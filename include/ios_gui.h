@@ -67,14 +67,20 @@ extern void dismiss_quip_alert(QUIP_ALERT_OBJ_TYPE *av,NSInteger buttonIndex);
 extern void quip_alert_shown(QUIP_ALERT_OBJ_TYPE *av);
 
 /* ios.m */
-extern void simple_alert(QSP_ARG_DECL  const char *type, const char *msg);
+extern void _simple_alert(QSP_ARG_DECL  const char *type, const char *msg);
 extern void fatal_alert(QSP_ARG_DECL  const char *msg);
 extern int check_deferred_alert(SINGLE_QSP_ARG_DECL);
 
+#define simple_alert(type,msg) _simple_alert(QSP_ARG  type,msg)
+
 extern void window_sys_init(SINGLE_QSP_ARG_DECL);	// a nop
-extern void give_notice(const char **msg_array);
-extern void set_std_cursor(void);
-extern void set_busy_cursor(void);
+
+extern void _set_std_cursor(SINGLE_QSP_ARG_DECL);
+extern void _set_busy_cursor(SINGLE_QSP_ARG_DECL);
+extern void _give_notice(QSP_ARG_DECL  const char **msg_array);
+#define set_std_cursor() _set_std_cursor(SINGLE_QSP_ARG)
+#define set_busy_cursor() _set_busy_cursor(SINGLE_QSP_ARG)
+#define give_notice(msg_array) _give_notice(QSP_ARG  msg_array)
 
 IOS_ITEM_NEW_PROT(Screen_Obj,scrnobj)
 IOS_ITEM_PICK_PROT(Screen_Obj,scrnobj)

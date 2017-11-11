@@ -1,0 +1,18 @@
+
+expressions
+
+  read -
+
+void t(float f[], float k)
+{
+#	f = f > k ? 1 : 0;
+	f = f > k ? f : 0;
+}
+
+end
+
+  dump t
+  quit
+
+exit
+	

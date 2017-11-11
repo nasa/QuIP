@@ -61,7 +61,7 @@ static int mpeg_to_dp(Data_Obj *dp,Mpeg_Hdr *mpeg_hp)
 	dp->dt_nelts = dp->dt_tdim * dp->dt_cols * dp->dt_rows
 			* dp->dt_frames * dp->dt_seqs;
 
-	auto_shape_flags(&dp->dt_shape,dp);
+	auto_shape_flags(&dp->dt_shape);
 
 	return(0);
 }
@@ -202,7 +202,7 @@ Image_File * mpeg_open(const char *name,int rw)
 printf("mpeg_open: IN\n");
 #endif /* QUIP_DEBUG */
 	
-	ifp = IMG_FILE_CREAT(name,rw,IFT_MPEG);
+	ifp = img_file_creat(name,rw,IFT_MPEG);
 	if( ifp==NULL ) return(ifp);
 
 	ifp->hdr = (Mpeg_Hdr *)getbuf( sizeof(Mpeg_Hdr) );
@@ -307,7 +307,7 @@ void mpeg_close(Image_File *ifp)
 	if( ifp->hdr != NULL )
 		givbuf(ifp->hdr);
 
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 

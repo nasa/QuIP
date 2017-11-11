@@ -183,10 +183,21 @@ extern UIViewController *current_view_controller;
 
 #endif /* BUILD_FOR_OBJC */
 
+#define init_genwins()		_init_genwins(SINGLE_QSP_ARG)
+#define new_genwin(s)		_new_genwin(QSP_ARG  s)
+#define genwin_of(s)		_genwin_of(QSP_ARG  s)
+#define get_genwin(s)		_get_genwin(QSP_ARG  s)
+#define pick_genwin(s)		_pick_genwin(QSP_ARG  s)
+//#define del_genwin(s)		_del_genwin(QSP_ARG  s)
+#define list_genwins(fp)	_list_genwins(QSP_ARG  fp)
+#define genwin_list()		_genwin_list(SINGLE_QSP_ARG)
 
-extern void add_genwin(QSP_ARG_DECL  IOS_Item_Type *itp, Genwin_Functions *gwfp,
+extern void _add_genwin(QSP_ARG_DECL  IOS_Item_Type *itp, Genwin_Functions *gwfp,
 	IOS_Item *(*lookup)(QSP_ARG_DECL  const char *));
-extern Gen_Win *find_genwin(QSP_ARG_DECL  const char *);
+extern Gen_Win *_find_genwin(QSP_ARG_DECL  const char *);
+
+#define add_genwin(itp,gwfp,lookup) _add_genwin(QSP_ARG  itp,gwfp,lookup)
+#define find_genwin(s) _find_genwin(QSP_ARG  s)
 
 extern COMMAND_FUNC( do_genwin_menu );
 
@@ -199,14 +210,21 @@ extern COMMAND_FUNC( do_genwin_menu );
 //#endif /* HAVE_MOTIF */
 
 #include "display.h"
-extern Dpyable *genwin_display(QSP_ARG_DECL  Gen_Win *gwp);
+extern Dpyable *_genwin_display(QSP_ARG_DECL  Gen_Win *gwp);
 
-extern void show_genwin(QSP_ARG_DECL  Gen_Win *gwp);
-extern void unshow_genwin(QSP_ARG_DECL  Gen_Win *gwp);
+extern void _show_genwin(QSP_ARG_DECL  Gen_Win *gwp);
+extern void _unshow_genwin(QSP_ARG_DECL  Gen_Win *gwp);
 
-extern void push_nav(QSP_ARG_DECL  Gen_Win *gwp);
-extern void pop_nav(QSP_ARG_DECL int n_levels);
+extern void _push_nav(QSP_ARG_DECL  Gen_Win *gwp);
+extern void _pop_nav(QSP_ARG_DECL int n_levels);
 extern int n_pushed_panels(void);
+
+#define genwin_display(gwp) _genwin_display(QSP_ARG  gwp)
+#define show_genwin(gwp) _show_genwin(QSP_ARG  gwp)
+#define unshow_genwin(gwp) _unshow_genwin(QSP_ARG  gwp)
+#define push_nav(gwp) _push_nav(QSP_ARG  gwp)
+#define pop_nav(n_levels) _pop_nav(QSP_ARG n_levels)
+
 
 #endif /* _GEN_WIN_H_ */
 

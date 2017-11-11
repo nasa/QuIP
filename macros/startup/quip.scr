@@ -1,4 +1,5 @@
 # @(#) .quip ver: 1.1 1/19/99
+#
 
 verbose no
 
@@ -8,12 +9,11 @@ If !var_exists(QUIP)
 If strcmp('$QUIP','quip')
   "warn 'Program invoked as quip, but QUIP = $QUIP'"
 
-variables
-  set QUIPSTARTUPDIR /usr/local/share/$QUIP/macros/startup
-  quit
+If !var_exists(QUIPSTARTUPDIR)
+  "advise 'QUIPSTARTUPDIR not set in environment, setting to default value' \
+   variables set QUIPSTARTUPDIR /usr/local/share/$QUIP/macros/startup quit"
 
-#echo "QUIPSTARTUPDIR = $QUIPSTARTUPDIR"
-#view debug xsupp quit
+variables set macro_dir $QUIPSTARTUPDIR/.. quit
 
 < $QUIPSTARTUPDIR/generic.scr
 < $QUIPSTARTUPDIR/gendata.scr

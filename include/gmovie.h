@@ -115,12 +115,16 @@ extern int n_refresh;
 
 extern List *movie_list(SINGLE_QSP_ARG_DECL);
 extern int movie_ok(void);
-extern Movie *create_movie(QSP_ARG_DECL  const char *moviename);
 extern void close_movie(QSP_ARG_DECL  Movie *mvip);
-extern void delete_movie(QSP_ARG_DECL  Movie *mvip);
 extern void add_playable(Item_Type * itp,void *vp);
-extern void load_movie_module(QSP_ARG_DECL  Movie_Module *mmp);
 extern const char *movie_pathname(const char *filename);
 
+extern void _load_movie_module(QSP_ARG_DECL  Movie_Module *mmp);
+extern Movie *_create_movie(QSP_ARG_DECL  const char *moviename);
+extern void _delete_movie(QSP_ARG_DECL  Movie *mvip);
+
+#define load_movie_module(mmp) _load_movie_module(QSP_ARG  mmp)
+#define create_movie(moviename) _create_movie(QSP_ARG  moviename)
+#define delete_movie(mvip) _delete_movie(QSP_ARG  mvip)
 
 #endif /* ! _GMOVIE_H_ */

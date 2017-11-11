@@ -7,29 +7,29 @@ all:	libcu2.a
 
 M4OPTS=	-I $(top_srcdir)/include -I $(srcdir)
 
-GENERATED_SRCS=						\
-			cu2_utils_expanded.c		\
-			cu2_veclib_expanded.c		\
-			cu2_fill_expanded.c		\
-			cu2_yuv2rgb_expanded.c		\
-			cu2_centroid_expanded.c
+GENERATED_SRCS=								\
+			$(builddir)/cu2_utils_expanded.c		\
+			$(builddir)/cu2_veclib_expanded.c		\
+			$(builddir)/cu2_fill_expanded.c			\
+			$(builddir)/cu2_yuv2rgb_expanded.c		\
+			$(builddir)/cu2_centroid_expanded.c
 
 clean-local:
 	rm -rf $(GENERATED_SRCS)
 
-cu2_utils_expanded.c:	$(LOCAL_M4FILES) $(srcdir)/_cu2_utils.c
+$(builddir)/cu2_utils_expanded.c:	$(LOCAL_M4FILES) $(srcdir)/_cu2_utils.c
 	m4 $(M4OPTS) < $(srcdir)/cu2_utils.m4 > $(builddir)/cu2_utils_expanded.c
 
-cu2_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
+$(builddir)/cu2_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) $(srcdir)/cu2_veclib.m4 | sed -e 's/	*\\//' > $(builddir)/cu2_veclib_expanded.c
 
-cu2_fill_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
+$(builddir)/cu2_fill_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) < $(srcdir)/cu2_fill.m4 > $(builddir)/cu2_fill_expanded.c
 
-cu2_yuv2rgb_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
+$(builddir)/cu2_yuv2rgb_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) < $(srcdir)/cu2_yuv2rgb.m4 > $(builddir)/cu2_yuv2rgb_expanded.c
 
-cu2_centroid_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
+$(builddir)/cu2_centroid_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) < $(srcdir)/cu2_centroid.m4 > $(builddir)/cu2_centroid_expanded.c
 
 
@@ -43,8 +43,10 @@ $(srcdir)/cu2_yuv2rgb.cu:	$(builddir)/cu2_yuv2rgb_expanded.c
 $(srcdir)/cu2_fill.cu:	$(builddir)/cu2_fill_expanded.c
 	touch $(srcdir)/cu2_fill.cu
 
-$(srcdir)/cu2_utils.cu:	$(builddir)/cu2_utils_expanded.c
-	touch $(srcdir)/cu2_utils.cu
+#$(srcdir)/cu2_utils.cu:	$(builddir)/cu2_utils_expanded.c
+#	touch $(srcdir)/cu2_utils.cu
+$(srcdir)/cu2_utils.c:	$(builddir)/cu2_utils_expanded.c
+	touch $(srcdir)/cu2_utils.c
 
 
 # Why does the generic rule not work?
@@ -55,8 +57,8 @@ cu2_yuv2rgb.o:	$(srcdir)/cu2_yuv2rgb.cu
 cu2_fill.o:	$(srcdir)/cu2_fill.cu
 	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
 
-cu2_utils.o:	$(srcdir)/cu2_utils.cu
-	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
+#cu2_utils.o:	$(srcdir)/cu2_utils.cu
+#	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
 
 cu2_centroid.o:	$(srcdir)/cu2_centroid.cu
 	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
@@ -93,6 +95,8 @@ NVCPPFLAGS =	-I/usr/local/cuda/include -I$(builddir) -I$(top_builddir) -I$(top_s
 #clean-local:
 #	-rm -rf cu2_veclib_expanded.c cu2_veclib_stripped.c
 
+#				new_fill.cu
+
 NVCC_SOURCES =						\
 				cu2_funcs.cu		\
 				cu2_fill.cu		\
@@ -101,7 +105,7 @@ NVCC_SOURCES =						\
 
 
 # more dependencies here, but what are they?  BUG
-$(srcdir)/cu2_funcs.cu:	m4_cu2_veclib.c
+$(srcdir)/cu2_funcs.cu:	m4_cu2_veclib.c ../../include/platform.h ../../include/my_cu2.h
 		touch $(srcdir)/cu2_funcs.cu
 
 # cu2_host_untyped_call_defs.h
@@ -111,6 +115,8 @@ $(srcdir)/m4_cu2_veclib.c:	cu2_veclib_expanded.c
 
 #			cu2_kern_args.m4
 #			cu2_kernel_src.m4
+
+#			$(srcdir)/new_fill.m4
 
 LOCAL_M4FILES=							\
 			$(srcdir)/cu2_fft_funcs.m4		\
@@ -124,7 +130,7 @@ LOCAL_M4FILES=							\
 			$(srcdir)/cu2_fill.m4			\
 			$(srcdir)/cu2_centroid.m4		\
 			$(srcdir)/cu2_centroid_defs.m4		\
-			$(srcdir)/cu2_yuv2rgb.m4			\
+			$(srcdir)/cu2_yuv2rgb.m4		\
 			$(srcdir)/cu2_veclib.m4 
 
 
@@ -182,6 +188,7 @@ INC_M4FILES=							\
 			$(M4_INCDIR)/li_defs.m4			\
 			$(M4_INCDIR)/math_funcs.m4		\
 			$(M4_INCDIR)/new_conv.m4		\
+			$(M4_INCDIR)/cu2_func_prot.m4		\
 			$(M4_INCDIR)/cu2_port.m4		\
 			$(M4_INCDIR)/cu2_veclib_prot.m4		\
 			$(M4_INCDIR)/quat_args.m4		\
@@ -234,6 +241,8 @@ INC_M4FILES=							\
 #			cu2_host_call_defs.h
 #			cu2_host_untyped_call_defs.h
 #			cu2_typtbl.h
+
+#			new_fill.cu
 
 noinst_HEADERS =					\
 			$(LOCAL_M4FILES)		\

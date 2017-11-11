@@ -9,6 +9,7 @@
 #include "vec_util.h"
 #include "veclib_api.h"
 #include "getbuf.h"
+#include "platform.h"
 
 /* Out new strategy for changing size is to make a subsampled image for destination and
  * source, based on the dimension values for each of the 5 dimensions.
@@ -40,31 +41,31 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 
 	/* For simplicity, we don't allow size changes to be combined with conversions */
 
-	if( !dp_same_prec(QSP_ARG  dst_dp,src_dp,"change_size") )
+	if( !dp_same_prec(dst_dp,src_dp,"change_size") )
 		return(-1);
 
 	for(i=0;i<N_DIMENSIONS;i++){
 		if( OBJ_TYPE_DIM(dst_dp,i) > OBJ_TYPE_DIM(src_dp,i) ){
 			/* enlargement - subsample the destination */
-			SET_DIMENSION(enlargement_factor,i,
+			set_dimension(enlargement_factor,i,
 				floor( OBJ_TYPE_DIM(dst_dp,i) / OBJ_TYPE_DIM(src_dp,i) ) );
-			SET_DIMENSION(reduction_factor,i, 0);
+			set_dimension(reduction_factor,i, 0);
 
-			SET_DIMENSION(size_dsp,i, OBJ_TYPE_DIM(src_dp,i) );
-			SET_DIMENSION(n_dsp,i, DIMENSION(enlargement_factor,i) );
+			set_dimension(size_dsp,i, OBJ_TYPE_DIM(src_dp,i) );
+			set_dimension(n_dsp,i, DIMENSION(enlargement_factor,i) );
 			dst_incrs[i] = DIMENSION(n_dsp,i);
 			src_incrs[i] = 1;
 		} else {
 			/* reduction - subsample the source */
-			SET_DIMENSION(reduction_factor,i,
+			set_dimension(reduction_factor,i,
 				ceil( OBJ_TYPE_DIM(src_dp,i) / OBJ_TYPE_DIM(dst_dp,i) ) );
-			SET_DIMENSION(enlargement_factor,i, 0 );
+			set_dimension(enlargement_factor,i, 0 );
 
-			SET_DIMENSION(size_dsp,i, floor( OBJ_TYPE_DIM(src_dp,i) /
+			set_dimension(size_dsp,i, floor( OBJ_TYPE_DIM(src_dp,i) /
 				DIMENSION(reduction_factor,i) ) );
 			/* We don't need to do this multiple times, just pick one and do it */
-			/*SET_DIMENSION(n_dsp,i, DIMENSION(reduction_factor,i) ); */
-			SET_DIMENSION(n_dsp,i, 1);
+			/*set_dimension(n_dsp,i, DIMENSION(reduction_factor,i) ); */
+			set_dimension(n_dsp,i, 1);
 			src_incrs[i] = DIMENSION(reduction_factor,i);
 			dst_incrs[i] = 1;
 		}
@@ -72,8 +73,8 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 	/* make the subsamples.
 	 * the column increment is expressed in columns, etc.
 	 */
-	dst_ss_dp=make_subsamp(QSP_ARG  "chngsize_dst_obj",dst_dp,size_dsp,offsets,dst_incrs);
-	src_ss_dp=make_subsamp(QSP_ARG  "chngsize_src_obj",src_dp,size_dsp,offsets,src_incrs);
+	dst_ss_dp=make_subsamp("chngsize_dst_obj",dst_dp,size_dsp,offsets,dst_incrs);
+	src_ss_dp=make_subsamp("chngsize_src_obj",src_dp,size_dsp,offsets,src_incrs);
 
 	clear_obj_args(oap);
 	SET_OA_DEST(oap,dst_ss_dp);
@@ -125,8 +126,8 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 			}
 		}
 	}
-	delvec(QSP_ARG  dst_ss_dp);
-	delvec(QSP_ARG  src_ss_dp);
+	delvec(dst_ss_dp);
+	delvec(src_ss_dp);
 
 	SET_OBJ_FLAG_BITS(dst_dp, DT_ASSIGNED);
 

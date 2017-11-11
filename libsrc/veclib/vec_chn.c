@@ -73,7 +73,7 @@ void start_chain(QSP_ARG_DECL  const char *name)
 	Chain *cp;
 
 	if( is_chaining ){
-		NWARN("a chain buffer is already open");
+		warn("a chain buffer is already open");
 		return;
 	}
 	cp=new_chain(QSP_ARG  name);
@@ -107,22 +107,22 @@ void add_link(void (*func)(LINK_FUNC_ARG_DECLS), LINK_FUNC_ARG_DECLS)
 	addTail(CHAIN_LIST(curr_cp) ,np);
 }
 
-void end_chain(void)
+void _end_chain(SINGLE_QSP_ARG_DECL)
 {
 	if( !is_chaining ){
-		NWARN("no chain buffer currently open");
+		warn("no chain buffer currently open");
 		return;
 	}
 	is_chaining=0;
 }
 
 
-int chain_breaks(const char *routine_name)
+int _chain_breaks(QSP_ARG_DECL  const char *routine_name)
 {
 	if( is_chaining ){
 		sprintf(DEFAULT_ERROR_STRING,
 	"Routine \"%s\" is not chainable!?",routine_name);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(DEFAULT_ERROR_STRING);
 		return(1);
 	}
 	return(0);
@@ -134,28 +134,28 @@ int chain_breaks(const char *routine_name)
  * be static.
  */
 
-#define SCHECK(dp)				\
-						\
-	if( dp != NULL ){			\
-		if( ! IS_STATIC(dp) ){		\
+#define CHECK_OBJ_IS_STATIC(dp)				\
+							\
+	if( dp != NULL ){				\
+		if( ! IS_STATIC(dp) ){			\
 			sprintf(DEFAULT_ERROR_STRING,	\
 "Object %s must be static for use in chain %s.",\
 		OBJ_NAME(dp),CHAIN_NAME(curr_cp) );	\
-			NWARN(DEFAULT_ERROR_STRING);	\
-			return(-1);		\
-		}				\
+			warn(DEFAULT_ERROR_STRING);	\
+			return(-1);			\
+		}					\
 	}
 
-int insure_static(const Vec_Obj_Args *oap)
+int _insure_static(QSP_ARG_DECL  const Vec_Obj_Args *oap)
 {
 	int i;
 
-	SCHECK( OA_DEST(oap) )
+	CHECK_OBJ_IS_STATIC( OA_DEST(oap) )
 	for(i=0;i<MAX_N_ARGS;i++){
-		SCHECK( OA_SRC_OBJ(oap,i) )
+		CHECK_OBJ_IS_STATIC( OA_SRC_OBJ(oap,i) )
 	}
 	for(i=0;i<MAX_RETSCAL_ARGS;i++){
-		SCHECK( OA_SCLR_OBJ(oap,i) )
+		CHECK_OBJ_IS_STATIC( OA_SCLR_OBJ(oap,i) )
 	}
 	return(0);
 }

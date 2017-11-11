@@ -15,19 +15,19 @@ double dt_invert(QSP_ARG_DECL  Data_Obj *dp)
 	float *matrix;
 
 	if( OBJ_ROWS(dp) != OBJ_COLS(dp) ){
-		NWARN("matrix must be square");
+		warn("matrix must be square");
 		return(0.0);
 	}
 	if( OBJ_PREC(dp) != PREC_SP ){
-		NWARN("matrix precision must be float");
+		warn("matrix precision must be float");
 		return(0.0);
 	}
 	if( ! IS_CONTIGUOUS(dp) ){
-		NWARN("matrix object must be contiguous");
+		warn("matrix object must be contiguous");
 		return(0.0);
 	}
 	if( OBJ_COMPS(dp) != 1 ){
-		NWARN("matrix componenet dimension must be 1");
+		warn("matrix componenet dimension must be 1");
 		return(0.0);
 	}
 

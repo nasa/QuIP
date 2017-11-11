@@ -41,7 +41,7 @@ static void setEntry ( GLXconfig* ptr, int b, int m, int a )
 
 int my_error_handler( Display *dpy, XErrorEvent *ee )
 {
-	NWARN("X error");
+	_warn(DEFAULT_QSP_ARG  "X error");
 }
 
 /*

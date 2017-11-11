@@ -13,13 +13,13 @@ static My_FANN *get_new_net(SINGLE_QSP_ARG_DECL)
 
 	s = NAMEOF("name for network");
 	// make sure not in use
-	mfp = fann_of(QSP_ARG  s);
+	mfp = fann_of(s);
 	if( mfp != NULL ){
 		sprintf(ERROR_STRING,"get_new_net:  network name %s is already in use!?",s);
 		WARN(ERROR_STRING);
 		return NULL;
 	}
-	mfp = new_fann(QSP_ARG  s);
+	mfp = new_fann(s);
 	assert(mfp!=NULL);
 	return mfp;
 }
@@ -81,7 +81,7 @@ static void create_network(QSP_ARG_DECL  My_FANN *mfp, struct net_params *np_p,
 //		e = fann_get_errno( (struct fann_error *) NULL );
 //printf(stderr,"errno = %d\n",e);
 		// clean up
-		del_fann(QSP_ARG  mfp);
+		del_fann(mfp);
 		return;
 	}
 
@@ -201,10 +201,10 @@ static COMMAND_FUNC(do_fann_train)
 	int n_data;
 #endif // HAVE_FANN
 
-	mfp = pick_fann(QSP_ARG  "");
+	mfp = pick_fann("");
 	//s = NAMEOF("name of file containing training data");
-	input_dp = PICK_OBJ("name of object containing input data");
-	output_dp = PICK_OBJ("name of object containing output data");
+	input_dp = pick_obj("name of object containing input data");
+	output_dp = pick_obj("name of object containing output data");
 
 	if( check_network(QSP_ARG  mfp, input_dp, output_dp) < 0 ) return;
 
@@ -247,10 +247,10 @@ static COMMAND_FUNC(do_cascade)
 	int n_data;
 #endif // HAVE_FANN
 
-	mfp = pick_fann(QSP_ARG  "");
+	mfp = pick_fann("");
 	//s = NAMEOF("name of file containing training data");
-	input_dp = PICK_OBJ("name of object containing input data");
-	output_dp = PICK_OBJ("name of object containing output data");
+	input_dp = pick_obj("name of object containing input data");
+	output_dp = pick_obj("name of object containing output data");
 
 	if( check_network(QSP_ARG  mfp, input_dp, output_dp) < 0 ) return;
 
@@ -280,10 +280,10 @@ static COMMAND_FUNC(do_fann_run)
 	float *result;
 #endif // HAVE_FANN
 
-	mfp = pick_fann(QSP_ARG  "");
+	mfp = pick_fann("");
 	//s = NAMEOF("name of file containing training data");
-	input_dp = PICK_OBJ("source object containing input data");
-	output_dp = PICK_OBJ("destination object for output data");
+	input_dp = pick_obj("source object containing input data");
+	output_dp = pick_obj("destination object for output data");
 
 	if( check_network(QSP_ARG  mfp, input_dp, output_dp) < 0 ) return;
 
@@ -313,10 +313,10 @@ static COMMAND_FUNC(do_init_weights)
 	int n_data;
 #endif // HAVE_FANN
 
-	mfp = pick_fann(QSP_ARG  "");
+	mfp = pick_fann("");
 	//s = NAMEOF("name of file containing training data");
-	input_dp = PICK_OBJ("name of object containing input data");
-	output_dp = PICK_OBJ("name of object containing output data");
+	input_dp = pick_obj("name of object containing input data");
+	output_dp = pick_obj("name of object containing output data");
 
 	if( check_network(QSP_ARG  mfp, input_dp, output_dp) < 0 ) return;
 
@@ -349,14 +349,14 @@ static COMMAND_FUNC(do_init_weights)
 
 static COMMAND_FUNC(do_list_fanns)
 {
-	list_fanns(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
+	list_fanns(tell_msgfile());
 }
 
 static COMMAND_FUNC(do_info_fann)
 {
 	My_FANN *mfp;
 
-	mfp = pick_fann(QSP_ARG  "name of network");
+	mfp = pick_fann("name of network");
 	if( mfp == NULL ) return;
 
 #ifdef HAVE_FANN
@@ -368,14 +368,14 @@ static COMMAND_FUNC(do_del_fann)
 {
 	My_FANN *mfp;
 
-	mfp = pick_fann(QSP_ARG  "name of network");
+	mfp = pick_fann("name of network");
 	if( mfp == NULL ) return;
 
 #ifdef HAVE_FANN
 	fann_destroy(mfp->mf_fann_p);
 #endif // HAVE_FANN
 
-	del_fann(QSP_ARG  mfp);	// does this release the name???
+	del_fann(mfp);	// does this release the name???
 }
 
 //#undef ADD_CMD
@@ -395,6 +395,6 @@ MENU_END(fann)
 
 COMMAND_FUNC(do_fann_menu)
 {
-	PUSH_MENU(fann)
+	CHECK_AND_PUSH_MENU(fann)
 }
 

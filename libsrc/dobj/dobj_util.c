@@ -14,11 +14,13 @@
 
 #include "quip_prot.h"
 #include "data_obj.h"
+#include "dobj_private.h"
 #include "vectree.h"
 #include "nexpr.h"		// set_obj_funcs
 #include "nports_api.h"		// define_port_data_type
 #include "debug.h"
 #include "query_stack.h"	// like to eliminate this dependency BUG?
+#include "platform.h"	// like to eliminate this dependency BUG?
 
 // Originally zombies were introduced to be able to refresh
 // an X11 canvas displaying an image after the image had been
@@ -28,7 +30,7 @@
 #define ZOMBIE_SUPPORT
 
 
-Data_Obj *pick_obj(QSP_ARG_DECL  const char *pmpt)
+Data_Obj *_pick_obj(QSP_ARG_DECL  const char *pmpt)
 {
 	const char *s;
 
@@ -52,12 +54,16 @@ Data_Obj *pick_obj(QSP_ARG_DECL  const char *pmpt)
 
 // free function for ram data area
 
-void cpu_mem_free(QSP_ARG_DECL  void *ptr)
+void _cpu_mem_free(QSP_ARG_DECL  void *ptr)
 {
+#ifdef HAVE_POSIX_MEMALIGN
+	givbuf(free);
+#else // ! HAVE_POSIX_MEMALIGN
 	givbuf(ptr);
+#endif // ! HAVE_POSIX_MEMALIGN
 }
 
-void cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp)
+void _cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 {
 	givbuf(dp->dt_unaligned_ptr);
 }
@@ -85,10 +91,12 @@ static void release_data(QSP_ARG_DECL  Data_Obj *dp )
  *	Remove a child object from parent's list
  */
 
-void disown_child( QSP_ARG_DECL  Data_Obj *dp )
+void _disown_child( QSP_ARG_DECL  Data_Obj *dp )
 {
 	Node *np;
 
+	if( OBJ_PARENT(dp) == NULL ) return;
+	
 	np=remData(OBJ_CHILDREN( OBJ_PARENT(dp) ),dp);
 	assert( np != NULL );
 
@@ -113,7 +121,7 @@ static void del_subs(QSP_ARG_DECL  Data_Obj *dp)			/** delete all subimages */
 
 	while( OBJ_CHILDREN( dp ) != NULL ){
 		np=QLIST_HEAD( OBJ_CHILDREN( dp ) );
-		delvec( QSP_ARG  (Data_Obj *) NODE_DATA(np) );
+		delvec( (Data_Obj *) NODE_DATA(np) );
 	}
 }
 
@@ -134,7 +142,7 @@ static void make_zombie(QSP_ARG_DECL  Data_Obj *dp)
 	 * to an image - for instance, if we display an image, then delete it,
 	 * and then later want to refresh the window...
 	 */
-	zombie_item(QSP_ARG  dobj_itp,(Item *)dp);
+	zombie_item(dobj_itp,(Item *)dp);
 
 	sprintf(zname,"Z.%s.%d",OBJ_NAME(dp),n_zombie++);
 fprintf(stderr,"make_zombine, changing object %s to %s\n",OBJ_NAME(dp),zname);
@@ -160,7 +168,7 @@ fprintf(stderr,"make_zombine, changing object %s to %s\n",OBJ_NAME(dp),zname);
  * object, a warning is printed and no action is taken.
  */
 
-void delvec(QSP_ARG_DECL  Data_Obj *dp)
+void _delvec(QSP_ARG_DECL  Data_Obj *dp)
 {
 
 	assert(dp!=NULL);
@@ -211,7 +219,7 @@ advise(ERROR_STRING);
 	if( IS_EXPORTED(dp) ){
 		Identifier *idp;
 
-		idp = ID_OF(OBJ_NAME(dp));
+		idp = id_of(OBJ_NAME(dp));
 		assert( idp != NULL );
 		delete_id(QSP_ARG  (Item *)idp);
 	}
@@ -220,7 +228,7 @@ advise(ERROR_STRING);
 		del_subs(QSP_ARG  dp);
 	}
 	if( OBJ_PARENT(dp) != NULL ){
-		disown_child(QSP_ARG  dp);
+		disown_child(dp);
 	}
 
 	if( IS_TEMP(dp) ){
@@ -278,7 +286,7 @@ advise(ERROR_STRING);
 		/* put this back on the free list... */
 		recycle_item(dobj_itp,dp);
 	} else {
-		del_item(QSP_ARG  dobj_itp, dp );
+		del_item(dobj_itp, dp );
 	}
 #else /* ! ZOMBIE_SUPPORT */
 
@@ -378,13 +386,12 @@ advise(ERROR_STRING);
 
 
 /* Set the flags in a shape_info struct based on the values
- * in the dimension array.  The object pointer dp may be null,
- * its only use is to provide a name when printing an error msg.
+ * in the dimension array.
  *
  * This routine determines the type (real/complex) from dt_prec...
  */
 
-int set_shape_flags(Shape_Info *shpp,Data_Obj *dp,uint32_t shape_flag)
+int set_shape_flags(Shape_Info *shpp, uint32_t shape_flag)
 {
 	int i;
 
@@ -440,8 +447,6 @@ int set_shape_flags(Shape_Info *shpp,Data_Obj *dp,uint32_t shape_flag)
 			else	SET_SHP_FLAG_BITS(shpp, DT_SCALAR);
 		}
 	} else {
-//sprintf(ERROR_STRING,"setting shape flag bit to 0x%x",shape_flag);
-//advise(ERROR_STRING);
 		SET_SHP_FLAG_BITS(shpp,shape_flag);
 	}
 
@@ -472,9 +477,9 @@ int set_shape_flags(Shape_Info *shpp,Data_Obj *dp,uint32_t shape_flag)
 	return(0);
 } /* end set_shape_flags() */
 
-int auto_shape_flags(Shape_Info *shpp,Data_Obj *dp)
+int auto_shape_flags(Shape_Info *shpp)
 {
-	return set_shape_flags(shpp,dp,AUTO_SHAPE);
+	return set_shape_flags(shpp,AUTO_SHAPE);
 }
 
 /*
@@ -626,7 +631,7 @@ void gen_xpose(Data_Obj *dp,int dim1,int dim2)
 	EXCHANGE_INCS(OBJ_MACH_INCS(dp),dim1,dim2)
 
 	/* should this be CAUTIOUS??? */ 
-	if( set_shape_flags(OBJ_SHAPE(dp),dp,AUTO_SHAPE) < 0 )
+	if( auto_shape_flags(OBJ_SHAPE(dp)) < 0 )
 		NWARN("gen_xpose:  RATS!?");
 
 	check_contiguity(dp);
@@ -711,8 +716,8 @@ static Position_Functions dobj_pf={
 };
 
 static Subscript_Functions dobj_ssf={
-	(Item * (*)(QSP_ARG_DECL  Item *,index_t))	d_subscript,
-	(Item * (*)(QSP_ARG_DECL  Item *,index_t))	c_subscript
+	(Item * (*)(QSP_ARG_DECL  Item *,index_t))	_d_subscript,
+	(Item * (*)(QSP_ARG_DECL  Item *,index_t))	_c_subscript
 };
 
 void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
@@ -726,41 +731,41 @@ void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 		return;
 	}
 
-	debug_data = add_debug_module(QSP_ARG  "data");
+	debug_data = add_debug_module("data");
 
 	// BUG?  this happens here on the main thread, but child threads
 	// will need to be initialized elsewhere!
 	INSURE_QS_DOBJ_ASCII_INFO(THIS_QSP)
 	init_dobj_ascii_info(QSP_ARG  QS_DOBJ_ASCII_INFO(THIS_QSP) );
     
-	init_dobjs(SINGLE_QSP_ARG);		/* initialize items */
+	init_dobjs();		/* initialize items */
 
 	// update to use platforms...
 	//ram_area_p=area_init(QSP_ARG  "ram",NULL,0L,MAX_RAM_CHUNKS,DA_RAM);
 	vl2_init_platform(SINGLE_QSP_ARG);	// this initializes ram_area_p
 
-	init_tmp_dps(SINGLE_QSP_ARG);
+	init_tmp_dps();
 
-	set_del_method(QSP_ARG  dobj_itp,(void (*)(QSP_ARG_DECL  Item *))delvec);
+	set_del_method(dobj_itp,(void (*)(QSP_ARG_DECL  Item *))_delvec);
 
 	init_dfuncs(SINGLE_QSP_ARG);
 
 	set_obj_funcs(
                   get_obj,
-                  dobj_of,
-                  d_subscript,
-                  c_subscript);
+                  _dobj_of,
+                  _d_subscript,
+                  _c_subscript);
     
 	init_dobj_expr_funcs(SINGLE_QSP_ARG);
 
 //	/* BUG need to make context items sizables too!? */
-	add_sizable(QSP_ARG  dobj_itp,&dobj_sf,
+	add_sizable(dobj_itp,&dobj_sf,
 		(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
-	add_positionable(QSP_ARG  dobj_itp,&dobj_pf,
+	add_positionable(dobj_itp,&dobj_pf,
 		(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
-	add_interlaceable(QSP_ARG  dobj_itp,&dobj_if,
+	add_interlaceable(dobj_itp,&dobj_if,
 		(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
-	add_subscriptable(QSP_ARG  dobj_itp,&dobj_ssf,
+	add_subscriptable(dobj_itp,&dobj_ssf,
 		(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
 
 	// This was commented out - why?
@@ -768,11 +773,9 @@ void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 
 	/* set up additional port data type */
 
-	define_port_data_type(QSP_ARG  P_DATA,"data","name of data object",
-		recv_obj,
-		/* null_proc, */
-		(const char *(*)(QSP_ARG_DECL  const char *))pick_obj,
-		(void (*)(QSP_ARG_DECL Port *,const void *,int)) xmit_obj
+	define_port_data_type(P_DATA,"data","name of data object", _recv_obj,
+		(const char *(*)(QSP_ARG_DECL  const char *))_pick_obj,
+		(void (*)(QSP_ARG_DECL Port *,const void *,int)) _xmit_obj
 		);
 
 	/* Version control */

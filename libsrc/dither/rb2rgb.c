@@ -63,10 +63,10 @@ int know_lumscal=0;
 
 COMMAND_FUNC( set_matrices )
 {
-	c2p_dp=PICK_OBJ("matrix for chromaticity to phosphor transformation");
-	p2c_dp=PICK_OBJ("matrix for phosphor to chromaticity transformation");
-	o2p_dp=PICK_OBJ("matrix for opponent to phosphor transformation");
-	p2o_dp=PICK_OBJ("matrix for phosphor to opponent transformation");
+	c2p_dp=pick_obj("matrix for chromaticity to phosphor transformation");
+	p2c_dp=pick_obj("matrix for phosphor to chromaticity transformation");
+	o2p_dp=pick_obj("matrix for opponent to phosphor transformation");
+	p2o_dp=pick_obj("matrix for phosphor to opponent transformation");
 
 	install_white(SINGLE_QSP_ARG);	/* BUG should be renamed */
 }
@@ -77,18 +77,18 @@ static int init_matrices(SINGLE_QSP_ARG_DECL)
 	int i,j;
 
 	if( c2p_dp == NULL ){
-		NWARN("init_matrices: need to specify object for c2p_mat");
+		warn("init_matrices: need to specify object for c2p_mat");
 		return(-1);
 	}
 	if( p2c_dp == NULL ){
-		NWARN("init_matrices: need to specify object for p2c_mat");
+		warn("init_matrices: need to specify object for p2c_mat");
 		return(-1);
 	}
 	ptr = (float *)OBJ_DATA_PTR(p2c_dp);
 	for(i=0;i<3;i++)
 		for(j=0;j<3;j++)
 			*ptr++ = p2c_mat[i][j];
-	dp_copy(QSP_ARG  c2p_dp,p2c_dp);
+	dp_copy(c2p_dp,p2c_dp);
 	dt_invert(QSP_ARG  c2p_dp);
 	ptr = (float *)OBJ_DATA_PTR(c2p_dp);
 	for(i=0;i<3;i++)
@@ -124,22 +124,24 @@ void show_mat( float matrix[3][3], char *name )
 }
 #endif /* NOT_USED */
 
-static float rgb_norm(float *vec)	/* un-normalized rgb */
+#define rgb_norm(vec) _rgb_norm(QSP_ARG  vec)
+
+static float _rgb_norm(QSP_ARG_DECL  float *vec)	/* un-normalized rgb */
 {
 	int i;
 	float totlum;
 
 #ifdef CAUTIOUS
 	if( !know_white )
-		NERROR1("CAUTIOUS:  rgb_norm:  don't know white!?");
+		error1("CAUTIOUS:  rgb_norm:  don't know white!?");
 
 	if( !know_lumscal )
-		NERROR1("CAUTIOUS:  rgb_norm:  don't know lumscal!?");
+		error1("CAUTIOUS:  rgb_norm:  don't know lumscal!?");
 #endif /* CAUTIOUS */
 
 	/* convert rgb settings to relative rgb luminances, get total lum */
 
-NADVISE("lumscal");
+advise("lumscal");
 showvec(lumscal);
 	totlum=0.0;
 	for(i=0;i<3;i++){
@@ -177,27 +179,29 @@ static void apply_mat3x3(float *vec,float mat[3][3])
 
 /* convert rgb settings to rb chromaticities and relative luminance */
 
-static void rgb2rb(float *vec)			/** returns luminance in vec[2] */
+#define rgb2rb(vec) _rgb2rb(QSP_ARG  vec)
+
+static void _rgb2rb(QSP_ARG_DECL  float *vec)			/** returns luminance in vec[2] */
 {
 	float totlum;
 
 #ifdef CAUTIOUS
 	if( !know_white )
-		NERROR1("CAUTIOUS:  rgb2rb:  don't know white!?");
+		error1("CAUTIOUS:  rgb2rb:  don't know white!?");
 #endif /* CAUTIOUS */
 
 showvec(vec);
 	totlum=rgb_norm(vec);
-sprintf(DEFAULT_ERROR_STRING,"rgb2rb:  totlum = %g",totlum);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"rgb2rb:  totlum = %g",totlum);
+advise(ERROR_STRING);
 	/* vec is now fractional luminances (sum to 1) */
 showvec(vec);
-NADVISE("p2c_mat");
+advise("p2c_mat");
 showvec(p2c_mat[0]);
 showvec(p2c_mat[1]);
 showvec(p2c_mat[2]);
 	apply_mat3x3(vec,p2c_mat);	/* now contains rb and lum */
-NADVISE("rgb2rb:  after p2c_mat");
+advise("rgb2rb:  after p2c_mat");
 showvec(vec);
 	vec[2]=totlum;
 showvec(vec);
@@ -205,14 +209,16 @@ showvec(vec);
 
 /* convert chromaticity coordinates & luminance to an rgb triple */
 
-static void rb2rgb(float *vec)			/** luminance given in vec[2] */
+#define rb2rgb(vec) _rb2rgb(QSP_ARG  vec)
+
+static void _rb2rgb(QSP_ARG_DECL  float *vec)			/** luminance given in vec[2] */
 {
 	float totlum;
 	int i;
 
 #ifdef CAUTIOUS
 	if( !know_white )
-		NERROR1("CAUTIOUS:  rb2rgb:  don't know white!?");
+		error1("CAUTIOUS:  rb2rgb:  don't know white!?");
 #endif /* CAUTIOUS */
 
 	totlum=vec[2];
@@ -233,13 +239,15 @@ static void rb2rgb(float *vec)			/** luminance given in vec[2] */
 	/* values are now machine units */
 }
 
-static void wnorm(float *vec)
+#define wnorm(vec) _wnorm(QSP_ARG  vec)
+
+static void _wnorm(QSP_ARG_DECL  float *vec)
 {
 	int j;
 	float fact, maxswing, factor[3];
 
-sprintf(DEFAULT_ERROR_STRING,"%g %g %g",vec[0],vec[1],vec[2]);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"%g %g %g",vec[0],vec[1],vec[2]);
+advise(ERROR_STRING);
 	for(j=0;j<3;j++){
 		maxswing=_white[j];	/* maximum allowable decrement */
 		if( (PHOSMAX-_white[j]) < maxswing )
@@ -252,7 +260,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		if( factor[j] > fact ) fact=factor[j];
 #ifdef CAUTIOUS
 	if( fact == 0.0 )
-		NERROR1("CAUTIOUS:  wnorm:  factor is 0!?");
+		error1("CAUTIOUS:  wnorm:  factor is 0!?");
 #endif /* CAUTIOUS */
 	for(j=0;j<3;j++)
 		vec[j] /= fact;
@@ -271,7 +279,7 @@ static int install_white(SINGLE_QSP_ARG_DECL)
 
 	/* we assume we already have the white point */
 	if( ! know_white )
-		NERROR1("install_white:  white point not defined!?");
+		error1("install_white:  white point not defined!?");
 
 
 	for(j=0;j<3;j++) wc[j] = _white[j];
@@ -315,7 +323,7 @@ showvec(wc);
 	for(j=0;j<3;j++)
 		for(k=0;k<3;k++)
 			*ptr++ = o2p_mat[j][k];
-	dp_copy(QSP_ARG  p2o_dp,o2p_dp);
+	dp_copy(p2o_dp,o2p_dp);
 	dt_invert(QSP_ARG  p2o_dp);
 	ptr = (float *)OBJ_DATA_PTR(p2o_dp);
 	for(j=0;j<3;j++)

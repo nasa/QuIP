@@ -69,7 +69,7 @@ static int exp_flags=0;
 #define IS_DRIBBLING	(exp_flags & DRIBBLING)
 
 static char rsp_tbl[N_RESPONSES][64];
-static const char *rsp_list[N_RESPONSES];
+static const char *response_list[N_RESPONSES];
 static int rsp_inited=0;
 static int n_prel, n_data;
 
@@ -98,7 +98,7 @@ static void do_rspinit(void);
 	if( _nvals <= 0 ){					\
 		sprintf(ERROR_STRING,				\
 	"Need to initialize x values (n=%d)",_nvals);		\
-		WARN(ERROR_STRING);				\
+		warn(ERROR_STRING);				\
 		return;						\
 	}
 
@@ -110,7 +110,7 @@ static void do_rspinit()
 	strcpy(rsp_tbl[NO_INDEX],RSP_NO);
 	strcpy(rsp_tbl[REDO_INDEX],RSP_REDO);
 	strcpy(rsp_tbl[ABORT_INDEX],RSP_ABORT);
-	for(i=0;i<N_RESPONSES;i++) rsp_list[i] = rsp_tbl[i];
+	for(i=0;i<N_RESPONSES;i++) response_list[i] = rsp_tbl[i];
 	rsp_inited=1;
 }
 
@@ -118,21 +118,21 @@ static COMMAND_FUNC( modify )
 {
 	unsigned int n;
 
-	if( modrt==null_mod ) ERROR1("pointer modrt must be defined by user");
+	if( modrt==null_mod ) error1("pointer modrt must be defined by user");
 	n=(unsigned int)HOW_MANY("condition index");
-	if( n >= eltcount(class_list(SINGLE_QSP_ARG)) ) WARN("undefined condition");
+	if( n >= eltcount(class_list()) ) warn("undefined condition");
 	else (*modrt)(QSP_ARG n);
 }
 
 static int insure_exp_is_ready(SINGLE_QSP_ARG_DECL)	/* make sure there is something to run */
 {
-	if( eltcount(class_list(SINGLE_QSP_ARG)) <= 0 ){
-		WARN("no conditions defined");
+	if( eltcount(class_list()) <= 0 ){
+		warn("no conditions defined");
 		return(-1);
 	}
 	if( _nvals <= 0 ){
 		sprintf(ERROR_STRING,"Need to initialize x values (n=%d)",_nvals);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(0);
@@ -159,7 +159,7 @@ static COMMAND_FUNC( do_trial )	/** present a stimulus, tally response */
 	Trial_Class *tcp;
 
 	//c=(short)HOW_MANY("stimulus class");
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 	v=(short)HOW_MANY("level");
 
 	if( tcp == NULL ) return;
@@ -186,7 +186,7 @@ static COMMAND_FUNC( demo )		/** demo a stimulus for this experiment */
 	Trial_Class *tcp;
 
 	//c=(int)HOW_MANY("stimulus class");
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 	v=(int)HOW_MANY("level");
 
 	if( tcp == NULL ) return;
@@ -201,7 +201,7 @@ static COMMAND_FUNC( show_stim )	/** demo a stimulus but don't get response */
 	Trial_Class *tcp;
 
 	//c=(int)HOW_MANY("stimulus class");
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 	v=(int)HOW_MANY("level");
 
 	if( tcp == NULL ) return;
@@ -244,7 +244,7 @@ static void make_staircases(SINGLE_QSP_ARG_DECL)
 	Node *np;
 	Trial_Class *tcp;
 
-	lp=class_list(SINGLE_QSP_ARG);
+	lp=class_list();
 	assert( lp != NULL );
 
 	np=QLIST_HEAD(lp);
@@ -326,19 +326,19 @@ static COMMAND_FUNC( do_new_class )
 	const char *name, *cmd;
 	Trial_Class *tcp;
 
-	name = NAMEOF("nickname for this class");
-	cmd = NAMEOF("string to execute for this stimulus class");
+	name = nameof("nickname for this class");
+	cmd = nameof("string to execute for this stimulus class");
 
 	// Make sure not in use
-	tcp = trial_class_of(QSP_ARG  name);
+	tcp = trial_class_of(name);
 	if( tcp != NULL ){
 		sprintf(ERROR_STRING,"Class name \"%s\" is already in use!?",
 			name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
-	tcp = new_trial_class(QSP_ARG  name );
+	tcp = new_trial_class(name );
 	SET_CLASS_CMD(tcp,savestr(cmd));
 	SET_CLASS_INDEX(tcp,class_index++);
 	SET_CLASS_DATA_TBL(tcp,NULL);
@@ -347,7 +347,7 @@ static COMMAND_FUNC( do_new_class )
 	if( _nvals > 0 ){
 		alloc_data_tbl(tcp,_nvals);
 	} else {
-		WARN("need to specify x-values before declaring stimulus class!?");
+		warn("need to specify x-values before declaring stimulus class!?");
 		SET_CLASS_DATA_TBL(tcp,NULL);
 	}
 
@@ -373,7 +373,7 @@ static void setup_files(SINGLE_QSP_ARG_DECL)
 	if( IS_DRIBBLING ){
 		init_dribble_file(SINGLE_QSP_ARG);
 	} else {
-		while( (fp=TRYNICE(NAMEOF("summary data file"),"w"))
+		while( (fp=try_nice(nameof("summary data file"),"w"))
 			== NULL ) ;
 		set_summary_file(fp);
 	}
@@ -396,7 +396,7 @@ COMMAND_FUNC( do_delete_all_classes )
 	Node *np,*next;
 	Trial_Class *tcp;
 
-	lp=class_list(SINGLE_QSP_ARG);
+	lp=class_list();
 	if( lp==NULL ) return;
 
 	np=QLIST_HEAD(lp);
@@ -406,7 +406,7 @@ COMMAND_FUNC( do_delete_all_classes )
 		del_class(QSP_ARG  tcp);
 		np=next;
 	}
-	ASSIGN_RESERVED_VAR( "n_classes" , "0" );
+	assign_reserved_var( "n_classes" , "0" );
 	/* new_exp(); */
 }
 
@@ -447,13 +447,13 @@ static COMMAND_FUNC( do_feedback )
 {
 	const char *s;
 
-	s=NAMEOF("script fragment to interpret for correct feedback");
+	s=nameof("script fragment to interpret for correct feedback");
 
 	if( correct_feedback_string != NULL )
 		rls_str(correct_feedback_string);
 	correct_feedback_string = savestr(s);
 
-	s=NAMEOF("script fragment to interpret for incorrect feedback");
+	s=nameof("script fragment to interpret for incorrect feedback");
 
 	if( incorrect_feedback_string != NULL )
 		rls_str(incorrect_feedback_string);
@@ -484,13 +484,13 @@ static COMMAND_FUNC( do_get_value )
 	Staircase *stcp;
 	char valstr[32];
 
-	s = NAMEOF("name of variable for value storage");
-	stcp=PICK_STC( "" );
+	s = nameof("name of variable for value storage");
+	stcp=pick_stc( "" );
 
 	if( stcp == NO_STAIR ) return;
 
 	sprintf(valstr,"%g",xval_array[stcp->stc_val]);
-	ASSIGN_VAR(s,valstr);
+	assign_var(s,valstr);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(staircases_menu,s,f,h)
@@ -510,7 +510,7 @@ static COMMAND_FUNC( do_staircase_menu )
 		rninit(SINGLE_QSP_ARG);
 		new_exp(SINGLE_QSP_ARG);
 	}
-	PUSH_MENU( staircases );
+	CHECK_AND_PUSH_MENU( staircases );
 }
 
 #undef ADD_CMD
@@ -544,7 +544,7 @@ COMMAND_FUNC( do_exp_menu )
 		rninit(SINGLE_QSP_ARG);
 		new_exp(SINGLE_QSP_ARG);
 	}
-	PUSH_MENU(experiment);
+	CHECK_AND_PUSH_MENU(experiment);
 }
 
 static void set_rsp_word(const char **sptr,const char *s,const char *default_str)
@@ -571,38 +571,38 @@ static COMMAND_FUNC( use_keyboard )
 
 static COMMAND_FUNC( setyesno )
 {
-	get_rsp_word(QSP_ARG  &rsp_list[YES_INDEX],RSP_YES);
-	get_rsp_word(QSP_ARG  &rsp_list[NO_INDEX],RSP_NO);
-	get_rsp_word(QSP_ARG  &rsp_list[REDO_INDEX],RSP_REDO);
+	get_rsp_word(QSP_ARG  &response_list[YES_INDEX],RSP_YES);
+	get_rsp_word(QSP_ARG  &response_list[NO_INDEX],RSP_NO);
+	get_rsp_word(QSP_ARG  &response_list[REDO_INDEX],RSP_REDO);
 
 	/* now check that everything is legal! */
 
-	if( is_a_substring(RSP_ABORT,rsp_list[YES_INDEX]) ||
-		is_a_substring(RSP_ABORT,rsp_list[NO_INDEX]) ||
-		is_a_substring(RSP_ABORT,rsp_list[REDO_INDEX]) ){
+	if( is_a_substring(RSP_ABORT,response_list[YES_INDEX]) ||
+		is_a_substring(RSP_ABORT,response_list[NO_INDEX]) ||
+		is_a_substring(RSP_ABORT,response_list[REDO_INDEX]) ){
 
-		WARN("conflict with abort response");
+		warn("conflict with abort response");
 		goto bad;
 	}
-	if( rsp_list[YES_INDEX][0] == rsp_list[NO_INDEX][0] ){
-		WARN("yes and no responses must differ in the 1st character");
+	if( response_list[YES_INDEX][0] == response_list[NO_INDEX][0] ){
+		warn("yes and no responses must differ in the 1st character");
 		goto bad;
 	}
-	if( rsp_list[YES_INDEX][0] == rsp_list[REDO_INDEX][0] ){
-		WARN("yes and redo responses must differ in the 1st character");
+	if( response_list[YES_INDEX][0] == response_list[REDO_INDEX][0] ){
+		warn("yes and redo responses must differ in the 1st character");
 		goto bad;
 	}
-	if( rsp_list[NO_INDEX][0] == rsp_list[REDO_INDEX][0] ){
-		WARN("no and redo responses must differ in the 1st character");
+	if( response_list[NO_INDEX][0] == response_list[REDO_INDEX][0] ){
+		warn("no and redo responses must differ in the 1st character");
 		goto bad;
 	}
 	custom_keys=1;
 	return;
 bad:
 	/* install default responses */
-	set_rsp_word(&rsp_list[YES_INDEX],RSP_YES,RSP_YES);
-	set_rsp_word(&rsp_list[NO_INDEX],RSP_NO,RSP_NO);
-	set_rsp_word(&rsp_list[REDO_INDEX],RSP_REDO,RSP_REDO);
+	set_rsp_word(&response_list[YES_INDEX],RSP_YES,RSP_YES);
+	set_rsp_word(&response_list[NO_INDEX],RSP_NO,RSP_NO);
+	set_rsp_word(&response_list[REDO_INDEX],RSP_REDO,RSP_REDO);
 	custom_keys=0;
 
 	return;
@@ -614,32 +614,55 @@ void get_rsp_word(QSP_ARG_DECL const char **sptr,const char *def_rsp)
 	const char *s;
 
 	sprintf(buf,"word %s response",def_rsp);
-	s=NAMEOF(buf);
+	s=nameof(buf);
 	sprintf(buf,"use \"%s\" for %s response",s,def_rsp);
 	if( !CONFIRM(buf) ) return;
 
 	set_rsp_word(sptr,s,def_rsp);
 }
 
-int response(QSP_ARG_DECL  const char *s)
+
+static void init_responses(char *target_prompt_string,const char *question_string)
+{
+	if( custom_keys ){
+		sprintf(target_prompt_string,
+	"%s? [(%c)%s (yes), (%c)%s (no), (%c)%s (redo), (a)bort] : ",
+			question_string,
+			response_list[YES_INDEX][0],response_list[YES_INDEX]+1,
+			response_list[NO_INDEX][0],response_list[NO_INDEX]+1,
+			response_list[REDO_INDEX][0],response_list[REDO_INDEX]+1
+			);
+	} else {
+		sprintf(target_prompt_string,
+	"%s? [(%c)%s, (%c)%s, (%c)%s, (a)bort] : ",
+			question_string,
+			response_list[YES_INDEX][0],response_list[YES_INDEX]+1,
+			response_list[NO_INDEX][0],response_list[NO_INDEX]+1,
+			response_list[REDO_INDEX][0],response_list[REDO_INDEX]+1
+			);
+	}
+}
+
+int response(QSP_ARG_DECL  const char *question_string)
 {
 	int n;
-	char rpmtstr[128];
+	char rpmtstr[128];	// BUG? possible buffer overflow?
 
-	init_rps(rpmtstr,s);
-
+	init_responses(rpmtstr,question_string);
 
 	if( get_response_from_keyboard ){
 #ifndef BUILD_FOR_OBJC
-		redir( QSP_ARG tfile(SINGLE_QSP_ARG), "/dev/tty" );	/* get response from keyboard */
+		redir( tfile(), "/dev/tty" );	/* get response from keyboard */
 #else // BUILD_FOR_OBJC
-		WARN("response (exp.c):  can't get response from keyboard!?");
+		warn("response (exp.c):  can't get response from keyboard!?");
 #endif // BUILD_FOR_OBJC
 	}
 
 
 	do {
-		n=WHICH_ONE2(rpmtstr,N_RESPONSES,rsp_list);
+		inhibit_next_prompt_format(SINGLE_QSP_ARG);	// prompt already formatted!
+		n=which_one(rpmtstr,N_RESPONSES,response_list);
+		enable_prompt_format(SINGLE_QSP_ARG);
 	} while( n < 0 );
 
 	if( get_response_from_keyboard )
@@ -655,27 +678,5 @@ int response(QSP_ARG_DECL  const char *s)
 	}
 	/* should never be reached */
 	return(ABORT);
-}
-
-
-void init_rps(char *target,const char *s)
-{
-	if( custom_keys ){
-		sprintf(target,
-	"%s? [(%c)%s (yes), (%c)%s (no), (%c)%s (redo), (a)bort] : ",
-			s,
-			rsp_list[YES_INDEX][0],rsp_list[YES_INDEX]+1,
-			rsp_list[NO_INDEX][0],rsp_list[NO_INDEX]+1,
-			rsp_list[REDO_INDEX][0],rsp_list[REDO_INDEX]+1
-			);
-	} else {
-		sprintf(target,
-	"%s? [(%c)%s, (%c)%s, (%c)%s, (a)bort] : ",
-			s,
-			rsp_list[YES_INDEX][0],rsp_list[YES_INDEX]+1,
-			rsp_list[NO_INDEX][0],rsp_list[NO_INDEX]+1,
-			rsp_list[REDO_INDEX][0],rsp_list[REDO_INDEX]+1
-			);
-	}
 }
 

@@ -24,7 +24,7 @@ static COMMAND_FUNC( edit_stair )
 {
 	Staircase *stcp;
 
-	stcp = PICK_STC("");
+	stcp = pick_stc("");
 	if( stcp== NO_STAIR ) return;
 
 	memcpy(&s1,stcp,sizeof(*stcp));
@@ -38,7 +38,7 @@ static int get_stair_type(SINGLE_QSP_ARG_DECL)
 {
 	int t;
 
-	t=WHICH_ONE("staircase feedback type",3,type_list);
+	t=which_one("staircase feedback type",3,type_list);
 	switch(t){
 		case 0: return(UP_DOWN);
 		case 1: return(TWO_TO_ONE);
@@ -56,7 +56,7 @@ static COMMAND_FUNC( do_add_stair )
 
 	t= (short) get_stair_type(SINGLE_QSP_ARG);
 	//c=(short)HOW_MANY("index of associated condition");
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 
 	if( t < 0 ) return;
 	if( tcp == NULL ) return;
@@ -68,19 +68,19 @@ static COMMAND_FUNC( do_del_stair )
 {
 	Staircase *stcp;
 
-	stcp=PICK_STC( "" );
+	stcp=pick_stc( "" );
 	if( stcp == NO_STAIR ) return;
 	del_stair(QSP_ARG  stcp);
 }
 
-static COMMAND_FUNC(do_list_stairs){list_stcs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
+static COMMAND_FUNC(do_list_stairs){list_stcs(tell_msgfile());}
 
 static COMMAND_FUNC( do_step_stair )
 {
 	Staircase *stcp;
 	int resp;
 
-	stcp=PICK_STC( "" );
+	stcp=pick_stc( "" );
 	resp=response(QSP_ARG "response");
 
 	if( stcp == NO_STAIR ) return;
@@ -101,6 +101,6 @@ MENU_END(staircases)
 
 COMMAND_FUNC( staircase_menu )
 {
-	PUSH_MENU(staircases);
+	CHECK_AND_PUSH_MENU(staircases);
 }
 

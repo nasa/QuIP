@@ -27,8 +27,8 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 	const char *filename;
 	char num_str[16];
 
-	filename=NAMEOF("data file");
-	fp=TRY_OPEN( filename, "r" );
+	filename=nameof("data file");
+	fp=try_open( filename, "r" );
 	if( !fp ) return;
 
 	/* We used to clear the data tables here,
@@ -47,11 +47,11 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 		return;
 	}
 	fclose(fp);
-	n_have_classes = eltcount(class_list(SINGLE_QSP_ARG));
+	n_have_classes = eltcount(class_list());
 
 	sprintf(num_str,"%d",n_have_classes);	// BUG?  buffer overflow
 						// if n_have_classes too big???
-	ASSIGN_RESERVED_VAR( "n_classes" , num_str );
+	assign_reserved_var( "n_classes" , num_str );
 	
 	if( verbose ){
 		sprintf(ERROR_STRING,"File %s read, %d classes, %d x-values",
@@ -80,8 +80,8 @@ static COMMAND_FUNC( prquic )
 	int in_db;
 	Trial_Class *tcp;
 
-	fp=TRYNICE( NAMEOF("quic file"), "w");
-	tcp = PICK_TRIAL_CLASS("");
+	fp=try_nice( nameof("quic file"), "w");
+	tcp = pick_trial_class("");
 	in_db = ASKIF("transform x values to decibels");
 
 	if( fp == NULL || tcp == NULL ) return;
@@ -100,7 +100,7 @@ static COMMAND_FUNC( do_print_raw )
 {
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 	if( tcp == NULL ) return;
 	if( no_data(QSP_ARG  "do_print_raw") ) return;
 	print_raw_data(QSP_ARG  tcp);
@@ -126,8 +126,8 @@ static COMMAND_FUNC( pntgrph )
 	FILE *fp;
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
-	fp=TRYNICE( NAMEOF("output file"), "w" );
+	tcp = pick_trial_class("");
+	fp=try_nice( nameof("output file"), "w" );
 	if( fp == NULL || tcp == NULL ) return;
 
 	if( no_data(QSP_ARG  "pntgrph") ) return;
@@ -140,7 +140,7 @@ static COMMAND_FUNC( t_wanal )
 {
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
 	if( no_data(QSP_ARG  "t_wanal") ) return;
@@ -153,7 +153,7 @@ static COMMAND_FUNC( t_danal )
 {
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
 	if( no_data(QSP_ARG  "t_danal") ) return;
@@ -166,7 +166,7 @@ static COMMAND_FUNC( wanal )
 {
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
 	if( no_data(QSP_ARG  "wanal") ) return;
@@ -179,7 +179,7 @@ static COMMAND_FUNC( danal )
 {
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
 	if( no_data(QSP_ARG  "danal") ) return;
@@ -199,7 +199,7 @@ static COMMAND_FUNC( do_set_chance_rate )
 static COMMAND_FUNC( setcl )
 {
 	//classno=(int)HOW_MANY("index of class of interest");
-	curr_tcp = PICK_TRIAL_CLASS("name of class of interest");
+	curr_tcp = pick_trial_class("name of class of interest");
 	if( curr_tcp == NULL ) return;
 
 	if( no_data(QSP_ARG  "setcl") ) return;
@@ -216,19 +216,19 @@ static COMMAND_FUNC( setcl )
 }
 #endif // FUBAR
 
-static COMMAND_FUNC( _split )
+static COMMAND_FUNC( do_split )
 {
 	int wu;
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 
 	wu = ASKIF("retain upper half");
 
 	if( tcp == NULL ) return;
-	if( no_data(QSP_ARG  "_split") ) return;
+	if( no_data(QSP_ARG  "split") ) return;
 
-	split(QSP_ARG  tcp,wu);
+	split(tcp,wu);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(ogive_menu,s,f,h)
@@ -244,7 +244,7 @@ MENU_END(ogive)
 
 static COMMAND_FUNC( do_ogive )
 {
-	PUSH_MENU(ogive);
+	CHECK_AND_PUSH_MENU(ogive);
 }
 
 static COMMAND_FUNC( seter )
@@ -269,7 +269,7 @@ MENU_END(weibull)
 
 static COMMAND_FUNC( do_weibull )
 {
-	PUSH_MENU(weibull);
+	CHECK_AND_PUSH_MENU(weibull);
 }
 
 static COMMAND_FUNC( do_pnt_bars )
@@ -277,8 +277,8 @@ static COMMAND_FUNC( do_pnt_bars )
 	FILE *fp;
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
-	fp=TRYNICE( NAMEOF("output file"), "w" );
+	tcp = pick_trial_class("");
+	fp=try_nice( nameof("output file"), "w" );
 	if( fp == NULL || tcp == NULL ) return;
 
 	pnt_bars( QSP_ARG  fp, tcp );
@@ -288,7 +288,7 @@ static COMMAND_FUNC( do_xv_xform )
 {
 	const char *s;
 
-	s=NAMEOF("dm expression string for x-value transformation");
+	s=nameof("dm expression string for x-value transformation");
 	set_xval_xform(s);
 }
 
@@ -304,8 +304,8 @@ ADD_CMD( plotprint,	pntgrph,	print data for plotting )
 ADD_CMD( errbars,	do_pnt_bars,	print psychometric function with error bars )
 ADD_CMD( ogive,		do_ogive,	do fits with to ogive )
 ADD_CMD( weibull,	do_weibull,	do fits to weibull function )
-ADD_CMD( split,		_split,		split data at zeroes )
-ADD_CMD( lump,		lump,		lump data conditions )
+ADD_CMD( split,		do_split,	split data at zeroes )
+ADD_CMD( lump,		do_lump,	lump data conditions )
 #ifdef QUIK
 ADD_CMD( Quick,		prquic,		print data in QUICK format )
 #endif /* QUIK */
@@ -313,6 +313,6 @@ MENU_END(lookit)
 
 COMMAND_FUNC( lookmenu )
 {
-	PUSH_MENU(lookit);
+	CHECK_AND_PUSH_MENU(lookit);
 }
 

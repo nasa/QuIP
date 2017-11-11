@@ -82,7 +82,7 @@ int open_client_port(QSP_ARG_DECL  const char *name,const char *hostname,int por
 	struct hostent FAR *hp;
 
 	if ( (port_no < 2001) || (port_no > 6999) ) {
-		WARN("Illegal port number");
+		warn("Illegal port number");
 		advise("Use 2001-6999");
 		advise("Check /etc/services for other conflicts");
 		return(-1);
@@ -90,12 +90,12 @@ int open_client_port(QSP_ARG_DECL  const char *name,const char *hostname,int por
 
 fresh_start:
 
-	mpp=new_port(QSP_ARG  name);
+	mpp=new_port(name);
 	if( mpp==NULL ){
 		if( verbose ){
 			sprintf(ERROR_STRING,"open_client_port %s %s %d failed to create port struct",
 				name,hostname,port_no);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 		return(-1);
 	}
@@ -105,13 +105,13 @@ advise("port struct created...");
 #ifdef HAVE_SOCKET
 	mpp->mp_sock=socket(AF_INET,SOCK_STREAM,0);
 #else // ! HAVE_SOCKET
-	WARN("open_client_port:  Sorry, no socket implementation!?");
+	warn("open_client_port:  Sorry, no socket implementation!?");
 	mpp->mp_sock = (-1);
 #endif // ! HAVE_SOCKET
 
 	if( mpp->mp_sock<0 ){
 		tell_sys_error("open_client_port (socket)");
-		WARN("error opening stream socket");
+		warn("error opening stream socket");
 		delport(QSP_ARG  mpp);
 		return(-1);
 	}
@@ -148,13 +148,13 @@ fprintf(stderr,"back from gethostbyname hp = 0x%lx\n",(long)hp);
 				sprintf(ERROR_STRING,
 			"open_client_port:  host \"%s\" not found",
 					hostname);
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				break;
 			default:
 				sprintf(ERROR_STRING,
 			"open_client_port:  unknown host:  \"%s\"",
 					hostname);
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				break;
 		}
 		goto cleanup;

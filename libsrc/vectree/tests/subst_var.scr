@@ -1,0 +1,30 @@
+# test of Subst_Var
+
+Vector str_obj 1 20 string
+Set_String str_obj "hello there"
+Display str_obj
+
+expressions
+  export str_obj
+  show_shp yes
+  read -
+
+void test1()
+{
+	str_obj = str_obj == 040 ? '_' : str_obj;
+}
+end
+
+  dump test1
+  quit
+Pause
+
+Set v 'this is a test'
+Print v
+
+Subst_Var v 040 '_'
+Print v
+
+exit
+
+

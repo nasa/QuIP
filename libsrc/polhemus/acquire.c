@@ -11,9 +11,6 @@
 
 #include "quip_prot.h"
 #include "debug.h"
-//#include "sigpush.h"
-//#include "vars.h"
-//#include "tryhard.h"		/* try_open */
 
 #include "polh_dev.h"
 #include "data_obj.h"
@@ -517,12 +514,12 @@ fprintf(stderr,"read_next_record 0x%lx\n",(long)raw_pdp);
 	}
 
 	// BUG how do we know that these are the data that were requested???
-	assign_var(QSP_ARG  "polh_x_pos",data_string[0]);
-	assign_var(QSP_ARG  "polh_y_pos",data_string[1]);
-	assign_var(QSP_ARG  "polh_z_pos",data_string[2]);
-	assign_var(QSP_ARG  "polh_x_rot",data_string[3]);
-	assign_var(QSP_ARG  "polh_y_rot",data_string[4]);
-	assign_var(QSP_ARG  "polh_z_rot",data_string[5]);
+	assign_var("polh_x_pos",data_string[0]);
+	assign_var("polh_y_pos",data_string[1]);
+	assign_var("polh_z_pos",data_string[2]);
+	assign_var("polh_x_rot",data_string[3]);
+	assign_var("polh_y_rot",data_string[4]);
+	assign_var("polh_z_rot",data_string[5]);
 
 	return(0);
 }
@@ -576,7 +573,7 @@ static void *transfer_polh_data(void *prip)
 		stop_continuous_mode();
 
 	sprintf(DEFAULT_MSG_STR,"%d", ((Polh_Read_Info *)prip)->pri_n_obtained  );
-	assign_var(DEFAULT_QSP_ARG  "n_polh_records_obtained",DEFAULT_MSG_STR);
+	_assign_var(DEFAULT_QSP_ARG  "n_polh_records_obtained",DEFAULT_MSG_STR);
 
 	return(NULL);
 }
@@ -670,10 +667,10 @@ void read_polh_vector(QSP_ARG_DECL  Data_Obj *dp)
 //NADVISE(DEFAULT_ERROR_STRING);
 
 	if( _read_async ){
-ADVISE("read_polh_vector:  calling start_data_thread");
+advise("read_polh_vector:  calling start_data_thread");
 		start_data_thread(&pri1);
 	} else {
-ADVISE("read_polh_vector:  calling transfer_polh_data");
+advise("read_polh_vector:  calling transfer_polh_data");
 		transfer_polh_data(&pri1);
 	}
 }
@@ -760,7 +757,7 @@ void display_formatted_point(QSP_ARG_DECL  Fmt_Pt * fpp, Polh_Record_Format *prf
 
 int set_continuous_output_file(QSP_ARG_DECL  const char *fname)
 {
-	polh_output_file = try_open(QSP_ARG  fname, "w");
+	polh_output_file = try_open(fname, "w");
 
 	if( !polh_output_file ) {
 		sprintf(DEFAULT_ERROR_STRING, "Unable to open file for continuous output: %s", fname);

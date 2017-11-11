@@ -37,7 +37,7 @@ static float u_confidence(SINGLE_QSP_ARG_DECL)	/* return sq. deviation from .975
 
 	sum = 0.0;
 
-	opp=get_opt_param(QSP_ARG  TP_NAME);
+	opp=get_opt_param(TP_NAME);
 	assert( opp != NULL );
 
 	t_p = opp->ans;
@@ -80,7 +80,7 @@ static float l_confidence(SINGLE_QSP_ARG_DECL)
 
 	sum = 0.0;
 
-	opp=get_opt_param(QSP_ARG  TP_NAME);
+	opp=get_opt_param(TP_NAME);
 	assert( opp != NULL );
 
 	t_p = opp->ans;

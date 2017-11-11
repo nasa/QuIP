@@ -121,7 +121,7 @@ MENU_END(parport)
 
 COMMAND_FUNC( do_parport_menu )
 {
-	PUSH_MENU(parport);
+	CHECK_AND_PUSH_MENU(parport);
 }
 
 #endif /* HAVE_PARPORT */

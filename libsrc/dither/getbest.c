@@ -24,10 +24,10 @@ float lum_weight=1.0;
 float rg_weight=1.0;
 float by_weight=1.0;
 
-void showvec(float *p)
+void _showvec(QSP_ARG_DECL  float *p)
 {
-sprintf(DEFAULT_ERROR_STRING,"vector:  %g %g %g",p[0],p[1],p[2]);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"vector:  %g %g %g",p[0],p[1],p[2]);
+advise(ERROR_STRING);
 }
 
 /* red in most sig. bits, then green, then blue */
@@ -44,9 +44,9 @@ int getbest(QSP_ARG_DECL  int col_index)
 		for(grn_level=0;grn_level<nlevels;grn_level++){
 			for(blu_level=0;blu_level<nlevels;blu_level++){
 /*
-sprintf(DEFAULT_ERROR_STRING,"getbest:  desired = %g %g %g",
+sprintf(ERROR_STRING,"getbest:  desired = %g %g %g",
 desired[0][col_index],desired[1][col_index],desired[2][col_index]);
-advise(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 */
 				vec[0]=desired[0][col_index]-quant_level[red_level];
 				vec[1]=desired[1][col_index]-quant_level[grn_level];
@@ -70,8 +70,8 @@ advise(DEFAULT_ERROR_STRING);
 			for(blu_level=0;blu_level<nlevels;blu_level++){
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"getbest %d %d %d:  err_dist[%d] = %g",red_level,grn_level,blu_level,n,err_dist[n]);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"getbest %d %d %d:  err_dist[%d] = %g",red_level,grn_level,blu_level,n,err_dist[n]);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 				if( err_dist[n] < least_err ){
@@ -85,11 +85,11 @@ advise(DEFAULT_ERROR_STRING);
 			}
 		}
 	}
-	if( best== -1 ) ERROR1("error too big!!!");
+	if( best== -1 ) error1("error too big!!!");
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"getbest RETURNING %d",best);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"getbest RETURNING %d",best);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	return(best);

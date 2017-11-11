@@ -20,9 +20,9 @@ static COMMAND_FUNC( set_params )
 	int i;
 	int n;
 
-	n=(int)HOW_MANY("number of paramters");
+	n=(int)how_many("number of paramters");
 	if( n <= 0 ){
-		NWARN("ridiculous number of paramters");
+		warn("ridiculous number of paramters");
 		return;
 	}
 
@@ -36,13 +36,13 @@ static COMMAND_FUNC( set_params )
 
 		s=NAMEOF("parameter name");
 
-		a=(float)HOW_MUCH("starting value");
-		mnv=(float)HOW_MUCH("minimum value");
-		mxv=(float)HOW_MUCH("maximum value");
-		del=(float)HOW_MUCH("starting increment");
-		mndl=(float)HOW_MUCH("minimum increment");
+		a=(float)how_much("starting value");
+		mnv=(float)how_much("minimum value");
+		mxv=(float)how_much("maximum value");
+		del=(float)how_much("starting increment");
+		mndl=(float)how_much("minimum increment");
 
-		opp = new_opt_param(QSP_ARG  s);
+		opp = new_opt_param(s);
 		if( opp != NULL ){
 			opp->ans = a;
 			opp->minv = mnv;
@@ -54,7 +54,7 @@ static COMMAND_FUNC( set_params )
 		/* in case we have a lot of params, and the expressions
 		 * involve subsripted objects...
 		 */
-		unlock_all_tmp_objs(SINGLE_QSP_ARG);
+		unlock_all_tmp_objs();
 	}
 /*
 sprintf(error_string,"%d parameters read",n);
@@ -81,7 +81,7 @@ static COMMAND_FUNC( select_package )
 
 	insure_opt_pkg(SINGLE_QSP_ARG);
 
-	pkp=PICK_OPT_PKG("");
+	pkp=pick_opt_pkg("");
 	if( pkp!=NULL )
 
 	curr_opt_pkg = pkp;
@@ -106,12 +106,12 @@ static COMMAND_FUNC( do_opt_param_info )
 {
 	Opt_Param *opp;
 
-	opp = PICK_OPT_PARAM("");
+	opp = pick_opt_param("");
 	if( opp == NULL ) return;
 	opt_param_info(QSP_ARG  opp);
 }
 
-static COMMAND_FUNC(do_list_opt_params){list_opt_params(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
+static COMMAND_FUNC(do_list_opt_params){list_opt_params(tell_msgfile());}
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(stepit_menu,s,f,h)
 
@@ -133,7 +133,7 @@ MENU_END(stepit)
 
 COMMAND_FUNC( do_step_menu )
 {
-	PUSH_MENU(stepit);
+	CHECK_AND_PUSH_MENU(stepit);
 }
 
 

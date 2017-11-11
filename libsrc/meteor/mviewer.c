@@ -315,7 +315,7 @@ RMSTATUS(RM_INIT);
         if( (n_read = read(fd_arr[disk_index],rdfrmptr[0],n_to_read)) != n_to_read ){
 	  char tmpstr[LLEN];
 	  sprintf(tmpstr,
-		  "read (frm %d, buf=0x%lx, fd=%d)",
+		  "read (frm %d, buf=0x%x, fd=%d)",
 		  frame,(int_for_addr)rdfrmptr[0],disk_index);
 	  perror(tmpstr);
 	  sprintf(tmpstr, "%d requested, %d read",
@@ -443,7 +443,7 @@ RSTATUS(DR_READ);
 
 		if( (n_read = read(fd,buf,n_to_read)) != n_to_read ){
 			sprintf(tmpstr,
-				"read (frm %d, buf=0x%lx, fd=%d)",
+				"read (frm %d, buf=0x%x, fd=%d)",
 				j,(int_for_addr)buf,fd);
 			perror(tmpstr);
 			sprintf(tmpstr, "%d requested, %d read",

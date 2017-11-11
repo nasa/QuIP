@@ -104,6 +104,7 @@ struct d_packet {
 ////////////////////////////////////////////////////////////////////
 
 extern ITEM_CHECK_PROT(Port_Data_Type,pdt)
+#define pdt_of(s)	_pdt_of(QSP_ARG  s)
 
 #ifdef HAVE_ENCRYPTION
 #include "my_encryption.h"
@@ -163,12 +164,17 @@ extern void ieee2cray(float *p, void *cbuf, int n);
 /* ports.c */
 ITEM_INTERFACE_PROTOTYPES(Port,port)
 
-#define PICK_PORT(pmpt)	pick_port(QSP_ARG  pmpt)
+#define new_port(s)	_new_port(QSP_ARG  s)
+#define del_port(s)	_del_port(QSP_ARG  s)
+#define port_of(s)	_port_of(QSP_ARG  s)
+#define list_ports(fp)	_list_ports(QSP_ARG  fp)
+
+#define pick_port(pmpt)	_pick_port(QSP_ARG  pmpt)
 
 extern Port *get_channel(Port *mpp,int mode);
 extern void delport(QSP_ARG_DECL  Port *mpp);
 extern void portinfo(QSP_ARG_DECL  Port *mpp);
-extern void close_all_ports();
+//extern void close_all_ports();
 
 /* xmitrecv.c */
 extern int check_port_data(QSP_ARG_DECL  Port *mpp, uint32_t usecs);
@@ -193,7 +199,7 @@ extern void if_pipe(int);
 /* server.c & client.c */
 extern void set_max_client_retries(QSP_ARG_DECL  int n);
 extern int get_connection(QSP_ARG_DECL  Port *mpp);
-extern void nofunc();
+extern void nofunc(void);
 extern void set_port_event_func( void (*func)(void) );
 extern void port_disable_events(void);
 extern void port_enable_events(void);

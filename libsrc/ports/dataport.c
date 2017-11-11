@@ -31,11 +31,11 @@ void *cbuf; float *p; int n;
 	bitoff = 0;
 	ierr = CRAY2IEG(&type,&n,cbuf,&bitoff,p);
 	if( ierr < 0 )
-		WARN("CRAY2IEG parameter error");
+		warn("CRAY2IEG parameter error");
 	else if( ierr > 0 ){
 		sprintf(ERROR_STRING,
 			"CRAY2IEG:  %d overflows",ierr);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -49,11 +49,11 @@ float *p; void *cbuf; int n;
 	bitoff = 0;
 	ierr = IEG2CRAY(&type,&n,cbuf,&bitoff,p);
 	if( ierr < 0 )
-		WARN("IEG2CRAY parameter error");
+		warn("IEG2CRAY parameter error");
 	else if( ierr > 0 ){
 		sprintf(ERROR_STRING,
 			"IEG2CRAY:  %d overflows",ierr);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -66,7 +66,7 @@ static int send_to_port( QSP_ARG_DECL  Port *mpp, char *cp, u_long n )
 	long nsent;
 
 	while( n > 0 ){
-		nsent=write_port(QSP_ARG  mpp,cp,n);
+		nsent=write_port(mpp,cp,n);
 		if( nsent < 0 ) return -1;
 		n-=nsent;
 		cp+=nsent;
@@ -94,7 +94,7 @@ fprintf(stderr,"if_pipe:  received SIGPIPE, arg = %d\n",i);
 
 
 /** xmit_obj - send a data object */
-void xmit_obj( QSP_ARG_DECL  Port *mpp, Data_Obj *dp, int dataflag )
+void _xmit_obj( QSP_ARG_DECL  Port *mpp, Data_Obj *dp, int dataflag )
 /* if flag is zero, don't xmit the actual image data */
 {
 	uint32_t name_len;
@@ -108,14 +108,14 @@ void xmit_obj( QSP_ARG_DECL  Port *mpp, Data_Obj *dp, int dataflag )
 	signal(SIGPIPE,SIG_IGN);
 #endif /* SIGPIPE */
 
-	if( put_port_int32(QSP_ARG  mpp,PORT_MAGIC_NUMBER) == (-1) ){
-		WARN("xmit_obj:  error sending port magic number");
+	if( put_port_int32(mpp,PORT_MAGIC_NUMBER) == (-1) ){
+		warn("xmit_obj:  error sending port magic number");
 		return;
 	}
 
 	code=P_DATA;
-	if( put_port_int32(QSP_ARG  mpp,code) == (-1) ){
-		WARN("xmit_obj:  error sending code");
+	if( put_port_int32(mpp,code) == (-1) ){
+		warn("xmit_obj:  error sending code");
 		return;
 	}
 
@@ -144,30 +144,30 @@ void xmit_obj( QSP_ARG_DECL  Port *mpp, Data_Obj *dp, int dataflag )
 	}
 
 
-	if( put_port_int32(QSP_ARG  mpp,name_len) == -1 ){
-		WARN("xmit_obj:  error writing first length word");
+	if( put_port_int32(mpp,name_len) == -1 ){
+		warn("xmit_obj:  error writing first length word");
 		return;
 	}
-	if( put_port_int32(QSP_ARG  mpp,data_len) == -1 ){
-		WARN("xmit_obj:  error writing second length word");
+	if( put_port_int32(mpp,data_len) == -1 ){
+		warn("xmit_obj:  error writing second length word");
 		return;
 	}
 
-	if( put_port_int32(QSP_ARG  mpp,(int32_t) OBJ_PREC(dp)) == -1 ||
-	    put_port_int32(QSP_ARG  mpp,(int32_t) OBJ_N_MACH_ELTS(dp) ) == -1 ){
-		WARN("error sending object header data");
+	if( put_port_int32(mpp,(int32_t) OBJ_PREC(dp)) == -1 ||
+	    put_port_int32(mpp,(int32_t) OBJ_N_MACH_ELTS(dp) ) == -1 ){
+		warn("error sending object header data");
 		return;
 	}
 	    
 	for(i=0;i<N_DIMENSIONS;i++){
-		if( put_port_int32(QSP_ARG  mpp,(int32_t) OBJ_TYPE_DIM(dp,i)) == -1 ){
-			WARN("error sending object dimensions");
+		if( put_port_int32(mpp,(int32_t) OBJ_TYPE_DIM(dp,i)) == -1 ){
+			warn("error sending object dimensions");
 			return;
 		}
 	}
 
-	if( write_port(QSP_ARG  mpp,OBJ_NAME(dp),name_len) == (-1) ){
-		WARN("xmit_obj:  error writing data object name");
+	if( write_port(mpp,OBJ_NAME(dp),name_len) == (-1) ){
+		warn("xmit_obj:  error writing data object name");
 		return;
 	}
 	
@@ -195,7 +195,7 @@ void xmit_obj( QSP_ARG_DECL  Port *mpp, Data_Obj *dp, int dataflag )
 			p += n;
 			nnums-=n;
 			if( send_to_port(mpp,cbuf,n*4) < 0 ){
-				WARN("Error sending object data to port!?");
+				warn("Error sending object data to port!?");
 				return;
 			}
 		}
@@ -206,11 +206,11 @@ void xmit_obj( QSP_ARG_DECL  Port *mpp, Data_Obj *dp, int dataflag )
 	if( send_to_port(QSP_ARG  mpp,(char *)OBJ_DATA_PTR(dp),data_len) < 0 ){
 		sprintf(ERROR_STRING,"Error sending object %s data to port %s!?",
 			OBJ_NAME(dp),mpp->mp_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
-long recv_obj(QSP_ARG_DECL  Port *mpp, Packet *pkp)			/** recieve a new data object */
+long _recv_obj(QSP_ARG_DECL  Port *mpp, Packet *pkp)			/** recieve a new data object */
 {
 	long name_len, data_len;
 	Data_Obj *old_obj, *new_dp;
@@ -225,14 +225,14 @@ long recv_obj(QSP_ARG_DECL  Port *mpp, Packet *pkp)			/** recieve a new data obj
 
 #ifdef NOT_YET
 	if( ram_area == NULL )
-		ERROR1("ram data area not initialized");
+		error1("ram data area not initialized");
 	if( curr_ap != ram_area )
-		ERROR1("current data area not ram area!?");
+		error1("current data area not ram area!?");
 #endif /* NOT_YET */
 
-	name_len=get_port_int32(QSP_ARG  mpp);
+	name_len=get_port_int32(mpp);
 	if( name_len <= 0 ) goto error_return;
-	data_len=get_port_int32(QSP_ARG  mpp);
+	data_len=get_port_int32(mpp);
 	if( data_len < 0 ) goto error_return;
 
 #ifdef QUIP_DEBUG
@@ -245,20 +245,20 @@ advise(ERROR_STRING);
 
 	// Get the critical information abou the object
 
-	_prec_code =(prec_t)get_port_int32(QSP_ARG  mpp);
-	_n_mach_elts = (dimension_t) get_port_int32(QSP_ARG  mpp); // n_mach_elts
+	_prec_code =(prec_t)get_port_int32(mpp);
+	_n_mach_elts = (dimension_t) get_port_int32(mpp); // n_mach_elts
 	if( _prec_code == (prec_t)BAD_PORT_LONG ||
 		_n_mach_elts == (dimension_t) BAD_PORT_LONG ) {
 
-		WARN("error getting object header data");
+		warn("error getting object header data");
 		goto error_return;
 	}
 
 	for(i=0;i<N_DIMENSIONS;i++){
 		long l;
-		l= get_port_int32(QSP_ARG  mpp);
+		l= get_port_int32(mpp);
 		if( l < 0 ) {
-			WARN("error getting object dimensions");
+			warn("error getting object dimensions");
 			goto error_return;
 		}
 		SET_DIMENSION(&_type_dims,i,l);
@@ -266,11 +266,11 @@ advise(ERROR_STRING);
 
 
 	if( name_len > LLEN ){
-		WARN("more than LLEN name chars!?");
+		warn("more than LLEN name chars!?");
 		goto error_return;
 	}
-	if( read_port(QSP_ARG  mpp,namebuf,name_len) != name_len ){
-		WARN("recv_obj:  error reading data object name");
+	if( read_port(mpp,namebuf,name_len) != name_len ){
+		warn("recv_obj:  error reading data object name");
 		goto error_return;
 	}
 	if( (long)strlen( namebuf ) != name_len-1 ){
@@ -284,10 +284,10 @@ advise(ERROR_STRING);
 				i,namebuf[i],namebuf[i]);
 			advise(ERROR_STRING);
 		}
-		ERROR1("choked");
+		error1("choked");
 	}
 
-	old_obj=dobj_of(QSP_ARG  namebuf);
+	old_obj=dobj_of(namebuf);
 
 	if( old_obj != NULL && ( OBJ_ROWS(old_obj)   != DS_ROWS(&_type_dims)   ||
 		   		   OBJ_COLS(old_obj)   != DS_COLS(&_type_dims)   ||
@@ -297,18 +297,18 @@ advise(ERROR_STRING);
 		sprintf(ERROR_STRING,
 			"mismatched object %s received, discarding old",
 			OBJ_NAME(old_obj));
-		WARN(ERROR_STRING);
-		delvec(QSP_ARG  old_obj);
+		warn(ERROR_STRING);
+		delvec(old_obj);
 		old_obj = NULL;
 	}
 
 	if( old_obj == NULL ){
 		/* BUG? set curr_ap to ram_area? */
 		if( data_len > 0 )
-			new_dp=make_dobj(QSP_ARG  namebuf,&_type_dims,
+			new_dp=make_dobj(namebuf,&_type_dims,
 							PREC_FOR_CODE(_prec_code));
 		else {
-			new_dp=_make_dp(QSP_ARG  namebuf,&_type_dims,
+			new_dp=make_dp(namebuf,&_type_dims,
 							PREC_FOR_CODE(_prec_code));
 			SET_OBJ_DATA_PTR(new_dp,NULL);
 		}
@@ -317,7 +317,7 @@ advise(ERROR_STRING);
 			sprintf(ERROR_STRING,
 				"recv_obj:  couldn't create object \"%s\"",
 				namebuf);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			goto error_return;
 		}
 	} else {
@@ -334,8 +334,8 @@ advise(ERROR_STRING);
 		(long)(OBJ_N_MACH_ELTS(new_dp) * ELEMENT_SIZE(new_dp)) ){
 		sprintf(ERROR_STRING,
 			"recv_obj:  data_len = %ld, size mismatch", data_len);
-		WARN(ERROR_STRING);
-		LONGLIST(new_dp);
+		warn(ERROR_STRING);
+		longlist(new_dp);
 	}
 #endif /* CAUTIOUS */
 
@@ -343,9 +343,9 @@ advise(ERROR_STRING);
 	while( data_len ){
 		long nb2;
 
-		nb2=read_port(QSP_ARG  mpp,cp,data_len);
+		nb2=read_port(mpp,cp,data_len);
 		if( nb2 == 0 ){	/* EOF */
-			WARN("recv_obj:  error reading object data");
+			warn("recv_obj:  error reading object data");
 			goto error_return;
 		}
 #ifdef QUIP_DEBUG

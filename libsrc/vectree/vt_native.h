@@ -17,10 +17,10 @@ typedef enum {
 	N_VT_NATIVE_FUNCS
 } VT_Native;
 
-extern const char *eval_vt_native_string(Vec_Expr_Node *enp);
-extern float eval_vt_native_flt(Vec_Expr_Node *enp);
-extern void eval_vt_native_assignment(Data_Obj *dp, Vec_Expr_Node *enp );
-extern void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp );
-extern void update_vt_native_shape(Vec_Expr_Node *enp);
-extern void prelim_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp);
+extern const char *_eval_vt_native_string(QSP_ARG_DECL  Vec_Expr_Node *enp);
+extern float _eval_vt_native_flt(QSP_ARG_DECL  Vec_Expr_Node *enp);
+extern void _eval_vt_native_assignment(QSP_ARG_DECL  Data_Obj *dp, Vec_Expr_Node *enp );
+extern void _eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp );
+extern void _update_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp);
+extern void _prelim_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp);
 

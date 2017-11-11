@@ -469,7 +469,7 @@ MENU_END(route)
 
 static COMMAND_FUNC( do_knox_route_cmds )
 {
-	PUSH_MENU(route);	
+	CHECK_AND_PUSH_MENU(route);	
 }	
 
 #ifdef NOT_YET
@@ -486,7 +486,7 @@ static COMMAND_FUNC( do_knox_salvo_cmds )
 		return;
 	}
 	/* current_mode = KNOX_SALVO_MODE; */
-	PUSH_MENU(knox_route_menu);
+	CHECK_AND_PUSH_MENU(knox_route_menu);
 }
 
 	
@@ -497,7 +497,7 @@ static COMMAND_FUNC( do_knox_conf_cmds )
 		return;
 	}
 	/* current_mode = KNOX_CONFERENCE_MODE; */
-	PUSH_MENU(knox_route_menu, "conference");
+	CHECK_AND_PUSH_MENU(knox_route_menu, "conference");
 }
 #endif /* NOT_YET */
 
@@ -542,7 +542,7 @@ MENU_END(knox_cmd)
 
 static COMMAND_FUNC( do_knox_main_cmds )
 {
-	PUSH_MENU(knox_cmd);
+	CHECK_AND_PUSH_MENU(knox_cmd);
 }
 
 #define MIN_CROSSPOINT_PATTERN	1
@@ -589,7 +589,7 @@ MENU_END(crosspoint)
 
 static COMMAND_FUNC( do_knox_cross_cmds )
 {
-	PUSH_MENU(crosspoint);
+	CHECK_AND_PUSH_MENU(crosspoint);
 }
 
 #define MIN_TIME_CYCLE	1
@@ -626,14 +626,14 @@ MENU_END(timer)
 
 static COMMAND_FUNC( do_knox_time_cmds )
 {
-	PUSH_MENU(timer);
+	CHECK_AND_PUSH_MENU(timer);
 }
 
 static COMMAND_FUNC( do_fetch_map )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("object for routing results");
+	dp = pick_obj("object for routing results");
 
 	if( dp == NULL ) return;
 
@@ -715,7 +715,7 @@ MENU_END(status)
 
 static COMMAND_FUNC( do_knox_status_cmds )
 {
-	PUSH_MENU(status);
+	CHECK_AND_PUSH_MENU(status);
 }
 
 static COMMAND_FUNC( do_lamp_test )
@@ -837,6 +837,6 @@ COMMAND_FUNC( do_knox_menu )
 	}
 #endif // HAVE_KNOX
 
-	PUSH_MENU(knox);
+	CHECK_AND_PUSH_MENU(knox);
 }
 

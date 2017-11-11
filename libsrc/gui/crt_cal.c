@@ -926,7 +926,7 @@ static COMMAND_FUNC( save_matches )
 	FILE *fp;
 	int t,i;
 
-	fp=TRYNICE( nameof("filename"), "w" );
+	fp=try_nice( nameof("filename"), "w" );
 
 	if( !fp ) return;
 
@@ -993,6 +993,6 @@ MENU_END(cal_menu)
 
 COMMAND_FUNC( do_cal_menu )
 {
-	PUSH_MENU(cal_menu);
+	CHECK_AND_PUSH_MENU(cal_menu);
 }
 

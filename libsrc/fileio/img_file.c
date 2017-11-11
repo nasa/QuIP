@@ -114,7 +114,7 @@ List *image_file_list(SINGLE_QSP_ARG_DECL)
 {
 	if( img_file_itp==NULL ) return(NULL);
 
-	return( item_list(QSP_ARG  img_file_itp) );
+	return( item_list(img_file_itp) );
 }
 
 static void update_pathname(Image_File *ifp)
@@ -134,9 +134,9 @@ static void update_pathname(Image_File *ifp)
 	}
 }
 
-void set_iofile_directory(QSP_ARG_DECL  const char *dirname)
+void _set_iofile_directory(QSP_ARG_DECL  const char *dirname)
 {
-	if( !directory_exists(QSP_ARG  dirname) ){
+	if( !directory_exists(dirname) ){
 		sprintf(ERROR_STRING,
 	"Directory %s does not exist or is not a directory", dirname);
 		WARN(ERROR_STRING);
@@ -177,7 +177,7 @@ static FIO_SEEK_FUNC(null)
 
 #define DECLARE_FILETYPE(stem,code,flags)			\
 								\
-	ftp = new_file_type(QSP_ARG  #stem);			\
+	ftp = new_file_type(#stem);				\
 	SET_FT_CODE(ftp,code);					\
 	SET_FT_FLAGS(ftp,flags);				\
 	SET_FT_OPEN_FUNC(ftp,FIO_OPEN_FUNC_NAME(stem));		\
@@ -193,13 +193,13 @@ static FIO_SEEK_FUNC(null)
 #define network_rd	null_rd
 #define network_wt	dummy_wt
 #define network_close	null_close
-#define network_conv	null_conv
-#define network_unconv	null_unconv
+#define _network_conv	_null_conv
+#define _network_unconv	_null_unconv
 #define network_seek	null_seek
 #define network_info_func	null_info_func
 #define network_seek_frame	null_seek_frame
 
-#define raw_close	generic_imgfile_close
+#define raw_close	_generic_imgfile_close
 #define raw_seek	uio_seek
 #define raw_info_func	null_info_func
 #define raw_seek_frame	uio_seek_frame
@@ -209,7 +209,7 @@ static FIO_SEEK_FUNC(null)
 #define hips1_seek_frame	uio_seek_frame
 
 #define hips2_info_func		null_info_func
-#define hips2_seek_frame	std_seek_frame
+#define hips2_seek_frame	_std_seek_frame
 
 #define bmp_wt		dummy_wt
 #define bmp_seek_frame	null_seek_frame
@@ -311,13 +311,13 @@ void image_file_init(SINGLE_QSP_ARG_DECL)
 	if( inited ) return;
 
 #ifdef QUIP_DEBUG
-	debug_fileio = add_debug_module(QSP_ARG  "fileio");
+	debug_fileio = add_debug_module("fileio");
 #endif /* QUIP_DEBUG */
 
 	/* This may have already been called - e.g. mmvi */
 	if( img_file_itp == NULL )
 		//img_file_init(SINGLE_QSP_ARG);
-		init_img_files(SINGLE_QSP_ARG);
+		init_img_files();
 
 	create_filetypes(SINGLE_QSP_ARG);	// used to be a static table
 
@@ -325,20 +325,20 @@ void image_file_init(SINGLE_QSP_ARG_DECL)
 	curr_ftp = FILETYPE_FOR_CODE(IFT_HIPS2);
 
 #ifdef HAVE_GETTIMEOFDAY
-	add_tsable( QSP_ARG   img_file_itp, &if_tsf, (Item * (*)(QSP_ARG_DECL  const char *))img_file_of);
+	add_tsable( img_file_itp, &if_tsf, (Item * (*)(QSP_ARG_DECL  const char *))_img_file_of);
 #endif
 
-	add_sizable(QSP_ARG  img_file_itp,&imgfile_sf,NULL);
-	add_interlaceable(QSP_ARG  img_file_itp,&imgfile_if,NULL);
+	add_sizable(img_file_itp,&imgfile_sf,NULL);
+	add_interlaceable(img_file_itp,&imgfile_if,NULL);
 
 	//setstrfunc("iof_exists",iof_exists);
 	DECLARE_STR1_FUNCTION(	iof_exists,	iof_exists )
 
-	define_port_data_type(QSP_ARG  P_IMG_FILE,"image_file","name of image file",
-		recv_img_file,
+	define_port_data_type(P_IMG_FILE,"image_file","name of image file",
+		_recv_img_file,
 		/* null_proc, */
-		(const char *(*)(QSP_ARG_DECL  const char *))pick_img_file,
-		(void (*)(QSP_ARG_DECL  Port *,const void *,int)) xmit_img_file);
+		(const char *(*)(QSP_ARG_DECL  const char *))_pick_img_file,
+		(void (*)(QSP_ARG_DECL  Port *,const void *,int)) _xmit_img_file);
 
 	inited=1;
 }
@@ -348,7 +348,7 @@ void image_file_init(SINGLE_QSP_ARG_DECL)
  * been closed, if necessary.
  */
 
-void delete_image_file(QSP_ARG_DECL  Image_File *ifp)
+void _delete_image_file(QSP_ARG_DECL  Image_File *ifp)
 {
 	// BUG - this can fail for a raw volume file because
 	// of permissions mismatch...
@@ -365,7 +365,7 @@ void delete_image_file(QSP_ARG_DECL  Image_File *ifp)
 	if( ifp->if_pathname != ifp->if_name ){
 		rls_str((char *)ifp->if_pathname);
 	}
-	DEL_IMG_FILE(ifp);	// frees the name
+	del_img_file(ifp);	// frees the name
 
 	/* don't free the struct pointer, it's marked available
 	 * for reuse by del_item (called from del_img_file)...
@@ -379,7 +379,7 @@ void delete_image_file(QSP_ARG_DECL  Image_File *ifp)
  * may be called from filetype-specific close routine.
  */
 
-void generic_imgfile_close(QSP_ARG_DECL  Image_File *ifp)
+void _generic_imgfile_close(QSP_ARG_DECL  Image_File *ifp)
 {
 	if( USES_STDIO(ifp) ){
 		if( ifp->if_fp != NULL ) {
@@ -396,7 +396,7 @@ void generic_imgfile_close(QSP_ARG_DECL  Image_File *ifp)
 		if( USES_STDIO(ifp) || USES_UNIX_IO(ifp) )
 			unlink(ifp->if_pathname);	/* remove file */
 	}
-	delete_image_file(QSP_ARG  ifp);
+	delete_image_file(ifp);
 }
 
 static Data_Obj *new_temp_dobj(void)
@@ -472,7 +472,7 @@ int open_fd(QSP_ARG_DECL  Image_File *ifp)
 				sprintf(ERROR_STRING,"statvfs (%s):",
 					ifp->if_pathname);
 				tell_sys_error(ERROR_STRING);
-				NWARN("Couldn't determine fs type, not using O_DIRECT");
+				warn("Couldn't determine fs type, not using O_DIRECT");
 			} else {
 				if( vfsbuf.f_flag & ST_LOCAL ){
 					o_direct = O_DIRECT;
@@ -512,17 +512,17 @@ retry:
 			o_direct = 0;
 sprintf(ERROR_STRING,"Couldn't open file \"%s\" with direct i/o.",
 ifp->if_pathname);
-NWARN(ERROR_STRING);
+warn(ERROR_STRING);
 advise("retrying to open write file w/o DIRECT_IO");
 			goto retry;
 		}
 #endif /* HAVE_DIRECT_IO */
 
 		tell_sys_error("open");
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"open_fd:  error getting descriptor for %s file %s",
 			IS_READABLE(ifp)?"read":"write",ifp->if_pathname);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(0);
@@ -541,7 +541,7 @@ advise(ERROR_STRING);
 
 	if( ifp->if_hd.rgb_ip == NULL ){
 		sprintf(ERROR_STRING,"Error iopening file %s",ifp->if_pathname);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	} else return(0);
 }
@@ -552,12 +552,12 @@ int open_fp(Image_File *ifp)
 #ifndef HAVE_RGB
 
 	if( IS_READABLE(ifp) ){
-		ifp->if_fp = try_open(DEFAULT_QSP_ARG  ifp->if_pathname,"r");
+		ifp->if_fp = _try_open(DEFAULT_QSP_ARG  ifp->if_pathname,"r");
 	} else {
 		/* open read-write so we can read back
 		 * the header if necessary...  (see hips2.c)
 		 */
-		ifp->if_fp = try_open(DEFAULT_QSP_ARG  ifp->if_pathname,"w+");
+		ifp->if_fp = _try_open(DEFAULT_QSP_ARG  ifp->if_pathname,"w+");
 	}
 	if( ! ifp->if_fp ) return(-1);
 	return(0);
@@ -571,7 +571,7 @@ int open_fp(Image_File *ifp)
 				sprintf(ERROR_STRING,
 			"open_fp:  error getting RGB descriptor for file %s",
 					ifp->if_pathname);
-				NWARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				return(-1);
 			} else return(0);
 		} else {
@@ -606,27 +606,27 @@ static int check_clobber(QSP_ARG_DECL  Image_File *ifp)
 	 * check the file system permissions
 	 */
 
-	if( file_exists(QSP_ARG  ifp->if_pathname) ){
+	if( file_exists(ifp->if_pathname) ){
 		if( no_clobber ){
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 				"Not clobbering existing file \"%s\"",
 				ifp->if_pathname);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return(-1);
-		} else if( !can_write_to(QSP_ARG  ifp->if_pathname) )
+		} else if( !can_write_to(ifp->if_pathname) )
 			return(-1);
 	} else {
-		if( !file_exists(QSP_ARG  dir) ){
-			sprintf(DEFAULT_ERROR_STRING, "No directory \"%s\"!?", dir);
-			NWARN(DEFAULT_ERROR_STRING);
+		if( !file_exists(dir) ){
+			sprintf(ERROR_STRING, "No directory \"%s\"!?", dir);
+			warn(ERROR_STRING);
 			return(-1);
 		}
 		/* We may have write permissions to the file even if we don't have
 		 * write permissions on the directory, e.g. /dev/null
 		 */
-		if( !can_write_to(QSP_ARG  dir) ){
-			sprintf(DEFAULT_ERROR_STRING, "Can't write to directory \"%s\"!?", dir);
-			NWARN(DEFAULT_ERROR_STRING);
+		if( !can_write_to(dir) ){
+			sprintf(ERROR_STRING, "Can't write to directory \"%s\"!?", dir);
+			warn(ERROR_STRING);
 			return(-1);
 		}
 	}
@@ -650,7 +650,7 @@ void image_file_clobber(int flag)
  * given the existence of a different function called open_image_file...
  */
 
-Image_File *img_file_creat(QSP_ARG_DECL  const char *name,int rw,Filetype * ftp)
+Image_File *_img_file_creat(QSP_ARG_DECL  const char *name,int rw,Filetype * ftp)
 {
 	Image_File *ifp;
 	int had_error=0;
@@ -658,16 +658,16 @@ Image_File *img_file_creat(QSP_ARG_DECL  const char *name,int rw,Filetype * ftp)
 	if( rw == FILE_READ && CANNOT_READ(ftp) ){
 		sprintf(ERROR_STRING,"Sorry, don't know how to read %s files",
 			FT_NAME(ftp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	} else if( rw == FILE_WRITE && CANNOT_WRITE(ftp) ){
 		sprintf(ERROR_STRING,"Sorry, don't know how to write %s files",
 			FT_NAME(ftp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
-	ifp = new_img_file(QSP_ARG  name);
+	ifp = new_img_file(name);
 	if( ifp==NULL ) return(ifp);
 
 	ifp->if_flags = (short) rw;
@@ -706,7 +706,7 @@ dun:
 			//givbuf(ifp->if_dp);
 			rls_temp_dobj(ifp->if_dp);
 		}
-		DEL_IMG_FILE(ifp);
+		del_img_file(ifp);
 		/* BUG? should also rls_str(name) here???
 		 * Or does del_item release the naem???
 		 */
@@ -747,7 +747,7 @@ int same_size(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 	return(1);
 }
 
-int same_type(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
+int _same_type(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 {
 	int retval=1;
 
@@ -801,7 +801,7 @@ void copy_dimensions(Data_Obj *dpto,Data_Obj *dpfr)	/* used by write routines...
 	SET_OBJ_N_TYPE_ELTS(dpto,OBJ_N_TYPE_ELTS(dpfr) );
 }
 
-void if_info(QSP_ARG_DECL  Image_File *ifp)
+void _if_info(QSP_ARG_DECL  Image_File *ifp)
 {
 	sprintf(msg_str,"File %s:",ifp->if_name);
 	prt_msg(msg_str);
@@ -884,7 +884,7 @@ void dump_image_file(QSP_ARG_DECL  const char *filename,Filetype *ftp,void *data
 		rls_temp_dobj(dp);
 		return;
 	}
-	write_image_to_file(QSP_ARG  ifp,dp);
+	write_image_to_file(ifp,dp);
 	rls_temp_dobj(dp);
 }
 
@@ -932,7 +932,7 @@ Filetype * current_filetype(void)
 	return(curr_ftp);
 }
 
-void set_filetype(QSP_ARG_DECL  Filetype *ftp)
+void _set_filetype(QSP_ARG_DECL  Filetype *ftp)
 {
 	curr_ftp=ftp;
 }
@@ -948,13 +948,17 @@ static ITEM_INIT_FUNC(Known_Suffix,suffix,0)
 static ITEM_NEW_FUNC(Known_Suffix,suffix)
 static ITEM_CHECK_FUNC(Known_Suffix,suffix)
 
+#define init_suffixs()	_init_suffixs(SINGLE_QSP_ARG)
+#define new_suffix(s)	_new_suffix(QSP_ARG  s)
+#define suffix_of(s)	_suffix_of(QSP_ARG  s)
+
 Filetype *filetype_for_code(QSP_ARG_DECL  filetype_code code)
 {
 	List *lp;
 	Node *np;
 	Filetype *ftp;
 
-	lp = file_type_list(SINGLE_QSP_ARG);
+	lp = file_type_list();
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
 		ftp = (Filetype *) NODE_DATA(np);
@@ -976,7 +980,7 @@ static void init_suffix( QSP_ARG_DECL  const char *name, filetype_code code )
 	ftp = filetype_for_code(QSP_ARG  code);
 	assert( ftp != NULL );
 
-	sfx_p = new_suffix(QSP_ARG  name);
+	sfx_p = new_suffix(name);
 	assert( sfx_p != NULL );
 
 	/* Now file the filetype struct with this code... */
@@ -1075,7 +1079,7 @@ static Filetype* infer_filetype_from_name(QSP_ARG_DECL  const char *name)
 	}
 	if( suffix == NULL || *suffix == 0 ) return(NULL);
 
-	sfx_p = suffix_of(QSP_ARG  suffix);
+	sfx_p = suffix_of(suffix);
 	if( sfx_p == NULL ){
 		// Print an advisory
 		sprintf(ERROR_STRING,"File suffix \"%s\" is not known!?",
@@ -1093,7 +1097,7 @@ static Filetype* infer_filetype_from_name(QSP_ARG_DECL  const char *name)
  * Call type-specific function to open the file
  */
 
-Image_File *read_image_file(QSP_ARG_DECL  const char *name)
+Image_File *_read_image_file(QSP_ARG_DECL  const char *name)
 {
 	Image_File *ifp;
 	Filetype * ftp;
@@ -1111,7 +1115,7 @@ Image_File *read_image_file(QSP_ARG_DECL  const char *name)
 	if( CANNOT_READ(ftp) ){
 		sprintf(ERROR_STRING,"Sorry, can't read files of type %s",
 			FT_NAME(ftp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -1121,21 +1125,22 @@ Image_File *read_image_file(QSP_ARG_DECL  const char *name)
 	if( ifp == NULL ) {
 		sprintf(ERROR_STRING,
 			"error reading %s file \"%s\"",FT_NAME(ftp),name);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return(ifp);
 }
 
 /* Open a file for writing */
 
-Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n)
+Image_File *_write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n)
 {
 	Image_File *ifp;
 	Filetype * ftp;
 
 	ftp = infer_filetype_from_name(QSP_ARG  filename);
 	if( ftp == NULL ) {	/* use default if can't figure it out */
-		assert( curr_ftp != NULL );
+		if( curr_ftp == NULL ) image_file_init(SINGLE_QSP_ARG);
+		//assert( curr_ftp != NULL );
 		ftp=curr_ftp;	/* use default if can't figure it out */
 	} else if( ftp != curr_ftp ){
 		sprintf(ERROR_STRING,"Inferring filetype %s from filename %s, overriding default %s",
@@ -1147,7 +1152,7 @@ Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n)
 	if( CANNOT_WRITE(ftp) ){
 		sprintf(ERROR_STRING,"Sorry, can't write files of type %s",
 			FT_NAME(ftp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -1160,7 +1165,7 @@ Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n)
 
 /* Should we impose that the objects have the same size?? */
 
-void read_object_from_file(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
+void _read_object_from_file(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 {
 	if( dp == NULL ) return;
 	if( ifp == NULL ) return;
@@ -1193,7 +1198,7 @@ void read_object_from_file(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
  * Calls routine from table.
  */
 
-void close_image_file(QSP_ARG_DECL  Image_File *ifp)
+void _close_image_file(QSP_ARG_DECL  Image_File *ifp)
 {
 	if( ifp == NULL ) return;
 	(*FT_CLOSE_FUNC(IF_TYPE(ifp)))(QSP_ARG  ifp);
@@ -1206,14 +1211,14 @@ void close_image_file(QSP_ARG_DECL  Image_File *ifp)
  * call vectored module-specific routine...
  */
 
-Image_File * open_image_file(QSP_ARG_DECL  const char *filename,const char *rw)
+Image_File * _open_image_file(QSP_ARG_DECL  const char *filename,const char *rw)
 {
 	Image_File *ifp;
 
 sprintf(ERROR_STRING,"open_image_file %s",filename);
 advise(ERROR_STRING);
 	if( *rw == 'r' )
-		ifp = read_image_file(QSP_ARG  filename);
+		ifp = read_image_file(filename);
 
 	/* BUG 4096 is an arbitrary big number.  Originally we
 	 * passed the number of frames to write to the open routine
@@ -1223,7 +1228,7 @@ advise(ERROR_STRING);
 	 */
 
 	else if( *rw == 'w' )
-		ifp = write_image_file(QSP_ARG  filename,4096);
+		ifp = write_image_file(filename,4096);
 
 	else {
 		assert( AERROR("bad r/w string passed to open_image_file") );
@@ -1234,7 +1239,7 @@ advise(ERROR_STRING);
 
 /* put an image out to a writable file */
 
-void write_image_to_file(QSP_ARG_DECL  Image_File *ifp,Data_Obj *dp)
+void _write_image_to_file(QSP_ARG_DECL  Image_File *ifp,Data_Obj *dp)
 {
 	/* take filetype from image file */
 	if( dp == NULL ) return;
@@ -1292,7 +1297,7 @@ int uio_seek_frame(QSP_ARG_DECL  Image_File *ifp, index_t n)
 	return(0);
 }
 
-int std_seek_frame(QSP_ARG_DECL  Image_File *ifp, index_t n)
+int _std_seek_frame(QSP_ARG_DECL  Image_File *ifp, index_t n)
 {
 	off_t offset;
 
@@ -1309,7 +1314,7 @@ int std_seek_frame(QSP_ARG_DECL  Image_File *ifp, index_t n)
 	return(0);
 }
 
-int image_file_seek(QSP_ARG_DECL  Image_File *ifp,dimension_t n)
+int _image_file_seek(QSP_ARG_DECL  Image_File *ifp,dimension_t n)
 {
 	/* BUG?  off_t is long long on new sgi!? */
 
@@ -1355,7 +1360,7 @@ advise(ERROR_STRING);
 	return(0);
 }
 
-void check_auto_close(QSP_ARG_DECL  Image_File *ifp)
+void _check_auto_close(QSP_ARG_DECL  Image_File *ifp)
 {
 	if( ifp->if_nfrms >= ifp->if_frms_to_wt ){
 		if( verbose ){
@@ -1363,7 +1368,7 @@ void check_auto_close(QSP_ARG_DECL  Image_File *ifp)
 			ifp->if_name,ifp->if_nfrms);
 			advise(ERROR_STRING);
 		}
-		close_image_file(QSP_ARG  ifp);
+		close_image_file(ifp);
 	}
 }
 
@@ -1371,7 +1376,7 @@ double iof_exists(QSP_ARG_DECL  const char *s)
 {
 	Image_File *ifp;
 
-	ifp=img_file_of(QSP_ARG  s);
+	ifp=img_file_of(s);
 	if( ifp==NULL ) return(0.0);
 	else return(1.0);
 }

@@ -121,7 +121,7 @@ advise("sound recording souce is the microphone...");
 		ioctl(mfd, SOUND_MIXER_WRITE_MIC, &g);
 	}
 #else
-	WARN("set_sound_gain:  not implemented for ALSA");
+	warn("set_sound_gain:  not implemented for ALSA");
 #endif /* FOOBAR */
 }
 
@@ -135,17 +135,17 @@ static void select_input(QSP_ARG_DECL  int mask )
 
 	if( ioctl(mfd, SOUND_MIXER_READ_RECSRC, &recsrc) < 0 ){
 		tell_sys_error("ioctl(SOUND_MIXER_READ_RECSRC)");
-		WARN("error fetching input source");
+		warn("error fetching input source");
 		return;
 	}
 	recsrc &= ~(SOUND_MASK_LINE|SOUND_MASK_MIC);
 	recsrc |= mask;
 	if( ioctl(mfd, SOUND_MIXER_WRITE_RECSRC, &recsrc) < 0 ){
 		tell_sys_error("ioctl(SOUND_MIXER_WRITE_RECSRC)");
-		WARN("error selecting microphone input");
+		warn("error selecting microphone input");
 	}
 #else
-	WARN("select_input:  not yet implemented for ALSA");
+	warn("select_input:  not yet implemented for ALSA");
 #endif /* FOOBAR */
 }
 
@@ -217,12 +217,12 @@ double get_sound_milliseconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 void halt_rec_stream(SINGLE_QSP_ARG_DECL)
 {
 	if( halting ){
-		WARN("halt_rec_stream:  already halting!?");
+		warn("halt_rec_stream:  already halting!?");
 		return;
 	}
 
 	if( !streaming ){
-		WARN("halt_rec_stream:  not streaming!?");
+		warn("halt_rec_stream:  not streaming!?");
 		return;
 	}
 
@@ -236,13 +236,13 @@ void halt_rec_stream(SINGLE_QSP_ARG_DECL)
 		*/
 
 	if( pthread_join(audio_thr,NULL) < 0 )
-		WARN("halt_rec_stream:  error in pthread_join");
+		warn("halt_rec_stream:  error in pthread_join");
 
 	streaming = 0;
 	halting = 0;
 }
 
-void set_stereo_input(QSP_ARG_DECL  int is_stereo) { WARN("unimplemented for ALSA:  set_stereo_input"); }
+void set_stereo_input(QSP_ARG_DECL  int is_stereo) { warn("unimplemented for ALSA:  set_stereo_input"); }
 
 void record_sound(QSP_ARG_DECL  Data_Obj *dp)
 {
@@ -271,14 +271,14 @@ static int setup_record(QSP_ARG_DECL  Sound_Device *sdp)
 	if((err = snd_pcm_hw_params(sdp->sd_capture_handle, sdp->sd_hw_params)) < 0) {
 		sprintf(ERROR_STRING, "setup_record:  cannot set parameters (%s)\n",
 			snd_strerror(err));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	if((err = snd_pcm_prepare(sdp->sd_capture_handle)) < 0) {
 		sprintf(ERROR_STRING,"record_sound:  cannot prepare audio interface %s for use (%s)\n",
 			sdp->sd_name,snd_strerror(err));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(0);
@@ -298,22 +298,22 @@ static int read_sound_frames(QSP_ARG_DECL  Sound_Device *sdp, char *ptr, snd_pcm
 //fprintf(stderr,"read_sound_frames: ptr = 0x%lx, frames_requested = %d\n",(u_long)ptr,frames_requested);
 		if((err = snd_pcm_readi(sdp->sd_capture_handle, ptr, frames_requested)) != (int) frames_requested) {
 			if( err == EPIPE ){		/* short read */
-				WARN("audio read overrun");
+				warn("audio read overrun");
 				return(-1);
 			} else if( errno == EINTR ){
 				if( verbose ){
 					sprintf(ERROR_STRING,"audio read error:  %s",snd_strerror(err));
-					WARN(ERROR_STRING);
+					warn(ERROR_STRING);
 				}
 				frames_requested = 0;
 			} else if( err < 0 ){
 				sprintf(ERROR_STRING,"audio read error:  %s",snd_strerror(err));
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				return(-1);
 			} else {
 				if( verbose ){
 					sprintf(ERROR_STRING,"audio read, expected %d frames but got %d",(int)frames_requested,err);
-					WARN(ERROR_STRING);
+					warn(ERROR_STRING);
 				}
 				frames_requested = err;
 			}
@@ -350,28 +350,28 @@ static int init_sound_hardware(QSP_ARG_DECL  Sound_Device *sdp)
 	if((err = snd_pcm_hw_params_malloc(&sdp->sd_hw_params)) < 0) {
 		sprintf(ERROR_STRING, "cannot allocate hardware parameter structure (%s)\n",
 			snd_strerror(err));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	if((err = snd_pcm_hw_params_any(sdp->sd_capture_handle, sdp->sd_hw_params)) < 0) {
 		sprintf(ERROR_STRING, "cannot initialize hardware parameter structure (%s)\n",
 			snd_strerror(err));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	if((err = snd_pcm_hw_params_set_access(sdp->sd_capture_handle, sdp->sd_hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
 		sprintf(ERROR_STRING, "cannot set access type (%s)\n",
 			snd_strerror(err));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	if((err = snd_pcm_hw_params_set_format(sdp->sd_capture_handle, sdp->sd_hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
 		sprintf(ERROR_STRING, "cannot set sample format (%s)\n",
 			snd_strerror(err));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -380,7 +380,7 @@ static int init_sound_hardware(QSP_ARG_DECL  Sound_Device *sdp)
 	if((err = snd_pcm_hw_params_set_rate_near(sdp->sd_capture_handle, sdp->sd_hw_params, &desired_rate, &dir)) < 0) {
 		sprintf(ERROR_STRING, "cannot set sample rate (%s)\n",
 			snd_strerror(err));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -389,14 +389,14 @@ static int init_sound_hardware(QSP_ARG_DECL  Sound_Device *sdp)
 	if((err = snd_pcm_hw_params_set_channels(sdp->sd_capture_handle, sdp->sd_hw_params, n_record_channels)) < 0) {
 		sprintf(ERROR_STRING, "cannot set channel count (%s)\n",
 			snd_strerror(err));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	if((err = snd_pcm_hw_params(sdp->sd_capture_handle, sdp->sd_hw_params)) < 0) {
 		sprintf(ERROR_STRING, "cannot set parameters (%s)\n",
 			snd_strerror(err));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -413,14 +413,14 @@ static Sound_Device * init_sound_device(QSP_ARG_DECL  const char *devname)
 	sdp = snddev_of(QSP_ARG  devname);
 	if( sdp != NULL ){
 		sprintf(ERROR_STRING,"init_sound_device:  device %s is already initialized",devname);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(sdp);
 	}
 
 	sdp = new_snddev(QSP_ARG  devname);
 	if( sdp == NULL ){
 		sprintf(ERROR_STRING,"init_sound_device:  unable to create struct for device %s",devname);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -428,13 +428,13 @@ static Sound_Device * init_sound_device(QSP_ARG_DECL  const char *devname)
 		sprintf(ERROR_STRING, "init_sound_device:  cannot open audio device %s (%s)\n", 
 			devname,
 			snd_strerror(err));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
 	if( init_sound_hardware(QSP_ARG  sdp) < 0 ){
 		sprintf(ERROR_STRING,"init_sound_device:  Unable to initialize sound hardware for device %s",sdp->sd_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		/* BUG cleanup here */
 		return(NULL);
 	}
@@ -492,21 +492,21 @@ static  void *disk_writer(void *arg)
 
 		if( (n_written=write(audio_stream_fd,ptr,n_want)) < 0 ){
 			tell_sys_error("write");
-			WARN("error writing audio stream file");
+			warn("error writing audio stream file");
 		} else if( n_written != n_want ){
 			sprintf(ERROR_STRING,"disk_writer:  %d audio bytes requested, %d actually written",
 					n_want,n_written);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 
 		tvp = &tv_tbl[oldest];
 		if( (n_written=write(timestamp_stream_fd,tvp,sizeof(*tvp))) < 0 ){
 			tell_sys_error("write");
-			WARN("error writing audio timestamp stream file");
+			warn("error writing audio timestamp stream file");
 		} else if( n_written != sizeof(*tvp) ){
 	sprintf(ERROR_STRING,"disk_writer:  %d timestamp bytes requested, %d actually written",
 				n_want,n_written);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 
 		oldest++;
@@ -552,14 +552,14 @@ static void *audio_reader(void *arg)
 
 		/* now fill this buffer with data */
 		if( read_sound_frames(QSP_ARG  the_sdp,(char *)ptr,frames_requested,framesize) < 0 ){
-			WARN("error reading audio data");
+			warn("error reading audio data");
 			halting=1;
 		}
 
 		/* get a timestamp for this bufferful */
 		if( gettimeofday(&tv,&tz) < 0 && ! warned_once ){
 			perror("gettimeofday");
-			WARN("error getting time stamp for sound stream");
+			warn("error getting time stamp for sound stream");
 			warned_once++;
 		}
 		tv_tbl[ active_buf ] = tv;
@@ -574,7 +574,7 @@ static void *audio_reader(void *arg)
 
 		while( active_buf == oldest ){
 			sprintf(ERROR_STRING,"audio_reader:  disk writer not keeping up (active_buf = %d, oldest = %d)!?",active_buf,oldest);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			usleep(wait_usecs);	/* wait one buffer */
 		}
 
@@ -599,12 +599,12 @@ static void *audio_reader(void *arg)
 static int stream_record_init(SINGLE_QSP_ARG_DECL)
 {
 	if( streaming ){
-		WARN("stream_record_init:  already streaming, need to halt before initiating another recording");
+		warn("stream_record_init:  already streaming, need to halt before initiating another recording");
 		return(-1);
 	}
 
 	if( init_stream_obj(SINGLE_QSP_ARG) == NULL ){
-		WARN("stream_record_init:  error creating audio stream object");
+		warn("stream_record_init:  error creating audio stream object");
 		return(-1);
 	}
 	streaming=1;
@@ -627,7 +627,7 @@ void record_stream(QSP_ARG_DECL  int sound_fd, int timestamp_fd)
 	if( setup_record(QSP_ARG  the_sdp) < 0 ) return;
 
 	if( stream_record_init(SINGLE_QSP_ARG) < 0 ){
-		WARN("error initializing stream recorder");
+		warn("error initializing stream recorder");
 		return;
 	}
 

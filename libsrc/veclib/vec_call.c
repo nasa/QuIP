@@ -4,6 +4,7 @@
 #include "quip_prot.h"
 #include "nvf.h"
 #include "debug.h"
+#include "platform.h"
 
 /* BUG - this is only correct when the order of words in this table corresponds
  * to the ordering of the corresponding constants.  Better to have a software initialization
@@ -23,7 +24,7 @@ static void shape_error(QSP_ARG_DECL  Vector_Function *vfp, Data_Obj *dp)
 {
 	sprintf(ERROR_STRING,"shape_error:  Vector function %s:  argument %s has unknown shape!?",
 		VF_NAME(vfp),OBJ_NAME(dp));
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 }
 
 
@@ -59,6 +60,49 @@ static const char *name_for_type(Data_Obj *dp)
 	}
 }
 
+#define IS_FWD_FFT(vfp)		(VF_CODE(vfp)==FVFFT || \
+				 VF_CODE(vfp)==FVFFT2D || \
+				 VF_CODE(vfp)==FVFFTROWS )
+
+static int chktyp_fft(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
+{
+	assert( OA_SRC1(oap) != NULL );
+
+	if( IS_FWD_FFT(vfp) ){
+		/* source vector can be real or complex */
+		if( !IS_COMPLEX(OA_DEST(oap) ) ){
+			warn("chktyp_fft:  destination must be complex for fft");
+			return -1;
+		}
+
+		if( IS_COMPLEX( OA_SRC1(oap) ) )
+			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
+		else if( IS_QUAT( OA_SRC1(oap) ) ){
+			warn("chktyp:  Can't compute FFT of a quaternion input");
+			return -1;
+		} else
+			SET_OA_ARGSTYPE(oap,REAL_ARGS);
+	} else {	// inverse fft
+		/* destination vector can be real or complex */
+		if( !IS_COMPLEX( OA_SRC1(oap) ) ){
+			warn("chktyp:  source must be complex for inverse fft");
+			return -1;
+		}
+		if( IS_COMPLEX(OA_DEST(oap) ) )
+			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
+		else if( IS_QUAT(OA_DEST(oap) ) ){
+			warn("chktyp:  Can't compute inverse FFT to a quaternion target");
+			return -1;
+		} else
+			SET_OA_ARGSTYPE(oap,REAL_ARGS);
+	}
+	return 0;
+}
+
+#define IS_FFT_FUNC(vfp)	(VF_CODE(vfp)==FVFFT || VF_CODE(vfp)==FVIFT || \
+				 VF_CODE(vfp)==FVFFT2D || VF_CODE(vfp)==FVIFT2D || \
+				 VF_CODE(vfp)==FVFFTROWS || VF_CODE(vfp)==FVIFTROWS )
+
 /* The "type" is real, complex, quaternion, or mixed...
  * independent of "precision" (byte/short/float etc)
  */
@@ -66,6 +110,10 @@ static const char *name_for_type(Data_Obj *dp)
 static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 {
 	SET_OA_ARGSTYPE(oap, UNKNOWN_ARGS);
+
+	if( IS_FFT_FUNC(vfp) ){
+		return chktyp_fft(QSP_ARG  vfp, oap);
+	}
 
 	/* Set the type based on the destination vector */
 	/* destv is highest numbered arg */
@@ -143,10 +191,13 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 				/* OA_SRC1 is not real or complex, must be a type mismatch */
 				goto type_mismatch13;
 			}
-		} else if(  OA_SRC1(oap)  != NULL ){	/* one source operand */
+		} else if( OA_SRC1(oap) != NULL ){	/* one source operand */
 			if( IS_COMPLEX( OA_SRC1(oap) ) ){
 				SET_OA_ARGSTYPE(oap, COMPLEX_ARGS);
 			} else if( IS_REAL( OA_SRC1(oap) ) ){
+				// This may be correct for vsadd, etc.
+				// but NOT for fft!?
+				if( vfp )
 				SET_OA_ARGSTYPE(oap, MIXED_ARGS);
 			} else {
 				/* OA_SRC1 is not real or complex, must be a type mismatch */
@@ -192,7 +243,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 		}
 	} else {
 		sprintf(ERROR_STRING,"chktyp:  can't categorize destination object %s!?",OBJ_NAME(OA_DEST(oap) ) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	/* now the type field has been set - make sure it's legal */
@@ -208,16 +259,16 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 		if( ! IS_COMPLEX( OA_SRC1(oap) ) ){
 			sprintf(ERROR_STRING,"chktyp:  source vector %s (%s) must be complex with function %s",
 				OBJ_NAME( OA_SRC1(oap) ) ,OBJ_PREC_NAME( OA_DEST(oap) ),VF_NAME(vfp) );
-			WARN(ERROR_STRING);
-			list_dobj(QSP_ARG  OA_SRC1(oap) );
+			warn(ERROR_STRING);
+			list_dobj(OA_SRC1(oap) );
 			return -1;
 		}
 		if( (VF_FLAGS(vfp) & INV_FT)==0 ){
 			if( ! IS_REAL(OA_DEST(oap)) ){
 				sprintf(ERROR_STRING,"chktyp:  destination vector %s (%s) must be real with function %s",
 					OBJ_NAME(OA_DEST(oap) ) ,OBJ_PREC_NAME( OA_DEST(oap) ),VF_NAME(vfp) );
-				WARN(ERROR_STRING);
-				list_dobj(QSP_ARG OA_DEST(oap) );
+				warn(ERROR_STRING);
+				list_dobj(OA_DEST(oap) );
 				return -1;
 			}
 			SET_OA_ARGSTYPE(oap, REAL_ARGS);
@@ -231,56 +282,19 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 		return 0;
 	}
 
-	if( VF_CODE(vfp) == FVFFT ){
-		/* source vector can be real or complex */
-		if( !IS_COMPLEX(OA_DEST(oap) ) ){
-			WARN("chktyp:  destination must be complex for fft");
-			return -1;
-		}
-		assert( OA_SRC1(oap) != NULL );
-
-		if( IS_COMPLEX( OA_SRC1(oap) ) )
-			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
-		else if( IS_QUAT( OA_SRC1(oap) ) ){
-			WARN("chktyp:  Can't compute FFT of a quaternion input");
-			return -1;
-		} else
-			SET_OA_ARGSTYPE(oap,REAL_ARGS);
-
-		return 0;
-	}
-
-	if( VF_CODE(vfp) == FVIFT ){
-		assert( OA_SRC1(oap) != NULL );
-
-		/* destination vector can be real or complex */
-		if( !IS_COMPLEX( OA_SRC1(oap) ) ){
-			WARN("chktyp:  source must be complex for inverse fft");
-			return -1;
-		}
-		if( IS_COMPLEX(OA_DEST(oap) ) )
-			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
-		else if( IS_QUAT(OA_DEST(oap) ) ){
-			WARN("chktyp:  Can't compute inverse FFT to a quaternion target");
-			return -1;
-		} else
-			SET_OA_ARGSTYPE(oap,REAL_ARGS);
-
-		return 0;
-	}
 
 	/* now the type field has been set - make sure it's legal */
 	if( (VF_TYPEMASK(vfp) & VL_TYPE_MASK(OA_ARGSTYPE(oap) ) )==0 ){
 		sprintf(ERROR_STRING,
 	"chktyp:  Arguments of type %s are not permitted with function %s",
 			argset_type_name[OA_ARGSTYPE(oap) ],VF_NAME(vfp) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 
 /*
 sprintf(ERROR_STRING,"function %s:  oa_argstype = %s",VF_NAME(vfp) ,argset_type_name[OA_ARGSTYPE(oap) ]);
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 */
 
 	/* if we get to here then it wasn't a special function */
@@ -299,14 +313,14 @@ ADVISE(ERROR_STRING);
 	if( HAS_MIXED_ARGS(oap) && ! IS_COMPLEX(OA_DEST(oap)) ){
 		sprintf(ERROR_STRING,"chktyp:  destination vector %s must be complex when mixing types with function %s",
 			OBJ_NAME(OA_DEST(oap) ) ,VF_NAME(vfp) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 
 	if( HAS_QMIXED_ARGS(oap)  && ! IS_QUAT(OA_DEST(oap) ) ){
 		sprintf(ERROR_STRING,"chktyp:  destination vector %s must be quaternion when mixing types with function %s",
 			OBJ_NAME(OA_DEST(oap) ) ,VF_NAME(vfp) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 
@@ -331,51 +345,21 @@ ADVISE(ERROR_STRING);
 	 * and swap around accordingly!
 	 */
 	if( HAS_MIXED_ARGS(oap) ){
-#ifdef FOOBAR
-		if( USES_REAL_SCALAR(VF_CODE(vfp)) ){
-			if( ! IS_COMPLEX( OA_SRC2(oap) ) ){
-				WARN("destination vector must be complex when mixing types with vsmul");
-				return -1;
-			}
-			if( ! IS_REAL( OA_SRC1(oap) ) ){
-				WARN("source vector must be real when mixing types with vsmul");
-				return -1;
-			}
-		} else if( USES_COMPLEX_SCALAR(VF_CODE(vfp)) ){
-			if( ! IS_COMPLEX( OA_SRC2(oap) ) ){
-				WARN("destination vector must be complex when mixing types with vcsmul");
-				return -1;
-			}
-			if( ! IS_REAL( OA_SRC1(oap) ) ){
-				WARN("source vector must be real when mixing types with vcsmul");
-				return -1;
-			}
-		} else if( USES_QUAT_SCALAR(VF_CODE(vfp)) ){
-			if( ! IS_QUAT( OA_SRC2(oap) ) ){
-				WARN("destination vector must be quaternion when mixing types with vqsmul");
-				return -1;
-			}
-			if( ! IS_REAL( OA_SRC1(oap) ) ){
-				WARN("source vector must be real when mixing types with vqsmul");
-				return -1;
-			}
-		}
-#endif /* FOOBAR */
 	
 		/*
 		show_obj_args(oap);
 sprintf(ERROR_STRING,"Function %s.",VF_NAME(vfp) );
-ADVISE(ERROR_STRING);
-		ERROR1("chktyp:  Sorry, not sure how to deal with this situation...");
+advise(ERROR_STRING);
+		error1("chktyp:  Sorry, not sure how to deal with this situation...");
 		*/
 
 		if( ! IS_COMPLEX( OA_SRC1(oap) ) ){
 			sprintf(ERROR_STRING,
-"first source vector (%s,%s) must be complex when mixing types with function %s",
+"chktyp:  first source vector (%s,%s) must be complex when mixing types with function %s",
 				OBJ_NAME( OA_SRC1(oap) ) ,
 				name_for_type( OA_SRC1(oap) ),
 				VF_NAME(vfp) );
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return -1;
 		}
 		// Mixed-arg fuctions have to have two sources, but the analyzer
@@ -388,12 +372,12 @@ ADVISE(ERROR_STRING);
 				OBJ_NAME(OA_SRC2(oap) ) ,
 				name_for_type(OA_SRC2(oap) ),
 				VF_NAME(vfp) );
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return -1;
 		}
 		/* Should the destination be complex??? */
 	} else if( HAS_QMIXED_ARGS(oap) ){
-		ERROR1("FIXME:  need to add code for quaternions, vec_call.c");
+		error1("FIXME:  need to add code for quaternions, vec_call.c");
 		/* BUG add the same check as above for quaternions */
 		return -1;
 	}
@@ -405,7 +389,7 @@ type_mismatch13:
 		OBJ_NAME( OA_SRC1(oap) ) ,name_for_type( OA_SRC1(oap) ),
 		OBJ_NAME( OA_SRC3(oap) ) ,name_for_type( OA_SRC3(oap) ),
 		VF_NAME(vfp) );
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 	return -1;
     
 type_mismatch01:
@@ -413,7 +397,7 @@ type_mismatch01:
             OBJ_NAME( OA_SRC1(oap) ) ,name_for_type( OA_SRC1(oap) ),
             OBJ_NAME(OA_DEST(oap) ) ,name_for_type(OA_DEST(oap) ),
             VF_NAME(vfp) );
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 	return -1;
     
     
@@ -422,21 +406,23 @@ type_mismatch23:
 		OBJ_NAME(OA_SRC2(oap) ) ,name_for_type(OA_SRC2(oap) ),
 		OBJ_NAME( OA_SRC3(oap) ) ,name_for_type( OA_SRC3(oap) ),
 		VF_NAME(vfp) );
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 	return -1;
 } /* end chktyp() */
 
-static void show_legal_precisions(uint32_t mask)
+#define show_legal_precisions(mask) _show_legal_precisions(QSP_ARG  mask)
+
+static void _show_legal_precisions(QSP_ARG_DECL  uint32_t mask)
 {
 	uint32_t bit=1;
 	prec_t prec;
 
-	NADVISE("legal precisions are:");
+	advise("legal precisions are:");
 	for( prec = 0; prec < 32 ; prec ++ ){
 		bit = 1 << prec ;
 		if( mask & bit ){
-			sprintf(DEFAULT_ERROR_STRING,"\t%s",NAME_FOR_PREC_CODE(prec));
-			NADVISE(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"\t%s",NAME_FOR_PREC_CODE(prec));
+			advise(ERROR_STRING);
 		}
 	}
 }
@@ -448,7 +434,7 @@ static void show_legal_precisions(uint32_t mask)
 VF_NAME(vfp) ,OBJ_NAME( OA_SRC1(oap) ) ,OBJ_PREC_NAME( OA_SRC1(oap) ),	\
 NAME_FOR_PREC_CODE( prec ),NAME_FOR_PREC_CODE(dst_prec),		\
 OBJ_NAME(OA_DEST(oap) ) ,OBJ_PREC_NAME( OA_DEST(oap) ));		\
-	WARN(ERROR_STRING);						\
+	warn(ERROR_STRING);						\
 	return -1;
 
 
@@ -494,11 +480,11 @@ static int chkprec(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 		 */
 		if( IS_BITMAP(OA_DEST(oap) ) ){
 /*
-ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
+advise("chkprec:  Setting argstype to R_BIT_ARGS!?");
 			SET_OA_ARGSTYPE(oap, R_BIT_ARGS);
 */
 			/* R_BIT_ARGS was a functype - not an argset type??? */
-			SET_OA_ARGSPREC(oap, BIT_ARGS);
+			SET_OA_ARGSPREC_CODE(oap, BIT_ARGS);
 		} else if( IS_BITMAP( OA_SRC1(oap) ) ){
 			/* this is necessary because bitmaps handled with kludgy hacks */
 			SET_OA_SBM(oap,OA_SRC1(oap) );
@@ -519,21 +505,21 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		sprintf(ERROR_STRING,
 "chkprec:  dest. precision %s (obj %s) cannot be used with function %s",
 			NAME_FOR_PREC_CODE(dst_prec),OBJ_NAME(OA_DEST(oap) ) ,VF_NAME(vfp) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		show_legal_precisions( VF_PRECMASK(vfp));
 		return -1;
 	}
 
-#define CHECK_SOURCE_PREC(p,dp)										\
-													\
-	if( ( VF_PRECMASK(vfp) & (1<<p)) == 0 ){							\
-		sprintf(ERROR_STRING,									\
-"chkprec:  source precision %s (obj %s) cannot be used with function %s",				\
-			NAME_FOR_PREC_CODE(p),OBJ_NAME( dp ) ,VF_NAME(vfp) );				\
-		WARN(ERROR_STRING);									\
-		show_legal_precisions( VF_PRECMASK(vfp));						\
-		return -1;										\
-	}												\
+#define CHECK_SOURCE_PREC(p,dp)								\
+											\
+	if( ( VF_PRECMASK(vfp) & (1<<p)) == 0 ){					\
+		sprintf(ERROR_STRING,							\
+"chkprec:  source precision %s (obj %s) cannot be used with function %s",		\
+			NAME_FOR_PREC_CODE(p),OBJ_NAME( dp ) ,VF_NAME(vfp) );		\
+		warn(ERROR_STRING);							\
+		show_legal_precisions( VF_PRECMASK(vfp));				\
+		return -1;								\
+	}										\
 	n_srcs++;
 
 	if(  OA_SRC1(oap) != NULL ){
@@ -553,6 +539,23 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		}
 		// Can there be more than 4 sources???
 	}
+#define IS_LUTMAP_FUNC(vfp) ( VF_CODE(vfp) == FVLUTMAPB || VF_CODE(vfp) == FVLUTMAPS )
+
+#define CHECK_MAP_INDEX_PREC(func_code,prec_code)					\
+											\
+	if( VF_CODE(vfp) == func_code ){						\
+		if( srcp1 != prec_code ){						\
+			sprintf(ERROR_STRING,						\
+	"Source object %s (%s) must have %s precision for function %s",			\
+				OBJ_NAME(OA_SRC1(oap)),NAME_FOR_PREC_CODE(srcp1),	\
+				NAME_FOR_PREC_CODE(prec_code),VF_NAME(vfp));		\
+			warn(ERROR_STRING);						\
+			return -1;							\
+		}									\
+	}
+
+	CHECK_MAP_INDEX_PREC(FVLUTMAPB,PREC_UBY)
+	CHECK_MAP_INDEX_PREC(FVLUTMAPS,PREC_UIN)
 
 	/* Figure out what type of function to call based on the arguments... */
 
@@ -564,11 +567,11 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		/* we used to use dst_prec here, but that
 		 * is only the machine precision!?
 		 */
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(OBJ_PREC( OA_DEST(oap) ) ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC( OA_DEST(oap) ) ));
 		return 0;
 	}
 
-#define REPORT_MISMATCH_ERROR(dp1,dp2)							\
+#define REPORT_SOURCE_MISMATCH_ERROR(dp1,dp2)							\
 											\
 	sprintf(ERROR_STRING,								\
 "chkprec:  %s operands %s (%s) and %s (%s) should have the same precision",		\
@@ -576,25 +579,48 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		OBJ_PREC_NAME( dp1 ),							\
 		OBJ_NAME( dp2 ) ,							\
 		OBJ_PREC_NAME( dp2 ) );							\
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 
-#define CHECK_MATCHING_SOURCES(p1,p2,dp1,dp2)								\
-													\
-	if( srcp1 != srcp2 ) {										\
-		REPORT_MISMATCH_ERROR(dp1,dp2)								\
-		return -1;										\
+#define REPORT_OBJECT_MISMATCH_ERROR(dp1,dp2)							\
+											\
+	sprintf(ERROR_STRING,								\
+"chkprec:  %s: objects %s (%s) and %s (%s) should have the same precision",		\
+		VF_NAME(vfp) ,OBJ_NAME( dp1 ) ,						\
+		OBJ_PREC_NAME( dp1 ),							\
+		OBJ_NAME( dp2 ) ,							\
+		OBJ_PREC_NAME( dp2 ) );							\
+	warn(ERROR_STRING);
+
+#define CHECK_MATCHING_SOURCES(p1,p2,dp1,dp2)						\
+											\
+	if( p1 != p2 ) {								\
+		REPORT_SOURCE_MISMATCH_ERROR(dp1,dp2)						\
+		return -1;								\
+	}
+
+#define CHECK_MATCHING_PRECISIONS(p1,p2,dp1,dp2)						\
+											\
+	if( p1 != p2 ) {								\
+		REPORT_OBJECT_MISMATCH_ERROR(dp1,dp2)						\
+		return -1;								\
 	}
 
 	if( n_srcs >= 2 ){
 		/* First make sure that the two source operands match */
-		CHECK_MATCHING_SOURCES(srcp1,srcp2,OA_SRC1(oap),OA_SRC2(oap))
+		// BUT only if not a mapping func...
+		if( IS_LUTMAP_FUNC(vfp) ){
+			CHECK_MATCHING_PRECISIONS(dst_prec,srcp2,OA_DEST(oap),OA_SRC2(oap))
+		} else {
+			CHECK_MATCHING_SOURCES(srcp1,srcp2,OA_SRC1(oap),OA_SRC2(oap))
+		}
+
 		/* if the precision is long, make sure that
 		 * none (or all) are bitmaps
 		 */
 		if( srcp1 == BITMAP_MACH_PREC ){
 			if( (IS_BITMAP( OA_SRC1(oap) ) && ! IS_BITMAP(OA_SRC2(oap) )) ||
 			    ( ! IS_BITMAP( OA_SRC1(oap) ) && IS_BITMAP(OA_SRC2(oap) )) ){
-				REPORT_MISMATCH_ERROR(OA_SRC1(oap),OA_SRC2(oap))
+				REPORT_SOURCE_MISMATCH_ERROR(OA_SRC1(oap),OA_SRC2(oap))
 				return -1;
 			}
 		}
@@ -626,11 +652,11 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 				VF_NAME(vfp) ,OBJ_NAME(OA_DEST(oap) ) ,
 				OBJ_PREC_NAME( OA_DEST(oap) ),
 				NAME_FOR_PREC_CODE(PREC_DI) );
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return -1;
 		}
 		assert( OA_SRC1(oap) != NULL );
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(OBJ_PREC( OA_SRC1(oap) ) ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC( OA_SRC1(oap) ) ));
 		/* If the destination is long, don't worry about
 		 * a match with the arg...
 		 */
@@ -653,7 +679,7 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 				goto next1;
 		}
 		/* Can't use dst_prec here because might be bitmap */
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(OBJ_PREC( OA_DEST(oap) ) ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC( OA_DEST(oap) ) ));
 		return 0;
 	}
 next1:
@@ -662,6 +688,12 @@ next1:
 	 * Make sure it is one of the legal ones.
 	 * First we check the special cases (bitmaps, indices).
 	 */
+	if( IS_LUTMAP_FUNC(vfp) ){		/* */
+		/* use the precision from the map */
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC2(oap) )  ));
+		return 0;
+	}
+
 	if( VF_FLAGS(vfp) & BITMAP_DST ){		/* vcmp, vcmpm */
 		/* Is dest vector set too??? */
 		if( OBJ_PREC( OA_DEST(oap) )  != PREC_BIT ){
@@ -670,11 +702,11 @@ next1:
 				VF_NAME(vfp) ,OBJ_NAME(OA_DEST(oap) ) ,
 				OBJ_PREC_NAME( OA_DEST(oap) ),
 				NAME_FOR_PREC_CODE(PREC_BIT));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return -1;
 		}
 		/* use the precision from the source */
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
 		// BUG?  functype gets set at the bottom of this function, so how can we return?
 		// Do we also set it elsewhere???
 		return 0;
@@ -689,28 +721,28 @@ next1:
 	switch( dst_prec ){
 		case PREC_IN:
 			if( srcp1==PREC_UBY ){
-				SET_OA_ARGSPREC(oap, BYIN_ARGS);
+				SET_OA_ARGSPREC_CODE(oap, BYIN_ARGS);
 				return 0;
 			}
 			NEW_PREC_ERROR_MSG(PREC_UBY);
 			break;
 		case PREC_DP:
 			if( srcp1==PREC_SP ){
-				SET_OA_ARGSPREC(oap, SPDP_ARGS);
+				SET_OA_ARGSPREC_CODE(oap, SPDP_ARGS);
 				return 0;
 			}
 			NEW_PREC_ERROR_MSG(PREC_SP);
 			break;
 		case PREC_DI:
 			if( srcp1==PREC_UIN ){
-				SET_OA_ARGSPREC(oap, INDI_ARGS);
+				SET_OA_ARGSPREC_CODE(oap, INDI_ARGS);
 				return 0;
 			}
 			NEW_PREC_ERROR_MSG(PREC_UIN);
 			break;
 		case PREC_BY:
 			if( srcp1==PREC_IN ){
-				SET_OA_ARGSPREC(oap, INBY_ARGS);
+				SET_OA_ARGSPREC_CODE(oap, INBY_ARGS);
 				return 0;
 			}
 			NEW_PREC_ERROR_MSG(PREC_IN);
@@ -721,12 +753,30 @@ next1:
 				VF_NAME(vfp) ,OBJ_NAME(OA_DEST(oap) ) ,
 				OBJ_PREC_NAME( OA_DEST(oap) ),
 				OBJ_NAME( OA_SRC1(oap) ) ,NAME_FOR_PREC_CODE(srcp1));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return -1;
 	}
-	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC(oap) ,OA_ARGSTYPE(oap) ) );
-//TELL_FUNCTYPE( OA_ARGSPREC(oap) ,OA_ARGSTYPE(oap) )
+	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) ) );
+//TELL_FUNCTYPE( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) )
 } /* end chkprec() */
+
+static int check_size_match(QSP_ARG_DECL  Vector_Function *vfp, Data_Obj *dp1, Data_Obj *dp2 )
+{
+	int status;
+
+	if( dp1 == NULL ) return 0;
+	if( dp2 == NULL ) return 0;
+
+	if( (status=cksiz(QSP_ARG  VF_FLAGS(vfp), dp1 ,dp2 )) == (-1) ){
+		sprintf(ERROR_STRING,
+	"check_size_match:  Size mismatch between objects %s and %s, function %s",
+			OBJ_NAME( dp1 ) ,OBJ_NAME( dp2 ), VF_NAME(vfp) );
+		advise(ERROR_STRING);	// why not warning???
+		return -1;
+	}
+	assert( status == 0 );
+	return 0;
+}
 
 static int chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check for argument size match */
 {
@@ -757,7 +807,7 @@ static int chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check
 			{
 				sprintf(ERROR_STRING,
 			"chksiz:  bitmap arg func size error, function %s",VF_NAME(vfp) );
-				ADVISE(ERROR_STRING);
+				advise(ERROR_STRING);
 				return -1;
 			}
 		}
@@ -777,7 +827,7 @@ if( debug & veclib_debug ){
 sprintf(ERROR_STRING,"chksiz:  destv %s (%s)  arg1 %s (%s)",
 OBJ_NAME(OA_DEST(oap) ), AREA_NAME(OBJ_AREA(OA_DEST(oap))),
 OBJ_NAME( OA_SRC1(oap) ), AREA_NAME(OBJ_AREA(OA_SRC1(oap))) );
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -790,41 +840,51 @@ ADVISE(ERROR_STRING);
 		if( (status=cksiz(QSP_ARG  VF_FLAGS(vfp), OA_SRC1(oap) ,OA_SRC2(oap) )) == (-1) ){
 			sprintf(ERROR_STRING,"chksiz:  Size mismatch between arg1 (%s) and arg2 (%s), function %s",
 				OBJ_NAME( OA_SRC1(oap) ) ,OBJ_NAME(OA_SRC2(oap) ) ,VF_NAME(vfp) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			return -1;
 		}
 		return 0;
 	}
 #endif // FVDOT
 
-	if( (status=cksiz(QSP_ARG  VF_FLAGS(vfp), OA_SRC1(oap) ,OA_DEST(oap) )) == (-1) ){
-		sprintf(ERROR_STRING,"chksiz:  Size mismatch between arg1 (%s) and destination (%s), function %s",
-			OBJ_NAME( OA_SRC1(oap) ) ,OBJ_NAME(OA_DEST(oap) ) ,VF_NAME(vfp) );
-		ADVISE(ERROR_STRING);
+	if( check_size_match(QSP_ARG  vfp, OA_SRC1(oap), OA_DEST(oap) ) < 0 )
 		return -1;
+
+	if( IS_LUTMAP_FUNC(vfp) ){
+		// second source should be a map w/ 256 entries
+		// For FVLUTMAPS, we pass the table size as a scalar arg.
+		if( VF_CODE(vfp) == FVLUTMAPB ){
+			if( OBJ_N_MACH_ELTS(OA_SRC2(oap)) != 256 ){
+				sprintf(ERROR_STRING,
+			"chksiz:  byte-indexed map object %s (%d) should have 256 elements!?",
+			OBJ_NAME(OA_SRC2(oap)),OBJ_N_MACH_ELTS(OA_SRC2(oap)));
+				warn(ERROR_STRING);
+				return -1;
+			}
+		}
+		if( ! IS_CONTIGUOUS(OA_SRC2(oap)) ){
+			sprintf(ERROR_STRING,"chksiz:  map object %s must be contiguous!?",
+				OBJ_NAME(OA_SRC2(oap)));
+			warn(ERROR_STRING);
+			return -1;
+		}
+	} else {
+		if( check_size_match(QSP_ARG  vfp, OA_SRC2(oap), OA_DEST(oap) ) < 0 )
+			return -1;
 	}
-	assert( status == 0 );
 
-	if( OA_SRC2(oap) == NULL ) return 0;
-#ifdef QUIP_DEBUG
-if( debug & veclib_debug ){
-sprintf(ERROR_STRING,"chksiz:  destv %s (%s)  arg2 %s (%s)",
-OBJ_NAME(OA_DEST(oap) ), AREA_NAME(OBJ_AREA(OA_DEST(oap))),
-OBJ_NAME(OA_SRC2(oap) ), AREA_NAME(OBJ_AREA(OA_SRC2(oap))) );
-ADVISE(ERROR_STRING);
-}
-#endif /* QUIP_DEBUG */
-
-	if( (status=cksiz(QSP_ARG  VF_FLAGS(vfp),OA_SRC2(oap) ,OA_DEST(oap) )) == (-1) ){
-		sprintf(ERROR_STRING,"chksiz:  Size mismatch between arg2 (%s) and destination (%s), function %s",
-			OBJ_NAME(OA_SRC2(oap) ) ,OBJ_NAME(OA_DEST(oap) ) ,VF_NAME(vfp) );
-		ADVISE(ERROR_STRING);
+	if( check_size_match(QSP_ARG  vfp, OA_SRC3(oap), OA_DEST(oap) ) < 0 )
 		return -1;
-	}
 
-	assert( status == 0 );
+	if( check_size_match(QSP_ARG  vfp, OA_SRC4(oap), OA_DEST(oap) ) < 0 )
+		return -1;
+
+	// SRC5 ???
+
+
 
 	/* BUG what about bitmaps?? */
+
 	return 0;
 } /* end chksiz() */
 
@@ -860,7 +920,7 @@ static int chkargs( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
 VF_NAME(vfp) ,OBJ_NAME( OA_SRC1(oap) ) ,OBJ_PREC_NAME( OA_SRC1(oap) ),	\
 NAME_FOR_PREC_CODE( prec ),NAME_FOR_PREC_CODE(dst_prec),		\
 OBJ_NAME(OA_DEST(oap) ) ,OBJ_PREC_NAME( OA_DEST(oap) ));		\
-	WARN(ERROR_STRING);						\
+	warn(ERROR_STRING);						\
 	return -1;
 
 
@@ -875,9 +935,9 @@ void wacky_arg(Data_Obj *dp)
 {
 	sprintf(ERROR_STRING, "%s:  inc = %d, cols = %d",
 		OBJ_NAME(dp) , dp->dt_inc, dp->dt_cols );
-	NWARN(ERROR_STRING);
-	list_dobj(QSP_ARG dp);
-	ERROR1("wacky_arg:  can't happen #1");
+	warn(ERROR_STRING);
+	list_dobj(dp);
+	error1("wacky_arg:  can't happen #1");
 }
 
 static char *remove_brackets(char *name)
@@ -945,20 +1005,20 @@ int perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap)
 #ifdef HAVE_ANY_GPU
 // BUG???  is this redundant now that we have platforms?
 
-static int default_gpu_dispatch(Vector_Function *vfp, Vec_Obj_Args *oap)
+static int _default_gpu_dispatch(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
 {
-	sprintf(DEFAULT_ERROR_STRING,"No GPU dispatch function specified, can't call %s",VF_NAME(vfp) );
-	NWARN(DEFAULT_ERROR_STRING);
-	NADVISE("Please call set_gpu_dispatch_func().");
+	sprintf(ERROR_STRING,"No GPU dispatch function specified, can't call %s",VF_NAME(vfp) );
+	warn(ERROR_STRING);
+	advise("Please call set_gpu_dispatch_func().");
 	return -1;
 }
 
-static int (*gpu_dispatch_func)(Vector_Function *vfp, Vec_Obj_Args *oap)=default_gpu_dispatch;
+static int (*gpu_dispatch_func)(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)=_default_gpu_dispatch;
 
-void set_gpu_dispatch_func( int (*func)(Vector_Function *vfp, Vec_Obj_Args *oap) )
+void set_gpu_dispatch_func( int (*func)(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap) )
 {
 //sprintf(ERROR_STRING,"Setting gpu dispatch func (0x%lx)",(int_for_addr)func);
-//ADVISE(ERROR_STRING);
+//advise(ERROR_STRING);
 	gpu_dispatch_func = func;
 }
 
@@ -974,13 +1034,13 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 	 * One answer is bitmap result functions...
 	 */
 	if(  OA_SRC1(oap)  != NULL ){
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
 	} else if( OA_DEST(oap)  != NULL ){
-		SET_OA_ARGSPREC(oap, ARGSET_PREC( OBJ_PREC( OA_DEST(oap) )  ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC( OBJ_PREC( OA_DEST(oap) )  ));
 	} else {
 		sprintf(ERROR_STRING,"call_vfunc %s:",VF_NAME(vfp) );
-		ADVISE(ERROR_STRING);
-		ERROR1("call_vfunc:  no prototype vector!?");
+		advise(ERROR_STRING);
+		error1("call_vfunc:  no prototype vector!?");
 	}
 
 //sprintf(ERROR_STRING,"call_vfunc:  function %s",VF_NAME(vfp));
@@ -996,8 +1056,8 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 	if( chkargs(QSP_ARG  vfp,oap) == (-1) ) return -1;	/* make set vslct_fake */
 
 	/* argstype has been set from within chkargs */
-	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC(oap) ,OA_ARGSTYPE(oap) ) );
-//TELL_FUNCTYPE( OA_ARGSPREC(oap) ,OA_ARGSTYPE(oap) )
+	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) ) );
+//TELL_FUNCTYPE( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) )
 
 	/* We don't worry here about vectorization on CUDA... */
 

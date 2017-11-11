@@ -12,7 +12,7 @@ static COMMAND_FUNC( do_scan2_requant )
 	int n;
 
 	n=(int)HOW_MANY("number of passes");
-	scan2_requant(QSP_ARG  n);
+	scan2_requant(n);
 }
 
 static COMMAND_FUNC( do_scan2_requant3d )
@@ -67,7 +67,7 @@ static COMMAND_FUNC( do_dich_anneal )
 	n=(index_t)HOW_MANY("number of passes");
 	temp1=HOW_MUCH("initial temperature");
 	temp2=HOW_MUCH("final temperature");
-	dich_scan_anneal(QSP_ARG  n,temp1,temp2);
+	dich_scan_anneal(n,temp1,temp2);
 }
 
 static const char *scanlist[]={"raster","scattered","random"};
@@ -75,18 +75,18 @@ static const char *scanlist[]={"raster","scattered","random"};
 static COMMAND_FUNC( do_pickscan )
 {
 	switch( WHICH_ONE("type of scanning pattern",3,scanlist) ){
-		case 0: scan_func=get_xy_raster_point; break;
-		case 1: scan_func=get_xy_scattered_point; break;
-		case 2: scan_func=get_xy_random_point; break;
+		case 0: scan_func=_get_xy_raster_point; break;
+		case 1: scan_func=_get_xy_scattered_point; break;
+		case 2: scan_func=_get_xy_random_point; break;
 	}
 }
 
 static COMMAND_FUNC( do_pickscan3d )
 {
 	switch( WHICH_ONE("type of scanning pattern",3,scanlist) ){
-		case 0: scan_func3d=get_3d_raster_point; break;
-		case 1: scan_func3d=get_3d_scattered_point; break;
-		case 2: scan_func3d=get_3d_random_point; break;
+		case 0: scan_func3d=_get_3d_raster_point; break;
+		case 1: scan_func3d=_get_3d_scattered_point; break;
+		case 2: scan_func3d=_get_3d_random_point; break;
 	}
 }
 
@@ -94,7 +94,7 @@ static COMMAND_FUNC( do_set_input )
 {
 	Data_Obj *gdp;
 
-	gdp = PICK_OBJ( "source image" );
+	gdp = pick_obj( "source image" );
 	if( gdp == NULL ) return;
 	set_grayscale(gdp);
 }
@@ -103,7 +103,7 @@ static COMMAND_FUNC( do_set_input3d )
 {
 	Data_Obj *gdp;
 
-	gdp = PICK_OBJ( "source image" );
+	gdp = pick_obj( "source image" );
 	if( gdp == NULL ) return;
 	set_grayscale3d(gdp);
 }
@@ -114,7 +114,7 @@ static COMMAND_FUNC( do_set_output )
 {
 	Data_Obj *hdp;
 
-	hdp = PICK_OBJ( "output image" );
+	hdp = pick_obj( "output image" );
 	if( hdp == NULL ) return;
 	set_halftone(hdp);
 }
@@ -123,7 +123,7 @@ static COMMAND_FUNC( do_set_filter )
 {
 	Data_Obj *fdp;
 
-	fdp = PICK_OBJ( "filter image" );
+	fdp = pick_obj( "filter image" );
 	if( fdp == NULL ) return;
 	set_filter(fdp);
 }
@@ -132,7 +132,7 @@ static COMMAND_FUNC( do_set_output3d )
 {
 	Data_Obj *hdp;
 
-	hdp = PICK_OBJ( "output image" );
+	hdp = pick_obj( "output image" );
 	if( hdp == NULL ) return;
 	set_halftone3d(hdp);
 }
@@ -141,21 +141,21 @@ static COMMAND_FUNC( do_set_filter3d )
 {
 	Data_Obj *fdp;
 
-	fdp = PICK_OBJ( "filter image" );
+	fdp = pick_obj( "filter image" );
 	if( fdp == NULL ) return;
 	set_filter3d(fdp);
 }
 
 static COMMAND_FUNC( do_init_requant )
 {
-	if( setup_requantize(SINGLE_QSP_ARG) == -1 ) return;
+	if( setup_requantize() == -1 ) return;
 	init_requant();
 }
 
 static COMMAND_FUNC( do_init_requant3d )
 {
-	if( setup_requantize3d(SINGLE_QSP_ARG) == -1 ) return;
-	init_requant3d(SINGLE_QSP_ARG);
+	if( setup_requantize3d() == -1 ) return;
+	init_requant3d();
 }
 
 #ifdef FOOBAR
@@ -163,8 +163,8 @@ static COMMAND_FUNC( do_qt_dither )
 {
 	Data_Obj *dpto, *dpfr;
 
-	dpto = PICK_OBJ( "target image" );
-	dpfr = PICK_OBJ( "source image" );
+	dpto = pick_obj( "target image" );
+	dpfr = pick_obj( "source image" );
 
 	if( dpto == NULL || dpfr == NULL ) return;
 
@@ -198,32 +198,32 @@ static COMMAND_FUNC( do_set_clr_input )
 {
 	Data_Obj *lumdp, *rgdp, *bydp;
 
-	lumdp = PICK_OBJ( "luminance image" );
-	rgdp = PICK_OBJ( "red-green image" );
-	bydp = PICK_OBJ( "blue-yellow image" );
+	lumdp = pick_obj( "luminance image" );
+	rgdp = pick_obj( "red-green image" );
+	bydp = pick_obj( "blue-yellow image" );
 
 	if( lumdp==NULL || rgdp==NULL || bydp==NULL ) return;
 
-	set_rgb_input(QSP_ARG  lumdp,rgdp,bydp);
+	set_rgb_input(lumdp,rgdp,bydp);
 }
 
 static COMMAND_FUNC( do_set_dich_input )
 {
 	Data_Obj *lumdp, *rgdp;
 
-	lumdp = PICK_OBJ( "luminance image" );
-	rgdp = PICK_OBJ( "red-green image" );
+	lumdp = pick_obj( "luminance image" );
+	rgdp = pick_obj( "red-green image" );
 
 	if( lumdp==NULL || rgdp==NULL ) return;
 
-	set_dich_input(QSP_ARG  lumdp,rgdp);
+	set_dich_input(lumdp,rgdp);
 }
 
 static COMMAND_FUNC( do_set_clr_output )
 {
 	Data_Obj *hdp;
 
-	hdp = PICK_OBJ( "byte image for composite halftone" );
+	hdp = pick_obj( "byte image for composite halftone" );
 	if( hdp==NULL ) return;
 	set_rgb_output(hdp);
 }
@@ -232,7 +232,7 @@ static COMMAND_FUNC( do_set_dich_output )
 {
 	Data_Obj *hdp;
 
-	hdp = PICK_OBJ( "byte image for composite halftone" );
+	hdp = pick_obj( "byte image for composite halftone" );
 	if( hdp==NULL ) return;
 	set_dich_output(hdp);
 }
@@ -241,9 +241,9 @@ static COMMAND_FUNC( do_set_clr_filter )
 {
 	Data_Obj *rdp, *gdp, *bdp;
 
-	rdp = PICK_OBJ( "red filter image" );
-	gdp = PICK_OBJ( "green filter image" );
-	bdp = PICK_OBJ( "blue filter image" );
+	rdp = pick_obj( "red filter image" );
+	gdp = pick_obj( "green filter image" );
+	bdp = pick_obj( "blue filter image" );
 
 	if( rdp==NULL || gdp==NULL || bdp==NULL ) return;
 
@@ -254,8 +254,8 @@ static COMMAND_FUNC( do_set_dich_filter )
 {
 	Data_Obj *rdp, *gdp;
 
-	rdp = PICK_OBJ( "red filter image" );
-	gdp = PICK_OBJ( "green filter image" );
+	rdp = pick_obj( "red filter image" );
+	gdp = pick_obj( "green filter image" );
 
 	if( rdp==NULL || gdp==NULL ) return;
 
@@ -268,7 +268,7 @@ static COMMAND_FUNC( do_clr_migrate_pixel )
 
 	x=(int)HOW_MANY("x coordinate");
 	y=(int)HOW_MANY("y coordinate");
-	clr_migrate_pixel(QSP_ARG  x,y);
+	clr_migrate_pixel(x,y);
 }
 
 
@@ -278,7 +278,7 @@ static COMMAND_FUNC( do_clr_redo_pixel )
 
 	x=(int)HOW_MANY("x coordinate");
 	y=(int)HOW_MANY("y coordinate");
-	clr_redo_pixel(QSP_ARG  x,y);
+	clr_redo_pixel(x,y);
 }
 
 static COMMAND_FUNC( do_dich_migrate_pixel )
@@ -287,7 +287,7 @@ static COMMAND_FUNC( do_dich_migrate_pixel )
 
 	x=(int)HOW_MANY("x coordinate");
 	y=(int)HOW_MANY("y coordinate");
-	dich_migrate_pixel(QSP_ARG  x,y);
+	dich_migrate_pixel(x,y);
 }
 
 
@@ -297,14 +297,14 @@ static COMMAND_FUNC( do_dich_redo_pixel )
 
 	x=(int)HOW_MANY("x coordinate");
 	y=(int)HOW_MANY("y coordinate");
-	dich_redo_pixel(QSP_ARG  x,y);
+	dich_redo_pixel(x,y);
 }
 
 static COMMAND_FUNC( do_clr_setxform )
 {
 	Data_Obj *matrix;
 
-	matrix = PICK_OBJ( "transformation matrix" );
+	matrix = pick_obj( "transformation matrix" );
 	if( matrix == NULL ) return;
 	set_clr_xform(matrix);
 }
@@ -313,29 +313,29 @@ static COMMAND_FUNC( do_dich_setxform )
 {
 	Data_Obj *matrix;
 
-	matrix = PICK_OBJ( "transformation matrix" );
+	matrix = pick_obj( "transformation matrix" );
 	if( matrix == NULL ) return;
 	set_dich_xform(matrix);
 }
 
 static COMMAND_FUNC( do_clr_descend )
 {
-	clr_scan_requant(QSP_ARG  1);
+	clr_scan_requant(1);
 }
 
 static COMMAND_FUNC( do_clr_migrate )
 {
-	clr_scan_migrate(QSP_ARG  1);
+	clr_scan_migrate(1);
 }
 
 static COMMAND_FUNC( do_dich_descend )
 {
-	dich_scan_requant(QSP_ARG  1);
+	dich_scan_requant(1);
 }
 
 static COMMAND_FUNC( do_dich_migrate )
 {
-	dich_scan_migrate(QSP_ARG  1);
+	dich_scan_migrate(1);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(achrom_requant_menu,s,f,h)
@@ -376,12 +376,12 @@ MENU_END(threeD_requant)
 
 static COMMAND_FUNC( do_achrom )
 {
-	PUSH_MENU(achrom_requant);
+	CHECK_AND_PUSH_MENU(achrom_requant);
 }
 
 static COMMAND_FUNC( do_3d )
 {
-	PUSH_MENU(threeD_requant);
+	CHECK_AND_PUSH_MENU(threeD_requant);
 }
 
 #undef ADD_CMD
@@ -433,12 +433,12 @@ MENU_END(dichrom_requant)
 
 static COMMAND_FUNC( do_dichrom )
 {
-	PUSH_MENU(dichrom_requant);
+	CHECK_AND_PUSH_MENU(dichrom_requant);
 }
 
 static COMMAND_FUNC( do_color )
 {
-	PUSH_MENU(color_requant);
+	CHECK_AND_PUSH_MENU(color_requant);
 }
 
 #undef ADD_CMD
@@ -455,9 +455,9 @@ MENU_END(requantize)
 COMMAND_FUNC( do_requant )
 {
 	if( spread_debug == 0 )
-		spread_debug=add_debug_module(QSP_ARG  "requantize");
+		spread_debug=add_debug_module("requantize");
 
-	PUSH_MENU(requantize);
+	CHECK_AND_PUSH_MENU(requantize);
 }
 
 

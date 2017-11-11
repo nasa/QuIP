@@ -3,15 +3,28 @@ To list remote repositories:
 
 git remote -v
 
+________________________________________
+
 How to control which remote is used?
 
+git pull origin master
+git [push|pull] repo branch
+
+_______________________________________
+
 add a remote:
+
 git remote add nasa http://github.com/nasa/QuIP.git
 
 ____________________
 
 How to revert to an earlier commit?
 
+git log
+git checkout [revision].
+
+("revision" should be full hash - don't forget the final period,
+so that changes are applied to the whole tree)
 ____________________
 List all remotes:
 
@@ -27,4 +40,28 @@ origin	mulligan@n262vcs-git:quip (push)
 ____________________
 
 Branching:
+
+TO UNDO AN UNWANTED MERGE:
+
+With git reflog check which commit is one prior the merge(git reflog will be better option than git log ). Then you can reset it using:
+
+git reset --hard commit_sha
+
+There's also another way
+
+git reset --hard HEAD~1
+
+will get you back 1 commit.
+
+Be aware that any modified and uncommitted/unstashed files will be reset to their unmodified state. To keep them either stash changes away or see --merge option below. 
+
+FETCH A REMOTE BRANCH
+
+git fetch
+git checkout test
+
+(User masukomi points out below that git checkout test will NOT work in modern git if you have multiple remotes. In this case use git checkout -b test <name of remote>/test).
+
+git fetch origin
+git checkout test
 

@@ -747,19 +747,19 @@ void getvals(double *arr, int n)
 		arr[i] = x[i];
 }
 
-int reset_n_params(int n)
+int _reset_n_params(QSP_ARG_DECL  int n)
 {
 	if( n<=0 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"requested n_params %d must be positive (and <= %d)",
 			n,VARS);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		n=1;
 	} else if( n>VARS ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"requested n_params %d is too large, must be <= %d",
 			n,VARS);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		n=VARS;
 	}
 	return( n_params=n );
@@ -772,9 +772,9 @@ void setvals(QSP_ARG_DECL  double *arr, int n)
 	if( n_params == 0 )
 		n_params=n;
 	else if( n!=n_params ){
-		sprintf(DEFAULT_ERROR_STRING,"setvals:  n_params = %d, n = %d",n_params,n);
-		advise(DEFAULT_ERROR_STRING);
-		NWARN("parameter count mismatch");
+		sprintf(ERROR_STRING,"setvals:  n_params = %d, n = %d",n_params,n);
+		advise(ERROR_STRING);
+		warn("parameter count mismatch");
 	}
 
 	for(i=0;i<n;i++)
@@ -788,9 +788,9 @@ void setminmax(QSP_ARG_DECL  double *minarr, double *maxarr, int n)
 	if( n_params==0 )
 		n_params=n;
 	else if( n!=n_params ){
-		sprintf(DEFAULT_ERROR_STRING,"setminmax:  n_params = %d, n = %d",n_params,n);
-		advise(DEFAULT_ERROR_STRING);
-		NWARN("parameter count mismatch");
+		sprintf(ERROR_STRING,"setminmax:  n_params = %d, n = %d",n_params,n);
+		advise(ERROR_STRING);
+		warn("parameter count mismatch");
 	}
 
 	for(i=0;i<n;i++){
@@ -806,9 +806,9 @@ void setdelta(QSP_ARG_DECL  double *delarr, double *dmnarr, int n)
 	if( n_params==0 )
 		n_params=n;
 	else if( n!=n_params ){
-		sprintf(DEFAULT_ERROR_STRING,"setminmax:  n_params = %d, n = %d",n_params,n);
-		advise(DEFAULT_ERROR_STRING);
-		NWARN("parameter count mismatch");
+		sprintf(ERROR_STRING,"setminmax:  n_params = %d, n = %d",n_params,n);
+		advise(ERROR_STRING);
+		warn("parameter count mismatch");
 	}
 
 	for(i=0;i<n;i++){

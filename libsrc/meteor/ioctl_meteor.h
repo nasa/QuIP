@@ -37,55 +37,48 @@
 #ifndef _MACHINE_IOCTL_METEOR_H
 #define _MACHINE_IOCTL_METEOR_H
 
-#include "quip_config.h"
-
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
 
 #define MAX_NUM_FRAMES 256	/* should be the same as meteor.h */
+#define MAGIC_FRAME_INDEX	(2*MAX_NUM_FRAMES)
+
 
 #ifndef __KERNEL__
-#ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
-#endif
-
 #ifdef HAVE_LINUX_IOCTL_H
 #include <linux/ioctl.h>
-#endif /* HAVE_LINUX_IOCTL_H */
+#endif // HAVE_LINUX_IOCTL_H
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif // HAVE_STDINT_H
 #endif /* ! __KERNEL__ */
 
 struct meteor_capframe {
-	int16_t	command;	/* see below for valid METEORCAPFRM commands */
-	int16_t	lowat;		/* start transfer if < this number */
-	int16_t	hiwat;		/* stop transfer if > this number */
+	short	command;	/* see below for valid METEORCAPFRM commands */
+	short	lowat;		/* start transfer if < this number */
+	short	hiwat;		/* stop transfer if > this number */
 } ;
 
 /* structure for METEOR[GS]WIN - get/set capture window */
 struct meteor_window {
-	uint16_t	xstart;
-	uint16_t	xsize;
-	uint16_t	ystart;
-	uint16_t	ysize;
+	u_short		xstart;
+	u_short		xsize;
+	u_short		ystart;
+	u_short		ysize;
 } ;
 
 /* structure for METEOR[GS]ETGEO - get/set geometry */
 struct meteor_geomet {
-	uint16_t	rows;
-	uint16_t	columns;
-	uint16_t	frames;
+	u_short		rows;
+	u_short		columns;
+	u_short		frames;
 	uint32_t	oformat;
+	uint32_t	frame_size;
 } ;
 
 /* structure for METEORGCOUNT-get count of frames, fifo errors and dma errors */
 struct meteor_counts {
 	uint32_t fifo_errors;	/* count of fifo errors since open */
 	uint32_t dma_errors;	/* count of dma errors since open */
-	uint32_t frames_captured;	/* count of frames captured since open */
+	uint32_t n_frames_captured;	/* count of frames captured since open */
 	uint32_t even_fields_captured;	/* count of even fields captured */
 	uint32_t odd_fields_captured;	/* count of odd fields captured */
 } ;
@@ -98,13 +91,16 @@ struct meteor_frame_offset {
 	uint32_t mem_off;
 } ;
 
+#ifdef METEOR_EXT_FRAME_BUF
 /* structure for getting and setting direct transfers to vram */
 struct meteor_fbuf {
-	uint32_t	addr;		/* Address of location to dma to */
+	/*uint32_t	addr;*/		/* Address of location to dma to */
+	void *		addr;		/* Address of location to dma to */
 	uint32_t	width;		/* Width of memory area */
 	uint32_t	banksize;	/* Size of Vram bank */
 	uint32_t	ramsize;	/* Size of Vram */
 };
+#endif // METEOR_EXT_FRAME_BUF
 
 
 #define METEORCAPTUR	_IOW('x', 1, int)			/* capture a frame */
@@ -126,8 +122,10 @@ struct meteor_fbuf {
 #define METEORGFPS	_IOR('x',11, unsigned short)		/* get fps */
 #define METEORSSIGNAL	_IOW('x', 12, unsigned int)		/* set signal */
 #define METEORGSIGNAL	_IOR('x', 12, unsigned int)		/* get signal */
+#ifdef METEOR_EXT_FRAME_BUF
 #define	METEORSVIDEO	_IOW('x', 13, struct meteor_fbuf)	/* set video */
 #define	METEORGVIDEO	_IOR('x', 13, struct meteor_fbuf)	/* get video */
+#endif // METEOR_EXT_FRAME_BUF
 #define	METEORSBRIG	_IOW('x', 14, unsigned char)		/* set brightness */
 #define METEORGBRIG	_IOR('x', 14, unsigned char)		/* get brightness */
 #define	METEORSCSAT	_IOW('x', 15, unsigned char)		/* set chroma sat */
@@ -159,6 +157,7 @@ struct error_info {
 	struct drop_info ei[3];
 };
 
+
 #define METEORGNERR	_IOR('x', 25, struct error_info)	/* get the number of error frames */
 #define METEORGERR0FRMS	_IOR('x', 26, uint32_t)			/* get error frames,var # */
 #define METEORGERR1FRMS	_IOR('x', 27, uint32_t)			/* get error frames, var # */
@@ -166,7 +165,8 @@ struct error_info {
 #define METEORGNDROP	_IOR('x', 29, struct drop_info)		/* get # of dropeed frames */
 #define METEORGDRPFRMS	_IOR('x', 30, uint32_t)
 
-
+#define METEORGNBUFFRMS	_IOR('x', 31, uint32_t)			/* get # frames in ring buffer */
+#define METEORSFRMIDX	_IOW('x', 32, uint32_t)			/* set current frame index for mmap */
 
 #define	METEOR_STATUS_ID_MASK	0xf000		/* ID of 7196 */
 #define	METEOR_STATUS_DIR	0x0800		/* Direction of Expansion port YUV */
@@ -232,14 +232,14 @@ struct meteor_mem {
 		/* kernel write only */
 	int	frame_size;		/* row*columns*depth */
 	int	num_bufs;		/* number of frames in buffer (1-32) */
-	uint32_t	frames_captured;	/* total frames captured */
+	u_int	n_frames_captured;	/* total frames captured */
 	int16_t	cur_frame;		/* index of most recent acquisition */
 	int16_t	cur_field;		/* 0=even, 1=odd */
 		/* user and kernel change these */
 	int16_t	lowat;			/* kernel starts capture if < this number */
 	int16_t	hiwat;			/* kernel stops capture if > this number.
 					   hiwat <= numbufs */
-	uint32_t	active;			/* bit mask of active frame buffers
+	u_long	active;			/* bit mask of active frame buffers
 					    kernel sets, user clears */
 	int	num_active_bufs;	/* count of active frame buffer
 					    kernel increments, user decrements */

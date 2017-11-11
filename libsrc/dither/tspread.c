@@ -28,7 +28,6 @@
 #include "vec_util.h"
 #include "data_obj.h"
 
-static void anneal_pixel3d(incr_t *posn);
 static double _temp,_k;
 
 #define NO_VALUE	(-1)
@@ -58,33 +57,35 @@ static float *_feptr;
 #define BIN_WIDTH	(2*MAX_DELE/N_BINS)
 
 
-void (*scan_func3d)(dimension_t,Dimension_Set *, incr_t *)=get_3d_random_point;
+void (*scan_func3d)(QSP_ARG_DECL  dimension_t,Dimension_Set *, incr_t *)=_get_3d_random_point;
 
-static void check_posn(incr_t *posn, Data_Obj *dp)
+#define check_posn(posn, dp) _check_posn(QSP_ARG  posn, dp)
+
+static void _check_posn(QSP_ARG_DECL  incr_t *posn, Data_Obj *dp)
 {
 	int i;
 
 	for(i=0;i<N_DIMENSIONS;i++){
 		if( posn[i] < 0 || posn[i] >= OBJ_TYPE_DIM(dp,i) ){
-			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  posn[%d] = %d",
+			sprintf(ERROR_STRING,"CAUTIOUS:  posn[%d] = %d",
 				i,posn[i]);
-			NERROR1(DEFAULT_ERROR_STRING);
+			error1(ERROR_STRING);
 		}
 	}
 }
 
-int setup_requantize3d(SINGLE_QSP_ARG_DECL)
+int _setup_requantize3d(SINGLE_QSP_ARG_DECL)
 {
 	if( _hdp == NULL ){
-		NWARN("output movie not specified");
+		warn("output movie not specified");
 		return(-1);
 	}
 	if( _gdp == NULL ){
-		NWARN("input movie not specified");
+		warn("input movie not specified");
 		return(-1);
 	}
 	if( _fdp == NULL ){
-		NWARN("filter not specified");
+		warn("filter not specified");
 		return(-1);
 	}
 	if( OBJ_ROWS(_hdp) != OBJ_ROWS(_gdp)		||
@@ -92,9 +93,9 @@ int setup_requantize3d(SINGLE_QSP_ARG_DECL)
 		OBJ_COMPS(_hdp) != OBJ_COMPS(_gdp)	||
 		OBJ_COLS(_hdp) != OBJ_COLS(_gdp) ){
 
-		sprintf(DEFAULT_ERROR_STRING,"setup_requantize3d:  input/output size mismatch, objects %s and %s",
+		sprintf(ERROR_STRING,"setup_requantize3d:  input/output size mismatch, objects %s and %s",
 			OBJ_NAME(_hdp),OBJ_NAME(_gdp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -104,21 +105,21 @@ int setup_requantize3d(SINGLE_QSP_ARG_DECL)
 	_npixels = (dimension_t)(OBJ_FRAMES(_hdp) * OBJ_ROWS(_hdp) * OBJ_COLS(_hdp));
 
 	if( _edp != NULL )
-		delvec(QSP_ARG  _edp);
-	_edp = make_obj(QSP_ARG  "HT_error",
+		delvec(_edp);
+	_edp = make_obj("HT_error",
 		OBJ_FRAMES(_hdp),OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
 	if( _edp == NULL ){
-		NWARN("couldn't create error image");
+		warn("couldn't create error image");
 		return(-1);
 	}
 	_eptr = (float *) OBJ_DATA_PTR(_edp);
 
 	if( _fedp != NULL )
-		delvec(QSP_ARG  _fedp);
-	_fedp = make_obj(QSP_ARG  "HT_ferror",
+		delvec(_fedp);
+	_fedp = make_obj("HT_ferror",
 		OBJ_FRAMES(_hdp),OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
 	if( _fedp == NULL ){
-		NWARN("couldn't create filtered error image");
+		warn("couldn't create filtered error image");
 		return(-1);
 	}
 	_feptr = (float *) OBJ_DATA_PTR(_fedp);
@@ -168,13 +169,13 @@ void setup_ffilter3d(QSP_ARG_DECL  Data_Obj *fdp)
 	float *fptr,val;
 
 	if( _ffdp != NULL )
-		delvec(QSP_ARG  _ffdp);
+		delvec(_ffdp);
 
-	_ffdp = make_obj(QSP_ARG   "double_filter",OBJ_FRAMES(fdp)*2-1,
+	_ffdp = make_obj("double_filter",OBJ_FRAMES(fdp)*2-1,
 		OBJ_ROWS(fdp)*2-1,OBJ_COLS(fdp)*2-1,1,PREC_FOR_CODE(PREC_SP));
 
 	if( _ffdp == NULL ){
-		NWARN("couldn't create double filter image");
+		warn("couldn't create double filter image");
 		return;
 	}
 
@@ -254,7 +255,7 @@ double get_volume3d(Data_Obj *dp)
 	}									\
 	isos[level+1] += isos[level];
 
-void normalize_filter3d(Data_Obj *fdp)
+void _normalize_filter3d(QSP_ARG_DECL  Data_Obj *fdp)
 {
 	float *fptr;
 	double isos[N_DIMENSIONS], length;
@@ -276,14 +277,14 @@ void normalize_filter3d(Data_Obj *fdp)
 	END_NF(3)
 
 	if( isos[4] <= 0.0 ){
-		NWARN("filter has non-positive vector length!?");
+		warn("filter has non-positive vector length!?");
 		return;
 	}
 	length = sqrt(isos[4]);
 	if( verbose ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"Normalizing filter by factor %g",length);
-		NADVISE(DEFAULT_ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 	BEG2(3,fdp)
 		BEG2(2,fdp)
@@ -297,7 +298,7 @@ void normalize_filter3d(Data_Obj *fdp)
 	}
 }
 
-void init_requant3d(SINGLE_QSP_ARG_DECL)
+void _init_requant3d(SINGLE_QSP_ARG_DECL)
 {
 	dimension_t offset;
 	/* float value; */
@@ -319,7 +320,7 @@ void init_requant3d(SINGLE_QSP_ARG_DECL)
 	convolve3d(QSP_ARG  _fedp,_edp,_ffdp);
 }
 
-int scan_requant3d(int ntimes)
+int _scan_requant3d(QSP_ARG_DECL  int ntimes)
 {
 	dimension_t i;
 	int j;
@@ -328,7 +329,7 @@ int scan_requant3d(int ntimes)
 
 
 	if( _npixels == NO_PIXELS ){
-		NWARN("have to tell me which images first!");
+		warn("have to tell me which images first!");
 		return(0);
 	}
 
@@ -337,14 +338,14 @@ int scan_requant3d(int ntimes)
 	n_changed=0;
 	for(j=0;j<ntimes;j++){
 		for(i=0;i<(dimension_t)_npixels;i++){
-			(*scan_func3d)(i,OBJ_TYPE_DIMS(_edp),posn);
+			(*scan_func3d)(QSP_ARG  i,OBJ_TYPE_DIMS(_edp),posn);
 			n_changed += redo_pixel3d(posn);
 		}
 	}
 	return( n_changed );
 }
 
-void scan2_requant3d(int ntimes)
+void _scan2_requant3d(QSP_ARG_DECL  int ntimes)
 {
 	int j;
 	dimension_t i;
@@ -352,7 +353,7 @@ void scan2_requant3d(int ntimes)
 
 
 	if( _npixels == NO_PIXELS ){
-		NWARN("have to tell me which images first!");
+		warn("have to tell me which images first!");
 		return;
 	}
 
@@ -360,32 +361,8 @@ void scan2_requant3d(int ntimes)
 
 	for(j=0;j<ntimes;j++){
 		for(i=0;i<(dimension_t)_npixels;i++){
-			(*scan_func3d)(i,OBJ_TYPE_DIMS(_edp),posn);
+			(*scan_func3d)(QSP_ARG  i,OBJ_TYPE_DIMS(_edp),posn);
 			redo_two_pixels3d(posn);
-		}
-	}
-}
-
-void scan_anneal3d(double temp,int ntimes)
-{
-	int j;
-	incr_t i,posn[N_DIMENSIONS];
-
-	if( _npixels == NO_PIXELS ){
-		NWARN("have to tell me which images first!");
-		return;
-	}
-
-	/* scan image, updating y's */
-
-	/* this should probably have some other normalizing factors in it... */
-	_k = 1 ;
-	_temp = temp;
-
-	for(j=0;j<ntimes;j++){
-		for(i=0;i<_npixels;i++){
-			(*scan_func3d)(i,OBJ_TYPE_DIMS(_edp),posn);
-			anneal_pixel3d(posn);
 		}
 	}
 }
@@ -420,7 +397,7 @@ float get_delta3d(incr_t *posn)
  * Returns 1 if flipped, 0 otherwise.
  */
 
-int redo_pixel3d(incr_t *posn)
+int _redo_pixel3d(QSP_ARG_DECL  incr_t *posn)
 {
 	dimension_t eoffset,hoffset,goffset;
 	float oldbit;
@@ -461,14 +438,14 @@ int redo_pixel3d(incr_t *posn)
 
 	if( delta_E >= 0 ){
 		if( verbose ){
-			sprintf(DEFAULT_ERROR_STRING,"clearing pixel at %d, %d, %d",posn[1],posn[2],posn[3]);
-			NADVISE(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"clearing pixel at %d, %d, %d",posn[1],posn[2],posn[3]);
+			advise(ERROR_STRING);
 		}
 		*(_hptr+hoffset) = -1;
 	} else {
 		if( verbose ){
-			sprintf(DEFAULT_ERROR_STRING,"setting pixel at %d, %d, %d",posn[1],posn[2],posn[3]);
-			NADVISE(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"setting pixel at %d, %d, %d",posn[1],posn[2],posn[3]);
+			advise(ERROR_STRING);
 		}
 		*(_hptr+hoffset) =  1;
 	}
@@ -492,8 +469,8 @@ int redo_pixel3d(incr_t *posn)
 		_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"total sse: %g",get_sos3d(_edp,_fdp));
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"total sse: %g",get_sos3d(_edp,_fdp));
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	}
@@ -554,7 +531,7 @@ static incr_t dt_tbl[NLOCS]={ 0,  0, 0, 0, 0,  0,  0,  0,  0,
  * energy barrier.
  */
 
-void redo_two_pixels3d(incr_t *posn)
+void _redo_two_pixels3d(QSP_ARG_DECL  incr_t *posn)
 {
 	dimension_t eoffset;
 	dimension_t goffset;
@@ -573,8 +550,8 @@ void redo_two_pixels3d(incr_t *posn)
 
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"optimizing at %d, %d, %d",posn[1],posn[2],posn[3]);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"optimizing at %d, %d, %d",posn[1],posn[2],posn[3]);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -614,8 +591,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 	dtbl[ HERE ] = delta_E  * oldbit ;
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"energy gain from flip:  %g",dtbl[HERE]);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"energy gain from flip:  %g",dtbl[HERE]);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -675,8 +652,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 	if( bestloc == NO_LOC ){	/* restore to original state */
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"no improvement from pair flip");
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"no improvement from pair flip");
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		/* correct filtered error */
@@ -687,8 +664,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 	} else if( bestloc != HERE ){
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"improvement from pair flip at %d %d",dx_tbl[bestloc],dy_tbl[bestloc]);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"improvement from pair flip at %d %d",dx_tbl[bestloc],dy_tbl[bestloc]);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		new_posn[1] = posn[1] + dx_tbl[bestloc];
@@ -710,7 +687,9 @@ void set_temp3d(double temp)
 	_temp = temp;
 }
 
-static void anneal_pixel3d(incr_t *posn)
+#define anneal_pixel3d(posn) _anneal_pixel3d(QSP_ARG  posn)
+
+static void _anneal_pixel3d(QSP_ARG_DECL  incr_t *posn)
 {
 	incr_t goffset,hoffset,eoffset,feoffset;
 	u_char oldbit;
@@ -788,10 +767,34 @@ static void anneal_pixel3d(incr_t *posn)
 			sprintf(DEFAULT_MSG_STR,
 			"Pixel at %d,%d,%d\t SOS:  %g\t\tdelta = %g",
 				posn[1],posn[2],posn[3],the_sos,the_sos-oldsos);
-			NADVISE(DEFAULT_MSG_STR);
+			advise(DEFAULT_MSG_STR);
 		}
 	}
 } /* end anneal_pixel3d */
+
+void _scan_anneal3d(QSP_ARG_DECL  double temp,int ntimes)
+{
+	int j;
+	incr_t i,posn[N_DIMENSIONS];
+
+	if( _npixels == NO_PIXELS ){
+		warn("have to tell me which images first!");
+		return;
+	}
+
+	/* scan image, updating y's */
+
+	/* this should probably have some other normalizing factors in it... */
+	_k = 1 ;
+	_temp = temp;
+
+	for(j=0;j<ntimes;j++){
+		for(i=0;i<_npixels;i++){
+			(*scan_func3d)(QSP_ARG  i,OBJ_TYPE_DIMS(_edp),posn);
+			anneal_pixel3d(posn);
+		}
+	}
+}
 
 #ifdef NOT_USED
 void insist_pixel3d(dimension_t *posn)
@@ -836,7 +839,7 @@ static int power_of_two(uint32_t n)
 	return(0);
 }
 
-void get_3d_scattered_point(dimension_t n,Dimension_Set *dsp,posn_t *posn)
+void _get_3d_scattered_point(QSP_ARG_DECL  dimension_t n,Dimension_Set *dsp,posn_t *posn)
 {
 	uint32_t src_bit,dst_bit;
 	int i;
@@ -850,14 +853,14 @@ void get_3d_scattered_point(dimension_t n,Dimension_Set *dsp,posn_t *posn)
 
 	tot_siz = DIMENSION(dsp,0) * DIMENSION(dsp,1) * DIMENSION(dsp,2) * DIMENSION(dsp,3) * DIMENSION(dsp,4);
 	if( ! power_of_two(tot_siz) ){
-		sprintf(DEFAULT_ERROR_STRING,"get_3d_scattered_point:  total size %d is not a power of two",
+		sprintf(ERROR_STRING,"get_3d_scattered_point:  total size %d is not a power of two",
 			tot_siz);
-		NERROR1(DEFAULT_ERROR_STRING);
+		error1(ERROR_STRING);
 		return;
 	}
     if( tot_siz <= 1 ){
-        sprintf(DEFAULT_ERROR_STRING,"get_3d_scattered_point:  total size %d is <= 1!?",tot_siz);
-        NERROR1(DEFAULT_ERROR_STRING);
+        sprintf(ERROR_STRING,"get_3d_scattered_point:  total size %d is <= 1!?",tot_siz);
+        error1(ERROR_STRING);
 	    return;
     }
 
@@ -882,7 +885,7 @@ void get_3d_scattered_point(dimension_t n,Dimension_Set *dsp,posn_t *posn)
 	posn[4]=0;
 }
 
-void get_3d_raster_point(dimension_t n,Dimension_Set *dsp,posn_t *posn)
+void _get_3d_raster_point(QSP_ARG_DECL  dimension_t n,Dimension_Set *dsp,posn_t *posn)
 {
 	posn[3] = n / (DIMENSION(dsp,0)*DIMENSION(dsp,1)*DIMENSION(dsp,2));
 	posn[2] = ( n / (DIMENSION(dsp,1)*DIMENSION(dsp,0)) ) % DIMENSION(dsp,2);
@@ -894,7 +897,7 @@ void get_3d_raster_point(dimension_t n,Dimension_Set *dsp,posn_t *posn)
 	posn[4]=0;
 }
 
-void get_3d_random_point(dimension_t n,Dimension_Set *dsp,posn_t *posn)
+void _get_3d_random_point(QSP_ARG_DECL  dimension_t n,Dimension_Set *dsp,posn_t *posn)
 {
 	int i;
 
@@ -1043,7 +1046,7 @@ double get_sos3d(Data_Obj *edp,Data_Obj *fdp)		/* get the total sq'd error */
 
 #define AS_END			}}
 
-double add_to_sos3d(posn_t *posn,Data_Obj *edp,Data_Obj *fdp,int factor)
+double _add_to_sos3d(QSP_ARG_DECL  posn_t *posn,Data_Obj *edp,Data_Obj *fdp,int factor)
 {
 	double err,adj;
 	incr_t var[N_DIMENSIONS];
@@ -1074,8 +1077,8 @@ double add_to_sos3d(posn_t *posn,Data_Obj *edp,Data_Obj *fdp,int factor)
 		adj /= - (OBJ_COLS(edp) * OBJ_ROWS(edp) * OBJ_FRAMES(edp) * OBJ_COMPS(edp));
 #ifdef CAUTIOUS
 	else {
-		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  add_to_sos:  factor (%d) is not 1 or -1 !?",factor);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"CAUTIOUS:  add_to_sos:  factor (%d) is not 1 or -1 !?",factor);
+		warn(ERROR_STRING);
 		return(0.0);
 	}
 #endif /* CAUTIOUS */

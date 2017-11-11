@@ -6,13 +6,13 @@ GENERATED_SOURCE=	vl2_veclib_prot.h ocl_veclib_prot.h cu2_veclib_prot.h
 clean-local:
 	rm -rf $(GENERATED_SOURCE)
 
-cu2_veclib_prot.h:	cu2_veclib_prot.m4 cu2_port.m4 gen_port.m4 cu2_func_prot.m4
+cu2_veclib_prot.h:	cu2_veclib_prot.m4 cu2_port.m4 gen_port.m4 cu2_func_prot.m4 vecgen.m4
 	m4 -I $(srcdir) -I$(top_srcdir)/include < $(srcdir)/cu2_veclib_prot.m4 > $(builddir)/cu2_veclib_prot.h
 
-vl2_veclib_prot.h:	vl2_veclib_prot.m4 vl2_port.m4 gen_port.m4 vl2_func_prot.m4
+vl2_veclib_prot.h:	vl2_veclib_prot.m4 vl2_port.m4 gen_port.m4 vl2_func_prot.m4 vecgen.m4
 	m4 -I $(srcdir) -I$(top_srcdir)/include < $(srcdir)/vl2_veclib_prot.m4 > $(builddir)/vl2_veclib_prot.h
 
-ocl_veclib_prot.h:	ocl_veclib_prot.m4 ocl_port.m4 gen_port.m4 ocl_func_prot.m4
+ocl_veclib_prot.h:	ocl_veclib_prot.m4 ocl_port.m4 gen_port.m4 ocl_func_prot.m4 vecgen.m4
 	m4 -I $(srcdir) -I$(top_srcdir)/include < $(srcdir)/ocl_veclib_prot.m4 > $(builddir)/ocl_veclib_prot.h
 
 #			platform_funcs.h

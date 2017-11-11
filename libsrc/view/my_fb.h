@@ -46,7 +46,10 @@ typedef struct fb_info {
 
 ITEM_INTERFACE_PROTOTYPES(FB_Info,fbi)
 
-#define PICK_FBI(pmpt)		pick_fbi(QSP_ARG  pmpt)
+#define pick_fbi(pmpt)		_pick_fbi(QSP_ARG  pmpt)
+#define fbi_of(s)		_fbi_of(QSP_ARG  s)
+#define new_fbi(s)		_new_fbi(QSP_ARG  s)
+#define del_fbi(s)		_del_fbi(QSP_ARG  s)
 
 #ifndef FBIO_WAITFORVSYNC
 // When is this not defined???

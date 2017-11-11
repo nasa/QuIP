@@ -52,22 +52,23 @@ void rls_macro(QSP_ARG_DECL  Macro *mp)
 		assert(MACRO_ARG_TBL(mp)==NULL);
 	}
 
-	del_macro(QSP_ARG  mp);
+	del_macro(mp);
 }
 
 Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno)
 {
 	Macro *mp;
 
-	mp = new_macro(QSP_ARG  name);
+	mp = new_macro(name);
 	SET_MACRO_N_ARGS(mp,n);
 	SET_MACRO_FLAGS(mp,0);
 	SET_MACRO_ARG_TBL(mp,ma_tbl);
 	assert(sbp!=NULL);
-	if( *sb_buffer(sbp) != 0 )
+	if( *sb_buffer(sbp) != 0 ){
 		SET_MACRO_TEXT(mp,savestr(sb_buffer(sbp)));
-	else
+	} else {
 		SET_MACRO_TEXT(mp,NULL);
+	}
 
 	// Can we access the filename here, or do we
 	// need to do it earlier because of lookahead?
@@ -91,12 +92,13 @@ static void setup_generic_macro_arg(Macro_Arg *map, int idx)
 	map->ma_prompt = savestr(str);	// memory leak?  BUG?  where freed?
 }
 
-Macro_Arg **create_generic_macro_args(int n)
+Macro_Arg **_create_generic_macro_args(QSP_ARG_DECL  int n)
 {
 	Macro_Arg **ma_tbl;
 	int i;
 
-	assert(n>0&&n<32);	// 32 is somewhat arbitrary...
+	assert(n>=0&&n<32);	// 32 is somewhat arbitrary...
+	if( n == 0 ) return NULL;
 	ma_tbl = getbuf( n * sizeof(Macro_Arg *));
 	for(i=0;i<n;i++){
 		ma_tbl[i] = getbuf( sizeof(Macro_Arg) );

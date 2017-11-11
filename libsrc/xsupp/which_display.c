@@ -17,9 +17,9 @@
 
 static const char *display_name=NULL;
 
-const char *which_display( SINGLE_QSP_ARG_DECL )
+const char *_which_display( SINGLE_QSP_ARG_DECL )
 {
-	display_name = check_display(SINGLE_QSP_ARG);
+	display_name = check_display();
 	if( !strncmp(display_name, ":0", 1 ))
 		display_name=getenv("HOSTNAME");
 

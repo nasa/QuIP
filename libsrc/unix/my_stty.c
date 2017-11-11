@@ -11,7 +11,7 @@
 #ifdef TTY_CTL
 #include "ttyctl.h"
 #else /* ! TTY_CTL */
-#define NO_TTY_CTL_MSG	WARN("Sorry, no tty control in this build.");
+#define NO_TTY_CTL_MSG	warn("Sorry, no tty control in this build.");
 #endif /* ! TTY_CTL */
 
 #include "my_stty.h"
@@ -44,8 +44,9 @@ static int stty_fd=(-1);
 // BUG global var not thread-safe
 static struct termios tiobuf;
 
+#define baud_for_code(c) _baud_for_code(QSP_ARG  c)
 
-static int baud_for_code(QSP_ARG_DECL  int c)
+static int _baud_for_code(QSP_ARG_DECL  int c)
 {
 	int b;
 
@@ -110,10 +111,10 @@ static int baud_for_code(QSP_ARG_DECL  int c)
 #ifdef CAUTIOUS
 		default:
 			b=0;	/* elim warning */
-			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  show_baud:  undefined baud rate constant 0x%x!?",c);
-			NWARN(DEFAULT_ERROR_STRING);
-			sprintf(DEFAULT_ERROR_STRING,"\tB9600 = 0x%x",B9600);
-			advise(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"CAUTIOUS:  show_baud:  undefined baud rate constant 0x%x!?",c);
+			warn(ERROR_STRING);
+			sprintf(ERROR_STRING,"\tB9600 = 0x%x",B9600);
+			advise(ERROR_STRING);
 			break;
 #endif /* CAUTIOUS */
 
@@ -130,14 +131,14 @@ static void show_baud(SINGLE_QSP_ARG_DECL)
 
 	speed = cfgetispeed(&tiobuf);
 //fprintf(stderr,"cfgetispeed returned %d (0x%lx)\n",speed,(u_long)speed);
-	b = baud_for_code(QSP_ARG  speed);
+	b = baud_for_code(speed);
 #else // ! HAVE_CFGETISPEED
 
 #ifdef CBAUD
 	int speed;
 
 	speed = tiobuc.c_cflag & CBAUD;
-	b = baud_for_code(QSP_ARG  speed);
+	b = baud_for_code(speed);
 
 #else /* ! CBAUD (OSX and what else???) */
 
@@ -234,10 +235,10 @@ static void show_all(QSP_ARG_DECL  int fd)
 		default: prt_msg("wacky data bits"); break;
 	}
 
-	show_term_flags(QSP_ARG  tiobuf.c_cflag,cf_opts);
-	show_term_flags(QSP_ARG  tiobuf.c_iflag,if_opts);
-	show_term_flags(QSP_ARG  tiobuf.c_oflag,of_opts);
-	show_term_flags(QSP_ARG  tiobuf.c_lflag,lf_opts);
+	show_term_flags(tiobuf.c_cflag,cf_opts);
+	show_term_flags(tiobuf.c_iflag,if_opts);
+	show_term_flags(tiobuf.c_oflag,of_opts);
+	show_term_flags(tiobuf.c_lflag,lf_opts);
 }
 
 static Termio_Option *search_to_tbl(Termio_Option *tbl,const char* name)
@@ -292,13 +293,13 @@ static void dump_all(QSP_ARG_DECL  int fd)
 	}
 	*/
 
-	dump_term_flags(QSP_ARG  tiobuf.c_cflag,cf_opts);
-	dump_term_flags(QSP_ARG  tiobuf.c_iflag,if_opts);
-	dump_term_flags(QSP_ARG  tiobuf.c_oflag,of_opts);
-	dump_term_flags(QSP_ARG  tiobuf.c_lflag,lf_opts);
+	dump_term_flags(tiobuf.c_cflag,cf_opts);
+	dump_term_flags(tiobuf.c_iflag,if_opts);
+	dump_term_flags(tiobuf.c_oflag,of_opts);
+	dump_term_flags(tiobuf.c_lflag,lf_opts);
 }
 
-void set_tty_flag(const char *flagname,int fd,int value)
+void _set_tty_flag(QSP_ARG_DECL  const char *flagname,int fd,int value)
 {
 	Termio_Option *top;
 	tcflag_t *flag_ptr;
@@ -322,13 +323,13 @@ void set_tty_flag(const char *flagname,int fd,int value)
 	}
 
 	if( top == NULL ){
-		sprintf(DEFAULT_ERROR_STRING,"Unrecognized flag %s",flagname);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"Unrecognized flag %s",flagname);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( fd < 0 ) {
-		NWARN("no serial device open");
+		warn("no serial device open");
 		return;
 	}
 
@@ -349,7 +350,7 @@ void set_stty_fd(int fd)
 	stty_fd = fd;
 }
 
-#define STTY_FD_CHECK	if( stty_fd < 0 ){ NWARN("need to open a file first"); return; }
+#define STTY_FD_CHECK	if( stty_fd < 0 ){ warn("need to open a file first"); return; }
 
 static COMMAND_FUNC( do_showall )
 {
@@ -373,10 +374,10 @@ static COMMAND_FUNC( do_stty_dump )
 
 #ifdef TTY_CTL
 #define SET_PARITY(fd,x,y)	set_parity(fd,x,y)
-#define	SET_NDATA(fd,n)		set_ndata(fd,n)
+#define	SET_N_DATA_BITS(fd,n)	set_n_data_bits(fd,n)
 #else // ! TTY_CTL
 #define SET_PARITY(fd,x,y)	NO_TTY_CTL_MSG
-#define	SET_NDATA(fd,n)		NO_TTY_CTL_MSG
+#define	SET_N_DATA_BITS(fd,n)		NO_TTY_CTL_MSG
 #endif // ! TTY_CTL
 
 #define N_PARITY_CHOICES 3
@@ -407,7 +408,7 @@ static COMMAND_FUNC( do_set_par )
 			break;
 #ifdef CAUTIOUS
 		default:
-			WARN("CAUTIOUS:  unexpected parity choice index!?");
+			warn("CAUTIOUS:  unexpected parity choice index!?");
 			break;
 #endif // CAUTIOUS
 	}
@@ -423,7 +424,7 @@ static COMMAND_FUNC( do_set_ndata )
 	HOW_MANY("number of data bits");
 #endif // ! TTY_CTL
 	STTY_FD_CHECK
-	SET_NDATA(stty_fd,n);
+	SET_N_DATA_BITS(stty_fd,n);
 }
 
 static COMMAND_FUNC( do_setflag )
@@ -505,8 +506,8 @@ MENU_END(stty)
 COMMAND_FUNC( do_stty_menu )
 {
 	if( stty_fd < 0 )
-		WARN("stty_menu:  no valid file descriptor selected!?");
+		warn("stty_menu:  no valid file descriptor selected!?");
 
-	PUSH_MENU(stty);
+	CHECK_AND_PUSH_MENU(stty);
 }
 

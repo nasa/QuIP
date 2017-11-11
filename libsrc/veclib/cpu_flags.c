@@ -11,15 +11,17 @@
 #include <stdio.h>
 #include <string.h>
 
-static int cpu_flag_set(char *string)
+#define cpu_flag_set(string) _cpu_flag_set(QSP_ARG  string)
+
+static int _cpu_flag_set(QSP_ARG_DECL  char *string)
 {
 	FILE *fp;
 	char str[32];
 
 	fp=popen("grep flags /proc/cpuinfo | head -1 | awk -F ':' '{print $2}'","r");
 	if( fp == NULL ) {
-		sprintf(DEFAULT_ERROR_STRING,"cpu_flag_set:  error opening pipe to read /proc/cpuinfo");
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"cpu_flag_set:  error opening pipe to read /proc/cpuinfo");
+		warn(ERROR_STRING);
 		return(0);
 	}
 	while( fscanf(fp,"%s",str) == 1 ){
@@ -32,17 +34,17 @@ static int cpu_flag_set(char *string)
 	return(0);
 }
 
-int cpu_supports_mmx(void)
+int _cpu_supports_mmx(SINGLE_QSP_ARG_DECL)
 {
 	return cpu_flag_set("mmx");
 }
 
-int cpu_supports_sse(void)
+int _cpu_supports_sse(SINGLE_QSP_ARG_DECL)
 {
 	return cpu_flag_set("sse");
 }
 
-int cpu_supports_sse2(void)
+int _cpu_supports_sse2(SINGLE_QSP_ARG_DECL)
 {
 	return cpu_flag_set("sse2");
 }
@@ -51,9 +53,9 @@ int cpu_supports_sse2(void)
 
 /* BUG this stuff might work on Macs if we knew how to test... */
 
-int cpu_supports_mmx(void) { return 1; }
-int cpu_supports_sse(void) { return 1; }
-int cpu_supports_sse2(void) { return 1; }
+int _cpu_supports_mmx(SINGLE_QSP_ARG_DECL) { return 1; }
+int _cpu_supports_sse(SINGLE_QSP_ARG_DECL) { return 1; }
+int _cpu_supports_sse2(SINGLE_QSP_ARG_DECL) { return 1; }
 
 #endif /* ! HAVE_PROC_CPUINFO */
 

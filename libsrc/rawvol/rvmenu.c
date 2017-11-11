@@ -34,7 +34,7 @@
 	sprintf(ERROR_STRING,				\
 "Unable to call %s, program not configured with raw volume support!?",	\
 		#funcname);				\
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 
 #endif // ! HAVE_RAWVOL
 
@@ -52,7 +52,7 @@ static COMMAND_FUNC( do_mkfs )
 		sprintf(ERROR_STRING,
 	"Number of disks (%d) must be between 1 and %d",
 			ndisks,MAX_DISKS);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		ndisks=1;
 	}
 	for(i=0;i<ndisks;i++){
@@ -61,7 +61,7 @@ static COMMAND_FUNC( do_mkfs )
 			sprintf(ERROR_STRING,
 	"Need to increase MAX_DISKNAME_LEN (%d) to accomodate diskname \"%s\"",
 				MAX_DISKNAME_LEN,s);
-			ERROR1(ERROR_STRING);
+			error1(ERROR_STRING);
 		}
 		strcpy(disknames[i],s);
 		str_arr[i] = disknames[i];
@@ -72,12 +72,12 @@ static COMMAND_FUNC( do_mkfs )
 
 	if( nib <= 0  ){
 		sprintf(ERROR_STRING,"number of inode blocks (%ld) must be positive",nib);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( nsb <= 0  ){
 		sprintf(ERROR_STRING,"number of string blocks (%ld) must be positive",nsb);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -120,10 +120,10 @@ static COMMAND_FUNC( do_rm )
 {
 	RV_Inode *inp;
 
-	inp = PICK_RV_INODE("");
+	inp = pick_rv_inode("");
 	if( inp==NULL ) return;
 #ifdef HAVE_RAWVOL
-	rv_rmfile(QSP_ARG  inp->rvi_name);
+	rv_rmfile(inp->rvi_name);
 #else // ! HAVE_RAWVOL
 	MISSING_CONFIG(rv_rmfile)
 #endif // ! HAVE_RAWVOL
@@ -134,7 +134,7 @@ static COMMAND_FUNC( do_chmod )
 	RV_Inode *inp;
 	int mode;
 
-	inp = PICK_RV_INODE("");
+	inp = pick_rv_inode("");
 	mode = HOW_MANY("integer mode code");
 	if( inp==NULL ) return;
 #ifdef HAVE_RAWVOL
@@ -148,7 +148,7 @@ static COMMAND_FUNC( do_ls_one )
 {
 	RV_Inode *inp;
 
-	inp = PICK_RV_INODE("");
+	inp = pick_rv_inode("");
 	if( inp==NULL ) return;
 #ifdef HAVE_RAWVOL
 	rv_ls_inode(QSP_ARG  inp);
@@ -167,7 +167,7 @@ static COMMAND_FUNC( do_mkfile )
 	nw=HOW_MANY("number of blocks per write");
 
 	if( nt<= 1 || nw <= 1 ){
-		WARN("number of blocks must be greater than 1");
+		warn("number of blocks must be greater than 1");
 		return;
 	}
 
@@ -215,14 +215,14 @@ static COMMAND_FUNC( do_set_root )
 	s=NAMEOF("user name for root privileges");
 
 	if( getuid() != 0 ){
-		WARN("Only root can grant rawvol super-user privileges to other users");
+		warn("Only root can grant rawvol super-user privileges to other users");
 		return;
 	}
 
 #ifdef HAVE_RAWVOL
 	if( grant_root_access(QSP_ARG  s) < 0 ){
 		sprintf(ERROR_STRING,"Error granting root access to user %s",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #else // ! HAVE_RAWVOL
 	MISSING_CONFIG(grant_root_access)
@@ -279,7 +279,7 @@ MENU_END(admin)
 
 static COMMAND_FUNC( do_admin )
 {
-	PUSH_MENU(admin);
+	CHECK_AND_PUSH_MENU(admin);
 }
 
 static COMMAND_FUNC( do_rv_end )
@@ -292,18 +292,18 @@ static COMMAND_FUNC( do_rv_end )
 	MISSING_CONFIG(rv_sync)
 #endif // ! HAVE_RAWVOL
 
-	POP_MENU;
+	pop_menu();
 }
 
 static COMMAND_FUNC( do_rv_info )
 {
 	RV_Inode *inp;
 
-	inp = PICK_RV_INODE("filename");
+	inp = pick_rv_inode("filename");
 	if( inp == NULL ) return;
 
 #ifdef HAVE_RAWVOL
-	rv_info(QSP_ARG  inp);
+	rv_info(inp);
 #else // ! HAVE_RAWVOL
 	MISSING_CONFIG(rv_info)
 #endif // ! HAVE_RAWVOL
@@ -323,14 +323,16 @@ static COMMAND_FUNC( do_err_frms )
 	const char *s;
 	RV_Inode *inp;
 	int i;
+	Frame_Info *fi_p;
 
 	s = NAMEOF("name for data vector");
-	inp = PICK_RV_INODE("filename");
+	inp = pick_rv_inode("filename");
 	i = WHICH_ONE("error type",N_ERROR_TYPES,error_type_list);
 
 	if( inp==NULL || i < 0 ) return;
 
-	if( inp->rvi_fi[i].fi_nsaved <= 0 ){
+	fi_p = &(inp->rvi_frame_info[i]);
+	if( FRAME_INFO_N_SAVED(fi_p) <= 0 ){
 		/*if( verbose ){ */
 			sprintf(ERROR_STRING,
 	"rv file %s has no %s errors",inp->rvi_name,error_type_list[i]);
@@ -339,7 +341,7 @@ static COMMAND_FUNC( do_err_frms )
 		return;
 	}
 
-	dp = dobj_of(QSP_ARG  s);
+	dp = dobj_of(s);
 	if( dp != NULL ){
 		/* object already exists */
 		if( verbose ){
@@ -347,13 +349,13 @@ static COMMAND_FUNC( do_err_frms )
 		"deleting previously created object %s",s);
 			advise(ERROR_STRING);
 		}
-		delvec(QSP_ARG  dp);
+		delvec(dp);
 	}
 
-	dp = mk_vec(QSP_ARG  s,inp->rvi_fi[i].fi_nsaved,1,PREC_FOR_CODE(PREC_DI));
+	dp = mk_vec(QSP_ARG  s,FRAME_INFO_N_SAVED(fi_p),1,PREC_FOR_CODE(PREC_DI));
 	if( dp == NULL ){
 		sprintf(ERROR_STRING,"do_err_frms:  unable to create data vector %s",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 #ifdef HAVE_RAWVOL
@@ -391,7 +393,7 @@ static COMMAND_FUNC( do_default_rv )
 {
 #ifdef HAVE_RAWVOL
 	if( insure_default_rv(SINGLE_QSP_ARG) < 0 )
-		WARN("Unable to mount default raw volume");
+		warn("Unable to mount default raw volume");
 #else // ! HAVE_RAWVOL
 	MISSING_CONFIG(insure_default_rv)
 #endif // ! HAVE_RAWVOL
@@ -494,11 +496,11 @@ COMMAND_FUNC( do_rv_menu )
 		/* insure_default_rv(); */
 #ifdef DEBUG
 		if( rawvol_debug == 0 )
-			rawvol_debug = add_debug_module(QSP_ARG  "rawvol");
+			rawvol_debug = add_debug_module("rawvol");
 #endif /* DEBUG */
 		inited++;
 	}
 
-	PUSH_MENU(rawvol);
+	CHECK_AND_PUSH_MENU(rawvol);
 }
 

@@ -27,7 +27,7 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 		Command *cp;
 		cp = (Command *)NODE_DATA(np);
 		// should we use the menu prompt or the full prompt?
-		add_def(QSP_ARG  QS_PROMPT_STR(THIS_QSP),CMD_SELECTOR(cp));
+		add_def(QS_CMD_PROMPT_STR(THIS_QSP),CMD_SELECTOR(cp));
 		np = NODE_NEXT(np);
 	}
 }
@@ -39,7 +39,7 @@ static void perform_callbacks(SINGLE_QSP_ARG_DECL)
 {
 	assert( QS_CALLBACK_LIST(THIS_QSP) != NULL );
 
-	reset_return_strings(SINGLE_QSP_ARG);
+	reset_return_strings();
 	call_funcs_from_list(QSP_ARG  QS_CALLBACK_LIST(THIS_QSP) );
 }
 
@@ -73,9 +73,9 @@ void qs_do_cmd( Query_Stack *qsp )
 
 
 	//SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),0);
-	reset_return_strings(SINGLE_QSP_ARG);
+	reset_return_strings();
 
-	cmd = nameof2(QSP_ARG  QS_PROMPT_STR(qsp));
+	cmd = next_query_word(QS_CMD_PROMPT_STR(qsp));
 
 	if( cmd == NULL || strlen(cmd) == 0 ){
 		return;
@@ -99,15 +99,15 @@ void qs_do_cmd( Query_Stack *qsp )
 				){
 
 
-			rem_def(QSP_ARG  QS_PROMPT_STR(qsp),cmd);	// erase from history list
+			rem_def(QS_CMD_PROMPT_STR(qsp),cmd);	// erase from history list
 		}
 #endif /* HAVE_HISTORY */
 
 		sprintf(ERROR_STRING,"Command \"%s\" not found!?",cmd);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		// Show the menu here
-		list_menu( QSP_ARG  TOP_OF_STACK( QS_MENU_STACK(THIS_QSP) ) );
-		list_menu( QSP_ARG  QS_HELP_MENU(THIS_QSP) );
+		list_menu( TOP_OF_STACK( QS_MENU_STACK(THIS_QSP) ) );
+		list_menu( QS_HELP_MENU(THIS_QSP) );
 
 		return;
 	}
@@ -190,13 +190,13 @@ static void store_mouthful(QSP_ARG_DECL  const char *text,
 
 void chew_mouthful(Mouthful *mfp)
 {
-	chew_text(DEFAULT_QSP_ARG  mfp->text, mfp->filename );
+	_chew_text(DEFAULT_QSP_ARG  mfp->text, mfp->filename );
 }
 
 static void begin_digestion(QSP_ARG_DECL  const char *text, const char *filename)
 {
 	push_top_menu(SINGLE_QSP_ARG);	/* make sure at root menu */
-	PUSH_TEXT(text,filename);	/* or fullpush? */
+	push_text(text,filename);	/* or fullpush? */
 }
 
 // Interpret this text
@@ -228,14 +228,14 @@ static void finish_digestion(QSP_ARG_DECL  int level)
 	if( IS_HALTING(THIS_QSP) ){
 		return;
 	}
-	pop_menu(SINGLE_QSP_ARG);
+	pop_menu();
 }
 
 
 // We use digest when we call from the optimization package,
 // because it doesn't mess with the chew flag...
 
-void digest(QSP_ARG_DECL  const char *text, const char *filename)
+void _digest(QSP_ARG_DECL  const char *text, const char *filename)
 {
 	/* set_busy_cursor(); */
 
@@ -261,7 +261,7 @@ static void chew_stored(SINGLE_QSP_ARG_DECL)
 			}
 		}
 	}
-	/* else { WARN("no chew_list"); } */
+	/* else { warn("no chew_list"); } */
 
 	/* set_std_cursor(); */
 } // end chew_stored
@@ -278,7 +278,7 @@ void finish_swallowing(SINGLE_QSP_ARG_DECL)
 // eat this text, unless we are already chewing something else...
 // In that case, save it for later.
 
-void chew_text(QSP_ARG_DECL  const char *text, const char *filename )
+void _chew_text(QSP_ARG_DECL  const char *text, const char *filename )
 {
 	if( text == NULL ) return;
 	if( IS_CHEWING(THIS_QSP) ){
@@ -331,15 +331,20 @@ void resume_quip(SINGLE_QSP_ARG_DECL)
 
 void exec_at_level(QSP_ARG_DECL  int level)
 {
+	int l;
+
 	assert( level >= 0 );
 
 	// We thought a lookahead here might help, but it didn't, probably
 	// because lookahead does not skip comments?
 
+	push_stop_level(level);
+
 	//lookahead(SINGLE_QSP_ARG);	// in case an empty macro was pushed?
 	while( QLEVEL >= level ){
 		qs_do_cmd(THIS_QSP);
 		if( IS_HALTING(THIS_QSP) ){
+			// restore stop level here???  BUG?
 			return;
 		}
 
@@ -350,6 +355,8 @@ void exec_at_level(QSP_ARG_DECL  int level)
 
 		lookahead(SINGLE_QSP_ARG);
 	}
+	l = pop_stop_level();
+	set_stop_level(l);
 
 	// BUG?  what happens if we halt execution when an alert is delivered?
 }

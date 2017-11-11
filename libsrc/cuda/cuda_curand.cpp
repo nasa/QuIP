@@ -48,14 +48,16 @@ static void init_curand(void);
 
 /* Does the lib support double? */
 
-static void g_sp_vuni(Data_Obj *dp)
+#define g_sp_vuni(dp) _g_sp_vuni(QSP_ARG  dp)
+
+static void _g_sp_vuni(QSP_ARG_DECL  Data_Obj *dp)
 {
 	curandStatus_t s;
 
 	if( f_gen == NULL ){
 		init_curand();
 	}
-	if( is_contiguous(DEFAULT_QSP_ARG  dp) ){
+	if( is_contiguous(dp) ){
 		s = curandGenerateUniform(f_gen,(float *)OBJ_DATA_PTR(dp), OBJ_N_TYPE_ELTS(dp) );
 		if( s != CURAND_STATUS_SUCCESS ){
 			NWARN("curand error generating uniform floats");
@@ -88,7 +90,7 @@ static void init_curand(void)
 
 
 // We use the curand implementation of the random number generator...
-void g_vuni( Vec_Obj_Args *oap )
+void g_vuni( QSP_ARG_DECL  Vec_Obj_Args *oap )
 {
 #ifdef HAVE_LIBCURAND
 	Data_Obj *dp;

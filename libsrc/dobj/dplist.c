@@ -11,6 +11,7 @@
 #include "data_obj.h"
 #include "dobj_prot.h"
 #include "debug.h"
+#include "platform.h"
 
 // BUG prec_for_code should use table lookup instead of list search
 
@@ -41,7 +42,7 @@ Precision *prec_for_code(prec_t prec)
 	return NULL;
 }
 
-void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
+void _describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 {
 	assert( SHP_PREC_PTR(shpp) != NULL );
 	
@@ -75,6 +76,7 @@ void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 	else if( VOID_SHAPE(shpp) )
 		sprintf(MSG_STR,"void shape                            ");
 	else {
+fprintf(stderr,"no categorization of shape at 0x%lx!?\n",(long)shpp);
 		assert( AERROR("describe_shape:  bad object type flag!?") );
 	}
 	prt_msg_frag(MSG_STR);
@@ -136,7 +138,7 @@ void dump_shape(QSP_ARG_DECL  Shape_Info *shpp)
 	sprintf(MSG_STR,"shpp = 0x%lx",(int_for_addr)shpp);
 	prt_msg(MSG_STR);
 
-	describe_shape(QSP_ARG  shpp);
+	describe_shape(shpp);
 	sprintf(MSG_STR,"prec = 0x%"PREC_FMT_X,SHP_PREC(shpp));
 	prt_msg(MSG_STR);
 	for(i=0;i<N_DIMENSIONS;i++){
@@ -162,7 +164,7 @@ void dump_shape(QSP_ARG_DECL  Shape_Info *shpp)
 	*/
 }
 
-void list_dobj(QSP_ARG_DECL  Data_Obj *dp)
+void _list_dobj(QSP_ARG_DECL  Data_Obj *dp)
 {
 	char string[128];
 
@@ -172,7 +174,7 @@ void list_dobj(QSP_ARG_DECL  Data_Obj *dp)
 		sprintf(string,"%s:%s", AREA_NAME( OBJ_AREA(dp) ), OBJ_NAME(dp) );
 	sprintf(MSG_STR,"%-40s",string);
 	prt_msg_frag(MSG_STR);
-	describe_shape(QSP_ARG   OBJ_SHAPE(dp) );
+	describe_shape(OBJ_SHAPE(dp) );
 
 	/*
 	if( dp->dt_extra != NULL ){
@@ -371,10 +373,12 @@ static void list_device(QSP_ARG_DECL  Data_Obj *dp)
 // This was originally written to be a CAUTIOUS error,
 // but in fact this seems like the correct behavior.
 // The alternative would be for the objects to keep a pointer
-// to their context (BETTER SOLUTION, BUG, FIXME), but
+// to their context (BETTER SOLUTION, BUG), but
 // for now it's not worth the trouble.
+// Another solution would be to search ALL of the contexts, not
+// just those currently on the stack...
 
-static void list_context(QSP_ARG_DECL  Data_Obj *dp)
+static void show_dobj_context(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Item_Context *icp;
 	Node *np;
@@ -390,15 +394,14 @@ static void list_context(QSP_ARG_DECL  Data_Obj *dp)
 	 */
 
 	if( OBJ_PARENT(dp) != NULL ){
-		list_context(QSP_ARG  OBJ_PARENT( dp) );
+		show_dobj_context(QSP_ARG  OBJ_PARENT( dp) );
 		return;
 	}
 
 	/* BUG this is the list of the current context stack,
 	 * not ALL the contexts!?
 	 */
-	//np=QLIST_HEAD( CONTEXT_LIST(dobj_itp) );
-	np=QLIST_HEAD( DOBJ_CONTEXT_LIST );
+	np=QLIST_HEAD( LIST_OF_DOBJ_CONTEXTS );
 	assert( np != NULL );
 
 	while(np!=NULL){
@@ -409,10 +412,7 @@ sprintf(ERROR_STRING,
 "Searching context %s for object %s",CTX_NAME(icp),OBJ_NAME(dp));
 advise(ERROR_STRING);
 */
-		//ip=fetch_name(OBJ_NAME(dp),icp->ic_nsp);
-		//ip=FETCH_NAME_FROM_CONTEXT( OBJ_NAME(dp), icp );
 		ip=FETCH_OBJ_FROM_CONTEXT( dp, icp );
-//		ip = container_find_match( CTX_CONTAINER(icp), OBJ_NAME(dp) );
 		if( ((Data_Obj *)ip) == dp ){	/* found it! */
 			cname=CTX_NAME(icp);
 			goto show_context;
@@ -470,11 +470,11 @@ static void list_increments(QSP_ARG_DECL  Data_Obj *dp)
 }
 #endif /* QUIP_DEBUG */
 
-void longlist(QSP_ARG_DECL  Data_Obj *dp)
+void _longlist(QSP_ARG_DECL  Data_Obj *dp)
 {
-	list_dobj(QSP_ARG  dp);
+	list_dobj(dp);
 	list_device(QSP_ARG  dp);
-	list_context(QSP_ARG  dp);
+	show_dobj_context(QSP_ARG  dp);
 	list_sizes(QSP_ARG  dp);
 	list_data(QSP_ARG  dp);
 	list_relatives(QSP_ARG  dp);
@@ -493,13 +493,13 @@ void info_area(QSP_ARG_DECL  Data_Area *ap)
 	Node *np;
 	Data_Obj *dp;
 
-	lp=dobj_list(SINGLE_QSP_ARG);
+	lp=dobj_list();
 	if( lp==NULL ) return;
 	np=QLIST_HEAD( lp );
 	while( np != NULL ){
 		dp = (Data_Obj *)NODE_DATA(np);
 		if( OBJ_AREA(dp) == ap )
-			list_dobj(QSP_ARG   dp );
+			list_dobj(dp);
 		np=NODE_NEXT(np);
 	}
 }
@@ -509,7 +509,7 @@ void info_all_dps(SINGLE_QSP_ARG_DECL)
 	List *lp;
 	Node *np;
 
-	lp=data_area_list(SINGLE_QSP_ARG);
+	lp=data_area_list();
 	if( lp==NULL ) return;
 	np=QLIST_HEAD( lp );
 	while( np != NULL ){

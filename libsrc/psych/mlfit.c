@@ -48,7 +48,7 @@ void set_chance_rate( double r )
 void set_fcflag(int flg)
 { fc_flag=flg; }
 
-double regr(Data_Tbl *dtp,int first)
+double _regr(QSP_ARG_DECL  Data_Tbl *dtp,int first)
 /* =1 if the first iteration */
 {
 	int i;
@@ -94,8 +94,8 @@ double regr(Data_Tbl *dtp,int first)
 		}
 	}
 	if( nsamps <= 1 ) {
-		if( nsamps == 1 ) NWARN("sorry, can't fit a line to 1 point");
-		else NWARN("sorry, can't file a line to 0 points");
+		if( nsamps == 1 ) warn("sorry, can't fit a line to 1 point");
+		else warn("sorry, can't file a line to 0 points");
 		return(NO_GOOD);
 	}
 	nt=sx=sy=sxx=syy=sxy=0.0;
@@ -119,7 +119,7 @@ double regr(Data_Tbl *dtp,int first)
 		xyvar -= sx * sy ;
 	}
 	if( xvar == 0.0 ){
-		NWARN("zero xvar");
+		warn("zero xvar");
 		return(0.0);
 	}
 	slope= xyvar/ xvar;
@@ -128,7 +128,7 @@ double regr(Data_Tbl *dtp,int first)
 	else y_int= (sy-sx*slope)/nt;
 
 	if( yvar==0.0 ){
-		NWARN("zero yvar");
+		warn("zero yvar");
 		return(0.0);
 	}
 	r=xyvar/sqrt(xvar*yvar);
@@ -233,11 +233,11 @@ void ml_fit(QSP_ARG_DECL  Data_Tbl *dtp,int ntrac)		/** maximum liklihood fit */
 	optimize(QSP_ARG  likelihood);
 
 	slope = get_opt_param_value(QSP_ARG  SLOPE_NAME);
-	del_opt_param(QSP_ARG  slope_opp);
+	del_opt_param(slope_opp);
 
 	if( !fc_flag ){
 		y_int = get_opt_param_value(QSP_ARG  INTERCEPT_NAME);
-		del_opt_param(QSP_ARG  int_opp);
+		del_opt_param(int_opp);
 	} else
 		y_int = 0.0;
 }
@@ -269,7 +269,7 @@ void analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith t
 	slope = _slope;
 	y_int = _y_int;
 
-        if( slope == 0.0 ) NWARN("zero slope");
+        if( slope == 0.0 ) warn("zero slope");
         else if(!fc_flag) {
                 _x_ = ( ptoz( .5 ) - y_int )/ slope ;
                 siqd = ( ptoz(.25) - y_int )/slope;
@@ -372,7 +372,7 @@ void print_raw_data(QSP_ARG_DECL  Trial_Class * tcp)
 	prt_msg("\n");
 }
 
-void split(QSP_ARG_DECL  Trial_Class * tcp,int wantupper)
+void _split(QSP_ARG_DECL  Trial_Class * tcp,int wantupper)
 {
         int j;
         Data_Tbl *dtp;
@@ -397,7 +397,7 @@ void split(QSP_ARG_DECL  Trial_Class * tcp,int wantupper)
 			}
 		}
 	}
-	if( !havzero ) NWARN("split:  no zero found!");
+	if( !havzero ) warn("split:  no zero found!");
 }
 
 static const char *clist[]={"negative","unconstrained","positive"};
@@ -406,7 +406,7 @@ COMMAND_FUNC( constrain_slope )
 {
 	int ctype;
 
-	ctype = WHICH_ONE("constraint for slope",3,clist);
+	ctype = which_one("constraint for slope",3,clist);
 	if( ctype < 0 ) return;
 
 	slope_constraint = ctype -1;

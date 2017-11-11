@@ -1,0 +1,156 @@
+max_warnings 2
+Set size 8
+
+Set zoom 64
+Viewer v1 $zoom*$size $zoom*$size
+Viewer v2 $zoom*$size $zoom*$size
+Posn_Window v1 50 50
+Posn_Window v2 600 60
+
+Image f $size $size 1 float
+Image g $size $size 1 float
+Image c $size $size 1 complex
+Image c2 $size $size 1 complex
+Xform_For xf f
+
+Zoomed_Viewer_For v3 xf{0} $zoom
+Zoomed_Viewer_For v4 xf{0} $zoom
+Posn_Window v3 1150 50
+Posn_Window v4 1500 50
+
+
+Define Try_Transforms 0
+
+VSet c{1} 0
+VMov c{0} f
+
+#Display f
+
+RFFT xf f
+advise 'Showing real transform...'
+#verbose yes
+Disp_Image xf{0} v3
+Disp_Image xf{1} v4
+#verbose no
+Pause
+
+advise 'Computing real inverse from transform...'
+RInvFFT g xf
+advise 'reconstructed image should be in the range -1 to 1'
+#verbose yes
+Disp_Image g v2
+#verbose no
+Pause
+
+exit_macro
+
+# Show the in-place transform
+advise 'Showing real transform after computation of inverse...'
+#verbose yes
+Disp_Image xf{0} v3
+Disp_Image xf{1} v4
+#verbose no
+Pause
+
+
+# Now try doing it by hand
+
+advise "Computing 2D transform 'by hand'"
+Set i 0
+repeat nrows(f)
+  RFFT xf[$i] f[$i]
+  Increment i
+  end
+advise "Row transforms computed"
+Disp_Image xf{0} v3
+Disp_Image xf{1} v4
+Pause
+
+advise "Transforming columns..."
+Set i 0
+repeat ncols(xf)
+  Subimage col xf 1 nrows(xf) $i 0
+  FFT col
+  Delete_Image col
+  Increment i
+  end
+advise "Column transforms computed"
+#verbose yes
+Disp_Image xf{0} v3
+Disp_Image xf{1} v4
+#verbose no
+Pause
+
+# Now do inverse by hand
+
+advise "Computing inverse transforms of columns..."
+Set i 0
+repeat ncols(xf)
+  Subimage col xf 1 nrows(xf) $i 0
+  InvFFT col
+  Delete_Image col
+  Increment i
+  end
+advise "Column inverse transforms computed"
+#verbose yes
+Disp_Image xf{0} v3
+Disp_Image xf{1} v4
+#verbose no
+Pause
+
+advise "Computing inverse transforms of rows..."
+Set i 0
+repeat nrows(xf)
+  RInvFFT g[$i] xf[$i]
+  Increment i
+  end
+advise "Row inverse transforms computed"
+#verbose yes
+Disp_Image g v2
+#verbose no
+Pause
+
+
+
+FFT c
+#Display c
+Disp_Image c{0} v1
+Disp_Image c{1} v2
+advise 'complex transform shown'
+Pause
+
+InvFFT c
+#verbose yes
+Disp_Image c{0} v1
+Disp_Image c{1} v2
+#verbose no
+advise 'inverse complex transform shown'
+Pause
+.
+
+# oblique grating
+Ramp2D f 0 atan(1) atan(1)
+VCos f f
+Disp_Image f v1
+Pause
+
+Try_Transforms
+
+# horizontal grating
+Ramp2D f 0 0 atan(1)
+VCos f f
+Disp_Image f v1
+Pause
+
+Try_Transforms
+
+
+# vertical grating
+Ramp2D f 0 0 atan(1)
+VSin f f
+Disp_Image f v1
+Pause
+
+Try_Transforms
+
+exit

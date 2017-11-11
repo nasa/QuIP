@@ -21,7 +21,9 @@ extern int check_queue_status(QSP_ARG_DECL  Video_Device *);
 #endif /* HAVE_V4L2 */
 
 ITEM_INTERFACE_PROTOTYPES(Video_Device,video_dev)
-#define PICK_VIDEO_DEV(p)	pick_video_dev(QSP_ARG  p)
+#define pick_video_dev(p)	_pick_video_dev(QSP_ARG  p)
+#define video_dev_of(s)		_video_dev_of(QSP_ARG  s)
+#define new_video_dev(s)	_new_video_dev(QSP_ARG  s)
 
 /* stream.c */
 extern COMMAND_FUNC( print_grab_times );
@@ -38,7 +40,8 @@ extern void release_oldest_buffer(QSP_ARG_DECL  Video_Device *);
 #endif /* HAVE_V4L2 */
 
 /* fastdown.c */
-extern void fast_downsample(Data_Obj *,Data_Obj *);
+extern void _fast_downsample(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
+#define fast_downsample(dp1,dp2) _fast_downsample(QSP_ARG  dp1,dp2)
 
 
 #endif /* _MY_V4L2_H_ */

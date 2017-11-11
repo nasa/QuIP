@@ -63,10 +63,33 @@ int is_evenly_spaced(Data_Obj *dp)
 	return 1;
 }
 
-int is_contiguous(QSP_ARG_DECL  Data_Obj *dp)
+int _is_contiguous(QSP_ARG_DECL  Data_Obj *dp)
 {
 	assert( OBJ_FLAGS(dp) & DT_CHECKED );
 	return(IS_CONTIGUOUS(dp));
+}
+
+static inline int bitmap_is_contiguous(Data_Obj *dp)
+{
+	int i_dim;
+	dimension_t n;
+	bitnum_t n_words;
+	int inc;
+
+	if( OBJ_TYPE_INC(dp,OBJ_MINDIM(dp)) != 1 ) return 0;
+	n=OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp));
+	n_words = (bitnum_t)(( OBJ_BIT0(dp) + n + BITS_PER_BITMAP_WORD - 1 )/BITS_PER_BITMAP_WORD);
+	for(i_dim=OBJ_MINDIM(dp)+1;i_dim<N_DIMENSIONS;i_dim++){
+		if( OBJ_TYPE_DIM(dp,i_dim) != 1 ){
+			inc = OBJ_TYPE_INC(dp,i_dim);
+			if( inc != n_words * BITS_PER_BITMAP_WORD ) return 0;
+			n_words *= OBJ_TYPE_DIM(dp,i_dim);
+		}
+	}
+	/* We cache the status when called from
+	 * check_contiguity()...
+	 */
+	return 1;
 }
 
 /* We have a special case for bitmaps:
@@ -78,24 +101,7 @@ int is_contiguous(QSP_ARG_DECL  Data_Obj *dp)
 static int has_contiguous_data(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( IS_BITMAP(dp) ){
-		int i_dim,n;
-		bitnum_t n_words;
-		int inc;
-		if( OBJ_TYPE_INC(dp,OBJ_MINDIM(dp)) != 1 ) return 0;
-		n=OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp));
-		// BUG make sure we don't lose precision by down-casting bit0
-		n_words = (int)((OBJ_BIT0(dp) + n + BITS_PER_BITMAP_WORD -1 )/BITS_PER_BITMAP_WORD);
-		for(i_dim=OBJ_MINDIM(dp)+1;i_dim<N_DIMENSIONS;i_dim++){
-			if( OBJ_TYPE_DIM(dp,i_dim) != 1 ){
-				inc = OBJ_TYPE_INC(dp,i_dim);
-				if( inc != n_words * BITS_PER_BITMAP_WORD ) return 0;
-				n_words *= OBJ_TYPE_DIM(dp,i_dim);
-			}
-		}
-		/* We cache the status when called from
-		 * check_contiguity()...
-		 */
-		return 1;
+		return bitmap_is_contiguous(dp);
 	} else {
 		return(IS_CONTIGUOUS(dp));
 	}

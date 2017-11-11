@@ -1,7 +1,7 @@
 #!/bin/csh
 
 if( $#argv != 1 && $#argv != 2 ) then
-  echo 'usage:  ./build_startup_file.csh demo|ezjet|afalert|pvt|csf|iquip|fdm [test]'
+  echo 'usage:  ./build_startup_file.csh demo|ezjet|afalert|pvt|csf|iquip|fdm|symm [test]'
   exit
 endif
 
@@ -10,10 +10,10 @@ pushd ../../include
 popd
 
 set flavor=$1
-if( $flavor != demo && $flavor != ezjet && $flavor != afalert && $flavor != csf && $flavor != pvt && $flavor != iquip && $flavor != fdm ) then
+if( $flavor != demo && $flavor != ezjet && $flavor != afalert && $flavor != csf && $flavor != pvt && $flavor != iquip && $flavor != fdm && $flavor != symm ) then
   echo './build_startup_file.csh:  bad flavor requested:  $flavor'
   echo 'usage:  ./build_startup_file.csh <flavor> [test]'
-  echo 'known flavors:  demo ezjet afalert csf pvt iquip fdm'
+  echo 'known flavors:  demo ezjet afalert csf pvt iquip fdm symm'
   exit
 endif
 
@@ -171,31 +171,14 @@ else if( $flavor == csf ) then
   set file_list=( csf calib arrows csf_cam sync_files csf_admin csf_util psych )
   source add_files.csh
 
-  #cat ../../macros/csf/csf.mac >> $outfile
-  #cat ../../macros/csf/calib.mac >> $outfile
-  #cat ../../macros/csf/arrows.mac >> $outfile
-  #cat ../../macros/csf/csf_cam.mac >> $outfile
-  #cat ../../macros/csf/sync_files.mac >> $outfile
-
   set subdir=ios
   set file_list=( utilz cache console )
   source add_files.csh
 
-  #cat ../../macros/ios/utilz.mac >> $outfile
-  #cat ../../macros/ios/cache.mac >> $outfile
-  #cat ../../macros/ios/console.mac >> $outfile
-
-  #cat ../../macros/pvt/pvt.mac >> $outfile
-  #cat ../../macros/pvt/dashboard.mac >> $outfile
-  #cat ../../macros/pvt/pvt_params.mac >> $outfile
-  #cat ../../macros/pvt/pvt_dist.mac >> $outfile
-  #cat ../../macros/pvt/pvt_plot.mac >> $outfile
   set subdir=$extra_macro_dir/pvt
   set file_list=( pvt dashboard pvt_params pvt_dist pvt_plot )
   source add_files.csh
 
-  #cat ../../macros/data/string_edit.mac >> $outfile
-  #cat ../../macros/data/set_sizes.mac >> $outfile
   set subdir=data
   set file_list=( string_edit set_sizes )
   source add_files.csh
@@ -203,10 +186,6 @@ else if( $flavor == csf ) then
   source add_file.csh compute/rdp.mac
   source add_file.csh view/opt_ht.mac
 
-#  cat ../../macros/compute/rdp.mac >> $outfile
-#  cat ../../macros/view/opt_ht.mac >> $outfile
-  #cat ../../macros/csf/csf_admin.mac >> $outfile	# csf
-  #cat ../../macros/csf/csf_main.scr >> $outfile
   source add_file.csh $extra_macro_dir/csf/csf_main.scr
 
 else if( $flavor == afalert ) then
@@ -297,6 +276,11 @@ else if( $flavor == fdm ) then
   cat ../../macros/compute/gaussian.mac >> $outfile
   cat $HOME/exps/uhco13/stimuli/fdm_demos.mac >> $outfile
   cat $HOME/exps/uhco13/stimuli/fdm_ipad.scr >> $outfile
+else if( $flavor == symm ) then
+  source add_file.csh ios/utilz.mac
+  cat ../$extra_macro_dir/symm/symm.mac >> $outfile
+  cat ../$extra_macro_dir/symm/symm_app.mac >> $outfile
+  cat ../$extra_macro_dir/symm/symm_main.scr >> $outfile
 else
   echo "Sorry, unhandled flavor $flavor"
   exit

@@ -71,6 +71,6 @@
 
 #include "nports_api.h"
 
-#include "glimage.h"
+//#include "glimage.h"
 
 #endif /* ! _IMG_FILE_HDR_H_ */

@@ -4,6 +4,7 @@
 #include <string.h>
 #include "quip_prot.h"
 #include "data_obj.h"
+#include "dobj_private.h"
 #include "function.h"
 
 /* support for data functions in expr.y */
@@ -13,7 +14,7 @@
 double obj_exists(QSP_ARG_DECL  const char *name)
 {
 	Data_Obj *dp;
-	dp = dobj_of(QSP_ARG  name);
+	dp = dobj_of(name);
 	if( dp==NULL ) return(0.0);
 	return(1.0);
 }
@@ -24,18 +25,11 @@ double obj_exists(QSP_ARG_DECL  const char *name)
 static inline double comp_func( Data_Obj *dp, index_t index )
 {
 	Precision *prec_p;
+	double d;
+	Data_Obj *ram_dp;
 
 	if( dp==NULL ) return(0.0);
 
-#ifdef FOOBAR
-#ifdef HAVE_CUDA
-	if( ! object_is_in_ram(DEFAULT_QSP_ARG  dp,
-		"use value functions on CUDA object") ){
-		return(0.0);
-	}
-#endif /* HAVE_CUDA */
-#endif // FOOBAR
-			
 	if( !IS_SCALAR(dp) ){
 		sprintf(DEFAULT_ERROR_STRING,"comp_func:  %s is not a scalar",
 			OBJ_NAME(dp));
@@ -51,7 +45,20 @@ static inline double comp_func( Data_Obj *dp, index_t index )
 	prec_p = OBJ_MACH_PREC_PTR(dp);
 	assert(prec_p!=NULL);
 
-	return (*(prec_p->indexed_data_func))(dp,index);
+#ifdef HAVE_ANY_GPU
+	ram_dp = insure_ram_obj_for_reading(DEFAULT_QSP_ARG dp);
+	assert(ram_dp!=NULL);
+#else /* ! HAVE_ANY_GPU */
+	ram_dp = dp;
+#endif /* ! HAVE_ANY_GPU */
+			
+	d = (*(prec_p->indexed_data_func))(ram_dp,index);
+
+#ifdef HAVE_ANY_GPU
+	release_ram_obj_for_reading(DEFAULT_QSP_ARG  ram_dp,dp);
+#endif /* ! HAVE_ANY_GPU */
+
+	return d;
 } // end comp_func
 
 double val_func(QSP_ARG_DECL  Data_Obj *dp )
@@ -135,7 +142,7 @@ static Data_Obj *obj_for_string(QSP_ARG_DECL  const char *string)
 	SET_DIMENSION(dsp,2,1);
 	SET_DIMENSION(dsp,3,1);
 	SET_DIMENSION(dsp,4,1);
-	dp=make_dobj(QSP_ARG  localname(),dsp,prec_for_code(PREC_STR));
+	dp=make_dobj(localname(),dsp,prec_for_code(PREC_STR));
 	if( dp != NULL ){
 		strcpy((char *)OBJ_DATA_PTR(dp),string);
 	}

@@ -25,16 +25,13 @@ extern debug_flag_t debug_fileio;
 
 
 /* img_file.c */
-extern int	std_seek_frame(QSP_ARG_DECL  Image_File *, uint32_t );
 extern int	uio_seek_frame(QSP_ARG_DECL  Image_File *, uint32_t );
-extern void	check_auto_close(QSP_ARG_DECL  Image_File *);
 // moved to fio_api.h
 //extern void	delete_image_file(QSP_ARG_DECL  Image_File *);
 //extern void generic_imgfile_close(QSP_ARG_DECL  Image_File *ifp);
 extern List *	image_file_list(SINGLE_QSP_ARG_DECL);
 extern void	set_direct_io(int);
-ITEM_INTERFACE_PROTOTYPES(Image_File,img_file)
-#define DEL_IMG_FILE(s)	del_img_file(QSP_ARG  s)
+//ITEM_INTERFACE_PROTOTYPES(Image_File,img_file)
 
 extern void setup_dummy(Image_File *ifp);
 extern int open_fd(QSP_ARG_DECL  Image_File *ifp);
@@ -45,16 +42,23 @@ extern int open_fp(Image_File *ifp);
 extern void image_file_clobber(int);
 extern void image_file_init(SINGLE_QSP_ARG_DECL);
 
-extern Image_File *img_file_creat(QSP_ARG_DECL  const char *,int rw,Filetype * ftp);
-#define IMG_FILE_CREAT(fn,m,t)	img_file_creat(QSP_ARG  fn,m,t)
+extern Image_File *_img_file_creat(QSP_ARG_DECL  const char *,int rw,Filetype * ftp);
+#define img_file_creat(fn,m,t)	_img_file_creat(QSP_ARG  fn,m,t)
 extern int same_dimensions(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
 extern int same_size(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
-extern int same_type(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
 extern void copy_dimensions(Data_Obj *dpto,Data_Obj *dpfr);
 extern void dump_image_file(QSP_ARG_DECL  const char *filename,Filetype *ftp,void *data,
 			dimension_t width,dimension_t height,Precision * prec_p);
 extern void *load_image_file(const char *name,
 	filetype_code input_file_type,filetype_code desired_hdr_type);
+
+extern void	_check_auto_close(QSP_ARG_DECL  Image_File *);
+extern int	_std_seek_frame(QSP_ARG_DECL  Image_File *, uint32_t );
+extern int	_same_type(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
+
+#define check_auto_close(ifp) _check_auto_close(QSP_ARG  ifp)
+#define std_seek_frame(ifp, t) _std_seek_frame(QSP_ARG  ifp, t)
+#define same_type(dp,ifp) _same_type(QSP_ARG  dp,ifp)
 
 //extern Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n);
 //extern void close_image_file(QSP_ARG_DECL  Image_File *ifp);
@@ -94,16 +98,24 @@ FIO_INTERFACE_PROTOTYPES( png , Png_Hdr )
 
 
 /* fileport.c */
-extern void xmit_img_file(QSP_ARG_DECL  Port *mpp,Image_File *ifp,int flag);
-extern long recv_img_file(QSP_ARG_DECL  Port *mpp, Packet *pkp);
+extern void _xmit_img_file(QSP_ARG_DECL  Port *mpp,Image_File *ifp,int flag);
+extern long _recv_img_file(QSP_ARG_DECL  Port *mpp, Packet *pkp);
+#define xmit_img_file(mpp,ifp,flag) _xmit_img_file(QSP_ARG  mpp,ifp,flag)
+#define recv_img_file(mpp,pkp) _recv_img_file(QSP_ARG  mpp,pkp)
 
 #ifdef HAVE_AVI_SUPPORT
-extern int check_avi_info(Image_File *);
-extern void save_avi_info(Image_File *ifp);
+extern int _check_avi_info(QSP_ARG_DECL  Image_File *);
+extern void _save_avi_info(QSP_ARG_DECL  Image_File *ifp);
+
+#define check_avi_info(ifp) _check_avi_info(QSP_ARG  ifp)
+#define save_avi_info(ifp) _save_avi_info(QSP_ARG  ifp)
+
 #endif /* HAVE_AVI_SUPPORT */
 
 // read_raw.c
-extern void read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
+extern void _read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
+#define read_object(dp,ifp) _read_object(QSP_ARG  dp,ifp)
+
 extern FIO_OPEN_FUNC( raw );
 extern FIO_RD_FUNC( raw );
 extern FIO_WT_FUNC( raw );

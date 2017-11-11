@@ -42,7 +42,7 @@ Data_Area *cuda_data_area[MAX_CUDA_DEVICES][N_CUDA_DEVICE_AREAS];
 
 ITEM_INTERFACE_DECLARATIONS( Cuda_Device, cudev, 0 )
 
-#define PICK_CUDEV(pmpt)	pick_cudev(QSP_ARG  pmpt)
+#define pick_cudev(pmpt)	_pick_cudev(QSP_ARG  pmpt)
 
 
 /* On the host 1L<<33 gets us bit 33 - but 1<<33 does not,
@@ -141,8 +141,8 @@ COMMAND_FUNC( do_gpu_obj_dnload )
 {
 	Data_Obj *dpto, *dpfr;
 
-	dpto = PICK_OBJ("destination RAM object");
-	dpfr = PICK_OBJ("source GPU object");
+	dpto = pick_obj("destination RAM object");
+	dpfr = pick_obj("source GPU object");
 
 	if( dpto == NULL || dpfr == NULL ) return;
 
@@ -153,8 +153,8 @@ COMMAND_FUNC( do_gpu_obj_upload )
 {
 	Data_Obj *dpto, *dpfr;
 
-	dpto = PICK_OBJ("destination GPU object");
-	dpfr = PICK_OBJ("source RAM object");
+	dpto = pick_obj("destination GPU object");
+	dpfr = pick_obj("source RAM object");
 
 	if( dpto == NULL || dpfr == NULL ) return;
 
@@ -168,8 +168,8 @@ COMMAND_FUNC( do_gpu_fwdfft )
 	const char *func_name="do_gpu_fwdfft";
 
 	Data_Obj *dst_dp, *src1_dp;
-	dst_dp = PICK_OBJ("destination object");
-	src1_dp = PICK_OBJ("source object");
+	dst_dp = pick_obj("destination object");
+	src1_dp = pick_obj("source object");
 
 	if( dst_dp == NULL || src1_dp == NULL) return;
 
@@ -365,7 +365,7 @@ H_CALL_F( vmgsq )
 
 COMMAND_FUNC( do_list_cudevs )
 {
-	list_cudevs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
+	list_cudevs(tell_msgfile());
 }
 
 #ifdef HAVE_CUDA
@@ -379,7 +379,7 @@ COMMAND_FUNC( do_cudev_info )
 {
 	Cuda_Device *cdp;
 
-	cdp = PICK_CUDEV((char *)"device");
+	cdp = pick_cudev((char *)"device");
 	if( cdp == NULL ) return;
 
 #ifdef HAVE_CUDA
@@ -482,6 +482,8 @@ const char* getCUFFTError(cufftResult status)
 	switch (status) {
 		case CUFFT_SUCCESS:
 			return "Success";
+		case CUFFT_NOT_SUPPORTED:
+			return "CuFFT not supported";
 		case CUFFT_INVALID_PLAN:
 			return "Invalid Plan";
 		case CUFFT_ALLOC_FAILED:

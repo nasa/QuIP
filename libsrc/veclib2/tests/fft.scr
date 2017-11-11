@@ -12,49 +12,33 @@ VSin ${1}_cvec{0} ${1}_cvec{0}
 VMov ${1}_rvec ${1}_cvec{0}
 Display ${1}_rvec
 Display ${1}_cvec
-#FFT ${1}_cvec
-veclib
-  execute vfft ${1}_cvec ${1}_cvec
-  quit
+FFT ${1}_cvec
+#veclib execute vfft ${1}_cvec ${1}_cvec quit
 advise "transform of complex input:"
 Display ${1}_cvec
 Pause
 
+# transform back
+InvFFT ${1}_cvec
+Display ${1}_cvec
+Pause
+
 VSetComplex ${1}_cxf 99 999
-veclib
-  execute vfft ${1}_cxf ${1}_rvec
-  quit
+Display ${1}_cxf
+
+#veclib execute vfft ${1}_cxf ${1}_rvec quit
+RFFT ${1}_cxf ${1}_rvec
 advise "transform of real input:"
 Display ${1}_cxf
 Pause
 
-#InvFFT ${1}_cvec
 
 VSet ${1}_rvec 99
-veclib
-  execute vift ${1}_rvec ${1}_cxf
-  quit
+#veclib execute vift ${1}_rvec ${1}_cxf quit
+RInvFFT ${1}_rvec ${1}_cxf
 advise "inverse transformed to real:"
 Display ${1}_rvec
 Pause
-
-Display ${1}_cvec
-veclib
-  execute vift ${1}_cvec ${1}_cvec
-  quit
-advise "inverse transformed to complex:"
-Display ${1}_cvec
-Pause
-
-# now test for length check
-VSetComplex ${1}_cvec 99 999
-veclib
-  execute vfft ${1}_cvec ${1}_rvec
-  quit
-advise "transform of real input:"
-Display ${1}_cvec
-Pause
-
 
 .
 

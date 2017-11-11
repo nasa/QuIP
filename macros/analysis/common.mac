@@ -147,7 +147,7 @@ If $tabulating Tabulate_Saccades
 Define Count_Saccades 1 signal
 Dup_Float count_buf $1		# usually fsacc...
 VMov count_buf $1
-Scalar min_index 1 int32
+Scalar min_index 1 int
 Set n_sacc 0
 do
   #Min_Index count_buf min_index
@@ -471,8 +471,8 @@ data
 
   vector xvdiff $1 1 float
   vector yvdiff $1 1 float
-  #vector xbitmap ceil($1/32) 1 int32
-  #vector ybitmap ceil($1/32) 1 int32
+  #vector xbitmap ceil($1/32) 1 int
+  #vector ybitmap ceil($1/32) 1 int
   vector xbitmap $1 1 bit
   vector ybitmap $1 1 bit
   vector scratch $1 1 float
@@ -502,7 +502,7 @@ data
   scalar sum 1 float
   scalar vsum 1 float
   scalar sos 1 float
-  scalar ls 1 int32
+  scalar ls 1 int
   quit
 # why is this length 10?
 Subvector veye_pos{0} eye_pos{0} min(10,$1) 0
@@ -1048,7 +1048,7 @@ User_Notify "Accumulators for stim type $1"
 Set sacc_hist_size 601
 
 Define Declare_Saccade_Histogram 0
-Image sacc_hist $sacc_hist_size $sacc_hist_size 1 uint32
+Image sacc_hist $sacc_hist_size $sacc_hist_size 1 u_int
 VSet sacc_hist 0
 .
 
@@ -1082,7 +1082,7 @@ If !obj_exists(sacc_hist) Declare_Saccade_Histogram
 Dup_Float ts_tmp fsacc
 VMov ts_tmp fsacc
 # like Count_Saccades...
-Scalar min_index 1 int32
+Scalar min_index 1 int
 do
   Min_Index min_index ts_tmp
   Assign mi value(min_index)

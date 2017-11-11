@@ -6,11 +6,11 @@
 
 define(`INSIST_CONTIG',`
 
-	if( ! is_contiguous( DEFAULT_QSP_ARG  $1 ) ){
-		sprintf(DEFAULT_ERROR_STRING,
+	if( ! is_contiguous($1) ){
+		sprintf(ERROR_STRING,
 	"Sorry, object %s must be contiguous for %s (gpu only?).",
 			OBJ_NAME($1),$2);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 ')
@@ -20,9 +20,9 @@ define(`INSIST_CONTIG',`
 define(`INSIST_LENGTH',`
 
 	if( ($1) == 1 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"Oops, kind of silly to do %s of 1-len vector %s!?",$2,$3);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 ')
@@ -44,5 +44,7 @@ define(`_VEC_FUNC_2V_PROJ',`H_CALL_PROJ_2V( $1, dest_type, std_type )')
 define(`_VEC_FUNC_3V_PROJ',`H_CALL_PROJ_3V( $1, dest_type, std_type, rvmul, rvsum)')
 define(`_VEC_FUNC_CPX_3V_PROJ',`H_CALL_PROJ_3V( $1, dest_cpx, std_cpx, cvmul, cvsum)')
 
+dnl define(`_VEC_FUNC_CPX_LUTMAP_B',`H_CALL_LUTMAP_B( $1, dest_cpx, std_cpx, cvlutmapb)')
+dnl define(`_VEC_FUNC_QUAT_LUTMAP_B',`H_CALL_LUTMAP_B( $1, dest_quat, std_quat, qvlutmapb)')
 
 

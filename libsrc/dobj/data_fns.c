@@ -6,6 +6,8 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "debug.h"
+#include "platform.h"
+#include "dobj_private.h"
 
 //#include "img_file.h"
 
@@ -67,24 +69,24 @@ int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 	if( !is_valid_dname(QSP_ARG  newname) ) return(-1);
 
 	// We expect that the passed object is in the namespace.
-	assert( dobj_of(QSP_ARG  OBJ_NAME(dp)) != NULL );
+	assert( dobj_of(OBJ_NAME(dp)) != NULL );
 
-	dp2=dobj_of(QSP_ARG  newname);
+	dp2=dobj_of(newname);
 	if( dp2 != NULL ){
 		sprintf(ERROR_STRING,
 			"name \"%s\" is already in use in area \"%s\"",
 			newname,AREA_NAME( OBJ_AREA(dp) ) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	/* BUG?  where is the object's node? */
 
-	DELETE_OBJ_ITEM(dp);	// remove from database, add to free list
+	del_dobj(dp);	// remove from database, add to free list
 	SET_OBJ_NAME(dp,savestr(newname));
 
 	/* now add this to the database */
 	/* We might have a memory leak, with the item node? */
-	assert( remove_from_item_free_list(QSP_ARG  dobj_itp, dp) == 0 );
+	assert( remove_from_item_free_list(dobj_itp, dp) == 0 );
 	ADD_OBJ_ITEM(dp);
 
 	return(0);
@@ -93,7 +95,7 @@ int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 /* this routine is made obsolete by make_dobj */
 
 Data_Obj *
-make_obj(QSP_ARG_DECL  const char *name,
+_make_obj(QSP_ARG_DECL  const char *name,
 	dimension_t frames,
 	dimension_t rows,
 	dimension_t cols,
@@ -111,7 +113,7 @@ make_obj(QSP_ARG_DECL  const char *name,
 	SET_DIMENSION(dsp,3,frames);
 	SET_DIMENSION(dsp,4,1);
 
-	dp = make_dobj(QSP_ARG  name,dsp,prec_p);
+	dp = make_dobj(name,dsp,prec_p);
 
 	RELEASE_DIMSET(dsp);
 
@@ -121,7 +123,7 @@ make_obj(QSP_ARG_DECL  const char *name,
 /* What is a list object?
  */
 
-Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
+Data_Obj *_make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 {
 	Data_Obj *dp;
     	Data_Obj **dp_tbl;
@@ -132,10 +134,10 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 
 	INIT_DIMSET_PTR(dsp)
 
-	dp = dobj_of(QSP_ARG  name);
+	dp = dobj_of(name);
 	if( dp != NULL ){
 		sprintf(ERROR_STRING,"make_obj_list:  object %s already exists!?",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -143,7 +145,7 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 	SET_DIMENSION(dsp,1,eltcount(lp));
 	if( DIMENSION(dsp,1) < 1 ){
 		sprintf(ERROR_STRING,"make_obj_list %s:  object list has no elements!?",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -157,10 +159,10 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 		prec_p=prec_for_code(PREC_LI);
 	else {
 		prec_p=NULL;	// error1 doesn't return, but silence compiler.
-		ERROR1("Unexpected pointer size!?");
+		error1("Unexpected pointer size!?");
 	}
 
-	dp = make_dobj(QSP_ARG  name,dsp,prec_p);	/* specify prec_long because sizeof(long) == sizeof(dp) */
+	dp = make_dobj(name,dsp,prec_p);	/* specify prec_long because sizeof(long) == sizeof(dp) */
 
 	SET_OBJ_PREC_PTR(dp,NULL);
 
@@ -180,7 +182,7 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 		SET_OBJ_PREC_PTR(dp, OBJ_PREC_PTR((*dp_tbl)) );
 	}
 
-	set_shape_flags( OBJ_SHAPE(dp),dp,AUTO_SHAPE);
+	auto_shape_flags( OBJ_SHAPE(dp) );
 
 	if( uk_leaf ){
 		CLEAR_OBJ_FLAG_BITS(dp,SHAPE_DIM_MASK);
@@ -191,17 +193,17 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 	return(dp);
 }
 
-Data_Obj *mk_scalar(QSP_ARG_DECL  const char *name,Precision * prec_p)
+Data_Obj *_mk_scalar(QSP_ARG_DECL  const char *name,Precision * prec_p)
 {
 	Data_Obj *dp;
 
-	dp=make_obj(QSP_ARG  name,1,1,1,1,prec_p);
+	dp=make_obj(name,1,1,1,1,prec_p);
 	return(dp);
 }
 
 // Doesn't support CUDA???
 
-void assign_scalar(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
+void assign_scalar_obj(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 {
 	Precision *prec_p;
 
@@ -209,68 +211,77 @@ void assign_scalar(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 
 #ifdef HAVE_ANY_GPU
 	if( ! OBJ_IS_RAM(dp) ){
+		index_t offset;
+
+		offset = OBJ_OFFSET(dp) * PREC_SIZE( OBJ_PREC_PTR(dp) );
 		// BUG may not be cuda, use platform-specific function!
 		(*(PF_MEM_UPLOAD_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp)))))
 			(QSP_ARG  OBJ_DATA_PTR(dp), &svp->u_d, PREC_SIZE(OBJ_PREC_PTR(dp)),
+				offset,
 				OBJ_PFDEV(dp) );
 		return;
 	}
 #endif // HAVE_ANY_GPU
 
 	prec_p = OBJ_PREC_PTR(dp);
-	if( (*(prec_p->assign_scalar_func))(dp,svp) < 0 ){
+	if( (*(prec_p->assign_scalar_obj_func))(dp,svp) < 0 ){
 		sprintf(ERROR_STRING,
 			"Unable to set scalar value for object %s!?",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	SET_OBJ_FLAG_BITS(dp,DT_ASSIGNED);
 }
 
-double cast_from_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p)
+double _cast_from_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p)
 {
 	return (*(prec_p->cast_to_double_func))(svp);
 }
 
-void cast_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,double val)
+void _cast_dbl_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,double val)
 {
 	(*(prec_p->cast_from_double_func))(svp,val);
 }
 
-void cast_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
+// This function casts to a single component
+
+void _cast_dbl_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 1 );
 	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
 }
 
 
-void cast_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
+void _cast_dbl_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 3 );
 	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
 }
 
-void cast_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
+void _cast_dbl_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 2 );
 	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
 }
 
-void extract_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)
+void _extract_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)
 {
 	Precision *prec_p;
 
 	if( ! OBJ_IS_RAM(dp) ){
+		index_t offset;
+
+		offset = OBJ_OFFSET(dp) * PREC_SIZE( OBJ_PREC_PTR(dp) );
 		// BUG may not be cuda, use platform-specific function!
 		( * PF_MEM_DNLOAD_FN(OBJ_PLATFORM(dp)) )
 			(QSP_ARG  &svp->u_d, OBJ_DATA_PTR(dp),
-				PREC_SIZE(OBJ_PREC_PTR(dp)), OBJ_PFDEV(dp) );
+				PREC_SIZE(OBJ_PREC_PTR(dp)), offset, OBJ_PFDEV(dp) );
 		return;
 	}
 
 	prec_p = OBJ_PREC_PTR(dp);
-	(*(prec_p->extract_scalar_func))(svp,OBJ_DATA_PTR(dp));
+	(*(prec_p->extract_scalar_func))(svp,dp);
 }
 
 
@@ -279,7 +290,7 @@ mk_cscalar(QSP_ARG_DECL  const char *name,double rval,double ival)
 {
 	Data_Obj *dp;
 
-	dp=make_obj(QSP_ARG  name,1,1,1,2,prec_for_code(PREC_SP));
+	dp=make_obj(name,1,1,1,2,prec_for_code(PREC_SP));
 	if( dp != NULL ){
 		*((float *)OBJ_DATA_PTR(dp)) = (float)rval;
 		*( ((float *)OBJ_DATA_PTR(dp)) + 1 ) = (float)ival;
@@ -289,16 +300,16 @@ mk_cscalar(QSP_ARG_DECL  const char *name,double rval,double ival)
 }
 
 Data_Obj *
-mk_img(QSP_ARG_DECL  const char *name,dimension_t rows,dimension_t cols,dimension_t type_dim,Precision *prec_p)		/**/
+_mk_img(QSP_ARG_DECL  const char *name,dimension_t rows,dimension_t cols,dimension_t type_dim,Precision *prec_p)		/**/
 {
-	return( make_obj(QSP_ARG  name,1,rows,cols,type_dim,prec_p) );
+	return( make_obj(name,1,rows,cols,type_dim,prec_p) );
 }
 
 
 Data_Obj *
 mk_vec(QSP_ARG_DECL  const char *name,dimension_t dim,dimension_t type_dim,Precision *prec_p)		/**/
 {
-	return( make_obj(QSP_ARG  name,1,1,dim,type_dim,prec_p) );
+	return( make_obj(name,1,1,dim,type_dim,prec_p) );
 }
 
 /* what is this for? half size?? */
@@ -311,10 +322,10 @@ dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 	if( !IS_IMAGE(dp) ){
 		sprintf(ERROR_STRING,"dup_half:  \"%s\" is not an image",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
-	dp2=make_obj(QSP_ARG  name,1,(OBJ_ROWS(dp))>>1,(OBJ_COLS(dp))>>1,
+	dp2=make_obj(name,1,(OBJ_ROWS(dp))>>1,(OBJ_COLS(dp))>>1,
 			OBJ_COMPS(dp),OBJ_PREC_PTR(dp));
 	return(dp2);
 }
@@ -327,10 +338,10 @@ dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 	if( !IS_IMAGE(dp) ){
 		sprintf(ERROR_STRING,"dup_half:  \"%s\" is not an image",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
-	dp2=make_obj(QSP_ARG  name,1,(OBJ_ROWS(dp))<<1,(OBJ_COLS(dp))<<1,
+	dp2=make_obj(name,1,(OBJ_ROWS(dp))<<1,(OBJ_COLS(dp))<<1,
 			OBJ_COMPS(dp),OBJ_PREC_PTR(dp));
 	return(dp2);
 }
@@ -345,7 +356,7 @@ dup_obj(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 {
 	Data_Obj *dp2;
 
-	dp2=make_obj(QSP_ARG  name,OBJ_FRAMES(dp),OBJ_ROWS(dp),OBJ_COLS(dp),
+	dp2=make_obj(name,OBJ_FRAMES(dp),OBJ_ROWS(dp),OBJ_COLS(dp),
 			OBJ_COMPS(dp),OBJ_PREC_PTR(dp));
 	return(dp2);
 }
@@ -383,7 +394,7 @@ int is_valid_dname(QSP_ARG_DECL  const char *name)
 			sprintf(ERROR_STRING,
 			"illegal character '%c' (0x%x) in data name (\"%s\")",
 				*s,*s,name);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(0);
 		}
 		s++;

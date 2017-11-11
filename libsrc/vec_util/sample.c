@@ -154,7 +154,7 @@ OBJ_NAME(image_dp),OBJ_NAME(coord_dp),OBJ_NAME(intens_dp));
 			sprintf(ERROR_STRING,
 	"render_samples2:  nan value passed in coordinate list %s",
 				OBJ_NAME(coord_dp));
-			ERROR1(ERROR_STRING);
+			error1(ERROR_STRING);
 			// IOS_RETURN?
 		}
 			

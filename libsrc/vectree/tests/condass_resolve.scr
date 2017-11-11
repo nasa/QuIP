@@ -1,0 +1,58 @@
+max_warnings 2
+
+expressions
+#  debug scope
+#  debug typecast
+#  debug resolver
+#  show_shp yes
+  read -
+
+
+void test1( float *dest, float *src1, float *src2, float kkk)
+{
+	print("*dest = kkk > log(*src1) ? log(*src2) : log(*src1) ;");
+	*dest = kkk > log(*src1) ? log(*src2) : log(*src1) ;
+	display(*dest);
+}
+
+void test2( float *dest, float *src1, float *src2, float kkk)
+{
+	print("*dest = log(*src1) > kkk ? log(*src2) : log(*src1) ;");
+	*dest = log(*src1) > kkk ? log(*src2) : log(*src1) ;
+	display(*dest);
+}
+
+void test3( float *dest, float *src1, float *src2, float kkk)
+{
+	print("*dest = log(*src1) > kkk ? kkk : log(*src1) ;");
+	*dest = log(*src1) > kkk ? kkk : log(*src1) ;
+	display(*dest);
+}
+
+void test4( float *dest, float *src1, float *src2, float kkk)
+{
+	print("*dest = log(*src1) > kkk ? log(*src2) : kkk ;");
+	*dest = log(*src1) > kkk ? log(*src2) : kkk ;
+	display(*dest);
+}
+
+void test5( float *dest, float *src1, float *src2, float kkk)
+{
+	print("*dest = log(*src1) > kkk ? 2 : kkk ;");
+	*dest = log(*src1) > kkk ? 2 : kkk ;
+	display(*dest);
+}
+
+float h_a[4],h_b[4],h_c[4];
+h_b=ramp(1,1,0);
+h_c=ramp(10,10,0);
+display(h_b,h_c);
+test1(&h_a,&h_b,&h_c,5.5);
+test2(&h_a,&h_b,&h_c,5.5);
+test3(&h_a,&h_b,&h_c,5.5);
+test4(&h_a,&h_b,&h_c,5.5);
+test5(&h_a,&h_b,&h_c,5.5);
+
+
+end
+

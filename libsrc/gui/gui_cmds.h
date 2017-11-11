@@ -48,6 +48,7 @@ extern COMMAND_FUNC( do_set_toggle );
 extern COMMAND_FUNC( do_add_choice );
 extern COMMAND_FUNC( do_del_choice );
 extern COMMAND_FUNC( do_set_choice );
+extern COMMAND_FUNC( do_get_choice );
 extern COMMAND_FUNC( do_set_picks );
 extern COMMAND_FUNC( do_clear_choices );
 extern COMMAND_FUNC( clear_screen );

@@ -102,10 +102,10 @@ void set_progname(const char *program_name)
  * Return a pointer to the name of the program
  */
 
-const char *tell_progname(void)
+const char *_tell_progname(SINGLE_QSP_ARG_DECL)
 {
 	if( _progname == NULL ){
-		NWARN("tell_progname():  progname not set!?");
+		warn("tell_progname():  progname not set!?");
 		return("");
 	}
 	return(_progname);
@@ -166,7 +166,7 @@ static void check_max_warnings(SINGLE_QSP_ARG_DECL)
 
 		sprintf(ERROR_STRING,"Too many warnings (%d max)",
 			QS_MAX_WARNINGS(THIS_QSP));
-		error1(QSP_ARG  ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 }
 
@@ -176,9 +176,12 @@ static void check_max_warnings(SINGLE_QSP_ARG_DECL)
  * We'd like to print the input line number where this occurred,
  * but to do that we need a qsp?
  * To do that, we introduced another function script_warn, w/ macro WARN
+ * but changed script_warn to _warn
  */
 
-static void deliver_warning(QSP_ARG_DECL  const char* msg)
+#define deliver_warning(msg)	_deliver_warning(QSP_ARG  msg)
+
+static void _deliver_warning(QSP_ARG_DECL  const char* msg)
 	/* warning message */
 {
 	if( ! silent(SINGLE_QSP_ARG) ){
@@ -203,7 +206,7 @@ void clear_warnings()
  * Print error message and exit
  */
 
-void error1(QSP_ARG_DECL  const char* msg)
+void _error1(QSP_ARG_DECL  const char* msg)
 	/* error message */
 {
 	(*error_vec)(QSP_ARG  msg);
@@ -322,10 +325,10 @@ static const char *show_unprintable(QSP_ARG_DECL  const char* s)
 	to=printable_str;
 
 	if( strlen(s) >= PRINTABLE_LEN ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"show_unprintable:  input string length (%ld) is greater than buffer size (%d)!?",
 			(long) strlen(s), PRINTABLE_LEN );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		//return(s);		/* print a warning here? */
 		return("<string too long>");
 	}
@@ -341,7 +344,7 @@ static const char *show_unprintable(QSP_ARG_DECL  const char* s)
 				*/
 				*to++ = *fr;
 			} else {
-//ADVISE("show_unprintable expanding a non-printing char...");
+//advise("show_unprintable expanding a non-printing char...");
 				*to++ = '\\';
 				*to++ = '0' + (((*fr)>>6)&0x3);
 				*to++ = '0' + (((*fr)>>3)&0x7);
@@ -359,6 +362,14 @@ static const char *show_unprintable(QSP_ARG_DECL  const char* s)
 	return(printable_str);
 }
 
+int string_is_printable(const char *s)
+{
+	while( *s ){
+		if( ! isprint(*s) ) return(0);
+		s++;
+	}
+	return(1);
+}
 	
 char *show_printable(QSP_ARG_DECL  const char* s)
 {
@@ -433,10 +444,10 @@ void _prt_msg_frag(QSP_ARG_DECL  const char* msg)
  * Return value 0 if successful, -1 if too many exit functions.
  */
 
-int do_on_exit(void (*func)(SINGLE_QSP_ARG_DECL))
+int _do_on_exit(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL))
 {
 	if( n_exit_funcs >= MAX_EXIT_FUNCS ){
-		NWARN("too many exit functions requested");
+		warn("too many exit functions requested");
 		return(-1);
 	}
 	exit_func_tbl[n_exit_funcs++] = func;
@@ -447,7 +458,7 @@ int do_on_exit(void (*func)(SINGLE_QSP_ARG_DECL))
  * Call user exit functions, then exit
  */
 
-void nice_exit(QSP_ARG_DECL  int status)
+void _nice_exit(QSP_ARG_DECL  int status)
 		/* exit status */
 {
 	int i;
@@ -479,24 +490,24 @@ void error_redir(QSP_ARG_DECL  FILE *fp)
 	SET_QS_ERROR_FILE(THIS_QSP,fp);
 }
 
-FILE *tell_msgfile(SINGLE_QSP_ARG_DECL)
+FILE *_tell_msgfile(SINGLE_QSP_ARG_DECL)
 {
 #ifndef NO_STDIO
 	if( QS_MSG_FILE(THIS_QSP) == NULL )
 		SET_QS_MSG_FILE(THIS_QSP,stdout);
 #else
-	if( QS_MSG_FILE(THIS_QSP) == NULL ) NWARN("null msgfile - no stdio!??");
+	if( QS_MSG_FILE(THIS_QSP) == NULL ) warn("null msgfile - no stdio!??");
 #endif
 	return(QS_MSG_FILE(THIS_QSP));
 }
 
-FILE *tell_errfile(SINGLE_QSP_ARG_DECL)
+FILE *_tell_errfile(SINGLE_QSP_ARG_DECL)
 {
 #ifndef NO_STDIO
 	if( QS_ERROR_FILE(THIS_QSP) == NULL )
 		SET_QS_ERROR_FILE(THIS_QSP,stderr);
 #else
-	if( QS_ERROR_FILE(THIS_QSP) == NULL ) NWARN("null errfile - no stdio!??");
+	if( QS_ERROR_FILE(THIS_QSP) == NULL ) warn("null errfile - no stdio!??");
 #endif
 	return(QS_ERROR_FILE(THIS_QSP));
 }
@@ -564,7 +575,7 @@ static void tty_error1(QSP_ARG_DECL  const char *s1)
 	error_wait();
 #endif /* MAC */
 
-	nice_exit(QSP_ARG  1);
+	nice_exit(1);
 }
 
 void expect_warning(QSP_ARG_DECL  const char *msg)
@@ -584,7 +595,7 @@ void check_expected_warning(SINGLE_QSP_ARG_DECL)
 	if( QS_EXPECTED_WARNING(THIS_QSP) != NULL ){
 		sprintf(ERROR_STRING,"Expected warning beginning with \"%s\" never issued!?",
 			QS_EXPECTED_WARNING(THIS_QSP));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -683,7 +694,7 @@ void error2(QSP_ARG_DECL  const char *progname,const char* msg)
 	char msgstr[LLEN];
 
 	sprintf(msgstr,"program %s,  %s",progname,msg);
-	ERROR1(msgstr);
+	error1(msgstr);
 }
 
 void revert_tty()
@@ -756,14 +767,14 @@ static void tell_input_location( SINGLE_QSP_ARG_DECL )
 void q_error1( QSP_ARG_DECL  const char *msg )
 {
 	tell_input_location(SINGLE_QSP_ARG);
-	error1(QSP_ARG  msg);
+	_error1(QSP_ARG  msg);
 }
 
-// script_warn - print a warning, preceded by a script input location
+// _warn - print a warning, preceded by a script input location
 
-void script_warn( QSP_ARG_DECL  const char *msg )
+void _warn( QSP_ARG_DECL  const char *msg )
 {
 	tell_input_location(SINGLE_QSP_ARG);
-	deliver_warning(QSP_ARG  msg);
+	deliver_warning(msg);
 }
 

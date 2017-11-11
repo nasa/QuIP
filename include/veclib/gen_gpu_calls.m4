@@ -30,6 +30,9 @@ define(`_VEC_FUNC_VVSLCT',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,,,3,) ')
 define(`_VEC_FUNC_VSSLCT',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,,_1S,2,) ')
 define(`_VEC_FUNC_SSSLCT',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,,_2S,1,) ')
 
+define(`_VEC_FUNC_LUTMAP_B',`GENERIC_GPU_FUNC_CALL($1,$2,,,,LUTMAP_B,) ')
+define(`_VEC_FUNC_LUTMAP_S',`GENERIC_GPU_FUNC_CALL($1,$2,,,,LUTMAP_S,) ')
+
 define(`_VEC_FUNC_SBM_1',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,,,1,) ')
 
 define(`_VEC_FUNC_1V',`GENERIC_GPU_FUNC_CALL($1,$2,,,,1,) ')
@@ -781,6 +784,7 @@ dnl	/* generic_fast_vec_func done */				\
 
 define(`__GENERIC_FAST_VEC_FUNC',`					\
 									\
+/* generic_fast_vec_func */						\
 KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1)			\

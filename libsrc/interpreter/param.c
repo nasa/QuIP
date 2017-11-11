@@ -50,7 +50,7 @@ static void showparm( QSP_ARG_DECL  Param* p ) /** show p on the screen */
 #ifndef NO_STDIO
 	pparam(QSP_ARG  p,stderr);
 #else
-	WARN("Can't show parameter without stdio!?");
+	warn("Can't show parameter without stdio!?");
 #endif
 }
 
@@ -88,8 +88,8 @@ static void pparam(QSP_ARG_DECL  Param* p,FILE* fp)	/** print parameter pted to 
 	}
 	else {
 		sprintf(ERROR_STRING,"parameter type:  0x%x",p->p_type);
-		WARN(ERROR_STRING);
-		ERROR1(badpstr);
+		warn(ERROR_STRING);
+		error1(badpstr);
 	}
 }
 
@@ -98,15 +98,15 @@ static void getparm(QSP_ARG_DECL  Param *p)
 	if( IS_ARRAY_PARAM(p) ) getarrp(QSP_ARG  p);
 
 	else if( IS_FLOAT_PARAM(p) )
-		*p->u.fp = fnum= (float)HOW_MUCH( p->p_comment );
+		*p->u.fp = fnum= (float)how_much( p->p_comment );
 	else if( IS_SHORT_PARAM(p) )
-		*p->u.sp = (short)HOW_MANY( p->p_comment );
+		*p->u.sp = (short)how_many( p->p_comment );
 	else if( IS_INT_PARAM(p) )
-		*p->u.ip = (int)HOW_MANY( p->p_comment );
+		*p->u.ip = (int)how_many( p->p_comment );
 	else if( IS_STRING_PARAM(p) )
-		strcpy( p->u.strp, NAMEOF(p->p_comment) );
+		strcpy( p->u.strp, nameof(p->p_comment) );
 
-	else ERROR1(badpstr);
+	else error1(badpstr);
 }
 
 static void getarrp(QSP_ARG_DECL  Param *p)
@@ -129,7 +129,7 @@ static void getarrel(QSP_ARG_DECL  Param *p,int pindex)
 	max=(int)((p->p_type & NELTMASK) + 1);
 	if( pindex < 0 || pindex >= max ){
 		sprintf(ERROR_STRING,"legal indices:0 to %d",max);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( IS_FLOAT_ARRAY_PARAM(p) ){
@@ -202,10 +202,10 @@ static COMMAND_FUNC( do_chng_one )
 		addTail(lp,np);
 
 		if( intractive(SINGLE_QSP_ARG) ){
-			char pline[LLEN];
-			make_prompt(QSP_ARG  pline,PNAME_PMPT);
-			new_defs(QSP_ARG  pline);		/* is this needed? */
-			init_hist_from_item_list(QSP_ARG  PNAME_PMPT,lp);
+			const char *pline;
+			pline = format_prompt(PROMPT_FORMAT, PNAME_PMPT);
+			new_defs(pline);		/* is this needed? */
+			init_hist_from_item_list(PNAME_PMPT,lp);
 		}
 
 		dellist(lp);
@@ -216,7 +216,7 @@ static COMMAND_FUNC( do_chng_one )
 		pnlist[i] = theptbl[i].p_name;
 #endif /* ! HAVE_HISTORY */
 
-	s=NAMEOF(PNAME_PMPT);
+	s=nameof(PNAME_PMPT);
 	if( !strcmp(s,"all") ){
 		p=theptbl;
 		while( p->p_type != NULL_P_TYPE ) {
@@ -227,7 +227,7 @@ static COMMAND_FUNC( do_chng_one )
 		return;
 	} else if( get_pval(QSP_ARG  s,theptbl) == -1 ){
 		sprintf(ERROR_STRING,"Unknown parameter \"%s\"",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -257,7 +257,7 @@ static index_t ifarr(QSP_ARG_DECL  const char *s)	/* return index or NOTARR */
 		if( i >= (MAX_INDEX_STRING_LEN-1)){
 			sprintf(ERROR_STRING,"ifarr:  index string too long (%d chars max)",
 				MAX_INDEX_STRING_LEN-1);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(NOTARR);
 		}
 		index_string[i++] = *s++;
@@ -265,7 +265,7 @@ static index_t ifarr(QSP_ARG_DECL  const char *s)	/* return index or NOTARR */
 	index_string[i]=0;
 
 	if( *s != ']' ) {
-		WARN("ifarr:  no closing brace for index");
+		warn("ifarr:  no closing brace for index");
 		return(NOTARR);
 	}
 	tsp = pexpr(QSP_ARG  index_string );
@@ -290,7 +290,7 @@ static int get_pval(QSP_ARG_DECL  const char *name,Param* ptable)
 		} else ptable++;
 	}
 	sprintf(ERROR_STRING,"no parameter \"%s\"",name);
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 	return(-1);
 }
 
@@ -314,12 +314,12 @@ static void rdprms(QSP_ARG_DECL  Param *p,FILE* fp, const char *filename)
 	int level;
 	const char *s;
 
-	redir(QSP_ARG  fp, filename);
+	redir(fp, filename);
 	level=QLEVEL;
 	do {
-		s=NAMEOF("name of parameter");
+		s=nameof("name of parameter");
 		if( get_pval(QSP_ARG  s,p) == -1 )
-			WARN("error getting parameter value");
+			warn("error getting parameter value");
 		/* lookahead word should decrement qlevel at EOF */
 		lookahead(SINGLE_QSP_ARG);
 	} while( level == QLEVEL );
@@ -331,8 +331,8 @@ static COMMAND_FUNC( do_prm_rd )
 	FILE *fp;
 	const char *s;
 
-	s=NAMEOF(pfstr);
-	fp=TRY_OPEN( s,"r" );
+	s=nameof(pfstr);
+	fp=try_open( s,"r" );
 	if( !fp ) return;
 	rdprms(QSP_ARG  theptbl,fp,s);
 }
@@ -340,7 +340,7 @@ static COMMAND_FUNC( do_prm_rd )
 static COMMAND_FUNC( do_prm_wt )
 {
 	FILE *fp;
-	fp=TRYNICE(NAMEOF(pfstr),"w");
+	fp=try_nice(nameof(pfstr),"w");
 	if( fp== NULL ) return;
 	wtprms(QSP_ARG  fp,theptbl);
 }
@@ -356,7 +356,7 @@ MENU_END(change_parameter)
 
 COMMAND_FUNC( prm_menu )
 {
-	PUSH_MENU(change_parameter);
+	CHECK_AND_PUSH_MENU(change_parameter);
 }
 
 void chngp(QSP_ARG_DECL  Param *p) /** display and modify parameters */

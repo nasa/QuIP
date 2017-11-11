@@ -55,7 +55,14 @@ static void dfunc(float *p,float *df)
 
 void halt_frprmn(void)
 {
-	NWARN("Sorry, don't know how to halt frprmn");
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+
+	assert(pr_qsp!=NULL);
+	qsp = pr_qsp;
+#endif // THREAD_SAFE_QUERY
+
+	warn("Sorry, don't know how to halt frprmn");
 }
 
 static float frprmn_scr_funk(float *p)
@@ -69,11 +76,13 @@ static float frprmn_scr_funk(float *p)
 #ifdef THREAD_SAFE_QUERY
 	Query_Stack *qsp;
 
+	assert(pr_qsp!=NULL);
 	qsp = pr_qsp;
 #endif // THREAD_SAFE_QUERY
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
+
+	lp=opt_param_list();
 	if( lp==NULL ) {
-		NWARN("no parameters!?");
+		warn("no parameters!?");
 		return(0.0);
 	}
 
@@ -85,16 +94,16 @@ static float frprmn_scr_funk(float *p)
 
 		opp=(Opt_Param *)np->n_data;
 		sprintf(str,"%g",p[i+1]);
-		ASSIGN_VAR(opp->op_name,str);
+		assign_var(opp->op_name,str);
 		i++;
 		np=np->n_next;
 	}
 
-	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
+	digest(opt_func_string, OPTIMIZER_FILENAME);
 	
-	vp=var__of(QSP_ARG  "error");
+	vp=var__of("error");
 	if( vp == NULL ) {
-		NWARN("variable \"error\" not set!!!");
+		WARN("variable \"error\" not set!!!");
 		err=0.0;
 	} else sscanf(VAR_VALUE(vp),"%g",&err);
 
@@ -108,8 +117,15 @@ static float frprmn_c_funk(float *p)
 	List *lp;
 	Opt_Param *opp;
 	Node *np;
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
 
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
+	assert(pr_qsp!=NULL);
+	qsp = pr_qsp;
+#endif // THREAD_SAFE_QUERY
+
+
+	lp=opt_param_list();
 	np=QLIST_HEAD(lp);
 
 	i=0;
@@ -120,14 +136,16 @@ static float frprmn_c_funk(float *p)
 		i++;
 	}
 
-	err = (*user_c_func)(SGL_DEFAULT_QSP_ARG);
+	err = (*user_c_func)(SINGLE_QSP_ARG);
 
 	return(err);
 }
 
 static float p[MAX_OPT_PARAMS];
 
-static void run_frprmn( QSP_ARG_DECL  float (*func)(float *) )
+#define run_frprmn(func) _run_frprmn( QSP_ARG  func)
+
+static void _run_frprmn( QSP_ARG_DECL  float (*func)(float *) )
 {
 	float ftol;
 	int iter;
@@ -139,7 +157,7 @@ static void run_frprmn( QSP_ARG_DECL  float (*func)(float *) )
 
 	/* initialize the number of parameters */
 
-	n_prms = eltcount( lp=opt_param_list(SGL_DEFAULT_QSP_ARG) );
+	n_prms = eltcount( lp=opt_param_list() );
 
 	/* init the values */
 	np=QLIST_HEAD(lp);
@@ -180,13 +198,13 @@ printf("&iter = 0x%x\n",&iter);
 void run_frprmn_scr(SINGLE_QSP_ARG_DECL)
 {
 	pr_qsp = THIS_QSP;
-	run_frprmn( QSP_ARG  frprmn_scr_funk );
+	run_frprmn( frprmn_scr_funk );
 }
 
 void run_frprmn_c( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) )
 {
 	user_c_func = func;
-	run_frprmn( QSP_ARG  frprmn_c_funk );
+	run_frprmn( frprmn_c_funk );
 }
 
 

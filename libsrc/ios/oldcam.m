@@ -198,6 +198,6 @@ COMMAND_FUNC(do_cam_menu)
 		inited=1;
 	}
 
-	PUSH_MENU(camera);
+	CHECK_AND_PUSH_MENU(camera);
 }
 

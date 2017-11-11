@@ -12,5 +12,6 @@ extern void discard_events(SINGLE_QSP_ARG_DECL);
 
 /* lut_xlib.c */
 extern void set_curr_win(Window win);
-extern u_long simulate_lut_mapping(Viewer *vp, u_long color);
+extern u_long _simulate_lut_mapping(QSP_ARG_DECL  Viewer *vp, u_long color);
+#define simulate_lut_mapping(vp,color) _simulate_lut_mapping(QSP_ARG  vp,color)
 

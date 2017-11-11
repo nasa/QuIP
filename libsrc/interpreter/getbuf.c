@@ -331,7 +331,7 @@ void * bigbuf(u_long size)
 		if( cp == NULL ){
 			sprintf(DEFAULT_ERROR_STRING,
 				"error getting %ld (0x%lx) bytes from big heap",s,s);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(DEFAULT_ERROR_STRING);
 			showmap(&big_heap.heap_fl);
 		} else {
 			/* get_from_heap succeeded... */
@@ -357,7 +357,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		if( cp == NULL ){
 			sprintf(DEFAULT_ERROR_STRING,
 				"error getting %ld (0x%lx) bytes from small heap",s,s);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(DEFAULT_ERROR_STRING);
 			showmap(&small_heap.heap_fl);
 			NADVISE("Consider changing SMALL_HEAPSIZE");
 			sprintf(DEFAULT_ERROR_STRING,
@@ -439,7 +439,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 			sprintf(DEFAULT_ERROR_STRING,
 	"givbuf:  error in givspace returning %ld bytes at address 0x%lx to big heap",
 				this_size,(u_long)caddr);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(DEFAULT_ERROR_STRING);
 			return;
 		}
 #ifdef QUIP_DEBUG
@@ -460,7 +460,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 			sprintf(DEFAULT_ERROR_STRING,
 	"givbuf:  error in givspace returning %ld bytes at address 0x%lx to small heap",
 				this_size,(u_long)caddr);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(DEFAULT_ERROR_STRING);
 			return;
 		}
 #ifdef QUIP_DEBUG
@@ -504,7 +504,7 @@ void * getbuf(size_t size)
 	/* Call calloc instead of malloc to zero the memory.
 	 * We expect callers to do this themselves if required!
 	 *
-	 * When we changed this to malloc, it revealed a buf in vectree...
+	 * When we changed this to malloc, it revealed a bug in vectree...
 	 * something that was assumed to be NULL if not set is not getting intialized!?
 	 *
 	 * setting MallocScribble can also help reveal these problems...
@@ -517,7 +517,7 @@ void * getbuf(size_t size)
 	p=calloc(size,1);
 
 	if( p == NULL ){
-		NWARN("Out of memory!?");
+		_warn(DEFAULT_QSP_ARG  "Out of memory!?");
 		NERROR1("fatal memory error");
 	}
 

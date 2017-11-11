@@ -15,7 +15,7 @@ void make_dragg(QSP_ARG_DECL  const char *name,Data_Obj *bm,Data_Obj *dp)
 {
 	Draggable *dgp;
 
-	if( !dp_same_size(QSP_ARG  bm,dp,"make_dragg") ){
+	if( !dp_same_size(bm,dp,"make_dragg") ){
 		WARN("image/bitmap size mismatch");
 		return;
 	}
@@ -35,7 +35,7 @@ void make_dragg(QSP_ARG_DECL  const char *name,Data_Obj *bm,Data_Obj *dp)
 		return;
 	}
 
-	dgp = new_dragg(QSP_ARG  name);
+	dgp = new_dragg(name);
 	if( dgp == NULL ) return;
 
 	dgp->dg_width = (int) OBJ_COLS(dp);

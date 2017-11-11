@@ -81,7 +81,7 @@ int scalars_are_equal(Typed_Scalar *tsp1, Typed_Scalar *tsp2)
 	return 0;
 }
 
-int has_zero_value(Typed_Scalar *tsp )
+int _has_zero_value(QSP_ARG_DECL  Typed_Scalar *tsp )
 {
 	if( TS_PREC(tsp) == PREC_DP ){
 		if( tsp->ts_value.u_d == 0.0 ) return 1;
@@ -95,9 +95,9 @@ int has_zero_value(Typed_Scalar *tsp )
 		if( !strcmp(s,"true") ) return 1;
 		else if( !strcmp(s,"false") ) return 0;
 		else {
-	  		sprintf(DEFAULT_ERROR_STRING,
+	  		sprintf(ERROR_STRING,
 "has_zero_value:  string argument \"%s\", expected \"true\" or \"false\"",s);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return 0;
 		}
 	}
@@ -151,17 +151,17 @@ Typed_Scalar *scalar_for_string(const char *s)
 	return tsp;
 }
 
-double double_for_scalar(Typed_Scalar *tsp)
+double _double_for_scalar(QSP_ARG_DECL  Typed_Scalar *tsp)
 {
 	if( TS_PREC(tsp) == PREC_DP ){
 		return tsp->ts_value.u_d;
 	} else if( TS_PREC(tsp) == PREC_LI ){
 		return (double) tsp->ts_value.u_ll;
 	} else if( TS_PREC(tsp) == PREC_STR ){
-        	sprintf(DEFAULT_ERROR_STRING,
+        	sprintf(ERROR_STRING,
 	"double_for_scalar:  passed string \"%s\" instead of a numeric scalar!?",
 		(const char *)(tsp->ts_value.u_vp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 		
 	  else {
@@ -183,7 +183,7 @@ int64_t llong_for_scalar(Typed_Scalar *tsp)
 	return 0;
 }
 
-int32_t long_for_scalar(Typed_Scalar *tsp)
+int32_t _long_for_scalar(QSP_ARG_DECL  Typed_Scalar *tsp)
 {
 	if( TS_PREC(tsp) == PREC_DP ){
 		return (int32_t) tsp->ts_value.u_d;
@@ -191,7 +191,7 @@ int32_t long_for_scalar(Typed_Scalar *tsp)
 		int64_t ll;
 		ll = (int64_t)tsp->ts_value.u_ll;
 		if( ll > 0x7fffffff || ll < -0x80000000 ){
-			NWARN("long_for_scalar:  losing precision!?");
+			warn("long_for_scalar:  losing precision!?");
 		}
 		return (int32_t) ll;
 	}
@@ -205,7 +205,7 @@ int32_t long_for_scalar(Typed_Scalar *tsp)
 //
 // cast a scalar to a value that can be used as an index...
 
-index_t index_for_scalar(Typed_Scalar *tsp)
+index_t _index_for_scalar(QSP_ARG_DECL  Typed_Scalar *tsp)
 {
 	int64_t v;
 
@@ -221,21 +221,21 @@ index_t index_for_scalar(Typed_Scalar *tsp)
 	  	assert( AERROR( "index_for_scalar:  Unexpected type code!?") );
 	}
 	if( v < 0 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"index_for_scalar:  value (%"PRId64") is negative!?",v);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		v=0;
 	}
 	if( v > 0xffffffff ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"index_for_scalar:  value (0x%"PRIx64") is out of range!?",v);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		v=0;
 	}
 	return (index_t) v;
 }
 
-void string_for_typed_scalar(char *buf,int buflen, Typed_Scalar *tsp)
+void _string_for_typed_scalar(QSP_ARG_DECL  char *buf,int buflen, Typed_Scalar *tsp)
 {
 	// BUG should check buffer length even for the numbers...
 	if( TS_PREC(tsp) == PREC_DP ){
@@ -244,16 +244,16 @@ void string_for_typed_scalar(char *buf,int buflen, Typed_Scalar *tsp)
 		sprintf(buf,"0x%"PRIx64, tsp->ts_value.u_ll);
 	} else if( TS_PREC(tsp) == PREC_STR ){
 		if( strlen( (char *) tsp->ts_value.u_vp ) >= buflen ){
-			NWARN("string_for_typed_scalar:  value would overrun fixed-size buffer!?");
+			warn("string_for_typed_scalar:  value would overrun fixed-size buffer!?");
 		}
 		//sprintf(buf,"%s",(char *)tsp->ts_value.u_vp);
 		strncpy(buf,tsp->ts_value.u_vp,buflen);
 	} else {
 		/*
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"string_for_typed_scalar:  bad prec code %d (%s)",
 			TS_PREC(tsp),PREC_NAME(PREC_FOR_CODE(TS_PREC(tsp))));
-		NERROR1(DEFAULT_ERROR_STRING);
+		NERROR1(ERROR_STRING);
 		*/
 		NERROR1("string_for_typed_scalar:  bad prec code");
 	}
@@ -261,27 +261,22 @@ void string_for_typed_scalar(char *buf,int buflen, Typed_Scalar *tsp)
 
 #define BUFLEN	80
 
-void show_typed_scalar(Typed_Scalar *tsp)
+void _show_typed_scalar(QSP_ARG_DECL  Typed_Scalar *tsp)
 {
 	char str[BUFLEN];
 
 	string_for_typed_scalar(str,BUFLEN,tsp);
 
 	if( TS_PREC(tsp) == PREC_DP ){
-		printf("double precision float:  %s\n",str);
+		sprintf(MSG_STR,"double precision float:  %s\n",str);
 	} else if( TS_PREC(tsp) == PREC_LI ){
-		printf("long integer:  %"PRId64" (%s)\n",
+		sprintf(MSG_STR,"long integer:  %"PRId64" (%s)\n",
 			tsp->ts_value.u_ll, str);
 	} else if( TS_PREC(tsp) == PREC_STR ){
-		printf("string:  \"%s\"",(char *)tsp->ts_value.u_vp);
+		sprintf(MSG_STR,"string:  \"%s\"",(char *)tsp->ts_value.u_vp);
 	} else {
-		/*
-		sprintf(DEFAULT_ERROR_STRING,
-	"show_typed_scalar:  bad prec code %d (%s)",
-			TS_PREC(tsp),PREC_NAME(PREC_FOR_CODE(TS_PREC(tsp))));
-		NERROR1(DEFAULT_ERROR_STRING);
-		*/
-		NERROR1("show_typed_scalar:  bad prec code");
+		error1("show_typed_scalar:  bad prec code");
 	}
+	prt_msg(MSG_STR);
 }
 

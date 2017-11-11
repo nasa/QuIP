@@ -23,32 +23,32 @@ ITEM_DEL_FUNC(Data_Obj,dobj)		// what does this do?
 
 Item_Context *create_dobj_context(QSP_ARG_DECL  const char *name)
 {
-	return create_item_context(QSP_ARG  dobj_itp, name);
+	return create_item_context(dobj_itp, name);
 }
 
-List *dobj_list(SINGLE_QSP_ARG_DECL)
+List *_dobj_list(SINGLE_QSP_ARG_DECL)
 {
-	return item_list(QSP_ARG  dobj_itp);
+	return item_list(dobj_itp);
 }
 
-void push_dobj_context(QSP_ARG_DECL  Item_Context *icp)
+void _push_dobj_context(QSP_ARG_DECL  Item_Context *icp)
 {
-	PUSH_ITEM_CONTEXT(dobj_itp,icp);
+	push_item_context(dobj_itp,icp);
 }
 
-Item_Context *pop_dobj_context(SINGLE_QSP_ARG_DECL)
+Item_Context *_pop_dobj_context(SINGLE_QSP_ARG_DECL)
 {
-	return POP_ITEM_CONTEXT(dobj_itp);
+	return pop_item_context(dobj_itp);
 }
 
-Item_Context *current_dobj_context(SINGLE_QSP_ARG_DECL)
+Item_Context *_current_dobj_context(SINGLE_QSP_ARG_DECL)
 {
-	return CURRENT_CONTEXT(dobj_itp);
+	return current_context(dobj_itp);
 }
 
-Data_Obj *pick_dobj(QSP_ARG_DECL  const char *pmpt)
+Data_Obj *_pick_dobj(QSP_ARG_DECL  const char *pmpt)
 {
-	return (Data_Obj *) pick_item(QSP_ARG  dobj_itp, pmpt);
+	return (Data_Obj *) pick_item(dobj_itp, pmpt);
 }
 
 

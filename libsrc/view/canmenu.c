@@ -18,7 +18,7 @@ static int viewer_name_in_use(QSP_ARG_DECL const char *s)
 {
 	Viewer *vp;
 
-	vp = VWR_OF(s);
+	vp = vwr_of(s);
 	if( vp != NULL){
 		sprintf(ERROR_STRING,"viewer name \"%s\" in use",s);
 		WARN(ERROR_STRING);
@@ -43,20 +43,20 @@ static Viewer * mk_new_viewer(QSP_ARG_DECL int viewer_type)
 		WARN("viewer sizes must be positive");
 		return NULL;
 	}
-	vp = viewer_init(QSP_ARG  name,dx,dy,viewer_type);
+	vp = viewer_init(name,dx,dy,viewer_type);
 
 	if( vp == NULL ) return NULL;
 #ifdef HAVE_X11
-	default_cmap(QSP_ARG  VW_DPYABLE(vp) );
+	default_cmap(VW_DPYABLE(vp) );
 #endif /* HAVE_X11 */
 #ifndef BUILD_FOR_IOS
 	/* default state is to be shown,
 	 * but in IOS we can only see one at a time, so
 	 * we leave them on the bottom until we ask.
 	 */
-	show_viewer(QSP_ARG  vp);
+	show_viewer(vp);
 #endif /* ! BUILD_FOR_IOS */
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 	return vp;
 }
 
@@ -137,7 +137,7 @@ COMMAND_FUNC( reset_button_funcs )
 	//char b1[LLEN],b2[LLEN],b3[LLEN];
 	const char *b1, *b2, *b3;
 
-	vp = PICK_VWR("");
+	vp = pick_vwr("");
 
 	b1=savestr(NAMEOF("left button text"));
 	b2=savestr(NAMEOF("middle button text"));
@@ -166,8 +166,8 @@ COMMAND_FUNC( do_set_event_action )
 	Canvas_Event *cep;
 	const char *action_text;
 
-	vp = PICK_VWR("");
-	cep = PICK_CANVAS_EVENT("event type");
+	vp = pick_vwr("");
+	cep = pick_canvas_event("event type");
 	action_text = NAMEOF("action text");
 
 	if( vp == NULL ) return;
@@ -192,7 +192,7 @@ COMMAND_FUNC( reset_window_text )
 	const char *s;
 	Viewer *vp;
 
-	vp=PICK_VWR("");
+	vp=pick_vwr("");
 	s=NAMEOF("window action text");
 
 	if( vp == NULL) return;
@@ -211,12 +211,12 @@ COMMAND_FUNC( do_redraw )
 {
 	Viewer *vp;
 
-	vp=PICK_VWR("");
+	vp=pick_vwr("");
 	if( vp == NULL) return;
 
 	INSURE_X11_SERVER
-	redraw_viewer(QSP_ARG  vp);
-	select_viewer(QSP_ARG  vp);
+	redraw_viewer(vp);
+	select_viewer(vp);
 }
 
 COMMAND_FUNC( do_embed_image )
@@ -225,8 +225,8 @@ COMMAND_FUNC( do_embed_image )
 	Data_Obj *dp;
 	int x,y;
 
-	vp = PICK_VWR("");
-	dp = PICK_OBJ("image");
+	vp = pick_vwr("");
+	dp = pick_obj("image");
 	x=(int)HOW_MANY("x position");
 	y=(int)HOW_MANY("y position");
 
@@ -240,12 +240,12 @@ COMMAND_FUNC( do_embed_image )
 	INSURE_X11_SERVER
 
 #ifdef BUILD_FOR_IOS
-	embed_image(QSP_ARG  vp,dp,x,y);
+	embed_image(vp,dp,x,y);
 #else /* ! BUILD_FOR_IOS */
 
 	// what does add_image do???
 	if( add_image(vp,dp,x,y) ){
-		embed_image(QSP_ARG  vp,dp,x,y);
+		embed_image(vp,dp,x,y);
 	} else {
 		bring_image_to_front(QSP_ARG  vp,dp,x,y);
 	}
@@ -263,8 +263,8 @@ COMMAND_FUNC( do_unembed_image )
 	Data_Obj *dp;
 	int x,y;
 
-	dp = PICK_OBJ("image");
-	vp = PICK_VWR("");
+	dp = pick_obj("image");
+	vp = pick_vwr("");
 	x=(int)HOW_MANY("x position");
 	y=(int)HOW_MANY("y position");
 
@@ -276,7 +276,7 @@ COMMAND_FUNC( do_unembed_image )
 	INSIST_RAM_OBJ(dp,"unembed_image");
 
 	INSURE_X11_SERVER
-	unembed_image(QSP_ARG  vp,dp,x,y);
+	unembed_image(vp,dp,x,y);
 }
 
 COMMAND_FUNC( do_load_viewer )
@@ -284,8 +284,8 @@ COMMAND_FUNC( do_load_viewer )
 	Viewer *vp;
 	Data_Obj *dp;
 
-	vp = PICK_VWR("");
-	dp = PICK_OBJ("image");
+	vp = pick_vwr("");
+	dp = pick_obj("image");
 
 	if( vp == NULL || dp == NULL ) return;
 
@@ -294,6 +294,6 @@ COMMAND_FUNC( do_load_viewer )
 	INSURE_X11_SERVER
 //fprintf(stderr,"Calling load_viewer %s %s\n",VW_NAME(vp),OBJ_NAME(dp));
 	load_viewer(QSP_ARG  vp,dp);
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 }
 

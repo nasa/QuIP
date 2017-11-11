@@ -23,7 +23,6 @@ void enlarge_buffer(String_Buf *sbp,size_t size)
 
 	size += 32;	/* give us some headroom */
 
-//fprintf(stderr,"enlarge_buffer calling Getbuf\n");
 	newbuf = (char*) getbuf(size);
 	if( sbp->sb_size > 0 ){
 		/* copy old contents */
@@ -64,16 +63,29 @@ void cat_string(String_Buf *sbp,const char *str)
 {
 	u_int need;
 
-	if( (need=(int)(strlen(sbp->sb_buf)+strlen(str)+1)) > sbp->sb_size )
+	if( sbp->sb_buf == NULL ){
+		assert( sbp->sb_size == 0 );
+		need = (u_int) strlen(str)+1;
 		enlarge_buffer(sbp,need);
+	}
+
+	if( (need=(int)(strlen(sbp->sb_buf)+strlen(str)+1)) > sbp->sb_size ){
+		enlarge_buffer(sbp,need);
+	}
 	strcat(sbp->sb_buf,str);
 }
 
 void cat_string_n(String_Buf *sbp, const char *str, int n)
 {
 	u_int need;
-	if( (need=(int)(strlen(sbp->sb_buf)+n+1)) > sbp->sb_size )
+
+	if( SB_SIZE(sbp) == 0 )
+		enlarge_buffer(sbp,n+1);
+
+	if( (need=(int)(strlen(sbp->sb_buf)+n+1)) > sbp->sb_size ){
 		enlarge_buffer(sbp,need);
+	}
+
 	strncat(sbp->sb_buf,str,n);
 }
 

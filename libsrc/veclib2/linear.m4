@@ -4,24 +4,24 @@
 
 /* Because this file is included, it can't have a version string */
 
-static int HOST_TYPED_CALL_NAME(arg_chk,type_code)(Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *xform, const char *func_name)
+static int HOST_TYPED_CALL_NAME(arg_chk,type_code)(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *xform, const char *func_name)
 {
 	if( OBJ_MACH_PREC(dpto) != REQUIRED_DST_PREC ){
-		sprintf(DEFAULT_ERROR_STRING,"target object %s (%s) must have %s precision for %s",
+		sprintf(ERROR_STRING,"target object %s (%s) must have %s precision for %s",
 			OBJ_NAME(dpto),OBJ_PREC_NAME(dpto), NAME_FOR_PREC_CODE(REQUIRED_DST_PREC),func_name);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( OBJ_MACH_PREC(dpfr) != REQUIRED_SRC_PREC ){
-		sprintf(DEFAULT_ERROR_STRING,"source object %s (%s) must have %s precision for %s",
+		sprintf(ERROR_STRING,"source object %s (%s) must have %s precision for %s",
 			OBJ_NAME(dpfr),OBJ_PREC_NAME(dpfr), NAME_FOR_PREC_CODE(REQUIRED_SRC_PREC),func_name);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( OBJ_MACH_PREC(xform) != REQUIRED_SRC_PREC ){
-		sprintf(DEFAULT_ERROR_STRING,"matrix object %s (%s) must have %s precision for %s",
+		sprintf(ERROR_STRING,"matrix object %s (%s) must have %s precision for %s",
 			OBJ_NAME(xform),OBJ_PREC_NAME(xform),NAME_FOR_PREC_CODE(REQUIRED_SRC_PREC),func_name);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( dpto == dpfr ){
@@ -29,9 +29,9 @@ static int HOST_TYPED_CALL_NAME(arg_chk,type_code)(Data_Obj *dpto, Data_Obj *dpf
 		 * an alias of some sort for the source, having a different header structure but pointing
 		 * to the same data!?
 		 */
-		sprintf(DEFAULT_ERROR_STRING,"arg_chk:  destination (%s) must be distinct from source (%s)",
+		sprintf(ERROR_STRING,"arg_chk:  destination (%s) must be distinct from source (%s)",
 			OBJ_NAME(dpto),OBJ_NAME(dpfr));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(0);
@@ -67,7 +67,6 @@ static void HOST_TYPED_CALL_NAME(rvdot,type_code)(HOST_CALL_ARG_DECLS);
 #endif // HAVE_FVDOT
 
 
-//static void HOST_TYPED_CALL_NAME(rxform_list,type_code)(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform_dp)
 static void HOST_TYPED_CALL_NAME(rxform_list,type_code)(HOST_CALL_ARG_DECLS)
 {
 	u_long i,j,k;
@@ -88,16 +87,16 @@ static void HOST_TYPED_CALL_NAME(rxform_list,type_code)(HOST_CALL_ARG_DECLS)
 	dpfr = OA_SRC1(oap);
 	xform_dp = OA_SRC2(oap);
 
-	SET_DIMENSION(row_dimset,0,1);
-	SET_DIMENSION(row_dimset,1,1);
-	SET_DIMENSION(row_dimset,2,1);
-	SET_DIMENSION(row_dimset,3,1);
-	SET_DIMENSION(row_dimset,4,1);
+	set_dimension(row_dimset,0,1);
+	set_dimension(row_dimset,1,1);
+	set_dimension(row_dimset,2,1);
+	set_dimension(row_dimset,3,1);
+	set_dimension(row_dimset,4,1);
 
 	if( xform_chk(dpto,dpfr,xform_dp) == -1 )
 		return;
 
-	if( HOST_TYPED_CALL_NAME(arg_chk,type_code)(dpto,dpfr,xform_dp,TYPED_STRING(xform_list)) < 0 )
+	if( HOST_TYPED_CALL_NAME(arg_chk,type_code)(QSP_ARG  dpto,dpfr,xform_dp,TYPED_STRING(xform_list)) < 0 )
 		return;
 
 	//oap = (&oa1);
@@ -114,7 +113,7 @@ fprintf(stderr,"complex args\n");
 else if( OA_ARGSTYPE(oap) == REAL_ARGS )
 fprintf(stderr,"real args\n");
 else
-NWARN("rxform_list:  Need to make set oa_argstype before calling!?");
+warn("rxform_list:  Need to make set oa_argstype before calling!?");
 	/*
 	if( IS_COMPLEX(dpto) )	SET_OA_ARGSTYPE(oap, COMPLEX_ARGS);
 	else			SET_OA_ARGSTYPE(oap, REAL_ARGS);
@@ -131,18 +130,18 @@ NWARN("rxform_list:  Need to make set oa_argstype before calling!?");
 	ASSIGN_IDX_COUNT(sizes,2,1);
 	ASSIGN_IDX_COUNT(sizes,1,1);
 	ASSIGN_IDX_COUNT(sizes,0,1);
-	sub_dst_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_dst",dpto,offsets,sizes);	/* xform_list */
+	sub_dst_dp = mk_subseq("_sub_dst",dpto,offsets,sizes);	/* xform_list */
 
 	* sizes = * OBJ_TYPE_DIMS(xform_dp);
 	ASSIGN_IDX_COUNT(sizes,2,1);					/* select one row */
-	sub_xf_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_xf",xform_dp,offsets,sizes);	/* one row */
+	sub_xf_dp = mk_subseq("_sub_xf",xform_dp,offsets,sizes);	/* one row */
 	ASSIGN_IDX_COUNT(row_dimset,0,OBJ_COLS(sub_xf_dp));
-	xf_row_dp = make_equivalence(DEFAULT_QSP_ARG  "_xf_row",sub_xf_dp,row_dimset,OBJ_PREC_PTR(sub_xf_dp));
+	xf_row_dp = make_equivalence("_xf_row",sub_xf_dp,row_dimset,OBJ_PREC_PTR(sub_xf_dp));
 
 	* sizes = * OBJ_TYPE_DIMS(dpfr);
 	ASSIGN_IDX_COUNT(sizes,2,1);				/* select one pixel */
 	ASSIGN_IDX_COUNT(sizes,1,1);
-	sub_src_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_src",dpfr,offsets,sizes);
+	sub_src_dp = mk_subseq("_sub_src",dpfr,offsets,sizes);
 
 	*oap2 = *oap;
 	SET_OA_DEST(oap2,sub_dst_dp);
@@ -166,17 +165,17 @@ NWARN("rxform_list:  Need to make set oa_argstype before calling!?");
 				SET_OBJ_DATA_PTR(xf_row_dp,multiply_indexed_data(xform_dp,xf_indices));
 				//vdot(oap);
 #ifdef HAVE_FVDOT
-				HOST_TYPED_CALL_NAME(rvdot,type_code)(FVDOT,oap2);
+				HOST_TYPED_CALL_NAME(rvdot,type_code)(QSP_ARG  FVDOT,oap2);
 #else // ! HAVE_FVDOT
-				NWARN("rxform_list:  Sorry, FVDOT not defined!?");
+				warn("rxform_list:  Sorry, FVDOT not defined!?");
 #endif // ! HAVE_FVDOT
 			} // comps of dpto
 		} // cols of dpto
 	} // rows of dpto
 
-	delvec(DEFAULT_QSP_ARG  sub_dst_dp);
-	delvec(DEFAULT_QSP_ARG  sub_src_dp);
-	delvec(DEFAULT_QSP_ARG  sub_xf_dp);
+	delvec(sub_dst_dp);
+	delvec(sub_src_dp);
+	delvec(sub_xf_dp);
 }
 
 
@@ -215,23 +214,23 @@ static void HOST_TYPED_CALL_NAME(rvec_xform,type_code)(HOST_CALL_ARG_DECLS)
 	if( xform_chk(dpto,dpfr,xform_dp) == -1 )
 		return;
 
-	if( HOST_TYPED_CALL_NAME(arg_chk,type_code)(dpto,dpfr,xform_dp,TYPED_STRING(vec_xform)) < 0 )
+	if( HOST_TYPED_CALL_NAME(arg_chk,type_code)(QSP_ARG  dpto,dpfr,xform_dp,TYPED_STRING(vec_xform)) < 0 )
 		return;
 
 	/* make a temporary output component */
 	/* like the destination except for tdim */
 
-	//coeff_dp = mk_subimg(DEFAULT_QSP_ARG  xform_dp, 0, 0, "_xform_coeff",1,1);	/* 1x1 subimage at 0 0 */
+	//coeff_dp = mk_subimg(xform_dp, 0, 0, "_xform_coeff",1,1);	/* 1x1 subimage at 0 0 */
 
 	tmp_sizes = *( OBJ_TYPE_DIMS(dpto) );
 	ASSIGN_IDX_COUNT(&tmp_sizes,0,1);			/* single component */
-	sub_dst_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_dst",dpto,offsets,&tmp_sizes);	/* vec_xform - RxC image w/ one component */
+	sub_dst_dp = mk_subseq("_sub_dst",dpto,offsets,&tmp_sizes);	/* vec_xform - RxC image w/ one component */
 
-	sub_src_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_src",dpfr,offsets,&tmp_sizes);
-	tmp_dst_dp = make_dobj(DEFAULT_QSP_ARG  "_tmp_dst",OBJ_TYPE_DIMS(sub_dst_dp),OBJ_PREC_PTR(sub_dst_dp));
+	sub_src_dp = mk_subseq("_sub_src",dpfr,offsets,&tmp_sizes);
+	tmp_dst_dp = make_dobj("_tmp_dst",OBJ_TYPE_DIMS(sub_dst_dp),OBJ_PREC_PTR(sub_dst_dp));
 
 	if( sub_dst_dp == NULL || sub_src_dp == NULL || tmp_dst_dp == NULL ){
-		NWARN("error creating temporary object for vec_xform");
+		warn("error creating temporary object for vec_xform");
 		return;
 	}
 
@@ -242,7 +241,7 @@ static void HOST_TYPED_CALL_NAME(rvec_xform,type_code)(HOST_CALL_ARG_DECLS)
 	if( IS_COMPLEX(dpto) )	SET_OA_ARGSTYPE(oap1,COMPLEX_ARGS);
 	else if( IS_REAL(dpto) )SET_OA_ARGSTYPE(oap1,REAL_ARGS);
 	else {
-		NWARN("Sorry, args must be real or complex");
+		warn("Sorry, args must be real or complex");
 	}
 #endif // FOOBAR
 
@@ -296,7 +295,7 @@ static void HOST_TYPED_CALL_NAME(rvec_xform,type_code)(HOST_CALL_ARG_DECLS)
 		SET_OBJ_DATA_PTR(sub_dst_dp,multiply_indexed_data(dpto,dst_indices));
 
 		//vsmul(oap1);
-		HOST_TYPED_CALL_NAME(rvsmul,type_code)(FVSMUL,oap1);
+		HOST_TYPED_CALL_NAME(rvsmul,type_code)(QSP_ARG  FVSMUL,oap1);
 
 		for(j=1;j<OBJ_COLS(xform_dp);j++){
 			/* choose the matrix coefficient with xform_indices */
@@ -309,13 +308,13 @@ static void HOST_TYPED_CALL_NAME(rvec_xform,type_code)(HOST_CALL_ARG_DECLS)
 			src_indices[0]=j;	/* select j_th component */
 			SET_OBJ_DATA_PTR(sub_src_dp,multiply_indexed_data(dpfr,src_indices));
 
-			HOST_TYPED_CALL_NAME(rvsmul,type_code)(FVSMUL,oap2);
-			HOST_TYPED_CALL_NAME(rvadd,type_code)(FVADD,oap3);
+			HOST_TYPED_CALL_NAME(rvsmul,type_code)(QSP_ARG  FVSMUL,oap2);
+			HOST_TYPED_CALL_NAME(rvadd,type_code)(QSP_ARG  FVADD,oap3);
 		}
 	}
-	delvec(DEFAULT_QSP_ARG  sub_src_dp);
-	delvec(DEFAULT_QSP_ARG  sub_dst_dp);
-	delvec(DEFAULT_QSP_ARG  tmp_dst_dp);
+	delvec(sub_src_dp);
+	delvec(sub_dst_dp);
+	delvec(tmp_dst_dp);
 } /* end rvec_xform() */
 
 #ifdef FOOBAR
@@ -342,7 +341,7 @@ static void HOST_TYPED_CALL_NAME(homog_xform,type_code)(QSP_ARG_DECL  Data_Obj *
 	tmp_obj=make_obj(QSP_ARG  "_tmptmp",1,OBJ_ROWS(dpto),OBJ_COLS(dpto),
 		1,prec_for_code(REQUIRED_DST_PREC));
 	if( tmp_obj == NULL ){
-		NWARN("homog_xform:  couldn't create temporary data object");
+		warn("homog_xform:  couldn't create temporary data object");
 		return;
 	}
 
@@ -365,7 +364,7 @@ static void HOST_TYPED_CALL_NAME(homog_xform,type_code)(QSP_ARG_DECL  Data_Obj *
 			h_vl2_vadd(oap3);
 		}
 	}
-	delvec(QSP_ARG  tmp_obj);
+	delvec(tmp_obj);
 } /* end homog_xorm */
 #endif // FOOBAR
 

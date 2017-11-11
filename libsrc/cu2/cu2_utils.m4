@@ -1,3 +1,6 @@
+dnl	This is an original source file, which may be edited.
+dnl	It is used to generate other source files, which should NOT be edited...
+
 dnl	include(`../../include/veclib/cu2_veclib_prot.m4')
 include(`../../include/veclib/cu2_port.m4')
 
@@ -20,49 +23,7 @@ include(`../../include/veclib/cu2_port.m4')
 #define INSURE_CURR_ODP(whence)
 #endif // ! CAUTIOUS
 
-
-/* cl_device_type - bitfield
- *
- * CL_DEVICE_TYPE_DEFAULT
- * CL_DEVICE_TYPE_CPU
- * CL_DEVICE_TYPE_GPU
- * CL_DEVICE_TYPE_ACCELERATOR
- * CL_DEVICE_TYPE_CUSTOM
- * CL_DEVICE_TYPE_ALL
- */
-
-/* Possible values for device XXX:
- *
- * CL_DEVICE_EXECUTION_CAPABILITIES
- * CL_DEVICE_NAME
- * CL_DEVICE_VENDOR
- * CL_DEVICE_PLATFORM
- * CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF
- * CL_DEVICE_HOST_UNIFIED_MEMORY
- * CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR
- * CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT
- * CL_DEVICE_NATIVE_VECTOR_WIDTH_INT
- * CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG
- * CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT
- * CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE
- * CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF
- * CL_DEVICE_OPENCL_C_VERSION
- * CL_DEVICE_BUILT_IN_KERNELS
- * CL_DEVICE_IMAGE_MAX_BUFFER_SIZE
- * CL_DEVICE_IMAGE_MAX_ARRAY_SIZE
- * CL_DEVICE_PARENT_DEVICE
- * CL_DEVICE_PARTITION_MAX_SUB_DEVICES
- * CL_DEVICE_PARTITION_PROPERTIES
- * CL_DEVICE_PARTITION_AFFINITY_DOMAIN
- * CL_DEVICE_PARTITION_TYPE
- * CL_DEVICE_REFERENCE_COUNT
- * CL_DEVICE_PREFERRED_INTEROP_USER_SYNC
- * CL_DEVICE_PRINTF_BUFFER_SIZE
- * CL_DEVICE_IMAGE_PITCH_ALIGNMENT
- * CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT
- */
-
- // init_dev_memory
+// init_dev_memory
 
 void PF_FUNC_NAME(shutdown)(void)
 {
@@ -72,7 +33,7 @@ void PF_FUNC_NAME(shutdown)(void)
 	ret = clReleaseCommandQueue(command_queue);
 	ret = clReleaseContext(context);
 	*/
-	NWARN("shutdown_cu2_platform NOT implemented!?");
+	warn("shutdown_cu2_platform NOT implemented!?");
 
 	// Need to iterate over all devices...
 }
@@ -86,8 +47,6 @@ void PF_FUNC_NAME(sync)(SINGLE_QSP_ARG_DECL)
 {
 	WARN("PF_FUNC_NAME(sync):  not implemented!?");
 }
-#endif // FOOBAR
-
 
 void PF_FUNC_NAME(set_device)( QSP_ARG_DECL  Platform_Device *pdp )
 {
@@ -96,9 +55,9 @@ void PF_FUNC_NAME(set_device)( QSP_ARG_DECL  Platform_Device *pdp )
 #endif // HAVE_CUDA
 
 	if( curr_pdp == pdp ){
-		sprintf(DEFAULT_ERROR_STRING,"%s:  current device is already %s!?",
+		sprintf(ERROR_STRING,"%s:  current device is already %s!?",
 			STRINGIFY(HOST_CALL_NAME(set_device)),PFDEV_NAME(pdp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( PFDEV_PLATFORM_TYPE(pdp) != PLATFORM_CUDA ){
@@ -124,14 +83,14 @@ PF_COMMAND_FUNC( list_devs )
 	list_pfdevs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
 }
 
-void insure_cu2_device( QSP_ARG_DECL  Data_Obj *dp )
+void insure_cu2_device(QSP_ARG_DECL  Data_Obj *dp )
 {
 	Platform_Device *pdp;
 
 	if( AREA_FLAGS(OBJ_AREA(dp)) & DA_RAM ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"insure_cu2_device:  Object %s is a host RAM object!?",OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -143,13 +102,13 @@ void insure_cu2_device( QSP_ARG_DECL  Data_Obj *dp )
 #endif /* CAUTIOUS */
 
 	if( curr_pdp != pdp ){
-sprintf(DEFAULT_ERROR_STRING,"insure_cu2_device:  curr_pdp = 0x%lx  pdp = 0x%lx",
+sprintf(ERROR_STRING,"insure_cu2_device:  curr_pdp = 0x%lx  pdp = 0x%lx",
 (int_for_addr)curr_pdp,(int_for_addr)pdp);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 
-sprintf(DEFAULT_ERROR_STRING,"insure_cu2_device:  current device is %s, want %s",
+sprintf(ERROR_STRING,"insure_cu2_device:  current device is %s, want %s",
 PFDEV_NAME(curr_pdp),PFDEV_NAME(pdp));
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 		PF_FUNC_NAME(set_device)(QSP_ARG  pdp);
 	}
 
@@ -213,10 +172,10 @@ static void init_cu2_ckpts(int n)
 	int i;
 
 	if( max_cu2_ckpts > 0 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "init_cu2_ckpts (%d):  already initialized with %d checpoints",
 			n,max_cu2_ckpts);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	ckpt_tbl = (Cuda_Checkpoint *) getbuf( n * sizeof(*ckpt_tbl) );
@@ -256,7 +215,7 @@ PF_COMMAND_FUNC( set_ckpt )
 	s = NAMEOF("tag for this checkpoint");
 
 	if( max_cu2_ckpts == 0 ){
-		NWARN("do_place_ckpt:  checkpoint table not initialized, setting to default size");
+		warn("do_place_ckpt:  checkpoint table not initialized, setting to default size");
 		init_cu2_ckpts(256);
 	}
 
@@ -286,7 +245,7 @@ PF_COMMAND_FUNC( show_ckpts )
 	int i;
 
 	if( n_cu2_ckpts <= 0 ){
-		NWARN("do_show_cu2_ckpts:  no checkpoints placed!?");
+		warn("do_show_cu2_ckpts:  no checkpoints placed!?");
 		return;
 	}
 

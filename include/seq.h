@@ -19,12 +19,14 @@ char VersionId_inc_seq[] = QUIP_VERSION_STRING;
 
 
 /* seqparse.y */
-ITEM_INTERFACE_PROTOTYPES(Seq,mviseq)
-#define PICK_SEQ(p)	pick_mviseq(QSP_ARG  p)
+// moved to seq_api.h
+//ITEM_INTERFACE_PROTOTYPES(Seq,mviseq)
+//#define PICK_SEQ(p)	pick_mviseq(QSP_ARG  p)
 
 extern void	load_seq_module(Seq_Module *smp);
 extern int	init_show_seq(Seq *);
 extern void	wait_show_seq(void);
+extern void	init_movie_sequences(SINGLE_QSP_ARG_DECL);
 
 //extern int	yylex(void);
 //extern int	yyerror(const char *s);

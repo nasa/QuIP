@@ -23,7 +23,7 @@ static COMMAND_FUNC( do_new_do )
 
 	s=NAMEOF("display");
 #ifdef HAVE_X11
-	if( open_display(QSP_ARG  s,8) == NULL ){
+	if( open_display(s,8) == NULL ){
 		sprintf(ERROR_STRING,"unable to open %s",s);
 		WARN(ERROR_STRING);
 	}
@@ -38,7 +38,7 @@ static COMMAND_FUNC( do_open_do )
 	s=NAMEOF("display");
 	d=HOW_MANY("desired bit depth");
 #ifdef HAVE_X11
-	if( open_display(QSP_ARG  s,d) == NULL ){
+	if( open_display(s,d) == NULL ){
 		sprintf(ERROR_STRING,"unable to open %s",s);
 		WARN(ERROR_STRING);
 	}
@@ -49,7 +49,7 @@ static COMMAND_FUNC( set_do )
 {
 	Disp_Obj *dop;
 
-	dop = PICK_DISP_OBJ("");
+	dop = pick_disp_obj("");
 	if( dop == NULL ) return;
 #ifdef HAVE_X11
 	set_display(dop);
@@ -69,14 +69,14 @@ static COMMAND_FUNC( do_tell_dpy )
 		return;
 	}
 
-	ASSIGN_VAR(s,DO_NAME(dop));
+	assign_var(s,DO_NAME(dop));
 }
 
 static COMMAND_FUNC( do_info_do )
 {
 	Disp_Obj *dop;
 
-	dop= PICK_DISP_OBJ("");
+	dop= pick_disp_obj("");
 	if( dop == NULL ) return;
 #ifdef HAVE_X11
 	info_do(dop);
@@ -87,15 +87,15 @@ static COMMAND_FUNC( do_show_visuals )
 {
 	Disp_Obj *dop;
 
-	dop= PICK_DISP_OBJ("");
+	dop= pick_disp_obj("");
 	if( dop == NULL ) return;
 #ifdef HAVE_X11
-	show_visuals(QSP_ARG  dop);
+	show_visuals(dop);
 #endif /* HAVE_X11 */
 }
 
 static COMMAND_FUNC( do_list_dos )
-{ list_disp_objs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+{ list_disp_objs(tell_msgfile()); }
 
 
 
@@ -117,6 +117,6 @@ COMMAND_FUNC( dpymenu )
 	insure_x11_server(SINGLE_QSP_ARG);
 #endif /* HAVE_X11 */
 
-	PUSH_MENU(displays);
+	CHECK_AND_PUSH_MENU(displays);
 }
 

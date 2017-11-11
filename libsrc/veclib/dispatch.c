@@ -108,7 +108,7 @@ COMMAND_FUNC( set_n_processors )
 	} else {
 		sprintf(ERROR_STRING,"%d processors requested, %d max on this machine",
 			n,N_PROCESSORS);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -185,7 +185,7 @@ mpnadvise(myindex,mystring);
 private_show_obj_args(QSP_ARG  mystring,pip->pi_oap,_advise);
 }
 #endif /* QUIP_DEBUG */
-			(*(pip->pi_func))(pip->pi_vf_code,pip->pi_oap);
+			(*(pip->pi_func))(QSP_ARG  pip->pi_vf_code,pip->pi_oap);
 //mpnadvise(myindex,"BACK from function call");
 		}
 
@@ -218,7 +218,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		pi[i].pi_index = i;
 		// should each thread have its own qsp?
 		sprintf(thread_name,"compute_thread_%d",i);
-		pi[i].pi_qsp = new_query_stack(QSP_ARG  thread_name);
+		pi[i].pi_qsp = new_query_stack(thread_name);
 		pthread_create(&dp_thr[i],&attr1,data_processor,&pi[i]);
 	}
 	n_threads_started=i;
@@ -311,16 +311,16 @@ void launch_threads(QSP_ARG_DECL
 		pi[i].pi_vf_code = vf_code;
 #ifdef QUIP_DEBUG
 if( debug & veclib_debug ){
-sprintf(DEFAULT_ERROR_STRING,"launch_threads: enabling data processing thread %d, pi_oap = 0x%lx",
+sprintf(ERROR_STRING,"launch_threads: enabling data processing thread %d, pi_oap = 0x%lx",
 i,(int_for_addr)pi[i].pi_oap);
-NADVISE(DEFAULT_ERROR_STRING);
-//show_obj_args(QSP_ARG  &oa[i]);
+advise(ERROR_STRING);
+//show_obj_args(&oa[i]);
 }
 #endif /* QUIP_DEBUG */
 	}
 
 	/* this thread does some of the work too! */
-	(*func)(vf_code,&oa[n_processors-1]);
+	(*func)(QSP_ARG  vf_code,&oa[n_processors-1]);
 	
 	wait_for_threads();
 
@@ -329,7 +329,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		int j;
 		for(j=0;j<(MAX_SRC_OBJECTS+1);j++){
 			if( tmp_obj[j][i] != NULL ){
-				delvec(QSP_ARG  tmp_obj[j][i]);
+				delvec(tmp_obj[j][i]);
 				tmp_obj[j][i] = NULL;
 			}
 		}
@@ -351,29 +351,19 @@ static Scalar_Value private_scalar[N_PROCESSORS];
 	index_t offsets[N_DIMENSIONS]={0,0,0,0,0};				\
 										\
 	n_per_thread = OBJ_TYPE_DIM(dp,i_dim) / n_processors;	\
-/*sprintf(DEFAULT_ERROR_STRING,"FIXIT %s (index = %d):  i_dim = %d   n_per_thread = %ld",		\
-OBJ_NAME(dp), arg_index, i_dim,	\
-							n_per_thread);		\
-NADVISE(DEFAULT_ERROR_STRING);*/								\
 	COPY_DIMS(dsp,OBJ_TYPE_DIMS(dp));					\
 	/* special case the last chunk (later) in case of a remainder... */	\
-	SET_DIMENSION(dsp,i_dim, n_per_thread);				\
+	set_dimension(dsp,i_dim, n_per_thread);					\
 										\
 	for(i=0;i<n_processors;i++){						\
 		if( i==(n_processors-1) ){					\
 			/* take care of remainder... */				\
-			SET_DIMENSION(dsp,i_dim,				\
+			set_dimension(dsp,i_dim,				\
 	OBJ_TYPE_DIM(dp,i_dim) - n_per_thread * (n_processors-1) );		\
 		}								\
-/*sprintf(DEFAULT_ERROR_STRING,"thread %d:  offset = %ld, n = %ld",i,			\
- * offsets[i_dim],DIMENSION(dsp,i_dim));					\
-NADVISE(DEFAULT_ERROR_STRING);*/								\
 		dest_dp = tmp_obj[arg_index][i] =			\
-			mk_subseq(QSP_ARG  tmp_obj_name[arg_index][i],		\
+			mk_subseq(tmp_obj_name[arg_index][i],		\
 					dp,offsets,dsp);		\
-/*sprintf(DEFAULT_ERROR_STRING,"tmp_obj[%d][%d] %s created",				\
-arg_index,i,OBJ_NAME(tmp_obj[arg_index][i]));					\
-NADVISE(DEFAULT_ERROR_STRING);*/								\
 		offsets[i_dim] += n_per_thread;					\
 	}									\
 }
@@ -469,15 +459,13 @@ static int multiprocessor_dispatch(QSP_ARG_DECL  const Vector_Function *vfp,
 		 */
 
 		float inc;
-NWARN("Arghh - probably botching vramp scalar args for multiple processors...");
+warn("Arghh - probably botching vramp scalar args for multiple processors...");
 		if( OBJ_PREC(OA_DEST(&oa_tbl[0])) != PREC_SP ){
-			NWARN("sorry, can only fix vramp multiprocessor args for float precision");
+			warn("sorry, can only fix vramp multiprocessor args for float precision");
 			return -1;
 		}
-		//extract_scalar_value( &private_scalar[0], OA_SVAL1(oap) );
-		//extract_scalar_value( (Scalar_Value *)(&inc), OA_SVAL2(oap) );
-		extract_scalar_value(QSP_ARG  &private_scalar[0], OA_SCLR1(oap) );
-		extract_scalar_value(QSP_ARG  (Scalar_Value *)(&inc), OA_SCLR2(oap) );
+		extract_scalar_value(&private_scalar[0], OA_SCLR1(oap) );
+		extract_scalar_value((Scalar_Value *)(&inc), OA_SCLR2(oap) );
 		for(i=1;i<n_processors;i++){
 			/*
 			private_scalar[i].u_f = private_scalar[i-1].u_f
@@ -488,7 +476,7 @@ NWARN("Arghh - probably botching vramp scalar args for multiple processors...");
 			oa_tbl[i].oa_sdp[0] = /* Need more objects */ NULL;
 		}
 	} else if( VF_CODE(vfp) == FVRAMP2D ){
-		WARN("NEED TO FIX CODE FOR MULTIPROC RAMP2D");
+		warn("NEED TO FIX CODE FOR MULTIPROC RAMP2D");
 		return -1;
 	}
 
@@ -504,7 +492,7 @@ NWARN("Arghh - probably botching vramp scalar args for multiple processors...");
 	if( debug & veclib_debug ) {
 		sprintf(ERROR_STRING,"\n\nvec_dispatch %s, using %d processors\n",
 			VF_NAME(vfp),n_processors);
-		ADVISE(DEFAULT_ERROR_STRING);
+		advise(DEFAULT_ERROR_STRING);
 	}
 #endif /* QUIP_DEBUG */
 
@@ -547,11 +535,11 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 
 #ifdef QUIP_DEBUG
 	if( debug & veclib_debug ) {
-		sprintf(DEFAULT_ERROR_STRING,"\nvec_dispatch:  Function %s",
+		sprintf(ERROR_STRING,"\nvec_dispatch:  Function %s",
 			VF_NAME(vfp));
-		NADVISE(DEFAULT_ERROR_STRING);
+		advise(ERROR_STRING);
 
-		show_obj_args(QSP_ARG  oap);
+		show_obj_args(oap);
 	}
 #endif /* QUIP_DEBUG */
 
@@ -566,7 +554,7 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 	}
 #endif	/* N_PROCESSORS > 1 */
 
-	assert( OA_ARGSPREC(oap) < N_ARGSET_PRECISIONS );
+	assert( OA_ARGSPREC_CODE(oap) < N_ARGSET_PRECISIONS );
 	assert( PF_FUNC_TBL(cpp) != NULL );
 
 #ifdef CAUTIOUS
@@ -575,11 +563,11 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 "CAUTIOUS:  platform_dispatch:  table entry %d has code %d - expected %s",
 			VF_CODE(vfp),
 			PF_FUNC_TBL(cpp)[VF_CODE(vfp)].vfa_code,VF_NAME(vfp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		sprintf(ERROR_STRING,
 "platform_dispatch:  vfa table for platform %s may not be sorted?",
 			PLATFORM_NAME(cpp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 
@@ -587,14 +575,14 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 
 	/* not really a BUG, but this may be redundant... */
 	/* Where should this be done??? */
-	OA_FUNCTYPE(oap) = FUNCTYPE_FOR(OA_ARGSPREC(oap),OA_ARGSTYPE(oap));
+	OA_FUNCTYPE(oap) = FUNCTYPE_FOR(OA_ARGSPREC_CODE(oap),OA_ARGSTYPE(oap));
 
 #ifdef QUIP_DEBUG
 if( debug & veclib_debug ){
 sprintf(ERROR_STRING,"vec_dispatch:  calling tabled function, code = %d, functype = %d",
 VF_CODE(vfp),OA_FUNCTYPE(oap));
-NADVISE(ERROR_STRING);
-show_obj_args(QSP_ARG  oap);
+advise(ERROR_STRING);
+show_obj_args(oap);
 }
 #endif /* QUIP_DEBUG */
 
@@ -606,7 +594,7 @@ fprintf(stderr,"Calling function at 0x%lx\n",
 
 	// Do it!
 //fprintf(stderr,"platform_dispatch calling function %s from vfa_tbl...\n",VF_NAME(vfp));
-	(*(PF_FUNC_TBL(cpp)[VF_CODE(vfp)].vfa_func[OA_FUNCTYPE(oap)]))(VF_CODE(vfp),oap);
+	(*(PF_FUNC_TBL(cpp)[VF_CODE(vfp)].vfa_func[OA_FUNCTYPE(oap)]))(QSP_ARG  VF_CODE(vfp),oap);
 	return 0;
 
 } /* end platform_dispatch */
@@ -623,7 +611,7 @@ fprintf(stderr,"Calling function at 0x%lx\n",
 			if( OBJ_PFDEV(dp) != pdp ){		\
 	sprintf(ERROR_STRING,"Object %s has wrong device (%s) - expected %s",	\
 	OBJ_NAME(dp),PFDEV_NAME(OBJ_PFDEV(dp)),PFDEV_NAME(pdp));	\
-				WARN(ERROR_STRING);		\
+				warn(ERROR_STRING);		\
 				return NULL;			\
 			}					\
 		}						\
@@ -666,6 +654,9 @@ void dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp )
 	assert( dst_dp != NULL );
 	assert( src_dp != NULL );
 
+	assert( OBJ_NAME(dst_dp) != NULL );
+	assert( OBJ_NAME(src_dp) != NULL );
+
 	switch( OBJ_MACH_PREC(dst_dp) ){
 		case PREC_BY: code=FVCONV2BY; break;
 		case PREC_IN: code=FVCONV2IN; break;
@@ -682,18 +673,14 @@ void dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp )
 "dp_convert:  destination object %s has unexpected precision (%s)!?",
 				OBJ_NAME(dst_dp),
 				NAME_FOR_PREC_CODE(OBJ_MACH_PREC(dst_dp)) );
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 	}
 
 	clear_obj_args(oap);
 	setvarg2(oap,dst_dp,src_dp);
 	// Need to set argset precision to match source, not destination...
-	SET_OA_ARGSPREC(oap, ARGSET_PREC( OBJ_PREC( src_dp ) ) );
-//fprintf(stderr,"dp_convert, dispatching conversion of %s to %s, func %s (code = %d)\n",
-//OBJ_NAME(dst_dp),OBJ_NAME(src_dp),
-//VF_NAME( &(vec_func_tbl[code]) ),
-//code);
+	SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC( OBJ_PREC( src_dp ) ) );
 	platform_dispatch_by_code(QSP_ARG  code, oap );
 }
 

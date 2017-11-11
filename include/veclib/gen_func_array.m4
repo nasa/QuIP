@@ -107,6 +107,12 @@ RCALL_ARR(vrand,FVRAND),
 
 RCFLT_ARR2(vfft,FVFFT),
 RCFLT_ARR2(vift,FVIFT),
+
+RCFLT_ARR2(fft2d,FVFFT2D),
+RCFLT_ARR2(ift2d,FVIFT2D),
+RCFLT_ARR2(fftrows,FVFFTROWS),
+RCFLT_ARR2(iftrows,FVIFTROWS),
+
 RFLT_ARR(vacos,FVACOS),
 RFLT_ARR(vasin,FVASIN),
 RFLT_ARR(vatn2,FVATN2),
@@ -242,6 +248,13 @@ RALL_ARR(viclp,FVICLP),
 RALL_ARR(vcmp,FVCMP),
 RALL_ARR(vscmp,FVSCMP),
 RALL_ARR(vscmp2,FVSCMP2),
+
+dnl	Mapping complex and quaternions should be straightforward,
+dnl	but not immediately necessary...
+dnl
+dnl RCQALL_ARR(vlutmapb,FVLUTMAPB),
+RALL_ARR(vlutmapb,FVLUTMAPB),
+RALL_ARR(vlutmaps,FVLUTMAPS),
 
 dnl	/* Type conversions
 dnl	 *

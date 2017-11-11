@@ -402,11 +402,11 @@ typedef int32_t prec_t;
 #define PREC_OF( dp )		( OBJ_PREC( dp ) )
 
 
-#define FLOATING_OBJ( dp )	FLOATING_PREC( OBJ_PREC(dp) )
+#define FLOATING_OBJ( dp )	IS_FLOATING_PREC_CODE( OBJ_PREC(dp) )
 #ifdef USE_LONG_DOUBLE
-#define FLOATING_PREC( prec )	((MP_BITS(prec)==PREC_SP)||(MP_BITS(prec)==PREC_DP)||(MP_BITS(prec)==PREC_LP))
+#define IS_FLOATING_PREC_CODE( prec )	((MP_BITS(prec)==PREC_SP)||(MP_BITS(prec)==PREC_DP)||(MP_BITS(prec)==PREC_LP))
 #else // ! USE_LONG_DOUBLE
-#define FLOATING_PREC( prec )	((MP_BITS(prec)==PREC_SP)||(MP_BITS(prec)==PREC_DP))
+#define IS_FLOATING_PREC_CODE( prec )	((MP_BITS(prec)==PREC_SP)||(MP_BITS(prec)==PREC_DP))
 #endif // USE_LONG_DOUBLE
 
 #define INTEGER_PREC( prec )	(   (MP_BITS(prec)==PREC_BY)  \
@@ -432,7 +432,7 @@ typedef int32_t prec_t;
 
 #define N_DIMENSIONS	5	/* color, x, y, t, hyper_t */
 
-typedef uint32_t dimension_t;
+typedef uint32_t dimension_t;	// If this is changed, must also change opencl/ocl_kern_call_defs.m4!
 typedef uint32_t index_t;
 typedef int32_t incr_t;
 

@@ -180,7 +180,7 @@ char *name;
 		if( j== 0 )
 			n_lin_lvls = n;
 		else if( n != n_lin_lvls )
-	NWARN("component linearization files have different numbers of values");
+	warn("component linearization files have different numbers of values");
 
 		fclose(fp);
 	}
@@ -205,7 +205,7 @@ char *name;
 
 		sprintf(filename, "%s.%c", name, '0' + j);
 
-		if(!(fp = TRYNICE(filename, "w"))) {
+		if(!(fp = try_nice(filename, "w"))) {
 			continue;
 		}
 
@@ -232,15 +232,15 @@ u_int start, n;
 	if( start < 0 || start >= n_lin_lvls ){
 		sprintf(ERROR_STRING,"Start value %d must be in the range 0-%d",
 			start,n_lin_lvls-1);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( n <= 0 ){
-		NWARN("number of entries to print must be positive");
+		warn("number of entries to print must be positive");
 		return;
 	}
 	if( start+n > n_lin_lvls ){
-		NWARN("requested linearization entries out of range");
+		warn("requested linearization entries out of range");
 		return;
 	}
 

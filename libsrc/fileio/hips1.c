@@ -22,8 +22,44 @@
 
 /* local prototypes */
 
-static void rewrite_hips1_nf(int fd,dimension_t n);
 static void rls_header(Hips1_Header *hd);
+
+
+/* rewrite the number of frames in this header */
+
+#define rewrite_hips1_nf(fd,n) _rewrite_hips1_nf(QSP_ARG  fd,n)
+
+static void _rewrite_hips1_nf(QSP_ARG_DECL  int fd,dimension_t n)
+{
+	int i;
+	char c;
+	char str[16];
+
+	/* seek to beginning of file */
+	if( lseek(fd,0L,SEEK_SET) != 0 ){
+		warn("error seeking in header");
+		return;
+	}
+
+	/* eat up the first two lines */
+
+	for(i=0;i<2;i++){
+		do {
+			if( read(fd,&c,1) != 1 ){
+				warn("error reading header char");
+				return;
+			}
+		} while(c!='\n');
+	}
+
+	/* print the new nframes string */
+
+	sprintf(str,"%6d",n);
+	if( write(fd,str,6) != 6 ){
+		warn("error overwriting header nframes");
+		return;
+	}
+}
 
 FIO_CLOSE_FUNC( hips1 )
 {
@@ -49,10 +85,10 @@ if( debug & debug_fileio ) advise("freeing hips1 header struct");
 #endif
 		givbuf(ifp->if_hdr_p);
 	}
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
-int hips1_to_dp(Data_Obj *dp,Hips1_Header *hd_p)
+int _hips1_to_dp(QSP_ARG_DECL  Data_Obj *dp,Hips1_Header *hd_p)
 {
 	dimension_t type_dim=1;
 	short prec;
@@ -61,7 +97,7 @@ int hips1_to_dp(Data_Obj *dp,Hips1_Header *hd_p)
 		prec=PREC_SP;
 		type_dim= hd_p->pixel_format * -1;
 		if( type_dim <= 2 ){
-			NWARN("hips1_to_dp: bad multidimensional format");
+			warn("hips1_to_dp: bad multidimensional format");
 			return(-1);
 		}
 	} else switch( hd_p->pixel_format ){
@@ -72,10 +108,10 @@ int hips1_to_dp(Data_Obj *dp,Hips1_Header *hd_p)
 		case PFDBL:   prec=PREC_DP; break;
 		case PFCOMPLEX: prec=PREC_SP; type_dim=2; break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 		"hips1_to_dp:  unsupported pixel format code %d",
 				hd_p->pixel_format);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return(-1);
 	}
 	SET_OBJ_SEQS(dp, 1);
@@ -106,7 +142,7 @@ FIO_OPEN_FUNC( hips1 )
 if( debug & debug_fileio ) advise("opening hips1 image file");
 #endif /* QUIP_DEBUG */
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_HIPS1));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_HIPS1));
 	/* img_file_creat creates dummy if_dp only if readable */
 
 	if( ifp==NULL ) return(ifp);
@@ -135,7 +171,7 @@ if( debug & debug_fileio ) advise("allocating hips1 header");
 }
 
 
-int dp_to_hips1(Hips1_Header *hd_p,Data_Obj *dp)
+int _dp_to_hips1(QSP_ARG_DECL  Hips1_Header *hd_p,Data_Obj *dp)
 {
 	dimension_t size;
 
@@ -144,7 +180,7 @@ int dp_to_hips1(Hips1_Header *hd_p,Data_Obj *dp)
 	hd_p->cols = (int)OBJ_COLS(dp);
 	hd_p->num_frame = (int)OBJ_FRAMES(dp);
 	if( OBJ_PREC(dp) != PREC_SP && OBJ_COMPS(dp) > 1 ){
-NWARN("HIPS1 extension does not support non-float multicomponent pixels");
+warn("HIPS1 extension does not support non-float multicomponent pixels");
 		return(-1);
 	}
 	switch( OBJ_PREC(dp) ){
@@ -186,7 +222,7 @@ NWARN("HIPS1 extension does not support non-float multicomponent pixels");
 			}
 			break;
 		default:
-			NWARN("dp_to_hips1:  unsupported pixel format");
+			warn("dp_to_hips1:  unsupported pixel format");
 			return(-1);
 	}
 	hd_p->bits_per_pixel=(int)(8*size);
@@ -204,8 +240,8 @@ static void _fpts(QSP_ARG_DECL  const char *s,int fd)
 	if( (n2=write(fd,s,n)) != n ){
 		if( n2 < 0 ) tell_sys_error("write");
 
-		sprintf(DEFAULT_ERROR_STRING,"error writing %ld header bytes (%s)",(long)n,s);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"error writing %ld header bytes (%s)",(long)n,s);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -261,9 +297,9 @@ FIO_WT_FUNC(hips1)
 		/* reset nframes */
 		SET_OBJ_FRAMES(ifp->if_dp, ifp->if_frms_to_wt);
 		if( set_hdr(QSP_ARG  ifp) < 0 ) return(-1);
-	} else if( !same_type(QSP_ARG  dp,ifp) ) return(-1);
+	} else if( !same_type(dp,ifp) ) return(-1);
 
-	wt_raw_data(QSP_ARG  dp,ifp);
+	wt_raw_data(dp,ifp);
 	return(0);
 }
 
@@ -285,45 +321,11 @@ FIO_UNCONV_FUNC(hips1)
 
 FIO_CONV_FUNC(hips1)
 {
-	NWARN("hips1_conv not implemented");
+	warn("hips1_conv not implemented");
 	return(-1);
 }
 
 /* stuff from former put_hdr.c */
-
-/* rewrite the number of frames in this header */
-
-static void rewrite_hips1_nf(int fd,dimension_t n)
-{
-	int i;
-	char c;
-	char str[16];
-
-	/* seek to beginning of file */
-	if( lseek(fd,0L,SEEK_SET) != 0 ){
-		NWARN("error seeking in header");
-		return;
-	}
-
-	/* eat up the first two lines */
-
-	for(i=0;i<2;i++){
-		do {
-			if( read(fd,&c,1) != 1 ){
-				NWARN("error reading header char");
-				return;
-			}
-		} while(c!='\n');
-	}
-
-	/* print the new nframes string */
-
-	sprintf(str,"%6d",n);
-	if( write(fd,str,6) != 6 ){
-		NWARN("error overwriting header nframes");
-		return;
-	}
-}
 
 static void rls_header(Hips1_Header *hd)		/* free saved strings */
 {

@@ -283,13 +283,13 @@ static void HOST_TYPED_CALL_NAME($1,type_code)(HOST_CALL_ARG_DECLS )
 	Vector_Args va1, *vap=(&va1);
 
 	if( OBJ_MACH_PREC(OA_DEST(oap)) != INDEX_PREC ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "%s:  destination index %s has %s precision, should be %s",
 			STRINGIFY(HOST_TYPED_CALL_NAME($1,type_code)),
 			OBJ_NAME(OA_DEST(oap)),
 			PREC_NAME(OBJ_MACH_PREC_PTR(OA_DEST(oap))),
 			PREC_NAME(PREC_FOR_CODE(INDEX_PREC)) );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -495,24 +495,24 @@ static void HOST_TYPED_CALL_NAME($1,type_code)(HOST_CALL_ARG_DECLS )
 
 	/* BUG? - isnt precision check done elsewhere??? */
 	if( OBJ_MACH_PREC(OA_DEST(oap)) != INDEX_PREC ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"%s:  destination index %s has %s precision, should be %s",
 	"$1",OBJ_NAME(OA_DEST(oap)),
 	PREC_NAME(OBJ_MACH_PREC_PTR(OA_DEST(oap))),
 			PREC_NAME(PREC_FOR_CODE(INDEX_PREC)) );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( OBJ_N_TYPE_ELTS(OA_DEST(oap)) !=
 		OBJ_N_TYPE_ELTS(oap->oa_dp[0]) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "%s:  number of elements of index array %s (%d) must match source %s (%d)",
 			"$1", OBJ_NAME(OA_DEST(oap)),
 			OBJ_N_TYPE_ELTS(OA_DEST(oap)),
 			OBJ_NAME(oap->oa_dp[0]),
 			OBJ_N_TYPE_ELTS(oap->oa_dp[0]));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	/* BUG need to set vap entries from oap - mm_nocc */
@@ -616,14 +616,14 @@ dnl	show_vec_args(vap);
 	SETUP_PROJ_ITERATION($2,$1)
 	CALL_GPU_FAST_PROJ_2V_SETUP_FUNC($1)
 dnl	fprintf(stderr,"after setup:\n");
-dnl	show_gpu_vector(DEFAULT_QSP_ARG  VA_PFDEV(vap), dst_values,len1);
+dnl	show_gpu_vector(QSP_ARG  VA_PFDEV(vap), dst_values,len1);
 	len=len1;
 	src_values = dst_values;
 	while( len > 1 ){
 		SETUP_PROJ_ITERATION($2,$1)
 		CALL_GPU_FAST_PROJ_2V_HELPER_FUNC($1)
 dnl	fprintf(stderr,"after helper:\n");
-dnl	show_gpu_vector(DEFAULT_QSP_ARG  VA_PFDEV(vap), dst_values,len1);
+dnl	show_gpu_vector(QSP_ARG  VA_PFDEV(vap), dst_values,len1);
 		len=len1;
 		src_values = dst_values;
 		/* Each temp vector gets used twice,
@@ -651,7 +651,7 @@ static void HOST_TYPED_CALL_NAME($1,type_code)( HOST_CALL_ARG_DECLS )
 	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))
 	/* BUG need to set vap entries from oap - proj_2v */
 	SET_VA_PFDEV(vap,OA_PFDEV(oap));
-dnl	show_obj_args(DEFAULT_QSP_ARG  oap);
+dnl	show_obj_args(QSP_ARG  oap);
 	/* why slow args? */
 	XFER_SLOW_ARGS_2
 	SETUP_SLOW_LEN_2
@@ -723,16 +723,16 @@ dnl	Vector_Args va1, *vap=(&va1);
 dnl	Data_Obj *disp_dp;	// for debugging
 	Vec_Obj_Args oa1, *prod_oap=(&oa1);
 
-	shpp = make_outer_shape(DEFAULT_QSP_ARG  OBJ_SHAPE(OA_SRC1(oap)), OBJ_SHAPE(OA_SRC2(oap)));
+	shpp = make_outer_shape(OBJ_SHAPE(OA_SRC1(oap)), OBJ_SHAPE(OA_SRC2(oap)));
 	if( shpp == NULL ){
-		NWARN("$1:  incompatible operand shapes!?");
+		warn("$1:  incompatible operand shapes!?");
 		return;
 	}
 
 	/* BUG - to make this thread-safe, we need to append the thread index to the name! */
-	prod_dp = make_dobj(DEFAULT_QSP_ARG   "prod_tmp",SHP_TYPE_DIMS(shpp),SHP_PREC_PTR(shpp));
+	prod_dp = make_dobj("prod_tmp",SHP_TYPE_DIMS(shpp),SHP_PREC_PTR(shpp));
 	if( prod_dp == NULL ){
-		NWARN("$1:  error creating temp object for products!?");
+		warn("$1:  error creating temp object for products!?");
 		return;
 	}
 
@@ -746,21 +746,21 @@ dnl	Data_Obj *disp_dp;	// for debugging
 
 	*prod_oap = *oap;
 	SET_OA_DEST(prod_oap,prod_dp);
-	HOST_TYPED_CALL_NAME($4,type_code)(FVMUL,prod_oap);
+	HOST_TYPED_CALL_NAME($4,type_code)(QSP_ARG  FVMUL,prod_oap);
 
 dnl	disp_dp = insure_ram_obj(prod_dp);
 dnl	assert(disp_dp!=NULL);
 dnl	fprintf(stderr,"displaying intermediate result:\n");
-dnl	pntvec(DEFAULT_QSP_ARG  disp_dp,stderr);
+dnl	pntvec(QSP_ARG  disp_dp,stderr);
 dnl	fflush(stderr);
-dnl	delvec(DEFAULT_QSP_ARG  disp_dp);
+dnl	delvec(disp_dp);
 
 	*prod_oap = *oap;
 	SET_OA_SRC1(prod_oap,prod_dp);
 	SET_OA_SRC2(prod_oap,NULL);
-	HOST_TYPED_CALL_NAME($5,type_code)(FVSUM,prod_oap);
+	HOST_TYPED_CALL_NAME($5,type_code)(QSP_ARG  FVSUM,prod_oap);
 
-	delvec(DEFAULT_QSP_ARG  prod_dp);
+	_delvec(QSP_ARG  prod_dp);
 
 dnl		CHECK_MM($1)
 dnl	

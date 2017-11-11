@@ -18,25 +18,25 @@ void war_cumsum(QSP_ARG_DECL  Data_Obj *dp_to,Data_Obj *dp_fr)
 	INSIST_RAM_OBJ(dp_fr,war_cumsum);
 
 	if( OBJ_PREC(dp_fr) != PREC_SP && OBJ_PREC(dp_fr) != PREC_DP ){
-		NWARN("Sorry, can only accumulate float or double precision vectors");
+		warn("Sorry, can only accumulate float or double precision vectors");
 		return;
 	}
 	/* check precision & type dimension */
-	if( !dp_same_pixel_type(QSP_ARG  dp_to,dp_fr,"war_cumsum") ) return;
-	if( ! dp_same_size(QSP_ARG  dp_to,dp_fr,"war_cumsum") ) return;
+	if( !dp_same_pixel_type(dp_to,dp_fr,"war_cumsum") ) return;
+	if( ! dp_same_size(dp_to,dp_fr,"war_cumsum") ) return;
 
 	/*
 	if( ! IS_ROWVEC(dp_to) ){
-		NWARN("Sorry, accumulation operation only defined for row vectors");
+		warn("Sorry, accumulation operation only defined for row vectors");
 		return;
 	}
 	if( OBJ_COMPS(dp_to) != 1 ){
-		NWARN("Sorry, can only accumulate vectors with 1 component/pixel");
+		warn("Sorry, can only accumulate vectors with 1 component/pixel");
 		return;
 	}
 	*/
 	if( (! IS_CONTIGUOUS(dp_to)) || ! IS_CONTIGUOUS(dp_fr) ){
-		NWARN("Sorry, accumulation operation requires contiguous source and destination objects");
+		warn("Sorry, accumulation operation requires contiguous source and destination objects");
 		return;
 	}
 

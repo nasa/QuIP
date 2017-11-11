@@ -115,7 +115,7 @@ void show_ctx_stack(void)
 }
 #endif // MAX_DEBUG
 
-IOS_Item_Context *pop_scrnobj_context(SINGLE_QSP_ARG_DECL)
+IOS_Item_Context *_pop_scrnobj_context(SINGLE_QSP_ARG_DECL)
 {
 	IOS_Item_Context *icp;
 	icp = pop_ios_item_context(QSP_ARG  scrnobj_itp );
@@ -140,7 +140,7 @@ IOS_Item_Context *create_scrnobj_context(QSP_ARG_DECL  const char *name)
 	static int sizable_added=0;
 
 	if( scrnobj_itp == NULL ){
-		init_scrnobjs(SINGLE_QSP_ARG);
+		init_scrnobjs();
 	}
 
 	if( ! sizable_added ){

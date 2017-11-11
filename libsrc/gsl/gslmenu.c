@@ -17,9 +17,9 @@ static COMMAND_FUNC( do_gsl_svd )
 {
 	Data_Obj *a_dp, *w_dp, *v_dp;
 
-	a_dp=PICK_OBJ( "input matrix" );
-	w_dp=PICK_OBJ( "vector for singular values" );
-	v_dp=PICK_OBJ( "output v matrix" );
+	a_dp=pick_obj( "input matrix" );
+	w_dp=pick_obj( "vector for singular values" );
+	v_dp=pick_obj( "output v matrix" );
 
 	if( a_dp == NULL || w_dp == NULL || v_dp == NULL )
 		return;
@@ -31,11 +31,11 @@ static COMMAND_FUNC( do_gsl_solve )
 {
 	Data_Obj *u_dp, *v_dp, *w_dp, *x_dp, *b_dp;
 
-	x_dp = PICK_OBJ("Vector of unknown coefficients");
-	u_dp = PICK_OBJ("U matrix");
-	w_dp = PICK_OBJ("Singular values");
-	v_dp = PICK_OBJ("V matrix");
-	b_dp = PICK_OBJ("Vector of input data");
+	x_dp = pick_obj("Vector of unknown coefficients");
+	u_dp = pick_obj("U matrix");
+	w_dp = pick_obj("Singular values");
+	v_dp = pick_obj("V matrix");
+	b_dp = pick_obj("Vector of input data");
 
 	if( u_dp == NULL || w_dp == NULL || v_dp == NULL ||
 		x_dp == NULL || b_dp == NULL )
@@ -57,7 +57,7 @@ int gsl_debug=0;
 static void gsl_debug_init(SINGLE_QSP_ARG_DECL)
 {
 	if( ! gsl_debug ){
-		gsl_debug = add_debug_module(QSP_ARG  "gsl");
+		gsl_debug = add_debug_module("gsl");
 	}
 }
 #endif /* QUIP_DEBUG */
@@ -75,7 +75,7 @@ COMMAND_FUNC( do_gsl_menu )
 		inited=1;
 	}
 
-	PUSH_MENU(gsl);
+	CHECK_AND_PUSH_MENU(gsl);
 }
 	
 #endif /* HAVE_GSL */

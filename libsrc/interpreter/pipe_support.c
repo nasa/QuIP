@@ -26,11 +26,11 @@ void creat_pipe(QSP_ARG_DECL  const char *name, const char* command, const char*
 	else if( *rw == 'w' ) flg=WRITE_PIPE;
 	else {
 		sprintf(ERROR_STRING,"create_pipe:  bad r/w string \"%s\"",rw);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
-	pp = new_pipe(QSP_ARG  name);
+	pp = new_pipe(name);
 	if( pp == NULL ) return;
 
 	pp->p_cmd = savestr(command);
@@ -40,7 +40,7 @@ void creat_pipe(QSP_ARG_DECL  const char *name, const char* command, const char*
 	if( pp->p_fp == NULL ){
 		sprintf(ERROR_STRING,
 			"unable to execute command \"%s\"",command);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		close_pipe(QSP_ARG  pp);
 	}
 }
@@ -49,29 +49,29 @@ void close_pipe(QSP_ARG_DECL  Pipe *pp)
 {
 	if( pp->p_fp != NULL && pclose(pp->p_fp) == -1 ){
 		sprintf(ERROR_STRING,"Error closing pipe \"%s\"!?",pp->p_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	rls_str(pp->p_cmd);
-	del_pipe(QSP_ARG  pp);
+	del_pipe(pp);
 }
 
 void sendto_pipe(QSP_ARG_DECL  Pipe *pp,const char* text)
 {
 	if( (pp->p_flgs & WRITE_PIPE) == 0 ){
 		sprintf(ERROR_STRING,"Can't write to read pipe %s",pp->p_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( fprintf(pp->p_fp,"%s\n",text) == EOF ){
 		sprintf(ERROR_STRING,
 			"write failed on pipe \"%s\"",pp->p_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		close_pipe(QSP_ARG  pp);
 	} else if( fflush(pp->p_fp) == EOF ){
 		sprintf(ERROR_STRING,
 			"fflush failed on pipe \"%s\"",pp->p_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		close_pipe(QSP_ARG  pp);
 	}
 #ifdef DEBUG
@@ -85,7 +85,7 @@ void readfr_pipe(QSP_ARG_DECL  Pipe *pp,const char* varname)
 
 	if( (pp->p_flgs & READ_PIPE) == 0 ){
 		sprintf(ERROR_STRING,"Can't read from  write pipe %s",pp->p_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -96,12 +96,12 @@ void readfr_pipe(QSP_ARG_DECL  Pipe *pp,const char* varname)
 			advise(ERROR_STRING);
 		}
 		close_pipe(QSP_ARG  pp);
-		ASSIGN_VAR(varname,"pipe_read_error");
+		assign_var(varname,"pipe_read_error");
 	} else {
 		/* remove trailing newline */
 		if( buf[strlen(buf)-1] == '\n' )
 			buf[strlen(buf)-1] = 0;
-		ASSIGN_VAR(varname,buf);
+		assign_var(varname,buf);
 	}
 }
 

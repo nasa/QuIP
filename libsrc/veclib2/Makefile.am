@@ -166,7 +166,6 @@ INC_M4FILES=							\
 noinst_HEADERS =					\
 			$(LOCAL_M4FILES)		\
 							\
-			_vl2_utils.c			\
-			vfft.c
+			_vl2_utils.c
 
 

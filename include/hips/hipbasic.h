@@ -203,12 +203,13 @@ struct hips_filter {
 	int highorder;
 };
 
-extern char *memalloc(),*formatheader(),*formatheadera();
-extern char *formatheaderc(),*hformatname(),*hformatname_f(),*hformatname_t();
-extern h_byte *halloc(),*hmalloc();
+//extern char *memalloc(),*formatheader(),*formatheadera();
+//extern char *formatheaderc(),*hformatname(),*hformatname_f(),*hformatname_t();
+//extern h_byte *halloc(),*hmalloc();
+
 extern hsize_t hsizepix(int format);
 
-extern FILE *hfopenr(),*ffopen(),*ffreopen();
+//extern FILE *hfopenr(),*ffopen(),*ffreopen();
 
 /*
  * image and pyramid type declarations for the pyramid routines.
@@ -246,10 +247,10 @@ typedef struct {
 
 /* function definitions */
 
-float		**_read_fimgstr();
-int		**_read_iimgstr();
-float		**_alloc_fimage();
-int		**_alloc_iimage();
+//float		**_read_fimgstr();
+//int		**_read_iimgstr();
+//float		**_alloc_fimage();
+//int		**_alloc_iimage();
 
 /* externals */
 

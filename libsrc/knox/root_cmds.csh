@@ -13,6 +13,8 @@
 # Don't seem to have documentation for galvo system (poisson?)
 if( $HOSTNAME == poisson.arc.nasa.gov ) then
   set the_tty=/dev/ttyS0
+else if( $HOSTNAME == wheatstone.arc.nasa.gov ) then
+  set the_tty=/dev/ttyS0
 else
   echo root_cmds.csh:  no info about knox serial port for host $HOSTNAME
   set the_tty=/dev/null

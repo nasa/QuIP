@@ -25,6 +25,7 @@ FORCE:
 #			function_basic.h
 #			dobj_basic.h
 
+#noinst_HEADERS = llseek.h rawvol.h off64_t.h
 noinst_HEADERS =			\
 					\
 			update_quip_version.sh	\
@@ -70,6 +71,8 @@ noinst_HEADERS =			\
 			item_type.h	\
 			linear.h	\
 			list.h		\
+			llen.h		\
+			llseek.h	\
 			macro.h		\
 			map_ios_item.h	\
 			my_cuda.h	\
@@ -86,6 +89,7 @@ noinst_HEADERS =			\
 			nrm_api.h	\
 			ocl_api.h	\
 			ocl_platform.h	\
+			off64_t.h	\
 			opengl_utils.h	\
 			optimize.h	\
 			panel_obj.h	\

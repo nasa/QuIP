@@ -123,7 +123,7 @@ IOS_ITEM_PICK_FUNC(Nav_Item,nav_item)
 IOS_ITEM_CHECK_FUNC(Nav_Item,nav_item)
 IOS_ITEM_DEL_FUNC(Nav_Item,nav_item)
 
-IOS_Item_Context *pop_navgrp_context(SINGLE_QSP_ARG_DECL)
+IOS_Item_Context *_pop_navgrp_context(SINGLE_QSP_ARG_DECL)
 {
 	IOS_Item_Context *icp;
 	icp = pop_ios_item_context(QSP_ARG  nav_group_itp );
@@ -140,12 +140,12 @@ void push_navgrp_context(QSP_ARG_DECL  IOS_Item_Context *icp)
 IOS_Item_Context *create_navgrp_context(QSP_ARG_DECL  const char *name)
 {
 	if( nav_group_itp == NULL )
-		init_nav_groups(SINGLE_QSP_ARG);
+		init_nav_groups();
 	
 	return create_ios_item_context(QSP_ARG  nav_group_itp, name );
 }
 
-IOS_Item_Context *pop_navitm_context(SINGLE_QSP_ARG_DECL)
+IOS_Item_Context *_pop_navitm_context(SINGLE_QSP_ARG_DECL)
 {
 	IOS_Item_Context *icp;
 
@@ -164,7 +164,7 @@ void push_navitm_context(QSP_ARG_DECL  IOS_Item_Context *icp)
 IOS_Item_Context *create_navitm_context(QSP_ARG_DECL  const char *name)
 {
 	if( nav_item_itp == NULL )
-		init_nav_items(SINGLE_QSP_ARG);
+		init_nav_items();
 	
 	// the context might already exist, if it's not destroyed
 	// when we delete a group and then recreate!?

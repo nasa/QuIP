@@ -8,5 +8,6 @@ librawvol_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes -D_LAR
 
 librawvol_a_SOURCES = rvmenu.c rawvol.c llseek.c getsize.c
 
-noinst_HEADERS = llseek.h rawvol.h off64_t.h
+#noinst_HEADERS = llseek.h rawvol.h off64_t.h
+noinst_HEADERS = rawvol.h
 

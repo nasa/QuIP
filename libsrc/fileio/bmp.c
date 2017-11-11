@@ -46,7 +46,7 @@ int bmp_to_dp(Data_Obj *dp, BMP_Header *hd_p)
 	SET_OBJ_N_TYPE_ELTS(dp, OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp)
 			* OBJ_FRAMES(dp) * OBJ_SEQS(dp));
 
-	set_shape_flags(OBJ_SHAPE(dp),dp,AUTO_SHAPE);
+	auto_shape_flags(OBJ_SHAPE(dp));
 
 	return(0);
 }
@@ -105,7 +105,7 @@ static unsigned char read8BitValue(Image_File *ifp)
 //void bmp_close(Image_File *ifp)
 FIO_CLOSE_FUNC( bmp )
 {
-	generic_imgfile_close(QSP_ARG  ifp);
+	generic_imgfile_close(ifp);
 }
 
 FIO_OPEN_FUNC( bmp )
@@ -116,7 +116,7 @@ FIO_OPEN_FUNC( bmp )
 if( debug ) advise("opening image file");
 #endif /* DEBUG */
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_BMP));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_BMP));
 	if( ifp==NULL ) return(ifp);
 
 	/* img_file_creat creates dummy if_dp only if readable */
@@ -222,20 +222,20 @@ if( debug ) advise("allocating hips header");
 
 		bmp_to_dp(ifp->if_dp,HDR_P(ifp));
 	} else {
-		ERROR1("Sorry, don't know how to write BMP files");
+		error1("Sorry, don't know how to write BMP files");
 	}
 	return(ifp);
 } /* end bmp_open */
 
-int bmp_unconv(void *hdr_pp,Data_Obj *dp)
+int _bmp_unconv(QSP_ARG_DECL  void *hdr_pp,Data_Obj *dp)
 {
-	NWARN("bmp_unconv not implemented");
+	warn("bmp_unconv not implemented");
 	return(-1);
 }
 
-int bmp_conv(Data_Obj *dp,void *hd_pp)
+int _bmp_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 {
-	NWARN("bmp_conv not implemented");
+	warn("bmp_conv not implemented");
 	return(-1);
 }
 
@@ -294,9 +294,9 @@ static void bmp_rd_bit_image(Data_Obj *dp,Image_File *ifp,index_t x_offset,index
 
 	/* 1-bit format cannot be compressed */
 	if (HDR_P(ifp)->bmp_compression != BMP_BI_RGB){
-		sprintf(DEFAULT_ERROR_STRING,"bmp_rd %s:  compression code (%d) is not BMP+BI_RGB (%d)!?",
+		sprintf(ERROR_STRING,"bmp_rd %s:  compression code (%d) is not BMP+BI_RGB (%d)!?",
 			ifp->if_name,HDR_P(ifp)->bmp_compression,BMP_BI_RGB);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 

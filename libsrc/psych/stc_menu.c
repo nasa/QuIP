@@ -56,7 +56,7 @@ int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
 	if( is_fc ){
 		coin=(int)rn(1);
 		sprintf(stim_str,"%d",coin);
-		ASSIGN_VAR("coin",stim_str);
+		assign_var("coin",stim_str);
 	}
 
 	sprintf(stim_str,"%f",xval_array[val]);
@@ -82,11 +82,11 @@ int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
 		s++;
 	}
 
-	ASSIGN_VAR("xval",stim_str);
+	assign_var("xval",stim_str);
 	sprintf(stim_str,"%d",val);
-	ASSIGN_VAR("val",stim_str);
+	assign_var("val",stim_str);
 	sprintf(stim_str,"%d",CLASS_INDEX(tcp));
-	ASSIGN_VAR("class",stim_str);
+	assign_var("class",stim_str);
 
 	assert( tcp != NULL );
 
@@ -94,8 +94,8 @@ int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
 	//PUSH_INPUT_FILE(msg_str);
 
 	//interpret_text_fragment(QSP_ARG tcp->cl_data);		/* use chew_text??? */
-	chew_text(QSP_ARG CLASS_CMD(tcp), "(stimulus text)");
-	vp=VAR_OF("response_string");
+	chew_text(CLASS_CMD(tcp), "(stimulus text)");
+	vp=var_of("response_string");
 	if( vp != NULL )
 		rsp=response(QSP_ARG  VAR_VALUE(vp));
 	else {
@@ -110,7 +110,7 @@ int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
 
 	if( is_fc ){
 		/* stimulus routine may have changed value of coin */
-		vp=VAR_OF("coin");
+		vp=var_of("coin");
 		if( vp == NULL )
 			WARN("variable \"coin\" not set!!!");
 		else {

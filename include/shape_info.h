@@ -71,16 +71,27 @@ struct precision {
 	struct vfunc_tbl *	prec_vf_tbl;
 
 	// methods
-	void			(*set_value_from_input_func)(QSP_ARG_DECL  void *ptr);
+
+	// read script input with appropriate function, and assign scalar
+	void			(*set_value_from_input_func)(QSP_ARG_DECL  void *ptr, const char *prompt);
+
 	double			(*indexed_data_func)(Data_Obj *dp, int index);
+
 	int			(*is_numeric_func)(void);
-	int			(*assign_scalar_func)(Data_Obj *dp, Scalar_Value *svp);
+
+	// assign a scalar data object from a scalar value constant
+	int			(*assign_scalar_obj_func)(Data_Obj *dp, Scalar_Value *svp);
+
+	// extract a value from a scalar data object
 	void			(*extract_scalar_func)(Scalar_Value *svp, Data_Obj *dp);
+
 	double			(*cast_to_double_func)(Scalar_Value *svp);
 	void			(*cast_from_double_func)
 					(Scalar_Value *,double val);
 	void			(*cast_indexed_type_from_double_func)
 					(Scalar_Value *,int idx,double val);
+	void			(*copy_value_func)
+					(Scalar_Value *,Scalar_Value *);
 } ;
 
 #define prec_name	prec_item.item_name
@@ -118,8 +129,8 @@ struct precision {
 #define PREC_IS_NUMERIC_FUNC(prec_p)	(prec_p)->is_numeric_func
 #define SET_PREC_IS_NUMERIC_FUNC(prec_p,v)	(prec_p)->is_numeric_func = v
 
-#define PREC_ASSIGN_SCALAR_FUNC(prec_p)	(prec_p)->assign_scalar_func
-#define SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,v)	(prec_p)->assign_scalar_func = v
+#define PREC_ASSIGN_SCALAR_FUNC(prec_p)	(prec_p)->assign_scalar_obj_func
+#define SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,v)	(prec_p)->assign_scalar_obj_func = v
 
 #define PREC_EXTRACT_SCALAR_FUNC(prec_p)	(prec_p)->extract_scalar_func
 #define SET_PREC_EXTRACT_SCALAR_FUNC(prec_p,v)	(prec_p)->extract_scalar_func = v
@@ -131,6 +142,9 @@ struct precision {
 
 #define PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p)	(prec_p)->cast_indexed_type_from_double_func
 #define SET_PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p,v)	(prec_p)->cast_indexed_type_from_double_func = v
+
+#define PREC_COPY_VALUE_FUNC(prec_p)	(prec_p)->copy_value_func
+#define SET_PREC_COPY_VALUE_FUNC(prec_p,v)	(prec_p)->copy_value_func = v
 
 
 //#ifdef HAVE_ANY_GPU
@@ -206,9 +220,9 @@ typedef struct bitmap_gpu_info {
 
 struct shape_info {
 	Dimension_Set *		si_mach_dims;
-	Dimension_Set *		si_type_dims;
+	Dimension_Set *		si_type_dims;	// what if these are the same???
 	Increment_Set *		si_mach_incs;
-	Increment_Set *		si_type_incs;
+	Increment_Set *		si_type_incs;	// what if these are the same???
 	Precision *		si_prec_p;
 	int32_t			si_maxdim;
 	int32_t			si_mindim;
@@ -363,7 +377,8 @@ struct shape_info {
 #define SET_SHP_BITMAP_GPU_INFO_G(shp,p)	(shp)->si_bitmap_gpu_info_g = p
 
 // BUG currently in vectree/comptree.c, but should be moved!
-extern Shape_Info *make_outer_shape(QSP_ARG_DECL  Shape_Info *,Shape_Info *);
+extern Shape_Info *_make_outer_shape(QSP_ARG_DECL  Shape_Info *,Shape_Info *);
+#define make_outer_shape(shpp1,shpp2) _make_outer_shape(QSP_ARG  shpp1,shpp2)
 
 #endif /* ! _SHAPE_INFO_H_ */
 

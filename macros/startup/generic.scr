@@ -5,6 +5,8 @@
 If $verbose 'echo "interpreting file generic.scr"'
 
 variables
+  If var_exists(QUIPSTARTUPDIR)
+    'set macro_dir $QUIPSTARTUPDIR/..'
   If !var_exists(macro_dir)
     'set macro_dir /usr/local/share/quip/macros'
   #list

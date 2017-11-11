@@ -110,7 +110,7 @@ static void put_down( QSP_ARG_DECL  int x, int y, Viewer *vp )
 	addTail(vp->vw_draglist,carried->dg_np);
 	carried=NULL;
 
-	delvec(QSP_ARG  drag_image);
+	delvec(drag_image);
 	drag_image = NULL;
 
 	drag_xim->data = (char *)NULL;	/* to avoid freeing the data */
@@ -135,7 +135,7 @@ static void pickup( QSP_ARG_DECL  Draggable *dgp, Viewer *vp )
 	/* make the rendering image */
 	assert( drag_image == NULL );
 
-	drag_image = mk_img(QSP_ARG  "drag_image",dgp->dg_height,
+	drag_image = mk_img("drag_image",dgp->dg_height,
 		dgp->dg_width,vp->vw_depth/8,PREC_FOR_CODE(PREC_BY));
 
 	drag_xim = XCreateImage(VW_DPY(vp),VW_VISUAL(vp),vp->vw_depth,ZPixmap,0,
@@ -201,8 +201,8 @@ static int HandleEvent( QSP_ARG_DECL  XEvent *event, int *donep )
 		case Expose:
 			win = event->xexpose.window;
 
-			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
-				NWARN("can't find viewing window for expose event");
+			if( (vp=find_viewer(win)) == NULL ){
+				warn("can't find viewing window for expose event");
 				return 0;
 			}
 			vp->vw_flags |= VIEW_EXPOSED;
@@ -236,7 +236,7 @@ sprintf(ERROR_STRING,"redrawing viewer %s after expose event",vp->vw_name);
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-				redraw_viewer(QSP_ARG  vp);
+				redraw_viewer(vp);
 			}
 //else advise("ignoring expose event w/ count > 0");
 
@@ -245,8 +245,8 @@ advise(ERROR_STRING);
 		case ButtonRelease:
 		case ButtonPress:
 			win = event->xbutton.window;
-			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
-		NWARN("can't find viewing window for button event");
+			if( (vp=find_viewer(win)) == NULL ){
+		warn("can't find viewing window for button event");
 				return 0;
 			}
 			/*
@@ -268,18 +268,18 @@ advise(ERROR_STRING);
 						// BUG give a value to ce_code
 						break;
 					case 1:
-						ASSIGN_VAR("left_button_down","1");
-						ASSIGN_VAR("left_button_up","0");
+						assign_reserved_var("left_button_down","1");
+						assign_reserved_var("left_button_up","0");
 						ce_code = CE_LEFT_BUTTON_DOWN;
 						break;
 					case 2:
-						ASSIGN_VAR("middle_button_down","2");
-						ASSIGN_VAR("middle_button_up","0");
+						assign_reserved_var("middle_button_down","2");
+						assign_reserved_var("middle_button_up","0");
 						ce_code = CE_MIDDLE_BUTTON_DOWN;
 						break;
 					case 3:
-						ASSIGN_VAR("right_button_down","4");
-						ASSIGN_VAR("right_button_up","0");
+						assign_reserved_var("right_button_down","4");
+						assign_reserved_var("right_button_up","0");
 						ce_code = CE_RIGHT_BUTTON_DOWN;
 						break;
 					default:
@@ -297,18 +297,18 @@ advise(ERROR_STRING);
 						// BUG give a value to ce_code
 						break;
 					case 1:
-						ASSIGN_VAR("left_button_down","0");
-						ASSIGN_VAR("left_button_up","1");
+						assign_reserved_var("left_button_down","0");
+						assign_reserved_var("left_button_up","1");
 						ce_code = CE_LEFT_BUTTON_UP;
 						break;
 					case 2:
-						ASSIGN_VAR("middle_button_down","0");
-						ASSIGN_VAR("middle_button_up","2");
+						assign_reserved_var("middle_button_down","0");
+						assign_reserved_var("middle_button_up","2");
 						ce_code = CE_MIDDLE_BUTTON_UP;
 						break;
 					case 3:
-						ASSIGN_VAR("right_button_down","0");
-						ASSIGN_VAR("right_button_up","4");
+						assign_reserved_var("right_button_down","0");
+						assign_reserved_var("right_button_up","4");
 						ce_code = CE_RIGHT_BUTTON_UP;
 						break;
 					default:
@@ -337,17 +337,17 @@ advise(ERROR_STRING);
 				y=vp->vw_height-1;
 			}
 			sprintf(string,"%d",x);
-			ASSIGN_VAR("view_xpos",string);
+			assign_reserved_var("view_xpos",string);
 			sprintf(string,"%d",y);
-			ASSIGN_VAR("view_ypos",string);
+			assign_reserved_var("view_ypos",string);
 
 			win = event->xbutton.window;
-			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
-				NWARN("can't find viewing window for button event");
+			if( (vp=find_viewer(win)) == NULL ){
+				warn("can't find viewing window for button event");
 				return 0;
 			}
 
-			ASSIGN_VAR("event_window",vp->vw_name);
+			assign_reserved_var("event_window",vp->vw_name);
 
 			// This is where we would like to use the new canvas_event
 			// scheme instead of the old button scheme...
@@ -357,7 +357,7 @@ advise(ERROR_STRING);
 
 				if( VW_EVENT_TBL(vp) != NULL ){
 					if( VW_EVENT_ACTION(vp,ce_code) != NULL ){
-						CHEW_TEXT( VW_EVENT_ACTION(vp,ce_code), "(viewer event)" );
+						chew_text( VW_EVENT_ACTION(vp,ce_code), "(viewer event)" );
 					}
 					// Do nothing if the event action has not been specified
 				} else {
@@ -365,11 +365,11 @@ advise(ERROR_STRING);
 					// This is mainly here to support backward-compatibility with old scripts.
 					// We should print a deprecated warning when the old-style actions are set...
 					if( button_number == 1 )
-				CHEW_TEXT(vp->vw_text1,"(button 1 event)");
+				chew_text(vp->vw_text1,"(button 1 event)");
 					else if( button_number == 2 )
-				CHEW_TEXT(vp->vw_text2,"(button 2 event)");
+				chew_text(vp->vw_text2,"(button 2 event)");
 					else if( button_number == 3 )
-				CHEW_TEXT(vp->vw_text3,"(button 3 event)");
+				chew_text(vp->vw_text3,"(button 3 event)");
 					else if( button_number == 0 ){
 						/* this sometimes happens on the new laptop
 						 * when using the touchpad... ???
@@ -381,7 +381,7 @@ advise(ERROR_STRING);
 					} else {
 						sprintf(ERROR_STRING,
 						"wacky button number %d",button_number);
-						NWARN(ERROR_STRING);
+						warn(ERROR_STRING);
 					}
 				}
 			} else if( IS_ADJUSTER(vp) ) goto adjust_event;
@@ -412,8 +412,8 @@ advise(ERROR_STRING);
 
 		case MapNotify:
 			win = event->xmapping.window;
-			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
-				NWARN("can't find viewing window for map event");
+			if( (vp=find_viewer(win)) == NULL ){
+				warn("can't find viewing window for map event");
 				return 0;
 			}
 			vp->vw_flags |= VIEW_MAPPED;
@@ -424,13 +424,13 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-			redraw_viewer(QSP_ARG  vp);
+			redraw_viewer(vp);
 			return 0;
 
 		case MotionNotify:
 			win = event->xmotion.window;
-			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
-		NWARN("can't find viewing window for motion event");
+			if( (vp=find_viewer(win)) == NULL ){
+		warn("can't find viewing window for motion event");
 				return 0;
 			}
 			if( !IS_TRACKING(vp) ){
@@ -481,16 +481,16 @@ advise(ERROR_STRING);
 			}
 
 			sprintf(string,"%d",x);
-			ASSIGN_VAR("view_xpos",string);
+			assign_reserved_var("view_xpos",string);
 			sprintf(string,"%d",y);
-			ASSIGN_VAR("view_ypos",string);
+			assign_reserved_var("view_ypos",string);
 
 			sprintf(string,"%d",button_number);
-			ASSIGN_VAR("button",string);
+			assign_reserved_var("button",string);
 			sprintf(string,"%d", event->type);
-			ASSIGN_VAR("event_type",string);
+			assign_reserved_var("event_type",string);
 
-			CHEW_TEXT(vp->vw_text,"(button motion event)");
+			chew_text(vp->vw_text,"(button motion event)");
 
 			last_button = button_number;
 			break;
@@ -508,9 +508,9 @@ advise(ERROR_STRING);
 			//NADVISE("ConfigureNotify event!");
 			win = event->xconfigure.window;
 
-			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
+			if( (vp=find_viewer(win)) == NULL ){
 				// Apparently we receive this event after we delete a window
-		//NWARN("can't find viewer for configure event");
+		//warn("can't find viewer for configure event");
 				return 0;
 			}
 //show_configure_notify(event);
@@ -567,7 +567,7 @@ VW_X(vp),VW_Y(vp),VW_X_REQUESTED(vp),VW_Y_REQUESTED(vp));
 #ifdef QUIP_DEBUG
 if( debug & xdebug ){
 sprintf(ERROR_STRING,"do-nothing event type %d",event->type);
-NWARN(ERROR_STRING);
+warn(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 #endif // FOOBAR
@@ -581,7 +581,7 @@ fprintf(stderr,"enter/leave event type %d\n",event->type);
 #ifdef QUIP_DEBUG
 if( debug ){
 sprintf(ERROR_STRING,"enter/leave event type %d",event->type);
-NWARN(ERROR_STRING);
+warn(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 			do_enter_leave(event);
@@ -590,7 +590,7 @@ NWARN(ERROR_STRING);
 #ifdef QUIP_DEBUG
 if( debug ){
 sprintf(ERROR_STRING,"mysterious event14 type %d",event->type);
-NWARN(ERROR_STRING);
+warn(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 			break;		/* what is this??? */
@@ -603,7 +603,7 @@ NWARN(ERROR_STRING);
 			if( ks_len > 1 ){
 				sprintf(ERROR_STRING,"keystring has length %d",
 					ks_len);
-				NWARN(ERROR_STRING);
+				warn(ERROR_STRING);
 			} else if( ks_len == 0 ){
 				/* usually because shift or control was depressed */
 			} else {
@@ -611,7 +611,7 @@ NWARN(ERROR_STRING);
 // never cleared!?
 // Maybe faulty auto-repeat?  We could check KeyRelease?
 //
-fprintf(stderr,"KeyPress event, ks_len = %d, keystr[0] = 0x%x\n",ks_len,keystr[0]);
+//fprintf(stderr,"KeyPress event, ks_len = %d, keystr[0] = 0x%x\n",ks_len,keystr[0]);
 				if( keystr[0] == 015 )
 					keystr[0]=012;	/* map CR to LF */
 				keystr[1]=0;
@@ -633,11 +633,11 @@ fprintf(stderr,"KeyPress event, ks_len = %d, keystr[0] = 0x%x\n",ks_len,keystr[0
 #ifdef QUIP_DEBUG
 if( debug ){
 sprintf(ERROR_STRING,"uncaught event type %d",event->type);
-NWARN(ERROR_STRING);
+warn(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 sprintf(ERROR_STRING,"uncaught event type %d",event->type);
-NWARN(ERROR_STRING);
+warn(ERROR_STRING);
 			break;		/* ignore unexpected events */
 	}
 	*donep = done;
@@ -720,12 +720,12 @@ void discard_events(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-Viewer *find_viewer( QSP_ARG_DECL  Window win )
+Viewer *_find_viewer( QSP_ARG_DECL  Window win )
 {
 	Node *np;
 	Viewer *vp;
 
-	np=first_viewer_node(SINGLE_QSP_ARG);
+	np=first_viewer_node();
 	while( np != NULL ){
 		vp=(Viewer *) np->n_data;
 		if( vp->vw_xwin == win ) return(vp);

@@ -53,7 +53,7 @@ COMMAND_FUNC( do_fork )
 	s=NAMEOF("string to interpret in forked task");
 
 	if( child_pid != -1 ){
-		WARN("Sorry, can't have more than 1 child");
+		warn("Sorry, can't have more than 1 child");
 		return;
 	}
 	if( (child_pid=fork()) == 0 ){
@@ -63,17 +63,8 @@ COMMAND_FUNC( do_fork )
 		 * only for a shared-memory thread!
 		 */
 
-		CHEW_TEXT(s,"(do_fork)");
-		CHEW_TEXT("fast_exit","(do_fork)");
-#ifdef FOOBAR
-		// The first pushed text gets executed second...
-
-		PUSH_TEXT("fast_exit","(do_fork)");
-		PUSH_TEXT(s,"(do_fork)");
-
-		while(1) qs_do_cmd(THIS_QSP);
-
-#endif // FOOBAR
+		chew_text(s,"(do_fork)");
+		chew_text("fast_exit","(do_fork)");
 	} else if( child_pid == -1 ){
 		tell_sys_error("fork");
 	}
@@ -87,7 +78,7 @@ COMMAND_FUNC( do_wait_child )
 {
 #ifdef HAVE_FORK
 	if( child_pid == -1 ){
-		WARN("No child to wait for");
+		warn("No child to wait for");
 		return;
 	}
 	if( wait((void *)0) == -1 )

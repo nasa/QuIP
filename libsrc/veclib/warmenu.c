@@ -13,10 +13,11 @@
 #include "vec_util.h"
 #include "quip_menu.h"
 #include "veclib/vl2_veclib_prot.h"
+#include "platform.h"
 
 #define TEMP_UNIMP(func)			\
 						\
-WARN("Sorry, function " #func " is temporarily unimplemented.");
+	warn("Sorry, function " #func " is temporarily unimplemented.");
 
 #define DO_VCODE(code)	do_vcode(QSP_ARG  code)
 
@@ -36,8 +37,8 @@ static COMMAND_FUNC( do_convert )
 	Vec_Obj_Args oa1;
 	Vec_Func_Code code;
 
-	dst= PICK_OBJ( "destination" );
-	src= PICK_OBJ( "source" );
+	dst= pick_obj( "destination" );
+	src= pick_obj( "source" );
 
 	if( dst==NULL || src == NULL ) return;
 
@@ -45,11 +46,11 @@ static COMMAND_FUNC( do_convert )
 	//h_vl2_convert(QSP_ARG  dst,src);
 	// BUG need to choose platform based on args!
 	if( IS_BITMAP(dst) ){
-		WARN("do_convert:  Sorry, forgot how to convert to bit!?");
+		warn("do_convert:  Sorry, forgot how to convert to bit!?");
 		return;
 	}
 	if( IS_BITMAP(src) ){
-		WARN("do_convert:  Sorry, forgot how to convert from bit!?");
+		warn("do_convert:  Sorry, forgot how to convert from bit!?");
 		return;
 	}
 
@@ -86,7 +87,7 @@ COMMAND_FUNC( dowheel )
 	float arg;
 	int n;
 
-	dp=PICK_OBJ( "target float image" );
+	dp=pick_obj( "target float image" );
 	n=HOW_MANY("number of spokes");
 	arg=HOW_MUCH("spoke phase");
 	if( dp==NULL ) return;
@@ -98,7 +99,7 @@ COMMAND_FUNC( doaxle )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ( "target float image" );
+	dp=pick_obj( "target float image" );
 	if( dp==NULL ) return;
 
 	make_axle(dp);
@@ -120,12 +121,12 @@ static COMMAND_FUNC( getDimSum )
 	float* src_data;
 	float* dst_data;
 
-	if ((dp_dst = PICK_OBJ( "destination object" )) == NULL) return;
-	if ((dp_src = PICK_OBJ( "source object" )) == NULL) return;
+	if ((dp_dst = pick_obj( "destination object" )) == NULL) return;
+	if ((dp_src = pick_obj( "source object" )) == NULL) return;
 
 	if (OBJ_PREC(dp_dst) != PREC_SP || OBJ_PREC(dp_src) != PREC_SP) {
 		sprintf(ERROR_STRING,"Object types must be float");
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 		return;
 	}
 
@@ -133,7 +134,7 @@ static COMMAND_FUNC( getDimSum )
 
 	if (dim > 2 || dim < 1) {
 		sprintf(ERROR_STRING,"Dimension can only be 1 (rows) or 2 (cols)");
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 		return;
 	}
 
@@ -156,7 +157,7 @@ static COMMAND_FUNC( getDimSum )
 
 		} else {
 			sprintf(ERROR_STRING,"Check destination object %s dims.", OBJ_NAME(dp_dst));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 	} else {
@@ -168,7 +169,7 @@ static COMMAND_FUNC( getDimSum )
 			}
 		} else {
 			sprintf(ERROR_STRING,"Check destination object %s dims.", OBJ_NAME(dp_dst));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 	}
@@ -184,18 +185,18 @@ static COMMAND_FUNC( dofind )
 	float* dst_data;
 	int thres;
 
-	if ((dp_dst = PICK_OBJ( "destination object" )) == NULL) return;
-	if ((dp_src = PICK_OBJ( "source object" )) == NULL) return;
+	if ((dp_dst = pick_obj( "destination object" )) == NULL) return;
+	if ((dp_src = pick_obj( "source object" )) == NULL) return;
 
 	if (OBJ_PREC(dp_dst) != PREC_SP || OBJ_PREC(dp_src) != PREC_SP) {
 		sprintf(ERROR_STRING,"Object types must be float");
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 		return;
 	}
 
 	if ((dw = OBJ_COLS(dp_dst)) != 2) {
 		sprintf(ERROR_STRING,"Destination object must have exactly 2 columns");
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 		return;
 	}
 
@@ -220,7 +221,7 @@ static COMMAND_FUNC( dofind )
 
 	if (k != dh) {
 		sprintf(ERROR_STRING,"Destination object rows were too long");
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 
 }
@@ -247,7 +248,7 @@ MENU_END(unary)
 
 static COMMAND_FUNC( do_unary )
 {
-	PUSH_MENU(unary);
+	CHECK_AND_PUSH_MENU(unary);
 }
 
 static COMMAND_FUNC( doatan ){	DO_VCODE(FVATAN); }
@@ -307,7 +308,7 @@ MENU_END(trig)
 
 static COMMAND_FUNC( do_trig )
 {
-	PUSH_MENU(trig);
+	CHECK_AND_PUSH_MENU(trig);
 }
 
 static COMMAND_FUNC( do_and ){	DO_VCODE(FVAND); }
@@ -352,7 +353,7 @@ MENU_END(logical)
 
 static COMMAND_FUNC( do_logic )
 {
-	PUSH_MENU(logical);
+	CHECK_AND_PUSH_MENU(logical);
 }
 
 static COMMAND_FUNC( do_vvadd ){	DO_VCODE(FVADD); }
@@ -376,33 +377,19 @@ MENU_END(vvector)
 
 static COMMAND_FUNC( do_vv )
 {
-	PUSH_MENU(vvector);
+	CHECK_AND_PUSH_MENU(vvector);
 }
 
-static COMMAND_FUNC( do_vsadd )		{	insist_real=1; DO_VCODE(FVSADD); }
-static COMMAND_FUNC( do_vssub )		{	insist_real=1; DO_VCODE(FVSSUB); }
-static COMMAND_FUNC( do_vsmul )		{	insist_real=1; DO_VCODE(FVSMUL); }
-static COMMAND_FUNC( do_vsdiv )		{	insist_real=1; DO_VCODE(FVSDIV); }
-static COMMAND_FUNC( do_vsdiv2 )		{	insist_real=1; DO_VCODE(FVSDIV2); }
+static COMMAND_FUNC( do_vsadd )		{	DO_VCODE(FVSADD); }
+static COMMAND_FUNC( do_vssub )		{	DO_VCODE(FVSSUB); }
+static COMMAND_FUNC( do_vsmul )		{	DO_VCODE(FVSMUL); }
+static COMMAND_FUNC( do_vsdiv )		{	DO_VCODE(FVSDIV); }
+static COMMAND_FUNC( do_vsdiv2 )	{	DO_VCODE(FVSDIV2); }
 
 /* static COMMAND_FUNC( do_vscml )	{	DO_VCODE(FVSCML); } */
 
 static COMMAND_FUNC( do_vsmod )		{	DO_VCODE(FVSMOD); }
-static COMMAND_FUNC( do_vsmod2 )		{	DO_VCODE(FVSMOD2); }
-
-#ifdef FOOBAR
-static COMMAND_FUNC( do_vcsadd )	{	insist_cpx=1;  DO_VCODE(FVCSADD); }
-static COMMAND_FUNC( do_vcssub )	{	insist_cpx=1;  DO_VCODE(FVCSSUB); }
-static COMMAND_FUNC( do_vcsmul )	{	insist_cpx=1;  DO_VCODE(FVCSMUL); }
-static COMMAND_FUNC( do_vcsdiv )	{	insist_cpx=1;  DO_VCODE(FVCSDIV); }
-static COMMAND_FUNC( do_vcsdiv2 )	{	insist_cpx=1;  DO_VCODE(FVCSDIV2); }
-
-static COMMAND_FUNC( do_vqsadd )	{	insist_quat=1;  DO_VCODE(FVQSADD); }
-static COMMAND_FUNC( do_vqssub )	{	insist_quat=1;  DO_VCODE(FVQSSUB); }
-static COMMAND_FUNC( do_vqsmul )	{	insist_quat=1;  DO_VCODE(FVQSMUL); }
-static COMMAND_FUNC( do_vqsdiv )	{	insist_quat=1;  DO_VCODE(FVQSDIV); }
-static COMMAND_FUNC( do_vqsdiv2 )	{	insist_quat=1;  DO_VCODE(FVQSDIV2); }
-#endif /* FOOBAR */
+static COMMAND_FUNC( do_vsmod2 )	{	DO_VCODE(FVSMOD2); }
 
 static COMMAND_FUNC( do_vspow )		{	DO_VCODE(FVSPOW); }
 static COMMAND_FUNC( do_vspow2 )	{	DO_VCODE(FVSPOW2); }
@@ -435,38 +422,7 @@ ADD_CMD( xor,	do_vsxor,	bitwise xor of scalar and vector	)
 MENU_END(svector)
 
 
-static COMMAND_FUNC( do_rvs ) { PUSH_MENU(svector); }
-
-#ifdef FOOBAR
-Command cvs_menu[]={
-{ "add",	do_vcsadd,	"add complex scalar to elements of a vector"	},
-{ "div",	do_vcsdiv,	"divide a complex scalar by the elements of a vector"},
-{ "div2",	do_vcsdiv2,	"divide elements of a vector by a complex scalar"},
-{ "mul",	do_vcsmul,	"multiply a vector by a complex scalar"	},
-/* { "conjmul",	do_vscml,	"multiply vector conj. by a complex scalar"},	*/
-{ "sub",	do_vcssub,	"subtract elements of a vector from a complex scalar"},
-#ifndef MAC
-{ "quit",	popcmd,		"exit submenu"				},
-#endif
-{ NULL_COMMAND								}
-};
-
-Command qvs_menu[]={
-{ "add",	do_vqsadd,	"add quaternion scalar to elements of a vector"	},
-{ "div",	do_vqsdiv,	"divide a quaternion scalar by the elements of a vector"},
-{ "div2",	do_vqsdiv2,	"divide elements of a vector by a quaternion scalar"},
-{ "mul",	do_vqsmul,	"multiply a vector by a quaternion scalar"	},
-/* { "conjmul",	do_vscml,	"multiply vector conj. by a quaternion scalar"},	*/
-{ "sub",	do_vqssub,	"subtract elements of a vector from a quaternion scalar"},
-#ifndef MAC
-{ "quit",	popcmd,		"exit submenu"				},
-#endif
-{ NULL_COMMAND								}
-};
-
-static COMMAND_FUNC( do_cvs ) { PUSH_MENU(cvs_menu); }
-static COMMAND_FUNC( do_qvs ) { PUSH_MENU(qvs_menu); }
-#endif	/* FOOBAR */
+static COMMAND_FUNC( do_vs ) { CHECK_AND_PUSH_MENU(svector); }
 
 /* These return a single scalar, and can be used as projection operators */
 static COMMAND_FUNC( domaxv ){	DO_VCODE(FVMAXV); }
@@ -506,42 +462,15 @@ MENU_END(minmax)
 
 static COMMAND_FUNC( do_minmax )
 {
-	PUSH_MENU(minmax);
+	CHECK_AND_PUSH_MENU(minmax);
 }
-
-#ifdef FOOBAR
-static COMMAND_FUNC( do_accumulate )
-{
-	Data_Obj *dp_to,*dp_fr;
-
-	dp_to=PICK_OBJ( "destination vector" );
-	dp_fr=PICK_OBJ( "source vector" );
-
-	if( dp_to==NULL || dp_fr==NULL ) return;
-
-	war_accumulate(dp_to,dp_fr);
-}
-
-static COMMAND_FUNC( do_project )
-{
-	Data_Obj *dp_to,*dp_fr;
-
-	dp_to=PICK_OBJ( "destination vector" );
-	dp_fr=PICK_OBJ( "source image" );
-
-	if( dp_to==NULL || dp_fr==NULL ) return;
-
-	war_project(dp_to,dp_fr);
-}
-#endif /* FOOBAR */
-
 
 static COMMAND_FUNC( do_cumsum )
 {
 	Data_Obj *dp_to,*dp_fr;
 
-	dp_to=PICK_OBJ( "destination vector" );
-	dp_fr=PICK_OBJ( "source vector" );
+	dp_to=pick_obj( "destination vector" );
+	dp_fr=pick_obj( "source vector" );
 
 	if( dp_to==NULL || dp_fr==NULL ) return;
 
@@ -552,8 +481,8 @@ static COMMAND_FUNC( do_reduce )
 {
 	Data_Obj *dp,*dp2;
 
-	dp2=PICK_OBJ( "destination image" );
-	dp=PICK_OBJ( "source image" );
+	dp2=pick_obj( "destination image" );
+	dp=pick_obj( "source image" );
 	if( dp2==NULL || dp == NULL ) return;
 	reduce(QSP_ARG  dp2,dp);
 }
@@ -562,65 +491,75 @@ static COMMAND_FUNC( do_enlarge )
 {
 	Data_Obj *dp,*dp2;
 
-	dp2=PICK_OBJ( "destination image" );
-	dp=PICK_OBJ( "source image" );
+	dp2=pick_obj( "destination image" );
+	dp=pick_obj( "source image" );
 	if( dp2==NULL || dp == NULL ) return;
 	enlarge(QSP_ARG  dp2,dp);
 }
 
 static COMMAND_FUNC( do_fwdfft )
 {
+	/*
 	Data_Obj *dp;
 	int vf_code=(-1);
 
-	dp=PICK_OBJ("complex image");
+	dp=pick_obj("complex image");
 	if( dp == NULL ) return;
 
-	//h_vl2_fft2d(VFCODE_ARG  dp,dp);
 	(*PF_FFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
+	*/
+	DO_VCODE(FVFFT2D);
 }
 
 static COMMAND_FUNC( do_fwdrowfft )
 {
+	/*
 	Data_Obj *dp;
 	int vf_code=(-1);
 
-	dp=PICK_OBJ("complex image");
+	dp=pick_obj("complex image");
 	if( dp == NULL ) return;
 
-	//h_vl2_fftrows(VFCODE_ARG  dp,dp);
 	(*PF_FFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
+	*/
+	DO_VCODE(FVFFTROWS);
 }
 
 static COMMAND_FUNC( do_invfft )
 {
+	/*
 	Data_Obj *dp;
 	int vf_code=(-1);
 
-	dp=PICK_OBJ("complex image");
+	dp=pick_obj("complex image");
 	if( dp == NULL ) return;
-	//h_vl2_ift2d(VFCODE_ARG  dp,dp);
 	(*PF_IFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
+	*/
+	DO_VCODE(FVIFT2D);
 }
 
 static COMMAND_FUNC( do_invrowfft )
 {
+	/*
 	Data_Obj *dp;
 	int vf_code=(-1);
 
-	dp=PICK_OBJ("complex image");
+	dp=pick_obj("complex image");
 	if( dp == NULL ) return;
-	//h_vl2_iftrows(VFCODE_ARG  dp,dp);
 	(*PF_IFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
+	*/
+	DO_VCODE(FVIFTROWS);
 }
+
+#ifdef FOOBAR
 
 static COMMAND_FUNC( do_invrfft )
 {
 	Data_Obj *src,*targ;
 	int vf_code=(-1);
 
-	targ = PICK_OBJ("real target");
-	src = PICK_OBJ("complex source");
+	targ = pick_obj("real target");
+	src = pick_obj("complex source");
 	if( targ == NULL || src == NULL ) return;
 
 	//h_vl2_ift2d(VFCODE_ARG  targ,src);
@@ -632,8 +571,8 @@ static COMMAND_FUNC( do_invrowrfft )
 	Data_Obj *src,*targ;
 	int vf_code=(-1);
 
-	targ = PICK_OBJ("real target");
-	src = PICK_OBJ("complex source");
+	targ = pick_obj("real target");
+	src = pick_obj("complex source");
 	if( targ == NULL || src == NULL ) return;
 
 	//h_vl2_iftrows(VFCODE_ARG  targ,src);
@@ -649,8 +588,8 @@ static COMMAND_FUNC( do_fwdrfft )
 	Data_Obj *src,*targ;
 	int vf_code=(-1);
 
-	targ = PICK_OBJ("complex target");
-	src = PICK_OBJ("real source");
+	targ = pick_obj("complex target");
+	src = pick_obj("real source");
 	if( targ == NULL || src == NULL ) return;
 
 	//h_vl2_fft2d(VFCODE_ARG  targ,src);
@@ -662,13 +601,14 @@ static COMMAND_FUNC( do_fwdrowrfft )
 	Data_Obj *src,*targ;
 	int vf_code=(-1);
 
-	targ = PICK_OBJ("complex target");
-	src = PICK_OBJ("real source");
+	targ = pick_obj("complex target");
+	src = pick_obj("real source");
 	if( targ == NULL || src == NULL ) return;
 
 	//h_vl2_fftrows(VFCODE_ARG  targ,src);
 	(*PF_FFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(targ))))(VFCODE_ARG  targ,src);
 }
+#endif // FOOBAR
 
 #ifdef REQUANT_ACHROM
 
@@ -713,7 +653,7 @@ static COMMAND_FUNC( do_set_input )
 {
 	Data_Obj *gdp;
 
-	gdp = PICK_OBJ( "source image" );
+	gdp = pick_obj( "source image" );
 	if( gdp == NULL ) return;
 	set_grayscale(gdp);
 }
@@ -723,7 +663,7 @@ static COMMAND_FUNC( do_set_output )
 {
 	Data_Obj *hdp;
 
-	hdp = PICK_OBJ( "output image" );
+	hdp = pick_obj( "output image" );
 	if( hdp == NULL ) return;
 	set_halftone(hdp);
 }
@@ -732,7 +672,7 @@ static COMMAND_FUNC( do_set_filter )
 {
 	Data_Obj *fdp;
 
-	fdp = PICK_OBJ( "filter image" );
+	fdp = pick_obj( "filter image" );
 	if( fdp == NULL ) return;
 	set_filter(fdp);
 }
@@ -740,7 +680,7 @@ static COMMAND_FUNC( do_set_filter )
 static COMMAND_FUNC( do_init_images )
 {
 	if( setup_requantize() == -1 )
-		WARN("error setting up images");
+		warn("error setting up images");
 }
 
 static COMMAND_FUNC( do_init_requant )
@@ -753,8 +693,8 @@ static COMMAND_FUNC( do_qt_dither )
 {
 	Data_Obj *dpto, *dpfr;
 
-	dpto = PICK_OBJ( "target image" );
-	dpfr = PICK_OBJ( "source image" );
+	dpto = pick_obj( "target image" );
+	dpfr = pick_obj( "source image" );
 
 	if( dpto == NULL || dpfr == NULL ) return;
 
@@ -803,9 +743,9 @@ static COMMAND_FUNC( do_set_input )
 {
 	Data_Obj *lumdp, *rgdp, *bydp;
 
-	lumdp = PICK_OBJ( "luminance image" );
-	rgdp = PICK_OBJ( "red-green image" );
-	bydp = PICK_OBJ( "blue-yellow image" );
+	lumdp = pick_obj( "luminance image" );
+	rgdp = pick_obj( "red-green image" );
+	bydp = pick_obj( "blue-yellow image" );
 
 	if( lumdp==NULL || rgdp==NULL || bydp==NULL ) return;
 
@@ -816,7 +756,7 @@ static COMMAND_FUNC( do_set_output )
 {
 	Data_Obj *hdp;
 
-	hdp = PICK_OBJ( "byte image for composite halftone" );
+	hdp = pick_obj( "byte image for composite halftone" );
 	if( hdp==NULL ) return;
 	set_rgb_output(hdp);
 }
@@ -825,9 +765,9 @@ static COMMAND_FUNC( do_set_filter )
 {
 	Data_Obj *rdp, *gdp, *bdp;
 
-	rdp = PICK_OBJ( "red filter image" );
-	gdp = PICK_OBJ( "green filter image" );
-	bdp = PICK_OBJ( "blue filter image" );
+	rdp = pick_obj( "red filter image" );
+	gdp = pick_obj( "green filter image" );
+	bdp = pick_obj( "blue filter image" );
 
 	if( rdp==NULL || gdp==NULL || bdp==NULL ) return;
 
@@ -858,7 +798,7 @@ static COMMAND_FUNC( do_setxform )
 {
 	Data_Obj *matrix;
 
-	matrix = PICK_OBJ( "transformation matrix" );
+	matrix = pick_obj( "transformation matrix" );
 	if( matrix == NULL ) return;
 	set_xform(matrix);
 }
@@ -893,7 +833,7 @@ static COMMAND_FUNC( do_scale )
 	Data_Obj *dp;
 	double mn,mx;
 
-	dp=PICK_OBJ( "float image" );
+	dp=pick_obj( "float image" );
 	mn=HOW_MUCH("desired min value");
 	mx=HOW_MUCH("desired max value");
 	if( dp==NULL ) return;
@@ -906,7 +846,7 @@ static COMMAND_FUNC( do_dither )
 	Data_Obj *dp;
 	int size;
 
-	dp=PICK_OBJ( "float image" );
+	dp=pick_obj( "float image" );
 	size=(int)HOW_MANY("size of dither matrix");
 	if( dp==NULL ) return;
 	odither(QSP_ARG  dp,size);
@@ -921,7 +861,7 @@ static COMMAND_FUNC( do_2dramp )
 	double s,dx,dy;
 	Vec_Obj_Args oargs;
 
-	oargs.oa_dp[0]=oargs.oa_dest = PICK_OBJ("target image");
+	oargs.oa_dp[0]=oargs.oa_dest = pick_obj("target image");
 	oargs.oa_dp[1]=
 	oargs.oa_dp[2]=NULL;
 
@@ -951,7 +891,7 @@ static COMMAND_FUNC( do_2dramp )
 		case PREC_UBY:  SETUP_SCALARS(u_char); break;
 		case PREC_UIN:  SETUP_SCALARS(u_short); break;
 		case PREC_UDI:  SETUP_SCALARS(u_long); break;
-		default:  WARN("missing prec case in ramp2d"); break;
+		default:  warn("missing prec case in ramp2d"); break;
 	}
 
 	ramp2d(&oargs);
@@ -962,8 +902,8 @@ static COMMAND_FUNC( do_wrap )
 {
 	Data_Obj *dpto,*dpfr;
 
-	dpto=PICK_OBJ("destination image");
-	dpfr=PICK_OBJ("source image");
+	dpto=pick_obj("destination image");
+	dpfr=pick_obj("source image");
 	if( dpto==NULL || dpfr==NULL ) return;
 	wrap(QSP_ARG  dpto,dpfr);
 }
@@ -972,13 +912,13 @@ static COMMAND_FUNC( do_wrap3d )
 {
 	Data_Obj *dpto,*dpfr;
 
-	dpto=PICK_OBJ("destination image");
-	dpfr=PICK_OBJ("source image");
+	dpto=pick_obj("destination image");
+	dpfr=pick_obj("source image");
 	if( dpto==NULL || dpfr==NULL ) return;
 #ifdef FOOBAR
 	wrap3d(QSP_ARG  dpto,dpfr);
 #else
-	WARN("no wrap3d yet");
+	warn("no wrap3d yet");
 #endif
 }
 
@@ -987,8 +927,8 @@ static COMMAND_FUNC( do_scroll )
 	Data_Obj *dpto,*dpfr;
 	int dx,dy;
 
-	dpto=PICK_OBJ("destination image");
-	dpfr=PICK_OBJ("source image");
+	dpto=pick_obj("destination image");
+	dpfr=pick_obj("source image");
 	dx=(int)HOW_MANY("x displacement");
 	dy=(int)HOW_MANY("y displacement");
 	if( dpto==NULL || dpfr==NULL ) return;
@@ -1001,7 +941,7 @@ static COMMAND_FUNC( doodd )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ( "name of image" );
+	dp=pick_obj( "name of image" );
 	if( dp == NULL ) return;
 	mkodd(dp);
 }
@@ -1010,25 +950,32 @@ static COMMAND_FUNC( doeven )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ( "name of image" );
+	dp=pick_obj( "name of image" );
 	if( dp == NULL ) return;
 	mkeven(dp);
 }
 
 #endif /* NOT_YET */
 
-static COMMAND_FUNC( dolutmap )
+static COMMAND_FUNC( do_lutmap_b )
+{ DO_VCODE(FVLUTMAPB); }
+
+static COMMAND_FUNC( do_lutmap_s )
+{ DO_VCODE(FVLUTMAPS); }
+
+#ifdef FOOBAR
 {
 	Data_Obj *dst, *src, *map;
 
-	dst=PICK_OBJ( "destination image" );
-	src=PICK_OBJ( "source byte image" );
-	map=PICK_OBJ( "lut vector" );
+	dst=pick_obj( "destination image" );
+	src=pick_obj( "source byte image" );
+	map=pick_obj( "lut vector" );
 	if( dst==NULL || src==NULL || map==NULL )
 		return;
 	if( lutmap(QSP_ARG  dst,src,map) == (-1) )
-		WARN("mapping failed");
+		warn("mapping failed");
 }
+#endif // FOOBAR
 
 #define MAX_FS_LEVELS	128
 
@@ -1039,11 +986,11 @@ static COMMAND_FUNC( do_fsdither )
 	float lvl[MAX_FS_LEVELS];
 	int i;
 
-	dpto=PICK_OBJ( "target byte image" );
-	dpfr=PICK_OBJ( "source image" );
+	dpto=pick_obj( "target byte image" );
+	dpfr=pick_obj( "source image" );
 	n=(int)HOW_MANY("number of quantization levels");
 	if( n<2 || n > MAX_FS_LEVELS ){
-		WARN("bad number of halftone levels");
+		warn("bad number of halftone levels");
 		return;
 	}
 	for(i=0;i<n;i++)
@@ -1061,13 +1008,13 @@ static COMMAND_FUNC( do_udither )		/* uniform quantization */
 	float minlvl,maxlvl,lvl[MAX_FS_LEVELS];
 	int i;
 
-	dpto=PICK_OBJ( "target byte image" );
-	dpfr=PICK_OBJ( "source image" );
+	dpto=pick_obj( "target byte image" );
+	dpfr=pick_obj( "source image" );
 	n=(int)HOW_MANY("number of quantization levels");
 	minlvl = (float)HOW_MUCH("minimum level value");
 	maxlvl = (float)HOW_MUCH("maximum level value");
 	if( n<2 || n > MAX_FS_LEVELS ){
-		WARN("bad number of halftone levels");
+		warn("bad number of halftone levels");
 		return;
 	}
 	for(i=0;i<n;i++){
@@ -1084,9 +1031,9 @@ static COMMAND_FUNC( do_resample )
 {
 	Data_Obj *dpto, *dpfr, *dpwarp;
 
-	dpto=PICK_OBJ( "target float image" );
-	dpfr=PICK_OBJ( "source float image" );
-	dpwarp=PICK_OBJ( "complex control image" );
+	dpto=pick_obj( "target float image" );
+	dpfr=pick_obj( "source float image" );
+	dpwarp=pick_obj( "complex control image" );
 	if( dpto==NULL || dpfr==NULL || dpwarp==NULL )
 		return;
 
@@ -1097,9 +1044,9 @@ static COMMAND_FUNC( do_bilinear )
 {
 	Data_Obj *dpto, *dpfr, *dpwarp;
 
-	dpto=PICK_OBJ( "target float image" );
-	dpfr=PICK_OBJ( "source float image" );
-	dpwarp=PICK_OBJ( "complex control image" );
+	dpto=pick_obj( "target float image" );
+	dpfr=pick_obj( "source float image" );
+	dpwarp=pick_obj( "complex control image" );
 	if( dpto==NULL || dpfr==NULL || dpwarp==NULL )
 		return;
 
@@ -1110,9 +1057,9 @@ static COMMAND_FUNC( do_new_bilinear )
 {
 	Data_Obj *dpto, *dpfr, *dpwarp;
 
-	dpto=PICK_OBJ( "target float image" );
-	dpfr=PICK_OBJ( "source float image" );
-	dpwarp=PICK_OBJ( "complex control image" );
+	dpto=pick_obj( "target float image" );
+	dpfr=pick_obj( "source float image" );
+	dpwarp=pick_obj( "complex control image" );
 	if( dpto==NULL || dpfr==NULL || dpwarp==NULL )
 		return;
 
@@ -1123,9 +1070,9 @@ static COMMAND_FUNC( do_iconv )
 {
 	Data_Obj *dpto, *dpfr, *dpfilt;
 
-	dpto = PICK_OBJ( "target image" );
-	dpfr = PICK_OBJ( "source image" );
-	dpfilt = PICK_OBJ( "filter image" );
+	dpto = pick_obj( "target image" );
+	dpfr = pick_obj( "source image" );
+	dpfilt = pick_obj( "filter image" );
 
 	if( dpto==NULL || dpfr==NULL || dpfilt==NULL )
 		return;
@@ -1138,9 +1085,9 @@ static COMMAND_FUNC( do_iconv3d )
 {
 	Data_Obj *dpto, *dpfr, *dpfilt;
 
-	dpto = PICK_OBJ( "target image" );
-	dpfr = PICK_OBJ( "source image" );
-	dpfilt = PICK_OBJ( "filter image" );
+	dpto = pick_obj( "target image" );
+	dpfr = pick_obj( "source image" );
+	dpfilt = pick_obj( "filter image" );
 
 	if( dpto==NULL || dpfr==NULL || dpfilt==NULL )
 		return;
@@ -1154,8 +1101,8 @@ static COMMAND_FUNC( do_histo )
 	Data_Obj *dp, *hdp;
 	double bw, minbin;
 
-	hdp = PICK_OBJ( "vector for histogram data" );
-	dp = PICK_OBJ( "source data object" );
+	hdp = pick_obj( "vector for histogram data" );
+	dp = pick_obj( "source data object" );
 	minbin = HOW_MUCH("minimum bin center");
 	bw = HOW_MUCH("bin width");
 
@@ -1168,8 +1115,8 @@ static COMMAND_FUNC( do_integral )
 {
 	Data_Obj *dst, *src;
 
-	dst = PICK_OBJ( "destination image" );
-	src = PICK_OBJ( "source image" );
+	dst = pick_obj( "destination image" );
+	src = pick_obj( "source image" );
 
 	if( dst == NULL || src == NULL ) return;
 
@@ -1181,8 +1128,8 @@ static COMMAND_FUNC( do_hough )
 	Data_Obj *dst, *src;
 	float thresh,x0,y0;
 
-	dst = PICK_OBJ("destination image for transform");
-	src = PICK_OBJ("source image");
+	dst = pick_obj("destination image for transform");
+	src = pick_obj("source image");
 	thresh = (float)HOW_MUCH("threshold");
 	x0 = (float) HOW_MUCH("x origin");
 	y0 = (float) HOW_MUCH("y origin");
@@ -1197,9 +1144,9 @@ static COMMAND_FUNC( do_local_max )
 	Data_Obj *val_dp, *coord_dp, *src;
 	long n;
 
-	val_dp = PICK_OBJ("destination vector for local maximum values");
-	coord_dp = PICK_OBJ("destination vector for coordinates");
-	src = PICK_OBJ("source image");
+	val_dp = pick_obj("destination vector for local maximum values");
+	coord_dp = pick_obj("destination vector for coordinates");
+	src = pick_obj("source image");
 
 	if( val_dp != NULL && coord_dp != NULL && src != NULL )
 		n = local_maxima(QSP_ARG  val_dp,coord_dp,src);
@@ -1207,7 +1154,7 @@ static COMMAND_FUNC( do_local_max )
 		n = 0;
 
 	sprintf(msg_str,"%ld",n);
-	ASSIGN_VAR("n_maxima",msg_str);
+	assign_var("n_maxima",msg_str);
 }
 
 
@@ -1219,8 +1166,8 @@ static COMMAND_FUNC( do_mhisto )
 	float bw[MAX_DIMENSIONS], minbin[MAX_DIMENSIONS];
 	dimension_t i;
 
-	hdp = PICK_OBJ( "target histogram data object" );
-	dp = PICK_OBJ( "source data object" );
+	hdp = pick_obj( "target histogram data object" );
+	dp = pick_obj( "source data object" );
 	if( dp == NULL ) return;
 	for(i=0;i<OBJ_COMPS(dp);i++){
 		minbin[i] = (float) HOW_MUCH("minimum bin center");
@@ -1241,7 +1188,7 @@ static COMMAND_FUNC( do_fill )
 	double val;
 	double tol;
 
-	dp=PICK_OBJ("image");
+	dp=pick_obj("image");
 	x= (dimension_t) HOW_MANY("seed x");
 	y= (dimension_t) HOW_MANY("seed y");
 	val=HOW_MUCH("value");
@@ -1249,7 +1196,7 @@ static COMMAND_FUNC( do_fill )
 
 	if( dp == NULL ) return;
 	if( tol < 0 ){
-		WARN("tolerance must be non-negative");
+		warn("tolerance must be non-negative");
 		return;
 	}
 
@@ -1264,8 +1211,8 @@ static COMMAND_FUNC( do_quads )
 {
 	Data_Obj *src, *dst;
 
-	dst=PICK_OBJ( "destination 4-tuple list" );
-	src=PICK_OBJ( "source image" );
+	dst=pick_obj( "destination 4-tuple list" );
+	src=pick_obj( "source image" );
 	if( dst == NULL || src == NULL ) return;
 
 	make_all_quads(QSP_ARG  dst,src);
@@ -1275,8 +1222,8 @@ static COMMAND_FUNC( do_ext_paths )
 {
 	Data_Obj *src, *dst;
 
-	dst=PICK_OBJ( "destination matrix" );
-	src=PICK_OBJ( "source matrix" );
+	dst=pick_obj( "destination matrix" );
+	src=pick_obj( "source matrix" );
 	if( dst == NULL || src == NULL ) return;
 
 	extend_shortest_paths(QSP_ARG  dst,src);
@@ -1288,14 +1235,14 @@ static COMMAND_FUNC( do_vstitch )
 	Data_Obj *to,*fr,*co;
 	int n;
 
-	to=PICK_OBJ( "target float vector" );
-	fr=PICK_OBJ( "source float vector" );
-	co=PICK_OBJ( "control float vector" );
+	to=pick_obj( "target float vector" );
+	fr=pick_obj( "source float vector" );
+	co=pick_obj( "control float vector" );
 	if( to==NULL || fr==NULL || co==NULL ) return;
 	n=vstitch(QSP_ARG  to,fr,co);
 	if( verbose ){
 		sprintf(ERROR_STRING,"%d elements copied",n);
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 }
 #endif /* FOOBAR */
@@ -1306,9 +1253,9 @@ static COMMAND_FUNC( do_vinterp )
 {
 	Data_Obj *to,*fr,*co;
 
-	to=PICK_OBJ( "target float vector" );
-	fr=PICK_OBJ( "source float vector" );
-	co=PICK_OBJ( "control float vector" );
+	to=pick_obj( "target float vector" );
+	fr=pick_obj( "source float vector" );
+	co=pick_obj( "control float vector" );
 	if( to==NULL || fr==NULL || co==NULL ) return;
 	vinterp(QSP_ARG  to,fr,co);
 }
@@ -1317,8 +1264,8 @@ static COMMAND_FUNC( do_median )
 {
 	Data_Obj *to, *fr;
 
-	to=PICK_OBJ("target");
-	fr=PICK_OBJ("source");
+	to=pick_obj("target");
+	fr=pick_obj("source");
 	if( to==NULL || fr==NULL ) return;
 	median(QSP_ARG  to,fr);
 }
@@ -1327,8 +1274,8 @@ static COMMAND_FUNC( do_median_clip )
 {
 	Data_Obj *to, *fr;
 
-	to=PICK_OBJ("target");
-	fr=PICK_OBJ("source");
+	to=pick_obj("target");
+	fr=pick_obj("source");
 	if( to==NULL || fr==NULL ) return;
 	median_clip(QSP_ARG  to,fr);
 }
@@ -1338,8 +1285,8 @@ static COMMAND_FUNC( do_median_1D )
 	Data_Obj *to, *fr;
 	int rad;
 
-	to=PICK_OBJ("target");
-	fr=PICK_OBJ("source");
+	to=pick_obj("target");
+	fr=pick_obj("source");
 	rad = (int) HOW_MANY("radius");
 
 	if( to==NULL || fr==NULL ) return;
@@ -1351,7 +1298,7 @@ static COMMAND_FUNC( do_krast )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ("coord list");
+	dp=pick_obj("coord list");
 	if( dp != NULL )
 		mk_krast(QSP_ARG  dp);
 }
@@ -1378,14 +1325,14 @@ MENU_END(image)
 
 static COMMAND_FUNC( do_imgsyn )
 {
-	PUSH_MENU(image);
+	CHECK_AND_PUSH_MENU(image);
 }
 
 static COMMAND_FUNC( do_sort )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	if( dp == NULL ) return;
 
 	sort_data(QSP_ARG  dp);
@@ -1395,8 +1342,8 @@ static COMMAND_FUNC( do_sort_indices )
 {
 	Data_Obj *dp1,*dp2;
 
-	dp1=PICK_OBJ("array of indices");
-	dp2=PICK_OBJ("data array");
+	dp1=pick_obj("array of indices");
+	dp2=pick_obj("data array");
 	if( dp1 == NULL || dp2 == NULL ) return;
 	sort_indices(QSP_ARG  dp1,dp2);
 }
@@ -1405,7 +1352,7 @@ static COMMAND_FUNC( do_scramble )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	if( dp == NULL ) return;
 
 	dp_scramble(QSP_ARG  dp);
@@ -1415,8 +1362,8 @@ COMMAND_FUNC( do_yuv2rgb )
 {
 	Data_Obj *dst_dp, *src_dp;
 
-	dst_dp = PICK_OBJ("destination rgb image");
-	src_dp = PICK_OBJ("source yuv image");
+	dst_dp = pick_obj("destination rgb image");
+	src_dp = pick_obj("source yuv image");
 
 	if( dst_dp == NULL || src_dp == NULL ) return;
 
@@ -1427,8 +1374,8 @@ static COMMAND_FUNC( do_yuv2gray )
 {
 	Data_Obj *dst_dp, *src_dp;
 
-	dst_dp = PICK_OBJ("destination grayscale image");
-	src_dp = PICK_OBJ("source yuv image");
+	dst_dp = pick_obj("destination grayscale image");
+	src_dp = pick_obj("source yuv image");
 
 	if( dst_dp == NULL || src_dp == NULL ) return;
 
@@ -1454,7 +1401,8 @@ ADD_CMD( dither,		do_dither,	initialize ordered dither matrix	)
 ADD_CMD( median,		do_median,	apply median filter to image	)
 ADD_CMD( median_clip,	do_median_clip,	apply median filter to bright pixels	)
 ADD_CMD( median_1D,	do_median_1D,	apply median filter to vector	)
-ADD_CMD( map,		dolutmap,	map through a lookup table	)
+ADD_CMD( map_b,		do_lutmap_b,	map through a byte-indexed lookup table	)
+ADD_CMD( map_s,		do_lutmap_s,	map through a short-indexed lookup table	)
 ADD_CMD( resample,	do_resample,	warp image using control image	)
 ADD_CMD( bilinear,	do_bilinear,	warp image w/ bilinear inter.	)
 ADD_CMD( new_bilinear,	do_new_bilinear,warp image w/ bilinear inter.	)
@@ -1495,7 +1443,7 @@ MENU_END(misc)
 
 static COMMAND_FUNC( do_misc )
 {
-	PUSH_MENU(misc);
+	CHECK_AND_PUSH_MENU(misc);
 }
 
 #define EXCHANGE( dp1, dp2 )				\
@@ -1533,7 +1481,7 @@ static COMMAND_FUNC( do_misc )
 		op2(QSP_ARG  to,fr);			\
 		EXCHANGE(to,fr);			\
 	}						\
-	dp_copy(QSP_ARG  to,fr);
+	dp_copy(to,fr);
 
 #ifdef HAVE_MORPH
 
@@ -1553,14 +1501,14 @@ static COMMAND_FUNC( do_closing )
 	Data_Obj *to,*fr;
 	int size;
 
-	to=PICK_OBJ("target");
-	fr=PICK_OBJ("source");
+	to=pick_obj("target");
+	fr=pick_obj("source");
 	size=(int)HOW_MANY("size of the closing");
 
 	if( to==NULL || fr==NULL ) return;
 
 	if( size <= 0 ){
-		WARN("size for closing operator must be positive");
+		warn("size for closing operator must be positive");
 		return;
 	}
 
@@ -1572,14 +1520,14 @@ static COMMAND_FUNC( do_opening )   /* Should choose the size of the opening */
 	Data_Obj *to,*fr;
 	int size;
 
-	to=PICK_OBJ("target");
-	fr=PICK_OBJ("source");
+	to=pick_obj("target");
+	fr=pick_obj("source");
 	size=(int)HOW_MANY("size of the opening");
 
 	if( to==NULL || fr==NULL ) return;
 
 	if( size <= 0 ){
-		WARN("size for opening operator must be positive");
+		warn("size for opening operator must be positive");
 		return;
 	}
 
@@ -1590,8 +1538,8 @@ static COMMAND_FUNC( do_dilate )
 {
 	Data_Obj *to,*fr;
 
-	to=PICK_OBJ("target");
-	fr=PICK_OBJ("source");
+	to=pick_obj("target");
+	fr=pick_obj("source");
 	if( to==NULL || fr==NULL ) return;
 
 	dilate(QSP_ARG  to,fr);
@@ -1601,8 +1549,8 @@ static COMMAND_FUNC( do_erode )
 {
 	Data_Obj *to,*fr;
 
-	to=PICK_OBJ("target");
-	fr=PICK_OBJ("source");
+	to=pick_obj("target");
+	fr=pick_obj("source");
 	if( to==NULL || fr==NULL ) return;
 
 	erode(QSP_ARG  to,fr);
@@ -1612,9 +1560,9 @@ static COMMAND_FUNC( gen_morph )
 {
 	Data_Obj *to,*fr,*tbl;
 
-	to=PICK_OBJ("target");
-	fr=PICK_OBJ("source");
-	tbl=PICK_OBJ("function look-up table");
+	to=pick_obj("target");
+	fr=pick_obj("source");
+	tbl=pick_obj("function look-up table");
 	if( to==NULL || fr==NULL || tbl == NULL ) return;
 
 	morph_process(QSP_ARG  to,fr,tbl);
@@ -1636,7 +1584,7 @@ MENU_END(morph)
 
 static COMMAND_FUNC( do_morph )
 {
-	PUSH_MENU(morph);
+	CHECK_AND_PUSH_MENU(morph);
 }
 
 #endif /* HAVE_MORPH */
@@ -1646,10 +1594,10 @@ static COMMAND_FUNC( do_radavg )
 {
 	Data_Obj *m_dp, *v_dp, *c_dp, *i_dp;
 
-	m_dp = PICK_OBJ( "data vector for mean" );
-	v_dp = PICK_OBJ( "data vector for variance" );
-	c_dp = PICK_OBJ( "data vector for counts" );
-	i_dp = PICK_OBJ( "source image" );
+	m_dp = pick_obj( "data vector for mean" );
+	v_dp = pick_obj( "data vector for variance" );
+	c_dp = pick_obj( "data vector for counts" );
+	i_dp = pick_obj( "source image" );
 
 	if( m_dp == NULL || v_dp == NULL || c_dp == NULL || i_dp == NULL )
 		return;
@@ -1661,10 +1609,10 @@ static COMMAND_FUNC( do_oriavg )
 {
 	Data_Obj *m_dp, *v_dp, *c_dp, *i_dp;
 
-	m_dp = PICK_OBJ( "data vector for mean" );
-	v_dp = PICK_OBJ( "data vector for variance" );
-	c_dp = PICK_OBJ( "data vector for counts" );
-	i_dp = PICK_OBJ( "source image" );
+	m_dp = pick_obj( "data vector for mean" );
+	v_dp = pick_obj( "data vector for variance" );
+	c_dp = pick_obj( "data vector for counts" );
+	i_dp = pick_obj( "source image" );
 
 	if( m_dp == NULL || v_dp == NULL || c_dp == NULL || i_dp == NULL )
 		return;
@@ -1679,7 +1627,7 @@ static COMMAND_FUNC( do_dct )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	if( dp==NULL ) return;
 
 	compute_dct(QSP_ARG  dp,FWD_DCT);
@@ -1689,7 +1637,7 @@ static COMMAND_FUNC( do_idct )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	if( dp==NULL ) return;
 
 	compute_dct(QSP_ARG  dp,INV_DCT);
@@ -1699,7 +1647,7 @@ static COMMAND_FUNC( do_odct )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	if( dp==NULL ) return;
 
 	compute_dct(QSP_ARG  dp,OLD_DCT);
@@ -1715,14 +1663,22 @@ MENU_BEGIN(fft)
 ADD_CMD( newfft,	do_newfft,	test new chainable complex fft )
 #endif /* FOOBAR */
 
+ADD_CMD( fft,		do_fwdfft,	forward Fourier transform )
+ADD_CMD( invfft,	do_invfft,	inverse Fourier transform )
+ADD_CMD( row_fft,	do_fwdrowfft,	forward Fourier transform of rows only )
+ADD_CMD( row_invfft,	do_invrowfft,	inverse Fourier transform of rows only )
+
+#ifdef FOOBAR
 ADD_CMD( fft,		do_fwdfft,	forward complex Fourier transform )
-ADD_CMD( row_fft,	do_fwdrowfft,	forward complex Fourier transform of rows only )
-ADD_CMD( rfft,		do_fwdrfft,	forward Fourier transform w/ real input )
-ADD_CMD( row_rfft,	do_fwdrowrfft,	forward Fourier transform of rows only w/ real input )
-ADD_CMD( irfft,		do_invrfft,	inverse Fourier transform w/ real output )
-ADD_CMD( row_irfft,	do_invrowrfft,	inverse Fourier transform of rows only w/ real output )
 ADD_CMD( invfft,	do_invfft,	inverse complex Fourier transform )
+ADD_CMD( row_fft,	do_fwdrowfft,	forward complex Fourier transform of rows only )
 ADD_CMD( row_invfft,	do_invrowfft,	inverse complex Fourier transform of rows only )
+ADD_CMD( rfft,		do_fwdrfft,	forward Fourier transform w/ real input )
+ADD_CMD( irfft,		do_invrfft,	inverse Fourier transform w/ real output )
+ADD_CMD( row_rfft,	do_fwdrowrfft,	forward Fourier transform of rows only w/ real input )
+ADD_CMD( row_irfft,	do_invrowrfft,	inverse Fourier transform of rows only w/ real output )
+#endif // FOOBAR
+
 ADD_CMD( wrap,		do_wrap,	wrap DFT image )
 ADD_CMD( wrap3d,	do_wrap3d,	wrap 3-D DFT )
 ADD_CMD( scroll,	do_scroll,	scroll image )
@@ -1740,7 +1696,7 @@ MENU_END(fft)
 
 static COMMAND_FUNC( do_fft )
 {
-	PUSH_MENU(fft);
+	CHECK_AND_PUSH_MENU(fft);
 }
 
 
@@ -1846,7 +1802,7 @@ MENU_END(compare)
 
 static COMMAND_FUNC( docmp )
 {
-	PUSH_MENU(compare);
+	CHECK_AND_PUSH_MENU(compare);
 }
 
 /* static COMMAND_FUNC( do_corr ) { DO_VCODE(FVCONV); } */
@@ -1860,8 +1816,8 @@ static COMMAND_FUNC( do_xpose )
 {
 	Data_Obj *dpto, *dpfr;
 
-	dpto=PICK_OBJ( "target image" );
-	dpfr=PICK_OBJ( "source image" );
+	dpto=pick_obj( "target image" );
+	dpfr=pick_obj( "source image" );
 	if( dpto == NULL || dpfr == NULL ) return;
 	transpose(QSP_ARG  dpto,dpfr);
 
@@ -1872,13 +1828,13 @@ static COMMAND_FUNC( do_ginvert )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ( "target matrix" );
+	dp=pick_obj( "target matrix" );
 	if( dp == NULL ) return;
 
 	/* BUG? is complete error checking done here??? */
 
 	if( ! IS_CONTIGUOUS(dp) ){
-		WARN("matrix must be contiguous for G-J inversion");
+		warn("matrix must be contiguous for G-J inversion");
 		return;
 	}
 
@@ -1890,7 +1846,7 @@ static COMMAND_FUNC( do_ginvert )
 		sprintf(ERROR_STRING,
 	"Matrix %s should have float or double precision for Gauss-Jordan inversion",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -1901,15 +1857,14 @@ static COMMAND_FUNC(do_inner)
 {
 	Data_Obj *target, *v1, *v2;
 
-	target=PICK_OBJ( "target data object" );
-	v1=PICK_OBJ( "first operand" );
-	v2=PICK_OBJ( "second operand" );
+	target=pick_obj( "target data object" );
+	v1=pick_obj( "first operand" );
+	v2=pick_obj( "second operand" );
 
 	if( target==NULL || v1==NULL || v2==NULL )
 		return;
 
-	inner(QSP_ARG  target,v1,v2);
-	//TEMP_UNIMP(inner)
+	inner(target,v1,v2);
 }
 
 static COMMAND_FUNC( do_invert )
@@ -1917,10 +1872,10 @@ static COMMAND_FUNC( do_invert )
 	Data_Obj *dp;
 	double det;
 
-	dp=PICK_OBJ( "matrix" );
+	dp=pick_obj( "matrix" );
 	if( dp == NULL ) return;
 	det=dt_invert(QSP_ARG  dp);
-	if( det == 0.0 ) WARN("ZERO DETERMINANT!!!");
+	if( det == 0.0 ) warn("ZERO DETERMINANT!!!");
 	else if( verbose ) {
 		sprintf(msg_str,"determinant:  %g",det);
 		prt_msg(msg_str);
@@ -1933,8 +1888,8 @@ static COMMAND_FUNC( do_corr_mtrx )
 	Data_Obj *dpto;
 	Data_Obj *dpfr;
 
-	dpto = PICK_OBJ("target corrlation matrix");
-	dpfr = PICK_OBJ("source vector array");
+	dpto = pick_obj("target corrlation matrix");
+	dpfr = pick_obj("source vector array");
 
 	if( dpto == NULL || dpfr == NULL ) return;
 
@@ -1947,8 +1902,8 @@ static COMMAND_FUNC( do_determinant )
 	Data_Obj *dp,*scal_dp;
 	double d;
 
-	scal_dp = PICK_OBJ("scalar for determinant");
-	dp = PICK_OBJ("matrix");
+	scal_dp = pick_obj("scalar for determinant");
+	dp = pick_obj("matrix");
 
 	if( scal_dp == NULL || dp==NULL ) return;
 
@@ -1960,7 +1915,7 @@ static COMMAND_FUNC( do_determinant )
 	} else {
 		sprintf(ERROR_STRING,"determinant:  bad scalar precision (%s) for object %s!?",
 			PREC_NAME(OBJ_PREC_PTR(dp)),OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	
 }
@@ -1970,9 +1925,9 @@ static COMMAND_FUNC(do_xform_list )
 	Data_Obj *dpto, *dpfr, *xform;
 	Vec_Obj_Args oa1;
 
-	dpto=PICK_OBJ( "target data object" );
-	dpfr=PICK_OBJ( "source data object" );
-	xform=PICK_OBJ( "transformation matrix" );
+	dpto=pick_obj( "target data object" );
+	dpfr=pick_obj( "source data object" );
+	xform=pick_obj( "transformation matrix" );
 
 	if( dpto==NULL || dpfr==NULL || xform==NULL ) return;
 
@@ -1983,7 +1938,7 @@ static COMMAND_FUNC(do_xform_list )
 	set_obj_arg_flags(&oa1);
 
 	// BUG need to make this a platform function!?
-	h_vl2_xform_list( -1,  &oa1);
+	h_vl2_xform_list(QSP_ARG  -1,  &oa1);
 	//TEMP_UNIMP(xform_list)
 }
 
@@ -1991,9 +1946,9 @@ static COMMAND_FUNC( do_vec_xform )
 {
 	Data_Obj *dpto, *dpfr, *xform;
 
-	dpto=PICK_OBJ( "target data object" );
-	dpfr=PICK_OBJ( "source data object" );
-	xform=PICK_OBJ( "transformation matrix" );
+	dpto=pick_obj( "target data object" );
+	dpfr=pick_obj( "source data object" );
+	xform=pick_obj( "transformation matrix" );
 
 	if( dpto==NULL || dpfr==NULL || xform==NULL ) return;
 
@@ -2005,9 +1960,9 @@ static COMMAND_FUNC( do_homog_xform )
 {
 	Data_Obj *dpto, *dpfr, *xform;
 
-	dpto=PICK_OBJ( "target data object" );
-	dpfr=PICK_OBJ( "source data object" );
-	xform=PICK_OBJ( "transformation matrix" );
+	dpto=pick_obj( "target data object" );
+	dpfr=pick_obj( "source data object" );
+	xform=pick_obj( "transformation matrix" );
 
 	if( dpto==NULL || dpfr==NULL || xform==NULL ) return;
 
@@ -2018,7 +1973,7 @@ static COMMAND_FUNC( do_homog_xform )
 #ifdef FOOBAR
 COMMAND_FUNC( do_outer )
 {
-	WARN("sorry, outer product not yet implemented");
+	warn("sorry, outer product not yet implemented");
 }
 #endif /* FOOBAR */
 
@@ -2053,7 +2008,7 @@ MENU_END(linear)
 
 static COMMAND_FUNC( do_lin )
 {
-	PUSH_MENU(linear);
+	CHECK_AND_PUSH_MENU(linear);
 }
 
 #ifdef VECEXP
@@ -2099,7 +2054,7 @@ Command expr_menu[]={
 {
 	warm_init();
 	expr_init();
-	PUSH_MENU(expr_menu);
+	CHECK_AND_PUSH_MENU(expr_menu);
 }
 #endif /* VECEXP */
 
@@ -2141,7 +2096,7 @@ MENU_END(control)
 
 static COMMAND_FUNC(do_ctl )
 {
-	PUSH_MENU(control);
+	CHECK_AND_PUSH_MENU(control);
 }
 
 #undef ADD_CMD
@@ -2153,11 +2108,7 @@ ADD_CMD(	trig,		do_trig,	trigonometric operations	)
 ADD_CMD(	unary,		do_unary,	unary operations on data	)
 ADD_CMD(	logical,	do_logic,	logical operations on data	)
 ADD_CMD(	vvector,	do_vv,		vector-vector operations	)
-ADD_CMD(	svector,	do_rvs,		real_scalar-vector operations	)
-#ifdef FOOBAR
-ADD_CMD(	csvector,	do_cvs,		complex_scalar-vector operations	)
-ADD_CMD(	Qsvector,	do_qvs,		quaternion_scalar-vector operations	)
-#endif /* FOOBAR */
+ADD_CMD(	svector,	do_vs,		scalar-vector operations	)
 ADD_CMD(	minmax,		do_minmax,	minimum/maximum routines	)
 ADD_CMD(	compare,	docmp,		comparision routines	)
 ADD_CMD(	fft,		do_fft,		FFT submenu	)
@@ -2205,7 +2156,7 @@ COMMAND_FUNC(do_comp_menu )
 		inited=1;
 	}
 
-	PUSH_MENU(compute);
+	CHECK_AND_PUSH_MENU(compute);
 }
 
 #define VFUNC_FOR_CODE(code)		(&vec_func_tbl[code])

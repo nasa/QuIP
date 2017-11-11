@@ -54,7 +54,8 @@ static IOS_ITEM_CHECK_FUNC(Platform_Viewer,pf_vwr)
 static IOS_ITEM_NEW_FUNC(Platform_Viewer,pf_vwr)
 static IOS_ITEM_PICK_FUNC(Platform_Viewer,pf_vwr)
 
-#define PICK_PF_VWR(p)	pick_pf_vwr(QSP_ARG  p)
+#define pick_pf_vwr(p)	_pick_pf_vwr(QSP_ARG  p)
+#define new_pf_vwr(s)	_new_pf_vwr(QSP_ARG  s)
 
 static void init_pf_viewer(Platform_Viewer *pvp)
 {
@@ -128,7 +129,9 @@ static void update_pf_viewer(QSP_ARG_DECL  Platform_Viewer *pvp, Data_Obj *dp)
 
 static int pf_viewer_subsystem_inited=0;
 
-static void init_pf_viewer_subsystem(void)
+#define init_pf_viewer_subsystem() _init_pf_viewer_subsystem(SINGLE_QSP_ARG)
+
+static void _init_pf_viewer_subsystem(SINGLE_QSP_ARG_DECL)
 {
 	const char *pn;
 	int n;
@@ -136,7 +139,7 @@ static void init_pf_viewer_subsystem(void)
 	pn = tell_progname();
 
 	if( pf_viewer_subsystem_inited ){
-		NWARN("Platform viewer subsystem already initialized!?");
+		warn("Platform viewer subsystem already initialized!?");
 		return;
 	}
 
@@ -166,7 +169,7 @@ static Platform_Viewer * new_pf_viewer(QSP_ARG_DECL  Viewer *vp)
 		init_pf_viewer_subsystem();
 	}
 
-	pvp = new_pf_vwr(QSP_ARG  VW_NAME(vp));
+	pvp = new_pf_vwr(VW_NAME(vp));
 	if( pvp == NULL ) return(pvp);
 
 #ifndef BUILD_FOR_OBJC
@@ -183,7 +186,7 @@ COMMAND_FUNC( do_new_pf_vwr )
 	Viewer *vp;
 
 
-	vp = PICK_VWR("name of existing viewer to use with Cuda/OpenCL");
+	vp = pick_vwr("name of existing viewer to use with Cuda/OpenCL");
 	if( vp == NULL ) return;
 
 	if( ! READY_FOR_GLX(vp) ) {
@@ -208,8 +211,8 @@ COMMAND_FUNC( do_load_pf_vwr )
 	Platform_Viewer *pvp;
 	Data_Obj *dp;
 
-	pvp = PICK_PF_VWR("platform viewer");
-	dp = PICK_OBJ("GL buffer object");
+	pvp = pick_pf_vwr("platform viewer");
+	dp = pick_obj("GL buffer object");
 
 	if( pvp == NULL || dp == NULL ) return;
 

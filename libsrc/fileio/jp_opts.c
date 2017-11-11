@@ -278,7 +278,7 @@ COMMAND_FUNC( do_djpeg_param_menu )
 {
 	if( ! defaults_initialized )
 		set_djpeg_defaults();
-	PUSH_MENU(djpeg_param);
+	CHECK_AND_PUSH_MENU(djpeg_param);
 }
 
 void install_djpeg_params(j_decompress_ptr cinfop)

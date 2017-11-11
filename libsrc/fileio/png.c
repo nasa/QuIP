@@ -68,7 +68,9 @@ static	u_char bg_red=0, bg_green=0, bg_blue=0;
 
 static int color_type_to_write = -1;	// BUG not thread-safe
 
-int png_to_dp( Data_Obj *dp, Png_Hdr *hdr_p )	// unix version
+#define png_to_dp( dp, hdr_p ) _png_to_dp( QSP_ARG  dp, hdr_p )
+
+int _png_to_dp( QSP_ARG_DECL  Data_Obj *dp, Png_Hdr *hdr_p )	// unix version
 {
 // With new version of libpng, need to use get functions...
 	SET_OBJ_COLS(dp, png_get_image_width(hdr_p->png_ptr,hdr_p->info_ptr) );
@@ -97,7 +99,7 @@ int png_to_dp( Data_Obj *dp, Png_Hdr *hdr_p )	// unix version
 	SET_OBJ_N_TYPE_ELTS(dp, OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp)
 			* OBJ_FRAMES(dp) * OBJ_SEQS(dp) );
 
-	auto_shape_flags(OBJ_SHAPE(dp),dp);
+	auto_shape_flags(OBJ_SHAPE(dp));
 
 	return(0);
 } // png_to_dp (unix)
@@ -134,7 +136,7 @@ FIO_CLOSE_FUNC( pngfio )
 		givbuf(ifp->if_hdr_p);
 	}
 
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 // Scanning all of the chunks (like what we do with jpeg) is very slow
@@ -142,7 +144,9 @@ FIO_CLOSE_FUNC( pngfio )
 // have the same size, and figure it out from the size of the first frame,
 // and the file size.
 
-static dimension_t count_png_frames(FILE *fp, long *frame_size)
+#define count_png_frames(fp, frame_size) _count_png_frames(QSP_ARG  fp, frame_size)
+
+static dimension_t _count_png_frames(QSP_ARG_DECL  FILE *fp, long *frame_size)
 {
 	dimension_t nf=1;
 	long file_pos;		// so we can restore the file ptr
@@ -157,11 +161,11 @@ static dimension_t count_png_frames(FILE *fp, long *frame_size)
 	// The file position at this point seems to be right after the first
 	// data chunk header...
 	if( fseek(fp,0,SEEK_END) < 0 )
-		NWARN("count_png_frames:  error seeking to end!?");
+		warn("count_png_frames:  error seeking to end!?");
 	end_pos = ftell(fp);
 
 	if( fseek(fp,file_pos-8,SEEK_SET) < 0 )
-		NWARN("count_png_frames:  initial seek error!?");
+		warn("count_png_frames:  initial seek error!?");
 
 	do {
 		unsigned char chunk_hdr[9];
@@ -170,7 +174,7 @@ static dimension_t count_png_frames(FILE *fp, long *frame_size)
 
 		// read the next chunk
 		if( fread(chunk_hdr,1,8,fp) != 8 ){
-			NWARN("count_png_frames:  error reading chunk header!?");
+			warn("count_png_frames:  error reading chunk header!?");
 			return nf;
 		}
 		chunk_size=0;
@@ -191,14 +195,14 @@ static dimension_t count_png_frames(FILE *fp, long *frame_size)
 		// the size does not include the 8 header bytes
 		// or the 4 byte checksum (at the end)
 		if( fseek(fp,chunk_size+4,SEEK_CUR) < 0 ){
-			NWARN("count_png_frames:  seek error!?");
+			warn("count_png_frames:  seek error!?");
 			return nf;
 		}
 	} while( ! end_seen);
 
 	if( (end_pos % file_pos2) != 0 ){
-		sprintf(DEFAULT_ERROR_STRING,"count_png_frames:  size of first frame (%ld) does not divide file size (%ld) !?",file_pos2,end_pos);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"count_png_frames:  size of first frame (%ld) does not divide file size (%ld) !?",file_pos2,end_pos);
+		warn(ERROR_STRING);
 	} else {
 		nf = end_pos / file_pos2;
 	}
@@ -206,7 +210,7 @@ static dimension_t count_png_frames(FILE *fp, long *frame_size)
 
 	// rewind to initial position
 	if( fseek(fp,file_pos,SEEK_SET) < 0 )
-		NWARN("count_png_frames:  reset seek error!?");
+		warn("count_png_frames:  reset seek error!?");
 
 	return nf;
 }
@@ -286,6 +290,7 @@ static int init_png(QSP_ARG_DECL  Image_File *ifp /* , png_infop info_ptr */ )
 	return 0;
 }
 
+#ifdef NOT_USED_NOW_BUT_MAY_NEED
 
 /* Expand palette images to RGB, low-bit-depth grayscale
  * images to 8 bits, transparency chunks to full alpha
@@ -314,12 +319,12 @@ static int expand_image(Image_File *ifp)
 		init_color_type = info_ptr->color_type;
 		init_pixel_depth = info_ptr->pixel_depth;
 		init_bit_depth = info_ptr->bit_depth;
-#else
+#else // ! OLD_PNG_LIB
 		init_n_of_channels = png_get_channels(HDR_P->png_ptr,HDR_P->info_ptr);
 		//init_color_type = info_ptr->color_type;
 		//init_pixel_depth = info_ptr->pixel_depth;
 		//init_bit_depth = info_ptr->bit_depth;
-#endif
+#endif // ! OLD_PNG_LIB
 	}
 
 	if (setjmp(png_jmpbuf(HDR_P->png_ptr))) {
@@ -405,6 +410,7 @@ static int skip_hdr_info(QSP_ARG_DECL  Image_File *ifp)
 	return 0;
 }
 
+#endif // NOT_USED_NOW_BUT_MAY_NEED
 
 /* I tried to predict the header info by looking at the routines in
  * expand_image, but it seems that when images get expanded rowbytes
@@ -461,7 +467,7 @@ FIO_OPEN_FUNC( pngfio )		// unix version
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
 	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hdr_p = getbuf( sizeof(Png_Hdr) );
@@ -639,9 +645,9 @@ FIO_RD_FUNC( pngfio )
 //		error1("error in expand_image");
 
 	/* make sure that the sizes match */
-	if( ! dp_same_dim(QSP_ARG  dp,ifp->if_dp,0,"png_rd") ) return;	/* same # components? */
-	if( ! dp_same_dim(QSP_ARG  dp,ifp->if_dp,1,"png_rd") ) return;	/* same # columns? */
-	if( ! dp_same_dim(QSP_ARG  dp,ifp->if_dp,2,"png_rd") ) return;	/* same # rows? */
+	if( ! dp_same_dim(dp,ifp->if_dp,0,"png_rd") ) return;	/* same # components? */
+	if( ! dp_same_dim(dp,ifp->if_dp,1,"png_rd") ) return;	/* same # columns? */
+	if( ! dp_same_dim(dp,ifp->if_dp,2,"png_rd") ) return;	/* same # rows? */
 
 	// data_ptr = OBJ_DATA_PTR(dp);
 
@@ -872,7 +878,7 @@ FIO_WT_FUNC( pngfio )		// unix version
 			ifp->if_name,ifp->if_nfrms);
 			NADVISE(ERROR_STRING);
 		}
-		close_image_file(QSP_ARG  ifp);
+		close_image_file(ifp);
 	}
 
 //	/* close the file */
@@ -945,7 +951,7 @@ void set_bg_color(int bg_color)
 	bg_blue  = (bg_color & 0x0000FF);
 }
 
-void set_color_type(int color_type)
+void _set_color_type(QSP_ARG_DECL  int color_type)
 {
 	switch(color_type) {
 		case 0:
@@ -969,8 +975,8 @@ void set_color_type(int color_type)
 			break;
 
 		default:
-			sprintf(DEFAULT_MSG_STR,"unknown color type %d", color_type);
-			NWARN(DEFAULT_MSG_STR);
+			sprintf(ERROR_STRING,"unknown color type %d", color_type);
+			warn(ERROR_STRING);
 	}
 }
 
@@ -1004,16 +1010,16 @@ FIO_SEEK_FUNC(pngfio)
 
 /* the unconvert routine creates a disk header */
 
-int pngfio_unconv(void *hdr_pp,Data_Obj *dp)
+int _pngfio_unconv(QSP_ARG_DECL  void *hdr_pp,Data_Obj *dp)
 {
-	NWARN("png_unconv() not implemented!?");
+	warn("png_unconv() not implemented!?");
 	return(-1);
 }
 
 
-int pngfio_conv(Data_Obj *dp,void *hd_pp)
+int _pngfio_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 {
-	NWARN("png_conv not implemented");
+	warn("png_conv not implemented");
 	return(-1);
 }
 
@@ -1072,7 +1078,9 @@ FIO_WT_FUNC( pngfio )		// iOS version
 	return(0);
 }
 
-static void png_to_dp(Data_Obj *dp, UIImage *img)	// iOS version
+#define png_to_dp(dp, img) _png_to_dp(QSP_ARG  dp, img)
+
+static void _png_to_dp(QSP_ARG_DECL  Data_Obj *dp, UIImage *img)	// iOS version
 {
 
 // With new version of libpng, need to use get functions...
@@ -1101,9 +1109,9 @@ static void png_to_dp(Data_Obj *dp, UIImage *img)	// iOS version
 		bpp=CGImageGetBitsPerPixel(img.CGImage);
 	}
 	if( bpp % 8 != 0 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"png_to_dp:  bits per pixel (%zu) is not a multiple of 8!?",bpp);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	SET_OBJ_COMPS(dp, bpp/8);
@@ -1132,7 +1140,7 @@ static void png_to_dp(Data_Obj *dp, UIImage *img)	// iOS version
 	SET_OBJ_N_TYPE_ELTS(dp, OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp)
 			* OBJ_FRAMES(dp) * OBJ_SEQS(dp) );
 
-	auto_shape_flags(OBJ_SHAPE(dp),dp);
+	auto_shape_flags(OBJ_SHAPE(dp));
 
 }
 
@@ -1140,7 +1148,7 @@ FIO_OPEN_FUNC( pngfio )		// iOS version
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
 	if( ifp==NULL ) return(ifp);
 
 	// if it's readable, then we would read the header so we can
@@ -1176,7 +1184,7 @@ FIO_CLOSE_FUNC( pngfio )		// iOS version
 	} else {
 		//advise("pngfio_close:  doing nothing.");
 	}
-	generic_imgfile_close(QSP_ARG  ifp);
+	generic_imgfile_close(ifp);
 }
 
 FIO_RD_FUNC( pngfio )		// iOS version
@@ -1218,20 +1226,22 @@ FIO_INFO_FUNC(pngfio)
 
 FIO_SEEK_FUNC(pngfio)
 {
-	NWARN("png_seek_frame:  not implemented!?");
+	warn("png_seek_frame:  not implemented!?");
 	return(0);
 }
 
-int pngfio_unconv(void *hdr_pp,Data_Obj *dp)
+//int pngfio_unconv(void *hdr_pp,Data_Obj *dp)		// iOS version
+FIO_UNCONV_FUNC(pngfio)
 {
-	NWARN("png_unconv() not implemented!?");
+	warn("png_unconv() not implemented!?");
 	return(-1);
 }
 
+//int pngfio_conv(Data_Obj *dp,void *hd_pp)		// iOS version
 
-int pngfio_conv(Data_Obj *dp,void *hd_pp)
+FIO_CONV_FUNC(pngfio)
 {
-	NWARN("png_conv not implemented");
+	warn("png_conv not implemented");
 	return(-1);
 }
 

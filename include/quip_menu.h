@@ -38,7 +38,7 @@ struct menu {
 
 #define MENU_BEGIN(prompt)						\
 static Menu *prompt##_menu=NULL;					\
-static void init_##prompt##_menu(void)					\
+static void init_##prompt##_menu(SINGLE_QSP_ARG_DECL)			\
 {									\
 	Command *cp;							\
 									\
@@ -70,26 +70,20 @@ static void init_##prompt##_menu(void)					\
 #define CHECK_MENU(prompt)					\
 								\
 	if( prompt##_menu == NULL ){				\
-		init_##prompt##_menu();				\
+		init_##prompt##_menu(SINGLE_QSP_ARG);		\
 	}
 
-extern void add_command_to_menu( Menu *mp, Command *cp );
-extern void list_menu( QSP_ARG_DECL  Menu *mp );
+extern void _add_command_to_menu(QSP_ARG_DECL  Menu *mp, Command *cp );
+#define add_command_to_menu(mp,cp) _add_command_to_menu(QSP_ARG  mp,cp)
 
-#define PUSH_MENU(prompt)		\
-					\
-		CHECK_MENU(prompt)	\
-		PUSH_MENU_PTR(prompt##_menu);
+extern void _list_menu( QSP_ARG_DECL  const Menu *mp );
+#define list_menu( mp ) _list_menu( QSP_ARG  mp )
 
-#define PUSH_MENU_PTR(mp)		\
-		push_menu(QSP_ARG  mp)
+#define CHECK_AND_PUSH_MENU(prompt)		\
+						\
+		CHECK_MENU(prompt)		\
+		push_menu(prompt##_menu);
 
-
-#define POP_MENU		pop_menu(SINGLE_QSP_ARG)
-
-/* BUG?  should this be dictionary_list() ??? */
-//#define MENU_DICT(mp)		mp->mn_dict
-//#define MENU_LIST(mp)		DICT_LIST(MENU_DICT(mp))
 #define MENU_CONTAINER(mp)	mp->mn_cnt_p
 #define MENU_LIST(mp)		container_list(MENU_CONTAINER(mp))
 #define MENU_PROMPT(mp)		mp->mn_prompt

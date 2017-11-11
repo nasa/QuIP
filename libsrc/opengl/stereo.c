@@ -234,6 +234,6 @@ COMMAND_FUNC( do_stereo_menu )
 
 	// auto init?
 
-	PUSH_MENU(stereo);
+	CHECK_AND_PUSH_MENU(stereo);
 }
 

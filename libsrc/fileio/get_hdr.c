@@ -31,10 +31,12 @@
 
 #define LINES 100
 
-static int fh_err(Header *hd,const char *s)
+#define fh_err(hd,s) _fh_err(QSP_ARG  hd,s)
+
+static int _fh_err(QSP_ARG_DECL  Header *hd,const char *s)
 {
-	NWARN("error reading HIPS file header:");
-	NWARN(s);
+	warn("error reading HIPS file header:");
+	warn(s);
 	return(0);
 }
 

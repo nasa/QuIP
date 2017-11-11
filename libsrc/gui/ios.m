@@ -57,7 +57,9 @@ static void suspend_quip_interpreter(SINGLE_QSP_ARG_DECL)
 	SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
 }
 
-static void show_alert( QSP_ARG_DECL   QUIP_ALERT_OBJ_TYPE *alert_p )
+#define show_alert( alert_p ) _show_alert( QSP_ARG   alert_p )
+
+static void _show_alert( QSP_ARG_DECL   QUIP_ALERT_OBJ_TYPE *alert_p )
 {
 #ifdef OLD
 	[alert_p show];
@@ -81,18 +83,19 @@ static void show_alert( QSP_ARG_DECL   QUIP_ALERT_OBJ_TYPE *alert_p )
 	suspend_quip_interpreter(SINGLE_QSP_ARG);
 }
 
+#define resume_busy() _resume_busy(SINGLE_QSP_ARG)
 
-static void resume_busy(void)
+static void _resume_busy(SINGLE_QSP_ARG_DECL)
 {
 	if( suspended_busy_p == NULL ){
-		NWARN("resume_busy:  no suspended busy alert!?");
+		warn("resume_busy:  no suspended busy alert!?");
 		return;
 	}
 	busy_alert_p=suspended_busy_p;
 	suspended_busy_p=NULL;
 	// Isn't this alert already remembered?
 	remember_busy_alert(busy_alert_p);
-	show_alert(QSP_ARG  busy_alert_p);
+	show_alert(busy_alert_p);
 }
 
 void set_allowed_orientations( Quip_Allowed_Orientations o )
@@ -137,10 +140,10 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 	// nop
 }
 
-void reposition(Screen_Obj *sop)
+void _reposition(QSP_ARG_DECL  Screen_Obj *sop)
 {
 	/* Reposition frame if it has one */
-	NWARN("need to implement reposition in ios.c");
+	warn("need to implement reposition in ios.c");
 }
 
 
@@ -150,7 +153,7 @@ Panel_Obj *find_panel(QSP_ARG_DECL  quipView *qv)
 	IOS_Node *np;
 	Panel_Obj *po;
 
-	lp=panel_obj_list(SINGLE_QSP_ARG);
+	lp=panel_obj_list();
 	if( lp == NULL ) return(NULL);
 	np=IOS_LIST_HEAD(lp);
 	while( np!=NULL ){
@@ -453,7 +456,7 @@ void make_message(QSP_ARG_DECL  Screen_Obj *sop)
 
 	sprintf(s,"%s:  %s",SOB_NAME(sop),SOB_CONTENT(sop));
 	//w=PIXELS_PER_CHAR*strlen(s)+EXTRA_WIDTH;
-	w=globalAppDelegate.dev_size.width,
+	w=globalAppDelegate.dev_size.width;
 	f=CGRectMake(PO_CURR_X(curr_panel),PO_CURR_Y(curr_panel),w,BUTTON_HEIGHT);
 	l=[[UILabel alloc] initWithFrame:f];
 	l.text = STRINGOBJ( s );
@@ -482,7 +485,33 @@ void reload_picker(Screen_Obj *sop)
 	[p reloadAllComponents];
 }
 
-void set_choice(Screen_Obj *sop, int which)
+void _get_choice(QSP_ARG_DECL  Screen_Obj *sop)
+{
+	if( IS_CHOOSER(sop) ){
+		warn("get_choice:  Sorry, not implemented yet for choosers...");
+	} else if( SOB_TYPE(sop) == SOT_PICKER ){
+		if( 0 == SOB_N_SELECTORS_AT_IDX(sop,0) ){
+			assign_var(DEFAULT_QSP_ARG "choice", "no_choices_available" );
+			return;
+		}
+
+		UIPickerView *p;
+		int idx;
+		p=(UIPickerView *)SOB_CONTROL(sop);
+		idx = [p selectedRowInComponent:0];
+fprintf(stderr,"get_choice:  idx = %d\n",idx);
+		assert( idx>=0 && idx < SOB_N_SELECTORS_AT_IDX(sop,0) );
+		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTOR_AT_IDX(sop,0,idx) );
+		return;
+	} else {
+		sprintf(ERROR_STRING,
+"get_choice:  object %s is neither a picker nor a chooser!?",SOB_NAME(sop));
+		warn(ERROR_STRING);
+	}
+	assign_var("choice", "oops" );
+}
+
+void _set_choice(QSP_ARG_DECL  Screen_Obj *sop, int which)
 {
 	if( IS_CHOOSER(sop) ){
 		UITableView *t;
@@ -503,31 +532,31 @@ void set_choice(Screen_Obj *sop, int which)
 		p=(UIPickerView *)SOB_CONTROL(sop);
 		[p selectRow:which inComponent:0 animated:NO];
 	} else {
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "set_choice:  object %s is neither a picker nor a chooser!?",SOB_NAME(sop));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
-void set_pick(Screen_Obj *sop, int cyl, int which)
+void _set_pick(QSP_ARG_DECL  Screen_Obj *sop, int cyl, int which)
 {
 	if( SOB_TYPE(sop) == SOT_PICKER ){
 		UIPickerView *p;
 		p=(UIPickerView *)SOB_CONTROL(sop);
 
 		if( cyl < 0 || cyl >= SOB_N_CYLINDERS(sop) ){
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 	"set_pick:  cylinder %d is out of range for picker %s (0-%d)",
 				cyl,SOB_NAME(sop),SOB_N_CYLINDERS(sop));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 
 		[p selectRow:which inComponent:cyl animated:NO];
 	} else {
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "set_pick:  object %s is not a chooser!?",SOB_NAME(sop));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -610,6 +639,9 @@ void make_picker(QSP_ARG_DECL  Screen_Obj *sop )
 	// BUG?  set width and height of sop here?
 }
 
+// Originally, the action string is called when the Done key is entered,
+// which can be confusing...  it would be better to have a way to pull the text
+// from the widget, or call the action every time that a keystroke is typed...
 
 void make_text_field(QSP_ARG_DECL  Screen_Obj *sop)
 {
@@ -634,7 +666,7 @@ void make_text_field(QSP_ARG_DECL  Screen_Obj *sop)
 	textField.clearButtonMode = UITextFieldViewModeWhileEditing;
 	textField.clearsOnBeginEditing = YES;
 	textField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-	textField.delegate = globalAppDelegate;
+	textField.delegate = globalAppDelegate;	// what methods are delegated???
 
 	if( SOB_TYPE(sop) == SOT_PASSWORD )
 		textField.secureTextEntry = YES;
@@ -755,10 +787,9 @@ void make_edit_box(QSP_ARG_DECL  Screen_Obj *sop)
 
 /* For a text widget, this sets the text!? */
 
-void update_prompt(Screen_Obj *sop)
+void _update_prompt(QSP_ARG_DECL  Screen_Obj *sop)
 {
-	NWARN("update_prompt not implemented!?");
-
+	warn("update_prompt not implemented!?");
 }
 
 // It is not clear that we need to have this separate!?
@@ -945,15 +976,15 @@ void make_adjuster(QSP_ARG_DECL  Screen_Obj *sop)
 	make_slider( QSP_ARG   sop );
 }
 
-void new_slider_range(Screen_Obj *sop, int xmin, int xmax)
+void _new_slider_range(QSP_ARG_DECL  Screen_Obj *sop, int xmin, int xmax)
 {
-	NWARN("new_slider_range not implemented!?");
+	warn("new_slider_range not implemented!?");
 }
 
 
-void new_slider_pos(Screen_Obj *sop, int val)
+void _new_slider_pos(QSP_ARG_DECL  Screen_Obj *sop, int val)
 {
-	NWARN("new_slider_pos not implemented!?");
+	warn("new_slider_pos not implemented!?");
 }
 
 void set_toggle_state(Screen_Obj *sop, int val)
@@ -1020,7 +1051,7 @@ void update_text_box(Screen_Obj *sop)
 // what kind of object can this be?
 // UILabel, UITextField...
 
-void update_text_field(Screen_Obj *sop, const char *string)
+void _update_text_field(QSP_ARG_DECL  Screen_Obj *sop, const char *string)
 {
 	switch( SOB_TYPE(sop) ){
 
@@ -1046,9 +1077,9 @@ void update_text_field(Screen_Obj *sop, const char *string)
 			break;
 
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 	"update_text_field:  unhandled object type, screen object %s",SOB_NAME(sop));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 }
@@ -1074,9 +1105,9 @@ void unshow_panel(QSP_ARG_DECL  Panel_Obj *po)
 	pop_nav(QSP_ARG 1);
 }
 
-void posn_panel(Panel_Obj *po)
+void _posn_panel(QSP_ARG_DECL  Panel_Obj *po)
 {
-	NWARN("posn_panel not implemented!?");
+	warn("posn_panel not implemented!?");
 }
 
 void free_wsys_stuff(Panel_Obj *po)
@@ -1084,19 +1115,19 @@ void free_wsys_stuff(Panel_Obj *po)
 	/* BUG - should check what we need to delete here */
 }
 
-void give_notice(const char **msg_array)
+void _give_notice(QSP_ARG_DECL  const char **msg_array)
 {
-	NWARN("give_notice:  notices not implemented in this version\n");
+	warn("give_notice:  notices not implemented in this version\n");
 }
 
-void set_std_cursor(void)
+void _set_std_cursor(SINGLE_QSP_ARG_DECL)
 {
-	NWARN("set_std_cursor not implemented!?");
+	warn("set_std_cursor not implemented!?");
 }
 
-void set_busy_cursor(void)
+void _set_busy_cursor(SINGLE_QSP_ARG_DECL)
 {
-	NWARN("set_busy_cursor not implemented!?");
+	warn("set_busy_cursor not implemented!?");
 }
 
 void make_scroller(QSP_ARG_DECL  Screen_Obj *sop)
@@ -1105,10 +1136,10 @@ void make_scroller(QSP_ARG_DECL  Screen_Obj *sop)
 
 }
 
-void set_scroller_list(Screen_Obj *sop, const char *string_list[],
+void _set_scroller_list(QSP_ARG_DECL  Screen_Obj *sop, const char *string_list[],
 	int nlist)
 {
-	NWARN("set_scroller_list not implemented!?");
+	warn("set_scroller_list not implemented!?");
 }
 
 void window_cm(Panel_Obj *po,Data_Obj *cm_dp)
@@ -1427,7 +1458,9 @@ static void clear_deferred_alert(void)
 // display a different alert.  we are probably calling this from
 // finish_digestion...
 
-static void suspend__busy(void)
+#define suspend__busy() _suspend__busy(SINGLE_QSP_ARG)
+
+static void _suspend__busy(SINGLE_QSP_ARG_DECL)
 {
 	// we need to display an alert while we are busy...
 	suspended_busy_p = busy_alert_p;
@@ -1492,7 +1525,7 @@ static void quip_alert_dismissal_actions(QUIP_ALERT_OBJ_TYPE *alertView, NSInteg
 	 else {
 		sprintf(DEFAULT_ERROR_STRING,
 "CAUTIOUS:  quip_alert_dismissal_actions:  Unrecognized alert type %d!?",aip.type);
-		NWARN(DEFAULT_ERROR_STRING);
+		_warn(DEFAULT_QSP_ARG  DEFAULT_ERROR_STRING);
 		return;
 	}
 #endif // CAUTIOUS
@@ -1628,7 +1661,7 @@ static void present_generic_alert(QSP_ARG_DECL  const char *type, const char *ms
 	alert = create_alert_with_one_button(type,msg);
 	remember_normal_alert(alert);
 	fatal_alert_view= is_fatal ? alert : NULL;
-	show_alert(QSP_ARG  alert);
+	show_alert(alert);
 } // generic_alert
 
 static void generic_alert(QSP_ARG_DECL  const char *type, const char *msg)
@@ -1663,7 +1696,7 @@ void get_confirmation(QSP_ARG_DECL  const char *title, const char *question)
 	QUIP_ALERT_OBJ_TYPE *alert;
 	alert = create_alert_with_two_buttons(title,question);
 	remember_confirmation_alert(alert);
-	show_alert(QSP_ARG  alert);
+	show_alert(alert);
 } // get_confirmation
 
 /* Like an alert, but we don't stop execution - but wait, we have to,
@@ -1691,7 +1724,7 @@ void notify_busy(QSP_ARG_DECL  const char *type, const char *msg)
 
 	alert = create_alert_with_no_buttons(type,msg);
 	remember_busy_alert(alert);
-	show_alert(QSP_ARG  alert);
+	show_alert(alert);
 	busy_alert_p=alert;	// remember for later
 } // notify_busy
 
@@ -1731,12 +1764,12 @@ static void dismiss_busy_alert(QUIP_ALERT_OBJ_TYPE *a)
 // a dismissal when the alert was shown.  Therefore, when we dismiss
 // the gui element now, we have already popped the menu...
 
-void end_busy(int final)
+void _end_busy(QSP_ARG_DECL  int final)
 {
 	QUIP_ALERT_OBJ_TYPE *a;
 
 	if( busy_alert_p == NULL ){
-		NWARN("end_busy:  no busy indicator!?");
+		warn("end_busy:  no busy indicator!?");
 		return;
 	}
 
@@ -1754,7 +1787,7 @@ void end_busy(int final)
 	dismiss_busy_alert(a);
 } // end_busy
 
-void simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
+void _simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	generic_alert(QSP_ARG  type,msg);
 }
@@ -1826,7 +1859,7 @@ static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 			return np;
 		np = IOS_NODE_NEXT(np);
 	}
-	NWARN("CAUTIOUS:  node_for_alert:  alert not found!?");
+	_warn(DEFAULT_QSP_ARG  "CAUTIOUS:  node_for_alert:  alert not found!?");
 	// assert!
 	return NULL;
 }

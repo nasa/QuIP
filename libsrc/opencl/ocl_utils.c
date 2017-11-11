@@ -10,6 +10,7 @@
 #include "veclib/vec_func.h"
 #include "ocl_platform.h"
 #include "fileck.h"
+#include "platform.h"
 
 //#define MEM_SIZE (16)//suppose we have a vector with 128 elements
 #define MAX_SOURCE_SIZE (0x100000)
@@ -550,26 +551,6 @@ static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pd
 	}
 }
 
-// this routine seems to only be used for the random number generator???
-
-cl_kernel ocl_make_kernel(const char *ksrc,const char *kernel_name,Platform_Device *pdp)
-{
-	cl_program program;
-	cl_kernel kernel;
-
-	program = ocl_create_program(ksrc,pdp);
-	if( program == NULL )
-		NERROR1("program creation failure!?");
-
-	kernel = ocl_create_kernel(program, kernel_name, pdp);
-	if( kernel == NULL ){
-		NADVISE("Source code of failed program:");
-		NADVISE(ksrc);
-		NERROR1("kernel creation failure!?");
-	}
-
-	return kernel;
-}
 
 cl_kernel ocl_create_kernel(cl_program program,
 			const char *name, Platform_Device *pdp )

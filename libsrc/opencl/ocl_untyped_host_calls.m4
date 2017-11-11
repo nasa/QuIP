@@ -3,26 +3,6 @@ dnl	Put fft stuff here??
 suppress_no
 
 
-static void ocl_fft_shutdown(SINGLE_QSP_ARG_DECL)
-{
-#ifdef HAVE_CLFFT
-	cl_int err;
-	err=clfftTeardown();
-	//CLFFT_RESULT_CHECK(clfftTeardown)
-fprintf(stderr,"clfftTeardown returned status code %d\n",err);
-#endif // HAVE_CLFFT
-}
-
-static int ocl_fft_inited=FALSE;
-
-define(`OCL_FFT_INIT',`
-	if( ! ocl_fft_inited ){
-		ocl_fft_inited = TRUE;
-fprintf(stderr,"ocl_fft_init setting exit function\n");
-		do_on_exit(ocl_fft_shutdown);
-	}
-')
-
 
 dnl	 FP_PREC_SWITCH(sw_dp,func)
 define(`FP_PREC_SWITCH',`
@@ -69,6 +49,31 @@ fprintf(stderr,"%s BEGIN, oap = 0x%lx\n",STRINGIFY(HOST_CALL_NAME($2)),(u_long)o
 	}
 ')
 
+dnl	Not needed:
+
+define(`OCL_FFT_INIT',`
+	if( ! ocl_fft_inited ){
+		ocl_fft_inited = TRUE;
+fprintf(stderr,"ocl_fft_init setting exit function\n");
+		do_on_exit(ocl_fft_shutdown);
+	}
+')
+
+ifdef(`FOOBAR',`
+
+static int ocl_fft_inited=FALSE;
+
+static void ocl_fft_shutdown(SINGLE_QSP_ARG_DECL)
+{
+#ifdef HAVE_CLFFT
+	cl_int err;
+	err=clfftTeardown();
+	//CLFFT_RESULT_CHECK(clfftTeardown)
+fprintf(stderr,"clfftTeardown returned status code %d\n",err);
+#endif // HAVE_CLFFT
+}
+
+
 void HOST_CALL_NAME(fft2d)( VFCODE_ARG_DECL  Data_Obj *_dst_dp, Data_Obj *src_dp )
 {
 	OCL_FFT_INIT
@@ -92,4 +97,6 @@ void HOST_CALL_NAME(iftrows)( VFCODE_ARG_DECL  Data_Obj *_dst_dp, Data_Obj *src_
 	OCL_FFT_INIT
 	RC_SWITCH(_dst_dp,iftrows,fftrows,0)
 }
+
+',`')	dnl endif FOOBAR
 

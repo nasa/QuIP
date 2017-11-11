@@ -9,6 +9,7 @@
 
 extern void push_item( Stack *stkp, void *ip );
 extern void * pop_item( Stack *stkp );
+extern int stack_size(Stack *stkp);
 
 #define TOP_OF_STACK(stkp)	\
 	(QLIST_HEAD(stkp)==NULL?NULL:NODE_DATA(QLIST_HEAD(stkp)))

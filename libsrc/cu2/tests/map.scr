@@ -1,0 +1,56 @@
+# test of new standardized mapping function
+
+Set n 4
+Set blen 256
+Set slen 1024
+
+Define Testit 1 stem
+advise "Declaring vectors..."
+Vector ${1}_dst $n 1 float
+Vector ${1}_map_b $blen 1 float
+Vector ${1}_map_s $slen 1 float
+Vector ${1}_src_b $n 1 u_byte
+Vector ${1}_src_s $n 1 u_short
+
+advise "Initializing map..."
+Ramp1D ${1}_map_b 0 1/$blen
+Ramp1D ${1}_map_s 0 1/$slen
+
+# There is a problem with this!
+advise "Reading source data..."
+data
+  ascii
+    read ${1}_src_b - 
+      0 10 20 21
+    read ${1}_src_s - 
+      0 10 20 21
+    quit
+  quit
+Display ${1}_src_b
+Display ${1}_src_s
+Pause
+
+#Ramp1D ${1}_src 0 1
+
+#advise "Testing a conversion..."
+#Convert ${1}_dst ${1}_src_b
+
+advise "Performing byte-indexed mapping..."
+veclib execute vlutmapb ${1}_dst ${1}_src_b ${1}_map_b quit
+advise "Displaying result..."
+Display ${1}_src_b
+Display ${1}_dst
+
+advise "Performing short-indexed mapping..."
+veclib execute vlutmaps ${1}_dst ${1}_src_s ${1}_map_s quit
+advise "Displaying result..."
+Display ${1}_src_s
+Display ${1}_dst
+.
+
+Testit h
+platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
+Testit g
+
+exit
+

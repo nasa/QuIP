@@ -49,7 +49,7 @@ COMMAND_FUNC( do_fix_prm )
 	Opt_Param *opp;
 
 	opp = PICK_OPT_PARAM("");
-	value=HOW_MUCH("value");
+	value=how_much("value");
 
 	if( opp==NULL ) return;
 

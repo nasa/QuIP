@@ -58,8 +58,8 @@ static float exclip(QSP_ARG_DECL  Data_Obj *dp,Data_Obj *val_sp,
 			sprintf(ERROR_STRING,
 				"new extremum %g, old extremum %g",
 				newex,extremum);
-			ADVISE(ERROR_STRING);
-			ERROR1("ifunc extremum disagrees with vfunc");
+			advise(ERROR_STRING);
+			error1("ifunc extremum disagrees with vfunc");
 		}
 
 		/* now reset this value */
@@ -85,12 +85,12 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 
 	clear_obj_args(oap);
 	SET_OA_ARGSTYPE(oap, REAL_ARGS );	/* BUG? should we check type of input? */
-	SET_OA_ARGSPREC(oap, ARGSET_PREC(OBJ_PREC(dp)) );
-	SET_OA_FUNCTYPE(oap, FUNCTYPE_FOR(OA_ARGSPREC(oap),OA_ARGSTYPE(oap)) );
+	SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC(dp)) );
+	SET_OA_FUNCTYPE(oap, FUNCTYPE_FOR(OA_ARGSPREC_CODE(oap),OA_ARGSTYPE(oap)) );
 	SET_OA_SRC_OBJ(oap,0,dp);
 	SET_OA_PFDEV(oap, OBJ_PFDEV(dp) );
 
-	scratch_scalar_dp = area_scalar( QSP_ARG  OBJ_AREA(dp) );
+	scratch_scalar_dp = area_scalar(OBJ_AREA(dp));
 	SET_OBJ_PREC_PTR(scratch_scalar_dp,OBJ_PREC_PTR(dp) );
 	/* this used to be oa_sdp[0], but now with "projection" the destination
 	 * doesn't have to be a scalar.
@@ -100,13 +100,13 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 
 	perf_vfunc(QSP_ARG  FVMINV, oap);
 
-	extract_scalar_value(QSP_ARG  &scratch_scalar_val, scratch_scalar_dp);
-	omn = cast_from_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp));
+	extract_scalar_value(&scratch_scalar_val, scratch_scalar_dp);
+	omn = cast_from_scalar_value(&scratch_scalar_val,OBJ_PREC_PTR(dp));
 
 	perf_vfunc(QSP_ARG  FVMAXV, oap);
 
-	extract_scalar_value(QSP_ARG  &scratch_scalar_val, scratch_scalar_dp);
-	omx = cast_from_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp));
+	extract_scalar_value(&scratch_scalar_val, scratch_scalar_dp);
+	omx = cast_from_scalar_value(&scratch_scalar_val,OBJ_PREC_PTR(dp));
 
 	/*	y = ( x - omn ) * (mx-mn)/(omx-omn) + mn
 	 *	  = x * rf + mn - omn*rf
@@ -116,7 +116,7 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 		if( verbose ){
 			sprintf(ERROR_STRING,
 		"scale:  object %s has constant value %g",OBJ_NAME(dp),omn);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 		}
 		rf = 1;
 	} else {
@@ -136,13 +136,13 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 	// stick with the tried and true...
 
 	SET_OA_SVAL(oap,0,&scratch_scalar_val);
-	cast_to_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp),rf);
+	cast_dbl_to_scalar_value(&scratch_scalar_val,OBJ_PREC_PTR(dp),rf);
 	OA_DEST(oap) = dp;
 	perf_vfunc(QSP_ARG  FVSMUL, oap);
 
 	offset = desmin - omn*rf;
 	if( offset != 0 ){
-		cast_to_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp),offset);
+		cast_dbl_to_scalar_value(&scratch_scalar_val,OBJ_PREC_PTR(dp),offset);
 		perf_vfunc(QSP_ARG  FVSADD, oap);
 	}
 }
