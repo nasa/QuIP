@@ -7,7 +7,7 @@
 void _add_command_to_menu(QSP_ARG_DECL  Menu *mp, Command *cp )
 {
 	if( add_to_container(MENU_CONTAINER(mp),(Item *)cp) < 0 )
-		NWARN("add_command_to_menu:  error adding command!?");
+		warn("add_command_to_menu:  error adding command!?");
 }
 
 void _list_menu(QSP_ARG_DECL  const Menu *mp)

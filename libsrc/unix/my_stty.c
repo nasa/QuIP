@@ -374,10 +374,10 @@ static COMMAND_FUNC( do_stty_dump )
 
 #ifdef TTY_CTL
 #define SET_PARITY(fd,x,y)	set_parity(fd,x,y)
-#define	SET_NDATA(fd,n)		set_ndata(fd,n)
+#define	SET_N_DATA_BITS(fd,n)	set_n_data_bits(fd,n)
 #else // ! TTY_CTL
 #define SET_PARITY(fd,x,y)	NO_TTY_CTL_MSG
-#define	SET_NDATA(fd,n)		NO_TTY_CTL_MSG
+#define	SET_N_DATA_BITS(fd,n)		NO_TTY_CTL_MSG
 #endif // ! TTY_CTL
 
 #define N_PARITY_CHOICES 3
@@ -424,7 +424,7 @@ static COMMAND_FUNC( do_set_ndata )
 	HOW_MANY("number of data bits");
 #endif // ! TTY_CTL
 	STTY_FD_CHECK
-	SET_NDATA(stty_fd,n);
+	SET_N_DATA_BITS(stty_fd,n);
 }
 
 static COMMAND_FUNC( do_setflag )

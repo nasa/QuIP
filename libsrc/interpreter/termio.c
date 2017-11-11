@@ -78,7 +78,7 @@ void _dump_term_flags(QSP_ARG_DECL  u_long flag, Termio_Option *tbl)
 	}
 }
 
-void set_ndata(int fd,int n)
+void _set_n_data_bits(QSP_ARG_DECL  int fd,int n)
 {
 	GETTERM;
 
@@ -94,7 +94,7 @@ void set_ndata(int fd,int n)
 		default:
 			sprintf(DEFAULT_ERROR_STRING,
 				"bad number of bits requested:  %d",n);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(DEFAULT_ERROR_STRING);
 			break;
 	}
 
@@ -125,7 +125,7 @@ void set_parity(int fd,int flag,int odd)
  * MacOSX doesn't have CBAUD...
  */
 
-void set_baud(int fd,int rate)
+void _set_baud(QSP_ARG_DECL  int fd,int rate)
 {
 	GETTERM;
 
@@ -133,7 +133,7 @@ void set_baud(int fd,int rate)
 
 	if( cfsetspeed(&tiobuf,rate) < 0 ){
 		tell_sys_error("cfsetspeed");
-		NWARN("Error setting baud rate!?");
+		warn("Error setting baud rate!?");
 	}
 
 #else // ! CFSETSPEED

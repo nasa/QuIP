@@ -20,9 +20,13 @@ typedef struct termio_option {
 
 /* prototypes from termio.c */
 
-extern void set_ndata(int fd,int n);
+extern void _set_n_data_bits(QSP_ARG_DECL  int fd,int n);
+#define set_n_data_bits(fd,n) _set_n_data_bits(QSP_ARG  fd,n)
+
 extern void set_parity(int fd,int flag,int odd);
-extern void set_baud(int fd,int rate);
+extern void _set_baud(QSP_ARG_DECL  int fd,int rate);
+#define set_baud(fd,rate) _set_baud(QSP_ARG  fd,rate)
+
 extern void tty_nonl(int fd);
 extern void ttyraw(int fd);
 extern void ttycbrk(int fd);

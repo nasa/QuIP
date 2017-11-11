@@ -71,7 +71,7 @@ static void _setup_ht(QSP_ARG_DECL  Hash_Tbl *htp, u_long size)
 	htp->ht_size=size;
 	htp->ht_entries = (void**) getbuf(size * sizeof(void *));
 	//if( htp->ht_entries==NULL ) mem_err("setup_ht");
-	if( htp->ht_entries==NULL ) NWARN("setup_ht memory allocation error");
+	if( htp->ht_entries==NULL ) warn("setup_ht memory allocation error");
 
 	clear_entries(htp->ht_entries,size);
 
