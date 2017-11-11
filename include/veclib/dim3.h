@@ -11,7 +11,12 @@ typedef struct {				\
 //#ifndef HAVE_CUDA
 #ifdef BUILD_FOR_CUDA
 // include the cuda header that defines dim3 here...
+#ifndef JUST_TESTING_NO_CUDA
 #include <vector_types.h>	// cuda header that defines dim3?
+#else // JUST_TESTING_NO_CUDA
+DECALARE_DIM3_STRUCT
+#endif // JUST_TESTING_NO_CUDA
+
 
 #else
 DECLARE_DIM3_STRUCT

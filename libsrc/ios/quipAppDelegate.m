@@ -107,6 +107,7 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 @synthesize wakeup_timer;
 @synthesize wakeup_lp;
 
+
 -(void) applicationDidEnterBackground:(UIApplication *)app
 {
 	/* Use this method to release shared resources,
@@ -131,6 +132,13 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 	// What should we do???
 }
 
+static void perform_text_action(NSString *s, Screen_Obj *sop)
+{
+	assign_var(DEFAULT_QSP_ARG  "input_string",s.UTF8String);
+	/* now interpret the action */
+	chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), "(text field event)");
+}
+
 // Where does this get called from?  how do we know which qsp to use???
 // This gets called when the user types 'DONE' on the pop-up keyboard...
 // This routine should handle the result.  In the case of the console,
@@ -143,15 +151,42 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 	CHECK_SCRNOBJ_BOOL(sop,textField,textFieldShouldReturn,1);
 
 	NSString *s= textField.text;
-	assign_var(DEFAULT_QSP_ARG  "input_string",s.UTF8String);
-
-	/* now interpret the action */
-	chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), "(text field event)");
+	perform_text_action(s,sop);
 
 	[textField resignFirstResponder];
 
 	return YES;
 }
+
+- (BOOL) textField: (UITextField *) textField shouldChangeCharactersInRange: (NSRange) range
+			replacementString: (NSString *) string
+{
+	Screen_Obj *sop = find_any_scrnobj((UIControl *)textField);
+	CHECK_SCRNOBJ_BOOL(sop,textField,shouldChangeCharactersInRange,1);
+
+	NSString *s = textField.text;
+//fprintf(stderr,"shouldChangeCharactersInRange:  old text is \"%s\"\nreplacement:  \"%s\"\nrange:  %d at %d\n\n",
+//s.UTF8String,string.UTF8String,(int)range.length,(int)range.location);
+
+	// For straighforward typing with no backspaces, the location should
+	// be the length of the existing string.
+	// When adding characters, length is 0, and when deleting length is 1.
+	// On the keyboard, we can use the arrow keys to move around, if we insert
+	// in the middle we get a length of 0 and a position where the insertion starts.
+	// So the final string should be:
+	// 1) existing characters up to position
+	// 2) new string chars
+	// 3) any old characters after position+len
+
+	NSString *result = [s stringByReplacingCharactersInRange:range withString:string];
+//fprintf(stderr,"result = \"%s\"\n",result.UTF8String);
+
+	perform_text_action(result,sop);
+
+	return YES;
+}
+
+// Is there a delegate method for changing (editing) the content?
 
 -(void) selectionDidChange:(id<UITextInput>)textInput
 {
@@ -186,12 +221,8 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 	Screen_Obj *sop=find_any_scrnobj(tableView);
 	CHECK_SCRNOBJ_INT(sop,tableView,numberOfSectionsInTableView,1);
 
-	if( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER ){
-		return 1;
-	} else {
-		NWARN("CAUTIOUS:  numberOfSectionsIntableView:  bad screen object!?");
-		return 0;
-	}
+	assert( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER );
+	return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)component
@@ -201,24 +232,11 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 
 	if( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER){
 		// now access stored information in the object
-#ifdef CAUTIOUS
-		if( component != 0 ) {
-			sprintf(DEFAULT_ERROR_STRING,
-"CAUTIOUS:  numberOfRowsInSection (TableView):  component (%ld) should be 0 for a chooser!?",
-				(long)component);
-			NWARN(DEFAULT_ERROR_STRING);
-			return 0;
-		}
-#endif // CAUTIOUS
+		assert( component == 0 );
 		return SOB_N_SELECTORS(sop);
-	} else {
-		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  numberOfRowsInSection:  Bad screen object type!?");
-		NWARN(DEFAULT_ERROR_STRING);
-		return 0;
 	}
-//#else // ! CAUTIOUS
+	assert(0);
 	return 0;	// shouldn't happen
-//#endif // ! CAUTIOUS
 }
 
 - (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -229,12 +247,8 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 	CHECK_SCRNOBJ_INT(sop,tableView,cellForRowAtIndexPath,1);
 
 	int r = (int) indexPath.row;
-#ifdef CAUTIOUS
-	if( r < 0 || r >= SOB_N_SELECTORS(sop) ){
-		NWARN("CAUTIOUS:  cellForRowAtIndexPath (TableView):  index out of range!?");
-		return 0;
-	}
-#endif /* CAUTIOUS */
+	assert( r >= 0 && r < SOB_N_SELECTORS(sop) );
+
 	const char **strings = SOB_SELECTORS(sop);
 
 	c = [tableView dequeueReusableCellWithIdentifier: kCellIdentifier ];
@@ -268,7 +282,7 @@ static void clear_selection(Screen_Obj *sop, NSIndexPath *path )
 
 // Call a function on all of the selections (in a multi-chooser)
 
-static int path_iterate(Screen_Obj *sop, void (*func)() )
+static int path_iterate(Screen_Obj *sop, void (*func)(Screen_Obj *,NSIndexPath *) )
 {
 #ifdef BUILD_FOR_IOS
 	UITableView *tableView = (UITableView *) SOB_CONTROL(sop);
@@ -289,16 +303,9 @@ static int path_iterate(Screen_Obj *sop, void (*func)() )
 
 void clear_all_selections(Screen_Obj *sop)
 {
-	//int n;
+	assert( IS_CHOOSER(sop) );	// chooser or mlt_chooser
 
-	if( IS_CHOOSER(sop) ){	// chooser or mlt_chooser
-		/*n =*/ path_iterate(sop,clear_selection);
-	}
-#ifdef CAUTIOUS
-	  else {
-		NWARN("CAUTIOUS:  clear_all_selections:  bad widget type!?");
-	}
-#endif // CAUTIOUS
+	path_iterate(sop,clear_selection);
 }
 
 String_Buf *choice_sbp=NULL;
@@ -322,7 +329,7 @@ static void add_selection_to_choice( Screen_Obj *sop, NSIndexPath *path )
 	r=0;	// BUG
 #endif // BUILD_FOR_IOS
 
-	if( SB_BUF(choice_sbp) == NULL ){
+	if( sb_buffer(choice_sbp) == NULL ){
 		copy_string(choice_sbp,strings[r]);
 		n_choices = 1;
 	} else {
@@ -349,10 +356,10 @@ static void updateMultipleChoices(Screen_Obj *sop)
 	sprintf(val_string,"%d",n);	// BUG? use snprint?
 	assign_var(DEFAULT_QSP_ARG "n_selections", val_string );
 
-	if( SB_BUF(choice_sbp) == NULL )	// no selections
+	if( sb_buffer(choice_sbp) == NULL )	// no selections
 		assign_var(DEFAULT_QSP_ARG "choice", "(nothing_selected)" );
 	else
-		assign_var(DEFAULT_QSP_ARG "choice", SB_BUF(choice_sbp) );
+		assign_var(DEFAULT_QSP_ARG "choice", sb_buffer(choice_sbp) );
 
 	rls_stringbuf(choice_sbp);
 	choice_sbp = NULL;
@@ -377,38 +384,20 @@ static void updateMultipleChoices(Screen_Obj *sop)
 	CHECK_SCRNOBJ_VOID(sop,tableView,didSelectRowAtIndexPath,1);
 
 	int section = (int) indexPath.section;
-	if( section != 0 ){
-		NWARN("CAUTIOUS:  didSelectRowAtIndexPath:  unexpected section!?");
-		return;
-	}
+	assert( section == 0 );
+
 	int row = (int) indexPath.row;	// assume just one section
 
-#ifdef CAUTIOUS
-	if( sop == NULL ){
-		NWARN("CAUTIOUS:  didSelectRow (TableView):  couldn't find screen object!?");
-		return;
-	}
-#endif // CAUTIOUS
+	assert( sop != NULL );
 
-	if( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER){
-#ifdef CAUTIOUS
-		if( row < 0 || row >= SOB_N_SELECTORS(sop) ){
-			NWARN("CAUTIOUS:  didSelectRow (TableView):  unexpected row index!?");
-			return;
-		}
-#endif /* CAUTIOUS */
-		if (SOB_TYPE(sop) == SOT_CHOOSER) {
-			assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTORS(sop)[row] );
-		} else { //SOB_TYPE(sop) == SOT_MLT_CHOOSER
-			updateMultipleChoices(sop);
-		}
+	assert( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER);
+	assert( row >= 0 && row < SOB_N_SELECTORS(sop) );
+
+	if (SOB_TYPE(sop) == SOT_CHOOSER) {
+		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTORS(sop)[row] );
+	} else { //SOB_TYPE(sop) == SOT_MLT_CHOOSER
+		updateMultipleChoices(sop);
 	}
-#ifdef CAUTIOUS
-  else {
-	NWARN("CAUTIOUS:  tableView didSelectRow: unexpected widget type!?");
-	return;
-	}
-#endif /* CAUTIOUS */
 
 	chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), "(table selection event)");
 } // end didSelectRowAtIndexPath
@@ -421,14 +410,13 @@ static void updateMultipleChoices(Screen_Obj *sop)
 	Screen_Obj *sop=find_any_scrnobj(pickerView);
 	CHECK_SCRNOBJ_INT(sop,pickerView,numberOfComponentsInPickerView,1);
 
-	if( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER)
-		return 1;
-	else if( SOB_TYPE(sop) == SOT_PICKER )
+	assert( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER ||
+		SOB_TYPE(sop) == SOT_PICKER );
+
+	if( SOB_TYPE(sop) == SOT_PICKER )
 		return SOB_N_CYLINDERS(sop);
-	else {
-		NWARN("CAUTIOUS:  numberOfComponentsInPickerView:  bad screen object!?");
-		return 0;
-	}
+
+	return 1;		// default
 }
 
 - (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component
@@ -438,39 +426,14 @@ static void updateMultipleChoices(Screen_Obj *sop)
 
 	if( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER){
 		// now access stored information in the object
-#ifdef CAUTIOUS
-		if( component != 0 ) {
-			sprintf(DEFAULT_ERROR_STRING,
-"CAUTIOUS:  numberOfRowsInComponent (PickerView):  component (%ld) should be 0 for a chooser!?",
-				(long)component);
-			NWARN(DEFAULT_ERROR_STRING);
-			return 0;
-		}
-#endif // CAUTIOUS
+		assert( component == 0 );
 		return SOB_N_SELECTORS(sop);
-	} else if( SOB_TYPE(sop) == SOT_PICKER ){
-#ifdef CAUTIOUS
-		if( component < 0 || component > (SOB_N_CYLINDERS(sop)-1) ) {
-			sprintf(DEFAULT_ERROR_STRING,
-"CAUTIOUS:  numberOfRowsInComponent (PickerView):  component (%ld) out of range for picker %s!?",
-				(long)component,SOB_NAME(sop));
-			NWARN(DEFAULT_ERROR_STRING);
-			return 0;
-		}
-
-#endif // CAUTIOUS
-		int n= SOB_N_SELECTORS_AT_IDX(sop,component);
-		return n;
 	}
-#ifdef CAUTIOUS
-	else {
-		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  numberOfRowsInComponent:  Bad screen object type!?");
-		NWARN(DEFAULT_ERROR_STRING);
-		return 0;
-	}
-#else // ! CAUTIOUS
-	return 0;	// shouldn't happen
-#endif // ! CAUTIOUS
+	
+	assert( SOB_TYPE(sop) == SOT_PICKER );
+	assert( component >= 0 && component < SOB_N_CYLINDERS(sop) ) ;
+	int n= SOB_N_SELECTORS_AT_IDX(sop,component);
+	return n;
 }
 
 // A "picker" is iOS for what we have called a "chooser"
@@ -481,49 +444,23 @@ static void updateMultipleChoices(Screen_Obj *sop)
 	CHECK_SCRNOBJ_STR(sop,pickerView,titleForRow,1);
 
 	if( SOB_TYPE(sop) == SOT_CHOOSER ){
-#ifdef CAUTIOUS
-		if( component != 0 ){
-			sprintf(DEFAULT_ERROR_STRING,
-	"CAUTIOUS:  titleForRow (PickerView):  unexpected chooser component index %ld!?",
-				(long)component);
-			NWARN(DEFAULT_ERROR_STRING);
-			return @"???";
-		}
-		if( row < 0 || row >= SOB_N_SELECTORS(sop) ){
-			sprintf(DEFAULT_ERROR_STRING,
-	"CAUTIOUS:  titleForRow (PickerView):  unexpected chooser row index %ld!?",(long)row);
-			NWARN(DEFAULT_ERROR_STRING);
-			return @"???";
-		}
-#endif /* CAUTIOUS */
+		assert( component == 0 );
+		assert( row >= 0 && row < SOB_N_SELECTORS(sop) );
 		return STRINGOBJ( SOB_SELECTORS(sop)[row] );
-	} else if( SOB_TYPE(sop) == SOT_PICKER ){
-		// Make sure component and row are OK
-#ifdef CAUTIOUS
-		if( component < 0 || component >= SOB_N_CYLINDERS(sop) ){
-			sprintf(DEFAULT_ERROR_STRING,
-	"CAUTIOUS:  titleForRow (PickerView):  unexpected picker component index %ld!?",(long)row);
-			NWARN(DEFAULT_ERROR_STRING);
-			return @"???";
-		}
-		if( row < 0 || row >= SOB_N_SELECTORS_AT_IDX(sop, component) ){
-			sprintf(DEFAULT_ERROR_STRING,
-	"CAUTIOUS:  titleForRow (PickerView):  unexpected picker row index %ld!?",(long)row);
-			NWARN(DEFAULT_ERROR_STRING);
-			return @"???";
-		}
-#endif /* CAUTIOUS */
-		//const char *s=SOB_SELECTOR_AT_IDX(sop, component,row);
-		const char ***tbl;
-		tbl = SOB_SELECTOR_TBL(sop);
-		const char **list;
-		list = tbl[component];
-		const char *s;
-		s=list[row];
-		return STRINGOBJ( s );
-
 	}
-	return @"???";
+	
+	assert( SOB_TYPE(sop) == SOT_PICKER );
+
+	// Make sure component and row are OK
+	assert( component >= 0 && component < SOB_N_CYLINDERS(sop) );
+	assert( row >= 0 && row < SOB_N_SELECTORS_AT_IDX(sop, component) );
+	const char ***tbl;
+	tbl = SOB_SELECTOR_TBL(sop);
+	const char **list;
+	list = tbl[component];
+	const char *s;
+	s=list[row];
+	return STRINGOBJ( s );
 }
 
 - (void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component
@@ -532,42 +469,13 @@ static void updateMultipleChoices(Screen_Obj *sop)
 	CHECK_SCRNOBJ_VOID(sop,pickerView,didSelectRow,1);
 
 	if( SOB_TYPE(sop) == SOT_CHOOSER ){
-//#ifdef CAUTIOUS
-//		if( component != 0 ){
-//			NWARN("CAUTIOUS:  titleForRow (PickerView):  unexpected component index!?");
-//			return;
-//		}
 		assert( component == 0 );
-
-//		if( row < 0 || row >= SOB_N_SELECTORS(sop) ){
-//			NWARN("CAUTIOUS:  titleForRow (PickerView):  unexpected row index!?");
-//			return;
-//		}
-//#endif /* CAUTIOUS */
-
 		assert( row>=0 && row < SOB_N_SELECTORS(sop) );
 
 		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTORS(sop)[row] );
-	} else if( SOB_TYPE(sop) == SOT_PICKER ){
-//#ifdef CAUTIOUS
-//		if( component < 0 || component >= SOB_N_CYLINDERS(sop) ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  titleForRow (PickerView):  unexpected component index %ld!?",(long)component);
-//			NWARN(DEFAULT_ERROR_STRING);
-//			return;
-//		}
-
+	} else {
+		assert( SOB_TYPE(sop) == SOT_PICKER );
 		assert( component >= 0 && component < SOB_N_CYLINDERS(sop));
-
-//		if( row < 0 || row >= SOB_N_SELECTORS_AT_IDX(sop,component) ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  titleForRow (PickerView):  unexpected row index %ld for component %ld!?",
-//				(long)row,(long)component);
-//			NWARN(DEFAULT_ERROR_STRING);
-//			return;
-//		}
-//#endif /* CAUTIOUS */
-
 		assert(row>=0&&row<SOB_N_SELECTORS_AT_IDX(sop,component));
 
 		char choice_idx[16];
@@ -578,11 +486,6 @@ static void updateMultipleChoices(Screen_Obj *sop)
 		assign_var(DEFAULT_QSP_ARG "choice_index", choice_idx );
 		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTOR_AT_IDX(sop,(int)component,(int)row) );
 	}
-#ifdef CAUTIOUS
-	  else {
-		  assert( ! "Unexpected widget type!?" );
-	}
-#endif /* CAUTIOUS */
 	chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), "(row selection event)");
 } // end didSelectRow
 
@@ -615,17 +518,10 @@ static void updateMultipleChoices(Screen_Obj *sop)
 
 		// BUG need to set variable here...
 		assign_var(DEFAULT_QSP_ARG  "input_text",new_content);
-	} else if( SOB_TYPE(sop) == SOT_TEXT || SOB_TYPE(sop) == SOT_TEXT_BOX ){
+	} else {
+		assert( SOB_TYPE(sop) == SOT_TEXT || SOB_TYPE(sop) == SOT_TEXT_BOX );
 fprintf(stderr,"non-editable text box changed!?\n");
 	}
-#ifdef CAUTIOUS
-	  else {
-		sprintf(DEFAULT_ERROR_STRING,
-	"CAUTIOUS:  Unexpected screen object %s generated textViewDidChange callback!?",
-			SOB_NAME(sop));
-		NWARN(DEFAULT_ERROR_STRING);
-	}
-#endif /* CAUTIOUS */
 
 	if( new_content != NULL )
 		SET_SOB_CONTENT(sop, new_content );
@@ -687,12 +583,7 @@ event_done:
 			i=SOB_N_SELECTORS(sop);	// break out
 		}
 	}
-#ifdef CAUTIOUS
-	if( choice_idx < 0 ){
-		NWARN("CAUTIOUS:  genericChooserAction:  bad choice!?");
-		return;
-	}
-#endif // CAUTIOUS
+	assert( choice_idx >= 0 );
 
 	const char *s=SOB_SELECTORS(sop)[choice_idx];
 	assign_var(DEFAULT_QSP_ARG "choice", s );
@@ -751,16 +642,11 @@ event_done:
 	// We create the dummy panel so that we can use expressions
 	// like ncols(iPad2)...
 
-	int w = dev_size.width;
+	// dev_size fields are float, can't switch
+	int w = dev_size.width, h = dev_size.height;
+
 	//Gen_Win *po;
 	switch( w ){
-		case 768:
-			// ipad Simulator - iPad 2, non-retina?
-			dev_type = DEV_TYPE_IPAD2;
-			force_reserved_var(DEFAULT_QSP_ARG  "DISPLAY","iPad2");
-			/*po=*/ dummy_panel(DEFAULT_QSP_ARG  "iPad2",
-				dev_size.width, dev_size.height);
-			break;
 		case 320:
 			// iPod w/ retina display - 320 x 480???
 			dev_type = DEV_TYPE_IPOD_RETINA;
@@ -770,6 +656,7 @@ event_done:
 				dev_size.width, dev_size.height);
 			break;
 		// What should we do if the app is launched with the device in landscape mode?
+		case 768:
 		case 1024:
 			// ipad Simulator - iPad 2, non-retina?
 			dev_type = DEV_TYPE_IPAD2;
@@ -777,19 +664,50 @@ event_done:
 			/*po=*/ dummy_panel(DEFAULT_QSP_ARG  "iPad2",
 				dev_size.width, dev_size.height);
 			break;
+		case 2732:
+ipad_pro_12_9:
+			dev_type = DEV_TYPE_IPAD_PRO_12_9;
+			force_reserved_var(DEFAULT_QSP_ARG  "DISPLAY","iPad_Pro_12_9");
+			dummy_panel(DEFAULT_QSP_ARG  "iPad_Pro_12_9",
+				dev_size.width, dev_size.height);
+			break;
+		case 1536:
+ipad_pro_9_7:
+			dev_type = DEV_TYPE_IPAD_PRO_9_7;
+			force_reserved_var(DEFAULT_QSP_ARG  "DISPLAY","iPad_Pro_9_7");
+			dummy_panel(DEFAULT_QSP_ARG  "iPad_Pro_9_7",
+				dev_size.width, dev_size.height);
+			break;
+		case 2048:	// width
+			switch( h ){
+				case 2732:
+					goto ipad_pro_12_9;
+				case 1536:
+					goto ipad_pro_9_7;
+				default:
+					dev_type = DEV_TYPE_DEFAULT;
+					sprintf(DEFAULT_ERROR_STRING,
+						"Unexpected display size %d x %d!?",h,w);
+					NWARN(DEFAULT_ERROR_STRING);
+					break;
+			}
+			break;
 		default:
 			dev_type = DEV_TYPE_DEFAULT;
-			printf("Unexpected view width %d!?\n",w);
+			sprintf(DEFAULT_ERROR_STRING,
+				"Unexpected view width %d!?\n",w);
+			NWARN(DEFAULT_ERROR_STRING);
 			break;
 	}
 }
 
-static int is_portrait(void)
+int is_portrait(void)
 {
 	UIDevice *dev;
 	static int warned=0;
 	UIDeviceOrientation dev_ori;
 	UIInterfaceOrientation ui_ori;
+	int retval;
 
 	dev = [UIDevice currentDevice];
 	// Is this really necessary?
@@ -801,16 +719,19 @@ static int is_portrait(void)
 		case UIDeviceOrientationPortrait:
 		case UIDeviceOrientationPortraitUpsideDown:
 //advise("portrait!");
-			return 1;
+			retval = 1;
+			break;
 		case UIDeviceOrientationLandscapeLeft:
 		case UIDeviceOrientationLandscapeRight:
 //advise("landscape!");
-			return 0;
+			retval = 0;
+			break;
 		case UIDeviceOrientationUnknown:
 			// This is returned when the startup script
 			// is being read...
 //fprintf(stderr,"is_portrait:  unknown orientation!?\n");
-			return -1;
+			retval = -1;
+			break;
 		case UIDeviceOrientationFaceUp:
 		case UIDeviceOrientationFaceDown:
 //fprintf(stderr,"is_portrait:  face up/down, using UI orientation...\n");
@@ -819,17 +740,20 @@ static int is_portrait(void)
 			switch( ui_ori ){
 				case UIInterfaceOrientationPortrait:
 				case UIInterfaceOrientationPortraitUpsideDown:
-					return 1;
+					retval = 1;
+					break;
 				case UIInterfaceOrientationLandscapeLeft:
 				case UIInterfaceOrientationLandscapeRight:
-					return 0;
+					retval = 0;
+					break;
 				// no other cases - include
 				// a CAUTIOUS default?
 
 
 				//This case is present in XCode 6, but not 5...
 				case UIInterfaceOrientationUnknown:
-				return 1;
+				retval = 1;
+				break;
 			}
 		default:
 /*
@@ -848,8 +772,11 @@ warned=1;
 			// when the device is flat...
 			// The previous orientation is remembered by the system.
 			// How can we get it here???
-			return -1;
+			retval = -1;
+			break;
 	}
+//fprintf(stderr,"is_portrait:  retval = %d\n",retval);
+	return retval;
 }
 #else // ! BUILD_FOR_IOS
 
@@ -862,14 +789,16 @@ static const char *get_display_height(SINGLE_QSP_ARG_DECL)
 	int h;
 	static char hstr[16];
 
-#ifdef BUILD_FOR_IOS
-	if( is_portrait() )
-		h=(int)globalAppDelegate.dev_size.height;
-	else
-		h=(int)globalAppDelegate.dev_size.width;
-#else // ! BUILD_FOR_IOS
+//#ifdef BUILD_FOR_IOS
+//	if( is_portrait() )
+//		h=(int)globalAppDelegate.dev_size.height;
+//	else
+//		h=(int)globalAppDelegate.dev_size.width;
+//#else // ! BUILD_FOR_IOS
+//	h=(int)globalAppDelegate.dev_size.height;
+//#endif // ! BUILD_FOR_IOS
+
 	h=(int)globalAppDelegate.dev_size.height;
-#endif // ! BUILD_FOR_IOS
 
 	sprintf(hstr,"%d",h);
 	return hstr;
@@ -882,19 +811,20 @@ static const char *get_display_width(SINGLE_QSP_ARG_DECL)
 	int w;
 	static char wstr[16];
 
-/*
-fprintf(stderr,"get_display_width:  globalAppDelegate.dev_size = 0x%lx\n",(long)&(globalAppDelegate.dev_size));
-*/
-#ifdef BUILD_FOR_IOS
-	if( is_portrait() )
-		w=(int)globalAppDelegate.dev_size.width;
-	else
-		w=(int)globalAppDelegate.dev_size.height;
-#else // ! BUILD_FOR_IOS
-	w=(int)globalAppDelegate.dev_size.width;
-#endif // ! BUILD_FOR_IOS
+fprintf(stderr,"get_display_width:  globalAppDelegate.dev_size = %f (w) x %f (h)\n",
+globalAppDelegate.dev_size.width,globalAppDelegate.dev_size.height);
+//#ifdef BUILD_FOR_IOS
+//	if( is_portrait() )
+//		w=(int)globalAppDelegate.dev_size.width;
+//	else
+//		w=(int)globalAppDelegate.dev_size.height;
+//#else // ! BUILD_FOR_IOS
+//	w=(int)globalAppDelegate.dev_size.width;
+//#endif // ! BUILD_FOR_IOS
 
 //fprintf(stderr,"get_display_width:  w = %d, is_portrait = %d\n",w,is_portrait());
+
+	w=(int)globalAppDelegate.dev_size.width;
 
 	sprintf(wstr,"%d",w);
 	return wstr;
@@ -1024,6 +954,7 @@ static void init_ios_device(void)
 
 	// This returns the same thing regardless of the device
 	// orientation.  The dimensions correspond to portrait mode.
+	// BUT WHY SHOULD THAT BE???
 	init_dynamic_var(DEFAULT_QSP_ARG  "DISPLAY_WIDTH",get_display_width);
 	init_dynamic_var(DEFAULT_QSP_ARG  "DISPLAY_HEIGHT",get_display_height);
 	init_dynamic_var(DEFAULT_QSP_ARG  "DEVICE_ASPECT",get_device_aspect);
@@ -1041,11 +972,11 @@ static void init_ios_device(void)
 
 	// now interpreter the startup file...
 	// We'd like the startup file to define the navigation interface...
-	//exec_pending_commands(SGL_DEFAULT_QSP_ARG);
 
 	// we can't call this thread synchronously, and then
 	// have it call us back synchronously, or we will hang...
-	exec_quip(SGL_DEFAULT_QSP_ARG);
+
+	exec_quip(SGL_DEFAULT_QSP_ARG);		// didFinishLaunching
 
 	// this might return before doing all the commands if
 	// there is an alert...
@@ -1074,10 +1005,6 @@ static void init_ios_device(void)
 			initWithRootViewController:first_quip_controller];
 
 
-	// The done button will call qvcExitProgram,
-	// (how does it get there?)
-	// List of button types UIBarButtonSystemItem
-
 	// This button is labelled 'Done'
 	UIBarButtonItem *item = [[UIBarButtonItem alloc]
 			initWithBarButtonSystemItem:UIBarButtonSystemItemDone
@@ -1091,9 +1018,7 @@ static void init_ios_device(void)
 
 	[window setRootViewController:root_view_controller];
 
-
 	init_ios_text_output();	// set function vectors for warnings etc.
-
 
 	// If an alert occurred in the startup script,
 	// the dismiss function won't have been caught by the proper view
@@ -1102,6 +1027,7 @@ static void init_ios_device(void)
 
 	// This causes the app to exit...
 	//dismiss_quip_alert(NULL);
+
 	check_deferred_alert(SGL_DEFAULT_QSP_ARG);
 
 	if( xcode_debug )
@@ -1226,15 +1152,10 @@ static double accel[3]={0,0,0};
 	// How do we know which qsp to wake?
 	IOS_Node *np;
 
-#ifdef CAUTIOUS
-	if( wakeup_lp == NULL ){
-		NWARN("CAUTIOUS:  quip_wakeup:  null wakeup list!?");
-		return;
-	}
-#endif // CAUTIOUS
+	assert( wakeup_lp != NULL );
 
 	np = IOS_LIST_HEAD(wakeup_lp);
-	while( np != NO_IOS_NODE ){
+	while( np != NULL ){
 		Query_Stack *qsp;
 		qsp = (__bridge Query_Stack *) IOS_NODE_DATA(np);
 		resume_quip(qsp);
@@ -1309,16 +1230,11 @@ static NSString *applicationName=NULL;
 
 	// now interpreter the startup file...
 
-	exec_quip(SGL_DEFAULT_QSP_ARG);
+	exec_quip(SGL_DEFAULT_QSP_ARG);	// applicationDidFinishLaunching
+fprintf(stderr,"back from exec_quip, applicationDidFinishLaunching:\n");
 
 	root_view_controller = [[quipNavController alloc]
 			initWithRootViewController:first_quip_controller];
-#ifdef FOOBAR
-	set_warn_func(ios_warn);
-	set_error_func(ios_error);
-	set_advise_func(ios_advise);
-	set_prt_msg_frag_func(ios_prt_msg_frag);
-#endif // FOOBAR
 
 	check_deferred_alert(SGL_DEFAULT_QSP_ARG);
 
@@ -1583,14 +1499,15 @@ static bool read_quip_file(const char *pathname)
 		// Should we send up an alert here?
 //fprintf(stderr,"Error opening file %s\n", pathname);
 		return FALSE;
-    } else {
+	} else {
 		// Because scripts often redirect
 		// to other files in the same directory,
 		// it might make sense to set the directory here?
-        chdir_to_file(pathname);
+        	chdir_to_file(pathname);
 
 		redir(DEFAULT_QSP_ARG  fp, pathname );
-		exec_quip(SGL_DEFAULT_QSP_ARG);
+		exec_quip(SGL_DEFAULT_QSP_ARG);	// read_quip_file
+fprintf(stderr,"back from exec_quip, read_quip_file\n");
 		return TRUE;
 	}
 }

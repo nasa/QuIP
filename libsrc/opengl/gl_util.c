@@ -92,7 +92,7 @@ static Capability cap_tbl[]={
 { "light2",		GL_LIGHT2		},
 { "normalize",		GL_NORMALIZE		},
 { "rescale_normal",	GL_RESCALE_NORMAL	},
-{ "material_properties",GL_COLOR_MATERIAL	},
+{ "color_material",	GL_COLOR_MATERIAL	},
 { "texture_2D" ,	GL_TEXTURE_2D   	},
 };
 
@@ -168,6 +168,25 @@ static const char **facedir_choices=NULL;
 
 GLenum choose_facing_dir(QSP_ARG_DECL const char *prompt)
 { return CHOOSE_NAMED_CONSTANT( prompt, &facedir_choices, facedir_tbl, N_FACING_DIRECTIONS ); }
+
+/******************************************************************/
+
+typedef Named_Constant Lighting_Component;
+
+static Lighting_Component light_comp_tbl[]={
+{ "emission",		GL_EMISSION		},
+{ "ambient",		GL_AMBIENT		},
+{ "specular",		GL_SPECULAR		},
+{ "diffuse",		GL_DIFFUSE		},
+{ "ambient_and_diffuse",		GL_AMBIENT_AND_DIFFUSE		},
+};
+
+#define N_LIGHTING_COMPONENTS (sizeof(light_comp_tbl)/sizeof(Lighting_Component))
+
+static const char **light_comp_choices=NULL;
+
+GLenum choose_lighting_component(QSP_ARG_DECL  const char *prompt)
+{ return CHOOSE_NAMED_CONSTANT( prompt, &light_comp_choices, light_comp_tbl, N_LIGHTING_COMPONENTS ); }
 
 /******************************************************************/
 

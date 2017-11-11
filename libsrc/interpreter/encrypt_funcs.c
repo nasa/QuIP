@@ -5,6 +5,8 @@
 #include "quip_prot.h"
 #include "my_encryption.h"
 #include "fileck.h"
+#include "getbuf.h"
+#include "strbuf.h"
 
 #ifdef HAVE_SECRET_KEY
 
@@ -18,8 +20,8 @@ void gen_string( char *buf, int buflen )
 	const char *s;
 
 	if( buflen < 33 ){
-		sprintf(DEFAULT_ERROR_STRING,"gen_string:  buffer length (%d) should be at least 33",buflen);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"gen_string:  buffer length (%d) should be at least 33",buflen);
+		warn(ERROR_STRING);
 		for(i=0;i<buflen;i++){
 			buf[i] = 'a' + i;
 		}
@@ -55,7 +57,7 @@ void gen_string( char *buf, int buflen )
 
 /* Make the key */
 
-int init_my_symm_key(void **key_ptr)
+int _init_my_symm_key(QSP_ARG_DECL  void **key_ptr)
 {
 	/* For an AES key, we need 128 bits (16 bytes).
 	 * Our 'secret' string is 33 characters, so
@@ -76,7 +78,7 @@ int init_my_symm_key(void **key_ptr)
 
 	klen = hash_my_key(&my_symm_key,rawcryptokeyarr,KEYARR_LEN);
 	if( klen < encryption_key_size() ){
-		NWARN("init_my_symm_key:  hash length less than required key length!?");
+		warn("init_my_symm_key:  hash length less than required key length!?");
 		my_symm_key=NULL;
 		return -1;
 	}
@@ -90,7 +92,9 @@ int init_my_symm_key(void **key_ptr)
 
 /* utilities for converting hex ascii to binary */
 
-static int value_of_hex_digit(int c)
+#define value_of_hex_digit(c) _value_of_hex_digit(QSP_ARG  c)
+
+static int _value_of_hex_digit(QSP_ARG_DECL  int c)
 {
 	int d;
 
@@ -101,10 +105,10 @@ static int value_of_hex_digit(int c)
 	} else if( isupper(c) && c<='F' ){
 		d= 10 + c - 'A';
 	} else {
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"value_of_hex_digit:  character 0x%x is not a valid hex digit!?",
 			c);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		d = -1;
 	}
 	return d;
@@ -120,7 +124,9 @@ static int value_of_hex_digit(int c)
 
 // convert from hex assumes a string with no white space
 
-static int convert_from_hex(uint8_t *buf, const char *s)
+#define convert_from_hex(buf, s) _convert_from_hex(QSP_ARG  buf, s)
+
+static int _convert_from_hex(QSP_ARG_DECL  uint8_t *buf, const char *s)
 {
 	int n_converted=0;
 
@@ -130,7 +136,7 @@ static int convert_from_hex(uint8_t *buf, const char *s)
 		NEXT_DIGIT(d1)
 
 		if( ! (*s) ){
-	NWARN("convert_from_hex:  input string has an odd # chars!?");
+	warn("convert_from_hex:  input string has an odd # chars!?");
 			return -1;
 		}
 
@@ -159,7 +165,9 @@ static void format_hex(char *s,const uint8_t *input, size_t len)
 
 #define MAX_BYTES_PER_LINE	32
 
-static void print_hex_data(FILE *fp, const uint8_t *buf, size_t len)
+#define print_hex_data(fp, buf, len) _print_hex_data(QSP_ARG  fp, buf, len)
+
+static void _print_hex_data(QSP_ARG_DECL  FILE *fp, const uint8_t *buf, size_t len)
 {
 	size_t n_remaining, n_this_line;
 	char linechars[2*MAX_BYTES_PER_LINE+2];
@@ -172,7 +180,7 @@ static void print_hex_data(FILE *fp, const uint8_t *buf, size_t len)
 		linechars[n_this_line*2]='\n';
 		linechars[1+n_this_line*2]=0;
 		if( fputs(linechars,fp) == EOF ){
-			NWARN("Error writing hex line");
+			warn("Error writing hex line");
 			return;
 		}
 		buf += n_this_line;
@@ -195,14 +203,14 @@ int has_encryption_suffix(const char *name)
 
 #define PRINT_ERR1(fmt,arg)				\
 	{						\
-		sprintf(DEFAULT_ERROR_STRING,fmt,arg);	\
-		NWARN(DEFAULT_ERROR_STRING);		\
+		sprintf(ERROR_STRING,fmt,arg);	\
+		warn(ERROR_STRING);		\
 	}
 
 #define PRINT_ERR2(fmt,arg1,arg2)				\
 	{						\
-		sprintf(DEFAULT_ERROR_STRING,fmt,arg1,arg2);	\
-		NWARN(DEFAULT_ERROR_STRING);		\
+		sprintf(ERROR_STRING,fmt,arg1,arg2);	\
+		warn(ERROR_STRING);		\
 	}
 
 /* The original motivation for this is to be able
@@ -213,7 +221,9 @@ int has_encryption_suffix(const char *name)
  * that the string doesn't exist in the executable file.
  */
 
-static const char *encrypt_string(const char *input_string)
+#define encrypt_string(input_string) _encrypt_string(QSP_ARG  input_string)
+
+static const char *_encrypt_string(QSP_ARG_DECL  const char *input_string)
 {
 	size_t n,l,max_raw_size;
 	uint8_t *rawbuf;
@@ -230,7 +240,7 @@ static const char *encrypt_string(const char *input_string)
 	n=encrypt_char_buf(input_string,l,rawbuf,max_raw_size);
 
 	if( n <= 0 ){
-		NWARN("encryption failed!?");
+		warn("encryption failed!?");
 		givbuf(rawbuf);
 		return NULL;
 	} else {
@@ -243,7 +253,9 @@ static const char *encrypt_string(const char *input_string)
 	}
 }
 
-static const char *decrypt_string(const char *input_string)
+#define decrypt_string(input_string) _decrypt_string(QSP_ARG  input_string)
+
+static const char *_decrypt_string(QSP_ARG_DECL  const char *input_string)
 {
 	uint8_t *buf;
 	size_t buflen;
@@ -251,7 +263,7 @@ static const char *decrypt_string(const char *input_string)
 	size_t n;
 
 	if( strlen(input_string) & 1 ){
-		NWARN(
+		warn(
 	"decrypt_string:  input string has an odd number of chars!?");
 		return NULL;
 	}
@@ -259,7 +271,7 @@ static const char *decrypt_string(const char *input_string)
 	buflen=strlen(input_string)/2;
 	buf = (uint8_t *)getbuf(buflen);
 	if( convert_from_hex(buf,input_string) < 0 ){
-		NWARN("error converting hex string for decryption");
+		warn("error converting hex string for decryption");
 		return NULL;
 	}
 	asciibuf = (char *)getbuf(buflen+1);
@@ -267,16 +279,10 @@ static const char *decrypt_string(const char *input_string)
 	n=decrypt_char_buf(buf,buflen,asciibuf,buflen);
 	givbuf(buf);
 
-//#ifdef CAUTIOUS
-//	if( n > buflen ){
-//		NWARN("CAUTIOUS:  too many decrypted chars!?");
-//		return NULL;
-//	}
-//#endif /* CAUTIOUS */
 	assert( n <= buflen );
 
 	if( n <= 0 ){
-		NWARN("decryption failed!?");
+		warn("decryption failed!?");
 		givbuf(asciibuf);
 		return NULL;
 	} else {
@@ -302,25 +308,18 @@ static void encrypt_file(QSP_ARG_DECL  FILE *fp_in, FILE *fp_out )
 	// coder.  (Although we are probably OK if we process chunks
 	// which are multiples of the blocksize.)
 
-	n_in = (long) fp_content_size(QSP_ARG  fp_in);
-
-//#ifdef CAUTIOUS
-//	if( n_in < 0 ){
-//		NWARN("CAUTIOUS:  encrypt_file:  couldn't determine input file size!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
+	n_in = (long) fp_content_size(fp_in);
 	assert( n_in >= 0 );
 
 	if( n_in == 0 ){
-		NWARN("encrypt_file:  input file is empty!?");
+		warn("encrypt_file:  input file is empty!?");
 		return;
 	}
 
 	inbuf = getbuf(n_in);
 
 	if( fread(inbuf,1,n_in,fp_in) != n_in ){
-		WARN("do_encrypt_file:  error reading input data");
+		warn("do_encrypt_file:  error reading input data");
 		return;
 	}
 
@@ -343,9 +342,13 @@ cleanup:
 // We know the size of the text when we allocate the data buffer,
 // So as long as we only call here we should be OK.
 
-static long convert_lines_from_hex(uint8_t *data, const char *text)
+#define MAX_LINE_SIZE	512
+
+#define convert_lines_from_hex(data, text) _convert_lines_from_hex(QSP_ARG  data, text)
+
+static long _convert_lines_from_hex(QSP_ARG_DECL  uint8_t *data, const char *text)
 {
-	char linebuf[LLEN];
+	char linebuf[MAX_LINE_SIZE];
 	const char *line_end, *line_start;
 	long total_converted=0;
 	long n_converted;
@@ -361,20 +364,14 @@ static long convert_lines_from_hex(uint8_t *data, const char *text)
 		line_end = strstr(line_start,"\n");
 		if( line_end == NULL ){		// no newline found
 			// do something special here?
-			NWARN("convert_lines_from_hex:  missing final newline");
+			warn("convert_lines_from_hex:  missing final newline");
 			line_end = line_start+strlen(line_start);
 		}
 		n_to_copy = line_end - line_start;
-//#ifdef CAUTIOUS
-//		if( n_to_copy <= 0 ){
-//			NWARN("CAUTIOUS:  convert_lines_from_hex:  empty line!?");
-//			return -1;
-//		}
-//#endif /* CAUTIOUS */
 		assert( n_to_copy > 0 );
 
-		if( n_to_copy >= LLEN ){
-			NWARN("convert_lines_from_hex:  line too long!?");
+		if( n_to_copy >= MAX_LINE_SIZE ){
+			warn("convert_lines_from_hex:  line too long!?");
 			return -1;
 		}
 		strncpy(linebuf,line_start,n_to_copy);
@@ -382,7 +379,7 @@ static long convert_lines_from_hex(uint8_t *data, const char *text)
 
 		n_converted = convert_from_hex(data,linebuf);
 		if( n_converted < 0 ){
-	NWARN("decrypt_file:  error converting hex string for decryption");
+	warn("decrypt_file:  error converting hex string for decryption");
 			return -1;
 		}
 		data += n_converted;
@@ -393,31 +390,28 @@ static long convert_lines_from_hex(uint8_t *data, const char *text)
 	return total_converted;
 }
 
-String_Buf *decrypt_text( const char *text )
+String_Buf *_decrypt_text(QSP_ARG_DECL   const char *text )
 {
 	uint8_t *data;
 	size_t buf_size,n_bytes,n_decrypted;
-	String_Buf *out_sbp;
+	String_Buf *out_sbp=NULL;
 		
 	buf_size=1+(size_t)ceil(strlen(text)/2);
 	data = getbuf(buf_size);
 	n_bytes = convert_lines_from_hex(data,text);
-	if( n_bytes <= 0 ) goto cleanup1;
+	if( n_bytes > 0 ) {
+		out_sbp = new_stringbuf();
+		if( n_bytes > out_sbp->sb_size )
+			enlarge_buffer(out_sbp,n_bytes);
 
-	out_sbp = new_stringbuf();
-	if( n_bytes > out_sbp->sb_size )
-		enlarge_buffer(out_sbp,n_bytes);
-
-	n_decrypted=decrypt_char_buf(data,n_bytes,out_sbp->sb_buf,n_bytes);
-	if( n_decrypted <= 0 ) goto cleanup2;
-
-	return out_sbp;
-
-cleanup2:
-	rls_stringbuf(out_sbp);
-cleanup1:
+		n_decrypted=decrypt_char_buf(data,n_bytes,out_sbp->sb_buf,n_bytes);
+		if( n_decrypted <= 0 ){
+			rls_stringbuf(out_sbp);
+			out_sbp = NULL;
+		}
+	}
 	givbuf(data);
-	return NULL;
+	return out_sbp;
 }
 
 char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
@@ -438,18 +432,11 @@ char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
 	// about, but for now we don't worry about
 	// them
 
-	n_in = (long) fp_content_size(QSP_ARG  fp_in);
-
-//#ifdef CAUTIOUS
-//	if( n_in < 0 ){
-//		NWARN("CAUTIOUS:  decrypt_file_contents:  couldn't determine input file size!?");
-//		return NULL;
-//	}
-//#endif /* CAUTIOUS */
+	n_in = (long) fp_content_size(fp_in);
 	assert( n_in >= 0 );
 
 	if( n_in == 0 ){
-		WARN("decrypt_file_contents:  file is empty!?");
+		warn("decrypt_file_contents:  file is empty!?");
 		return NULL;
 	}
 
@@ -461,11 +448,11 @@ char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
 	inbuf = getbuf(buf_size);
 
 #ifdef READ_LINE_BY_LINE
-	char line_buf[LLEN];	// the actual line should be much smaller
+	char line_buf[MAX_LINE_SIZE];	// the actual line should be much smaller
 	long n_converted;
 
 	uint8_t *buf=inbuf;
-	while( fgets(line_buf,LLEN,fp_in) != NULL ){
+	while( fgets(line_buf,MAX_LINE_SIZE,fp_in) != NULL ){
 		int i;
 		i=strlen(line_buf)-1;
 		if( line_buf[i] == '\n' ) line_buf[i]=0;
@@ -473,7 +460,7 @@ char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
 		// convert from hex
 		n_converted = convert_from_hex(buf,line_buf);
 		if( n_converted < 0 ){
-	NWARN("decrypt_file:  error converting hex string for decryption");
+	warn("decrypt_file:  error converting hex string for decryption");
 			goto cleanup1;
 		}
 		buf += n_converted;
@@ -485,7 +472,7 @@ char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
 // When the file is large, this buffer can get big...
 	text_buf = getbuf(1+n_in);
 	if( fread(text_buf,1,n_in,fp_in) != n_in ){
-		WARN("decrypt_file_contents:  error reading file contents!?");
+		warn("decrypt_file_contents:  error reading file contents!?");
 		goto cleanup1;
 	}
 	text_buf[n_in]=0;	// make sure null-terminated string
@@ -494,7 +481,7 @@ char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
 	givbuf(text_buf);
 
 	if( total_converted <= 0 ){
-		WARN("decrypt_file_contents:  error converting hex lines!?");
+		warn("decrypt_file_contents:  error converting hex lines!?");
 		goto cleanup1;
 	}
 
@@ -531,13 +518,13 @@ static void decrypt_file(QSP_ARG_DECL  FILE *fp_in, FILE *fp_out )
 
 	outbuf = decrypt_file_contents(QSP_ARG  fp_in,&n_converted);
 	if( outbuf == NULL ){
-		WARN("decrypt_file:  failed!?");
+		warn("decrypt_file:  failed!?");
 		return;
 	}
 
 	// Now all the data is decrypted...
 	if( fwrite(outbuf,1,n_converted,fp_out) != n_converted ){
-		WARN("do_decrypt_file:  error writing input data");
+		warn("do_decrypt_file:  error writing input data");
 	}
 
 	givbuf(outbuf);
@@ -549,16 +536,16 @@ COMMAND_FUNC( do_encrypt_string )
 	const char *s;
 	const char *e;
 
-	vn=NAMEOF("variable name for result");
-	s=NAMEOF("string to encrypt");
+	vn=nameof("variable name for result");
+	s=nameof("string to encrypt");
 
 	e = encrypt_string(s);
 
 	if( e != NULL ){
-		ASSIGN_VAR(vn,e);
+		assign_var(vn,e);
 		rls_str(e);
 	} else
-		WARN("Encryption failed.");
+		warn("Encryption failed.");
 }
 
 COMMAND_FUNC( do_decrypt_string )
@@ -567,16 +554,16 @@ COMMAND_FUNC( do_decrypt_string )
 	const char *s;
 	const char *d;
 
-	vn=NAMEOF("variable name for result");
-	s=NAMEOF("string to decrypt");
+	vn=nameof("variable name for result");
+	s=nameof("string to decrypt");
 
 	d = decrypt_string(s);
 
 	if( d != NULL ){
-		ASSIGN_VAR(vn,d);
+		assign_var(vn,d);
 		rls_str(d);
 	} else
-		WARN("Decryption failed.");
+		warn("Decryption failed.");
 }
 
 COMMAND_FUNC( do_encrypt_file )
@@ -585,13 +572,13 @@ COMMAND_FUNC( do_encrypt_file )
 	const char *outfile_name;
 	FILE *fp_in, *fp_out;
 
-	infile_name = NAMEOF("input filename");
-	outfile_name = NAMEOF("output filename");
+	infile_name = nameof("input filename");
+	outfile_name = nameof("output filename");
 
-	fp_in = TRY_OPEN(infile_name,"r");
+	fp_in = try_open(infile_name,"r");
 	if( ! fp_in ) return;
 
-	fp_out = TRY_OPEN(outfile_name,"w");
+	fp_out = try_open(outfile_name,"w");
 	if( !fp_out ){
 		fclose(fp_in);
 		return;
@@ -612,13 +599,13 @@ COMMAND_FUNC( do_decrypt_file )
 	const char *outfile_name;
 	FILE *fp_in, *fp_out;
 
-	infile_name = NAMEOF("input filename");
-	outfile_name = NAMEOF("output filename");
+	infile_name = nameof("input filename");
+	outfile_name = nameof("output filename");
 
-	fp_in = TRY_OPEN(infile_name,"r");
+	fp_in = try_open(infile_name,"r");
 	if( ! fp_in ) return;
 
-	fp_out = TRY_OPEN(outfile_name,"w");
+	fp_out = try_open(outfile_name,"w");
 	if( !fp_out ){
 		fclose(fp_in);
 		return;
@@ -639,16 +626,16 @@ COMMAND_FUNC( do_read_encrypted_file )
 	size_t n_converted;
 
 
-	s=NAMEOF("input file name");
-	fp=TRY_OPEN(s,"r");
+	s=nameof("input file name");
+	fp=try_open(s,"r");
 	if( fp == NULL ) return;
 
 	outbuf = decrypt_file_contents(QSP_ARG  fp,&n_converted);
 	if( outbuf == NULL ){
-		WARN("read_encrypted_file:  decryption failed!?");
+		warn("read_encrypted_file:  decryption failed!?");
 		return;
 	}
-	PUSH_TEXT(outbuf,s);
+	push_text(outbuf,s);
 
 	// Should we call exec_quip here?
 	// We should not need to - we are in a command already!?
@@ -657,6 +644,9 @@ COMMAND_FUNC( do_read_encrypted_file )
 	exec_quip(SINGLE_QSP_ARG);
 
 	// Now we should be done with the file contents
+	// BUG?  can we be sure that we didn't halt because of an alert???
+	// should we check status of HALTING???
+
 	rls_str(outbuf);
 }
 

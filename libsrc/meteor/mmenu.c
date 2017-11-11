@@ -170,12 +170,9 @@ static COMMAND_FUNC( do_meteor_set_input )
 		case 4:  meteor_set_input(METEOR_INPUT_DEV1); break;
 		case 5:  meteor_set_input(METEOR_INPUT_DEV2); break;
 		case 6:  meteor_set_input(METEOR_INPUT_DEV3); break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("bad meteor input");
 			assert( ! "bad meteor input" );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
@@ -204,14 +201,9 @@ static COMMAND_FUNC( do_meteor_get_input )
 		case METEOR_INPUT_DEV1:  i=4; break;
 		case METEOR_INPUT_DEV2:  i=5; break;
 		case METEOR_INPUT_DEV3:  i=6; break;
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"CAUTIOUS:  invalid meteor input code %d (0x%x)", w,w);
-//			WARN(ERROR_STRING);
 			assert( ! "invalid meteor input" );
 			return;
-//#endif /* CAUTIOUS */
 	}
 
 	sprintf(msg_str,"Meteor input is %s",input_names[i]);
@@ -220,7 +212,7 @@ static COMMAND_FUNC( do_meteor_get_input )
 
 static void setup_meteor_device(SINGLE_QSP_ARG_DECL)
 {
-	if ( fg_open(QSP_ARG  SOURCE_NTSC, METEOR_GEO_RGB24, HIMEM_RAM) < 0) {
+	if ( fg_open(QSP_ARG  SOURCE_NTSC, METEOR_GEO_RGB24, KERNEL_RAM) < 0) {
 		perror("fg_open()");
 		exit(-1);
 	}
@@ -257,12 +249,9 @@ static COMMAND_FUNC( do_meteor_set_iformat )
 		case 1:  meteor_set_iformat(METEOR_FMT_PAL); break;
 		case 2:  meteor_set_iformat(METEOR_FMT_SECAM); break;
 		case 3:  meteor_set_iformat(METEOR_FMT_AUTOMODE); break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("bad format selection");
 			assert( ! "bad format selection");
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
@@ -279,12 +268,9 @@ static COMMAND_FUNC( do_meteor_get_iformat )
 		case METEOR_FMT_PAL:  i=1; break;
 		case METEOR_FMT_SECAM:  i=2; break;
 		case METEOR_FMT_AUTOMODE:  i=3; break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("CAUTIOUS:  unrecognized format code");
 			assert( ! "unrecognized format code");
 			break;
-//#endif /* CAUTIOUS */
 	}
 	if( i < 0 ) return;
 
@@ -301,15 +287,6 @@ static void meteor_install_handler()
 }
 #endif
 
-
-#ifdef FOOBAR
-static void meteor_check_frame()
-{
-	/* see what's in there in case driver stops signalling */
-
-	gotframe(12);
-}
-#endif
 
 static COMMAND_FUNC( kill_sig )
 {
@@ -464,7 +441,7 @@ static COMMAND_FUNC( do_setup_blur )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("impulse response");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	setup_blur(QSP_ARG  dp);
 }
@@ -482,7 +459,7 @@ MENU_END(pupfind)
 
 static COMMAND_FUNC( pf_menu )
 {
-	PUSH_MENU(pupfind);
+	CHECK_AND_PUSH_MENU(pupfind);
 }
 
 #undef ADD_CMD
@@ -515,24 +492,24 @@ void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
 	Movie *mvip;
 	Image_File *ifp;
 
-	if( IS_DIRECTORY(inp) || IS_LINK(inp) ){
+	if( ! is_rv_movie(inp) ){
 		if( verbose ){
-			sprintf(ERROR_STRING,"make_movie_from_inode:  rv inode %s is not a movie",inp->rvi_name);
+			sprintf(ERROR_STRING,"make_movie_from_inode:  rv inode %s is not a movie",rv_name(inp));
 			advise(ERROR_STRING);
 		}
 		return;
 	}
 
-	mvip = create_movie(QSP_ARG  inp->rvi_name);
-	if( mvip == NO_MOVIE ){
+	mvip = create_movie(QSP_ARG  rv_name(inp));
+	if( mvip == NULL ){
 		sprintf(ERROR_STRING,
-			"error creating movie %s",inp->rvi_name);
+			"error creating movie %s",rv_name(inp));
 		WARN(ERROR_STRING);
 	} else {
-		ifp = img_file_of(QSP_ARG  inp->rvi_name);
-		if( ifp == NO_IMAGE_FILE ){
+		ifp = img_file_of(QSP_ARG  rv_name(inp));
+		if( ifp == NULL ){
 			sprintf(ERROR_STRING,
-	"image file struct for rv file %s does not exist!?",inp->rvi_name);
+	"image file struct for rv file %s does not exist!?",rv_name(inp));
 			WARN(ERROR_STRING);
 		} else {
 			mvip->mvi_data = ifp;
@@ -550,9 +527,9 @@ void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
 
 void update_movie_database(QSP_ARG_DECL  RV_Inode *inp)
 {
-	if( IS_DIRECTORY(inp) || IS_LINK(inp) ){
+	if( ! is_rv_movie(inp) ){
 		if( verbose ){
-			sprintf(ERROR_STRING,"update_movie_database:  rv inode %s is not a movie",inp->rvi_name);
+			sprintf(ERROR_STRING,"update_movie_database:  rv inode %s is not a movie",rv_name(inp));
 			advise(ERROR_STRING);
 		}
 		return;
@@ -606,7 +583,7 @@ advise("back from meteor init");
 		inited=1;
 	}
 
-	PUSH_MENU(meteor);
+	CHECK_AND_PUSH_MENU(meteor);
 }
 
 

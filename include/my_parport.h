@@ -8,8 +8,6 @@ typedef struct parport {
 	int	pp_fd;
 } ParPort;
 
-#define NO_PARPORT ((ParPort *)NULL)
-
 ITEM_INTERFACE_PROTOTYPES(ParPort,parport)
 
 extern ParPort *	open_parport(QSP_ARG_DECL  const char *name);

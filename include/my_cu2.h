@@ -1,3 +1,5 @@
+#ifndef _MY_CU2_H_
+#define _MY_CU2_H_
 
 #ifdef _WIN32
 //#define USE_DLL_LINKING
@@ -9,9 +11,14 @@
 //using namespace dyn;
 //#else
 
-
 #ifdef HAVE_CUDA
 #define BUILD_FOR_CUDA
+#endif // HAVE_CUDA
+
+#include "platform.h"	// MAX_DEVICES_PER_PLATFORM
+
+#ifdef HAVE_CUDA
+
 #include <cuda.h>
 
 #if CUDA_VERSION >= 5000
@@ -46,15 +53,48 @@
 
 // These need to come after the cuda includes...
 
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 #include "item_type.h"
 #include "veclib/vec_func.h"
 #include "veclib/obj_args.h"
 
-#include "veclib/cu2_port.h"	// BUILD_FOR_GPU, BUILD_FOR_CUDA
-#include "platform.h"
+#include "veclib/cu2_veclib_prot.h"	// BUILD_FOR_GPU, BUILD_FOR_CUDA
+//#include "platform.h"
 
-#include "query.h"
 #include "veclib_api.h"
+
+/* prototypes here */
+
+extern void query_cuda_device(QSP_ARG_DECL  int dev);
+
+// from old lib cuda - BUG consolidate!
+extern void init_cuda_devices(SINGLE_QSP_ARG_DECL);
+
+// cu2.c
+extern void insure_cu2_device( QSP_ARG_DECL   Data_Obj *dp );
+
+// whence?
+#ifdef HAVE_CUDA
+extern const char* getCUFFTError(cufftResult status);
+#endif // HAVE_CUDA
+
+extern void insure_cuda_device( Data_Obj *dp );
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+
+struct cuda_kernel_info {
+	char *	cki_ptx[MAX_DEVICES_PER_PLATFORM];
+};
+
+#define CUDA_KI_KERNEL(kip,idx)		((kip).cuda_kernel_info_p)->cki_ptx[idx]
+#define SET_CUDA_KI_KERNEL(kip,idx,v)	((kip).cuda_kernel_info_p)->cki_ptx[idx] = v
 
 #define MAX_CUDA_GLOBAL_OBJECTS	2048
 #define MAX_CUDA_MAPPED_OBJECTS	128
@@ -75,7 +115,6 @@ extern bitmap_word *gpu_bit_val_array;	/* BUG should have one per device */
 #define MAX_CUDA_GLOBAL_OBJECTS	2048
 #define MAX_CUDA_MAPPED_OBJECTS	128
 
-#define NO_CUDA_DEVICE ((Cuda_Device *)NULL)
 #define cudev_name	cudev_item.item_name
 
 #define CONST_MEM_SIZE	0x8000	/* 32k bytes */
@@ -93,10 +132,6 @@ extern bitmap_word *gpu_bit_val_array;	/* BUG should have one per device */
 #define index_type	int32_t	// for vmaxi etc
 #define INDEX_PREC	PREC_DI	// for vmaxi etc
 
-/* prototypes here */
-
-// from old lib cuda - BUG consolidate!
-extern void init_cuda_devices(SINGLE_QSP_ARG_DECL);
 
 // cu2.c
 #ifdef FOOBAR
@@ -106,7 +141,5 @@ extern int cu2_mem_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align
 extern void cu2_mem_free(QSP_ARG_DECL  Data_Obj *dp );
 #endif // FOOBAR
 
-// cu2.c
-extern void insure_cu2_device( QSP_ARG_DECL   Data_Obj *dp );
 
-
+#endif // ! _MY_CU2_H_

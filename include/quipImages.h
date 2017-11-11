@@ -29,6 +29,7 @@
 #endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
+#include <AppKit/NSView.h>
 @interface quipImages : NSView
 #endif // BUILD_FOR_MACOS
 
@@ -65,9 +66,6 @@
 #define QI_VW(qip)		QVC_VW(QV_QVC(QI_QV(qip)))
 
 #define SET_QI_VW(qip,vp)	SET_QV_VW(QI_QV(qip),vp)
-
-#define NO_QI	((quipImages *)NULL)
-
 
 #endif /* ! _QUIPIMAGES_H_ */
 

@@ -22,8 +22,13 @@
 #include <stdlib.h>		/* memalign() */
 #endif
 
+#include <errno.h>		/* EINVAL etc. */
+
 #include "quip_prot.h"
 #include "data_obj.h"
+#include "dobj_private.h"
+#include "debug.h"
+#include "platform.h"
 //#include "img_file.h"
 
 
@@ -35,44 +40,62 @@ void set_dp_alignment(int aval)
 	else default_align=aval;
 }
 
-// allocate memory for a new object in ram
-
-int cpu_mem_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
+void *_cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align )
 {
-	unsigned char *st;
+	void *ptr;
 
-	/* if getbuf is not aliased to malloc but instead uses getspace,
-	 * then this is not correct!?  BUG
-	 */
+#ifdef HAVE_POSIX_MEMALIGN
+	int status;
 
-	// BUG?  Why not use posix_memalign here?
-	// ans:  because we don't always compile to use
-	// malloc as our memory allocator.  Given the capabilities
-	// of new malloc_debug, however, it is not clear that
-	// there is still a need to support the old getbuf interface...
+	if( align < sizeof(void *) ) align = sizeof(void *);
+	status = posix_memalign(&ptr,align,size);
+	if( status != 0 ){
+		switch(status){
+			case EINVAL:
+				warn("cpu_mem_alloc:  bad alignment!?");
+				break;
+			case ENOMEM:
+				warn("cpu_mem_alloc:  memory allocation failure!?");
+				break;
+			default:
+				warn("cpu_mem_alloc:  unexpected error code from posix_memalign!?");
+				break;
+		}
+		return NULL;
+	}
+	return ptr;
+#else // ! HAVE_POSIX_MEMALIGN
 
 	/* malloc always aligns to an 8 byte boundary, but for SSE we need 16 */
 	if( align > 8 ){
 		size += align - 1;	/* guarantee we will be able to align */
 	}
-	st=(unsigned char *)getbuf(size);
-	if( st == (unsigned char *)NULL ){
-		mem_err("no more RAM for data objects");
-		return(-1);
-	}
-	SET_OBJ_DATA_PTR(dp,st);
-	SET_OBJ_UNALIGNED_PTR(dp,OBJ_DATA_PTR(dp));
 
-	if( align > 0 ){
-#ifdef QUIP_DEBUG
-if( debug & debug_data ){
-sprintf(ERROR_STRING,"get_data_space:  aligning area provided by getbuf (align = %d)",align);
-advise(ERROR_STRING);
-}
-#endif
-		/* remember the original address of the data for freeing! */
-		SET_OBJ_DATA_PTR(dp, (void *)((((u_long)OBJ_DATA_PTR(dp))+align-1) & ~(align-1)) );
+	ptr=(unsigned char *)getbuf(size);
+	if( ptr == (unsigned char *)NULL ){
+		mem_err("no more RAM for data objects");
 	}
+	return ptr;
+#endif // ! HAVE_POSIX_MEMALIGN
+}
+
+// allocate memory for a new object in ram
+
+int _cpu_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
+{
+	unsigned char *st;
+	st = cpu_mem_alloc(NULL, size, align );
+
+	/* remember the original address of the data for freeing! */
+	SET_OBJ_UNALIGNED_PTR(dp,st);
+
+#ifndef HAVE_POSIX_MEMALIGN
+	if( align > 0 ){
+		st = (u_char *)((((u_long)st)+align-1) & ~(align-1));
+	}
+#endif // ! HAVE_POSIX_MEMALIGN
+
+	SET_OBJ_DATA_PTR(dp,st);
 
 	return 0;
 }
@@ -97,9 +120,6 @@ advise(ERROR_STRING);
 
 static int get_data_space(QSP_ARG_DECL  Data_Obj *dp,dimension_t size, int min_align)
 {
-#ifdef FOOBAR
-	Data_Area *ap;
-#endif // FOOBAR
 	int align=0;
 
 #ifdef QUIP_DEBUG
@@ -108,29 +128,16 @@ sprintf(ERROR_STRING,"get_data_space:  requesting %d (0x%x) bytes for object %s"
 size,size,OBJ_NAME(dp));
 advise(ERROR_STRING);
 }
-#endif
-
-#ifdef FOOBAR
-	// is this set yet?
-	ap = OBJ_AREA(dp);
-#endif // FOOBAR
+#endif	// QUIP_DEBUG
 
 	if( default_align > 0 )
 		align = default_align;
 	if( min_align > 1 && min_align > align )
 		align = min_align;
 
-//#ifdef CAUTIOUS
-//	if( PF_ALLOC_FN( OBJ_PLATFORM(dp) ) == NULL ){
-//		sprintf(ERROR_STRING,
-//"CAUTIOUS: get_data_space:  Platform %s has a null memory allocator!?",
-//			PLATFORM_NAME(OBJ_PLATFORM(dp)) );
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif // CAUTIOUS
-	assert( PF_ALLOC_FN( OBJ_PLATFORM(dp) ) != NULL );
+	assert( PF_OBJ_ALLOC_FN( OBJ_PLATFORM(dp) ) != NULL );
 
-	return (* PF_ALLOC_FN( OBJ_PLATFORM(dp) ) )( QSP_ARG  dp, size, align );
+	return (* PF_OBJ_ALLOC_FN( OBJ_PLATFORM(dp) ) )( QSP_ARG  dp, size, align );
 
 } /* end get_data_space() */
 
@@ -145,8 +152,8 @@ static Data_Obj *setup_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,Precision * prec
 	SET_OBJ_BIT0(dp,0);
 
 	/* set_shape_flags is where mindim gets set */
-	if( set_shape_flags( OBJ_SHAPE(dp), dp, type_flag) < 0 )
-		return(NO_OBJ);
+	if( set_shape_flags( OBJ_SHAPE(dp), type_flag) < 0 )
+		return(NULL);
 
 	/* check_contiguity used to be called from set_obj_flags,
 	 * but Shape_Info structs don't have increments, so we
@@ -163,134 +170,29 @@ static Data_Obj *setup_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,Precision * prec
 	return(dp);
 }
 
-Data_Obj *setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision * prec_p)
+Data_Obj *_setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision * prec_p)
 {
 	return setup_dp_with_shape(QSP_ARG  dp,prec_p,AUTO_SHAPE);
-}
-
-// THIS NEEDS TO BE MOVED TO A CUDA LIBRARY!?
-#ifdef HAVE_CUDA
-#ifdef NOT_YET
-static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
-{
-	char name[LLEN];
-	Data_Obj *new_dp;
-	Data_Area *ap;
-	cudaError_t e;
-	int i;
-
-//#ifdef CAUTIOUS
-//	if( OBJ_AREA(dp)->da_flags != DA_CUDA_HOST ){
-//		sprintf(ERROR_STRING,
-//"CAUTIOUS:  make_device_alaias:  object %s is not host-mapped!?",OBJ_NAME(dp));
-//		NERROR1(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
-	assert( OBJ_AREA(dp)->da_flags == DA_CUDA_HOST ){
-
-	/* Find the pseudo-area for the device mapping */
-	sprintf(name,"%s_mapped",OBJ_AREA(dp)->da_name);
-	//ap = data_area_of(QSP_ARG  name);
-	ap = get_data_area(QSP_ARG  name);
-	if( ap == NO_AREA ){
-		WARN("Failed to find mapped data area");
-		return;
-	}
-
-	/* BUG check name length to make sure no buffer overrun */
-	sprintf(name,"dev_%s",OBJ_NAME(dp));
-
-	new_dp = new_dobj(QSP_ARG  name);
-	if( new_dp==NO_OBJ )
-		NERROR1("make_device_alias:  error creating alias object");
-
-	// Need to allocate dimensions and increments...
-	SET_OBJ_SHAPE(new_dp, ALLOC_SHAPE );
-
-	if( set_obj_dimensions(QSP_ARG  new_dp,OBJ_TYPE_DIMS(dp),OBJ_PREC_PTR(dp)) < 0 )
-		NERROR1("make_device_alias:  error setting alias dimensions");
-	parent_relationship(dp,new_dp);
-	for(i=0;i<N_DIMENSIONS;i++){
-		SET_OBJ_MACH_INC(new_dp,i,OBJ_MACH_INC(dp,i));
-		SET_OBJ_TYPE_INC(new_dp,i,OBJ_TYPE_INC(dp,i));
-	}
-	new_dp = setup_dp_with_shape(QSP_ARG  new_dp,OBJ_PREC_PTR(dp),type_flag);
-	if( new_dp==NO_OBJ )
-		NERROR1("make_device_alias:  failure in setup_dp");
-
-	SET_OBJ_AREA(new_dp, ap);
-
-	/* Now the magic:  get the address on the device! */
-
-	e = cudaHostGetDevicePointer( &OBJ_DATA_PTR(new_dp), OBJ_DATA_PTR(dp), 0 );
-	if( e != cudaSuccess ){
-		describe_cuda_driver_error2("make_device_alias",
-					"cudaHostGetDevicePointer",e);
-		/* BUG should clean up and destroy object here... */
-	}
-}
-#else // ! NOT_YET
-static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
-{
-	ERROR1("make_device_alias:  not implemented, check makedobj.c!?");
-}
-#endif // ! NOT_YET
-#endif /* HAVE_CUDA */
-
-/* fix_bitmap_increments
- */
-
-static void fix_bitmap_increments(Data_Obj *dp)
-{
-	int i_dim;
-	int minc,tinc,n,nw,n_bits;
-
-	i_dim=OBJ_MINDIM(dp);
-
-	n_bits = OBJ_TYPE_DIM(dp,i_dim);
-	if( n_bits > 1 ) SET_OBJ_TYPE_INC(dp,i_dim,1);
-	else             SET_OBJ_TYPE_INC(dp,i_dim,0);
-
-	nw = (n_bits + BITS_PER_BITMAP_WORD - 1)/BITS_PER_BITMAP_WORD;
-	if( nw > 1 ) SET_OBJ_MACH_INC(dp,i_dim,1);
-	else         SET_OBJ_MACH_INC(dp,i_dim,0);
-
-	minc = nw;		/* number of words at mindim */
-	tinc = minc * BITS_PER_BITMAP_WORD;	/* total bits */
-	for(i_dim=OBJ_MINDIM(dp)+1;i_dim<N_DIMENSIONS;i_dim++){
-		if( (n=OBJ_TYPE_DIM(dp,i_dim)) == 1 ){
-			SET_OBJ_TYPE_INC(dp,i_dim,0);
-			SET_OBJ_MACH_INC(dp,i_dim,0);
-		} else {
-			SET_OBJ_TYPE_INC(dp,i_dim,tinc);
-			SET_OBJ_MACH_INC(dp,i_dim,minc);
-			tinc *= n;
-			minc *= n;
-		}
-	}
-	/* We used to clear the contig & evenly-spaced flags here,
-	 * but that is wrong in the case that there's only one word...
-	 */
-	CLEAR_OBJ_FLAG_BITS(dp,DT_CHECKED);
-	check_contiguity(dp);
 }
 
 /*
  * Initialize an existing header structure
  */
 
-static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
+static Data_Obj *_init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 			Dimension_Set *dsp,Precision * prec_p,uint32_t type_flag)
 {
-	if( dp == NO_OBJ )	/* name already used */
+	if( dp == NULL )	/* name already used */
 		return(dp);
 
 	/* these four fields are initialized for sub_obj's in
 	 * parent_relationship()
 	 */
 	SET_OBJ_AREA(dp, curr_ap);
-	SET_OBJ_PARENT(dp,NO_OBJ);
-	SET_OBJ_CHILDREN(dp,NO_LIST);
+
+	// this code could be simplified if new_item called bzero on the struct...
+	SET_OBJ_PARENT(dp,NULL);
+	SET_OBJ_CHILDREN(dp,NULL);
 	/* We make sure that these pointers are set so that
 	 * we can know when not to free them... */
 	SET_OBJ_DECLFILE(dp,NULL);
@@ -302,6 +204,8 @@ static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 
 	// This must be done before touching the flags,
 	// because the flags are really part of the shape struct...
+	// But why are we dynamically allocating the shape instead
+	// of having part of the data_obj?
 	SET_OBJ_SHAPE(dp, ALLOC_SHAPE );
 
 	SET_OBJ_FLAGS(dp,0);
@@ -310,30 +214,34 @@ static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 	 * regard to a nonexistent object:  i.e. ncols(i1)
 	 * where i1 has not been created.  The expression
 	 * then returns 0 (or -1... this has changed over
-	 * various revisions...), and setup_dp returns NO_OBJ
+	 * various revisions...), and setup_dp returns NULL
 	 */
 
-	if( set_obj_dimensions(QSP_ARG  dp,dsp,prec_p) < 0 ){
-		WARN("init_dp_with_shape:  error setting dimensions");
-		return(NO_OBJ);
+	if( set_obj_dimensions(dp,dsp,prec_p) < 0 ){
+		warn("init_dp_with_shape:  error setting dimensions");
+		return(NULL);
 		/* BUG might want to clean up */
 	}
 
 	make_contiguous(dp);
 
-	if( setup_dp_with_shape(QSP_ARG  dp,prec_p,type_flag) == NO_OBJ ){
+	if( setup_dp_with_shape(QSP_ARG  dp,prec_p,type_flag) == NULL ){
 		/* set this flag so delvec doesn't free nonexistent mem */
 		SET_OBJ_FLAG_BITS(dp,DT_NO_DATA);
-		delvec(QSP_ARG  dp);
-		return(NO_OBJ);
+		delvec(dp);
+		return(NULL);
 	}
+
+#ifdef HAVE_ANY_GPU
+	SET_BITMAP_OBJ_GPU_INFO_HOST_PTR(dp,NULL);
+#endif // HAVE_ANY_GPU
 
 	return(dp);
 } // end init_dp_with_shape
 
-Data_Obj *init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
+Data_Obj *_init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
 {
-	return init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,AUTO_SHAPE);
+	return _init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,AUTO_SHAPE);
 }
 
 
@@ -342,7 +250,7 @@ Data_Obj *init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec
  *
  *  This routine creates a new header structure and initializes it.
  *
- *  Returns a pointer to the new header structure, or NO_OBJ if the name is
+ *  Returns a pointer to the new header structure, or NULL if the name is
  *  already in use, or if the name contains illegal characters.
  */
 
@@ -351,25 +259,25 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 {
 	Data_Obj *dp;
 
-	if( curr_ap == NO_AREA ){
-		if( ram_area_p == NO_AREA ) dataobj_init(SINGLE_QSP_ARG);
+	if( curr_ap == NULL ){
+		if( ram_area_p == NULL ) dataobj_init(SINGLE_QSP_ARG);
 		curr_ap = ram_area_p;
 	}
 
 	/* make sure that the new name contains only legal chars */
 	if( !is_valid_dname(QSP_ARG  name) ){
 		sprintf(ERROR_STRING,"invalid data object name \"%s\"",name);
-		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		warn(ERROR_STRING);
+		return(NULL);
 	}
 
 	/* Check if we are using contexts...
 	 */
-	dp = new_dobj(QSP_ARG  name);
+	dp = new_dobj(name);
 
-	if( dp == NO_OBJ ){
-		dp = dobj_of(QSP_ARG  name);
-		if( dp != NO_OBJ ){
+	if( dp == NULL ){
+		dp = dobj_of(name);
+		if( dp != NULL ){
 
 	// BUG the declfile is ok for the expression
 	// language, but for classic scripts, we get told
@@ -387,12 +295,12 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 				//current_input_stack(SINGLE_QSP_ARG)
 			advise(ERROR_STRING);
 		}
-		return(NO_OBJ);
+		return(NULL);
 	}
 
-	if( init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,type_flag) == NO_OBJ ){
-		delvec(QSP_ARG   dp );
-		return(NO_OBJ);
+	if( _init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,type_flag) == NULL ){
+		delvec(dp);
+		return(NULL);
 	}
 
 	return(dp);
@@ -403,23 +311,86 @@ Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision 
 	return _make_dp_with_shape(QSP_ARG  name,dsp,prec_p, AUTO_SHAPE);
 }
 
+
+// THIS NEEDS TO BE MOVED TO A CUDA LIBRARY!?
+#ifdef HAVE_CUDA
+#ifdef NOT_YET
+static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
+{
+	char name[LLEN];
+	Data_Obj *new_dp;
+	Data_Area *ap;
+	cudaError_t e;
+	int i;
+
+	assert( OBJ_AREA(dp)->da_flags == DA_CUDA_HOST );
+
+	/* Find the pseudo-area for the device mapping */
+	sprintf(name,"%s_mapped",OBJ_AREA(dp)->da_name);
+	//ap = data_area_of(QSP_ARG  name);
+	ap = get_data_area(QSP_ARG  name);
+	if( ap == NULL ){
+		warn("Failed to find mapped data area");
+		return;
+	}
+
+	/* BUG check name length to make sure no buffer overrun */
+	sprintf(name,"dev_%s",OBJ_NAME(dp));
+
+	new_dp = new_dobj(QSP_ARG  name);
+	if( new_dp==NULL )
+		NERROR1("make_device_alias:  error creating alias object");
+
+	// Need to allocate dimensions and increments...
+	SET_OBJ_SHAPE(new_dp, ALLOC_SHAPE );
+
+	if( set_obj_dimensions(new_dp,OBJ_TYPE_DIMS(dp),OBJ_PREC_PTR(dp)) < 0 )
+		NERROR1("make_device_alias:  error setting alias dimensions");
+	parent_relationship(dp,new_dp);
+	for(i=0;i<N_DIMENSIONS;i++){
+		SET_OBJ_MACH_INC(new_dp,i,OBJ_MACH_INC(dp,i));
+		SET_OBJ_TYPE_INC(new_dp,i,OBJ_TYPE_INC(dp,i));
+	}
+	new_dp = setup_dp_with_shape(QSP_ARG  new_dp,OBJ_PREC_PTR(dp),type_flag);
+	if( new_dp==NULL )
+		NERROR1("make_device_alias:  failure in setup_dp");
+
+	SET_OBJ_AREA(new_dp, ap);
+
+	/* Now the magic:  get the address on the device! */
+
+	e = cudaHostGetDevicePointer( &OBJ_DATA_PTR(new_dp), OBJ_DATA_PTR(dp), 0 );
+	if( e != cudaSuccess ){
+		describe_cuda_driver_error2("make_device_alias",
+					"cudaHostGetDevicePointer",e);
+		/* BUG should clean up and destroy object here... */
+	}
+}
+#else // ! NOT_YET
+static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
+{
+	error1("make_device_alias:  not implemented, check makedobj.c!?");
+}
+#endif // ! NOT_YET
+#endif /* HAVE_CUDA */
+
 /*
  * Create a new data object.  This routine calls _make_dp() to create a new
  * header structure and then allocates space for the data.
  * Returns a pointer to the newly created header.  Prints a warning and
- * returns NO_OBJ if the name is already in use, or if space cannot be allocated
+ * returns NULL if the name is already in use, or if space cannot be allocated
  * in the data area,.
  */
 
 Data_Obj *
-make_dobj_with_shape(QSP_ARG_DECL  const char *name,
+_make_dobj_with_shape(QSP_ARG_DECL  const char *name,
 			Dimension_Set *dsp,Precision * prec_p, uint32_t type_flag)
 {
 	Data_Obj *dp;
 	dimension_t size;
 
 	dp = _make_dp_with_shape(QSP_ARG  name,dsp,prec_p,type_flag);
-	if( dp == NO_OBJ ) return(dp);
+	if( dp == NULL ) return(dp);
 
 	// area should be set here
 
@@ -427,41 +398,19 @@ make_dobj_with_shape(QSP_ARG_DECL  const char *name,
 		SET_OBJ_DATA_PTR(dp,NULL);
 	} else {
 		if( IS_BITMAP(dp) ){
-			int n_bits, n_words, i_dim;
-
+			int n_bits, n_words;
 			/* size is in elements (bits), convert to # words */
 			/* round n bits up to an even number of words */
-
-			/* we used to just slosh all the bits together,
-			 * but, for reasons relating to CUDA implementation,
-			 * we now don't want to have words crossing
-			 * dimension boundaries.  For example, if we
-			 * have a one component image, then we want
-			 * to pad each row so that an integral number
-			 * of words is allocated for each row.
-			 * In general, we have to have an integral
-			 * number of words for mindim.
-			 *
-			 * In the case that there is padding, we have
-			 * to fix the increments.
-			 */
-			n_bits = OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp));
-			// n_words is generally the row length, but it doesn't have to be. TEST
+			n_bits = OBJ_N_TYPE_ELTS(dp);	// total bits
 			n_words = (n_bits+BITS_PER_BITMAP_WORD-1)/
 						BITS_PER_BITMAP_WORD;
-			SET_OBJ_MACH_DIM(dp,OBJ_MINDIM(dp),n_words);
-
-			// We used to only call this when there were
-			// bits left over, but we need it all the time!
-			fix_bitmap_increments(dp);
-
 			size = n_words;
 			SET_OBJ_N_MACH_ELTS(dp,n_words);
-			for(i_dim=OBJ_MINDIM(dp)+1;i_dim<N_DIMENSIONS;i_dim++){
-				size *= OBJ_TYPE_DIM(dp,i_dim);
-				SET_OBJ_N_MACH_ELTS(dp,
-					OBJ_N_MACH_ELTS(dp) * OBJ_MACH_DIM(dp,i_dim) );
-			}
+			SET_OBJ_MACH_DIM(dp,0,1);
+			SET_OBJ_MACH_DIM(dp,1,n_words);
+			SET_OBJ_MACH_DIM(dp,2,1);
+			SET_OBJ_MACH_DIM(dp,3,1);
+			SET_OBJ_MACH_DIM(dp,4,1);
 		} else {
 			size = OBJ_N_MACH_ELTS(dp);
 		}
@@ -479,8 +428,8 @@ advise(ERROR_STRING);
 		if( get_data_space(QSP_ARG  dp,size,ELEMENT_SIZE(dp) ) < 0 ){
 			SET_OBJ_DATA_PTR(dp,NULL);
 			SET_OBJ_UNALIGNED_PTR(dp,NULL);
-			delvec(QSP_ARG  dp);
-			return(NO_OBJ);
+			delvec(dp);
+			return(NULL);
 		}
 	}
 #ifdef HAVE_CUDA
@@ -496,9 +445,9 @@ advise(ERROR_STRING);
 } /* end make_dobj_with_shape */
 
 Data_Obj *
-make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision * prec_p)
+_make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision * prec_p)
 {
-	return make_dobj_with_shape(QSP_ARG  name,dsp,prec_p,AUTO_SHAPE);
+	return make_dobj_with_shape(name,dsp,prec_p,AUTO_SHAPE);
 }
 
 /*
@@ -508,7 +457,7 @@ make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision * prec_p)
  * (why?  it doesn't set increments...)
  */
 
-int set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
+int _set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
 {
 //	int retval=0;
 
@@ -516,12 +465,54 @@ int set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision *
 //		sprintf(ERROR_STRING,
 //			"set_obj_dimensions:  error setting shape dimensions for object %s",
 //			OBJ_NAME(dp));
-//		WARN(ERROR_STRING);
+//		warn(ERROR_STRING);
 //		retval=(-1);
 		return -1;
 	}
 //	return(retval);
 	return 0;
+}
+
+static inline int count_zero_dimensions(Dimension_Set *dsp)
+{
+	int i;
+	int nzero=0;
+
+	for(i=0;i<N_DIMENSIONS;i++)
+		if( DIMENSION(dsp,i) == 0 ){
+			nzero++;
+		}
+	return nzero;
+}
+
+static inline void setup_unknown_shape(Shape_Info *shpp, Dimension_Set *dsp)
+{
+	SET_SHP_FLAG_BITS(shpp,DT_UNKNOWN_SHAPE);
+	DIMSET_COPY(SHP_MACH_DIMS(shpp),dsp);
+	DIMSET_COPY(SHP_TYPE_DIMS(shpp),dsp);
+	SET_SHP_N_MACH_ELTS(shpp,0);
+	SET_SHP_N_TYPE_ELTS(shpp,0);
+}
+
+static inline void set_shape_dimensions_for_index(Shape_Info *shpp, Dimension_Set *dsp, int idx)
+{
+	SET_SHP_TYPE_DIM( shpp, idx, DIMENSION(dsp,idx) );
+	SET_SHP_MACH_DIM( shpp, idx, DIMENSION(dsp,idx) );
+	SET_SHP_N_MACH_ELTS( shpp, SHP_N_MACH_ELTS(shpp) * DIMENSION(dsp,idx) );
+	SET_SHP_N_TYPE_ELTS( shpp, SHP_N_TYPE_ELTS(shpp) * DIMENSION(dsp,idx) );
+}
+
+static inline void set_first_shape_dimension(Shape_Info *shpp, Dimension_Set *dsp)
+{
+	/* BUG?  could we handle bitmaps here too? */
+	if( NORMAL_PRECISION(PREC_CODE(SHP_PREC_PTR(shpp))) ){
+		set_shape_dimensions_for_index(shpp,dsp,0);
+	} else {
+		/* complex or quaternion */
+		SET_SHP_TYPE_DIM(shpp,0,1);
+		SET_SHP_MACH_DIM(shpp,0,SHP_N_MACH_ELTS(shpp));
+		SET_SHP_N_TYPE_ELTS(shpp, SHP_N_TYPE_ELTS(shpp) * DIMENSION(dsp,0) );
+	}
 }
 
 /*
@@ -534,30 +525,18 @@ int set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision *
 int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Precision * prec_p)
 {
 	int i;
-	int retval=0;
+//	int retval=0;
 	int nzero=0;
 
 	/* all dimensions 0 is a special case of an unknown object... */
-//fprintf(stderr,"set_shape_dimensions:  shpp = 0x%lx, dsp = 0x%lx, prec_p = 0x%lx\n",
-//(long)shpp,(long)dsp,(long)prec_p);
 
 	SET_SHP_PREC_PTR(shpp,prec_p);
-//advise("prec ptr set");
 	/* check that all dimensions have positive values */
 	/* BUT if ALL the dimensions are 0, then this is an unknown obj... */
-	for(i=0;i<N_DIMENSIONS;i++)
-		if( DIMENSION(dsp,i) == 0 ){
-			nzero++;
-		}
+	nzero = count_zero_dimensions(dsp);
 
-//advise("zero dims counted");
 	if( nzero==N_DIMENSIONS ){	/* all zero!? */
-//advise("all dims zero!");
-		SET_SHP_FLAG_BITS(shpp,DT_UNKNOWN_SHAPE);
-		DIMSET_COPY(SHP_MACH_DIMS(shpp),dsp);
-		DIMSET_COPY(SHP_TYPE_DIMS(shpp),dsp);
-		SET_SHP_N_MACH_ELTS(shpp,0);
-		SET_SHP_N_TYPE_ELTS(shpp,0);
+		setup_unknown_shape(shpp,dsp);
 		return 0;
 	}
 
@@ -566,23 +545,13 @@ int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Preci
 			sprintf(ERROR_STRING,
 		"Sorry, multi-component (%d) not allowed for complex",
 				DIMENSION(dsp,0));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return -1;
 		}
 
 		SET_DIMENSION(dsp,0,1);
 		SET_SHP_N_MACH_ELTS(shpp,2);
 	} else if( QUAT_PRECISION(PREC_CODE(prec_p)) ){
-//advise("quaternion precision...");
-
-//#ifdef CAUTIOUS
-//		if( DIMENSION(dsp,0) != 1 ){
-//			sprintf(ERROR_STRING,
-//"CAUTIOUS:  set_shape_dimensions:  Sorry, multiple (%d) components not allowed for quaternion",
-//				DIMENSION(dsp,0));
-//			WARN(ERROR_STRING);
-//		}
-//#endif /* CAUTIOUS */
 		assert( DIMENSION(dsp,0) == 1 );
 		SET_DIMENSION(dsp,0,1);
 		SET_SHP_N_MACH_ELTS(shpp,4);
@@ -590,49 +559,33 @@ int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Preci
 		SET_SHP_N_MACH_ELTS(shpp,1);
 	}
 	SET_SHP_N_TYPE_ELTS(shpp,1);
-//advise("n_elts set...");
-
 
 	for(i=0;i<N_DIMENSIONS;i++){
-//fprintf(stderr,"set_shape_dimensions:  setting dimension %d\n",i);
+#ifdef FOOBAR
 		if( DIMENSION(dsp,i) <= 0 ){
 			sprintf(ERROR_STRING,
 	"set_shape_dimensions:  Bad %s dimension (%d) specified",
 				dimension_name[i],DIMENSION(dsp,i));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			SET_DIMENSION(dsp,i,1);
 			retval=(-1);
 		}
+#endif // FOOBAR
+		assert( DIMENSION(dsp,i) > 0 );
 		if( i == 0 ){
-			/* BUG?  could we handle bitmaps here too? */
-			if( NORMAL_PRECISION(PREC_CODE(prec_p)) ){
-				SET_SHP_TYPE_DIM(shpp,i,DIMENSION(dsp,i));
-				SET_SHP_MACH_DIM(shpp,i,DIMENSION(dsp,i));
-				SET_SHP_N_MACH_ELTS(shpp, SHP_N_MACH_ELTS(shpp) * DIMENSION(dsp,i) );
-				SET_SHP_N_TYPE_ELTS(shpp, SHP_N_TYPE_ELTS(shpp) * DIMENSION(dsp,i) );
-			} else {
-				/* complex or quaternion */
-				SET_SHP_TYPE_DIM(shpp,i,1);
-				SET_SHP_MACH_DIM(shpp,i,SHP_N_MACH_ELTS(shpp));
-				SET_SHP_N_TYPE_ELTS(shpp,
-					SHP_N_TYPE_ELTS(shpp) * DIMENSION(dsp,i) );
-			}
+			set_first_shape_dimension(shpp,dsp);
 		} else {
-			SET_SHP_TYPE_DIM(shpp,i, DIMENSION(dsp,i) );
-			SET_SHP_MACH_DIM(shpp,i,DIMENSION(dsp,i) );
-			SET_SHP_N_MACH_ELTS(shpp, SHP_N_MACH_ELTS(shpp) * DIMENSION(dsp,i) );
-			SET_SHP_N_TYPE_ELTS(shpp, SHP_N_TYPE_ELTS(shpp) * DIMENSION(dsp,i) );
+			set_shape_dimensions_for_index(shpp,dsp,i);
 		}
 	}
-//fprintf(stderr,"set_shape_dimensions:  returning %d\n",retval);
-	return(retval);
+//	return(retval);
+	return 0;
 }
-
 
 /* Make a copy of the given object, but with n components */
 
 Data_Obj *
-comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data)
+_comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data)
 {
 	char str[256],*s;
 	Data_Obj *dp2;
@@ -646,19 +599,18 @@ comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data)
 
 	SET_DIMENSION(dsp,0,n);
 
-	/* BUG if the original image is subscripted, there will be
-	 * illegal chars in the name...
-	 */
-
 	strcpy(str,OBJ_NAME(dp));
-	/* make sure not an array name... */
+
+	/* if the original image is subscripted, there will be
+	 * illegal chars in the name...  we overwrite any subscripts.
+	 */
 	s=str;
 	while( *s && *s != '[' && *s != '{' )
 		s++;
 	sprintf(s,".%d",n);
 
 	if( allocate_data )
-		dp2=make_dobj(QSP_ARG  str,dsp,OBJ_PREC_PTR(dp));
+		dp2=make_dobj(str,dsp,OBJ_PREC_PTR(dp));
 	else {
 		/* We call this from xsupp when we want to point to an XImage */
 		dp2 = _make_dp(QSP_ARG  str,dsp,OBJ_PREC_PTR(dp));
@@ -709,4 +661,10 @@ void copy_shape(Shape_Info *dst_shpp, Shape_Info *src_shpp)
 	COPY_INCS( (SHP_MACH_INCS(dst_shpp)) , (SHP_MACH_INCS(src_shpp)) );
 }
 
+// setter function to call from external modules
+
+void set_dimension(Dimension_Set *dsp, int idx, dimension_t value)
+{
+	SET_DIMENSION(dsp,idx,value);
+}
 

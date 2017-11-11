@@ -73,19 +73,19 @@ static COMMAND_FUNC( do_packed_mseq )
 	int t, m, n;
 	u_long start_val;
 
-	dp = PICK_OBJ("mseq vector");
+	dp = pick_obj("mseq vector");
 	n = (int) HOW_MANY("register length");
 	t = (int) HOW_MANY("tap bit index");
 	start_val = HOW_MANY("start value");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* BUG check object here */
 
 	if( (dimension_t)(((1<<n)+n-1)/n) > OBJ_COLS(dp) ){
 		sprintf(ERROR_STRING,"target mseq vector %s (%d) too small for this register length %d",OBJ_NAME(dp),
 				OBJ_COLS(dp),n);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -102,19 +102,19 @@ static COMMAND_FUNC( do_mseq )
 	int t, m, n;
 	u_long start_val;
 
-	dp = PICK_OBJ("mseq vector");
+	dp = pick_obj("mseq vector");
 	n = (int) HOW_MANY("register length");
 	t = (int) HOW_MANY("tap bit index");
 	start_val = HOW_MANY("start value");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* BUG check object here */
 
 	if( (dimension_t)((1<<n)-1) > OBJ_COLS(dp) ){
 		sprintf(ERROR_STRING,"target mseq vector %s (%d) too small for this register length %d",OBJ_NAME(dp),
 				OBJ_COLS(dp),n);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -124,7 +124,7 @@ static COMMAND_FUNC( do_mseq )
 		prt_msg(msg_str);
 	} else {
 		sprintf(ERROR_STRING,"BAD reglen = %d, t = %d, seqlen = %d (0x%x)",n,t,m,m);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -136,14 +136,14 @@ static COMMAND_FUNC( do_pack )
 	u_long src_bit, dst_bit, max_src_bit, max_dst_bit;
 	u_long *src, *dst;
 
-	dst_dp = PICK_OBJ("destination vector");
-	src_dp = PICK_OBJ("source vector");
+	dst_dp = pick_obj("destination vector");
+	src_dp = pick_obj("source vector");
 	
 	reg_len = (int) HOW_MANY("source register length");
 	total_bits = (1<<reg_len)-1;
 	//nwords = (int) floor((total_bits+31)/32);
 
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ ) return;
+	if( dst_dp == NULL || src_dp == NULL ) return;
 	src = (u_long *)OBJ_DATA_PTR(src_dp);
 	dst = (u_long *)OBJ_DATA_PTR(dst_dp);
 
@@ -180,7 +180,7 @@ MENU_END(mseq)
 
 COMMAND_FUNC( do_mseq_menu )
 {
-	PUSH_MENU(mseq);
+	CHECK_AND_PUSH_MENU(mseq);
 }
 
 

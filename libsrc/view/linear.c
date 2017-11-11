@@ -19,7 +19,7 @@
 
 /* global */
 /*short lintbl[N_COMPS][MAX_LIN_LVLS]; */
-Data_Obj *default_lt_dp=NO_OBJ;		/* BUG this object needs to be locked... */
+Data_Obj *default_lt_dp=NULL;		/* BUG this object needs to be locked... */
 					/* a user could delete it from the data menu,
 					 * creating a dangling pointer.
 					 */
@@ -43,7 +43,7 @@ Data_Obj *new_lintbl( QSP_ARG_DECL  const char * name )
 #ifdef HAVE_CUDA
 	pop_data_area();
 #endif
-	if( lt_dp == NO_OBJ ) return(lt_dp);
+	if( lt_dp == NULL ) return(lt_dp);
 
 	/*lin_setup(lt_dp,DEF_GAM,DEF_VZ); */		/* seems a bit wasteful? */
 	return(lt_dp);
@@ -128,7 +128,7 @@ void lininit(SINGLE_QSP_ARG_DECL)
 #ifdef HAVE_X11
 void install_default_lintbl(QSP_ARG_DECL  Dpyable *dpyp)
 {
-	if(default_lt_dp==NO_OBJ){
+	if(default_lt_dp==NULL){
 		default_lt_dp = new_lintbl(QSP_ARG  "default_lintbl");
 		lin_setup(QSP_ARG  default_lt_dp,DEF_GAM,DEF_VZ);		/* seems a bit wasteful? */
 	}
@@ -180,7 +180,7 @@ char *name;
 		if( j== 0 )
 			n_lin_lvls = n;
 		else if( n != n_lin_lvls )
-	NWARN("component linearization files have different numbers of values");
+	warn("component linearization files have different numbers of values");
 
 		fclose(fp);
 	}
@@ -205,7 +205,7 @@ char *name;
 
 		sprintf(filename, "%s.%c", name, '0' + j);
 
-		if(!(fp = TRYNICE(filename, "w"))) {
+		if(!(fp = try_nice(filename, "w"))) {
 			continue;
 		}
 
@@ -232,15 +232,15 @@ u_int start, n;
 	if( start < 0 || start >= n_lin_lvls ){
 		sprintf(ERROR_STRING,"Start value %d must be in the range 0-%d",
 			start,n_lin_lvls-1);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( n <= 0 ){
-		NWARN("number of entries to print must be positive");
+		warn("number of entries to print must be positive");
 		return;
 	}
 	if( start+n > n_lin_lvls ){
-		NWARN("requested linearization entries out of range");
+		warn("requested linearization entries out of range");
 		return;
 	}
 

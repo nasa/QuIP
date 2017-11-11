@@ -126,37 +126,6 @@ static void meteor_set_num_frames(QSP_ARG_DECL  int n)
 	meteor_set_geometry(QSP_ARG  &my_geo);
 }
 
-/* The limit on the number of frames USED to be determined by
- * the bigphysarea memory size defined in /etc/lilo.conf
- *
- * With the new himemfb driver, the amount of memory is set
- * in /etc/lilo.conf.  We ought to have the difference between
- * the actual physical memory and what is specified in the file.
- *
- * For testing, we assume that we have 64 Mb.
- *
- * 640 * 480 * 4 / 1024 = 640 * 480 / 256 = 10 * 480 / 4 = 1200 1k blocks
- *
- * Now, each frame is 1200 1k blocks (1.2Mb), an extra page seems to get
- * added on, plus extra spacing so individual frames don't cross
- * 4Mb boundaries...
- *
- * So we need 4M for each 3 frames...
- *
- * So if we have 64M, we ought to be able to have 3*16 = 48 frames...
- */
-
-/* BUG this definition assumes 64M reserved - need to get the true number
- * from himemfb...  on dirac we now reseve 128M
- */
-
-/* On dirac we supposedly have reserved 128MB, but the last frame
- * (actually mtr->mem, which is the last page...)
- * mem->frame_size keeps getting reset to 0xffffffff, but
- * we can't figure out where it's coming from.  04-09-2007
- * It seems ok if nframes is 95...
- */
-
 static int32_t max_frames=95;
 
 static COMMAND_FUNC( do_meteor_set_num_frames )
@@ -339,12 +308,9 @@ static COMMAND_FUNC( do_meteor_set_oformat )
 		case 2:  fmt=METEOR_GEO_YUV_PLANAR; break;
 		case 3:  fmt=METEOR_GEO_YUV_PACKED; break;
 		case 4:  fmt=METEOR_GEO_YUV_422; break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("wacky output format!?");
 			assert( ! "wacky output format" );
 			return;
-//#endif /* CAUTIOUS */
 	}
 
 	curr_ofmt = fmt;
@@ -438,7 +404,7 @@ MENU_END(geometry)
 
 COMMAND_FUNC( do_geometry )
 {
-	PUSH_MENU(geometry);
+	CHECK_AND_PUSH_MENU(geometry);
 }
 
 

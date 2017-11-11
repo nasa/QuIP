@@ -11,6 +11,8 @@
 #include <string.h>
 #endif
 
+#include "quip_prot.h"
+#include "query_bits.h"	// LLEN - BUG
 #include "fio_prot.h"
 #include "nports_api.h"
 #include "quip_prot.h"
@@ -18,7 +20,7 @@
 //#include "filetype.h"
 
 /* flag ignored, for arg compatibility w/ xmit_data */
-void xmit_img_file(QSP_ARG_DECL  Port *mpp,Image_File *ifp,int flag)	/** send a file header */
+void _xmit_img_file(QSP_ARG_DECL  Port *mpp,Image_File *ifp,int flag)	/** send a file header */
 {
 	int32_t len;
 	int32_t code;
@@ -32,8 +34,8 @@ void xmit_img_file(QSP_ARG_DECL  Port *mpp,Image_File *ifp,int flag)	/** send a 
 #endif /* SIGPIPE */
 
 	code=P_IMG_FILE;
-	if( put_port_int32(QSP_ARG  mpp,code) == (-1) ){
-		WARN("xmit_file:  error sending code");
+	if( put_port_int32(mpp,code) == (-1) ){
+		warn("xmit_file:  error sending code");
 		return;
 	}
 
@@ -52,41 +54,33 @@ void xmit_img_file(QSP_ARG_DECL  Port *mpp,Image_File *ifp,int flag)	/** send a 
 	 *	(if_pathname)	(don't really care since file is on remot sys)
 	 */
 
-	if( put_port_int32(QSP_ARG  mpp,len) == -1 ){
-		WARN("xmit_file:  error writing name length word");
+	if( put_port_int32(mpp,len) == -1 ){
+		warn("xmit_file:  error writing name length word");
 		return;
 	}
 
-	if( put_port_int32(QSP_ARG  mpp, ifp->if_nfrms) == -1 ||
-	    put_port_int32(QSP_ARG  mpp, FT_CODE(IF_TYPE(ifp)) ) == -1 ||
-	    put_port_int32(QSP_ARG  mpp, ifp->if_flags ) == -1 ){
-		WARN("error sending image file header data");
+	if( put_port_int32(mpp, ifp->if_nfrms) == -1 ||
+	    put_port_int32(mpp, FT_CODE(IF_TYPE(ifp)) ) == -1 ||
+	    put_port_int32(mpp, ifp->if_flags ) == -1 ){
+		warn("error sending image file header data");
 		return;
 	}
 	    
-	if( write_port(QSP_ARG  mpp,ifp->if_name,len) == (-1) ){
-		WARN("xmit_file:  error writing image file name");
+	if( write_port(mpp,ifp->if_name,len) == (-1) ){
+		warn("xmit_file:  error writing image file name");
 		return;
 	}
 
 	/* now send the associated data_obj header... */
 
-//#ifdef CAUTIOUS
-//	if( ifp->if_dp == NO_OBJ ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  xmit_file:  file %s has no associated data object!?",
-//			ifp->if_name);
-//		WARN(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
-	assert( ifp->if_dp != NO_OBJ );
+	assert( ifp->if_dp != NULL );
 
-	xmit_obj(QSP_ARG  mpp,ifp->if_dp,0);
+	xmit_obj(mpp,ifp->if_dp,0);
 }
 
 /** recv_img_file - recieve a new data object */
 
-long recv_img_file(QSP_ARG_DECL  Port *mpp, /* char **bufp */ Packet *pkp )
+long _recv_img_file(QSP_ARG_DECL  Port *mpp, /* char **bufp */ Packet *pkp )
 {
 	long len;
 	Image_File *old_ifp, *new_ifp;
@@ -95,7 +89,7 @@ long recv_img_file(QSP_ARG_DECL  Port *mpp, /* char **bufp */ Packet *pkp )
 	long code;
 
 	ifp=(&imgf);
-	len=get_port_int32(QSP_ARG  mpp);
+	len=get_port_int32(mpp);
 	if( len <= 0 ) goto error_return;
 
 #ifdef QUIP_DEBUG
@@ -106,19 +100,19 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	if( (ifp->if_nfrms = get_port_int32(QSP_ARG  mpp)) == BAD_PORT_LONG ||
-	    (ifp->if_ftp = filetype_for_code( QSP_ARG  (filetype_code) get_port_int32(QSP_ARG  mpp))) == NO_FILETYPE ||
-	    (ifp->if_flags = (short) get_port_int32(QSP_ARG  mpp)) == (short)BAD_PORT_LONG ){
-		WARN("error getting image file data");
+	if( (ifp->if_nfrms = get_port_int32(mpp)) == BAD_PORT_LONG ||
+	    (ifp->if_ftp = filetype_for_code( QSP_ARG  (filetype_code) get_port_int32(mpp))) == NULL ||
+	    (ifp->if_flags = (short) get_port_int32(mpp)) == (short)BAD_PORT_LONG ){
+		warn("error getting image file data");
 		goto error_return;
 	}
 
 	if( len > LLEN ){
-		WARN("more than LLEN name chars!?");
+		warn("more than LLEN name chars!?");
 		goto error_return;
 	}
-	if( read_port(QSP_ARG  mpp,namebuf,len) != len ){
-		WARN("recv_file:  error reading data object name");
+	if( read_port(mpp,namebuf,len) != len ){
+		warn("recv_file:  error reading data object name");
 		goto error_return;
 	}
 
@@ -137,45 +131,45 @@ advise(ERROR_STRING);
 				i,namebuf[i],namebuf[i]);
 			advise(ERROR_STRING);
 		}
-		ERROR1("choked");
+		error1("choked");
 	}
 
-	old_ifp=img_file_of(QSP_ARG  namebuf);
+	old_ifp=img_file_of(namebuf);
 
-	if( old_ifp != NO_IMAGE_FILE ){
-		DEL_IMG_FILE(old_ifp);
+	if( old_ifp != NULL ){
+		del_img_file(old_ifp);
 		rls_str((char *)old_ifp->if_name);	// BUG?  release name here or not?
-		old_ifp = NO_IMAGE_FILE;
+		old_ifp = NULL;
 	}
 
-	new_ifp=new_img_file(QSP_ARG  namebuf);
-	if( new_ifp==NO_IMAGE_FILE ){
+	new_ifp=new_img_file(namebuf);
+	if( new_ifp==NULL ){
 		sprintf(ERROR_STRING,
 			"recv_file:  couldn't create file struct \"%s\"",
 			namebuf);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		goto error_return;
 	}
 
 	new_ifp->if_nfrms = imgf.if_nfrms;
 	new_ifp->if_ftp = filetype_for_code(QSP_ARG  IFT_NETWORK);
 	new_ifp->if_flags = imgf.if_flags;
-	new_ifp->if_dp = NO_OBJ;	/* BUG should receive? */
+	new_ifp->if_dp = NULL;	/* BUG should receive? */
 	new_ifp->if_pathname = new_ifp->if_name;
 
-	code = get_port_int32(QSP_ARG  mpp);
+	code = get_port_int32(mpp);
 	if( code == -1 )
-		ERROR1("error port code received!?");
+		error1("error port code received!?");
 	if( code != P_DATA ){
 		sprintf(ERROR_STRING,
 	"recv_file:  expected data object packet to complete transmission of file %s!?",
 			new_ifp->if_name);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 		
 	// the cast generates a compiler warning???
-	if( recv_obj(QSP_ARG  mpp, pkp ) != sizeof(Data_Obj) ){
-		WARN("Error receiving data object!?");
+	if( recv_obj(mpp, pkp ) != sizeof(Data_Obj) ){
+		warn("Error receiving data object!?");
 		goto error_return;
 	}
 

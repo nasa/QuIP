@@ -30,7 +30,7 @@
 // global var
 int max_threads_per_block;
 
-Cuda_Device *curr_cdp=NO_CUDA_DEVICE;
+Cuda_Device *curr_cdp=NULL;
 
 Data_Area *cuda_data_area[MAX_CUDA_DEVICES][N_CUDA_DEVICE_AREAS];
 
@@ -42,7 +42,7 @@ Data_Area *cuda_data_area[MAX_CUDA_DEVICES][N_CUDA_DEVICE_AREAS];
 
 ITEM_INTERFACE_DECLARATIONS( Cuda_Device, cudev, 0 )
 
-#define PICK_CUDEV(pmpt)	pick_cudev(QSP_ARG  pmpt)
+#define pick_cudev(pmpt)	_pick_cudev(QSP_ARG  pmpt)
 
 
 /* On the host 1L<<33 gets us bit 33 - but 1<<33 does not,
@@ -141,10 +141,10 @@ COMMAND_FUNC( do_gpu_obj_dnload )
 {
 	Data_Obj *dpto, *dpfr;
 
-	dpto = PICK_OBJ("destination RAM object");
-	dpfr = PICK_OBJ("source GPU object");
+	dpto = pick_obj("destination RAM object");
+	dpfr = pick_obj("source GPU object");
 
-	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
+	if( dpto == NULL || dpfr == NULL ) return;
 
 	gpu_obj_dnload(QSP_ARG  dpto,dpfr);
 }
@@ -153,10 +153,10 @@ COMMAND_FUNC( do_gpu_obj_upload )
 {
 	Data_Obj *dpto, *dpfr;
 
-	dpto = PICK_OBJ("destination GPU object");
-	dpfr = PICK_OBJ("source RAM object");
+	dpto = pick_obj("destination GPU object");
+	dpfr = pick_obj("source RAM object");
 
-	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
+	if( dpto == NULL || dpfr == NULL ) return;
 
 	gpu_obj_upload(QSP_ARG  dpto,dpfr);
 }
@@ -168,10 +168,10 @@ COMMAND_FUNC( do_gpu_fwdfft )
 	const char *func_name="do_gpu_fwdfft";
 
 	Data_Obj *dst_dp, *src1_dp;
-	dst_dp = PICK_OBJ("destination object");
-	src1_dp = PICK_OBJ("source object");
+	dst_dp = pick_obj("destination object");
+	src1_dp = pick_obj("source object");
 
-	if( dst_dp == NO_OBJ || src1_dp == NO_OBJ) return;
+	if( dst_dp == NULL || src1_dp == NULL) return;
 
 	CHECK_GPU_OBJ(dst_dp);
 	CHECK_GPU_OBJ(src1_dp);
@@ -365,7 +365,7 @@ H_CALL_F( vmgsq )
 
 COMMAND_FUNC( do_list_cudevs )
 {
-	list_cudevs(SINGLE_QSP_ARG);
+	list_cudevs(tell_msgfile());
 }
 
 #ifdef HAVE_CUDA
@@ -379,8 +379,8 @@ COMMAND_FUNC( do_cudev_info )
 {
 	Cuda_Device *cdp;
 
-	cdp = PICK_CUDEV((char *)"device");
-	if( cdp == NO_CUDA_DEVICE ) return;
+	cdp = pick_cudev((char *)"device");
+	if( cdp == NULL ) return;
 
 #ifdef HAVE_CUDA
 	print_cudev_info(QSP_ARG  cdp);
@@ -420,11 +420,7 @@ void insure_cuda_device( Data_Obj *dp )
 	}
 
 	cdp = (Cuda_Device *) AREA_CUDA_DEV(OBJ_AREA(dp));
-
-#ifdef CAUTIOUS
-	if( cdp == NO_CUDA_DEVICE )
-		NERROR1("CAUTIOUS:  null cuda device ptr in data area!?");
-#endif /* CAUTIOUS */
+	assert( cdp != NULL );
 
 	if( curr_cdp != cdp ){
 sprintf(DEFAULT_ERROR_STRING,"insure_cuda_device:  curr_cdp = 0x%lx  cdp = 0x%lx",
@@ -481,11 +477,13 @@ void freetmp(void *ptr,const char *whence)
 #ifdef HAVE_CUDA
 //CUFFT
 //static const char* getCUFFTError(cufftResult_t status)
-static const char* getCUFFTError(cufftResult status)
+const char* getCUFFTError(cufftResult status)
 {
 	switch (status) {
 		case CUFFT_SUCCESS:
 			return "Success";
+		case CUFFT_NOT_SUPPORTED:
+			return "CuFFT not supported";
 		case CUFFT_INVALID_PLAN:
 			return "Invalid Plan";
 		case CUFFT_ALLOC_FAILED:

@@ -18,13 +18,6 @@
 #define IOS_ITEM_NAME	ITEM_NAME
 #define IOS_MBR_DATA	MBR_DATA
 
-#define NO_IOS_ITEM		NO_ITEM
-#define NO_IOS_NODE		NO_NODE
-#define NO_IOS_LIST		NO_LIST
-#define NO_IOS_ITEM_CLASS	NO_ITEM_CLASS
-#define NO_IOS_ITEM_TYPE	NO_ITEM_TYPE
-#define NO_IOS_MEMBER_INFO	NO_MEMBER_INFO
-
 #define ios_eltcount		eltcount
 #define new_ios_item_class	new_item_class
 #define add_items_to_ios_class	add_items_to_class

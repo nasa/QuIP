@@ -1,0 +1,100 @@
+#
+# Test some bitmap operations
+
+data ascii max_per_line 32 quit quit
+
+Define Test_Fast 1 platform
+Image ${1}_image $h $w $d bit
+Info ${1}_image
+Pause
+
+advise "data before any operations (as allocated)"
+Display ${1}_image
+Pause
+
+advise "VSet ${1}_image 0"
+VSet ${1}_image 0
+Display ${1}_image
+Pause
+
+advise "VSet ${1}_image 1"
+VSet ${1}_image 1
+Display ${1}_image
+Pause
+advise proceeding...
+
+advise "VSet ${1}_image{0} 0"
+VSet ${1}_image{0} 0
+Display ${1}_image
+Pause
+advise proceeding...
+
+advise "VSet ${1}_image{1} 0"
+VSet ${1}_image{1} 0
+Display ${1}_image
+Pause
+.
+
+Define Test_Insets 1 platform
+Image ${1}_image $h $w 1 bit
+Info ${1}_image
+Pause
+Subimage ${1}_inset ${1}_image $sw $sh 4 1
+Subsample_Image ${1}_si ${1}_inset $sw/2 0 2 $sh/2 0 2
+
+advise "data before any operations (as allocated)"
+Display ${1}_image
+Pause
+
+advise "VSet ${1}_image 0"
+VSet ${1}_image 0
+Display ${1}_image
+Pause
+
+advise "VSet ${1}_image 1"
+VSet ${1}_image 1
+Display ${1}_image
+Pause
+
+advise "VSet ${1}_inset 0"
+VSet ${1}_inset 0
+Display ${1}_image
+Pause
+
+advise "VSet ${1}_si 1"
+VSet ${1}_si 1
+Display ${1}_image
+Pause
+
+Info ${1}_inset
+Info ${1}_si
+Pause
+.
+
+Define Perform_Inset_Test 0
+Set w 64
+Set h 8
+Set sw 6
+Set sh 4
+
+Test_Insets h
+platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
+Test_Insets g
+.
+
+Define Perform_Fast_Test 0
+Set w 16
+Set h 9
+Set d 4
+
+Test_Fast h
+platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
+Test_Fast g
+.
+
+#Perform_Inset_Test
+Perform_Fast_Test
+
+
+exit
+

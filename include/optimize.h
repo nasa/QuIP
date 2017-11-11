@@ -1,5 +1,6 @@
 
-#ifndef NO_OPT_PARAM
+#ifndef _OPTIMIZE_H_
+#define _OPTIMIZE_H_
 
 #include "quip_prot.h"
 #include "item_obj.h"
@@ -18,8 +19,6 @@ typedef struct opt_param {
 	float	mindel;		/* minimum delta */
 } Opt_Param;
 
-#define NO_OPT_PARAM	((Opt_Param *)NULL)
-
 typedef struct opt_pkg {
 	Item	pkg_item;
 #define pkg_name	pkg_item.item_name
@@ -28,8 +27,6 @@ typedef struct opt_pkg {
 	void (*pkg_c_func)(QSP_ARG_DECL  float (*f)(SINGLE_QSP_ARG_DECL));
 	void (*pkg_halt_func)(void);
 } Opt_Pkg;
-
-#define NO_OPT_PKG	((Opt_Pkg *)NULL)
 
 extern Opt_Pkg *curr_opt_pkg;
 
@@ -65,13 +62,20 @@ extern const char *opt_func_string;
 
 /* stepsupp.c */
 ITEM_INTERFACE_PROTOTYPES(Opt_Param,opt_param)
-#define PICK_OPT_PARAM(p)	pick_opt_param(QSP_ARG  p)
+
+#define new_opt_param(s)	_new_opt_param(QSP_ARG  s)
+#define get_opt_param(s)	_get_opt_param(QSP_ARG  s)
+#define opt_param_of(s)		_opt_param_of(QSP_ARG  s)
+#define pick_opt_param(p)	_pick_opt_param(QSP_ARG  p)
+#define list_opt_params(fp)	_list_opt_params(QSP_ARG  fp)
+#define del_opt_param(s)	_del_opt_param(QSP_ARG  s)
+#define opt_param_list()	_opt_param_list(SINGLE_QSP_ARG)
 
 //extern void init_opt_params(void);
 extern void delete_opt_params(SINGLE_QSP_ARG_DECL);
 extern Opt_Param * add_opt_param(QSP_ARG_DECL  Opt_Param *);
 extern void optimize( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) );
-extern List *opt_param_list(SINGLE_QSP_ARG_DECL);
+//extern List *opt_param_list(SINGLE_QSP_ARG_DECL);
 extern void opt_param_info(QSP_ARG_DECL  Opt_Param *);
 extern float get_opt_param_value(QSP_ARG_DECL  const char *);
 
@@ -80,7 +84,10 @@ extern float get_opt_param_value(QSP_ARG_DECL  const char *);
 
 extern void insure_opt_pkg(SINGLE_QSP_ARG_DECL);
 ITEM_INTERFACE_PROTOTYPES(Opt_Pkg,opt_pkg)
-#define PICK_OPT_PKG(p)	pick_opt_pkg(QSP_ARG  p)
+
+#define pick_opt_pkg(p)		_pick_opt_pkg(QSP_ARG  p)
+#define new_opt_pkg(s)		_new_opt_pkg(QSP_ARG  s)
+#define get_opt_pkg(s)		_get_opt_pkg(QSP_ARG  s)
 
 
 /* am_supp.c */
@@ -101,4 +108,5 @@ extern void run_stepit_c( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) );
 
 
 
-#endif /* undef NO_OPT_PARAM */
+#endif // ! _OPTIMIZE_H_
+

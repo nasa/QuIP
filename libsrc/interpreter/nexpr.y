@@ -9,50 +9,21 @@
 #include "warn.h"
 #include "shape_bits.h"
 #include "function.h"
-
-//#define YACC_HACK_PREFIX	quip
-//#include "yacc_hack.h"
-
-//static char err_str[LLEN];
-static const char *original_string;
-#define YY_ORIGINAL	original_string
-//#define ERROR_STRING err_str
-
-//#include <stdio.h>
-//
-//#include <stdlib.h>
-//#include <string.h>
-//#include <ctype.h>
+//#include "strbuf.h"
+#include "query_stack.h"
 
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif // HAVE_LIMITS_H
 
-double rn_number();
+double rn_number(double);
 
-#include "query_prot.h"
 #include "nexpr.h"
-
-//#include "nexpr_func.h"
-
-//typedef void Function;  // so (Function *) is (void *)
-
 #include "func_helper.h"
-
-#ifdef MOVED
-// Need this local prototype because of call structure...
-static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *);
-#endif // MOVED
-
-#ifdef MOVED
-static Data_Obj *obj_for_string(const char *string);
-#endif // MOVED
 
 static Item * default_eval_szbl( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 { return NULL; }
 
-//#define EVAL_EXPR( s )		eval_expr( QSP_ARG  s )
-//#define EVAL_SZBL_EXPR( s )	eval_szbl_expr( QSP_ARG  s )
 static Item * ( * eval_szbl_func ) ( QSP_ARG_DECL  Scalar_Expr_Node *enp ) = default_eval_szbl;
 #define EVAL_SZBL_EXPR_FUNC( s )	(*eval_szbl_func)( QSP_ARG  s )
 #define EVAL_ILBL_EXPR( s )	eval_interlaceable_expr( QSP_ARG  s )
@@ -80,38 +51,28 @@ static debug_flag_t expr_debug=0;
 #define IS_LEGAL_FIRST_CHAR(c)	( isalpha( c ) || IS_LEGAL_NAME_PUNCT(c) )
 #define IS_LEGAL_NAME_CHAR(c)	( isalnum( c ) || IS_LEGAL_NAME_PUNCT(c) )
 
-// moved to query.h
-#define MAXEDEPTH	20
 
-// BUG all these static globals are not thread-safe!?
-
-static List *free_enp_lp=NO_LIST;
+// This has to be a global, because the nodes are allocated in a context
+// without a qsp...
+static List *free_enp_lp=NULL;
 
 // BUG - probably 4 is not enough now that these are being used
 // to store strings for the whole tree...
-#define MAX_E_STRINGS	64
-static String_Buf *expr_string[MAX_E_STRINGS];
-static Typed_Scalar string_scalar[MAX_E_STRINGS];
-static int estrings_inited=0;
 
 static Scalar_Expr_Node *alloc_expr_node(void);
 
-/* These have to be put into query stream... */
-/*
-static Scalar_Expr_Node * final;
-*/
 
-static Scalar_Expr_Node * final_expr_node_p;
-// BUG not thread-sage
-static const char *yystrptr[MAXEDEPTH];
-static int edepth=(-1);
-static int which_str=0;
-static int in_pexpr=0;
-#define FINAL_EXPR_NODE_P	final_expr_node_p
-#define YYSTRPTR yystrptr
-#define EDEPTH edepth
-#define WHICH_EXPR_STR	which_str
-#define IN_PEXPR	in_pexpr
+#define THIS_SPD	QS_SCALAR_PARSER_DATA(THIS_QSP)
+
+#define YYSTRPTR 	SPD_YYSTRPTR(THIS_SPD)
+#define YY_ORIGINAL	SPD_ORIGINAL_STRING(THIS_SPD)
+#define EDEPTH 		SPD_EDEPTH(THIS_SPD)
+#define WHICH_EXPR_STR	SPD_WHICH_STR(THIS_SPD)
+#define IN_PEXPR	SPD_IN_PEXPR(THIS_SPD)
+#define EXPR_STRING	SPD_EXPR_STRING(THIS_SPD)
+#define FINAL_EXPR_NODE_P	SPD_FINAL_EXPR_NODE_P(THIS_SPD)
+#define STRING_SCALAR	SPD_STRING_SCALAR(THIS_SPD)
+#define ESTRINGS_INITED	SPD_ESTRINGS_INITED(THIS_SPD)
 
 #define ADVANCE_EXPR_STR				\
 							\
@@ -128,19 +89,13 @@ static Typed_Scalar ts_dbl_one={
 static Typed_Scalar ts_dbl_minus_one={
 	{ -1.0 }, PREC_DP, TS_STATIC };
 
-//static int n_function_classes=0;
-//#define MAX_FUNCTION_CLASSES	10
-//static Function_Class func_class[MAX_FUNCTION_CLASSES];
-
 #define LLERROR(s)	llerror(s)
 
 /* what yylval can be */
 
 typedef union {
-//	double			dval;		/* actual value */
 	int			fundex;		/* function index */
-	Function *		func_p;
-//	char *			e_string;
+	Quip_Function *		func_p;
 	Scalar_Expr_Node *	enp;
 	Typed_Scalar *		tsp;
 } YYSTYPE;
@@ -149,16 +104,14 @@ typedef union {
 
 
 
-#ifdef THREAD_SAFE_QUERY
-
-//#error THREAD_SAFE_QUERY is defined
-//#define YYPARSE_PARAM qsp	/* gets declared void * instead of Query_Stack * */
-
-/* For yyerror */
 #define YY_(msg)	msg
 
-//#define YYLEX_PARAM SINGLE_QSP_ARG
-//static int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
+// With parser data stored in the query stack, we are thread-safe!
+
+#ifdef FOOBAR
+#ifdef THREAD_SAFE_QUERY
+
+/* For yyerror */
 
 
 #ifdef HAVE_PTHREADS
@@ -182,16 +135,16 @@ static int enode_flags=0;
 		status = pthread_mutex_lock(&enode_mutex);	\
 		if( status != 0 )				\
 			report_mutex_error(QSP_ARG  status,"LOCK_ENODES");\
-		enode_flags |= LIST_LOCKED;			\
+		enode_flags |= LIST_LOCKED_FLAG_BITS;			\
 	}
 
 #define UNLOCK_ENODES						\
 								\
-	if( enode_flags & LIST_LOCKED )				\
+	if( enode_flags & LIST_LOCKED_FLAG_BITS )		\
 	{							\
 		int status;					\
 								\
-		enode_flags &= ~LIST_LOCKED;			\
+		enode_flags &= ~LIST_LOCKED_FLAG_BITS;		\
 		status = pthread_mutex_unlock(&enode_mutex);	\
 		if( status != 0 )				\
 			report_mutex_error(QSP_ARG  status,"UNLOCK_ENODES");\
@@ -207,41 +160,14 @@ static int enode_flags=0;
 
 #define LOCK_ENODES
 #define UNLOCK_ENODES
-//static int yylex(YYSTYPE *yylvp);		// undef THREAD_SAFE_QUERY
 
 #endif /* ! THREAD_SAFE_QUERY */
+#endif // FOOBAR
 
 // For the time being a single signature, regardless of THREAD_SAFE_QUERY
 static int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 
 int yyerror(Query_Stack *, char *);
-/* int yyparse(void); */
-
-#ifdef MOVED
-// We try to avoid local prototypes, but these have to be here...
-static Data_Obj * _def_obj(QSP_ARG_DECL  const char *);
-static Data_Obj * _def_sub(QSP_ARG_DECL  Data_Obj * , index_t);
-#endif // MOVED
-
-
-#ifdef FOOBAR
-// we avoid local prototypes, but this has to be here
-// because of circular calls between eval_expr and eval_dobj_expr...
-//static double eval_expr(QSP_ARG_DECL  Scalar_Expr_Node *);
-//static Typed_Scalar * eval_expr(QSP_ARG_DECL  Scalar_Expr_Node *);
-#endif // FOOBAR
-
-
-/* globals */
-
-#ifdef MOVED
-// These pointers are here so that this module can be build (and loaded)
-// independently of the data_obj module.
-Data_Obj * (*obj_get_func)(QSP_ARG_DECL  const char *)=_def_obj;
-//Data_Obj * (*exist_func)(QSP_ARG_DECL  const char *)=_def_obj;
-Data_Obj * (*sub_func)(QSP_ARG_DECL  Data_Obj *,index_t)=_def_sub;
-Data_Obj * (*csub_func)(QSP_ARG_DECL  Data_Obj *,index_t)=_def_sub;
-#endif // MOVED
 
 #define NODE0(code)	node0(code)
 #define NODE1(code,enp)	node1(code,enp)
@@ -292,28 +218,34 @@ static Scalar_Expr_Node *node3( Scalar_Expr_Node_Code code, Scalar_Expr_Node *ch
 
 // New version to avoid fixed length strings
 
-static char *get_expr_stringbuf( int index, long min_len )
+static char *get_expr_stringbuf( QSP_ARG_DECL   int index, long min_len )
 {
 	String_Buf *sbp;
 
-	if( expr_string[index] == NULL ){
+	if( EXPR_STRING[index] == NULL ){
 		sbp = new_stringbuf();
-		expr_string[index]=sbp;
+		EXPR_STRING[index]=sbp;
 	} else {
-		sbp = expr_string[index];
+		sbp = EXPR_STRING[index];
 	}
-	if( expr_string[index]->sb_size < min_len )
+	if( sb_size(EXPR_STRING[index]) < min_len )
 		enlarge_buffer(sbp,min_len);
-	return(sbp->sb_buf);
+	return(sb_buffer(sbp));
 }
 
 %}
 
-// %pure_parser	// make the parser rentrant (thread-safe)
 %pure-parser	// make the parser rentrant (thread-safe)
-// not on brewster or mach...
+
+// I've installed bison 3.0 on all mac systems using fink,
+// but xcode still wants to use its own old version!?
+// I wish there was a conditional processing (ifde
+
+// this form works with bison 2.X (xcode)
+// issues a deprecated warning in 3.0, but hopefully still works?
 %name-prefix="quip_"
-// this does not work on pavlov:
+
+// this form requires bison 3.0 or later
 //%name-prefix "quip_"
 
 /* The YYPARSE_PARAM macro has been deprecated in favor of %parse-param
@@ -361,6 +293,7 @@ static char *get_expr_stringbuf( int index, long min_len )
 %token <func_p> MATH2_FUNC
 %token <func_p> INT1_FUNC
 %token <func_p> DATA_FUNC
+%token <func_p> DOBJV_STR_ARG_FUNC
 %token <func_p> SIZE_FUNC
 %token <func_p> TS_FUNC
 %token <func_p> IL_FUNC
@@ -384,6 +317,7 @@ static char *get_expr_stringbuf( int index, long min_len )
 %start topexp
 %type <enp> expression
 %type <enp> data_object
+%type <enp> scalar_obj
 //%type <enp> sizable_object
 %type <enp> timestampable_object
 %type <enp> e_string
@@ -400,20 +334,20 @@ static char *get_expr_stringbuf( int index, long min_len )
 
 topexp		: expression { 
 			// qsp is passed to yyparse through YYPARSE_PARAM, but it is void *
-			final_expr_node_p = $1 ;
+			FINAL_EXPR_NODE_P = $1 ;
+			}
+		| e_string {
+			FINAL_EXPR_NODE_P = $1;
 			}
 		/*
-		| e_string {
-			final_expr_node_p = $1;
-			}
-			*/
 		| strv_func {
 			final_expr_node_p = $1;
 			}
+			*/
 		;
 
 			
-strv_func	: STRV_FUNC '(' /* e_string */ data_object ')' {
+strv_func	: STRV_FUNC '(' e_string /* data_object*/  ')' {
 			// string-valued functions (e.g. precision(obj))
 			//
 			// This doesn't have to be a data_object,
@@ -447,41 +381,31 @@ e_string	: E_STRING {
 		| strv_func
 		;
 
-data_object	: /* E_STRING {
-			Scalar_Expr_Node *enp;
-			enp=NODE0(N_LITSTR);
-			enp->sen_tsp = $1;
-			$$=NODE1(N_OBJNAME,enp);
-			}
-		| E_QSTRING {
-			/* the string is the data, not the name of an object... */
-			/* We added this node type to support things like
-			 * isdigit("abc1"[2]), but treating quoted strings
-			 * as row vectors broke a lot of things where we quote
-			 * the name of an image file...
-			 *
-			 * A compromise is to strip the quotes as normally,
-			 * but if the data_obj does not exist, THEN treat it
-			 * as a string... messy!
-			 */
-			 /*
-			Scalar_Expr_Node *enp;
-			enp=NODE0(N_LITSTR);
-			enp->sen_tsp = $1;
-			$$=NODE1(N_QUOT_STR,enp);
-			}
-		| */ e_string {
-			Scalar_Expr_Node *enp;
-			enp=NODE1(N_STRING,$1);
-			//enp->sen_tsp = $1;
-			$$=NODE1(N_QUOT_STR,enp);
-			}
+// We would really like a data object to be a quoted string only...
+// Because when we say ncols(xxx) we want the number of columns of an object
+// named xxx, not the length of the string "xxx"...
 
+data_object	:
+		  e_string {
+			$$=NODE1(N_OBJNAME,$1);
+			}
+ 
+		 /* The data_object-valued function with a string arg:
+		  * string_obj("a string")
+		  * This construct allows us to index strings and test char values.
+		  */
+
+		 | DOBJV_STR_ARG_FUNC '(' e_string ')' {
+			$$=NODE1(N_DOBJV_STR_ARG_FUNC,$3);
+			$$->sen_func_p=$1;
+		  	}
 		| data_object '[' expression ']' {
 			$$=NODE2(N_SUBSCRIPT,$1,$3); }
 		| data_object '{' expression '}' {
 			$$=NODE2(N_CSUBSCRIPT,$1,$3); }
 		;
+
+scalar_obj	: data_object { $$=NODE1(N_SCALAR_OBJ,$1); }
 
 /* Because the size functions can take things other than data objects
  * as arguments (e.g., a viewer name), it seemed more readable to
@@ -529,6 +453,10 @@ expression	: NUMBER {
 			$$=NODE1(N_CHARFUNC,$3);
 			$$->sen_func_p = $1;
 			}
+		| CHAR_FUNC '(' scalar_obj ')' {
+			$$=NODE1(N_CHARFUNC,$3);
+			$$->sen_func_p = $1;
+			}
 		| DATA_FUNC '(' data_object ')' {
 			$$=NODE1(N_DATAFUNC,$3);
 			$$->sen_func_p=$1;
@@ -539,7 +467,7 @@ expression	: NUMBER {
 			$$=NODE1(N_ILACEFUNC,$3);
 			$$->sen_func_p=$1;
 			}
-		| POSN_FUNC '(' data_object ')' {
+		| POSN_FUNC '(' e_string ')' {
 			// This doesn't have to be a data_object,
 			// it can be the name of a sizable object...
 			$$=NODE1(N_POSNFUNC,$3);
@@ -607,8 +535,10 @@ expression	: NUMBER {
 			$$->sen_string = savestr($1);
 			}
 			*/
+		/*
 		| data_object
 			{ $$=NODE1(N_SCALAR_OBJ,$1); }
+			*/
 
 		// We used to allow a named scalar object to be given -
 		// equivalent to value(objname), but without having to explicitly
@@ -626,35 +556,12 @@ expression	: NUMBER {
 
 %%
 
-#ifdef MOVED
-static Data_Obj *obj_for_string(const char *string)
-{
-	Dimension_Set *dsp;
-	Data_Obj *dp;
-
-	INIT_DIMSET_PTR(dsp)
-
-	/* this is just a string that we treat as a row vector
-	 * of character data...
-	 * We haven't actually created the data yet.
-	 */
-	SET_DIMENSION(dsp,0,1);
-	SET_DIMENSION(dsp,1,(dimension_t)strlen(string)+1);
-	SET_DIMENSION(dsp,2,1);
-	SET_DIMENSION(dsp,3,1);
-	SET_DIMENSION(dsp,4,1);
-	dp=make_dobj(DEFAULT_QSP_ARG  localname(),dsp,prec_for_code(PREC_STR));
-	if( dp != NULL ) strcpy((char *)OBJ_DATA_PTR(dp),string);
-	return(dp);
-}
-#endif // MOVED
-
 static Scalar_Expr_Node *alloc_expr_node(void)
 {
 	Scalar_Expr_Node *enp;
 	int i;
 
-	if( free_enp_lp != NO_LIST && QLIST_HEAD(free_enp_lp) != NO_NODE ){
+	if( free_enp_lp != NULL && QLIST_HEAD(free_enp_lp) != NULL ){
 		Node *np;
 		np=remHead(free_enp_lp);
 		enp = (Scalar_Expr_Node *)NODE_DATA(np);
@@ -678,6 +585,9 @@ static Scalar_Expr_Node *alloc_expr_node(void)
 	return(enp);
 }
 
+// This gets called from outside?
+// Where does the node come from???
+
 const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 {
 	Typed_Scalar *tsp;
@@ -690,6 +600,7 @@ const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 			break;
 
 		case N_STRVFUNC:
+#ifdef FOOBAR
 #ifdef BUILD_FOR_OBJC
 			// BUG BUG BUG
 			if( check_ios_strv_func(&s,enp->sen_func_p,
@@ -698,6 +609,7 @@ const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 				return s;
 			}
 #endif /* BUILD_FOR_OBJC */
+#endif // FOOBAR
 			// why sizable?  this is supposed to be a string arg...
 			// This makes sense only for the "precision" function -
 			// but what about touuper etc?
@@ -708,6 +620,7 @@ const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 			break;
 
 		case N_STRV2FUNC:
+#ifdef FOOBAR
 #ifdef BUILD_FOR_OBJC
 			// BUG BUG BUG ? (why?)
 			if( check_ios_strv2_func(&s,enp->sen_func_p,
@@ -716,6 +629,7 @@ const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 				return s;
 			}
 #endif /* BUILD_FOR_OBJC */
+#endif // FOOBAR
 			// why sizable???
 			/*
 			szp = EVAL_SZBL_EXPR_FUNC(enp->sen_child[0]);
@@ -730,28 +644,16 @@ const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 
 		case N_LITSTR:
 			tsp = enp->sen_tsp;
-//#ifdef CAUTIOUS
-//			if( tsp->ts_prec_code != PREC_STR ){
-//				NWARN("CAUTIOUS:  eval_scalexp_string:  typed scalar does not have string precision!?");
-//				return "foobar";
-//			}
-//#endif // CAUTIOUS
 			assert( tsp->ts_prec_code == PREC_STR );
 
 			return (char *) tsp->ts_value.u_vp;
 			break;
-//#ifdef CAUTIOUS
 		case N_STRING:
 			return EVAL_SCALEXP_STRING(enp->sen_child[0]);
 			break;
 		default:
-//			sprintf(DEFAULT_ERROR_STRING,
-//		"CAUTIOUS:  eval_scalexp_string:  unhandled node code %d!?",enp->sen_code);
-//			NWARN(DEFAULT_ERROR_STRING);
-//			dump_etree(DEFAULT_QSP_ARG  enp);
 			assert( 0 );
 			break;
-//#endif // CAUTIOUS
 	}
 	return "foobar";
 }
@@ -770,15 +672,12 @@ static Item* eval_tsbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 				sprintf(ERROR_STRING,
 					"No time-stampable object \"%s\"!?",s);
 				NWARN(ERROR_STRING);
-				return(NULL);
+				return NULL;
 			}
 			break;
-//#ifdef CAUTIOUS
 		default:
-//			NWARN("unexpected case in eval_tsbl_expr");
 			assert( AERROR("unexpected case in eval_tsbl_expr") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(ip);
 }
@@ -798,14 +697,14 @@ N_CONDITIONAL
 			s = EVAL_SCALEXP_STRING(enp);
 			sprintf(ERROR_STRING,"0x%lx\tstring\t%s",
 				(long/*int_for_addr*/)enp, s);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 #ifdef FOOBAR
 		case N_SIZABLE:
 			sprintf(ERROR_STRING,"0x%lx\tsizable\t%s",
 				(long/*int_for_addr*/)enp, enp->sen_string);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 #endif /* FOOBAR */
 
@@ -813,7 +712,7 @@ N_CONDITIONAL
 			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
 			sprintf(ERROR_STRING,"0x%lx\ttsable\t%s",
 				(long/*int_for_addr*/)enp, s);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_STRVFUNC:
@@ -829,207 +728,207 @@ N_CONDITIONAL
 		case N_SIZFUNC:
 			sprintf(ERROR_STRING,"0x%lx\tsizefunc\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_TSFUNC:
 			sprintf(ERROR_STRING,"0x%lx\tts_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_ILACEFUNC:
 			sprintf(ERROR_STRING,"0x%lx\tinterlace_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_POSNFUNC:
 			sprintf(ERROR_STRING,"0x%lx\tposn_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_MATH0FUNC:
 			sprintf(ERROR_STRING,"0x%lx\tmath0_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_MATH2FUNC:
 			sprintf(ERROR_STRING,"0x%lx\tmath2_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_MISCFUNC:
 			sprintf(ERROR_STRING,"0x%lx\tmisc_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_STR2FUNC:
 			sprintf(ERROR_STRING,"0x%lx\tstr2_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_STR3FUNC:
 			sprintf(ERROR_STRING,"0x%lx\tstr3_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_DATAFUNC:
 			sprintf(ERROR_STRING,"0x%lx\tdatafunc\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_OBJNAME:
 			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
 			sprintf(ERROR_STRING,"0x%lx\tobjname\t%s",
 				(long/*int_for_addr*/)enp, s);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_SCALAR_OBJ:
 			sprintf(ERROR_STRING,"0x%lx\tscalar_obj\t0x%lx",
 				(long/*int_for_addr*/)enp, (long/*int_for_addr*/)enp->sen_child[0]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_SUBSCRIPT:
 			sprintf(ERROR_STRING,"0x%lx\tsubscript\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp, (long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_CSUBSCRIPT:
 			sprintf(ERROR_STRING,"0x%lx\tcsubscript\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp, (long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_MATH1FUNC:
 			sprintf(ERROR_STRING,"0x%lx\tmath1func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME(enp->sen_func_p) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_PLUS:
 			sprintf(ERROR_STRING,"0x%lx\tplus\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_MINUS:
 			sprintf(ERROR_STRING,"0x%lx\tminus\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_TIMES:
 			sprintf(ERROR_STRING,"0x%lx\ttimes\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_DIVIDE:
 			sprintf(ERROR_STRING,"0x%lx\tdivide\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_MODULO:
 			sprintf(ERROR_STRING,"0x%lx\tmodulo\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_BITAND:
 			sprintf(ERROR_STRING,"0x%lx\tbitand\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_BITOR:
 			sprintf(ERROR_STRING,"0x%lx\tbitor\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_BITXOR:
 			sprintf(ERROR_STRING,"0x%lx\tbitxor\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_SHL:
 			sprintf(ERROR_STRING,"0x%lx\tshl\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_SHR:
 			sprintf(ERROR_STRING,"0x%lx\tshr\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_LOGOR:
 			sprintf(ERROR_STRING,"0x%lx\tlog_or\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_LOGAND:
 			sprintf(ERROR_STRING,"0x%lx\tlog_and\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_LOGXOR:
 			sprintf(ERROR_STRING,"0x%lx\tlog_xor\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_LITNUM:
-			string_for_typed_scalar(MSG_STR,enp->sen_tsp);
+			string_for_typed_scalar(MSG_STR,LLEN,enp->sen_tsp);
 			sprintf(ERROR_STRING,"0x%lx\tlit_num\t%s",
 				(long/*int_for_addr*/)enp,MSG_STR);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_LE:
 			sprintf(ERROR_STRING,"0x%lx\t<= (LE)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
 				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_GE:
 			sprintf(ERROR_STRING,"0x%lx\t>= (GE)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
 				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_NE:
 			sprintf(ERROR_STRING,"0x%lx\t!= (NE)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
 				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_LT:
 			sprintf(ERROR_STRING,"0x%lx\t< (LT)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
 				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_GT:
 			sprintf(ERROR_STRING,"0x%lx\t> (GT)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
 				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_NOT:
 			sprintf(ERROR_STRING,"0x%lx\t! (NOT)\t0x%lx",
 				(long/*int_for_addr*/)enp,
 				(long/*int_for_addr*/)enp->sen_child[0]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_STRFUNC:
 			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
@@ -1037,7 +936,7 @@ N_CONDITIONAL
 				(long/*int_for_addr*/)enp,
 				FUNC_NAME(enp->sen_func_p),
 				s);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 // comment out the default case for the compiler to show unhandled cases...
@@ -1045,7 +944,7 @@ N_CONDITIONAL
 			sprintf(ERROR_STRING,
 		"%s - %s:  unhandled node code %d",
 				WHENCE2(dump_enode),enp->sen_code);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 	}
@@ -1096,11 +995,32 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_SCALAR_OBJ:
 			dp = eval_dobj_expr(QSP_ARG  enp->sen_child[0]);
 			if( IS_SCALAR(dp) ) return(dp);
-			return(NULL);
+			return NULL;
 			break;
-		case N_OBJNAME:
+		case N_OBJNAME:	// eval_dobj_expr
 			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
-			dp = (*obj_get_func)( QSP_ARG  s );
+			dp = (*exist_func)( QSP_ARG  s );
+			if( dp == NULL ){	// could be an identifier?
+				Identifier *idp;
+				idp = id_of(s);
+				if( idp == NULL ){
+					sprintf(ERROR_STRING,
+	"No object or identifier %s!?",s);
+					warn(ERROR_STRING);
+					return NULL;
+				}
+				if( ID_TYPE(idp) == ID_SCALAR ){
+					// create a temp scalar object
+					dp = mk_scalar("tmp_scal",ID_PREC_PTR(idp));
+
+					// BUG when to release this object???
+				} else {
+					sprintf(ERROR_STRING,
+	"Identifier %s is not a scalar!?",s);
+					warn(ERROR_STRING);
+					return NULL;
+				}
+			}
 			break;
 		case N_SUBSCRIPT:
 			dp2=eval_dobj_expr(QSP_ARG  enp->sen_child[0]);
@@ -1117,14 +1037,9 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			dp=(*csub_func)( QSP_ARG  dp2, index );
 			break;
 
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"unexpected case (%d) in eval_dobj_expr",enp->sen_code);
-//			NWARN(ERROR_STRING);
 			assert(0);
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(dp);
 } // end eval_dobj_expr
@@ -1155,14 +1070,14 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 				sprintf(ERROR_STRING,
 					"No sizable object \"%s\"!?",s);
 				NWARN(ERROR_STRING);
-				return(NULL);
+				return NULL;
 			}
 			break;
 		//case N_SUBSIZ:
 		case N_SUBSCRIPT:
 			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
 			if( szp2 == NULL )
-				return(NULL);
+				return NULL;
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = sub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
@@ -1170,18 +1085,13 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_CSUBSCRIPT:
 			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
 			if( szp2 == NULL )
-				return(NULL);
+				return NULL;
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = csub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"unexpected case in eval_szbl_expr %d",enp->sen_code);
-//			NWARN(ERROR_STRING);
 			assert(0);
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(szp);
 }
@@ -1194,25 +1104,26 @@ static Item * eval_positionable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 
 	switch(enp->sen_code){
 		case N_QUOT_STR:
+		case N_LITSTR:
 		case N_OBJNAME:
 			// Not necessarily a data object!?
 			s = EVAL_SCALEXP_STRING(enp);
 			szp = find_positionable( DEFAULT_QSP_ARG  s );
 			break;
-//#ifdef CAUTIOUS
+#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"unexpected case in eval_szbl_expr %d",enp->sen_code);
-//			NWARN(ERROR_STRING);
-			assert(0);
+			sprintf(ERROR_STRING,
+		"unexpected case in eval_szbl_expr %d",enp->sen_code);
+			NWARN(ERROR_STRING);
+			//assert(0);
 			break;
-//#endif /* CAUTIOUS */
+#endif /* CAUTIOUS */
 	}
 	if( szp == NULL ){
 		sprintf(ERROR_STRING,
 			"No positionable object \"%s\"!?",s);
 		NWARN(ERROR_STRING);
-		return(NULL);
+		return NULL;
 	}
 
 	return(szp);
@@ -1233,7 +1144,7 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 				sprintf(ERROR_STRING,
 					"No interlaceable object \"%s\"!?",s);
 				NWARN(ERROR_STRING);
-				return(NULL);
+				return NULL;
 			}
 			break;
 		// are data objects interlaceable???
@@ -1242,7 +1153,7 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_SUBSCRIPT:
 			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
 			if( szp2 == NULL )
-				return(NULL);
+				return NULL;
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = sub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
@@ -1250,20 +1161,15 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_CSUBSCRIPT:
 			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
 			if( szp2 == NULL )
-				return(NULL);
+				return NULL;
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = csub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
 #endif // FOOBAR
 
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"unexpected case in eval_szbl_expr %d",enp->sen_code);
-//			NWARN(ERROR_STRING);
 			assert(0);
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(szp);
 }
@@ -1271,7 +1177,7 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 static void divzer_error(SINGLE_QSP_ARG_DECL)
 {
 	sprintf(DEFAULT_ERROR_STRING,"Error parsing \"%s\"",YY_ORIGINAL);
-	ADVISE(DEFAULT_ERROR_STRING);
+	advise(DEFAULT_ERROR_STRING);
 	NWARN("eval_expr:  divide by 0!?");
 }
 
@@ -1405,12 +1311,12 @@ Typed_Scalar * eval_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 	Typed_Scalar *tsp, *tsp2, *tsp3;
 
 	dimension_t frm;
-	static Function *val_func_p=NO_FUNCTION;
+	static Quip_Function *val_func_p=NULL;
 
 #ifdef QUIP_DEBUG
 if( debug & expr_debug ){
 sprintf(ERROR_STRING,"eval_expr:  code = %d",enp->sen_code);
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 dump_enode(QSP_ARG  enp);
 }
 #endif /* QUIP_DEBUG */
@@ -1492,6 +1398,7 @@ dump_enode(QSP_ARG  enp);
 		tsp = scalar_for_double(dval);
 		break;
 	case N_STRVFUNC:		// eval_expr
+#ifdef FOOBAR
 		/* We have problems mixing IOS objects and C structs... */
 #ifdef BUILD_FOR_OBJC
 		if( check_ios_strv_func(&s,enp->sen_func_p,
@@ -1500,6 +1407,7 @@ dump_enode(QSP_ARG  enp);
 			return tsp;
 		}
 #endif /* BUILD_FOR_OBJC */
+#endif // FOOBAR
 		// BUG - if this is to support the precision function, then
 		// the sizable lookup should be done within the function, not here!
 		/*
@@ -1508,9 +1416,11 @@ dump_enode(QSP_ARG  enp);
 		*/
 		s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
 		s = (*enp->sen_func_p->fn_u.strv_func)( QSP_ARG s );
+//fprintf(stderr,"eval_expr:  strv_func returned string at 0x%lx\n",(long)s);
 		tsp = scalar_for_string(s);
 		break;
 	case N_STRV2FUNC:		// eval_expr
+#ifdef FOOBAR
 #ifdef BUILD_FOR_OBJC
 		if( check_ios_strv2_func(&s,enp->sen_func_p,
 				enp->sen_child[0],enp->sen_child[0]) ){
@@ -1518,6 +1428,7 @@ dump_enode(QSP_ARG  enp);
 			return tsp;
 		}
 #endif /* BUILD_FOR_OBJC */
+#endif // FOOBAR
 		s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
 		s2 = EVAL_SCALEXP_STRING(enp->sen_child[1]);
 		s = (*enp->sen_func_p->fn_u.strv2_func)( QSP_ARG s, s2 );
@@ -1593,15 +1504,9 @@ dump_enode(QSP_ARG  enp);
 		 * But this is good enough for now...
 		 */
 
-		if( val_func_p == NO_FUNCTION )
-			val_func_p = function_of(QSP_ARG  "value");
-//#ifdef CAUTIOUS
-//		if( val_func_p == NO_FUNCTION ){
-//			ERROR1("CAUTIOUS:  couldn't find object value function!?");
-//			IOS_RETURN_VAL(NULL);
-//		}
-//#endif /* CAUTIOUS */
-		assert( val_func_p != NO_FUNCTION );
+		if( val_func_p == NULL )
+			val_func_p = function_of("value");
+		assert( val_func_p != NULL );
 
 		/* This seems buggy - there should be a value function
 		 * that returns a typed scalar!?
@@ -1821,7 +1726,7 @@ dump_enode(QSP_ARG  enp);
 
 //#ifdef FOOBAR
 //	case N_SLCT_CHAR:		// eval_expr
-//ADVISE("case N_SLCT_CHAR");
+//advise("case N_SLCT_CHAR");
 //		ival = EVAL_EXPR(enp->sen_child[0]);
 //		if( ival < 0 || ival >= strlen(enp->sen_string) )
 //			dval = -1;
@@ -1830,17 +1735,9 @@ dump_enode(QSP_ARG  enp);
 //		break;
 //#endif /* FOOBAR */
 
-//#ifdef CAUTIOUS
 	default:		// eval_expr
-//		sprintf(ERROR_STRING,
-//			"CAUTIOUS:  %s - %s:  unhandled node code case %d!?",
-//			WHENCE2(eval_expr),
-//			enp->sen_code);
-//		NWARN(ERROR_STRING);
-//		SET_RESULT_ZERO
 		assert(0);
 		break;
-//#endif /* CAUTIOUS */
 
 	}
 
@@ -2053,7 +1950,7 @@ Typed_Scalar *parse_number(QSP_ARG_DECL  const char **strptr)
 
 		errno = 0;
 //sprintf(ERROR_STRING,"converting string \"%s\"",buf);
-//ADVISE(ERROR_STRING);
+//advise(ERROR_STRING);
 		d = strtod(buf,&endptr);
 		if( errno == ERANGE ){
 			// This message is printing, but the returned
@@ -2061,14 +1958,14 @@ Typed_Scalar *parse_number(QSP_ARG_DECL  const char **strptr)
 			// the documentation.
 			if( d == 0.0 ){
 sprintf(DEFAULT_ERROR_STRING,"strtod:  possible underflow buf=\"%s\", d = %g",buf,d);
-ADVISE(DEFAULT_ERROR_STRING);
+advise(DEFAULT_ERROR_STRING);
 			} else if( d == HUGE_VAL || d == -HUGE_VAL ){
 sprintf(DEFAULT_ERROR_STRING,"strtod:  possible overflow buf=\"%s\", d = %g  HUGE_VAL = %g",buf,d,HUGE_VAL);
-ADVISE(DEFAULT_ERROR_STRING);
+advise(DEFAULT_ERROR_STRING);
 			} else {
 				if( verbose ){
 sprintf(DEFAULT_ERROR_STRING,"strtod:  possible overflow (inconsistent) buf=\"%s\", d = %g  HUGE_VAL = %g",buf,d,HUGE_VAL);
-ADVISE(DEFAULT_ERROR_STRING);
+advise(DEFAULT_ERROR_STRING);
 				}
 			}
 		} else if( errno != 0 ){
@@ -2078,7 +1975,7 @@ ADVISE(DEFAULT_ERROR_STRING);
 		}
 
 //sprintf(DEFAULT_ERROR_STRING,"flt conversion returning %lg",d);
-//ADVISE(DEFAULT_ERROR_STRING);
+//advise(DEFAULT_ERROR_STRING);
 //		return( scalar_for_double(d) );
 
 	{
@@ -2096,14 +1993,14 @@ static Typed_Scalar * yynumber(SINGLE_QSP_ARG_DECL)
 	Typed_Scalar *tsp;
 
 //sprintf(ERROR_STRING,"yynumber calling parse_number %s",YYSTRPTR[EDEPTH]);
-//ADVISE(ERROR_STRING);
+//advise(ERROR_STRING);
 	tsp = parse_number(DEFAULT_QSP_ARG  (const char **)&YYSTRPTR[EDEPTH]);
 	return tsp;
 }
 
 #define TMPBUF_LEN	128
 
-static const char * varval(void)
+static const char * varval(SINGLE_QSP_ARG_DECL)
 {
 	char tmpbuf[TMPBUF_LEN];
 	const char *s;
@@ -2114,7 +2011,7 @@ static const char * varval(void)
 
 	if( *YYSTRPTR[EDEPTH] == '$' ){
 		YYSTRPTR[EDEPTH]++;
-		s = varval() ;
+		s = varval(SINGLE_QSP_ARG) ;
 	} else {
 		/* read in the variable name */
 		char *sp;
@@ -2159,15 +2056,13 @@ static int token_for_func_type(int type)
 		case CHAR_FUNCTYP:	return(CHAR_FUNC);	break;
 		case SIZE_FUNCTYP:	return(SIZE_FUNC);	break;
 		case DOBJ_FUNCTYP:	return(DATA_FUNC);	break;
+		case DOBJV_STR_ARG_FUNCTYP:	return(DOBJV_STR_ARG_FUNC);	break;
 		case TS_FUNCTYP:	return(TS_FUNC);	break;
 		case ILACE_FUNCTYP:	return(IL_FUNC);	break;
 		case POSN_FUNCTYP:	return(POSN_FUNC);	break;
-//#ifdef CAUTIOUS
 		default:
-//			NERROR1("CAUTIOUS:  token_for_func_type:  bad type!?");
 			assert( AERROR("token_for_func_type:  bad type!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(-1);
 }
@@ -2211,41 +2106,34 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 				LLERROR("expression depth too large");
 				return(0);
 			}
-			YYSTRPTR[EDEPTH+1]=varval();
+			YYSTRPTR[EDEPTH+1]=varval(SINGLE_QSP_ARG);
 			/* varval should advance YYSTRPTR[edpth] */
 			EDEPTH++;
 			/* keep looping */
 		} else if( IS_LEGAL_FIRST_CHAR(c) ){	/* get a name */
 			int n=1;
-			s=get_expr_stringbuf(WHICH_EXPR_STR,strlen(YYSTRPTR[EDEPTH]));
+			s=get_expr_stringbuf(QSP_ARG  WHICH_EXPR_STR,strlen(YYSTRPTR[EDEPTH]));
 			*s++ = (*YYSTRPTR[EDEPTH]++);
 			while( IS_LEGAL_NAME_CHAR(*YYSTRPTR[EDEPTH]) ){
 				*s++ = (*YYSTRPTR[EDEPTH]++);
 				n++;
-//#ifdef CAUTIOUS
-//				if( n >= expr_string[WHICH_EXPR_STR]->sb_size ){
-//					LLERROR("string buffer overflow #1");
-//					s--;
-//					n--;
-//				}
-//#endif // CAUTIOUS
-				assert(n< SB_SIZE(expr_string[WHICH_EXPR_STR]));
+				assert( n < sb_size(EXPR_STRING[WHICH_EXPR_STR]) );
 			}
 			*s=0;
 
-			yylvp->func_p = function_of(QSP_ARG
-				expr_string[WHICH_EXPR_STR]->sb_buf);
+			yylvp->func_p = function_of(sb_buffer(EXPR_STRING[WHICH_EXPR_STR]));
 			if( yylvp->func_p != NULL ){
 				int t;
 				t = token_for_func_type(FUNC_TYPE(yylvp->func_p));
+//fprintf(stderr,"Found function at 0x%lx, token = %d\n",(long)yylvp->func_p,t);
 				return t;
 			}
 
 			// use an array of tsp's here instead???
-			//yylvp->e_string=expr_string[WHICH_EXPR_STR]->sb_buf;
-			string_scalar[WHICH_EXPR_STR].ts_value.u_vp=
-				expr_string[WHICH_EXPR_STR]->sb_buf;
-			yylvp->tsp=(&string_scalar[WHICH_EXPR_STR]);
+			//yylvp->e_string=EXPR_STRING[WHICH_EXPR_STR]->sb_buf;
+			STRING_SCALAR[WHICH_EXPR_STR].ts_value.u_vp=
+				sb_buffer(EXPR_STRING[WHICH_EXPR_STR]);
+			yylvp->tsp=(&STRING_SCALAR[WHICH_EXPR_STR]);
 			ADVANCE_EXPR_STR
 			return(E_STRING);	/* unquoted string */
 
@@ -2314,7 +2202,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 				 * like to skip escaped quotes...
 				 */
 				qchar=c;
-				s=get_expr_stringbuf(WHICH_EXPR_STR,strlen(YYSTRPTR[EDEPTH]));
+				s=get_expr_stringbuf(QSP_ARG  WHICH_EXPR_STR,strlen(YYSTRPTR[EDEPTH]));
 				/* copy string into a buffer */
 				c = *YYSTRPTR[EDEPTH];
 				while( c && c != qchar ){
@@ -2335,16 +2223,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 						n++;
 					}
 					c = *YYSTRPTR[EDEPTH];
-//#ifdef CAUTIOUS
-//					if( n >= expr_string[WHICH_EXPR_STR]->sb_size ){
-//						LLERROR("CAUTIOUS:  string buffer overflow #2");
-//						s--;
-//						*s = 0;
-//						//LLERROR(_strbuf[WHICH_EXPR_STR]);
-//						n--;
-//					}
-//#endif // CAUTIOUS
-					assert(n<SB_SIZE(expr_string[WHICH_EXPR_STR]));
+					assert( n < sb_size(EXPR_STRING[WHICH_EXPR_STR]) );
 				}
 				*s=0;
 				if( *YYSTRPTR[EDEPTH] == qchar ){
@@ -2354,48 +2233,34 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 					 */
 				} else LLERROR("unmatched quote");
 
-				yylvp->tsp=(&string_scalar[WHICH_EXPR_STR]);
-				string_scalar[WHICH_EXPR_STR].ts_value.u_vp
-					= expr_string[WHICH_EXPR_STR]->sb_buf;
+				yylvp->tsp=(&STRING_SCALAR[WHICH_EXPR_STR]);
+				STRING_SCALAR[WHICH_EXPR_STR].ts_value.u_vp
+					= sb_buffer(EXPR_STRING[WHICH_EXPR_STR]);
 
 				ADVANCE_EXPR_STR
-#ifdef QUIP_DEBUG
-//if( debug & expr_debug ){
-//ADVISE("yylex:  quoted E_STRING");
-//}
-#endif /* QUIP_DEBUG */
 				return(E_QSTRING);	/* quoted string */
 			}
-#ifdef QUIP_DEBUG
-//if( debug & expr_debug ){
-//ADVISE("yylex:  punct char");
-//}
-#endif /* QUIP_DEBUG */
-
-			return(c);
+			return(c);	// punctuation char
 		} else {
 			LLERROR("yylex error");
 			return(0);
 		}
 	}
-#ifdef QUIP_DEBUG
-//if( debug & expr_debug ){
-//ADVISE("yylex:  0 (EDEPTH<0)");
-//}
-#endif /* QUIP_DEBUG */
 
 	return(0);
 }
 
 /* rls_tree should only be called when locked */
 
-static void rls_tree( Scalar_Expr_Node *enp )
+#define rls_tree(enp) _rls_tree(QSP_ARG  enp)
+
+static void _rls_tree(QSP_ARG_DECL  Scalar_Expr_Node *enp )
 {
 	Node *np;
 
-	if( enp->sen_child[0] != NO_EXPR_NODE )
+	if( enp->sen_child[0] != NULL )
 		rls_tree(enp->sen_child[0]);
-	if( enp->sen_child[1] != NO_EXPR_NODE )
+	if( enp->sen_child[1] != NULL )
 		rls_tree(enp->sen_child[1]);
 	/*
 	if( enp->sen_string != NULL )
@@ -2404,29 +2269,26 @@ static void rls_tree( Scalar_Expr_Node *enp )
 		rls_str(enp->sen_string2);
 		*/
 
-	if( free_enp_lp == NO_LIST ){
+	if( free_enp_lp == NULL ){
 		free_enp_lp = new_list();
-//#ifdef CAUTIOUS
-//		if( free_enp_lp == NO_LIST ) NERROR1("CAUTIOUS:  rls_tree:  error creating free enp list");
-//#endif /* CAUTIOUS */
-		assert( free_enp_lp != NO_LIST );
+		assert( free_enp_lp != NULL );
 	}
 	np = mk_node(enp);
 	addHead(free_enp_lp,np);
 }
 
-static void initialize_estrings(void)
+static void initialize_estrings(SINGLE_QSP_ARG_DECL)
 {
 	// BUG using these static structs is not thread-safe!
 
 	int i;
 
 	for(i=0;i<MAX_E_STRINGS;i++){
-		expr_string[i]=NULL;
-		string_scalar[i].ts_value.u_vp = NULL;
-		string_scalar[i].ts_prec_code = PREC_STR;
+		EXPR_STRING[i]=NULL;
+		STRING_SCALAR[i].ts_value.u_vp = NULL;
+		STRING_SCALAR[i].ts_prec_code = PREC_STR;
 	}
-	estrings_inited=1;
+	ESTRINGS_INITED=1;
 }
 
 /*
@@ -2458,43 +2320,57 @@ pexpr(QSP_ARG_DECL  const char *buf)	/** parse expression */
 	int stat;
 	Typed_Scalar *tsp;
 
-	if( ! estrings_inited ) initialize_estrings();
+//fprintf(stderr,"pexpr('%s') BEGIN, thread %d, IN_PEXPR = %d\n",buf,QS_SERIAL,IN_PEXPR);
+	if( ! ESTRINGS_INITED ) initialize_estrings(SINGLE_QSP_ARG);
 
 #ifdef QUIP_DEBUG
 	if( expr_debug <= 0 )
-		expr_debug = add_debug_module(QSP_ARG  "expressions");
+		expr_debug = add_debug_module("expressions");
 #endif /* QUIP_DEBUG */
 
 #ifdef QUIP_DEBUG
 if( debug & expr_debug ){
 sprintf(ERROR_STRING,"%s - %s:  BEGIN %s, in_pexpr = %d",
 WHENCE2(pexpr),buf,IN_PEXPR);
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
+
+	// Can the parser be reentrant?
+	// From the point of view of yacc/bison, I think the answer is yes,
+	// but we have global vars that are per-qsp...
+	// The gets used for things like is_contiguous('img[1]')
+	// where img[1] is processed by the object name lookup function
+	// which calls the parser on the index.
+	// The parser won't parse things inside of quote strings.
+	// The proper solution would be to make pexpr rentrant (like yyparse)
 
 	if( IN_PEXPR ) {
 #ifdef QUIP_DEBUG
 if( debug & expr_debug ){
-ADVISE("pexpr:  nested call to pexpr, calling parse_number");
+advise("pexpr:  nested call to pexpr, calling parse_number");
 }
 #endif /* QUIP_DEBUG */
+//advise("pexpr:  nested call to pexpr, calling parse_number");
 		return( parse_number(QSP_ARG  &buf) );
 	}
 
+//fprintf(stderr,"pexpr setting IN_PEXPR in thread %d\n",QS_SERIAL);
 	IN_PEXPR=1;
 	EDEPTH=0;
 	YY_ORIGINAL=YYSTRPTR[EDEPTH]=buf;
-
+//fprintf(stderr,"pexpr:  input set to '%s', thread %d\n",buf,QS_SERIAL);
 	stat=yyparse(/*SINGLE_QSP_ARG*/ THIS_QSP );
+//fprintf(stderr,"pexpr:  back from yyparse, thread %d\n",QS_SERIAL);
 
 	if( stat != 0 ){
 		/* Need to somehow free allocated nodes... */
 		if( verbose ){
 			sprintf(ERROR_STRING,"yyparse returned status %d",stat);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 		}
 		IN_PEXPR=0;
+//fprintf(stderr,"pexpr clearing IN_PEXPR (#1) in thread %d\n",QS_SERIAL);
 		//return(0.0);
 		return(&ts_dbl_zero);
 	}
@@ -2505,13 +2381,15 @@ dump_etree(QSP_ARG  FINAL_EXPR_NODE_P);
 }
 #endif /* QUIP_DEBUG */
 
+//fprintf(stderr,"pexpr:  evaluating expression tree, thread %d\n",QS_SERIAL);
 	tsp = EVAL_EXPR(FINAL_EXPR_NODE_P);
+//fprintf(stderr,"pexpr:  done with expression tree, thread %d\n",QS_SERIAL);
 
 #ifdef QUIP_DEBUG
 if( debug & expr_debug ){
 if( tsp->ts_prec_code == PREC_DP ){
 sprintf(ERROR_STRING,"pexpr:  s=\"%s\", dval = %g",buf,tsp->ts_value.u_d);
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 }
 }
 #endif /* QUIP_DEBUG */
@@ -2541,12 +2419,13 @@ ADVISE(ERROR_STRING);
 	}
 #endif /* SUN */
 
-	LOCK_ENODES
+	//LOCK_ENODES
 
 	rls_tree(FINAL_EXPR_NODE_P);
 
-	UNLOCK_ENODES
+	//UNLOCK_ENODES
 
+//fprintf(stderr,"pexpr clearing IN_PEXPR (#2) in thread %d\n",QS_SERIAL);
 	IN_PEXPR=0;
 
 	return( tsp );
@@ -2583,8 +2462,7 @@ int yyerror(Query_Stack *qsp, char *s)
 	 * large number...  causes all sorts of problems!
 	 */
 cleanup:
-	//FINAL_EXPR_NODE_P=NO_EXPR_NODE;
-	final_expr_node_p = NO_EXPR_NODE;
+	FINAL_EXPR_NODE_P=NULL;
 	/* BUG need to release nodes here... */
 	return(0);
 }
@@ -2604,13 +2482,13 @@ static Data_Obj * _def_obj(QSP_ARG_DECL  const char *name)
 	NWARN(DEFAULT_ERROR_STRING);
 
 	NWARN("data module not linked");
-	return(NULL);
+	return NULL;
 }
 
 static Data_Obj *_def_sub(QSP_ARG_DECL  Data_Obj *object,index_t index)
 {
 	NWARN("can't get subobject; data module not linked");
-	return(NULL);
+	return NULL;
 }
 
 

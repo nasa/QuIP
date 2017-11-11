@@ -19,16 +19,6 @@ static void relinquish_to_ios(SINGLE_QSP_ARG_DECL)
 	// We set a timer based on the display refresh to wake up
 	// the interpreter...
 
-//#ifdef CAUTIOUS
-//	if( IS_HALTING(THIS_QSP) ){
-//		// The fact that this warning statement was commented out
-//		// suggests that the code traverses this path routinely???
-//
-//		//WARN("CAUTIOUS:  relinquish_to_ios:  already halting!?");
-//		return;
-//	}
-//#endif // CAUTIOUS
-
 	// If this assertion fails, that means that we've
 	// already called this?
 	assert( ! IS_HALTING( THIS_QSP ) );
@@ -50,16 +40,9 @@ void call_funcs_from_list(QSP_ARG_DECL  List *lp )
 	void (*func)(SINGLE_QSP_ARG_DECL);
 
 	np=QLIST_HEAD(lp);
+	assert( np != NULL );
 
-//#ifdef CAUTIOUS
-//	if( np == NO_NODE ){
-//		WARN("CAUTIOUS:  call_funcs_from_list:  list is empty!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( np != NO_NODE );
-
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		func = (void (*)(SINGLE_QSP_ARG_DECL)) NODE_DATA(np);
 		(*func)(SINGLE_QSP_ARG);
 		np = NODE_NEXT(np);
@@ -77,7 +60,7 @@ void call_event_funcs(SINGLE_QSP_ARG_DECL)
 	}
 #endif // BUILD_FOR_IOS
 
-	if( QS_EVENT_LIST(THIS_QSP) == NO_LIST )
+	if( QS_EVENT_LIST(THIS_QSP) == NULL )
 		return;
 
 	call_funcs_from_list(QSP_ARG  QS_EVENT_LIST(THIS_QSP) );

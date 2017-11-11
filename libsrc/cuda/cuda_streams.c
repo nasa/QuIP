@@ -17,8 +17,6 @@ typedef struct my_cuda_stream {
 #endif // HAVE_CUDA
 } My_Cuda_Stream;
 
-#define NO_CUDA_STREAM ((My_Cuda_Stream *)NULL)
-#define PICK_CUDA_STREAM(s)	pick_cuda_stream(QSP_ARG s)
 
 
 //ITEM_INTERFACE_DECLARATIONS_STATIC( My_Cuda_Stream , cuda_stream )
@@ -30,7 +28,10 @@ static ITEM_PICK_FUNC(My_Cuda_Stream,cuda_stream)
 static ITEM_LIST_FUNC(My_Cuda_Stream,cuda_stream)
 static ITEM_GET_FUNC(My_Cuda_Stream,cuda_stream)
 
-#define GET_CUDA_STREAM(p)	get_cuda_stream(QSP_ARG  p)
+#define new_cuda_stream(s)	_new_cuda_stream(QSP_ARG  s)
+#define get_cuda_stream(p)	_get_cuda_stream(QSP_ARG  p)
+#define list_cuda_streams(fp)	_list_cuda_streams(QSP_ARG  fp)
+#define pick_cuda_stream(s)	_pick_cuda_stream(QSP_ARG s)
 
 static int have_first_cuda_stream=0;
 
@@ -38,11 +39,8 @@ static void init_first_cuda_stream(SINGLE_QSP_ARG_DECL)
 {
 	My_Cuda_Stream *csp;
 
-	csp=new_cuda_stream(QSP_ARG  "default");
-
-#ifdef CAUTIOUS
-	if( csp == NO_CUDA_STREAM ) ERROR1("CAUTIOUS:  failed to create default stream object");
-#endif /* CAUTIOUS */
+	csp=new_cuda_stream("default");
+	assert( csp != NULL );
 
 #ifdef HAVE_CUDA
 	csp->cs_stream = (cudaStream_t) 0;
@@ -61,8 +59,8 @@ COMMAND_FUNC( do_new_stream )
 	if( ! have_first_cuda_stream ) init_first_cuda_stream(SINGLE_QSP_ARG);
 
 	s=NAMEOF("name for stream");
-	csp = new_cuda_stream(QSP_ARG  s);
-	if( csp == NO_CUDA_STREAM ) return;
+	csp = new_cuda_stream(s);
+	if( csp == NULL ) return;
 
 #ifdef HAVE_CUDA
 	e = cudaStreamCreate(&csp->cs_stream);
@@ -77,15 +75,15 @@ COMMAND_FUNC( do_new_stream )
 
 COMMAND_FUNC( do_list_cuda_streams )
 {
-	list_cuda_streams(SINGLE_QSP_ARG);
+	list_cuda_streams(tell_msgfile());
 }
 
 COMMAND_FUNC( do_cuda_stream_info )
 {
 	My_Cuda_Stream *csp;
 	
-	csp = GET_CUDA_STREAM("");
-	if( csp == NO_CUDA_STREAM ) return;
+	csp = get_cuda_stream("");
+	if( csp == NULL ) return;
 
 	prt_msg("No information...");
 }
@@ -99,8 +97,8 @@ COMMAND_FUNC( do_sync_stream )
 
 	if( ! have_first_cuda_stream ) init_first_cuda_stream(SINGLE_QSP_ARG);
 
-	csp = PICK_CUDA_STREAM("stream");
-	if( csp == NO_CUDA_STREAM ) return;
+	csp = pick_cuda_stream("stream");
+	if( csp == NULL ) return;
 
 #ifdef HAVE_CUDA
 	e = cudaStreamSynchronize(csp->cs_stream);

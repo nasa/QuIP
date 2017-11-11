@@ -2,4 +2,5 @@ quip_version.h
 current_quip_version.h
 Makefile
 Makefile.in
+junk
 

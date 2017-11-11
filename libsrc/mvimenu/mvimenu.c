@@ -16,6 +16,7 @@
 #include "gmovie.h"
 #include "function.h"
 #include "xmvi.h"
+#include "seq.h"	// BUG - need to separate public & private
 
 //#ifdef BUILD_FOR_OBJC
 //#include "sizable.h"
@@ -30,14 +31,18 @@ int mvi_debug=(-1);
 #endif /* QUIP_DEBUG */
 
 static Seq_Module mvi_sm;
-static Item_Class *playable_icp=NO_ITEM_CLASS;
+static Item_Class *playable_iclp=NULL;
 
 /* local prototypes */
 ITEM_INTERFACE_PROTOTYPES(Movie,mvi)
-#define PICK_MVI(p)	pick_mvi(QSP_ARG  p)
+#define pick_mvi(p)	_pick_mvi(QSP_ARG  p)
 
-#define MVI_OF(s)		mvi_of(QSP_ARG  s)
-#define GET_MVI(s)		get_mvi(QSP_ARG  s)
+#define mvi_of(s)		_mvi_of(QSP_ARG  s)
+#define get_mvi(s)		_get_mvi(QSP_ARG  s)
+#define del_mvi(s)		_del_mvi(QSP_ARG  s)
+#define new_mvi(s)		_new_mvi(QSP_ARG  s)
+#define list_mvis(fp)		_list_mvis(QSP_ARG  fp)
+#define init_mvis()		_init_mvis(SINGLE_QSP_ARG)
 
 static const char *get_movie_name(SINGLE_QSP_ARG_DECL);
 
@@ -75,16 +80,16 @@ static Interlace_Functions mvi_if={
 
 ITEM_INTERFACE_DECLARATIONS(Movie,mvi,0)
 
-static Movie_Module *the_mmp=NO_MOVIE_MODULE;
+static Movie_Module *the_mmp=NULL;
 
 List *movie_list(SINGLE_QSP_ARG_DECL)
 {
-	return(item_list(QSP_ARG  mvi_itp));
+	return(item_list(mvi_itp));
 }
 
 int movie_ok(void)
 {
-	if( the_mmp == NO_MOVIE_MODULE ){
+	if( the_mmp == NULL ){
 		NWARN("No movie module loaded");
 		return(0);
 	}
@@ -98,12 +103,12 @@ int movie_ok(void)
 
 static int clobber_movies=1;
 
-Movie *create_movie(QSP_ARG_DECL  const char *moviename)
+Movie *_create_movie(QSP_ARG_DECL  const char *moviename)
 {
 	Movie *mvip;
 
-	mvip=MVI_OF(moviename);
-	if( mvip!=NO_MOVIE ){
+	mvip=mvi_of(moviename);
+	if( mvip!=NULL ){
 		/* overwrite an existing movie only if clobber flag set */
 		if( clobber_movies ){
 			if( verbose ){
@@ -111,18 +116,18 @@ Movie *create_movie(QSP_ARG_DECL  const char *moviename)
 			"create_movie:  clobbering existing movie %s",moviename);
 				advise(ERROR_STRING);
 			}
-			del_mvi(QSP_ARG  mvip);
+			del_mvi(mvip);
 			/* maybe do something module-specific here */
 			/* what does rtv do, that's the question! */
 		} else {
 			sprintf(ERROR_STRING,"NOT clobbering existing movie %s",moviename);
 			advise(ERROR_STRING);
-			return(NO_MOVIE);
+			return(NULL);
 		}
 	}
 
-	mvip=new_mvi(QSP_ARG  moviename);
-	if( mvip == NO_MOVIE )
+	mvip=new_mvi(moviename);
+	if( mvip == NULL )
 		return(mvip);
 
 	SET_MOVIE_FLAGS(mvip, 0);
@@ -142,18 +147,18 @@ static Movie *create_writable_movie(QSP_ARG_DECL  const char *moviename,uint32_t
 {
 	Movie *mvip;
 
-	mvip=create_movie(QSP_ARG  moviename);
-	if( mvip == NO_MOVIE ) return(mvip);
+	mvip=create_movie(moviename);
+	if( mvip == NULL ) return(mvip);
 
-	if( !movie_ok() ) return(NO_MOVIE);
+	if( !movie_ok() ) return(NULL);
 
 #ifdef QUIP_DEBUG
 if( debug & mvi_debug ) advise("calling movie setup_func");
 #endif /* QUIP_DEBUG */
 
 	if( (*the_mmp->setup_func)(QSP_ARG  mvip,n_fields) < 0 ){	/* device specific */
-		delete_movie(QSP_ARG  mvip);
-		return(NO_MOVIE);
+		delete_movie(mvip);
+		return(NULL);
 	}
 
 	return(mvip);
@@ -163,8 +168,8 @@ static COMMAND_FUNC( do_movie_info )
 {
 	Movie *mvip;
 
-	mvip=PICK_MVI("");
-	if( mvip == NO_MOVIE ) return;
+	mvip=pick_mvi("");
+	if( mvip == NULL ) return;
 
 	printf("Movie %s:\n",MOVIE_NAME(mvip));
 	printf("\t%d frames\n\t%d rows\n\t%d columns\n",
@@ -194,9 +199,9 @@ static Movie *open_if(QSP_ARG_DECL  const char *s)
 {
 	Movie *mvip;
 
-	mvip=MVI_OF(s);
+	mvip=mvi_of(s);
 
-	if( mvip == NO_MOVIE ){
+	if( mvip == NULL ){
 		if( verbose ){
 			sprintf(ERROR_STRING,
 			"Trying to open movie file %s",s);
@@ -209,9 +214,9 @@ if( debug & mvi_debug ) advise("calling movie open_func");
 
 /* use pathname here... */
 		(*the_mmp->open_func)(QSP_ARG  s);		/* device specific */
-		mvip = MVI_OF(s);
+		mvip = mvi_of(s);
 	}
-	if( mvip == NO_MOVIE ){
+	if( mvip == NULL ){
 		sprintf(ERROR_STRING,"No movie \"%s\"",s);
 		WARN(ERROR_STRING);
 		return(mvip);
@@ -219,7 +224,7 @@ if( debug & mvi_debug ) advise("calling movie open_func");
 
 	if( IS_ASSEMBLING(mvip) ){
 		WARN("can't play a movie that is being assembled");
-		return(NO_MOVIE);
+		return(NULL);
 	}
 
 	SET_MOVIE_TIME(mvip, time(NULL) );
@@ -233,8 +238,8 @@ static COMMAND_FUNC( do_open_mvi )
 	Movie *mvip;
 
 	s=NAMEOF("movie filename");
-	mvip = MVI_OF(s);
-	if( mvip != NO_MOVIE ){
+	mvip = mvi_of(s);
+	if( mvip != NULL ){
 		sprintf(ERROR_STRING,"Movie %s was already open!?",s);
 		advise(ERROR_STRING);
 		SET_MOVIE_TIME(mvip, time(NULL) );
@@ -260,7 +265,7 @@ static const char *get_movie_name(SINGLE_QSP_ARG_DECL)
 	if( intractive(SINGLE_QSP_ARG) ){
 		List *lp;
 		lp = movie_list(SINGLE_QSP_ARG);
-		if( lp != NO_LIST )
+		if( lp != NULL )
 			init_hist_from_item_list(QSP_ARG  MOVIENAME_PMPT,lp);
 	}
 #endif // HISTORY
@@ -277,13 +282,13 @@ static COMMAND_FUNC( do_play_movie )
 
 	if( !movie_ok() ) return;
 
-	mip = get_member_info(QSP_ARG  playable_icp,s);
+	mip = get_member_info(playable_iclp,s);
 
 	/*
 	 * On some implementations (cosmo, sirius), the movies are
 	 * regular disk files, and therefore are not necessarily in
 	 * our database at this point.  When that is the case, mip
-	 * will have a value of NO_MEMBER_INFO, as returned by
+	 * will have a value of NULL, as returned by
 	 * get_member_info().  Therefore it is legal to pass
 	 * a name to play_movie even if there is not movie object
 	 * already loaded.  On the other hand, in the RTV implementation,
@@ -291,7 +296,7 @@ static COMMAND_FUNC( do_play_movie )
 	 * so in that system play_movie() must check for a bogus name!
 	 */
 
-	if( mip == NO_MEMBER_INFO || mip->mi_itp == mvi_itp )
+	if( mip == NULL || mip->mi_itp == mvi_itp )
 		play_movie(QSP_ARG  s);
 	else
 		show_sequence(QSP_ARG  s);
@@ -302,7 +307,7 @@ static void play_movie(QSP_ARG_DECL  const char *s)
 	Movie *mvip;
 
 	mvip = OPEN_IF(s);
-	if( mvip == NO_MOVIE ) return;
+	if( mvip == NULL ) return;
 
 	if( ! is_ready_to_play(QSP_ARG  mvip) ) return;
 
@@ -353,10 +358,10 @@ static COMMAND_FUNC( do_shuttle )
 	Movie *mvip;
 	incr_t frame;
 
-	mvip=PICK_MVI("");
+	mvip=pick_mvi("");
 	frame= (incr_t) HOW_MANY("frame index");
 
-	if( mvip == NO_MOVIE ) return;
+	if( mvip == NULL ) return;
 
 	if( frame < 0 || frame >= (incr_t) MOVIE_FRAMES(mvip) ){
 		sprintf(ERROR_STRING,"Frame index %d out of range for movie %s",
@@ -400,13 +405,13 @@ static COMMAND_FUNC( do_getframe )
 	Data_Obj *dp;
 	const char *moviename;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	moviename = get_movie_name(SINGLE_QSP_ARG);
 	frame = (incr_t) HOW_MANY("frame index");
 
 	mvip = OPEN_IF(moviename);
 
-	if( mvip == NO_MOVIE || dp == NO_OBJ ) return;
+	if( mvip == NULL || dp == NULL ) return;
 
 	if( frame < 0 || frame >= (incr_t)MOVIE_FRAMES(mvip) ){
 		sprintf(ERROR_STRING,
@@ -444,14 +449,14 @@ static COMMAND_FUNC( do_getframec )
 	Data_Obj *dp;
 	const char *moviename;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	moviename = get_movie_name(SINGLE_QSP_ARG);
 	frame = (incr_t) HOW_MANY("frame index");
 	comp =  (int) HOW_MANY("component index");
 
 	mvip = OPEN_IF(moviename);
 
-	if( mvip == NO_MOVIE || dp == NO_OBJ ) return;
+	if( mvip == NULL || dp == NULL ) return;
 
 	if( frame < 0 || frame >= (incr_t) MOVIE_FRAMES(mvip) ){
 		sprintf(ERROR_STRING,
@@ -488,13 +493,13 @@ static COMMAND_FUNC( do_getfields )
 	Data_Obj *dp;
 	const char *moviename;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	moviename = get_movie_name(SINGLE_QSP_ARG);
 	field = (incr_t) HOW_MANY("starting field index");
 
 	mvip = OPEN_IF(moviename);
 
-	if( mvip == NO_MOVIE || dp == NO_OBJ ) return;
+	if( mvip == NULL || dp == NULL ) return;
 
 	if( field < 0 || field >= (incr_t)MOVIE_FRAMES(mvip)*2 ){
 		sprintf(ERROR_STRING,
@@ -531,14 +536,14 @@ static COMMAND_FUNC( do_getfieldc )
 	Data_Obj *dp;
 	const char *moviename;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	moviename = get_movie_name(SINGLE_QSP_ARG);
 	field = (incr_t) HOW_MANY("starting field index");
 	comp =  (int) HOW_MANY("component index");
 
 	mvip = OPEN_IF(moviename);
 
-	if( mvip == NO_MOVIE || dp == NO_OBJ ) return;
+	if( mvip == NULL || dp == NULL ) return;
 
 	if( field < 0 || field >= (incr_t)MOVIE_FRAMES(mvip)*2 ){
 		sprintf(ERROR_STRING,
@@ -571,8 +576,8 @@ static COMMAND_FUNC( do_del_mvi )
 {
 	Movie *mvip;
 
-	mvip = PICK_MVI("");
-	if( mvip == NO_MOVIE ) return;
+	mvip = pick_mvi("");
+	if( mvip == NULL ) return;
 
 	if( IS_ASSEMBLING(mvip) ){
 		WARN("can't delete a movie which is being assembled");
@@ -608,8 +613,8 @@ void close_movie(QSP_ARG_DECL  Movie *mvip)
 		List *lp;
 
 		lp=seqs_referring(QSP_ARG  mvip);
-		np=lp->l_head;
-		while(np!=NO_NODE){
+		np=QLIST_HEAD(lp);
+		while(np!=NULL){
 			seqp=(Seq *)np->n_data;
 			/* BUG? does this delete sequences which depend on seqp? */
 			delseq(QSP_ARG  seqp);
@@ -618,20 +623,19 @@ void close_movie(QSP_ARG_DECL  Movie *mvip)
 		dellist(lp);
 	}
 
-	if( the_mmp != NO_MOVIE_MODULE )
+	if( the_mmp != NULL )
 		(*the_mmp->close_func)(QSP_ARG  mvip);		/* device specific */
 
-	delete_movie(QSP_ARG  mvip);
+	delete_movie(mvip);
 }
 
 /* delete a movie from the database */
 
-void delete_movie(QSP_ARG_DECL  Movie *mvip)
+void _delete_movie(QSP_ARG_DECL  Movie *mvip)
 {
-	if( mvip == NO_MOVIE ) return;
+	if( mvip == NULL ) return;
 
-	del_mvi(QSP_ARG  mvip);	/* remove from item database */
-	rls_str((char *)MOVIE_NAME(mvip));
+	del_mvi(mvip);	/* remove from item database */
 }
 
 static COMMAND_FUNC( do_set_nrefresh )
@@ -684,7 +688,7 @@ static void set_mvidir(QSP_ARG_DECL  const char *dirname)
 	movie_dir = savestr( dirname );
 }
 
-static COMMAND_FUNC( do_list_mvis ){ list_mvis(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_list_mvis ){ list_mvis(tell_msgfile()); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(playback_menu,s,f,h)
 
@@ -707,7 +711,7 @@ MENU_END(playback)
 
 static COMMAND_FUNC( do_play_menu )
 {
-	PUSH_MENU(playback);
+	CHECK_AND_PUSH_MENU(playback);
 }
 
 #define MAX_MOVIE_FIELDS	0x40000000	/* a dummy value */
@@ -720,7 +724,7 @@ static COMMAND_FUNC( do_start_movie )
 	s=NAMEOF("name for movie");
 
 	mvip = create_writable_movie(QSP_ARG  s,MAX_MOVIE_FIELDS);
-	if( mvip == NO_MOVIE ) return;
+	if( mvip == NULL ) return;
 	SET_MOVIE_FLAG_BITS(mvip, MVI_ASSEMBLING);
 }
 
@@ -729,10 +733,10 @@ static COMMAND_FUNC( do_add_frame )
 	Data_Obj *dp;
 	Movie *mvip;
 
-	mvip = PICK_MVI("");
-	dp = PICK_OBJ("");
+	mvip = pick_mvi("");
+	dp = pick_obj("");
 
-	if( mvip == NO_MOVIE || dp == NO_OBJ ) return;
+	if( mvip == NULL || dp == NULL ) return;
 
 	if( !movie_ok() ) return;
 
@@ -743,8 +747,8 @@ static COMMAND_FUNC( do_end_movie )
 {
 	Movie *mvip;
 
-	mvip = PICK_MVI("");
-	if( mvip == NO_MOVIE ) return;
+	mvip = pick_mvi("");
+	if( mvip == NULL ) return;
 
 	if( ! IS_ASSEMBLING(mvip) ){
 		sprintf(ERROR_STRING,"Movie \"%s\" is not being assembled",MOVIE_NAME(mvip));
@@ -772,7 +776,7 @@ if( debug & mvi_debug ) advise("creating writable movie");
 #endif /* QUIP_DEBUG */
 
 	mvip = create_writable_movie(QSP_ARG  s,n);
-	if( mvip == NO_MOVIE ) return;
+	if( mvip == NULL ) return;
 	SET_MOVIE_FLAG_BITS(mvip, MVI_RECORDING);
 
 
@@ -821,7 +825,7 @@ MENU_END(assemble)
 
 static COMMAND_FUNC( ass_menu )
 {
-	PUSH_MENU(assemble);
+	CHECK_AND_PUSH_MENU(assemble);
 }
 
 static COMMAND_FUNC( dev_menu )
@@ -838,7 +842,7 @@ if( debug & mvi_debug ) advise("calling movie device menu");
 
 static COMMAND_FUNC( report_mm )
 {
-	if( the_mmp == NO_MOVIE_MODULE )
+	if( the_mmp == NULL )
 		WARN("No movie module loaded");
 	else {
 		sprintf(msg_str,"Current movie module:  %s",the_mmp->mm_name);
@@ -898,7 +902,7 @@ static double get_mvi_il_flg(QSP_ARG_DECL  Item *ip)
 
 void add_playable(Item_Type * itp,void *vp)
 {
-	add_items_to_class(playable_icp,itp,vp,NULL);
+	add_items_to_class(playable_iclp,itp,vp,NULL);
 }
 
 #define PLAYABLE_PMPT	"movie or sequence"
@@ -909,7 +913,7 @@ static const char *get_playable_name(SINGLE_QSP_ARG_DECL)
 
 #ifdef HISTORY
 	if( intractive(SINGLE_QSP_ARG) )
-		init_hist_from_class(QSP_ARG  PLAYABLE_PMPT,playable_icp);
+		init_hist_from_class(QSP_ARG  PLAYABLE_PMPT,playable_iclp);
 #endif // HISTORY
 
 	s=NAMEOF(PLAYABLE_PMPT);
@@ -925,8 +929,8 @@ static Movie *lookup_movie(QSP_ARG_DECL  const char *name)
 {
 	Movie *mvip;
 
-	mvip=GET_MVI(name);
-	if( mvip == NO_MOVIE ) return(mvip);
+	mvip=get_mvi(name);
+	if( mvip == NULL ) return(mvip);
 
 	SET_MOVIE_TIME(mvip, time(NULL));
 	return(mvip);
@@ -935,26 +939,21 @@ static Movie *lookup_movie(QSP_ARG_DECL  const char *name)
 COMMAND_FUNC( do_movie_menu )
 {
 
-	if( playable_icp == NO_ITEM_CLASS ){
-		if( mvi_itp == NO_ITEM_TYPE ) init_mvis(SINGLE_QSP_ARG);
-		add_sizable(QSP_ARG  mvi_itp,&mvi_sf,NULL);
-		add_interlaceable(QSP_ARG  mvi_itp,&mvi_if,NULL);
+	if( playable_iclp == NULL ){
+		if( mvi_itp == NULL ) init_mvis();
+		add_sizable(mvi_itp,&mvi_sf,NULL);
+		add_interlaceable(mvi_itp,&mvi_if,NULL);
 
-		playable_icp = new_item_class(QSP_ARG  "playable");
+		playable_iclp = new_item_class("playable");
 		add_playable(mvi_itp,NULL);
 
-		/* BUG need to figure out how to do this without the itp... */
-#ifdef FIXME
-		if( mviseq_itp == NO_ITEM_TYPE )
-			init_mviseqs(SINGLE_QSP_ARG);
-		add_playable(mviseq_itp,NULL);
-#endif /* FIXME */
-
+		// add sequences to the playable class
+		init_movie_sequences(SINGLE_QSP_ARG);
 	}
 
 
 #ifdef HAVE_X11
-	if( the_mmp == NO_MOVIE_MODULE ){
+	if( the_mmp == NULL ){
 		if( verbose )
 			advise("no movie module loaded, using X w/ fileio...");
 		xmvi_init(SINGLE_QSP_ARG);
@@ -963,7 +962,7 @@ COMMAND_FUNC( do_movie_menu )
 
 	/* initialize the sequencer module */
 
-	if( the_mmp != NO_MOVIE_MODULE ){
+	if( the_mmp != NULL ){
 		mvi_sm.init_func = (int (*)(void *)) the_mmp->setup_play_func;
 		mvi_sm.get_func  = (void * (*)(const char *)) lookup_movie;
 		mvi_sm.show_func = (void (*)(void *)) the_mmp->play_func;
@@ -976,13 +975,13 @@ COMMAND_FUNC( do_movie_menu )
 
 #ifdef QUIP_DEBUG
 	if( mvi_debug < 0 )
-		mvi_debug = add_debug_module(QSP_ARG  "movie");
+		mvi_debug = add_debug_module("movie");
 #endif /* QUIP_DEBUG */
 
-	PUSH_MENU(movie);
+	CHECK_AND_PUSH_MENU(movie);
 }
 
-void load_movie_module(QSP_ARG_DECL  Movie_Module *mmp)
+void _load_movie_module(QSP_ARG_DECL  Movie_Module *mmp)
 {
 	the_mmp = mmp;
 

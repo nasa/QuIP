@@ -62,6 +62,19 @@ Plot_Y_Axis $ymin $ymax $y_tick_spacing $xmin
 Label_Y_Ticks $ymin $ymax $y_tick_spacing
 .
 
+Define Redraw_X_Axis 0
+Set vars_ok 1
+Require_Var xmin
+Require_Var xmax
+Require_Var ymin
+Require_Var ymax
+Require_Var x_tick_spacing
+If !$vars_ok exit_macro
+Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
+Label_X_Ticks $xmin $xmax $x_tick_spacing
+.
+
+
 Define Setup_X_Axis 0
 Set vars_ok 1
 Require_Var xmin
@@ -123,10 +136,13 @@ Define Use_Viewer_As_Plotter 1 name
 Init_New_Plotter $1
 .
 
+# should we ignore button releases?
+
 Define Plotter_Click 0
-If $left_button_up exit_macro
-If $middle_button_up exit_macro
-If $right_button_up exit_macro
+#If $left_button_up exit_macro
+#If $middle_button_up exit_macro
+#If $right_button_up exit_macro
+#If $left_button_up&&$middle_button_up&&$right_button_up exit_macro
 If $exit_on_plotter_click exit
 Set clicked 1
 .
@@ -172,7 +188,7 @@ Set param_vec_name ${nospacename}_params
 Define Init_New_Plotter 1 name
 #advise "Init_New_Plotter $1"
 If strcmp('$the_plotter','no_plotter')
-  Remember_Plotter_Params
+  "advise 'the_plotter = $the_plotter' Remember_Plotter_Params"
 # Here we need to forget everything about the old plotter...
 
 Set minmax_set 0		# BUG this should be a plotter param...
@@ -193,7 +209,8 @@ Erase_Plot
 #advise "Init_New_Plotter:  '$1'"
 # This causes trouble if we allow spaces in the plotter name
 Get_Param_Vec_Name $1
-Vector $param_vec_name $n_plotter_params 1 float
+If !obj_exists('$param_vec_name')
+  "Vector $param_vec_name $n_plotter_params 1 float"
 data ascii
   input_fmt ' '
 	read $param_vec_name -
@@ -202,15 +219,27 @@ data ascii
 	0
 	nrows('$1')-1
 	0 0 0 0
-#	$black
-#	$white
 	$plot_foreground
 	$plot_background
 	$grid_color
 	$label_color
-#	$pen_color
 
 	quit quit
+.
+
+Define Delete_Plotter 1 plotter_name
+advise "Delete_Plotter BEGIN"
+Push_Var the_plotter
+Push_Var current_window
+Select_Plotter $1
+Delete_Viewer $1
+#advise "Delete_Plotter calling Delete_Image $param_vec_name"
+Delete_Image $param_vec_name
+Pop_Var the_plotter
+Pop_Var current_window
+If strcmp('$the_plotter','no_plotter')
+  "advise 'Delete_Plotter setting the_plotter to no_plotter' Set the_plotter no_plotter"
+advise "Delete_Plotter DONE"
 .
 
 # Remember_Plotter_Params:	store script vars to memory data structure
@@ -286,6 +315,8 @@ Set purple	29
 Set magenta	29
 Set dark_green	30
 Set dark_red	31
+Set dark_yellow	32
+Set dark_cyan	33
 .
 
 Define Init_Color_Defs 0
@@ -297,9 +328,11 @@ Setcolor $red 255 0 0
 Setcolor $dark_red 100 0 0
 Setcolor $green 0 255 0
 Setcolor $dark_green 0 100 0
+Setcolor $dark_cyan 0 100 255
 Setcolor $blue 0 0 255
 Setcolor $purple 255 0 255	# same as $magenta
 Setcolor $yellow 255 255 0
+Setcolor $dark_yellow 190 160 0
 Setcolor $orange 250 100 0
 Setcolor $cyan 0 255 255
 Plot_Foreground $default_fg
@@ -340,6 +373,7 @@ If $plotter_changing
   Recall_Plotter_Params
 # There are some parameters that are computed...
 #advise "Select_Plotter $1   right_margin = $right_margin"
+#advise "Select_Plotter $1:  Plot_Data_Range $plot_xmin $plot_ymin $plot_xmax $plot_ymax"
 Plot_Data_Range $plot_xmin $plot_ymin $plot_xmax $plot_ymax
 .
 
@@ -428,10 +462,13 @@ view
 .
 
 Define Plot_Space 4 xmin ymin xmax ymax
-#Tell_If "Plot_Space $1 $2 $3 $4"
+Tell_If "Plot_Space ($the_plotter) $1 $2 $3 $4"
 If !$margins_set "advise 'Plot_Space:  no margins set, using 0' Zero_Margins"
-If !$minmax_set "Set_Plot_Minmax $1 $2 $3 $4"	# can't do this here if called from Plot_Data_Range
-#advise "Plot_Space '$the_plotter' $1 $2 $3 $4"
+If !$minmax_set
+#  Then "Set_Plot_Minmax $1 $2 $3 $4"	# can't do this here if called from Plot_Data_Range
+#  Else "advise 'Plot_Space NOT calling Set_Plot_Minmax...'"
+  "Set_Plot_Minmax $1 $2 $3 $4"	# can't do this here if called from Plot_Data_Range
+
 view
   plot $the_plotter
     space $1 $2 $3 $4
@@ -579,9 +616,10 @@ Set margins_set 1
 # BUG margins set should be per plotter???
 
 Define Plot_Data_Range 4 xmin ymin xmax ymax
-#Tell_If "Plot_Data_Range $1 $2 $3 $4"
+Tell_If "Plot_Data_Range $1 $2 $3 $4"
 If !$margins_set "Tell_If 'margins not set, assigning default values' Assign_Margins"
 Print_If right_margin
+#advise "Plot_Data_Range calling Set_Plot_Minmax"
 Set_Plot_Minmax $1 $2 $3 $4
 Assign x_delta ($3)-($1)				# width of plotting area in plotting units
 Assign y_delta ($4)-($2)
@@ -595,6 +633,7 @@ Assign pdr_x1 ($1)-$x_delta*$left_factor		# edge of window in plot units
 Assign pdr_y1 ($2)-$y_delta*$bot_factor
 Assign pdr_x2 ($3)+$x_delta*$right_factor
 Assign pdr_y2 ($4)+$y_delta*$top_factor
+#advise "Plot_Data_Range calling Plot_Space $pdr_x1 $pdr_y1 $pdr_x2 $pdr_y2"
 Plot_Space $pdr_x1 $pdr_y1 $pdr_x2 $pdr_y2
 Update_Range_Constants
 # tick_len is in pixels (screen units), not plot space units
@@ -608,6 +647,7 @@ Unit_Font
 # end Plot_Data_Range
 
 Define Set_Plot_Minmax 4 xmin ymin xmax ymax
+#advise "Set_Plot_Minmax $1 $2 $3 $4"
 Assign plot_xmin $1
 Assign plot_ymin $2
 Assign plot_xmax $3
@@ -621,6 +661,8 @@ Print plot_xmax
 Print plot_ymin
 Print plot_ymax
 .
+
+# Plot_2_Screen - convert a point in plot coords to screen coords
 
 Define Plot_2_Screen 4 xvarname yvarname x y
 # these two statements are for debugging...
@@ -1039,10 +1081,18 @@ view
 .
 
 Define Bar_At 3 x y width
-Plot_2_Screen bx1 by1 $1-$3/2 $plot_ymin
-Plot_2_Screen bx2 by2 $1+$3/2 $2
+Bar_At_2 $1 $2 $plot_ymin $3
+.
+
+# This version lets us specify the top and bottom of the bar,
+# useful for box-and-whisker plots...
+
+Define Bar_At_2 4 x y1 y2 width
+Plot_2_Screen bx1 by1 $1-$4/2 $3
+Plot_2_Screen bx2 by2 $1+$4/2 $2
 # y increases down...
-Decrement by1
+Decrement by1	# why do this???
+		# when this is plot_ymin, this would move it up?
 view
   draw $the_plotter
     fill_poly 4

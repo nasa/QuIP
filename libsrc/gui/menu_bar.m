@@ -40,7 +40,7 @@ static Menu_Bar_Item *find_menu_bar_item(NSObject *id)
 	lp = all_ios_items(DEFAULT_QSP_ARG  menu_bar_item_itp);
 	IOS_Node *np;
 	np = IOS_LIST_HEAD(lp);
-	while( np != NO_IOS_NODE ){
+	while( np != NULL ){
 		Menu_Bar_Item *mbi_p;
 		mbi_p = IOS_NODE_DATA(np);
 		if( mbi_p.menu_item == id )
@@ -138,7 +138,7 @@ static COMMAND_FUNC(do_populate_menu)
 		push_ios_item_context(QSP_ARG  menu_bar_item_itp, 
 						curr_menu.item_icp );
 	}
-	PUSH_MENU(populate_menu);
+	CHECK_AND_PUSH_MENU(populate_menu);
 }
 
 #undef ADD_CMD
@@ -191,6 +191,6 @@ MENU_END(menu_bar)
 
 COMMAND_FUNC(do_menu_bar)
 {
-	PUSH_MENU(menu_bar)
+	CHECK_AND_PUSH_MENU(menu_bar)
 }
 

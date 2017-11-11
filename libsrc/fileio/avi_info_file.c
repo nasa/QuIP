@@ -37,6 +37,7 @@ int force_avi_info_load;		/* see comment in matio.c */
 #endif
 
 #include "quip_prot.h"
+#include "query_bits.h"	// LLEN - BUG
 #include "fio_prot.h"
 
 // BUG this defn is duplicated from avi.c
@@ -64,7 +65,9 @@ static void make_avs_name(char buf[LLEN], Image_File *ifp )
 	strcat(buf,".avs");
 }
 
-static FILE * remove_avi_info_if_stale(const char *info_name,FILE *info_fp,const char *src_name)
+#define remove_avi_info_if_stale(info_name,info_fp,src_name) _remove_avi_info_if_stale(QSP_ARG  info_name,info_fp,src_name)
+
+static FILE * _remove_avi_info_if_stale(QSP_ARG_DECL  const char *info_name,FILE *info_fp,const char *src_name)
 {
 	struct stat info_statb, file_statb;
 
@@ -72,47 +75,46 @@ static FILE * remove_avi_info_if_stale(const char *info_name,FILE *info_fp,const
 	/* need to stat both files... */
 
 	if( fstat(fileno(info_fp),&info_statb) < 0 ){
-		_tell_sys_error(DEFAULT_QSP_ARG  "remove_avi_info_if_stale:  fstat:");
-		NERROR1("unable to stat avi info file");
+		tell_sys_error("remove_avi_info_if_stale:  fstat:");
+		error1("unable to stat avi info file");
 	}
 
 	if( stat(src_name,&file_statb) < 0 ){
 #ifdef LONG_64_BIT
 //#ifdef IA64
-		_tell_sys_error(DEFAULT_QSP_ARG  "remove_avi_info_if_stale:  stat:");
-		sprintf(DEFAULT_ERROR_STRING,"unable to stat avi data file %s",src_name);
-		NERROR1(DEFAULT_ERROR_STRING);
+		tell_sys_error("remove_avi_info_if_stale:  stat:");
+		sprintf(ERROR_STRING,"unable to stat avi data file %s",src_name);
+		error1(ERROR_STRING);
 #elif defined(LONG_32_BIT)
 		if( errno == EOVERFLOW ){
 			struct stat64 stat64b;
 			if( stat64(src_name,&stat64b) < 0 ){
-				_tell_sys_error(DEFAULT_QSP_ARG  "remove_avi_info_if_stale:  stat64:");
-				sprintf(DEFAULT_ERROR_STRING,"unable to stat64 avi data file %s",src_name);
-				NERROR1(DEFAULT_ERROR_STRING);
+				tell_sys_error("remove_avi_info_if_stale:  stat64:");
+				sprintf(ERROR_STRING,"unable to stat64 avi data file %s",src_name);
+				error1(ERROR_STRING);
 			}
 			file_statb.st_mtime = stat64b.st_mtime;
 		} else {
-			_tell_sys_error(DEFAULT_QSP_ARG  "remove_avi_info_if_stale:  stat:");
-			sprintf(DEFAULT_ERROR_STRING,"unable to stat avi data file %s",src_name);
-			NERROR1(DEFAULT_ERROR_STRING);
+			tell_sys_error("remove_avi_info_if_stale:  stat:");
+			sprintf(ERROR_STRING,"unable to stat avi data file %s",src_name);
+			error1(ERROR_STRING);
 		}
 #else
 #error "sizeof(long) not properly set by configure!?"
-//		NERROR1("CAUTIOUS:  sizeof(long) not properly set by configure!?");
 		assert( ! "sizeof(long) not properly set by configure!?");
 #endif
 	}
 
 	/* now compare mod times */
 	if( file_statb.st_mtime > info_statb.st_mtime ){
-		sprintf(DEFAULT_ERROR_STRING,"Existing jpeg info file %s is older than file %s, will unlink and recompute",
+		sprintf(ERROR_STRING,"Existing jpeg info file %s is older than file %s, will unlink and recompute",
 				info_name,src_name);
-		NADVISE(DEFAULT_ERROR_STRING);
+		advise(ERROR_STRING);
 		fclose(info_fp);
 
 		if( unlink(info_name) < 0 ){
-			_tell_sys_error(DEFAULT_QSP_ARG  "remove_avi_info_if_stale:  unlink:");
-			NWARN("unable to remove stale jpeg info file");
+			tell_sys_error("remove_avi_info_if_stale:  unlink:");
+			warn("unable to remove stale jpeg info file");
 			/* may not have permission */
 		}
 		return(NULL);
@@ -121,7 +123,9 @@ static FILE * remove_avi_info_if_stale(const char *info_name,FILE *info_fp,const
 	return(info_fp);
 }
 
-static int read_avi_info(Image_File *ifp, FILE *info_fp)
+#define read_avi_info(ifp,info_fp) _read_avi_info(QSP_ARG  ifp,info_fp)
+
+static int _read_avi_info(QSP_ARG_DECL  Image_File *ifp, FILE *info_fp)
 {
 	char buf[16];
 	unsigned long nf, n_skew, n_seek;
@@ -129,36 +133,36 @@ static int read_avi_info(Image_File *ifp, FILE *info_fp)
 
 	/* first check the magic number */
 	if( fread(buf,1,strlen(AVI_INFO_MAGIC_STRING)+1,info_fp) != strlen(AVI_INFO_MAGIC_STRING)+1 ){
-		sprintf(DEFAULT_ERROR_STRING,"read_avi_info_top:  missing magic number data");
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"read_avi_info_top:  missing magic number data");
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( buf[strlen(AVI_INFO_MAGIC_STRING)] != '\n' ){
-		sprintf(DEFAULT_ERROR_STRING,"read_avi_info_top:  bad magic number terminator");
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"read_avi_info_top:  bad magic number terminator");
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	buf[strlen(AVI_INFO_MAGIC_STRING)]=0;
 	if( strcmp(buf,AVI_INFO_MAGIC_STRING) ){
-		sprintf(DEFAULT_ERROR_STRING,"read_avi_info_top:  bad magic number data");
-		NWARN(DEFAULT_ERROR_STRING);
-		sprintf(DEFAULT_ERROR_STRING,"read_jpeg_info_top:  expected \"%s\" but encountered \"%s\"",
+		sprintf(ERROR_STRING,"read_avi_info_top:  bad magic number data");
+		warn(ERROR_STRING);
+		sprintf(ERROR_STRING,"read_jpeg_info_top:  expected \"%s\" but encountered \"%s\"",
 			AVI_INFO_MAGIC_STRING,buf);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	/* now we know that the file starts out in the right format */
 
 	if( fscanf(info_fp,"%ld",&nf) != 1 ){
-		sprintf(DEFAULT_ERROR_STRING,"read_avi_info_top:  bad nframes");
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"read_avi_info_top:  bad nframes");
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	if( fscanf(info_fp,"%ld",&n_skew) != 1 ){
-		sprintf(DEFAULT_ERROR_STRING,"read_avi_info_top:  bad n_skew");
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"read_avi_info_top:  bad n_skew");
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	HDR_P(ifp)->avch_n_skew_tbl_entries = n_skew;
@@ -171,14 +175,14 @@ static int read_avi_info(Image_File *ifp, FILE *info_fp)
 		if( fscanf(info_fp,"%d %d",
 			&HDR_P(ifp)->avch_skew_tbl[i].frame_index,
 			&HDR_P(ifp)->avch_skew_tbl[i].pts_offset ) != 2 ){
-			NWARN("error reading frame skew data");
+			warn("error reading frame skew data");
 			return(-1);
 		}
 	}
 
 	if( fscanf(info_fp,"%ld",&n_seek) != 1 ){
-		sprintf(DEFAULT_ERROR_STRING,"read_avi_info_top:  bad n_seek");
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"read_avi_info_top:  bad n_seek");
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -192,7 +196,7 @@ static int read_avi_info(Image_File *ifp, FILE *info_fp)
 		if( fscanf(info_fp,"%d %d",
 			&HDR_P(ifp)->avch_seek_tbl[i].seek_target,
 			&HDR_P(ifp)->avch_seek_tbl[i].seek_result ) != 2 ){
-			NWARN("error reading seek data");
+			warn("error reading seek data");
 			return(-1);
 		}
 	}
@@ -207,7 +211,7 @@ static int read_avi_info(Image_File *ifp, FILE *info_fp)
  *
  */
 
-int check_avi_info(Image_File *ifp)
+int _check_avi_info(QSP_ARG_DECL  Image_File *ifp)
 {
 	char avs_name[LLEN];
 	FILE *fp;
@@ -264,7 +268,7 @@ static long get_long(FILE *fp)
 }
 #endif /* FOOBAR */
 
-void save_avi_info(Image_File *ifp)
+void _save_avi_info(QSP_ARG_DECL  Image_File *ifp)
 {
 	char avs_name[LLEN];
 	FILE *fp;
@@ -273,8 +277,8 @@ void save_avi_info(Image_File *ifp)
 	make_avs_name(avs_name,ifp);
 	fp = fopen(avs_name,"w");
 	if( !fp ){
-		sprintf(DEFAULT_ERROR_STRING,"save_avi_info:  couldn't open avi info file %s for writing",avs_name);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"save_avi_info:  couldn't open avi info file %s for writing",avs_name);
+		warn(ERROR_STRING);
 		return;
 	}
 	fprintf(fp,"AVIinfo\n");

@@ -19,6 +19,11 @@
 #include <UIKit/UIScreen.h>
 #endif // BUILD_FOR_IOS
 
+#ifdef BUILD_FOR_MACOS
+#include <AppKit/NSColor.h>
+#include <AppKit/NSGraphicsContext.h>
+#endif // BUILD_FOR_MACOS
+
 typedef enum {
 	DO_UNUSED,	// don't use 0
 	DO_MOVE,
@@ -127,13 +132,13 @@ typedef struct pt_arg {
 
 #ifdef CAUTIOUS
 #define ADD_DRAW_OP(vp,do_p)					\
-	if( VW_DRAW_LIST(vp) == NO_IOS_LIST ){			\
+	if( VW_DRAW_LIST(vp) == NULL ){			\
 		SET_VW_DRAW_LIST(vp,new_ios_list());		\
 	}							\
 	if( ios_eltcount(VW_DRAW_LIST(vp)) > MAX_DRAWLIST_LEN ){\
 		static int warned=0;				\
 		if( !warned ){					\
-			NWARN("Too many stored draw ops!?");	\
+			warn("Too many stored draw ops!?");	\
 			warned=1;				\
 		}						\
 	} else {						\
@@ -144,7 +149,7 @@ typedef struct pt_arg {
 #else /* ! CAUTIOUS */
 
 #define ADD_DRAW_OP(vp,do_p)					\
-	if( VW_DRAW_LIST(vp) == NO_IOS_LIST ){			\
+	if( VW_DRAW_LIST(vp) == NULL ){			\
 		SET_VW_DRAW_LIST(vp,new_ios_list());		\
 	}							\
 	IOS_Node *np = mk_ios_node(do_p);			\
@@ -160,10 +165,10 @@ typedef struct pt_arg {
 
 #define CHECK_COLOR_INDEX(funcname,color)		\
 	if( color > 255 ){				\
-		sprintf(DEFAULT_ERROR_STRING,		\
+		sprintf(ERROR_STRING,		\
 "%s:  color (%ld) must be in the range 0-255",		\
 			#funcname,color);		\
-		NWARN(DEFAULT_ERROR_STRING);		\
+		warn(ERROR_STRING);		\
 		return;					\
 	}
 
@@ -326,7 +331,7 @@ static void init_text_font(Viewer *vp)
 {
 #ifdef CAUTIOUS
 	if( VW_GFX_CTX(vp) == NULL ){
-		NWARN("CAUTIOUS:  init_text_font:  viewer has null context!?");
+		warn("CAUTIOUS:  init_text_font:  viewer has null context!?");
 		return;
 	}
 #endif /* CAUTIOUS */
@@ -362,7 +367,9 @@ static void init_text_font(Viewer *vp)
 	CGContextSetTextMatrix (VW_GFX_CTX(vp), myTextTransform);
 }
 
-static int exec_drawop(Viewer *vp, Draw_Op *do_p)
+#define exec_drawop(vp,do_p) _exec_drawop(QSP_ARG  vp,do_p)
+
+static int _exec_drawop(QSP_ARG_DECL  Viewer *vp, Draw_Op *do_p)
 {
 	QUIP_COLOR_TYPE *c;
 	static CGFloat x=0.0;
@@ -374,13 +381,13 @@ static int exec_drawop(Viewer *vp, Draw_Op *do_p)
 	if( do_p == NULL ) NERROR1("CAUTIOUS:  exec_drawop:  null operation ptr!?");
 
 	if( VW_GFX_CTX(vp) == NULL ){
-		NWARN("CAUTIOUS:  exec_drawop:  null context!?");
+		warn("CAUTIOUS:  exec_drawop:  null context!?");
 		return -1;
 	}
 #endif /* CAUTIOUS */
 	switch( do_p.code ){
 		case DO_UNUSED:
-			NWARN("invalid zero Draw_Op_Code!?");
+			warn("invalid zero Draw_Op_Code!?");
 			return 0;
 			break;
 		case DO_MOVE:
@@ -497,8 +504,8 @@ CGSize drawn_size =
 				CGContextShowTextAtPoint (VW_GFX_CTX(vp),
 					x-pt.x, y-pt.y, DOA_STR(do_p), strlen(DOA_STR(do_p)) );
 			} else {
-				sprintf(DEFAULT_ERROR_STRING,"Unexpected text justification mode 0x%x!?",VW_FLAGS(vp)&VW_JUSTIFY_MASK);
-				NWARN(DEFAULT_ERROR_STRING);
+				sprintf(ERROR_STRING,"Unexpected text justification mode 0x%x!?",VW_FLAGS(vp)&VW_JUSTIFY_MASK);
+				warn(ERROR_STRING);
 			}
 			break;
 
@@ -533,13 +540,13 @@ CGSize drawn_size =
 			return -1;
 			break;
 		default:
-			NWARN("Unexpected code in exec_drawop!?");
+			warn("Unexpected code in exec_drawop!?");
 			break;
 	}
 	return 0;
 }
 
-int exec_drawlist(Viewer *vp)
+int _exec_drawlist(QSP_ARG_DECL  Viewer *vp)
 {
 	IOS_Node *np;
 	int retval=0;
@@ -548,7 +555,7 @@ int exec_drawlist(Viewer *vp)
 
 #ifdef BUILD_FOR_IOS
 	if( VW_GFX_CTX(vp) != UIGraphicsGetCurrentContext() )
-		NWARN("viewer context does not match UIGraphicsGetCurrentContext !?");
+		warn("viewer context does not match UIGraphicsGetCurrentContext !?");
 #endif // BUILD_FOR_IOS
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 	CGContextSetStrokeColorSpace( VW_GFX_CTX(vp), colorSpace );
@@ -560,7 +567,7 @@ int exec_drawlist(Viewer *vp)
 		init_text_font(vp);
 	//}
 
-	if( VW_DRAW_LIST(vp) == NO_IOS_LIST ) {
+	if( VW_DRAW_LIST(vp) == NULL ) {
 		fprintf(stderr,"exec_drawlist %s:  null draw list!?\n",VW_NAME(vp));
 		return 0;
 	}
@@ -569,7 +576,7 @@ int exec_drawlist(Viewer *vp)
 //	fprintf(stderr,"exec_drawlist %s:  drawlist has %d elements\n",
 //			VW_NAME(vp),ios_eltcount(VW_DRAW_LIST(vp)) );
 
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Draw_Op *do_p;
 		do_p = (Draw_Op *) IOS_NODE_DATA(np);
 //		fprintf(stderr,"exec_drawlist %s:  calling exec_drawop\n",VW_NAME(vp));
@@ -605,7 +612,7 @@ int make_viewer(QSP_ARG_DECL  Viewer *vp,int width,int height)
 
 	// Do we already have a Gen_Win (from a panel)?
 	Gen_Win *gwp=genwin_of( QSP_ARG  VW_NAME(vp) );
-	if( gwp == NO_GENWIN ){
+	if( gwp == NULL ){
 //fprintf(stderr,"make_viewer calling make_genwin %s\n",VW_NAME(vp));
 		gwp=make_genwin(QSP_ARG  VW_NAME(vp), width, height );
 	}
@@ -628,7 +635,7 @@ void show_viewer(QSP_ARG_DECL  Viewer *vp)
 
 #ifdef FOOBAR
 	Panel_Obj *po=panel_obj_of(QSP_ARG  VW_NAME(vp));
-	if( po != NO_PANEL_OBJ ){
+	if( po != NULL ){
 		show_panel(QSP_ARG  po);
 	} else {
 		quipView *qv = VW_QV(vp);
@@ -654,11 +661,11 @@ int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
 		case GW_VC_QVC:		return 1;
 		case GW_VC_QTVC:	return 0;
 		default:
-			warn("Unhandled view controller case in is_image_viewer!?");
+			WARN("Unhandled view controller case in is_image_viewer!?");
 			return 0;
 	}
 #else // ! BUILD_FOR_IOS
-	warn("is_image_viewer:  need to implement!?");
+	WARN("is_image_viewer:  need to implement!?");
     return 1;
 #endif // ! BUILD_FOR_IOS
 }
@@ -687,14 +694,14 @@ void embed_image(QSP_ARG_DECL Viewer *vp, Data_Obj *dp,int x,int y)
 	qiv_p.frame = CGRectMake(x,y,VW_WIDTH(vp),VW_HEIGHT(vp));
 
 	// We add the new imageView as a subview of the viewer view...
-fprintf(stderr,"embed_image:  checking VW_IMAGES...\n");
+//fprintf(stderr,"embed_image:  checking VW_IMAGES...\n");
 	if( VW_IMAGES(vp) == NULL ){
-fprintf(stderr,"embed_image:  Calling init_viewer_images...\n");
+//fprintf(stderr,"embed_image:  Calling init_viewer_images...\n");
 		init_viewer_images(vp);
-fprintf(stderr,"embed_image:  Back from init_viewer_images...\n");
+//fprintf(stderr,"embed_image:  Back from init_viewer_images...\n");
 	}
 
-fprintf(stderr,"embed_image:  proceeding\n");
+//fprintf(stderr,"embed_image:  proceeding\n");
 	// What is the purpose of this bit of code???
 
 // old, duplicates lookup
@@ -828,7 +835,7 @@ void set_remember_gfx(int flag)
 
 }
 
-void _xp_erase(Viewer *vp)
+void _xp_erase(QSP_ARG_DECL  Viewer *vp)
 {
 	// We used to release the drawlist here, but that is wrong
 	// because it may contain non-drawing directives, like setting the font etc.
@@ -836,7 +843,7 @@ void _xp_erase(Viewer *vp)
 	// and then wait until it has been redrawn, and THEN release
 	// the list...  Or we could have a non-drawing scan of the list first?
 
-//	if( VW_DRAW_LIST(vp) == NO_IOS_LIST ) return;
+//	if( VW_DRAW_LIST(vp) == NULL ) return;
 //	fprintf(stderr,"_xp_erase %s:  releasing nodes\n",VW_NAME(vp));
 //	rls_nodes_from_ios_list(VW_DRAW_LIST(vp));
 
@@ -852,7 +859,7 @@ void _xp_update(Viewer *vp)
 }
 
 
-void _xp_move(Viewer *vp,int x1,int y1)
+void _xp_move(QSP_ARG_DECL  Viewer *vp,int x1,int y1)
 {
 	Draw_Op *do_p;
 	do_p = new_drawop(DO_MOVE);
@@ -861,7 +868,7 @@ void _xp_move(Viewer *vp,int x1,int y1)
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void _xp_select(Viewer *vp, u_long index)
+void _xp_select(QSP_ARG_DECL  Viewer *vp, u_long index)
 {
 	QUIP_COLOR_TYPE *c;
 
@@ -876,7 +883,7 @@ void _xp_select(Viewer *vp, u_long index)
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void _xp_bgselect(Viewer *vp, u_long index)
+void _xp_bgselect(QSP_ARG_DECL  Viewer *vp, u_long index)
 {
 	QUIP_COLOR_TYPE *c;
 
@@ -889,7 +896,7 @@ void _xp_bgselect(Viewer *vp, u_long index)
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2)
+void _xp_line(QSP_ARG_DECL  Viewer *vp,int x1,int y1,int x2,int y2)
 {
 	Draw_Op *do_p;
 
@@ -903,7 +910,7 @@ void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2)
 	MAKE_NEEDY(vp);
 }
 
-void _xp_linewidth(Viewer *vp,CGFloat w)
+void _xp_linewidth(QSP_ARG_DECL  Viewer *vp,CGFloat w)
 {
 	Draw_Op *do_p;
 
@@ -915,7 +922,7 @@ void _xp_linewidth(Viewer *vp,CGFloat w)
 	//MAKE_NEEDY(vp);
 }
 
-void set_font_size(Viewer *vp,int sz)
+void _set_font_size(QSP_ARG_DECL  Viewer *vp,int sz)
 {
 	Draw_Op *do_p;
 
@@ -926,7 +933,7 @@ void set_font_size(Viewer *vp,int sz)
 				// e.g. get_string_offset
 }
 
-void set_text_angle(Viewer *vp,float a)
+void _set_text_angle(QSP_ARG_DECL  Viewer *vp,float a)
 {
 	Draw_Op *do_p;
 
@@ -935,7 +942,7 @@ void set_text_angle(Viewer *vp,float a)
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void set_char_spacing(Viewer *vp,int sz)
+void _set_char_spacing(QSP_ARG_DECL  Viewer *vp,int sz)
 {
 	Draw_Op *do_p;
 
@@ -945,7 +952,7 @@ void set_char_spacing(Viewer *vp,int sz)
 }
 
 
-void set_font_by_name(Viewer *vp,const char *s)
+void _set_font_by_name(QSP_ARG_DECL  Viewer *vp,const char *s)
 {
 	Draw_Op *do_p;
 
@@ -956,7 +963,7 @@ void set_font_by_name(Viewer *vp,const char *s)
 	//MAKE_NEEDY(vp);
 }
 
-void _xp_text(Viewer *vp,int x, int y, const char *s)
+void _xp_text(QSP_ARG_DECL  Viewer *vp,int x, int y, const char *s)
 {
 	Draw_Op *do_p;
 	_xp_move(vp,x,y);
@@ -966,50 +973,50 @@ void _xp_text(Viewer *vp,int x, int y, const char *s)
 	MAKE_NEEDY(vp);
 }
 
-void _xp_arc(Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
+void _xp_arc(QSP_ARG_DECL  Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
 {
 
 	// Not sure what the args are???
-	//advise("_xp_arc:  UNIMPLEMENTED!?");
+	warn("_xp_arc:  UNIMPLEMENTED!?");
 	//CGContextAddArc(VW_GFX_CTX(vp),x,y,radius,startAngle,endAngle,clockwise);
 }
 
-void _xp_fill_arc(Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
+void _xp_fill_arc(QSP_ARG_DECL  Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
 {
-	NADVISE("_xp_fill_arc:  UNIMPLEMENTED!?");
+	warn("_xp_fill_arc:  UNIMPLEMENTED!?");
 
 }
 
-void _xp_fill_polygon(Viewer* vp, int num_points, int* px_vals, int* py_vals)
+void _xp_fill_polygon(QSP_ARG_DECL  Viewer* vp, int num_points, int* px_vals, int* py_vals)
 {
-	NADVISE("_xp_fill_polygon:  UNIMPLEMENTED!?");
+	warn("_xp_fill_polygon:  UNIMPLEMENTED!?");
 
 }
 
 // CGContextSetAllowsAntialiasing
 // CGContextSetShouldAntialias
 
-void dump_drawlist(QSP_ARG_DECL  Viewer *vp)
+void _dump_drawlist(QSP_ARG_DECL  Viewer *vp)
 {
 	advise("dump_drawlist:  UNIMPLEMENTED!?");
 
 }
 
-void left_justify(Viewer *vp)
+void _left_justify(QSP_ARG_DECL  Viewer *vp)
 {
 	Draw_Op *do_p;
 	do_p = new_drawop(DO_LJUST);
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void right_justify(Viewer *vp)
+void _right_justify(QSP_ARG_DECL  Viewer *vp)
 {
 	Draw_Op *do_p;
 	do_p = new_drawop(DO_RJUST);
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void center_text(Viewer *vp)
+void _center_text(QSP_ARG_DECL  Viewer *vp)
 {
 	Draw_Op *do_p;
 	do_p = new_drawop(DO_CJUST);
@@ -1055,12 +1062,12 @@ int make_mousescape(QSP_ARG_DECL  Viewer *vp,int w,int h)
 
 void relabel_viewer(Viewer *vp,const char *s)
 {
-
+fprintf(stderr,"relabel_viewer not implemented for iOS\n");
 }
 
 void redraw_viewer(QSP_ARG_DECL  Viewer *vp)
 {
-
+fprintf(stderr,"redraw_viewer not implemented for iOS\n");
 }
 
 int event_loop(SINGLE_QSP_ARG_DECL)
@@ -1074,12 +1081,12 @@ void install_default_lintbl(QSP_ARG_DECL  Dpyable *dpyp)
 
 }
 
-int display_depth(SINGLE_QSP_ARG_DECL)
+int _display_depth(SINGLE_QSP_ARG_DECL)
 {
 	return 4;	// bits or bytes?
 }
 
-void list_disp_objs(SINGLE_QSP_ARG_DECL)
+void list_disp_objs(QSP_ARG_DECL  FILE *fp)
 {
 
 }
@@ -1095,10 +1102,10 @@ int get_string_width(Viewer *vp, const char *s)
 {
 	// Do we really initialize here???
 	if( VW_GFX_CTX(vp) == NULL ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"get_string_width '%s':  drawing context for viewer %s is NULL!?",
 			s,VW_NAME(vp));
-		NADVISE(DEFAULT_ERROR_STRING);
+		NADVISE(ERROR_STRING);
 		return( (int)strlen(s) * DEFAULT_PIXELS_PER_CHAR );
 	}
 
@@ -1183,10 +1190,21 @@ void init_viewer_images(Viewer *vp)
 	// but behind the controls...
 	// BUT this brings the images to the front?
 	// Does this depend on order of initialization?
-//sprintf(DEFAULT_ERROR_STRING,"init_viewer_images:  bringing images 0x%lx to front, superview = 0x%lx",
+
+	// That comment says we want the controls in front - so why
+	// are we bringing the images to the front???
+
+//sprintf(ERROR_STRING,"init_viewer_images:  bringing images 0x%lx to front, superview = 0x%lx",
 //(long)qip,(long)VW_QV(vp));
-//advise(DEFAULT_ERROR_STRING);
-	[VW_QV(vp) bringSubviewToFront:qip];
+//advise(ERROR_STRING);
+
+	//[VW_QV(vp) bringSubviewToFront:qip];
+
+	// this puts it behind the default background!
+	//[VW_QV(vp) sendSubviewToBack:qip];
+    
+	// this puts it just in front of the default background?
+	[VW_QV(vp) insertSubview:qip aboveSubview:QV_BG_IMG(VW_QV(vp))];
     
 	qip.backgroundColor = [UIColor clearColor];
 #endif // BUILD_FOR_IOS

@@ -1,0 +1,38 @@
+# test of correct deletion of local objects
+
+Set h 20
+Set w 30
+
+expressions
+  show_shp yes
+  read -
+
+u_byte simple_test()
+{
+	float c1[$h][$w];
+	c1 = ramp(0,1,1);
+	return(c1);
+}
+
+end
+
+#  advise "dumping simple_test..."
+#  dump simple_test
+
+#  dumpflag yes
+  read -
+
+u_byte c2[$h][$w];
+print("c2 = simple_test();");
+c2 = simple_test();
+end
+
+  advise "DONE with simple_test"
+  quit
+
+debug no
+#Info c2
+
+
+exit
+

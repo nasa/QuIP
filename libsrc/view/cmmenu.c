@@ -42,7 +42,7 @@ static COMMAND_FUNC( do_grayscale )
 	n=(int)HOW_MANY("number of colors");
 
 	CHECK_DPYP("do_grayscale")
-	make_grayscale(QSP_ARG  base,n);
+	make_grayscale(base,n);
 }
 
 static COMMAND_FUNC( do_const_alpha )
@@ -51,7 +51,7 @@ static COMMAND_FUNC( do_const_alpha )
 
 	value=(int)HOW_MANY("value");
 	CHECK_DPYP("do_const_alpha")
-	const_alpha(QSP_ARG  value);
+	const_alpha(value);
 }
 
 static COMMAND_FUNC( do_const_cmap )
@@ -65,7 +65,7 @@ static COMMAND_FUNC( do_const_cmap )
 	g=(int)HOW_MANY("green");
 	b=(int)HOW_MANY("blue");
 	CHECK_DPYP("do_const_cmap")
-	const_cmap(QSP_ARG  base,n,r,g,b);
+	const_cmap(base,n,r,g,b);
 }
 
 static COMMAND_FUNC( do_make_rgb )
@@ -78,7 +78,7 @@ static COMMAND_FUNC( do_make_rgb )
 	b=(int)HOW_MANY("number of blue levels");
 
 	CHECK_DPYP("do_make_rgb")
-	make_rgb(QSP_ARG  base,r,g,b);
+	make_rgb(base,r,g,b);
 }
 
 static COMMAND_FUNC( do_poke )
@@ -91,7 +91,7 @@ static COMMAND_FUNC( do_poke )
 	b=(int)HOW_MANY("blue value");
 
 	CHECK_DPYP("do_poke")
-	poke_lut(QSP_ARG  c,r,g,b);
+	poke_lut(c,r,g,b);
 }
 
 
@@ -102,7 +102,7 @@ static COMMAND_FUNC( do_poke )
  * so we are going to apply the quick fix by initializing to pick_obj()
  */
 
-static void *(*pick_func)(const char *)=(void *(*)(const char *))pick_obj;
+static void *(*pick_func)(const char *)=(void *(*)(const char *))_pick_obj;
 
 #ifdef NOT_USED
 /* call this to link this module with the data module */
@@ -118,7 +118,7 @@ static COMMAND_FUNC( do_getmap )
 	Data_Obj *dp;
 
 	dp = (Data_Obj *) (*pick_func)("data object");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	getmap( dp );
 }
 
@@ -127,8 +127,8 @@ static COMMAND_FUNC( do_setmap )
 	Data_Obj *dp;
 
 	dp = (Data_Obj *) (*pick_func)("data object");
-	if( dp == NO_OBJ ) return;
-	setmap( QSP_ARG   dp );
+	if( dp == NULL ) return;
+	setmap( dp );
 }
 
 static COMMAND_FUNC( do_cm_imm )
@@ -168,7 +168,7 @@ static COMMAND_FUNC( do_default_cmap )
 {
 	CHECK_DPYP("do_default_cmap")
 #ifdef HAVE_X11
-	default_cmap(QSP_ARG  current_dpyp);
+	default_cmap(current_dpyp);
 #endif
 }
 
@@ -197,7 +197,7 @@ MENU_END(cmaps)
 
 COMMAND_FUNC( do_cmaps )
 {
-	PUSH_MENU(cmaps);
+	CHECK_AND_PUSH_MENU(cmaps);
 }
 
 #undef ADD_CMD
@@ -225,9 +225,9 @@ COMMAND_FUNC( do_lut_menu )
 	}
 
 	s=NAMEOF("name of viewer or panel");
-	gwp = find_genwin(QSP_ARG  s);
+	gwp = find_genwin(s);
 
-	if( gwp == NO_GENWIN ){
+	if( gwp == NULL ){
 		/* find_genwin() has already printed an error msg? */
 		sprintf(ERROR_STRING,"No viewer or panel named \"%s\"!?",s);
 		WARN(ERROR_STRING);
@@ -235,8 +235,8 @@ COMMAND_FUNC( do_lut_menu )
 #ifdef HAVE_X11
 		Dpyable *dpyp;
 
-		dpyp = genwin_display(QSP_ARG  gwp);
-		if( dpyp != NO_DISPLAY ){
+		dpyp = genwin_display(gwp);
+		if( dpyp != NULL ){
 			current_dpyp = dpyp;
 		}
 #endif /* HAVE_X11 */
@@ -256,6 +256,6 @@ COMMAND_FUNC( do_lut_menu )
 	 */
 	
 
-	PUSH_MENU(luts);
+	CHECK_AND_PUSH_MENU(luts);
 }
 

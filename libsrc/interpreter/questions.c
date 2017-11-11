@@ -16,30 +16,25 @@
 ITEM_PICK_FUNC(Item_Type,ittyp)
 ITEM_PICK_FUNC(Macro,macro)
 
-long how_many(QSP_ARG_DECL  const char *prompt)
+long _how_many(QSP_ARG_DECL  const char *prompt)
 {
 	const char *s;
-	char pline[LLEN];
+	const char *pline;
 	long n;
 	//double dn;
 	Typed_Scalar *tsp;
 
-	// Why does how_many all qword, while how_much uses nameof???
+	// Why does how_many all next_query_word, while how_much uses nameof???
 
-	// BUG? can prompt get too long?
-	assert( strlen(prompt) < LLEN );
-
-	if( prompt[0] != 0 ) sprintf(pline,PROMPT_FORMAT,prompt);
-	else pline[0]=0;
-
-	s=qword(QSP_ARG  pline);
+	pline = format_prompt(PROMPT_FORMAT, prompt);
+	s=next_query_word(pline);
 
 	tsp=pexpr(QSP_ARG  s);
 
 	if( SCALAR_PREC_CODE(tsp) == PREC_STR ){
 		sprintf(ERROR_STRING,
 	"how_many:  can't convert string \"%s\" to an integer!?",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		n = 0;
 	} else {
 		// What should we do on 32 bit machines?
@@ -71,13 +66,13 @@ long how_many(QSP_ARG_DECL  const char *prompt)
 	return(n);
 }
 
-double how_much(QSP_ARG_DECL  const char* s)		/**/
+double _how_much(QSP_ARG_DECL  const char* s)		/**/
 {
 	const char *estr;
 	Typed_Scalar *tsp;
 	double d;
 
-	estr=nameof(QSP_ARG  s);
+	estr=nameof(s);
 	tsp=pexpr(QSP_ARG  estr);
 	d=double_for_scalar(tsp);
 	RELEASE_SCALAR(tsp)
@@ -90,19 +85,19 @@ static const char *bool_choices[N_BOOL_CHOICES]={"no","yes","false","true"};
 #define YES	1
 #define NO	0
 
-int askif(QSP_ARG_DECL  const char *prompt)
+#define ASKIF_FORMAT	"%s? (y/n) "
+
+int _askif(QSP_ARG_DECL  const char *prompt)
 {
-	char pline[LLEN];
+	const char *pline;
 	int n;
 
-	// BUG? can prompt get too long?
-	assert( strlen(prompt) < (LLEN-10) );
-
-	if( prompt[0] != 0 ) sprintf(pline,"%s? (y/n) ",prompt);
-	else pline[0]=0;
+	pline = format_prompt(ASKIF_FORMAT, prompt);
 
 	do {
-		n = which_one2(QSP_ARG  pline,N_BOOL_CHOICES,bool_choices);
+		inhibit_next_prompt_format(SINGLE_QSP_ARG);	// prompt already formatted!
+		n = which_one(pline,N_BOOL_CHOICES,bool_choices);
+		enable_prompt_format(SINGLE_QSP_ARG);
 	} while( n < 0 && intractive( SINGLE_QSP_ARG ) );
 
 
@@ -117,144 +112,51 @@ int askif(QSP_ARG_DECL  const char *prompt)
 	return( -1 );
 }
 
-int confirm(QSP_ARG_DECL  const char *s)
+int _confirm(QSP_ARG_DECL  const char *s)
 {
 	if( !intractive( SINGLE_QSP_ARG ) ) return(1);
-	return(askif(QSP_ARG  s));
+	return(askif(s));
 }
 
 /*
  * Get a string from the query file.
  *
- * Get a string from the query file by calling qword().
+ * Get a string from the query file by calling next_query_word().
  * Macro expansion is disabled during this call.
  * The prompt string is prefixed by "Enter " and postfixed by a colon.
  * Used to get user command arguments.
  */
 
-const char * nameof(QSP_ARG_DECL  const char *prompt)
-		/* user prompt */
+const char * _nameof(QSP_ARG_DECL  const char *prompt)
 {
-	char pline[LLEN];
+	const char *pline;
 	int v;
 	const char *buf;
 
-//	assert( strlen(prompt) < (LLEN-10) );
-//	make_prompt checks string length
-
-	make_prompt(QSP_ARG  pline,prompt);
+	pline = format_prompt(PROMPT_FORMAT, prompt);
 
 	/* turn macros off so we can enter macro names!? */
 
 	v = QS_FLAGS(THIS_QSP) & QS_EXPAND_MACS;		/* save current value */
 	CLEAR_QS_FLAG_BITS(THIS_QSP,QS_EXPAND_MACS);
-	buf=qword(QSP_ARG  pline);
+	buf=next_query_word(pline);
 	SET_QS_FLAG_BITS(THIS_QSP,v);		/* restore macro state */
 	return(buf);
 }
 
-/*
- * Get a string from the query file with macro expansion.
- *
- * Like nameof(), but macro expansion is enabled and the prompts
- * are not modified.  Used to get command words.
- *
- * The command prompt has the potential to grow too much!?
- */
-
-const char * nameof2(QSP_ARG_DECL  const char *prompt)
+static const char *insure_item_prompt(Item_Type *itp, const char *prompt)
 {
-	//char pline[LLEN];
-	const char *buf;
-
-	//strcpy(pline,prompt);
-	//buf=qword(QSP_ARG  pline);
-
-	// Why were we copying the prompt?
-	// Now the prompt is allowed to grow using
-	// string buffers, so the strcpy is a potential
-	// buffer overflow!
-	buf=qword(QSP_ARG  prompt);
-
-	return(buf);
+	if( prompt == NULL || *prompt==0 )
+		return IT_NAME(itp);
+	return prompt;
 }
 
-/* Make prompt takes a query string (like "number of elements") and
- * prepends "Enter " and appends ":  ".
- * We can inhibit this by clearing the flag,
- * but in that case we reset the flag after use,
- * so that we can always assume the default behavior.
- */
-
-void make_prompt(QSP_ARG_DECL char buffer[LLEN],const char* s)
+static void _remove_from_history_list(QSP_ARG_DECL  const char *prompt, const char *s)
 {
-	if( QS_FLAGS(THIS_QSP) & QS_FORMAT_PROMPT ){
-		// BUG possible buffer overrun
-		if( strlen(s) + strlen(PROMPT_FORMAT) -2 >= LLEN ){
-			sprintf(ERROR_STRING,"make_prompt:  formatted prompt too long for buffer!?");
-			WARN(ERROR_STRING);
-			buffer[0]=0;
-		} else {
-			if(  s[0]  != 0 ) sprintf(buffer,PROMPT_FORMAT,s);
-			else  buffer[0]=0;
-		}
-	} else {
-		if( strlen(s) >= LLEN ){
-			sprintf(ERROR_STRING,"make_prompt:  prompt too long for buffer!?");
-			WARN(ERROR_STRING);
-			buffer[0]=0;
-		} else {
-			strcpy(buffer,s);	/* BUG possible overrun error */
-			SET_QS_FLAG_BITS(THIS_QSP, QS_FORMAT_PROMPT); /* this is a one-shot deal. */
-		}
-	}
+	const char *pline;
+	pline = format_prompt(PROMPT_FORMAT, prompt);
+	rem_def(pline,s);
 }
-
-#ifdef USE_CHOICE_LIST
-static const char **make_choices( QSP_ARG_DECL  int* countp, List* lp )
-{
-	const char **choices;
-	int i;
-	Item *ip;
-	Node *np;
-
-	*countp = eltcount(lp);
-	if( *countp == 0 ){
-		if( verbose ) WARN("make_choices:  passed empty list!?");
-		return(NULL);
-	}
-
-	choices = (const char**) getbuf(*countp*sizeof(char *));
-
-	if( choices == NULL ) {
-		ERROR1("make_choices:  out of memory");
-		IOS_RETURN_VAL(NULL)
-	}
-	
-	np=QLIST_HEAD(lp);
-	i=0;
-	while(np!=NO_NODE){
-		ip = (Item*) NODE_DATA(np);
-		choices[i++] = ITEM_NAME(ip);
-		np = NODE_NEXT(np);
-	}
-	return(choices);
-}
-#endif // USE_CHOICE_LIST
-
-#ifdef USE_CHOICE_LIST
-static void setup_item_choices( QSP_ARG_DECL  Item_Type *itp )
-{
-	int count;
-
-	if( IT_CHOICES(itp) != NO_STR_ARRAY ){
-		givbuf( (char *) IT_CHOICES(itp));
-	}
-	SET_IT_CHOICES(itp, make_choices(QSP_ARG  &count,item_list(QSP_ARG  itp)) );
-	SET_IT_N_CHOICES(itp, count);
-	CLEAR_IT_FLAG_BITS(itp, NEED_CHOICES);
-}
-#endif // USE_CHOICE_LIST
 
 
 /*
@@ -264,107 +166,34 @@ static void setup_item_choices( QSP_ARG_DECL  Item_Type *itp )
  * (Here large means 100,000 items or more - but how few items can cause the problem?
  */
 
-Item *pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
+Item *_pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 {
-#ifdef USE_CHOICE_LIST
-	int i;
-#endif // USE_CHOICE_LIST
 	Item *ip;
 	const char *s;
 
 	/* use item type name as the prompt */
 
-//#ifdef CAUTIOUS
-//	if( itp == NO_ITEM_TYPE ){
-//		WARN("CAUTIOUS:  Uninitialized item type given to pick_item");
-//		/*s=*/NAMEOF("dummy");
-//		return(NO_ITEM);
-//	}
-//#endif /* CAUTIOUS */
-	assert( itp != NO_ITEM_TYPE );
+	assert( itp != NULL );
 
 	if( ! IS_COMPLETING(THIS_QSP) ){
-		s = NAMEOF(prompt);
-		return get_item(QSP_ARG  itp, s);
+		s = nameof(prompt);
+		return get_item(itp, s);
 	}
 
-	/* use the item type name as the prompt if unspecified */
-	if( prompt == NULL || *prompt==0 )
-		prompt=IT_NAME(itp);
+	prompt = insure_item_prompt(itp,prompt);
 
-#ifdef USE_CHOICE_LIST
-	// Before we setup the choices, we should make sure that the number
-	// is not so large that the program will appear to hang...
-	//
-	// We tackle this in a new way - instead of adding all of the item names
-	// to the history list, we keep the history list to be just what was actually
-	// entered previously - if we don't find a match there, then we may look
-	// in the list/table/tree of items...
-	// But that would be tricky, because response completion happens inside
-	// of nameof()...
-
-	if( NEEDS_NEW_CHOICES(itp) ){
-		setup_item_choices(QSP_ARG  itp);
-#ifdef HAVE_HISTORY
-
-#ifdef QUIP_DEBUG
-if( debug & hist_debug ){
-sprintf(ERROR_STRING,"resetting history list for %s items",IT_NAME(itp));
-NADVISE(ERROR_STRING);
-}
-#endif /* QUIP_DEBUG */
-
-		/*
-		 * clear the old history list in case an item was deleted.
-		 *
-		 * this is a kind of BUG, since we lose the old item priorities...
-		 * It might be better to have separate flags for additions
-		 * and deletions...
-		 */
-
-		if( intractive(SINGLE_QSP_ARG) ){
-			char pline[LLEN];
-			sprintf(pline,PROMPT_FORMAT,prompt);
-			new_defs(QSP_ARG  pline);
-		}
-#endif /* HAVE_HISTORY */
-	}
-
-	/* eat a meaningless word if there are no items */
-
-	if( IT_N_CHOICES(itp) <= 0 ){
-		s=NAMEOF(prompt);	/* eat a word */
-		sprintf(ERROR_STRING,"No %s %s (No items in existence)",
-			IT_NAME(itp),s);
-		WARN(ERROR_STRING);
-		return(NO_ITEM);
-	}
-
-	i = WHICH_ONE(prompt,IT_N_CHOICES(itp),IT_CHOICES(itp));
-
-	if( i < 0 )
-		return(NO_ITEM);
-
-	s=IT_CHOICES(itp)[i];
-#endif // USE_CHOICE_LIST
-
-	// The old way with an array of choices is no good when there are 100k items...
-
-	// picking_item_itp
 	assert( QS_PICKING_ITEM_ITP(THIS_QSP) == NULL );
 
 	SET_QS_PICKING_ITEM_ITP(THIS_QSP,itp);
-//fprintf(stderr,"pick_item:  picking_item_itp set to %s\n",ITEM_TYPE_NAME(itp));
-	s=NAMEOF(prompt);
+	s=nameof(prompt);
 	SET_QS_PICKING_ITEM_ITP(THIS_QSP,NULL);
 
-	ip=get_item(QSP_ARG  itp,s);
+	ip=item_of(itp,s);	// report_invalid_pick will complain, so don't need to here
 
 	if( ip == NULL ){
-		// remove from history list
-		char pline[LLEN];
-		make_prompt(QSP_ARG  pline,prompt);
-		rem_def(QSP_ARG  pline,s);
+		_remove_from_history_list(QSP_ARG  prompt, s);
+		// list the valid items
+		report_invalid_pick(itp, s);
 	}
 
 	return(ip);
@@ -382,20 +211,14 @@ void init_item_hist( QSP_ARG_DECL  Item_Type *itp, const char* prompt )
 {
 	List *lp;
 
-//#ifdef CAUTIOUS
-//	if( itp == NO_ITEM_TYPE ){
-//		WARN("CAUTIOUS:  init_item_hist passed negative index");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( itp != NO_ITEM_TYPE );
+	assert( itp != NULL );
 
 	// Don't do this if the number of choices is too large...
 	// We should set a flag in the itp...
 
-	lp=item_list(QSP_ARG  itp);
-	if( lp == NO_LIST ) return;
-	init_hist_from_item_list(QSP_ARG  prompt,lp);
+	lp=item_list(itp);
+	if( lp == NULL ) return;
+	init_hist_from_item_list(prompt,lp);
 }
 #endif /* HAVE_HISTORY */
 

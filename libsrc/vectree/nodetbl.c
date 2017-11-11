@@ -12,7 +12,7 @@
 #define ND_NULL	ND_NONE
 
 Tree_Node_Type tnt_tbl[N_TREE_CODES]={
-{	T_SUBRT,	"subroutine",		0,	CP_SHP,	ND_SUBRT	},
+{	T_SUBRT_DECL,	"subroutine_decl",	0,	NO_SHP,	ND_NONE	},
 {	T_STAT_LIST,	"stat_list",		2,	NO_SHP,	ND_LIST	},
 
 {	T_DECL_STAT_LIST,"decl_stat_list",	2,	NO_SHP,	ND_LIST	},
@@ -39,7 +39,7 @@ Tree_Node_Type tnt_tbl[N_TREE_CODES]={
 {	T_STRING_LIST,	"stringlist",		2,	CP_SHP,	ND_LIST	},
 {	T_MIXED_LIST,	"mixed_list",		2,	NO_SHP,	ND_LIST	},
 {	T_PRINT_LIST,	"print_list",		2,	NO_SHP,	ND_LIST	},
-{	T_SCRIPT,	"script",		1,	NO_SHP,	ND_SUBRT	},
+{	T_SCRIPT,	"script",		1,	NO_SHP,	ND_CALLF },
 {	T_NAME_FUNC,	"namefunc",		1,	NO_SHP,	ND_NONE	},
 
 {	T_LIT_DBL,	"lit_dbl",		0,	PT_SHP,	ND_DBL	},
@@ -48,6 +48,9 @@ Tree_Node_Type tnt_tbl[N_TREE_CODES]={
 {	T_COMP_OBJ,	"compobj",		1,	CP_SHP,	ND_NONE	},
 {	T_DYN_OBJ,	"dynamic_object",	0,	PT_SHP,	ND_STRING	},
 {	T_STATIC_OBJ,	"static_object",	0,	PT_SHP,	ND_STRING	},
+#ifdef SCALARS_NOT_OBJECTS
+{	T_SCALAR_VAR,	"scalar_var",		0,	PT_SHP,	ND_STRING	},
+#endif // SCALARS_NOT_OBJECTS
 {	T_POINTER,	"pointer",		0,	PT_SHP,	ND_STRING	},
 {	T_STR_PTR,	"str_ptr",		0,	PT_SHP,	ND_STRING	},
 {	T_REFERENCE,	"reference",		1,	PT_SHP,	ND_NONE	},
@@ -154,7 +157,7 @@ Tree_Node_Type tnt_tbl[N_TREE_CODES]={
 
 {	T_FUNCPTR,	"funcptr",		0,	PT_SHP,	ND_STRING	},
 {	T_FUNCPTR_DECL,	"funcptr_decl",		1,	CP_SHP,	ND_DECL	},
-{	T_FUNCREF,	"funcref",		0,	PT_SHP,	ND_SUBRT	},
+{	T_FUNCREF,	"funcref",		0,	NO_SHP,	ND_CALLF },
 {	T_SET_FUNCPTR,	"set_funcptr",		2,	PT_SHP,	ND_NULL	},
 {	T_INDIR_CALL,	"indir_call",		2,	PT_SHP,	ND_NONE /* should be ND_CALLF??? BUG? */	},
 {	T_UNDEF,	"undef",		0,	PT_SHP,	ND_STRING	},
@@ -176,7 +179,7 @@ Tree_Node_Type tnt_tbl[N_TREE_CODES]={
 
 {	T_CLR_OPT_PARAMS,"clr_opt_prms",	0,	PT_SHP,	ND_NONE	},
 {	T_ADD_OPT_PARAM,"add_opt_prm",		3,	PT_SHP,	ND_NONE	},
-{	T_OPTIMIZE,	"optimize",		0,	PT_SHP,	ND_SUBRT	},
+{	T_OPTIMIZE,	"optimize",		0,	CP_SHP,	ND_CALLF	},
 
 {	T_PERFORM,	"perform",		1,	PT_SHP,	ND_NULL	},
 {	T_WHILE,	"while",		2,	NO_SHP,	ND_NONE	},
@@ -282,20 +285,6 @@ void sort_tree_tbl()
 
 		for(i=0;i<N_TREE_CODES;i++){
 			assert( tnt_tbl[i].tnt_code == i );
-//			if( tnt_tbl[i].tnt_code != i ){
-//				sprintf(DEFAULT_ERROR_STRING,
-//			"tnt_tbl[%d,%s].tnt_code = %d, should be %d !?",
-//					i,tnt_tbl[i].tnt_name,tnt_tbl[i].tnt_code,i);
-//				NWARN(DEFAULT_ERROR_STRING);
-//				NERROR1("make sure that all tree codes are listed in nodetbl.c");
-//			}
-//			/*
-//			else if( verbose ){
-//				sprintf(DEFAULT_ERROR_STRING,
-//			"tnt_tbl[%d] = %s",i,tnt_tbl[i].tnt_name);
-//				advise(DEFAULT_ERROR_STRING);
-//			}
-//			*/
 		}
 	}
 #endif /* CAUTIOUS */

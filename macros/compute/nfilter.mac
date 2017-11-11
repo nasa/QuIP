@@ -67,11 +67,9 @@ Define Make_2D_LP 3 'target filter image' 'H filter constant' 'V filter constant
 Assign _lpw "ncols($1)"
 Assign _lph "nrows($1)"
 Tell_Precision $1 mlpprec
-data
-  vector dx $_lpw 1 $mlpprec
-  column dy $_lph 1 $mlpprec
-  column dy2 $_lph 1 $mlpprec
-  quit
+Vector dx $_lpw 1 $mlpprec
+Column dy $_lph 1 $mlpprec
+Column dy2 $_lph 1 $mlpprec
 Set x_filt_size $2
 Set y_filt_size $3
 #Assign mlp_sigma sqrt($_lph/$filt_size)/2
@@ -97,8 +95,34 @@ Delete_Image dy2
 # boxcar; 
 
 Define Make_Interp 2 'target filter image' 'sample spacing'
-Tell_Precision $1 mkprec
-data vector dx $size 1 $miprec quit
+Tell_Precision $1 miprec
+Print size
+Vector dx ncols('$1') 1 $miprec
+Column dy nrows('$1') 1 $miprec
+Set ss $2
+#Assign start " 1 + ( $size - $ss ) / 2"
+Decrement ss
+Set _i 0
+VSet dx 0.0
+repeat $ss
+  #VSet dx[$start] 1.0
+  #Increment start
+  VSet dx[$_i] 1.0
+  VSet dy[$_i] 1.0
+  If $_i>0 "VSet dy[nrows(dy)-$_i] 1.0"
+  Increment _i
+  end
+#Product $1 dx dx
+VVMul $1 dx dy
+Delete_Image dx
+Delete_Image dy
+.
+
+# This must have assumed a complex fft?
+Define OLD_Make_Interp 2 'target filter image' 'sample spacing'
+Tell_Precision $1 miprec
+Print size
+Vector dx $size 1 $miprec
 Set ss $2
 Assign start " 1 + ( $size - $ss ) / 2"
 Decrement ss
@@ -108,7 +132,7 @@ repeat $ss
   Increment start
   end
 Product $1 dx dx
-data del dx quit
+Delete_Image dx
 .
 
 Define Make_2D_HP 3 target x_constant y_constant

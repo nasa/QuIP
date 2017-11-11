@@ -1,0 +1,84 @@
+# test of new standardized mapping function
+
+Set dest_type u_byte
+Set n 4
+
+# test of multi-component mapping
+
+
+
+Vector rgb $n 3 $dest_type
+Vector dst $n 1 $dest_type
+Vector mdst $n 3 $dest_type
+Vector map_b 256 1 $dest_type
+Vector rgb_map_b 256 3 $dest_type
+Vector map_s 1024 1 $dest_type
+Vector src_b $n 1 u_byte
+Vector src_s $n 1 u_short
+Subvector s_b map_b 22 0
+Subvector s_s map_s 22 0
+
+# We used this init for float maps...
+#Ramp1D map_b 0 1/ncols(map_b)
+#Ramp1D map_s 0 1/ncols(map_s)
+# This init will work for byte maps as well...
+Ramp1D rgb_map_b{0} 0 1
+Ramp1D rgb_map_b{1} 0 2
+Ramp1D rgb_map_b{2} 0 3
+Ramp1D map_b 0 1
+Ramp1D map_s 0 3
+#Display s_b
+#Display s_s
+#Pause
+
+data
+  ascii
+    read src_b - 
+      0 10 20 21
+    read src_s - 
+      0 10 20 21
+    quit
+  quit
+
+VSet rgb 55
+Map_B rgb src_b rgb_map_b
+Display src_b
+Display rgb
+exit
+
+Define Test_Fast_Map 0
+veclib execute vlutmapb dst src_b map_b quit
+Display src_b
+Display dst
+Display map_b[10]
+Display map_b[21]
+
+VSet dst -5
+veclib execute vlutmaps dst src_s map_s quit
+Display src_s
+Display dst
+Display map_s[10]
+Display map_s[21]
+.
+
+Define Test_Eqsp_Map 0
+VSet mdst 55
+veclib execute vlutmapb mdst{0} src_b map_b quit
+Display src_b
+Display mdst{0}
+Display map_b[10]
+Display map_b[21]
+
+VSet mdst 55
+veclib execute vlutmaps mdst{0} src_s map_s quit
+Display src_s
+Display mdst{0}
+Display map_s[10]
+Display map_s[21]
+.
+
+Test_Eqsp_Map
+Pause
+
+
+exit

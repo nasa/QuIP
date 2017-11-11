@@ -1,2 +1,5 @@
 
-is host_typed_prot_defs.h used?  Apparently not!?
+04-06-2017
+Converted the macro mess from c-preprocessor to m4
+to make it easier to debug the C code.
+

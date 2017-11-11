@@ -91,7 +91,7 @@ static void read_stamp(SINGLE_QSP_ARG_DECL)
 	int n=0;
 
 	if( next_sc_to_read >= MAX_TIME_STAMPS ){
-		WARN("read_stamp:  out of time stamp buffer space");
+		warn("read_stamp:  out of time stamp buffer space");
 		halting=1;
 		return;
 	}
@@ -115,12 +115,12 @@ static void read_stamp(SINGLE_QSP_ARG_DECL)
 	scp = &sc_tbl[active_buf][next_sc_to_read];
 	if( gettimeofday(&scp->sc_tv,NULL) < 0 ){
 		perror("gettimeofday");
-		WARN("error reading system time");
+		warn("error reading system time");
 		return;
 	}
 	scp->sc_n = n;
 	if( ts_char_offset[active_buf]+n > TMP_BUF_SIZE ){
-		WARN("out of char buf space");
+		warn("out of char buf space");
 		halting=1;
 		scp->sc_n=0;
 		return;
@@ -129,7 +129,7 @@ static void read_stamp(SINGLE_QSP_ARG_DECL)
 	scp->sc_buf = &ts_char_buf[active_buf][ts_char_offset[active_buf]];
 	if( read(input_fd,scp->sc_buf,n) != n ){
 		sprintf(ERROR_STRING,"Error reading %d chars",n);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -138,7 +138,7 @@ static void read_stamp(SINGLE_QSP_ARG_DECL)
 
 	if( next_sc_to_read >= MAX_TIME_STAMPS ){	/* this buf is full */
 		if( writing_buf >= 0 )
-			ERROR1("read_stamp:  disk writer not keeping up!?");
+			error1("read_stamp:  disk writer not keeping up!?");
 		writing_buf = active_buf;
 		active_buf ++;
 		active_buf %= N_SWAP_BUFFERS;
@@ -210,8 +210,8 @@ static COMMAND_FUNC( show_stamps )
 
 	if( sc_list == NULL ) return;
 
-	np = sc_list->l_head;
-	while(np!=NO_NODE){
+	np = QLIST_HEAD(sc_list);
+	while(np!=NULL){
 		scp=(Stamped_Char *)np->n_data;
 		show_one(QSP_ARG  scp,DEFAULT_MAX_PER_LINE);
 		np=np->n_next;
@@ -222,7 +222,7 @@ static COMMAND_FUNC( set_zero )
 {
 	if( gettimeofday(&zero_tv,NULL) < 0 ){
 		perror("gettimeofday");
-		WARN("error reading time zero");
+		warn("error reading time zero");
 		return;
 	}
 	zero_set=1;
@@ -292,22 +292,22 @@ static void *disk_writer(void *argp)
 		count= sizeof(sc_tbl[0][0])*MAX_TIME_STAMPS;
 		if( write(output_fd,(char *)&sc_tbl[writing_buf][0],count) != count ){
 			tell_sys_error("write");
-			NWARN("error writing timestamp data");
+			warn("error writing timestamp data");
 		}
 		/* now write the number of characters (variable) */
 		count = sizeof(ts_char_offset[writing_buf]);
 		if( write(output_fd,(char *)&ts_char_offset[writing_buf],count) != count ){
 			tell_sys_error("write");
-			NWARN("error writing char count");
+			warn("error writing char count");
 		}
 		count = ts_char_offset[writing_buf];
 if( verbose ){
-sprintf(DEFAULT_ERROR_STRING,"writing buffer %d, %d chars",writing_buf,count);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"writing buffer %d, %d chars",writing_buf,count);
+advise(ERROR_STRING);
 }
 		if( write(output_fd,&ts_char_buf[writing_buf],count) != count ){
 			tell_sys_error("write");
-			NWARN("error writing char buffer");
+			warn("error writing char buffer");
 		}
 
 		/* now we're done! */
@@ -334,7 +334,7 @@ int ntot=0;
 		count= sizeof(stmp_tbl[0])*MAX_TIME_STAMPS;
 		if( (actual=read(fd,(char *)&stmp_tbl[0],count)) < 0 ){
 			tell_sys_error("read");
-			WARN("error reading timestamp data");
+			warn("error reading timestamp data");
 sprintf(ERROR_STRING,"Read error after reading %d total characters",ntot);
 advise(ERROR_STRING);
 			return;
@@ -347,7 +347,7 @@ advise(ERROR_STRING);
 		} else if( actual != count ){
 			sprintf(ERROR_STRING,"Requested %d timestamp chars, %zd actually read",
 				count,actual);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 sprintf(ERROR_STRING,"Read error after reading %d total characters",ntot);
 advise(ERROR_STRING);
 			return;
@@ -357,14 +357,14 @@ ntot+=count;
 		count = sizeof(char_offset);
 		if( (actual=read(fd,(char *)&char_offset,count)) < 0 ){
 			tell_sys_error("read");
-			WARN("error reading char count");
+			warn("error reading char count");
 sprintf(ERROR_STRING,"Read error after reading %d total characters",ntot);
 advise(ERROR_STRING);
 			return;
 		} else if( actual != count ){
 			sprintf(ERROR_STRING,"Requested %d charcount chars, %zd actually read",
 				count,actual);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 sprintf(ERROR_STRING,"Read error after reading %d total characters",ntot);
 advise(ERROR_STRING);
 			return;
@@ -375,14 +375,14 @@ ntot+=count;
 
 		if( (actual=read(fd,&char_buf,count)) < 0 ){
 			tell_sys_error("read");
-			WARN("error reading char buffer");
+			warn("error reading char buffer");
 sprintf(ERROR_STRING,"Read error after reading %d total characters",ntot);
 advise(ERROR_STRING);
 			return;
 		} else if( actual != count ){
 			sprintf(ERROR_STRING,"Requested %d data chars, %zd actually read",
 				count,actual);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 sprintf(ERROR_STRING,"Read error after reading %d total characters",ntot);
 advise(ERROR_STRING);
 			return;
@@ -452,7 +452,7 @@ static COMMAND_FUNC( do_set_async )
 {
 	stamp_async = ASKIF("log character data asynchronously");
 #ifdef HAVE_PTHREADS
-	WARN("No support for async timestamps without pthreads!?");
+	warn("No support for async timestamps without pthreads!?");
 #endif // HAVE_PTHREADS
 }
 
@@ -504,7 +504,7 @@ MENU_END(stamps)
 
 COMMAND_FUNC( do_stamp_menu )
 {
-	PUSH_MENU(stamps);
+	CHECK_AND_PUSH_MENU(stamps);
 }
 
 

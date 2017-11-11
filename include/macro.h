@@ -39,7 +39,7 @@ struct macro {
 
 #define MACRO_NAME(mp)			(mp)->m_item.item_name
 #define MACRO_N_ARGS(mp)		(mp)->m_n_args
-#define MACRO_TEXT(mp)			(mp)->m_text
+//#define MACRO_TEXT(mp)			(mp)->m_text
 #define MACRO_FLAGS(mp)			(mp)->m_flags
 #define MACRO_ARG_TBL(mp)		(mp)->m_arg_tbl
 #define MACRO_ARG(mp,idx)		MACRO_ARG_TBL(mp)[idx]
@@ -50,8 +50,6 @@ struct macro {
 #define SET_MACRO_FLAG_BITS(mp,f)	(mp)->m_flags |= f
 #define CLEAR_MACRO_FLAG_BITS(mp,f)	(mp)->m_flags &= ~(f)
 
-#define NO_MACRO ((Macro *)NULL)
-
 // flag bits
 #define ALLOW_RECURSION		1
 #define MACRO_INVOKED		2	// keep track of what has been used
@@ -60,13 +58,8 @@ struct macro {
 							\
 	( (MACRO_FLAGS( mp ) & ALLOW_RECURSION) == 0 )
 
-// macro.c
-ITEM_INIT_PROT(Macro,macro)
-ITEM_NEW_PROT(Macro,macro)
-ITEM_CHECK_PROT(Macro,macro)
-ITEM_PICK_PROT(Macro,macro)
-ITEM_DEL_PROT(Macro,macro)
-#define PICK_MACRO(pmpt)	pick_macro(QSP_ARG  pmpt)
+// BUG? - should be per-qsp???
+#define IS_INVOKED(mp)		(MACRO_FLAGS(mp) & MACRO_INVOKED)
 
 #endif /* ! _MACRO_H_ */
 

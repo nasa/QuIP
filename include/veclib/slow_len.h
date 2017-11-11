@@ -12,21 +12,19 @@ extern "C" {
 #endif
 
 #include "platform.h"
-#include "veclib/dim3.h"
+//#include "veclib/dim3.h"
+#include "veclib/dim5.h"
 
-extern int setup_slow_len(	/* DIM3 *len_p, */ /* use vap */
-				/* Size_Info *szi_p, */
+extern int _setup_slow_len(	QSP_ARG_DECL
 				Vector_Args *vap,
 				dimension_t start_dim,
-				/* int *dim_indices, */	/* now in vap */
 				int i_first,
 				int n_vec,
 				Platform_Device *pdp);
 
-#ifdef FOOBAR
-// now in vap
-#define SETUP_FAST_LEN		len=VA_LENGTH(vap);
-#endif // FOOBAR
+
+#define setup_slow_len(vap, start_dim, i_first, n_vec, pdp) _setup_slow_len(QSP_ARG vap, start_dim, i_first, n_vec, pdp)
+
 
 // SETUP_SLOW_LEN takes the dimension arrays (up to 5 dieensions)
 // and figures out which 3 to use, putting the dimensions in len

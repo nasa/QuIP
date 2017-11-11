@@ -4,9 +4,11 @@
 
 #include "polh_dev.h"
 
+#define MAX_STRING_LEN		256	// overkill?
+
 int set_polh_angles(QSP_ARG_DECL  Ph_Cmd_Code code)
 {
-	char angles[LLEN];
+	char angles[MAX_STRING_LEN];	// BUG - check for overrun?
 	float az, el, rl;
 
 	az = (float)HOW_MUCH("azimuth reference angle");
@@ -23,7 +25,7 @@ int set_polh_angles(QSP_ARG_DECL  Ph_Cmd_Code code)
 
 int set_polh_filter(QSP_ARG_DECL  Ph_Cmd_Code code)
 {
-	char filter[LLEN];
+	char filter[MAX_STRING_LEN];	// BUG - overrun?
 	float f, flow, fhigh, factor;
 
 #define MIN_SENSITIVITY_FILTER	0
@@ -69,7 +71,7 @@ int set_polh_filter(QSP_ARG_DECL  Ph_Cmd_Code code)
 
 int ask_env(QSP_ARG_DECL  const char* name, const char* type, float* max_value, float* min_value, float sys_max, float sys_min)
 {
-	char ask_string[LLEN];
+	char ask_string[MAX_STRING_LEN];	// BUG - overrun?
 	
 	sprintf(ask_string,"minimum %s value for %s",name, type);
 	*min_value = (float)HOW_MUCH(ask_string);

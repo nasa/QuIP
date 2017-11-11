@@ -39,6 +39,7 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 	// nop
 }
 
+#ifdef FOOBAR
 /********** UIAlertView delegate methods ************/
 
 - (void)alertView:(QUIP_ALERT_OBJ_TYPE *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex
@@ -52,6 +53,7 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 }
 
 /********** end UIAlertView delegate methods ************/
+#endif // FOOBAR
 
 -(void) qtvcExitProgram
 {
@@ -80,7 +82,14 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 #ifdef BUILD_FOR_IOS
 	self = [super initWithStyle: UITableViewStyleGrouped];
 
+//fprintf(stderr,"quipTableViewControoler initWithSize delegate = 0x%lx\n",(long)dgp);
+
+//fprintf(stderr,"quipTableViewControoler delegate set to self = 0x%lx\n",(long)self);
 	self.tableView.delegate = self;
+	// When we use this delegate, we lose the nav group headings,
+	// and the selections don't work!?!?
+	//self.tableView.delegate = dgp;
+
 	self.tableView.dataSource = self;
 	// BUG - this makes a new background image for every panel.
 	// After rewriting make_bg_image to reuse the UIImageView,
@@ -91,6 +100,8 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 //fprintf(stderr,"Setting title to %s, nav_panel = 0x%lx\n",nav_p.name.UTF8String,(long)nav_p);
 	self.title = nav_p.name;
 	//menuList = [NSMutableArray array];
+
+	//if( dgp
 
 	// set nav bar to not hidden here?
 #endif // BUILD_FOR_IOS
@@ -281,13 +292,7 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 -(void) qtvcDoneButtonPressed
 {
 	done_button_pushed=1;
-#ifdef CAUTIOUS
-	if( done_action == NULL ){
-		NWARN("qtvcDoneButtonPushed:  no action!?");
-		return;
-	}
-#endif // CAUTIOUS
-    
+	assert( done_action != NULL );
 	chew_text(DEFAULT_QSP_ARG  done_action.UTF8String, "(done button)" );
 }
 

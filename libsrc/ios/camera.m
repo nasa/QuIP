@@ -10,7 +10,7 @@
 #include "viewer.h"
 
 static IOS_Item_Type *camera_itp;
-IOS_ITEM_INIT_FUNC(Camera,camera)
+IOS_ITEM_INIT_FUNC(Camera,camera,0)
 IOS_ITEM_NEW_FUNC(Camera,camera)
 IOS_ITEM_CHECK_FUNC(Camera,camera)
 IOS_ITEM_PICK_FUNC(Camera,camera)
@@ -73,12 +73,7 @@ static void init_formats(Camera *cam)
 		AVCaptureDeviceFormat *cdf;
 		CMVideoDimensions vdims;
 		cdf = [fmt_list objectAtIndex:i];
-#ifdef CAUTIOUS
-		if( cdf == NULL ){
-			NERROR1("CAUTIOUS:  init_formats:  null format!?");
-			return;
-		}
-#endif // CAUTIOUS
+		assert( cdf != NULL );
 
 		if( [ cdf.mediaType compare:AVMediaTypeVideo ] == NSOrderedSame ){ 
 			int w, h;
@@ -121,12 +116,7 @@ static void init_camera_subsystem(SINGLE_QSP_ARG_DECL)
 		AVCaptureDevice *avcd;
 
 		avcd = [cam_list objectAtIndex:i];
-#ifdef CAUTIOUS
-		if( avcd == NULL ) {
-			WARN("CAUTIOUS:  init_camera_subsystem:  Null list element!?");
-			return;
-		}
-#endif /* CAUTIOUS */
+		assert( avcd != NULL );
 
 		cam = new_camera(QSP_ARG  avcd.localizedName.UTF8String );
 		if( cam == NULL ){
@@ -182,7 +172,7 @@ static void print_cam_info(QSP_ARG_DECL  Camera *cam)
 static COMMAND_FUNC( do_list_cams )
 {
 	prt_msg("A/V Capture Devices:");
-	list_cameras(SINGLE_QSP_ARG);
+	list_cameras(QSP_ARG  tell_msgfile());
 }
 
 static COMMAND_FUNC( do_cam_info )
@@ -206,7 +196,7 @@ static int get_ios_item_names( QSP_ARG_DECL  Data_Obj *str_dp, IOS_Item_Type *it
 	int i, n;
 
 	lp = ios_item_list(QSP_ARG  itp);
-	if( lp == NO_IOS_LIST ){
+	if( lp == NULL ){
 		WARN("get_item_names:  No item list!?");
 		return 0;
 	}
@@ -221,7 +211,7 @@ static int get_ios_item_names( QSP_ARG_DECL  Data_Obj *str_dp, IOS_Item_Type *it
 		
 	np=IOS_LIST_HEAD(lp);
 	i=0;
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		char *dst;
 		ip = (IOS_Item *) IOS_NODE_DATA(np);
 		dst = OBJ_DATA_PTR(str_dp);
@@ -235,7 +225,7 @@ static int get_ios_item_names( QSP_ARG_DECL  Data_Obj *str_dp, IOS_Item_Type *it
 		}
 		i++;
 		if( i>=n )
-			np=NO_IOS_NODE;
+			np=NULL;
 		else
 			np = IOS_NODE_NEXT(np);
 	}
@@ -253,8 +243,8 @@ static COMMAND_FUNC( do_get_cams )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("string table");
-	if( dp == NO_OBJ ) return;
+	dp = pick_obj("string table");
+	if( dp == NULL ) return;
 
 	if( get_camera_names( QSP_ARG  dp ) < 0 )
 		WARN("Error getting camera names!?");
@@ -264,8 +254,8 @@ static COMMAND_FUNC( do_mon_cam )
 {
 	Viewer *vp;
 
-	vp = PICK_VWR("");
-	if( vp == NO_VIEWER ) return;
+	vp = pick_vwr("");
+	if( vp == NULL ) return;
 
 	monitor_av_session(vp);
 }
@@ -304,8 +294,8 @@ static COMMAND_FUNC( do_grab_cam )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("target image object");
-	if( dp == NO_OBJ ) return;
+	dp = pick_obj("target image object");
+	if( dp == NULL ) return;
 
 	grab_next_frame(dp);
 }
@@ -334,6 +324,6 @@ COMMAND_FUNC(do_cam_menu)
 		inited=1;
 	}
 
-	PUSH_MENU(camera);
+	CHECK_AND_PUSH_MENU(camera);
 }
 

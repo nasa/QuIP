@@ -22,15 +22,15 @@
 
 // BUG for this module to be thread-safe, this static
 // variable has to be part of the Query_Stack...
-static Viewer *draw_vp=NO_VIEWER;
+static Viewer *draw_vp=NULL;
 
-#define DRAW_CHECK(s)	if( draw_vp == NO_VIEWER ){			\
+#define DRAW_CHECK(s)	if( draw_vp == NULL ){			\
 	sprintf(ERROR_STRING,"%s:  no drawing viewer selected!?",#s);	\
 				WARN(ERROR_STRING);			\
 				return;					\
 			}
 #define XFORMING_COORDS(vp)					\
-	( ( vp ) != NO_VIEWER && VW_FLAGS(vp) & VIEW_XFORM_COORDS )
+	( ( vp ) != NULL && VW_FLAGS(vp) & VIEW_XFORM_COORDS )
 
 /* a menu of stuff to draw into windows */
 /* the window-dependent stuff ought to go into xsupp, but for now
@@ -40,7 +40,9 @@ static Viewer *draw_vp=NO_VIEWER;
 
 #ifdef HAVE_X11
 ITEM_INTERFACE_PROTOTYPES( XFont , xfont )
-#define XFONT_OF( s )		xfont_of( QSP_ARG  s)
+#define xfont_of( s )		_xfont_of( QSP_ARG  s)
+#define new_xfont( s )		_new_xfont( QSP_ARG  s)
+#define list_xfonts( fp )		_list_xfonts( QSP_ARG  fp)
 #endif /* HAVE_X11 */
 
 static int curr_x=0;
@@ -75,7 +77,7 @@ static void load_font(QSP_ARG_DECL  const char *fontname)
 
 	DRAW_CHECK(load_font)
 
-	xfp = xfont_of(QSP_ARG  fontname);
+	xfp = xfont_of(fontname);
 	if( xfp != NULL ){
 		sprintf(ERROR_STRING,"load_font:  font %s is already loaded!?",
 			fontname);
@@ -106,8 +108,8 @@ static void load_font(QSP_ARG_DECL  const char *fontname)
 	XFreeFontNames(flist);
 
 	id = XLoadFont(VW_DPY(draw_vp),fontname);
-	xfp = new_xfont(QSP_ARG  fontname);
-	if( xfp != NO_XFONT ){
+	xfp = new_xfont(fontname);
+	if( xfp != NULL ){
 		xfp->xf_id = id;
 		xfp->xf_fsp = XQueryFont(VW_DPY(draw_vp),id);
 		// If we ever delete this thing, we have to free
@@ -164,11 +166,11 @@ static COMMAND_FUNC( do_set_font )
 	s=NAMEOF("font name");
 
 #ifdef HAVE_X11
-	xfp = XFONT_OF(s);
-	if( xfp == NO_XFONT ){
+	xfp = xfont_of(s);
+	if( xfp == NULL ){
 		load_font(QSP_ARG  s);
-		xfp = XFONT_OF(s);
-		if( xfp == NO_XFONT ){
+		xfp = xfont_of(s);
+		if( xfp == NULL ){
 			WARN("Unable to load font!?");
 			return;
 		}
@@ -204,7 +206,7 @@ static COMMAND_FUNC( do_set_fg )
 
 	DRAW_CHECK(do_set_fg)
 
-	_xp_select(draw_vp,val);
+	xp_select(draw_vp,val);
 }
 
 static COMMAND_FUNC( do_set_bg )
@@ -215,7 +217,7 @@ static COMMAND_FUNC( do_set_bg )
 
 	DRAW_CHECK(do_set_bg)
 
-	_xp_bgselect(draw_vp,val);
+	xp_bgselect(draw_vp,val);
 }
 
 static COMMAND_FUNC( do_draw_string )
@@ -228,7 +230,7 @@ static COMMAND_FUNC( do_draw_string )
 
 	DRAW_CHECK(do_draw_string)
 
-	_xp_text(draw_vp,x,y,s);
+	xp_text(draw_vp,x,y,s);
 }
 
 static COMMAND_FUNC( do_show_gc )
@@ -267,7 +269,7 @@ static COMMAND_FUNC( do_cont )
 
 	DRAW_CHECK(do_cont)
 
-	_xp_line(draw_vp,curr_x,curr_y,x,y);
+	xp_line(draw_vp,curr_x,curr_y,x,y);
 	curr_x = x;
 	curr_y = y;
 }
@@ -314,7 +316,7 @@ static COMMAND_FUNC( do_clear )
 {
 	DRAW_CHECK(do_clear)
 
-	_xp_erase(draw_vp);
+	xp_erase(draw_vp);
 }
 
 static COMMAND_FUNC( do_update )
@@ -402,7 +404,7 @@ static COMMAND_FUNC( do_set_text_mode )
 		case 2:  right_justify(draw_vp); break;
 #ifdef CAUTIOUS
 		default:
-ERROR1("CAUTIOUS:  do_set_text_mode:  Unexpected text justification index!?");
+error1("CAUTIOUS:  do_set_text_mode:  Unexpected text justification index!?");
 			break;
 #endif /* CAUTIOUS */
 	}
@@ -432,7 +434,7 @@ static COMMAND_FUNC( do_set_text_angle )
 static COMMAND_FUNC( do_list_xfonts )
 {
 #ifdef HAVE_X11
-	list_xfonts(SINGLE_QSP_ARG);
+	list_xfonts(tell_msgfile());
 #endif /* HAVE_X11 */
 }
 
@@ -446,7 +448,7 @@ static COMMAND_FUNC( do_get_string_width )
 
 	n = get_string_width(draw_vp,s);
 	sprintf(msg_str,"%d",n);
-	ASSIGN_VAR(v,msg_str);
+	assign_var(v,msg_str);
 	rls_str((char *)v);
 }
 
@@ -483,13 +485,13 @@ COMMAND_FUNC( do_draw_menu )
 
 	GET_VIEWER("drawmenu")
 	draw_vp = vp;
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 
 #ifdef BUILD_FOR_OBJC
 	if( VW_CANVAS(vp) == NULL )
 		init_viewer_canvas(vp);
 #endif /* BUILD_FOR_OBJC */
 
-	PUSH_MENU(draw);
+	CHECK_AND_PUSH_MENU(draw);
 }
 

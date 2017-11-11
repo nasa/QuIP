@@ -3,60 +3,12 @@
 
 #include "quip_config.h"
 #include "quip_fwd.h"
-#ifdef FOOBAR
-#include "quip_menu.h"
-#endif // FOOBAR
-
 #include "shape_bits.h"
-
-//#include "query_api.h"
 #include "item_type.h"
 #include "shape_info.h"
 #include "freel.h"
-//#include "list.h"
-//#include "debug.h"
-//#include "dobj_basic.h"
 
 struct platform_device;
-
-typedef union {
-	double		u_d;	// this is first to be the default initializer
-	long double	u_ld;
-	char		u_b;
-	short		u_s;
-	int32_t		u_l;
-	int64_t		u_ll;
-	unsigned char	u_ub;
-	unsigned short	u_us;
-	uint32_t	u_ul;
-	uint64_t	u_ull;
-	float		u_f;
-	/* Do we need both of these??? */
-	float		u_fc[2];
-	SP_Complex	u_spc;
-	float		u_fq[4];
-	SP_Quaternion	u_spq;
-
-	double		u_dc[2];
-	DP_Complex	u_dpc;
-	double		u_dq[4];
-	DP_Quaternion	u_dpq;
-
-	long double	u_lc[2];
-	LP_Complex	u_lpc;
-	long double	u_lq[4];
-	LP_Quaternion	u_lpq;
-
-	bitmap_word	u_bit;	/* should be boolean type... */
-	void *		u_vp;	// for string type
-} Scalar_Value;
-
-#define NO_SCALAR_VALUE	((Scalar_Value *)NULL)
-
-#define SVAL_FLOAT(svp)		(svp)->u_f
-#define SVAL_STD(svp)		(svp)->std_scalar
-#define SVAL_STD_CPX(svp)	(svp)->std_cpx_scalar
-#define SVAL_STD_QUAT(svp)	(svp)->std_quat_scalar
 
 /* Data areas were a largely obsolete construct, which were
  * originally introduced to allow objects to be placed in a particular
@@ -74,10 +26,6 @@ typedef struct memory_area {
 	uint32_t		ma_memsiz;
 	uint32_t		ma_memfree;
 } Memory_Area;
-
-#define NO_MEMORY_AREA ((Memory_Area *)NULL)
-
-
 
 typedef struct data_area {
 	Item			da_item;
@@ -155,7 +103,7 @@ enum data_area_type {
 		return;					\
 	}
 
-#ifdef HAVE_CUDA
+#ifdef HAVE_ANY_GPU
 
 #define RAM_OBJ_ERROR_MSG(dp,whence)			\
 		sprintf(ERROR_STRING,			\
@@ -175,10 +123,10 @@ enum data_area_type {
 		return retval;				\
 	}
 
-#else // ! HAVE_CUDA
+#else // ! HAVE_ANY_GPU
 #define INSIST_RAM_OBJ(dp,whence)		// nop
 #define VINSIST_RAM_OBJ(dp,whence,retval)	// nop
-#endif // ! HAVE_CUDA
+#endif // ! HAVE_ANY_GPU
 		
 
 extern Data_Area *def_area_p, *ram_area_p;
@@ -187,29 +135,32 @@ extern debug_flag_t debug_data;
 
 #define MAX_AREAS	4
 
-#define NO_AREA	((Data_Area *) NULL )
-
 // this may be pointed to by dt_unaligned_ptr...
 struct gl_info;
+
+struct data_info {
+	Data_Area *		di_ap;
+	void *			di_data_ptr;
+	void *			di_unaligned_ptr;
+	index_t			di_offset;	// data offset of subobjects - in bytes
+	bitnum_t		di_bit0;
+};
 
 struct data_obj {
 	Item			dt_item;
 	Shape_Info *		dt_shpp;
-	void *			dt_data_ptr;
-	void *			dt_unaligned_ptr;
+	struct data_info	dt_data_info;
+#define dt_data_ptr		dt_data_info.di_data_ptr
+#define dt_unaligned_ptr	dt_data_info.di_unaligned_ptr
+#define dt_offset		dt_data_info.di_offset
+#define dt_bit0			dt_data_info.di_bit0
+#define dt_ap			dt_data_info.di_ap
 	void *			dt_extra;	// used for decl_enp - what else?
-	int			dt_bit0;
 	Data_Obj *		dt_parent;
 	List *			dt_children;
-	index_t			dt_offset;	// data offset of subobjects - in bytes
-	int			dt_refcount;
 	const char *		dt_declfile;
-	Data_Area *		dt_ap;
-	//int			dt_flags;	// are the flags the same as the shape flags?
+	int			dt_refcount;
 };
-
-#define NO_OBJ		((Data_Obj *)NULL)
-
 
 #define OWNS_DATA(dp)		((OBJ_FLAGS(dp) & DT_NO_DATA)==0)
 
@@ -242,20 +193,23 @@ struct data_obj {
 
 #define IS_ZOMBIE(dp)		( OBJ_FLAGS(dp) & DT_ZOMBIE )
 
-#ifdef CAUTIOUS
+//#ifdef CAUTIOUS
+
 #define IS_CONTIGUOUS(dp)	(  ( OBJ_FLAGS(dp) & DT_CONTIG ) || 		\
-				( (!(OBJ_FLAGS(dp) & DT_CHECKED)) && is_contiguous(QSP_ARG  dp) ) )
+				( (!(OBJ_FLAGS(dp) & DT_CHECKED)) && is_contiguous(dp) ) )
+
+// These two look the same - what is the difference???
 
 #define N_IS_CONTIGUOUS(dp)	(  ( OBJ_FLAGS(dp) & DT_CONTIG ) || 		\
 				( (!(OBJ_FLAGS(dp) & DT_CHECKED)) &&		\
-				is_contiguous(DEFAULT_QSP_ARG  dp) ) )
+				_is_contiguous(DEFAULT_QSP_ARG  dp) ) )
 
 #define IS_EVENLY_SPACED(dp)	( OBJ_FLAGS(dp) & DT_EVENLY )
 
-#else /* ! CAUTIOUS */
-#define IS_CONTIGUOUS(dp)	(  ( OBJ_FLAGS(dp) & DT_CONTIG ) )
-#define IS_EVENLY_SPACED(dp)	( OBJ_FLAGS(dp) & DT_EVENLY )
-#endif /* ! CAUTIOUS */
+//#else /* ! CAUTIOUS */
+//#define IS_CONTIGUOUS(dp)	(  ( OBJ_FLAGS(dp) & DT_CONTIG ) )
+//#define IS_EVENLY_SPACED(dp)	( OBJ_FLAGS(dp) & DT_EVENLY )
+//#endif /* ! CAUTIOUS */
 
 #define HAS_CONTIGUOUS_DATA(dp)	( IS_CONTIGUOUS(dp) || (OBJ_FLAGS(dp) & DT_CONTIG_BITMAP_DATA) )
 
@@ -275,8 +229,6 @@ struct data_obj {
 /* codes for subscript strings */
 #define SQUARE	1
 #define CURLY	2
-
-extern int max_vectorizable;
 
 #include "dobj_prot.h"
 
@@ -362,7 +314,7 @@ extern int max_vectorizable;
 #define SET_OBJ_FRM_INC(dp,v)	SET_SHP_FRM_INC(OBJ_SHAPE(dp),v)
 #define SET_OBJ_SEQ_INC(dp,v)	SET_SHP_SEQ_INC(OBJ_SHAPE(dp),v)
 
-#define SET_OBJ_SHAPE_FLAGS(dp)	set_shape_flags(OBJ_SHAPE(dp),dp,AUTO_SHAPE)
+#define SET_OBJ_SHAPE_FLAGS(dp)	set_shape_flags(OBJ_SHAPE(dp),AUTO_SHAPE)
 
 #define SET_SHP_COMP_INC(shpp,v)	SET_INCREMENT(shpp->si_type_incs,0,v)
 #define SET_SHP_PXL_INC(shpp,v)		SET_INCREMENT(shpp->si_type_incs,1,v)
@@ -392,6 +344,14 @@ extern int max_vectorizable;
 #define OBJ_MACH_PREC_NAME(dp)	PREC_NAME(OBJ_MACH_PREC_PTR(dp))
 #define OBJ_MACH_PREC_SIZE(dp)	PREC_SIZE(OBJ_MACH_PREC_PTR(dp))
 #define OBJ_MACH_PREC_PTR(dp)	PREC_MACH_PREC_PTR(OBJ_PREC_PTR(dp))
+
+#define BITMAP_OBJ_GPU_INFO_HOST_PTR(dp)		SHP_BITMAP_GPU_INFO_H(OBJ_SHAPE(dp))
+#define SET_BITMAP_OBJ_GPU_INFO_HOST_PTR(dp,p)		SET_SHP_BITMAP_GPU_INFO_H(OBJ_SHAPE(dp),p)
+
+#ifdef HAVE_ANY_GPU
+#define BITMAP_OBJ_GPU_INFO_DEV_PTR(dp)			SHP_BITMAP_GPU_INFO_G(OBJ_SHAPE(dp))
+#define SET_BITMAP_OBJ_GPU_INFO_DEV_PTR(dp,p)		SET_SHP_BITMAP_GPU_INFO_G(OBJ_SHAPE(dp),p)
+#endif // HAVE_ANY_GPU
 
 /* This is not so good now that the shape info is pointed to... */
 #define OBJ_COPY_FROM(dpto,dpfr)	*dpto = *dpfr
@@ -473,10 +433,10 @@ extern int max_vectorizable;
 
 #define FETCH_OBJ_FROM_CONTEXT( dp, icp )	container_find_match( CTX_CONTAINER(icp) , OBJ_NAME(dp) )
 
-#define PUSH_DOBJ_CONTEXT(icp)		push_dobj_context(QSP_ARG  icp)
-#define POP_DOBJ_CONTEXT		pop_dobj_context(SINGLE_QSP_ARG)
-#define DOBJ_CONTEXT_LIST		CONTEXT_LIST(dobj_itp)
-#define ID_CONTEXT_LIST			CONTEXT_LIST(id_itp)
+//#define PUSH_DOBJ_CONTEXT(icp)		push_dobj_context(QSP_ARG  icp)
+//#define POP_DOBJ_CONTEXT		pop_dobj_context(SINGLE_QSP_ARG)
+#define LIST_OF_DOBJ_CONTEXTS		LIST_OF_CONTEXTS(dobj_itp)
+#define LIST_OF_ID_CONTEXTS		LIST_OF_CONTEXTS(id_itp)
 
 /* BUG should go elsewhere */
 extern const char *dimension_name[];
@@ -488,16 +448,23 @@ extern int set_obj_shape_flags(Data_Obj *dp);
 
 
 extern Data_Area *curr_ap;
-void describe_shape(QSP_ARG_DECL  Shape_Info *shpp);
-#define DESCRIBE_SHAPE(shpp)	describe_shape(QSP_ARG  shpp)
+void _describe_shape(QSP_ARG_DECL  Shape_Info *shpp);
+#define describe_shape(shpp)	_describe_shape(QSP_ARG  shpp)
 
 extern Item_Context *create_dobj_context(QSP_ARG_DECL  const char *);
 
-extern Data_Obj *pick_dobj(QSP_ARG_DECL  const char *pmpt);
-extern Data_Area *pick_data_area(QSP_ARG_DECL  const char *pmpt);
-extern void push_dobj_context(QSP_ARG_DECL  Item_Context *icp);
-extern Item_Context * pop_dobj_context(SINGLE_QSP_ARG_DECL);
-extern Item_Context * current_dobj_context(SINGLE_QSP_ARG_DECL);
+extern Data_Obj *_pick_dobj(QSP_ARG_DECL  const char *pmpt);
+extern Data_Area *_pick_data_area(QSP_ARG_DECL  const char *pmpt);
+extern void _push_dobj_context(QSP_ARG_DECL  Item_Context *icp);
+extern Item_Context * _pop_dobj_context(SINGLE_QSP_ARG_DECL);
+extern Item_Context * _current_dobj_context(SINGLE_QSP_ARG_DECL);
+
+#define pick_dobj(pmpt)	_pick_dobj(QSP_ARG  pmpt)
+#define pick_data_area(p)	_pick_data_area(QSP_ARG  p)
+#define push_dobj_context(icp)	_push_dobj_context(QSP_ARG  icp)
+#define pop_dobj_context()	_pop_dobj_context(SINGLE_QSP_ARG)
+#define current_dobj_context()	_current_dobj_context(SINGLE_QSP_ARG)
+
 extern void init_asc_menu(void);
 extern void init_ops_menu(void);
 //extern int siztbl[];
@@ -511,14 +478,26 @@ ITEM_CHECK_PROT(Data_Obj,dobj)
 ITEM_NEW_PROT(Data_Obj,dobj)
 ITEM_DEL_PROT(Data_Obj,dobj)
 
+#define init_dobjs()	_init_dobjs(SINGLE_QSP_ARG)
+#define list_dobjs(fp)	_list_dobjs(QSP_ARG  fp)
+#define dobj_of(name)	_dobj_of(QSP_ARG  name)
+#define new_dobj(name)	_new_dobj(QSP_ARG  name)
+#define del_dobj(name)	_del_dobj(QSP_ARG  name)
+
+
 /* remove from the dictionary... */
-#define DELETE_OBJ_ITEM(dp)		del_dobj(QSP_ARG  dp)
-#define ADD_OBJ_ITEM(dp)		/* add to the dictionary...  BUG LOOKS LIKE A NO-OP??? */
+//#define DELETE_OBJ_ITEM(dp)		del_dobj(QSP_ARG  dp)
+#define ADD_OBJ_ITEM(dp)		add_item(dobj_itp, dp)
 
 // areas.c
 
 ITEM_INTERFACE_PROTOTYPES(Data_Area,data_area)
-#define PICK_DATA_AREA(p)	pick_data_area(QSP_ARG  p)
+
+#define init_data_areas()	_init_data_areas(SINGLE_QSP_ARG)
+#define new_data_area(name)	_new_data_area(QSP_ARG  name)
+#define pick_data_area(p)	_pick_data_area(QSP_ARG  p)
+#define data_area_list()	_data_area_list(SINGLE_QSP_ARG)
+#define list_data_areas(fp)	_list_data_areas(QSP_ARG  fp)
 
 
 // sub_obj.c
@@ -532,7 +511,7 @@ extern void propagate_flag(Data_Obj *dp,uint32_t flagbit);
 void init_dobj_expr_funcs(SINGLE_QSP_ARG_DECL);
 
 // Something in here breaks some old cuda code...
-#include "platform.h"
+//#include "platform.h"
 
 #endif /* ! _DATA_OBJ_H_ */
 

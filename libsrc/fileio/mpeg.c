@@ -53,15 +53,15 @@ static int mpeg_to_dp(Data_Obj *dp,Mpeg_Hdr *mpeg_hp)
 	dp->dt_finc = dp->dt_rinc*dp->dt_rows;
 	dp->dt_sinc = dp->dt_finc*dp->dt_frames;
 
-	dp->dt_parent = NO_OBJ;
-	dp->dt_children = NO_LIST;
+	dp->dt_parent = NULL;
+	dp->dt_children = NULL;
 
 	dp->dt_ap = ram_area;		/* the default */
 	dp->dt_data = NULL;
 	dp->dt_nelts = dp->dt_tdim * dp->dt_cols * dp->dt_rows
 			* dp->dt_frames * dp->dt_seqs;
 
-	auto_shape_flags(&dp->dt_shape,dp);
+	auto_shape_flags(&dp->dt_shape);
 
 	return(0);
 }
@@ -202,8 +202,8 @@ Image_File * mpeg_open(const char *name,int rw)
 printf("mpeg_open: IN\n");
 #endif /* QUIP_DEBUG */
 	
-	ifp = IMG_FILE_CREAT(name,rw,IFT_MPEG);
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	ifp = img_file_creat(name,rw,IFT_MPEG);
+	if( ifp==NULL ) return(ifp);
 
 	ifp->hdr = (Mpeg_Hdr *)getbuf( sizeof(Mpeg_Hdr) );
 
@@ -307,7 +307,7 @@ void mpeg_close(Image_File *ifp)
 	if( ifp->hdr != NULL )
 		givbuf(ifp->hdr);
 
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 
@@ -403,7 +403,7 @@ int mpeg_wt(Data_Obj *dp,Image_File *ifp)
 {
 	ImVfb *wt_img=NULL;
 
-	if( ifp->if_dp == NO_OBJ ){	/* first time? */
+	if( ifp->if_dp == NULL ){	/* first time? */
 		/* set header params if necessary? */
 		setup_dummy(ifp);
 		copy_dimensions(ifp->if_dp, dp);

@@ -3,6 +3,7 @@
 #include "quip_config.h"
 
 #include "quip_prot.h"
+#include "function.h"
 #include "data_obj.h"
 
 #include <stdio.h>
@@ -219,13 +220,10 @@ static double get_pgc_size(QSP_ARG_DECL  Item *ip, int dim_index)
 		case 2: return(((PGR_Cam *)ip)->pc_rows);
 		case 3: return(((PGR_Cam *)ip)->pc_n_buffers);
 		case 4: return(1.0);
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,"CAUTIOUS:  Unexpected dimension index (%d) in get_pgc_size!?",dim_index);
-//			WARN(ERROR_STRING);
+			// should never happen
 			assert(0);
 			break;
-//#endif // CAUTIOUS
 	}
 	return(0.0);
 }
@@ -354,7 +352,7 @@ static void report_fc2_error(QSP_ARG_DECL  fc2Error error, const char *whence )
 	WARN(ERROR_STRING);
 }
 
-ITEM_INTERFACE_DECLARATIONS(PGR_Property_Type,pgr_prop)
+ITEM_INTERFACE_DECLARATIONS(PGR_Property_Type,pgr_prop,0)
 
 //  When we change cameras, we have to refresh all properties!
 
@@ -377,7 +375,7 @@ void list_cam_properties(QSP_ARG_DECL  PGR_Cam *pgcp)
 
 	lp = pgr_prop_list(SINGLE_QSP_ARG);	// all properties
 	np = QLIST_HEAD(lp);
-	if( np != NO_NODE ){
+	if( np != NULL ){
 		sprintf(MSG_STR,"\n%s properties",pgcp->pc_name);
 		prt_msg(MSG_STR);
 	} else {
@@ -386,7 +384,7 @@ void list_cam_properties(QSP_ARG_DECL  PGR_Cam *pgcp)
 		return;
 	}
 
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		pgpt = (PGR_Property_Type *)NODE_DATA(np);
 		if( pgpt->info.present ){
 			sprintf(MSG_STR,"\t%s",pgpt->name);
@@ -407,7 +405,7 @@ void refresh_camera_properties(QSP_ARG_DECL  PGR_Cam *pgcp)
 
 	lp = pgr_prop_list(SINGLE_QSP_ARG);	// all properties
 	np = QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		pgpt = (PGR_Property_Type *)NODE_DATA(np);
 		refresh_property_info(QSP_ARG  pgcp, pgpt );
 		if( pgpt->info.present ){
@@ -743,257 +741,6 @@ NAME_LOOKUP_FUNC(bus_speed,fc2BusSpeed,nbs)
 NAME_LOOKUP_FUNC(bw_allocation,fc2BandwidthAllocation,nba)
 NAME_LOOKUP_FUNC(interface,fc2InterfaceType,nif)
 
-
-#ifdef FOOBAR
-/* called once at camera initialization... */
-
-void get_camera_features( PGR_Cam *pgcp )
-{
-	Node *np;
-	int i;
-
-	if ( fly_get_cam_features(pgcp) < 0 ) {
-		NERROR1("get_camera_features:  unable to get camera feature set");
-	}
-
-	/* Now can the table and build the linked list */
-#ifdef FUBAR
-//#ifdef CAUTIOUS
-//	if( pgcp->pc_feat_lp != NO_LIST ) NERROR1("CAUTIOUS:  get_camera_features:  bad list ptr!?");
-//#endif /* CAUTIOUS */
-	assert( pgcp->pc_feat_lp == NO_LIST );
-#endif /* FUBAR */
-	/* We may call this again after we have diddled the controls... */
-	/* releasing and rebuilding the list is wasteful, but should work... */
-	if( pgcp->pc_feat_lp != NO_LIST ){
-		while( (np=remHead(pgcp->pc_feat_lp)) != NO_NODE )
-			rls_node(np);
-	} else {
-		pgcp->pc_feat_lp = new_list();
-	}
-
-	// BUG figure out how to scan features/capabilies
-
-}
-#endif // FOOBAR
-
-
-#ifdef FOOBAR
-static void list_camera_feature(QSP_ARG_DECL  dc1394feature_info_t *feat_p )
-{
-	sprintf(msg_str,"%s", /*dc1394_feature_desc[feat_p->id - DC1394_FEATURE_MIN]*/
-			dc1394_feature_get_string(feat_p->id) );
-	prt_msg(msg_str);
-}
-
-int list_camera_features(QSP_ARG_DECL  PGR_Cam *pgcp )
-{
-	Node *np;
-
-//	if( pgcp->pc_feat_lp == NO_LIST ) NERROR1("CAUTIOUS:  list_camera_features:  bad list");
-	assert( pgcp->pc_feat_lp != NO_LIST );
-
-	np = pgcp->pc_feat_lp->l_head;
-	while(np!=NO_NODE){
-		dc1394feature_info_t * f;
-		f= (dc1394feature_info_t *) np->n_data;
-		list_camera_feature(QSP_ARG  f);
-		np=np->n_next;
-	}
-	return(0);
-}
-
-int get_feature_choices( PGR_Cam *pgcp, const char ***chp )
-{
-	int n;
-	const char * /* const */ * sptr;
-	Node *np;
-
-	n=eltcount(pgcp->pc_feat_lp);
-	if( n <= 0 ) return(0);
-
-	sptr = (const char **) getbuf( n * sizeof(char *) );
-	*chp = sptr;
-
-	np=pgcp->pc_feat_lp->l_head;
-	while(np!=NO_NODE){
-		dc1394feature_info_t *f;
-		f= (dc1394feature_info_t *) np->n_data;
-		*sptr = /*(char *)dc1394_feature_desc[f->id - DC1394_FEATURE_MIN]*/
-			dc1394_feature_get_string(f->id) ;
-		sptr++;
-		np=np->n_next;
-	}
-	return n;
-}
-
-void report_feature_info(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394feature_t id )
-{
-	Node *np;
-	dc1394feature_info_t *f;
-	unsigned int i;
-	const char *name;
-	char nbuf[32];
-
-	np = pgcp->pc_feat_lp->l_head;
-	f=NULL;
-	while( np != NO_NODE ){
-		f= (dc1394feature_info_t *) np->n_data;
-
-		if( f->id == id )
-			np=NO_NODE;
-		else
-			f=NULL;
-
-		if( np != NO_NODE )
-			np = np->n_next;
-	}
-
-//#ifdef CAUTIOUS
-//	if( f == NULL ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  report_feature_info:  couldn't find %s",
-//			/*dc1394_feature_desc[id - DC1394_FEATURE_MIN]*/
-//			dc1394_feature_get_string(id) );
-//		NWARN(DEFAULT_ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( f != NULL );
-
-	name=/*dc1394_feature_desc[f->id - DC1394_FEATURE_MIN]*/
-		dc1394_feature_get_string(f->id);
-	sprintf(nbuf,"%s:",name);
-	sprintf(msg_str,"%-16s",nbuf);
-	prt_msg_frag(msg_str);
-
-	if (f->on_off_capable) {
-		if (f->is_on) 
-			prt_msg_frag("ON\t");
-		else
-			prt_msg_frag("OFF\t");
-	} else {
-		prt_msg_frag("\t");
-	}
-
-	/*
-	if (f->one_push){
-		if (f->one_push_active)
-			prt_msg_frag("  one push: ACTIVE");
-		else
-			prt_msg_frag("  one push: INACTIVE");
-	}
-	prt_msg("");
-	*/
-	/* BUG need to use (new?) feature_get_modes... */
-	 /* FIXME */
-	/*
-	if( f->auto_capable ){
-		if (f->auto_active) 
-			prt_msg_frag("AUTO\t");
-		else
-			prt_msg_frag("MANUAL\t");
-	} else {
-		prt_msg_frag("\t");
-	}
-	*/
-
-	/*
-	prt_msg("");
-	*/
-
-	/*
-	if( f->id != DC1394_FEATURE_TRIGGER ){
-		sprintf(msg_str,"\tmin: %d max %d", f->min, f->max);
-		prt_msg(msg_str);
-	}
-	if( f->absolute_capable){
-		sprintf(msg_str,"\tabsolute settings:  value: %f  min: %f  max: %f",
-			f->abs_value,f->abs_min,f->abs_max);
-		prt_msg(msg_str);
-	}
-	*/
-
-	switch(f->id){
-		case DC1394_FEATURE_TRIGGER:
-			switch(f->trigger_modes.num){
-				case 0:
-					prt_msg("no trigger modes available");
-					break;
-				case 1:
-					sprintf(msg_str,"one trigger mode (%s)",
-						name_for_trigger_mode(f->trigger_modes.modes[0]));
-					prt_msg(msg_str);
-					break;
-				default:
-					sprintf(msg_str,"%d trigger modes (",f->trigger_modes.num);
-					prt_msg_frag(msg_str);
-					for(i=0;i<f->trigger_modes.num-1;i++){
-						sprintf(msg_str,"%s, ",
-					name_for_trigger_mode(f->trigger_modes.modes[i]));
-						prt_msg_frag(msg_str);
-					}
-					sprintf(msg_str,"%s)",
-						name_for_trigger_mode(f->trigger_modes.modes[i]));
-					prt_msg(msg_str);
-
-					break;
-			}
-			break;
-			/*
-    printf("\n\tAvailableTriggerModes: ");
-    if (f->trigger_modes.num==0) {
-      printf("none");
-    }
-    else {
-      int i;
-      for (i=0;i<f->trigger_modes.num;i++) {
-	printf("%d ",f->trigger_modes.modes[i]);
-      }
-    }
-    printf("\n\tAvailableTriggerSources: ");
-    if (f->trigger_sources.num==0) {
-      printf("none");
-    }
-    else {
-      int i;
-      for (i=0;i<f->trigger_sources.num;i++) {
-	printf("%d ",f->trigger_sources.sources[i]);
-      }
-    }
-    printf("\n\tPolarity Change Capable: ");
-    
-    if (f->polarity_capable) 
-      printf("True");
-    else 
-      printf("False");
-    
-    printf("\n\tCurrent Polarity: ");
-    
-    if (f->trigger_polarity) 
-      printf("POS");
-    else 
-      printf("NEG");
-    
-    printf("\n\tcurrent mode: %d\n", f->trigger_mode);
-    if (f->trigger_sources.num>0) {
-      printf("\n\tcurrent source: %d\n", f->trigger_source);
-    }
-    */
-		case DC1394_FEATURE_WHITE_BALANCE: 
-		case DC1394_FEATURE_TEMPERATURE:
-		case DC1394_FEATURE_WHITE_SHADING: 
-			NWARN("unhandled case in feature type switch");
-			break;
-		default:
-			sprintf(msg_str,"value: %-8d  range: %d-%d",f->value,f->min,f->max);
-			prt_msg(msg_str);
-			break;
-	}
-}
-#endif // FOOBAR
-
-
-
 int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
 {
 	// Could check format of object here...
@@ -1005,7 +752,7 @@ int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
 	int i, n;
 
 	lp = pgc_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ){
+	if( lp == NULL ){
 		WARN("No cameras!?");
 		return 0;
 	}
@@ -1020,7 +767,7 @@ int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
 		
 	np=QLIST_HEAD(lp);
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		char *dst;
 		pgcp = (PGR_Cam *) NODE_DATA(np);
 		dst = OBJ_DATA_PTR(str_dp);
@@ -1034,7 +781,7 @@ int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
 		}
 		i++;
 		if( i>=n )
-			np=NO_NODE;
+			np=NULL;
 		else
 			np = NODE_NEXT(np);
 	}
@@ -1126,12 +873,10 @@ advise(ERROR_STRING);
 				advise("No framerates available for format7.");
 			}
 			  else {
-//		WARN("CAUTIOUS:  get_framerate_choices:  video mode is format7, but framerate is not!?");
 				assert(0);
 			}
 		}
 		  else {
-//	WARN("CAUTIOUS:  get_framerate_choices:  video mode is not format7, but no framerates found!?");
 			assert(0);
 		}
 		return;
@@ -1156,9 +901,6 @@ advise(ERROR_STRING);
 		mask >>= 1;
 	}
 
-//#ifdef CAUTIOUS
-//	if( idx != n ) ERROR1("CAUTIOUS:  get_framerate_choices:  count mismatch!?");
-//#endif // CAUTIOUS
 	assert( idx == n );
 }
 
@@ -1272,34 +1014,10 @@ static fc2FrameRate highest_framerate( QSP_ARG_DECL  Framerate_Mask mask )
 		mask >>= 1;
 		k++;
 	}
-//#ifdef CAUTIOUS
-//	if( k < 0 ){
-//		ERROR1("CAUTIOUS:  null framerate mask!?");
-//	}
-//#endif // CAUTIOUS
 	assert( k >= 0 );
 
 	return (fc2FrameRate) k;
 }
-
-#ifdef FOOBAR
-//#ifdef CAUTIOUS
-//
-//#define CHECK_IDX(whence)				\
-//							\
-//if( idx < 0 || idx >= pgcp->pc_n_video_modes ) {	\
-//	sprintf(ERROR_STRING,				\
-//	"CAUTIOUS:  is_fmt7_mode:  bad index %d!?",idx);\
-//	WARN(ERROR_STRING);				\
-//	return -1;					\
-//}
-//
-//#else // ! CAUTIOUS
-//
-//#define CHECK_IDX(whence)
-//
-//#endif // ! CAUTIOUS
-#endif // FOOBAR
 
 int is_fmt7_mode(QSP_ARG_DECL  PGR_Cam *pgcp, int idx )
 {
@@ -1394,20 +1112,8 @@ static void set_highest_fmt7_framerate( QSP_ARG_DECL  PGR_Cam *pgcp )
 
 	fr_prop_p = get_pgr_prop(QSP_ARG  "frame_rate" );	// BUG string must match table
 
-//#ifdef CAUTIOUS
-//	if( fr_prop_p == NULL )
-//		ERROR1("CAUTIOUS:  set_highest_fmt7_framerate:"
-//			"  couldn't find frame_rate property!?");
-//#endif // CAUTIOUS
 	assert( fr_prop_p != NULL );
 
-//#ifdef CAUTIOUS
-//	if( ! fr_prop_p->info.absValSupported ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  set_highest_fmt7_framerate:  absolute mode not supported for frame rate!?");
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif // CAUTIOUS
 	assert( fr_prop_p->info.absValSupported );
 
 	prop.type = FC2_FRAME_RATE;
@@ -1532,13 +1238,6 @@ void set_grab_mode(QSP_ARG_DECL  PGR_Cam *pgcp, int grabmode_idx )
 	fc2Error error;
 	fc2Config cfg;
 
-//#ifdef CAUTIOUS
-//	if( grabmode_idx < 0 || grabmode_idx >= N_NAMED_GRAB_MODES ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  set_grab_mode:  bad index (%d)",grabmode_idx);
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif // CAUTIOUS
 	assert( grabmode_idx >= 0 && grabmode_idx < N_NAMED_GRAB_MODES );
 
 	// grab mode is part of the config struct
@@ -1801,7 +1500,6 @@ static void get_fmt7_modes(QSP_ARG_DECL  PGR_Cam *pgcp)
 			largest = i;
 		}
 	}
-	// CAUTIOUS?
 	if( (largest+1) != pgcp->pc_n_fmt7_modes ){
 		sprintf(ERROR_STRING,
 	"Unexpected number of format7 modes!?  (largest index = %d, n_modes = %d)",
@@ -1913,8 +1611,8 @@ static PGR_Cam *setup_my_camera( QSP_ARG_DECL
 		return NULL;
 	}
 
-	pgcp->pc_feat_lp=NO_LIST;
-	pgcp->pc_in_use_lp=NO_LIST;
+	pgcp->pc_feat_lp=NULL;
+	pgcp->pc_in_use_lp=NULL;
 	pgcp->pc_flags = 0;		/* assume no B-mode unless we are told otherwise... */
 	pgcp->pc_base = NULL;
 
@@ -1998,12 +1696,7 @@ void pop_camera_context(SINGLE_QSP_ARG_DECL)
 	// pop old context...
 	Item_Context *icp;
 	icp=pop_dobj_context(SINGLE_QSP_ARG);
-//#ifdef CAUTIOUS
-//	if( icp == NO_ITEM_CONTEXT ){
-//		ERROR1("CAUTIOUS:  pop_camera_context popped a null dobj context!?");
-//	}
-//#endif // CAUTIOUS
-	assert( icp != NO_ITEM_CONTEXT );
+	assert( icp != NULL );
 }
 
 void push_camera_context(QSP_ARG_DECL  PGR_Cam *pgcp)
@@ -2243,25 +1936,14 @@ static void init_one_frame(QSP_ARG_DECL  PGR_Cam *pgcp, int index )
 	//ASSIGN_VAR("newest",fname+5);
 
 	dp = dobj_of(QSP_ARG  fname);
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		SET_DS_SEQS(&ds1,1);
 		SET_DS_FRAMES(&ds1,1);
 		SET_DS_ROWS(&ds1,pgcp->pc_img_p->rows);
 		SET_DS_COLS(&ds1,pgcp->pc_img_p->cols);
 		SET_DS_COMPS(&ds1,1);
 		dp = _make_dp(QSP_ARG  fname,&ds1,PREC_FOR_CODE(PREC_UBY));
-//#ifdef CAUTIOUS
-//		if( dp == NO_OBJ ){
-//			sprintf(ERROR_STRING,
-//	"CAUTIOUS:  grab_firewire_frame:  Error creating object %s!?",
-//				fname);
-//			WARN(ERROR_STRING);
-//		} else
-//#endif // CAUTIOUS
-//	       		{
-			//SET_OBJ_DATA_PTR(dp,pgcp->pc_img_p->pData);
-
-		assert( dp != NO_OBJ );
+		assert( dp != NULL );
 
 		SET_OBJ_DATA_PTR( dp, pgcp->pc_base+index*pgcp->pc_buf_delta );
 		pgcp->pc_frm_dp_tbl[index] = dp;
@@ -2269,7 +1951,6 @@ static void init_one_frame(QSP_ARG_DECL  PGR_Cam *pgcp, int index )
 //fprintf(stderr,"init_one_frame %d:  %s, data at 0x%lx\n",index,OBJ_NAME(dp),(long)OBJ_DATA_PTR(dp));
 //		}
 	} else {
-		// CAUTIOUS??
 		sprintf(ERROR_STRING,"init_one_frame:  object %s already exists!?",
 			fname);
 		WARN(ERROR_STRING);
@@ -2280,22 +1961,7 @@ static void init_cam_frames(QSP_ARG_DECL  PGR_Cam *pgcp)
 {
 	int index;
 
-//#ifdef CAUTIOUS
-//	if( pgcp->pc_n_buffers <= 0 ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  init_cam_frames:  bad n_buffers (%d)!?",pgcp->pc_n_buffers);
-//		WARN(ERROR_STRING);
-//		return;
-//	}
 	assert( pgcp->pc_n_buffers > 0 );
-
-//	if( pgcp->pc_frm_dp_tbl != NULL ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  init_cam_frames:  frame table is not NULL!?");
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif // CAUTIOUS
 	assert( pgcp->pc_frm_dp_tbl == NULL );
 
 	pgcp->pc_frm_dp_tbl = getbuf( sizeof(Data_Obj) * pgcp->pc_n_buffers );
@@ -2424,14 +2090,6 @@ sprintf(ERROR_STRING,
 advise(ERROR_STRING);
 */
 
-//#ifdef CAUTIOUS
-//	if( idx < 0 || idx >= pgcp->pc_n_buffers ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  index_of_buffer:  computed index %d is out of range (0-%d)!?",
-//			idx,pgcp->pc_n_buffers-1);
-//		WARN(ERROR_STRING);
-//		idx=0;
-//	}
-//#endif // CAUTIOUS
 	assert( idx >= 0 && idx < pgcp->pc_n_buffers );
 	return idx;
 }

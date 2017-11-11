@@ -6,7 +6,7 @@
 @class IOS_Item;
 @class IOS_List;
 
-static IOS_List *ios_node_free_list=NO_IOS_LIST;
+static IOS_List *ios_node_free_list=NULL;
 
 @implementation IOS_Node
 
@@ -18,7 +18,7 @@ static IOS_List *ios_node_free_list=NO_IOS_LIST;
 {
 	IOS_Node *np;
 
-	if( ios_node_free_list != NO_IOS_LIST &&
+	if( ios_node_free_list != NULL &&
 			ios_eltcount(ios_node_free_list) > 0 ){
 		np = ios_remHead(ios_node_free_list);
 	} else {
@@ -26,8 +26,8 @@ static IOS_List *ios_node_free_list=NO_IOS_LIST;
 	}
 
 	[np setData : data];
-	[np setNext : NO_IOS_NODE ];
-	[np setPrev : NO_IOS_NODE ];
+	[np setNext : NULL ];
+	[np setPrev : NULL ];
 
 	return np;
 }
@@ -47,11 +47,11 @@ IOS_Node *ios_nodeOf( IOS_List *lp, id d )
 	IOS_Node *np;
 
 	np = IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		if( IOS_NODE_DATA(np) == d ) return(np);
 		np = IOS_NODE_NEXT(np);
 	}
-	return NO_IOS_NODE;
+	return NULL;
 }
 
 void rls_ios_node(IOS_Node *np)
@@ -62,7 +62,7 @@ void rls_ios_node(IOS_Node *np)
 		abort();
 	}
 #endif /* CAUTIOUS */
-	if( ios_node_free_list == NO_IOS_LIST )
+	if( ios_node_free_list == NULL )
 		ios_node_free_list = new_ios_list();
 	ios_addHead(ios_node_free_list,np);
 }

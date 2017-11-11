@@ -71,7 +71,7 @@ IOS_ITEM_CHECK_PROT(Panel_Obj,panel_obj)
 IOS_ITEM_ENUM_PROT(Panel_Obj,panel_obj)
 IOS_ITEM_LIST_PROT(Panel_Obj,panel_obj)
 
-#define GET_PANEL_OBJ(s)	get_panel_obj(QSP_ARG  s)
+//#define GET_PANEL_OBJ(s)	get_panel_obj(QSP_ARG  s)
 
 /* panel.m */
 extern void add_to_panel(Panel_Obj *po, Screen_Obj *sop);
@@ -175,9 +175,13 @@ typedef struct screen_obj Screen_Obj;
 
 #endif /* ! BUILD_FOR_OBJC */
 
-
-#define NO_PANEL_OBJ	((Panel_Obj *) NULL)
-
+#define pick_panel(pmpt)	_pick_panel_obj(QSP_ARG  pmpt)
+#define init_panel_objs()	_init_panel_objs(SINGLE_QSP_ARG)
+#define new_panel_obj(s)	_new_panel_obj(QSP_ARG  s)
+#define get_panel_obj(s)	_get_panel_obj(QSP_ARG  s)
+#define panel_obj_of(s)		_panel_obj_of(QSP_ARG  s)
+#define list_panel_objs(fp)	_list_panel_objs(QSP_ARG  fp)
+#define panel_obj_list()	_panel_obj_list(SINGLE_QSP_ARG)
 
 #define CLEAR_PANEL_FLAG_BITS(po,bits)	SET_GW_FLAGS(PO_GW(po),GW_FLAGS(PO_GW(po)) & ~(bits) )
 #define SET_PANEL_FLAG_BITS(po,bits)	SET_GW_FLAGS(PO_GW(po),GW_FLAGS(PO_GW(po)) | (bits) )
@@ -197,7 +201,6 @@ extern Widget curr_thing_obj;
 /* prototypes */
 
 
-#define PICK_PANEL(pmpt)	pick_panel_obj(QSP_ARG  pmpt)
 
 /* screen_objs.c */
 
@@ -211,9 +214,11 @@ extern void make_panel(QSP_ARG_DECL  Panel_Obj *po,int,int);
 extern void activate_panel(QSP_ARG_DECL  Panel_Obj *po, int yesno);
 extern void panel_cmap(Panel_Obj *po, Data_Obj *cm_dp);
 extern void label_panel(Panel_Obj *po, const char *s);
-extern void posn_panel(Panel_Obj *po);
 extern void free_wsys_stuff(Panel_Obj *po);
 extern void window_cm(Panel_Obj *po,Data_Obj *cm_dp);
+
+extern void _posn_panel(QSP_ARG_DECL  Panel_Obj *po);
+#define posn_panel(po) _posn_panel(QSP_ARG  po)
 
 #ifdef BUILD_FOR_OBJC
 extern Panel_Obj *find_panel(QSP_ARG_DECL  quipView *qv);
@@ -223,11 +228,15 @@ extern IOS_Size_Functions panel_sf;
 #endif /* BUILD_FOR_OBJC */
 
 // These functions typically go in an implementation support file...
-extern void show_panel(QSP_ARG_DECL  Panel_Obj *po);
-extern void unshow_panel(QSP_ARG_DECL  Panel_Obj *po);
+extern void _show_panel(QSP_ARG_DECL  Panel_Obj *po);
+extern void _unshow_panel(QSP_ARG_DECL  Panel_Obj *po);
+
+#define show_panel(po) _show_panel(QSP_ARG  po)
+#define unshow_panel(po) _unshow_panel(QSP_ARG  po)
 
 /* panel.m */
 extern void add_to_panel(Panel_Obj *po, Screen_Obj *sop);
+extern void remove_from_panel(Panel_Obj *po, Screen_Obj *sop);
 
 #endif /* ! _PANEL_H_ */
 

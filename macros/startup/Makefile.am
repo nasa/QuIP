@@ -10,6 +10,7 @@ macros_DATA	=	Xgraph.scr		\
 			gendata.scr		\
 			genview.scr		\
 			generic.scr		\
+			genplot.scr		\
 			mon_ptz.scr		\
 			mon_cam.scr		\
 			ctrack.scr		\
@@ -20,6 +21,7 @@ macros_DATA	=	Xgraph.scr		\
 			jpshow.scr		\
 			kdrw.scr		\
 			knoxd.scr		\
+			flyd.scr		\
 			evid.scr		\
 			coq.scr			\
 			airway.scr			\

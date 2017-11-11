@@ -93,12 +93,7 @@
 		}
 		NSString *s = [QVC_GW(qvc).event_tbl objectAtIndex: code];
 
-#ifdef CAUTIOUS
-		if( s == NULL ) {
-fprintf(stderr,"CAUTIOUS:  process_action:  error fetching action for event code %d\n",code);
-			return;
-		}
-#endif // CAUTIOUS
+		assert( s != NULL );
 
 		if( *(s.UTF8String) == 0 ){	// empty string?
 			// This is the default if nothing has
@@ -210,14 +205,14 @@ fprintf(stderr,"CAUTIOUS:  process_action:  error fetching action for event code
 
 static QUIP_IMAGE_TYPE * CreateDefaultBG(int pixelsWide, int pixelsHigh)
 {
-	static IOS_List *lp=NO_IOS_LIST;
+	static IOS_List *lp=NULL;
 	IOS_Node *np;
 	QUIP_IMAGE_TYPE *ip;
 
-	if( lp != NO_IOS_LIST ){
+	if( lp != NULL ){
 		// Check the list for images of the correct size
 		np=IOS_LIST_HEAD(lp);
-		while( np != NO_IOS_NODE ){
+		while( np != NULL ){
 			ip = (QUIP_IMAGE_TYPE *) IOS_NODE_DATA(np);
 			// How do we get the dimensions?
 			if( ip.size.width== pixelsWide &&
@@ -308,7 +303,7 @@ static QUIP_IMAGE_TYPE * CreateDefaultBG(int pixelsWide, int pixelsHigh)
 #endif // BUILD_FOR_IOS
 	
 	np = mk_ios_node(ip);
-	if( lp == NO_IOS_LIST ) lp = new_ios_list();
+	if( lp == NULL ) lp = new_ios_list();
 	ios_addTail(lp,np);
 
 //fprintf(stderr,"CreateDefaultBG:  created %d x %d image (0x%lx)\n",

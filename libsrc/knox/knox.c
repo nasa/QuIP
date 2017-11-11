@@ -15,6 +15,8 @@
 static int range_ok;
 static int doing_command_set = 0;	/* flag for sending set of commands */
 
+#define MAX_ARGS_LEN	512	// string length - BUG need to check for overrun
+
 
 #define MIN_SIGNAL_NUMBER	1
 #define MAX_SIGNAL_NUMBER	8
@@ -57,6 +59,11 @@ static int doing_command_set = 0;	/* flag for sending set of commands */
 #define NO_KNOX_MSG WARN("Sorry, no knox support in this build.");
 #define DO_KNOX_CMD( code, args, error_msg )				\
 	NO_KNOX_MSG
+
+#define NO_KNOX_MSG2(p,v)									\
+												\
+	sprintf(ERROR_STRING,"Sorry, no knox support in this build, can't set %s to %s!?",p,v);	\
+	WARN(ERROR_STRING);
 
 #define USES_NEWER_FIRMWARE(kdp)		0
 #define USES_OLDER_FIRMWARE(kdp)		0
@@ -144,8 +151,8 @@ Knox_Device *curr_kdp=NULL;
 // should be static?
 //ITEM_INTERFACE_PROTOTYPES_STATIC(Knox_Device,knox_dev)
 //ITEM_INTERFACE_DECLARATIONS_STATIC(Knox_Device,knox_dev)
-static Item_Type * knox_dev_itp=NO_ITEM_TYPE;
-static ITEM_INIT_FUNC(Knox_Device,knox_dev)
+static Item_Type * knox_dev_itp=NULL;
+static ITEM_INIT_FUNC(Knox_Device,knox_dev,0)
 static ITEM_NEW_FUNC(Knox_Device,knox_dev)
 static ITEM_CHECK_FUNC(Knox_Device,knox_dev)
 
@@ -386,10 +393,10 @@ static int get_knox_args(QSP_ARG_DECL   char* arg_buf)
 #ifdef HAVE_KNOX
 static int do_knox_cmd(QSP_ARG_DECL  Knox_Cmd_Code code, char* args)
 {
-	char buf[LLEN];
+	char buf[MAX_ARGS_LEN];
 	int stat;
 	
-	sprintf(buf, "%s", knox_tbl[code].kc_str);
+	sprintf(buf, "%s", knox_tbl[code].kc_str);	// BUG check for overrun
 	if( args ) strcat(buf, args);
 	reset_buffer(curr_kdp->kd_sbp);
 	send_knox_cmd(QSP_ARG  buf);
@@ -408,7 +415,7 @@ static int do_knox_cmd(QSP_ARG_DECL  Knox_Cmd_Code code, char* args)
 
 static COMMAND_FUNC( do_route_both )
 {
-	char knox_args[LLEN];
+	char knox_args[MAX_ARGS_LEN];
 
 	if( GET_KNOX_ARGS(knox_args) < 0 ) return;
 
@@ -417,7 +424,7 @@ static COMMAND_FUNC( do_route_both )
 
 static COMMAND_FUNC( do_route_diff )
 {
-	char knox_args[LLEN];
+	char knox_args[MAX_ARGS_LEN];
 	int output, video_input, audio_input;
 	int ret_stat=0;
 
@@ -434,7 +441,7 @@ static COMMAND_FUNC( do_route_diff )
 
 static COMMAND_FUNC( do_route_video )
 {
-	char knox_args[LLEN];
+	char knox_args[MAX_ARGS_LEN];
 
 	if( GET_KNOX_ARGS(knox_args) < 0 ) return;
 
@@ -443,7 +450,7 @@ static COMMAND_FUNC( do_route_video )
 
 static COMMAND_FUNC( do_route_audio )
 {
-	char knox_args[LLEN];
+	char knox_args[MAX_ARGS_LEN];
 
 	if( GET_KNOX_ARGS(knox_args) < 0 ) return;
 
@@ -462,7 +469,7 @@ MENU_END(route)
 
 static COMMAND_FUNC( do_knox_route_cmds )
 {
-	PUSH_MENU(route);	
+	CHECK_AND_PUSH_MENU(route);	
 }	
 
 #ifdef NOT_YET
@@ -479,7 +486,7 @@ static COMMAND_FUNC( do_knox_salvo_cmds )
 		return;
 	}
 	/* current_mode = KNOX_SALVO_MODE; */
-	PUSH_MENU(knox_route_menu);
+	CHECK_AND_PUSH_MENU(knox_route_menu);
 }
 
 	
@@ -490,7 +497,7 @@ static COMMAND_FUNC( do_knox_conf_cmds )
 		return;
 	}
 	/* current_mode = KNOX_CONFERENCE_MODE; */
-	PUSH_MENU(knox_route_menu, "conference");
+	CHECK_AND_PUSH_MENU(knox_route_menu, "conference");
 }
 #endif /* NOT_YET */
 
@@ -535,7 +542,7 @@ MENU_END(knox_cmd)
 
 static COMMAND_FUNC( do_knox_main_cmds )
 {
-	PUSH_MENU(knox_cmd);
+	CHECK_AND_PUSH_MENU(knox_cmd);
 }
 
 #define MIN_CROSSPOINT_PATTERN	1
@@ -543,7 +550,7 @@ static COMMAND_FUNC( do_knox_main_cmds )
 
 static COMMAND_FUNC( do_knox_recall )
 {
-	char args[LLEN];
+	char args[MAX_ARGS_LEN];
 	int pattern;
 	int ret_stat=0;
 
@@ -561,7 +568,7 @@ static COMMAND_FUNC( do_knox_recall )
 
 static COMMAND_FUNC( do_knox_store )
 {
-	char args[LLEN];
+	char args[MAX_ARGS_LEN];
 	int pattern_index;
 	int ret_stat=0;
 
@@ -582,7 +589,7 @@ MENU_END(crosspoint)
 
 static COMMAND_FUNC( do_knox_cross_cmds )
 {
-	PUSH_MENU(crosspoint);
+	CHECK_AND_PUSH_MENU(crosspoint);
 }
 
 #define MIN_TIME_CYCLE	1
@@ -590,7 +597,7 @@ static COMMAND_FUNC( do_knox_cross_cmds )
 
 static COMMAND_FUNC( do_knox_timer_start )
 {
-	char args[LLEN];
+	char args[MAX_ARGS_LEN];
 	int time_cycle;
 
 	time_cycle = (int)HOW_MANY("time cycle");
@@ -619,16 +626,16 @@ MENU_END(timer)
 
 static COMMAND_FUNC( do_knox_time_cmds )
 {
-	PUSH_MENU(timer);
+	CHECK_AND_PUSH_MENU(timer);
 }
 
 static COMMAND_FUNC( do_fetch_map )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("object for routing results");
+	dp = pick_obj("object for routing results");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if( OBJ_COLS(dp) != 8 ){
 		sprintf(ERROR_STRING,
@@ -708,7 +715,7 @@ MENU_END(status)
 
 static COMMAND_FUNC( do_knox_status_cmds )
 {
-	PUSH_MENU(status);
+	CHECK_AND_PUSH_MENU(status);
 }
 
 static COMMAND_FUNC( do_lamp_test )
@@ -795,7 +802,7 @@ static COMMAND_FUNC( do_select_device )
 
 	open_knox_device(QSP_ARG  s);
 #else // ! HAVE_KNOX
-	NO_KNOX_MSG
+	NO_KNOX_MSG2("device",s)
 #endif // ! HAVE_KNOX
 
 }
@@ -830,6 +837,6 @@ COMMAND_FUNC( do_knox_menu )
 	}
 #endif // HAVE_KNOX
 
-	PUSH_MENU(knox);
+	CHECK_AND_PUSH_MENU(knox);
 }
 

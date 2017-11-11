@@ -1,0 +1,32 @@
+
+Set n 8
+
+Define Test_Ramp 1 stem
+Vector ${1}_rvec $n 1 float
+Vector ${1}_cvec $n 1 complex
+Image ${1}_img 4 4 1 float
+Subimage ${1}_s ${1}_img 1 4 1 0
+VSetComplex ${1}_cvec 0 0
+
+Ramp1D ${1}_rvec    0 1
+Ramp1D ${1}_cvec{0} 0 1
+Display ${1}_rvec
+Display ${1}_cvec
+
+VSet ${1}_img 0
+Ramp1D ${1}_s 10 1
+Display ${1}_img
+Pause
+.
+
+Test_Ramp h
+
+platforms
+  select $DEFAULT_PLATFORM $DEFAULT_GPU
+  show
+  quit
+
+Test_Ramp g
+
+exit
+

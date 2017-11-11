@@ -30,4 +30,6 @@ libdobj_a_SOURCES =				\
 			dobj_expr.c		\
 			sub_obj.c
 
+noinst_HEADERS =				\
+			dobj_private.h
 

@@ -1,8 +1,10 @@
+#ifndef _DISPLAY_H_
+#define _DISPLAY_H_
+
 #include "quip_config.h"
 
 
 /* display.h */
-#ifndef NO_DISPLAY
 
 #include "node.h"
 #include "data_obj.h"
@@ -118,8 +120,6 @@ typedef struct dpyable {		/* canvas & panel shared */
 
 } Dpyable ;
 
-#define NO_DISPLAY ((Dpyable *)NULL)
-
 #define DPA_DPY(dpy)		DO_DISPLAY(DPA_DOP(dpy))
 #define DPA_ROOTW(dpy)		DO_ROOTW(DPA_DOP(dpy))
 #define DPA_SCREEN_NO(dpy)	DO_SCREEN(DPA_DOP(dpy))
@@ -165,5 +165,5 @@ typedef struct dpyable {		/* canvas & panel shared */
 
 #endif /* ! HAVE_X11 */
 
-#endif /* NO_DISPLAY */
+#endif // ! _DISPLAY_H_
 

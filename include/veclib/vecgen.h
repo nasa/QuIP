@@ -11,15 +11,18 @@ extern "C" {
 
 #include <stdio.h>
 #include "typedefs.h"
-//#include "data_obj.h"
-// Does this need to be a separate file?
+
+#define VFCODE_ARG		vf_code,
+#define VFCODE_ARG_DECL		const int vf_code,
+
 #include "veclib/obj_args.h"
 
 //typedef uint32_t	index_type;
 typedef uint32_t	count_type;
 
-#define FWD_FFT		(-1)
-#define INV_FFT		1
+// Make these be m4 macros!!
+//#define FWD_FFT		(-1)
+//#define INV_FFT		1
 
 /* These aren't really types of numbers - the "mixed" types refer to operations... */
 typedef enum {
@@ -30,7 +33,8 @@ typedef enum {
 	N_NUMBER_TYPES		/* must be last! */
 } number_type;
 
-extern const char *name_for_argsprec(argset_prec i);
+extern void init_argset_objects(SINGLE_QSP_ARG_DECL);
+extern const char *name_for_argsprec(argset_prec_t code);
 extern const char *name_for_argtype(argset_type i);
 
 #define	N_FUNCTION_TYPES	(N_ARGSET_PRECISIONS * N_ARGSET_TYPES)
@@ -39,7 +43,7 @@ extern const char *name_for_argtype(argset_type i);
 
 #define ARGSET_PREC( prec )						\
 									\
-	( (argset_prec)( PSEUDO_PREC_INDEX(prec) == PP_BIT?		\
+	( (argset_prec_t)( PSEUDO_PREC_INDEX(prec) == PP_BIT?		\
 					BIT_ARGS :			\
 					( ((prec)&MACH_PREC_MASK) - PREC_BY ) ))
 
@@ -161,7 +165,9 @@ typedef enum {
 	FVSSHL2,			/* 79 */
 
 	FVSUM,				/* 80 */
+	/* to implement on GPU, better to write vdot as composition of VMUL and VSUM */
 	FVDOT,				/* 81 */
+#define HAVE_FVDOT
 	FVRAND,				/* 82 */
 
 	FVSMLT,				/* 83 */
@@ -185,13 +191,13 @@ typedef enum {
 	FVCMUL, /* complex stuff */
 	FVSCML,
 	FVCONJ,
-//#ifdef NOT_YET
 	FVFFT,
 	FVIFT,
-//#else // !NOT_YET
-//#define FVFFT	(-3)
-//#define FVIFT	(-5)
-//#endif // NOT_YET
+
+	FVFFT2D,
+	FVIFT2D,
+	FVFFTROWS,
+	FVIFTROWS,
 
 	FVBND, /* comparison operators */
 	FVIBND,
@@ -293,13 +299,16 @@ typedef enum {
 
 #define IS_CONVERSION( vfp )	IS_NEW_CONVERSION(vfp)
 
-	/* Don't put any new codes below this line, reserved for warrior obsolete */
-
 	FVTRUNC,			/* would add after FVFLOOR, but that would mess up numbers in comments */
 	FVERFINV,			/* ditto... */
 
 	FVGAMMA,		// new funcs from libgsl...
 	FVLNGAMMA,
+
+	FVSSUB2,		/* should be moved up, but would mess up index comments */
+
+	FVLUTMAPB,		/* byte index lutmap */
+	FVLUTMAPS,		/* short index lutmap */
 
 	N_VEC_FUNCS,		/* must be next-to-last! */
 	INVALID_VFC		/* must be last! */
@@ -327,6 +336,7 @@ typedef enum {
 	case FVSMAX:							\
 	case FVSADD:							\
 	case FVSSUB:							\
+	case FVSSUB2:							\
 	case FVSMUL:							\
 	case FVSDIV:							\
 	case FVSDIV2:
@@ -364,12 +374,15 @@ extern debug_flag_t veclib_debug;
 
 struct vector_function;
 
-//#define VFPTR_ARG		vfp,
-//#define VFPTR_ARG_DECL		Vector_Function *vfp,
-#define VFCODE_ARG		vf_code,
-#define VFCODE_ARG_DECL		const int vf_code,
-#define HOST_CALL_ARGS		VFCODE_ARG  oap
-#define HOST_CALL_ARG_DECLS	VFCODE_ARG_DECL  /*const*/ Vec_Obj_Args *oap
+// BUG - these have to be kept consistent with the m4 definitions!?
+#define HOST_CALL_ARGS		QSP_ARG  VFCODE_ARG  oap
+#define HOST_CALL_ARG_DECLS	QSP_ARG_DECL  VFCODE_ARG_DECL  Vec_Obj_Args *oap
+
+// Why are these called link funcs?  Maybe because they can be chained?
+// Kind of a legacy from the old skywarrior library code...
+// A vector arg used to just have a length and a stride, but now
+// with gpu's we have three-dimensional lengths.  But in principle
+// there's no reason why we couldn't have full shapes passed...
 #define LINK_FUNC_ARGS		VFCODE_ARG  vap
 #define LINK_FUNC_ARG_DECLS	VFCODE_ARG_DECL  const Vector_Args *vap
 

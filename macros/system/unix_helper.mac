@@ -70,5 +70,12 @@ os
   quit
 .
 
+Define Chmod 2 mode path
+os
+  system "chmod $1 $2"
+  quit
+.
+
+
 If $verbose "echo 'finished interpreting file unix_helper.mac'"
 

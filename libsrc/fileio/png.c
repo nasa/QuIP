@@ -63,37 +63,26 @@
 
 /* some globals */
 /* BUG: some of these are avoidable */
-#ifdef FOOBAR
-static int RShift, GShift, BShift;
-static u_long RMask, GMask, BMask;
-#endif/* FOOBAR */
 
 static	u_char bg_red=0, bg_green=0, bg_blue=0;
 
-static int color_type_to_write = -1;
+static int color_type_to_write = -1;	// BUG not thread-safe
 
-#ifdef OLD_PNG_LIB
-int png_to_dp( Data_Obj *dp, png_infop info_ptr )
-#else
-int png_to_dp( Data_Obj *dp, Png_Hdr *hdr_p )
-#endif
+#define png_to_dp( dp, hdr_p ) _png_to_dp( QSP_ARG  dp, hdr_p )
+
+int _png_to_dp( QSP_ARG_DECL  Data_Obj *dp, Png_Hdr *hdr_p )	// unix version
 {
-
 // With new version of libpng, need to use get functions...
-#ifdef OLD_PNG_LIB
-	SET_OBJ_COLS(dp, info_ptr->width );
-	SET_OBJ_ROWS(dp, info_ptr->height );
-	SET_OBJ_COMPS(dp, info_ptr->channels );
-#else
 	SET_OBJ_COLS(dp, png_get_image_width(hdr_p->png_ptr,hdr_p->info_ptr) );
 	SET_OBJ_ROWS(dp, png_get_image_height(hdr_p->png_ptr,hdr_p->info_ptr) );
 	SET_OBJ_COMPS(dp, png_get_channels(hdr_p->png_ptr,hdr_p->info_ptr) );
-#endif /* ! OLD_PNG_LIB */
 
 	/* prec will always get converted to 8 bits */
 	SET_OBJ_PREC_PTR(dp,PREC_FOR_CODE(PREC_UBY) );
 
-	SET_OBJ_FRAMES(dp, 1);
+	// BUG scan the file to get number of frames!?
+	//SET_OBJ_FRAMES(dp, 1);	// default, set later
+	SET_OBJ_FRAMES(dp, hdr_p->n_frames);
 	SET_OBJ_SEQS(dp, 1);
 
 	SET_OBJ_COMP_INC(dp, 1);
@@ -102,41 +91,21 @@ int png_to_dp( Data_Obj *dp, Png_Hdr *hdr_p )
 	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp)*OBJ_ROWS(dp) );
 	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp)*OBJ_FRAMES(dp) );
 
-	SET_OBJ_PARENT(dp, NO_OBJ);
-	SET_OBJ_CHILDREN(dp, NO_LIST);
+	SET_OBJ_PARENT(dp, NULL);
+	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
 	SET_OBJ_DATA_PTR(dp, NULL);
 	SET_OBJ_N_TYPE_ELTS(dp, OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp)
 			* OBJ_FRAMES(dp) * OBJ_SEQS(dp) );
 
-	auto_shape_flags(OBJ_SHAPE(dp),dp);
+	auto_shape_flags(OBJ_SHAPE(dp));
 
 	return(0);
-}
+} // png_to_dp (unix)
 
-
-#ifdef FOOBAR
-static void fill_hdr(Png_Hdr *png_hp, png_infop info_ptr)
-#else
 static void fill_hdr(Png_Hdr *png_hp)
-#endif /* OLD_PNG_LIB */
 {
-	//printf("fill_hdr: IN\n");
-
-#ifdef OLD_PNG_LIB
-	png_hp->width = info_ptr->width;
-	png_hp->height = info_ptr->height;
-	png_hp->channels = info_ptr->channels;
-	png_hp->color_type = info_ptr->color_type;
-
-	png_hp->bit_depth = info_ptr->bit_depth;
-	png_hp->compression_type = info_ptr->compression_type;
-	png_hp->filter_type = info_ptr->filter_type;
-	png_hp->interlace_type = info_ptr->interlace_type;
-	png_hp->pixel_depth = info_ptr->pixel_depth;
-#else
-
 #define PNG_GET_ARGS	png_hp->png_ptr,png_hp->info_ptr
 
 	png_hp->width = png_get_image_width(PNG_GET_ARGS);
@@ -149,9 +118,6 @@ static void fill_hdr(Png_Hdr *png_hp)
 	png_hp->filter_type = png_get_filter_type(PNG_GET_ARGS);
 	png_hp->interlace_type = png_get_interlace_type(PNG_GET_ARGS);
 	png_hp->pixel_depth = png_hp->channels * png_hp->bit_depth;
-#endif /* ! OLD_PNG_LIB */
-
-	//printf("fill_hdr: OUT\n");
 }
 
 
@@ -170,7 +136,83 @@ FIO_CLOSE_FUNC( pngfio )
 		givbuf(ifp->if_hdr_p);
 	}
 
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
+}
+
+// Scanning all of the chunks (like what we do with jpeg) is very slow
+// when we have a lot of frames - so instead we assume that all frames
+// have the same size, and figure it out from the size of the first frame,
+// and the file size.
+
+#define count_png_frames(fp, frame_size) _count_png_frames(QSP_ARG  fp, frame_size)
+
+static dimension_t _count_png_frames(QSP_ARG_DECL  FILE *fp, long *frame_size)
+{
+	dimension_t nf=1;
+	long file_pos;		// so we can restore the file ptr
+	long end_pos;		// so we can restore the file ptr
+	long file_pos2;		// so we can restore the file ptr
+	int end_seen=0;
+
+	file_pos = ftell(fp);
+//fprintf(stderr,"count_png_frames:  file_pos = %ld (0x%lx)\n",file_pos,file_pos);
+
+	// get to the first header - why are we not there already!?
+	// The file position at this point seems to be right after the first
+	// data chunk header...
+	if( fseek(fp,0,SEEK_END) < 0 )
+		warn("count_png_frames:  error seeking to end!?");
+	end_pos = ftell(fp);
+
+	if( fseek(fp,file_pos-8,SEEK_SET) < 0 )
+		warn("count_png_frames:  initial seek error!?");
+
+	do {
+		unsigned char chunk_hdr[9];
+		uint32_t chunk_size;
+		int i;
+
+		// read the next chunk
+		if( fread(chunk_hdr,1,8,fp) != 8 ){
+			warn("count_png_frames:  error reading chunk header!?");
+			return nf;
+		}
+		chunk_size=0;
+		for(i=0;i<4;i++){
+			chunk_size <<= 8;
+			chunk_size += chunk_hdr[i];
+		}
+		chunk_hdr[8]=0;	// null terminate type string
+//fprintf(stderr,"chunk_type = %s, chunk_size = %d\n", &chunk_hdr[4] , chunk_size);
+		if( !strcmp((const char *)(&chunk_hdr[4]),"IEND") ){
+			end_seen=1;
+			// normally we end up four bytes before the end...
+			file_pos2 = ftell(fp);
+			file_pos2 += 4;	// include the checksum
+//fprintf(stderr,"size of first frame:  %ld (0x%lx)\n",file_pos2,file_pos2);
+		}
+
+		// the size does not include the 8 header bytes
+		// or the 4 byte checksum (at the end)
+		if( fseek(fp,chunk_size+4,SEEK_CUR) < 0 ){
+			warn("count_png_frames:  seek error!?");
+			return nf;
+		}
+	} while( ! end_seen);
+
+	if( (end_pos % file_pos2) != 0 ){
+		sprintf(ERROR_STRING,"count_png_frames:  size of first frame (%ld) does not divide file size (%ld) !?",file_pos2,end_pos);
+		warn(ERROR_STRING);
+	} else {
+		nf = end_pos / file_pos2;
+	}
+	*frame_size = file_pos2;	// return the frame size
+
+	// rewind to initial position
+	if( fseek(fp,file_pos,SEEK_SET) < 0 )
+		warn("count_png_frames:  reset seek error!?");
+
+	return nf;
 }
 
 /*
@@ -178,9 +220,10 @@ FIO_CLOSE_FUNC( pngfio )
  *	Create the library struct, and the info struct.
  */
 
-static int init_png(Image_File *ifp /* , png_infop info_ptr */ )
+static int init_png(QSP_ARG_DECL  Image_File *ifp /* , png_infop info_ptr */ )
 {
 	u_char sig[8];
+	long frame_size;
 	png_infop info_ptr;
 
 	//png_infop orig_info_ptr;
@@ -188,62 +231,66 @@ static int init_png(Image_File *ifp /* , png_infop info_ptr */ )
 
 	//orig_info_ptr = info_ptr;
 
-	rewind(ifp->if_fp);
-	fread(sig, 1, 8, ifp->if_fp);
+	//rewind(ifp->if_fp);
 
-#ifdef FOOBAR
-	/* This used to work, but not on MBP with fink libpng... */
-	if (!png_check_sig(sig,8)) {
-		NWARN("init_png: not a valid PNG file (bad signature)");
+	if( fread(sig, 1 /* size */, 8 /* n_items */, ifp->if_fp) != 8 ){
+		WARN("Error reading PNG header!?");
 		return(-1);
 	}
-#else /* ! FOOBAR */
+
 	if( png_sig_cmp(sig,0,8) != 0 ){
-		NWARN("init_png:  not a valid PNG file (bad signature)");
+		WARN("init_png:  not a valid PNG file (bad signature)");
 		return -1;
 	}
-#endif /* ! FOOBAR */
+
+	if( HDR_P->n_frames != 0 ){	// not first time?
+		png_destroy_read_struct(&HDR_P->png_ptr, &(HDR_P->info_ptr), NULL);
+	}
 
 	HDR_P->png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,	NULL, NULL, NULL);
-
 	if (!HDR_P->png_ptr){
-		NWARN("error creating png read struct");
+		WARN("error creating png read struct");
 		return(-1);   /* out of memory */
 	}
 
 	info_ptr = png_create_info_struct(HDR_P->png_ptr);
-
 	if (!info_ptr) {
-		NWARN("error creating png info struct");
+		WARN("error creating png info struct");
 		png_destroy_read_struct(&HDR_P->png_ptr, NULL, NULL);
 		return(-1);   /* out of memory */
 	}
+	HDR_P->info_ptr = info_ptr;
 
-		/* setjmp() must be called in every function
-		 * that calls a PNG-reading libpng function */
+	/* setjmp() must be called in every function
+	 * that calls a PNG-reading libpng function */
 
 	if (setjmp(png_jmpbuf(HDR_P->png_ptr))) {
-		png_destroy_read_struct(&HDR_P->png_ptr, &info_ptr, NULL);
+		png_destroy_read_struct(&HDR_P->png_ptr, &(HDR_P->info_ptr), NULL);
 		return(-1);
 	}
 
 	png_init_io(HDR_P->png_ptr, ifp->if_fp);
-
 	/* we have already read the 8 signature bytes */
 	png_set_sig_bytes(HDR_P->png_ptr, 8);
 
 	/* read all PNG info up to image data */
-	png_read_info(HDR_P->png_ptr, info_ptr);
+	png_read_info(HDR_P->png_ptr, HDR_P->info_ptr);
 
-	HDR_P->info_ptr = info_ptr;
 	//orig_info_ptr = (png_infop)memcpy(orig_info_ptr, info_ptr, sizeof(png_info));
 
 	/* what about freeing our new struct? */
 
 	//printf("init_png: OUT\n");
+
+	if( HDR_P->n_frames == 0 ){	// first time
+		HDR_P->n_frames = count_png_frames(ifp->if_fp,&frame_size);
+		HDR_P->frame_size = frame_size;
+	}
+
 	return 0;
 }
 
+#ifdef NOT_USED_NOW_BUT_MAY_NEED
 
 /* Expand palette images to RGB, low-bit-depth grayscale
  * images to 8 bits, transparency chunks to full alpha
@@ -272,12 +319,12 @@ static int expand_image(Image_File *ifp)
 		init_color_type = info_ptr->color_type;
 		init_pixel_depth = info_ptr->pixel_depth;
 		init_bit_depth = info_ptr->bit_depth;
-#else
+#else // ! OLD_PNG_LIB
 		init_n_of_channels = png_get_channels(HDR_P->png_ptr,HDR_P->info_ptr);
 		//init_color_type = info_ptr->color_type;
 		//init_pixel_depth = info_ptr->pixel_depth;
 		//init_bit_depth = info_ptr->bit_depth;
-#endif
+#endif // ! OLD_PNG_LIB
 	}
 
 	if (setjmp(png_jmpbuf(HDR_P->png_ptr))) {
@@ -286,17 +333,10 @@ static int expand_image(Image_File *ifp)
 		return -1;
 	}
 
-#ifdef OLD_PNG_LIB
-	color_type = info_ptr->color_type;
-	bit_depth = info_ptr->bit_depth;
-	channels = info_ptr->channels;
-	pixel_depth = info_ptr->pixel_depth;
-#else
 	color_type = png_get_color_type(HDR_P->png_ptr,HDR_P->info_ptr);
 	bit_depth = png_get_bit_depth(HDR_P->png_ptr,HDR_P->info_ptr);
 	channels = png_get_channels(HDR_P->png_ptr,HDR_P->info_ptr);;
 	pixel_depth = bit_depth * channels;
-#endif /* ! OLD_PNG_LIB */
 
 //fprintf(stderr,"expand_image:  color_type is %d\n",color_type);
 	if (color_type == PNG_COLOR_TYPE_PALETTE)
@@ -347,6 +387,30 @@ static int expand_image(Image_File *ifp)
 	return 0;
 }
 
+static int skip_hdr_info(QSP_ARG_DECL  Image_File *ifp)
+{
+	u_char sig[8];
+
+	if( fread(sig, 1, 8, ifp->if_fp) != 8 ){
+		WARN("Error reading PNG header!?");
+		return(-1);
+	}
+
+	if( png_sig_cmp(sig,0,8) != 0 ){
+		WARN("init_png:  not a valid PNG file (bad signature)");
+		return -1;
+	}
+	// read the header chunk - if we wanted to be very careful
+	// we could compare the contents to what we expect...
+
+	/* read all PNG info up to image data */
+	png_set_sig_bytes(HDR_P->png_ptr, 8);		// probably not necessary?
+	png_read_info(HDR_P->png_ptr, HDR_P->info_ptr);	// overwrites old info...
+
+	return 0;
+}
+
+#endif // NOT_USED_NOW_BUT_MAY_NEED
 
 /* I tried to predict the header info by looking at the routines in
  * expand_image, but it seems that when images get expanded rowbytes
@@ -354,29 +418,31 @@ static int expand_image(Image_File *ifp)
  * This hack expands the images and picks up the hdr info.
  *
  * (who wrote that comment?  doesn't sound like me (jbm) ...
+ *
+ * get_hdr_info is called when we open a file for reading...
  */
 
-static int get_hdr_info(Image_File *ifp)
+static int get_hdr_info(QSP_ARG_DECL  Image_File *ifp)
 {
 	//png_infop info_ptr;
 
 	//info_ptr = HDR_P->info_ptr;
 
-	if( init_png(ifp /*, info_ptr*/ ) < 0)
+	if( init_png(QSP_ARG  ifp /*, info_ptr*/ ) < 0)
 		return(-1);
 
+	/* Used to call expand_image() here, which seems to blow anything up to RGB???  why bother? */
+	/*
 	if( expand_image(ifp) < 0)
 		return(-1);
+		*/
 
-#ifdef OLD_PNG_LIB
-	if( png_to_dp(ifp->if_dp, HDR_P->info_ptr))
-		return(-1);
-	fill_hdr(HDR_P, HDR_P->info_ptr);
-#else
+	// The header doesn't contain the number of frames,
+	// so we have to scan the file...
+
 	if( png_to_dp(ifp->if_dp, HDR_P ))
 		return(-1);
 	fill_hdr(HDR_P);
-#endif /* ! OLD_PNG_LIB */
 
 
 //advise("get_hdr_info calling png_destroy_read_struct");
@@ -391,26 +457,29 @@ static int get_hdr_info(Image_File *ifp)
 	//ifp->if_hdr_p = getbuf( sizeof(Png_Hdr) );
 	//HDR_P->info_ptr = (png_infop)getbuf(sizeof(png_info));
 
+
 	return 0;
 }
 
 
 
-FIO_OPEN_FUNC( pngfio )
+FIO_OPEN_FUNC( pngfio )		// unix version
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
+	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hdr_p = getbuf( sizeof(Png_Hdr) );
-	/* We should zero the contents here!? */
-	HDR_P->info_ptr = NULL;
+	/* zero the contents */
+	memset(ifp->if_hdr_p,0,sizeof(Png_Hdr));
+
+	//HDR_P->info_ptr = NULL;
 
 	if( IS_READABLE(ifp) ) {
 //fprintf(stderr,"checking header info, reading png file...\n");
-		if(get_hdr_info(ifp) < 0)
-			return(NO_IMAGE_FILE);
+		if(get_hdr_info(QSP_ARG  ifp) < 0)
+			return(NULL);
 
 	} else {
 		/* We've only opened a file for writing, the header info
@@ -551,9 +620,24 @@ FIO_RD_FUNC( pngfio )
 		return;
 #endif // HAVE_ANY_GPU
 
+	/*
 	if(ifp->if_nfrms) {
 		advise("ERROR: png format does not have a stream of frames!");
 		exit(1);
+	}
+	*/
+//fprintf(stderr,"pngfio_rd:  ifp->if_nfrms = %d\n",ifp->if_nfrms);
+	if( ifp->if_nfrms > 0 ) {
+		// This means we have already read at least one frame.
+		// We scan the header when we open the file, but concatenated images
+		// have their own header, which we have to skip...
+		/*
+		if( skip_hdr_info(QSP_ARG  ifp) < 0 ){
+			WARN("Error skipping frame header in png file!?");
+			return;
+		}
+		*/
+		init_png(QSP_ARG  ifp);
 	}
 
 //advise("png_rd calling expand_image");
@@ -561,9 +645,9 @@ FIO_RD_FUNC( pngfio )
 //		error1("error in expand_image");
 
 	/* make sure that the sizes match */
-	if( ! dp_same_dim(QSP_ARG  dp,ifp->if_dp,0,"png_rd") ) return;	/* same # components? */
-	if( ! dp_same_dim(QSP_ARG  dp,ifp->if_dp,1,"png_rd") ) return;	/* same # columns? */
-	if( ! dp_same_dim(QSP_ARG  dp,ifp->if_dp,2,"png_rd") ) return;	/* same # rows? */
+	if( ! dp_same_dim(dp,ifp->if_dp,0,"png_rd") ) return;	/* same # components? */
+	if( ! dp_same_dim(dp,ifp->if_dp,1,"png_rd") ) return;	/* same # columns? */
+	if( ! dp_same_dim(dp,ifp->if_dp,2,"png_rd") ) return;	/* same # rows? */
 
 	// data_ptr = OBJ_DATA_PTR(dp);
 
@@ -617,7 +701,7 @@ FIO_RD_FUNC( pngfio )
 }
 
 
-FIO_WT_FUNC( pngfio )
+FIO_WT_FUNC( pngfio )		// unix version
 {
 	png_infop png_info_ptr;
 	int bit_depth;
@@ -632,7 +716,8 @@ FIO_WT_FUNC( pngfio )
 		return(-1);
 #endif // HAVE_ANY_GPU
 
-	if( ifp->if_dp == NO_OBJ ){	/* first time? */
+//fprintf(stderr,"pngfio write func BEGIN\n");
+	if( ifp->if_dp == NULL ){	/* first time? */
 		/* what should be here? */
 	} else {
 		advise("png_wt:  obj exists");
@@ -714,13 +799,15 @@ FIO_WT_FUNC( pngfio )
 
 	/* we do ini mini mina mo if color type hasn't been given */
 	if(color_type_to_write < 0) {
+//fprintf(stderr,"pngfio_wt:  color_type_to_write not set, checking OBJ_COMPS...\n");
 
-		if( OBJ_COMPS(dp) == 3 )
+		if( OBJ_COMPS(dp) == 3 ){
 			color_type = PNG_COLOR_TYPE_RGB;
-
-		else if( OBJ_COMPS(dp) == 4 ){
+		} else if( OBJ_COMPS(dp) == 4 ){
 			color_type = PNG_COLOR_TYPE_RGB_ALPHA;
-//fprintf(stderr,"pngfio_wt:  color_type = %d\n",color_type);
+		} else if( OBJ_COMPS(dp) == 1 ){
+			color_type = PNG_COLOR_TYPE_GRAY;
+//fprintf(stderr,"pngfio_wt:  color_type_to_write not set, using GRAY based on OBJ_COMPS...\n");
 		} else {
 			sprintf(ERROR_STRING,
 				"Object %s has bad number of components (%d) for png",
@@ -791,7 +878,7 @@ FIO_WT_FUNC( pngfio )
 			ifp->if_name,ifp->if_nfrms);
 			NADVISE(ERROR_STRING);
 		}
-		close_image_file(QSP_ARG  ifp);
+		close_image_file(ifp);
 	}
 
 //	/* close the file */
@@ -864,7 +951,7 @@ void set_bg_color(int bg_color)
 	bg_blue  = (bg_color & 0x0000FF);
 }
 
-void set_color_type(int color_type)
+void _set_color_type(QSP_ARG_DECL  int color_type)
 {
 	switch(color_type) {
 		case 0:
@@ -888,31 +975,51 @@ void set_color_type(int color_type)
 			break;
 
 		default:
-			sprintf(DEFAULT_MSG_STR,"unknown color type %d", color_type);
-			NWARN(DEFAULT_MSG_STR);
+			sprintf(ERROR_STRING,"unknown color type %d", color_type);
+			warn(ERROR_STRING);
 	}
 }
 
 
+// args are ifp and n
+
 FIO_SEEK_FUNC(pngfio)
 {
-	NWARN("png_seek_frame:  not implemented!?");
-	return(0);
+	long offset;
+
+	// BUG - should we validate the frame index?
+
+	offset = HDR_P->frame_size * n;
+	if( fseek(ifp->if_fp,offset,SEEK_SET) < 0 ){
+		WARN("Error seeking in png file!?");
+		return -1;
+	}
+	// We used to skip the header here, but better to do it in the read function
+#ifdef FOOBAR
+	// Now we should read the top of the file, to the first data
+	// section?
+	if( skip_hdr_info(QSP_ARG  ifp) < 0 ){
+		WARN("Error skipping header after seeking in png file!?");
+		return -1;
+	}
+#endif // FOOBAR
+
+	return 0;
 }
 
 
 /* the unconvert routine creates a disk header */
 
-int pngfio_unconv(void *hdr_pp,Data_Obj *dp)
+int _pngfio_unconv(QSP_ARG_DECL  void *hdr_pp,Data_Obj *dp)
 {
-	NWARN("png_unconv() not implemented!?");
+	warn("png_unconv() not implemented!?");
 	return(-1);
 }
 
 
-int pngfio_conv(Data_Obj *dp,void *hd_pp)
+int _pngfio_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 {
-	NWARN("png_conv not implemented");
+	warn("png_conv not implemented");
 	return(-1);
 }
 
@@ -939,10 +1046,10 @@ int pngfio_conv(Data_Obj *dp,void *hd_pp)
 // but currently that's not an Objective C IOS_Item, and I don't want to take
 // the time to do the boilerplate now.
 
-static Image_File *png_ifp=NULL;
-static UIImage *png_uip=NULL;
+static Image_File *png_ifp=NULL;	// BUG not thread-safe
+static UIImage *png_uip=NULL;		// BUG not thread-safe
 
-FIO_WT_FUNC( pngfio )
+FIO_WT_FUNC( pngfio )		// iOS version
 {
 	NSData *png_data;
 	QUIP_IMAGE_TYPE *myimg;
@@ -950,7 +1057,7 @@ FIO_WT_FUNC( pngfio )
 	// we have a dp...
 	// make a UIImage then convert and write...
 
-	myimg=objc_img_for_dp(dp,0);
+	myimg=objc_img_for_dp(dp,0);	// don't set the little-endian flag - why not?
 	if( myimg == NULL ){
 		WARN("error creating UIImage!?");
 		return -1;
@@ -971,7 +1078,9 @@ FIO_WT_FUNC( pngfio )
 	return(0);
 }
 
-static void png_to_dp(Data_Obj *dp, UIImage *img)
+#define png_to_dp(dp, img) _png_to_dp(QSP_ARG  dp, img)
+
+static void _png_to_dp(QSP_ARG_DECL  Data_Obj *dp, UIImage *img)	// iOS version
 {
 
 // With new version of libpng, need to use get functions...
@@ -1000,9 +1109,9 @@ static void png_to_dp(Data_Obj *dp, UIImage *img)
 		bpp=CGImageGetBitsPerPixel(img.CGImage);
 	}
 	if( bpp % 8 != 0 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"png_to_dp:  bits per pixel (%zu) is not a multiple of 8!?",bpp);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	SET_OBJ_COMPS(dp, bpp/8);
@@ -1023,24 +1132,24 @@ static void png_to_dp(Data_Obj *dp, UIImage *img)
 	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp)*OBJ_ROWS(dp) );
 	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp)*OBJ_FRAMES(dp) );
 
-	SET_OBJ_PARENT(dp, NO_OBJ);
-	SET_OBJ_CHILDREN(dp, NO_LIST);
+	SET_OBJ_PARENT(dp, NULL);
+	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
 	SET_OBJ_DATA_PTR(dp, NULL);
 	SET_OBJ_N_TYPE_ELTS(dp, OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp)
 			* OBJ_FRAMES(dp) * OBJ_SEQS(dp) );
 
-	auto_shape_flags(OBJ_SHAPE(dp),dp);
+	auto_shape_flags(OBJ_SHAPE(dp));
 
 }
 
-FIO_OPEN_FUNC( pngfio )
+FIO_OPEN_FUNC( pngfio )		// iOS version
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
+	if( ifp==NULL ) return(ifp);
 
 	// if it's readable, then we would read the header so we can
 	// answer queries about it...
@@ -1065,27 +1174,21 @@ FIO_OPEN_FUNC( pngfio )
 	}
 
 	return ifp;
-}
+} // open_func iOS
 
-FIO_CLOSE_FUNC( pngfio )
+FIO_CLOSE_FUNC( pngfio )		// iOS version
 {
 	if( ifp == png_ifp ){
 		png_ifp = NULL;
 		png_uip = NULL;
 	} else {
-		advise("pngfio_close:  doing nothing.");
+		//advise("pngfio_close:  doing nothing.");
 	}
-	generic_imgfile_close(QSP_ARG  ifp);
+	generic_imgfile_close(ifp);
 }
 
-FIO_RD_FUNC( pngfio )
+FIO_RD_FUNC( pngfio )		// iOS version
 {
-//#ifdef CAUTIOUS
-//	if( png_ifp == NULL ){
-//		WARN("CAUTIOUS:  pngfio_rd:  png_ifp is NULL!?");
-//		return;
-//	}
-//#endif // CAUTIOUS
 	assert( png_ifp != NULL );
 
 	if( ifp != png_ifp ){
@@ -1101,12 +1204,6 @@ FIO_RD_FUNC( pngfio )
 
 	// Now we want to copy the data...
 	// We have a CGImage!
-//#ifdef CAUTIOUS
-//	if( png_uip.CGImage == NULL ){
-//		WARN("CAUTIOUS:  pngfio_rd:  null CGImage!?");
-//		return;
-//	}
-//#endif // CAUTIOUS
 	assert( png_uip.CGImage != NULL );
 
 	CGDataProviderRef provider = CGImageGetDataProvider(png_uip.CGImage);
@@ -1118,6 +1215,7 @@ FIO_RD_FUNC( pngfio )
 
 	memcpy(OBJ_DATA_PTR(dp),bytes,OBJ_N_MACH_ELTS(dp));
 
+	// what if there is more than one image in the file???
 	close_image_file(QSP_ARG  ifp);
 }
 
@@ -1128,20 +1226,22 @@ FIO_INFO_FUNC(pngfio)
 
 FIO_SEEK_FUNC(pngfio)
 {
-	NWARN("png_seek_frame:  not implemented!?");
+	warn("png_seek_frame:  not implemented!?");
 	return(0);
 }
 
-int pngfio_unconv(void *hdr_pp,Data_Obj *dp)
+//int pngfio_unconv(void *hdr_pp,Data_Obj *dp)		// iOS version
+FIO_UNCONV_FUNC(pngfio)
 {
-	NWARN("png_unconv() not implemented!?");
+	warn("png_unconv() not implemented!?");
 	return(-1);
 }
 
+//int pngfio_conv(Data_Obj *dp,void *hd_pp)		// iOS version
 
-int pngfio_conv(Data_Obj *dp,void *hd_pp)
+FIO_CONV_FUNC(pngfio)
 {
-	NWARN("png_conv not implemented");
+	warn("png_conv not implemented");
 	return(-1);
 }
 

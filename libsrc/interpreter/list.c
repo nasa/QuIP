@@ -3,7 +3,8 @@
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "query_stack.h"
-#include "list.h"
+#include "list_private.h"
+
 
 /*	the term "ring" refers to a circular list
 	rings have head and tail pointers, which should
@@ -12,8 +13,8 @@
 	the tail
  */
 
-static List *free_node_list=NO_LIST;
-static List *free_list_list=NO_LIST;
+static List *free_node_list=NULL;
+static List *free_list_list=NULL;
 //static u_long node_debug=NODE_DEBUG_MASK;
 #ifdef QUIP_DEBUG
 //static u_long node_debug=0;
@@ -28,29 +29,55 @@ int n_active_threads=0;
 void report_node_data(SINGLE_QSP_ARG_DECL)
 {
         sprintf(ERROR_STRING,"%ld nodes allocated",total_nodes);
-        ADVISE(ERROR_STRING);
+        advise(ERROR_STRING);
 
-        if( free_node_list == NO_LIST )
-                ADVISE("no nodes freed");
+        if( free_node_list == NULL )
+                advise("no nodes freed");
         else {
                 sprintf(ERROR_STRING,
                         "%d free nodes available",eltcount(free_node_list));
-                ADVISE(ERROR_STRING);
+                advise(ERROR_STRING);
         }
 
-        if( free_list_list == NO_LIST )
-                ADVISE("no lists freed");
+        if( free_list_list == NULL )
+                advise("no lists freed");
         else {
                 sprintf(ERROR_STRING,
                         "%d free lists available",eltcount(free_list_list));
-                ADVISE(ERROR_STRING);
+                advise(ERROR_STRING);
         }
 }
 
+static void remove_found_node(Node *np, List *lp)
+{
+	if( NODE_PREV(np) != NULL )
+		SET_NODE_NEXT(NODE_PREV(np),NODE_NEXT(np));
+	else SET_LIST_HEAD(lp, NODE_NEXT(np));
+	if( NODE_NEXT(np) != NULL )
+		SET_NODE_PREV(NODE_NEXT(np),NODE_PREV(np));
+	else SET_LIST_TAIL(lp, NODE_PREV(np));
+	SET_NODE_NEXT(np,NULL);
+	SET_NODE_PREV(np,NULL);
+}
+
+static void fix_ring_ptrs(Node *np, List *lp)
+{
+	if( _LIST_HEAD(lp) == np ){
+		if( _LIST_TAIL(lp) == np ){
+			SET_LIST_HEAD(lp,NULL);
+			SET_LIST_TAIL(lp,NULL);
+		} else SET_LIST_HEAD(lp,NODE_NEXT(np));
+	} else if( _LIST_TAIL(lp) == np ){
+		SET_LIST_TAIL(lp, NODE_PREV(np));
+	}
+	// Why?
+	SET_NODE_NEXT(np,np);
+	SET_NODE_PREV(np,np);
+}
 
 /*
  * remove a node from a list
- * returns removed node or NO_NODE if not in list
+ * returns removed node or NULL if not in list
  */
 
 Node *remNode( List * lp, Node* node )
@@ -60,53 +87,34 @@ Node *remNode( List * lp, Node* node )
 	Node *np;
 	int is_ring=0;
 
-	np=QLIST_HEAD(lp);
-	if( np == NO_NODE ) return(NO_NODE);
+	np=_LIST_HEAD(lp);
+	if( np == NULL ) return(NULL);
 
-	LOCK_LIST(lp)
+	LOCK_LIST(lp,remNode)
 
-	if( NODE_PREV(np) != NO_NODE ) is_ring=1;
-	while( np != NO_NODE ){
+	if( NODE_PREV(np) != NULL ) is_ring=1;
+	while( np != NULL ){
 		if( np==node ){
-			if( NODE_PREV(np) != NO_NODE )
-				SET_NODE_NEXT(NODE_PREV(np),NODE_NEXT(np));
-			else SET_QLIST_HEAD(lp, NODE_NEXT(np));
-			if( NODE_NEXT(np) != NO_NODE )
-				SET_NODE_PREV(NODE_NEXT(np),NODE_PREV(np));
-			else SET_QLIST_TAIL(lp, NODE_PREV(np));
-
-			/* the above doesn't work for rings!! */
-
-			if( is_ring ){
-				if( QLIST_HEAD(lp) == np ){
-					if( QLIST_TAIL(lp) == np ){
-						SET_QLIST_HEAD(lp,NO_NODE);
-						SET_QLIST_TAIL(lp,NO_NODE);
-					} else SET_QLIST_HEAD(lp,NODE_NEXT(np));
-				} else if( QLIST_TAIL(lp) == np ){
-					SET_QLIST_TAIL(lp, NODE_PREV(np));
-				}
-				SET_NODE_NEXT(np,np);
-				SET_NODE_PREV(np,np);
-			} else {
-				SET_NODE_NEXT(np,NO_NODE);
-				SET_NODE_PREV(np,NO_NODE);
-			}
-
+			remove_found_node(np,lp);
+			if( is_ring )
+				fix_ring_ptrs(np,lp);
+			UNLOCK_LIST(lp,remNode)
 			return(np);
 		}
 		np = NODE_NEXT(np);
-		if( np == QLIST_HEAD(lp) ) np=NO_NODE;
+		if( np == _LIST_HEAD(lp) ) np=NULL;
 	}
 
-	UNLOCK_LIST(lp)
-
-	return(np);
-}
+	// can this ever happen?
+	// assertion?
+	_warn(DEFAULT_QSP_ARG  "remNode:  node not found!?");
+	UNLOCK_LIST(lp,remNode)
+	return(NULL);
+} // remNode
 
 /*
  * search list for node pointing to data
- * returns pointer to node or NO_NODE
+ * returns pointer to node or NULL
  */
 
 Node *nodeOf( List *lp, void* data )
@@ -115,13 +123,13 @@ Node *nodeOf( List *lp, void* data )
 {
 	Node *np;
 
-	np=QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	np=_LIST_HEAD(lp);
+	while( np != NULL ){
 		if( np->n_data == data ) return(np);
 		np=NODE_NEXT(np);
-		if( np==QLIST_HEAD(lp) ) np=NO_NODE;
+		if( np==_LIST_HEAD(lp) ) np=NULL;
 	}
-	return(NO_NODE);
+	return(NULL);
 }
 
 Node *remData( List *lp, void* data )	/** remove node pointing to data */
@@ -129,18 +137,10 @@ Node *remData( List *lp, void* data )	/** remove node pointing to data */
 	Node *np, *stat;
 
 	np=nodeOf( lp, data );
-	if( np==NO_NODE )
-		return(NO_NODE);
+	if( np==NULL )
+		return(NULL);
 	stat=remNode( lp, np );
-
-//#ifdef CAUTIOUS
-//	if( stat == NO_NODE ){
-//		NWARN("CAUTIOUS:  remData:  remNode failed");
-//		return(NO_NODE);
-//	}
-//#endif /* CAUTIOUS */
-
-	assert( stat != NO_NODE );
+	assert( stat != NULL );
 
 	return(np);
 }
@@ -150,14 +150,14 @@ Node *nth_elt( List *lp , count_t n )	/** get ptr to nth node from head */
 	Node *np, *np0;
 
     // count_t is unsigned?
-	//if( n < 0 ) return(NO_NODE);
-	np0=np=QLIST_HEAD(lp);
+	//if( n < 0 ) return(NULL);
+	np0=np=_LIST_HEAD(lp);
 	while( n-- ) {
-		if( np==NO_NODE )
-			return( NO_NODE );
+		if( np==NULL )
+			return( NULL );
 		np=NODE_NEXT(np);
 		if( np==np0 )
-			return( NO_NODE );
+			return( NULL );
 	}
 	return( np );
 }
@@ -166,13 +166,13 @@ Node *nth_elt_from_tail( List *lp , count_t n )
 {
 	Node *np, *np0;
 
-	np0=np=QLIST_TAIL(lp);
+	np0=np=_LIST_TAIL(lp);
 	while( n-- ) {
-		if( np==NO_NODE )
-			return( NO_NODE );
+		if( np==NULL )
+			return( NULL );
 		np=NODE_PREV(np);
 		if( np==np0 )
-			return( NO_NODE );
+			return( NULL );
 	}
 	return( np );
 }
@@ -183,14 +183,14 @@ count_t eltcount( List * lp )	/** returns number of elements (for rings too) */
 	Node *np;
 	Node *np0;
 
-	if( lp==NO_LIST ) return(0);
+	if( lp==NULL ) return(0);
 
-	np0=np=QLIST_HEAD(lp);
+	np0=np=_LIST_HEAD(lp);
 
-	while( np!=NO_NODE ){
+	while( np!=NULL ){
 		i++;
 		np=NODE_NEXT(np);
-		if( np==np0 ) np=NO_NODE;
+		if( np==np0 ) np=NULL;
 	}
 	return(i);
 }
@@ -219,7 +219,7 @@ void rls_node(Node *np)
  * allocate memory for a new one.
  */
 
-static Node *newnode()			/**/
+static Node *newnode(void)			/**/
 {
 	Node *np;
 
@@ -227,10 +227,10 @@ static Node *newnode()			/**/
 	// BUG?  we might want to lock free_node_list,
 	// but in practice this will be executed early,
 	// before a second thread has been created...
-	if( free_node_list == NO_LIST )
+	if( free_node_list == NULL )
 		free_node_list = new_list();
 
-	LOCK_LIST(free_node_list)
+	LOCK_LIST(free_node_list,newnode)
 
 	if( IS_EMPTY(free_node_list) ){		/* grab another page's worth of nodes */
 		int n_per_page;
@@ -245,7 +245,7 @@ static Node *newnode()			/**/
 //}
 #endif /* QUIP_DEBUG */
 		np = (Node *) malloc( n_per_page * sizeof(Node) );
-		if( np == NO_NODE ){
+		if( np == NULL ){
 			sprintf(DEFAULT_ERROR_STRING,
 				"no more memory for nodes (%ld allocated)",
 				total_nodes);
@@ -263,10 +263,10 @@ static Node *newnode()			/**/
 	}
 	np=safe_remHead(free_node_list);
 
-	UNLOCK_LIST(free_node_list)
+	UNLOCK_LIST(free_node_list,newnode)
 
-	SET_NODE_NEXT(np,NO_NODE);
-	SET_NODE_PREV(np,NO_NODE);
+	SET_NODE_NEXT(np,NULL);
+	SET_NODE_PREV(np,NULL);
 	np->n_pri = 0;
 	np->n_data = NULL;
 #ifdef QUIP_DEBUG
@@ -276,14 +276,14 @@ static Node *newnode()			/**/
 //}
 #endif /* QUIP_DEBUG */
 	return(np);
-}
+} // newnode
 
 /*
  * Release all of the nodes belonging to a list,
  * and then release the list pointer.
  */
 
-void dellist( List *lp )
+void _dellist(QSP_ARG_DECL  List *lp )
 {
 	rls_nodes_from_list(lp);
 	rls_list(lp);
@@ -293,60 +293,67 @@ void rls_nodes_from_list(List *lp)
 {
 	Node *np, *np2;
 
-	LOCK_LIST(lp)
-	np=QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	LOCK_LIST(lp,rls_nodes_from_list)
+	np=_LIST_HEAD(lp);
+	while( np != NULL ){
 		np2=np;
 		np=NODE_NEXT(np2);
 		rls_node(np2);
-		if( np == QLIST_HEAD(lp) ) np=NO_NODE;
+		if( np == _LIST_HEAD(lp) ) np=NULL;
 	}
-	SET_QLIST_HEAD(lp,NO_NODE);
-	SET_QLIST_TAIL(lp,NO_NODE);
-	UNLOCK_LIST(lp)
+	SET_LIST_HEAD(lp,NULL);
+	SET_LIST_TAIL(lp,NULL);
+	UNLOCK_LIST(lp,rls_nodes_from_list)
 }
 
 static void init_list(List *lp)
 {
 //#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
+//	if( lp == NULL ){
 //		NERROR1("CAUTIOUS:  init_list:  null list pointer!?");
 //		IOS_RETURN
 //	}
 //#endif // CAUTIOUS
 
-	assert( lp != NO_LIST );
+	assert( lp != NULL );
 	
 #ifdef THREAD_SAFE_QUERY
 #ifdef HAVE_PTHREADS
 	int status;
+	pthread_mutexattr_t attr;
 
-	status = pthread_mutex_init(&lp->l_mutex,NULL);
+	status = pthread_mutexattr_init(&attr);
+	assert(status ==0);
+	status = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+	assert(status ==0);
+	status = pthread_mutex_init(&lp->l_mutex,/*NULL*/&attr);
+	assert(status ==0);
 	if( status != 0 ){
-		NERROR1("error initializing mutex");
+		NERROR1("error initializing mutex!?");
 		IOS_RETURN
 	}
+//fprintf(stderr,"mutex initialized for list at 0x%lx\n",(long)lp);
 #endif /* HAVE_PTHREADS */
 
-	//lp->l_flags=0;
+	lp->l_flags=0;
 #endif /* THREAD_SAFE_QUERY */
 
-	SET_QLIST_HEAD(lp,NO_NODE);
-	SET_QLIST_TAIL(lp,NO_NODE);
+	SET_LIST_HEAD(lp,NULL);
+	SET_LIST_TAIL(lp,NULL);
 }
 
 /*
  * Return a pointer to a new list structure
  */
 
-List *new_list()
+List *new_list(void)
 {
 	List *lp;
 
-	if( free_list_list == NO_LIST || IS_EMPTY(free_list_list) ){
+	if( free_list_list == NULL || IS_EMPTY(free_list_list) ){
 		lp=(List*) getbuf(sizeof(*lp));
-		//if( lp == NO_LIST ) mem_err("new_list");
-		if( lp == NO_LIST ) NERROR1("new_list");
+		//if( lp == NULL ) mem_err("new_list");
+		if( lp == NULL ) NERROR1("new_list");
 	} else {
 		Node *np;
 
@@ -355,6 +362,7 @@ List *new_list()
 		rls_node(np);
 	}
 	init_list(lp);
+//fprintf(stderr,"new_list returning initialized list at 0x%lx\n",(long)lp);
 	return(lp);
 }
 
@@ -366,53 +374,54 @@ void rls_list(List *lp)
 {
 	Node *np;
 
-	if( free_list_list == NO_LIST )
+	if( free_list_list == NULL )
 		free_list_list = new_list();
 	np=mk_node(lp);
 	addHead(free_list_list,np);
 }
 
-void addHead( List *lp, Node* node )		/**/
+void addHead( List *lp, Node* np )		/**/
 {
-	LOCK_LIST(lp)
-	if( QLIST_HEAD(lp) != NO_NODE ){
-		if( NODE_PREV(QLIST_HEAD(lp)) != NO_NODE ){	/* ring */
-			SET_NODE_PREV(node, QLIST_TAIL(lp));
-			SET_NODE_NEXT(QLIST_TAIL(lp), node);
+	assert(lp!=NULL);
+	LOCK_LIST(lp,addHead)
+	if( _LIST_HEAD(lp) != NULL ){
+		if( NODE_PREV(_LIST_HEAD(lp)) != NULL ){	/* ring */
+			SET_NODE_PREV(np, _LIST_TAIL(lp));
+			SET_NODE_NEXT(_LIST_TAIL(lp), np);
 
 		}
-		SET_NODE_PREV(QLIST_HEAD(lp), node);
-		SET_NODE_NEXT(node, QLIST_HEAD(lp));
+		SET_NODE_PREV(_LIST_HEAD(lp), np);
+		SET_NODE_NEXT(np, _LIST_HEAD(lp));
 	} else {
 		/* don't initialize this (for rings)
-		SET_NODE_NEXT(node, NO_NODE);
+		SET_NODE_NEXT(np, NULL);
 		*/
 
-		SET_QLIST_TAIL(lp, node);
+		SET_LIST_TAIL(lp, np);
 	}
-	SET_QLIST_HEAD(lp, node);
-	UNLOCK_LIST(lp)
+	SET_LIST_HEAD(lp, np);
+	UNLOCK_LIST(lp,addHead)
 }
 
 #define ADD_TAIL(lp,np)						\
 								\
-	if( QLIST_TAIL(lp) != NO_NODE ){				\
-		if( NODE_NEXT(QLIST_TAIL(lp)) != NO_NODE ){		\
-			SET_NODE_PREV(QLIST_HEAD(lp), np);		\
-			SET_NODE_NEXT(np, QLIST_HEAD(lp));		\
+	if( _LIST_TAIL(lp) != NULL ){				\
+		if( NODE_NEXT(_LIST_TAIL(lp)) != NULL ){		\
+			SET_NODE_PREV(_LIST_HEAD(lp), np);		\
+			SET_NODE_NEXT(np, _LIST_HEAD(lp));		\
 		}						\
-		SET_NODE_NEXT(QLIST_TAIL(lp), np);			\
-		SET_NODE_PREV(np, QLIST_TAIL(lp));			\
+		SET_NODE_NEXT(_LIST_TAIL(lp), np);			\
+		SET_NODE_PREV(np, _LIST_TAIL(lp));			\
 	} else {						\
-		SET_QLIST_HEAD(lp, np);				\
+		SET_LIST_HEAD(lp, np);				\
 	}							\
-	SET_QLIST_TAIL(lp, np);
+	SET_LIST_TAIL(lp, np);
 
 void addTail( List *lp, Node* np )		/**/
 {
-	LOCK_LIST(lp)
+	LOCK_LIST(lp,addTail)
 	ADD_TAIL(lp,np)
-	UNLOCK_LIST(lp)
+	UNLOCK_LIST(lp,addTail)
 }
 
 void safe_addTail( List *lp, Node* np )		/**/
@@ -422,11 +431,11 @@ void safe_addTail( List *lp, Node* np )		/**/
 
 #define REM_HEAD(np,lp)							\
 									\
-	SET_QLIST_HEAD(lp, NODE_NEXT(np));					\
-	if( NODE_PREV(np) != NO_NODE ){		/* ring */		\
-		if( QLIST_HEAD(lp) == np ){	/* last node of ring list ? */	\
-			SET_QLIST_TAIL(lp,NO_NODE);				\
-			SET_QLIST_HEAD(lp, NO_NODE);		\
+	SET_LIST_HEAD(lp, NODE_NEXT(np));					\
+	if( NODE_PREV(np) != NULL ){		/* ring */		\
+		if( _LIST_HEAD(lp) == np ){	/* last node of ring list ? */	\
+			SET_LIST_TAIL(lp,NULL);				\
+			SET_LIST_HEAD(lp, NULL);		\
 		} else {						\
 			SET_NODE_NEXT(NODE_PREV(np), NODE_NEXT(np));		\
 			SET_NODE_PREV(NODE_NEXT(np), NODE_PREV(np));		\
@@ -436,25 +445,25 @@ void safe_addTail( List *lp, Node* np )		/**/
 		SET_NODE_NEXT(np,np);						\
 		SET_NODE_PREV(np,np);						\
 	} else {							\
-		if( NODE_NEXT(np) != NO_NODE )				\
-			SET_NODE_PREV(NODE_NEXT(np), NO_NODE);			\
-		else SET_QLIST_TAIL(lp, NO_NODE);				\
+		if( NODE_NEXT(np) != NULL ){				\
+			SET_NODE_PREV(NODE_NEXT(np), NULL);			\
+		} else SET_LIST_TAIL(lp, NULL);				\
 									\
-		SET_NODE_NEXT(np, NO_NODE);					\
-		SET_NODE_PREV(np, NO_NODE);					\
+		SET_NODE_NEXT(np, NULL);					\
+		SET_NODE_PREV(np, NULL);					\
 	}
 
 Node *remHead( List *lp )		/**/
 {
 	Node *np;
 
-	if( (np=QLIST_HEAD(lp)) == NO_NODE ){
-		return( NO_NODE );
+	assert(lp!=NULL);
+	if( (np=_LIST_HEAD(lp)) == NULL ){
+		return( NULL );
 	}
-
-	LOCK_LIST(lp)
+	LOCK_LIST(lp,remHead)
 	REM_HEAD(np,lp)
-	UNLOCK_LIST(lp)
+	UNLOCK_LIST(lp,remHead)
 
 	return(np);
 }
@@ -463,8 +472,8 @@ Node *safe_remHead( List *lp )		/**/
 {
 	Node *np;
 
-	if( (np=QLIST_HEAD(lp)) == NO_NODE ){
-		return( NO_NODE );
+	if( (np=_LIST_HEAD(lp)) == NULL ){
+		return( NULL );
 	}
 
 	REM_HEAD(np,lp)
@@ -476,13 +485,13 @@ Node *remTail( List *lp )		/**/
 {
 	Node *np;
 
-	if( (np=QLIST_TAIL(lp)) == NO_NODE ) return(NO_NODE);
-	LOCK_LIST(lp)
-	SET_QLIST_TAIL(lp, NODE_PREV(np));
-	if( NODE_NEXT(np) != NO_NODE ){		/* ring */
-		if( QLIST_TAIL(lp) == np ){	/* last link of ring */
-			SET_QLIST_TAIL(lp,NO_NODE);
-			SET_QLIST_HEAD(lp,NO_NODE);
+	if( (np=_LIST_TAIL(lp)) == NULL ) return(NULL);
+	LOCK_LIST(lp,remTail)
+	SET_LIST_TAIL(lp, NODE_PREV(np));
+	if( NODE_NEXT(np) != NULL ){		/* ring */
+		if( _LIST_TAIL(lp) == np ){	/* last link of ring */
+			SET_LIST_TAIL(lp,NULL);
+			SET_LIST_HEAD(lp,NULL);
 		} else {
 			SET_NODE_PREV(NODE_NEXT(np), NODE_PREV(np));
 			SET_NODE_NEXT(NODE_PREV(np), NODE_NEXT(np));
@@ -492,14 +501,14 @@ Node *remTail( List *lp )		/**/
 		SET_NODE_NEXT(np,np);
 		SET_NODE_PREV(np,np);
 	} else {
-		if( NODE_PREV(np) != NO_NODE )		/* last node */
-			SET_NODE_NEXT(NODE_PREV(np), NO_NODE);
-		else SET_QLIST_HEAD(lp,NO_NODE);
+		if( NODE_PREV(np) != NULL )		/* last node */
+			SET_NODE_NEXT(NODE_PREV(np), NULL);
+		else SET_LIST_HEAD(lp,NULL);
 
-		SET_NODE_NEXT(np, NO_NODE);
-		SET_NODE_PREV(np, NO_NODE);
+		SET_NODE_NEXT(np, NULL);
+		SET_NODE_PREV(np, NULL);
 	}
-	UNLOCK_LIST(lp)
+	UNLOCK_LIST(lp,remTail)
 	return(np);
 }
 
@@ -508,15 +517,15 @@ static void l_exch( List *lp, Node* np1, Node* np2 )		/** exchange two list elem
 	Node tmp;
 	Node *tmp_np=(&tmp);
 
-	LOCK_LIST(lp)
+	LOCK_LIST(lp,l_exch)
 
 	/* this procedure has to be different for adjacent nodes! */
 
 	if( np1 == NODE_NEXT(np2) ){	/* np1 follows np2 */
 		if( np2 != NODE_NEXT(np1) ){
-			if( NODE_NEXT(np1) != NO_NODE )
+			if( NODE_NEXT(np1) != NULL )
 				SET_NODE_PREV(NODE_NEXT(np1),np2);
-			if( NODE_PREV(np2) != NO_NODE )
+			if( NODE_PREV(np2) != NULL )
 				SET_NODE_NEXT(NODE_PREV(np2),np1);
 			SET_NODE_NEXT(np2,NODE_NEXT(np1));
 			SET_NODE_PREV(np1,NODE_PREV(np2));
@@ -525,22 +534,22 @@ static void l_exch( List *lp, Node* np1, Node* np2 )		/** exchange two list elem
 		}
 		/* else two element ring; do nothing 'cept fix head & tail */
 	} else if( np2 == NODE_NEXT(np1) ){
-		if( NODE_PREV(np1) != NO_NODE )
+		if( NODE_PREV(np1) != NULL )
 			SET_NODE_NEXT(NODE_PREV(np1),np2);
-		if( NODE_NEXT(np2) != NO_NODE )
+		if( NODE_NEXT(np2) != NULL )
 			SET_NODE_PREV(NODE_NEXT(np2),np1);
 		SET_NODE_NEXT(np1,NODE_NEXT(np2));
 		SET_NODE_PREV(np2,NODE_PREV(np1));
 		SET_NODE_NEXT(np2,np1);
 		SET_NODE_PREV(np1,np2);
 	} else {
-		if( NODE_NEXT(np1) != NO_NODE )
+		if( NODE_NEXT(np1) != NULL )
 			SET_NODE_PREV(NODE_NEXT(np1),np2);
-		if( NODE_PREV(np1) != NO_NODE )
+		if( NODE_PREV(np1) != NULL )
 			SET_NODE_NEXT(NODE_PREV(np1),np2);
-		if( NODE_NEXT(np2) != NO_NODE )
+		if( NODE_NEXT(np2) != NULL )
 			SET_NODE_PREV(NODE_NEXT(np2),np1);
-		if( NODE_PREV(np2) != NO_NODE )
+		if( NODE_PREV(np2) != NULL )
 			SET_NODE_NEXT(NODE_PREV(np2),np1);
 
 		memcpy(tmp_np,np1,sizeof(Node));
@@ -551,12 +560,12 @@ static void l_exch( List *lp, Node* np1, Node* np2 )		/** exchange two list elem
 		SET_NODE_NEXT(np2, NODE_NEXT(tmp_np));
 		SET_NODE_PREV(np2, NODE_PREV(tmp_np));
 	}
-	if( QLIST_HEAD(lp) == np1 ) SET_QLIST_HEAD(lp,np2);
-	else if( QLIST_HEAD(lp) == np2 ) SET_QLIST_HEAD(lp,np1);
+	if( _LIST_HEAD(lp) == np1 ) SET_LIST_HEAD(lp,np2);
+	else if( _LIST_HEAD(lp) == np2 ) SET_LIST_HEAD(lp,np1);
 	
-	if( QLIST_TAIL(lp) == np1 ) SET_QLIST_TAIL(lp,np2);
-	else if( QLIST_TAIL(lp) == np2 ) SET_QLIST_TAIL(lp,np1);
-	UNLOCK_LIST(lp)
+	if( _LIST_TAIL(lp) == np1 ) SET_LIST_TAIL(lp,np2);
+	else if( _LIST_TAIL(lp) == np2 ) SET_LIST_TAIL(lp,np1);
+	UNLOCK_LIST(lp,l_exch)
 }
 	
 void p_sort( List* lp )		/** sort list with highest priority at head */
@@ -570,8 +579,8 @@ void p_sort( List* lp )		/** sort list with highest priority at head */
 
 	while( !done ){
 		done=1;
-		np=QLIST_HEAD(lp);
-		while( NODE_NEXT(np) != NO_NODE && np!=QLIST_TAIL(lp) ){
+		np=_LIST_HEAD(lp);
+		while( NODE_NEXT(np) != NULL && np!=_LIST_TAIL(lp) ){
 			if( NODE_NEXT(np)->n_pri > np->n_pri ){
 /*
 sprintf(ERROR_STRING,"exchanging nodes w/ priorities %d, %d",
@@ -596,7 +605,7 @@ Node *mk_node(void* dp)	/** returns a node for a two-ended list */
 	Node *np;
 
 	np=newnode();
-	if( np == NO_NODE ) return(np);
+	if( np == NULL ) return(np);
 	init_node(np,dp);
 	return(np);
 }
@@ -613,8 +622,8 @@ void init_node(Node *np,void* dp)
 	assert( np != NULL );
 
 	np->n_data=dp;
-	SET_NODE_NEXT(np,NO_NODE);
-	SET_NODE_PREV(np,NO_NODE);
+	SET_NODE_NEXT(np,NULL);
+	SET_NODE_PREV(np,NULL);
 	np->n_pri = 0;
 }
 
@@ -630,6 +639,7 @@ void advance_list_enumerator(List_Enumerator *lep)
 
 Item *list_enumerator_item(List_Enumerator *lep)
 {
+	assert(lep!=NULL);
 	if( lep->np == NULL ) return NULL;
 	return (Item *) NODE_DATA(lep->np);
 }
@@ -641,8 +651,8 @@ Node *list_find_named_item(List *lp, const char *name)
 
 	assert(lp!=NULL);
 
-	np = QLIST_HEAD(lp);
-	while( np != NO_NODE ){	// BUG?  won't work for circular list!
+	np = _LIST_HEAD(lp);
+	while( np != NULL ){	// BUG?  won't work for circular list!
 		ip = NODE_DATA(np);
 		if( !strcmp(name,ITEM_NAME(ip)) )
 			return np;
@@ -651,15 +661,46 @@ Node *list_find_named_item(List *lp, const char *name)
 	return NULL;
 }
 
-List_Enumerator *new_list_enumerator(List *lp)
+List_Enumerator *_new_list_enumerator(QSP_ARG_DECL  List *lp)
 {
 	List_Enumerator *lep;
 
-	if( QLIST_HEAD(lp) == NULL ) return NULL;
+	if( _LIST_HEAD(lp) == NULL ) return NULL;
 
 	lep = getbuf(sizeof(List_Enumerator));
 	lep->lp = lp;	// needed?
-	lep->np = QLIST_HEAD(lp);
+	lep->np = _LIST_HEAD(lp);
 	return lep;
+}
+
+void rls_list_enumerator(List_Enumerator *lep)
+{
+	givbuf(lep);	// keep a pool?
+}
+
+void rls_list_nodes(List *lp)
+{
+	Node *np;
+	while( (np=remHead(lp)) != NULL )
+		rls_node(np);
+}
+
+
+// release all the nodes in a list and the list too
+
+void _zap_list(QSP_ARG_DECL  List *lp)
+{
+	rls_list_nodes(lp);
+	rls_list(lp);
+}
+
+Node *list_head(List *lp)
+{
+	return lp->l_head;
+}
+
+Node *list_tail(List *lp)
+{
+	return lp->l_tail;
 }
 

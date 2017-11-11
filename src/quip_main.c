@@ -11,6 +11,7 @@
 #include "view_cmds.h"
 #include "server.h"	// do_http_menu
 #include "polh_menu.h"	// do_polh
+#include "query_stack.h"	// BUG?  elim dependency...
 
 #ifdef HAVE_CUDA
 #include "cuda_api.h"
@@ -52,6 +53,7 @@ ADD_CMD(	mseq,		do_mseq_menu,	M-sequence submenu )
 ADD_CMD(	experiments,	do_exp_menu,	psychophysical experiment submenu )
 ADD_CMD(	sound,		do_sound_menu,	sound submenu )
 ADD_CMD(	requantize,	do_requant,	dithering submenu )
+ADD_CMD(	fann,		do_fann_menu,	neural network submenu )
 
 #ifndef BUILD_FOR_OBJC
 
@@ -91,9 +93,10 @@ ADD_CMD(	stepit,		do_step_menu,	stepit submenu )
 #endif /* STEPIT */
 
 #ifdef HAVE_NUMREC
-#ifdef USE_NUMREC
+// Apparently there are situations where we have numrec but don't want to use it?
+//#ifdef USE_NUMREC
 ADD_CMD(	numrec,		do_nr_menu,	numerical recipes submenu )
-#endif // USE_NUMREC
+//#endif // USE_NUMREC
 #endif /* HAVE_NUMREC */
 
 #ifndef BUILD_FOR_OBJC
@@ -139,12 +142,23 @@ MENU_END(quip)
 
 int main(int argc,char *argv[])
 {
+#ifdef BUILD_FOR_MACOS
+    @autoreleasepool {
+#endif // BUILD_FOR_MACOS
 	input_on_stdin();
-	CHECK_MENU(quip);
+	//CHECK_MENU(quip);
+	if( quip_menu == NULL ){
+		init_quip_menu(SGL_DEFAULT_QSP_ARG);
+	}
 	start_quip_with_menu(argc,argv,quip_menu);
 	while( QS_LEVEL(DEFAULT_QSP) >= 0 ){
 		qs_do_cmd(DEFAULT_QSP);
 	}
+#ifdef BUILD_FOR_MACOS
+    } // closing brace for autoreleasepool
+#endif // BUILD_FOR_MACOS
 	return 0;
 }
+//#import <Foundation/Foundation.h>
+
 

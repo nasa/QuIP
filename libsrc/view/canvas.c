@@ -20,7 +20,7 @@ int add_image( Viewer *vp, Data_Obj *dp, int x, int y )
 
 	/* Don't add the image if it is already on the list... */
 	np = QLIST_HEAD( VW_IMAGE_LIST(vp) );
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		wip = NODE_DATA(np);
 		if( wip->wi_dp == dp ) {
 			return 0;
@@ -38,7 +38,7 @@ int add_image( Viewer *vp, Data_Obj *dp, int x, int y )
 }
 #endif /* ! BUILD_FOR_IOS */
 
-void old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
+void _old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 {
 	dimension_t i;
 
@@ -69,7 +69,7 @@ void old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 		"Can't display non-contiguous image %s (viewer %s)",
 			OBJ_NAME(dp),VW_NAME(vp));
 		WARN(ERROR_STRING);
-		LONGLIST(dp);
+		longlist(dp);
 		return;
 	}
 	if( OBJ_MACH_PREC(dp) != PREC_BY && OBJ_MACH_PREC(dp) != PREC_UBY ){
@@ -80,14 +80,15 @@ void old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 		return;
 	}
 	if( IS_DRAGSCAPE(vp) ){
-		zap_image_list(vp);
+		//zap_image_list(vp);
 #ifndef BUILD_FOR_IOS
+		rls_list_nodes(vp->vw_image_list);
 		add_image(vp,dp,0,0);
 #endif // BUILD_FOR_IOS
 	} else {
 		/* If we are holding an image, release it */
-		if( VW_OBJ(vp) != NO_OBJ )
-			release_image(QSP_ARG  VW_OBJ(vp));
+		if( VW_OBJ(vp) != NULL )
+			release_image(VW_OBJ(vp));
 		SET_VW_OBJ(vp,dp);
 		/* make sure this image doesn't get deleted out from under us */
 		SET_OBJ_REFCOUNT(dp,
@@ -99,7 +100,7 @@ void old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 		//refresh_image(QSP_ARG  vp);
 		usleep(16000);	/* approx 16 msec */
 	}
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 } // end old_load_viewer
 
 #ifndef BUILD_FOR_IOS
@@ -112,14 +113,8 @@ void bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp, int x, int y )
 
 	lp = VW_IMAGE_LIST(vp);
 
-#ifdef CAUTIOUS
-	if( lp == NO_LIST ){
-		ERROR1("CAUTIOUS:  bring_image_to_front:  no image list!?");
-	}
-	if( QLIST_HEAD( lp ) == NO_NODE ){
-		ERROR1("CAUTIOUS:  bring_image_to_front:  image list is empty!?");
-	}
-#endif /* CAUTIOUS */
+	assert(lp!=NULL);
+	assert(QLIST_HEAD(lp)!=NULL);
 
 	n_possible = eltcount(lp);
 	while( n_tried < n_possible ){
@@ -129,7 +124,7 @@ void bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp, int x, int y )
 			// image is first in the list now
 			wip->wi_x = x;
 			wip->wi_y = y;
-			embed_image(QSP_ARG  vp,dp,wip->wi_x,wip->wi_y);
+			embed_image(vp,dp,wip->wi_x,wip->wi_y);
 			return;
 		}
 		// rotate the list
@@ -165,12 +160,12 @@ void load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 	 * should be added to the list or not
 	 */
 #ifdef BUILD_FOR_IOS
-	embed_image(QSP_ARG  vp,dp,0,0);
+	embed_image(vp,dp,0,0);
 #else /* ! BUILD_FOR_IOS */
 
 	if( add_image(vp,dp,0,0) ){
 //fprintf(stderr,"load_viewer:  redrawing image %s\n",OBJ_NAME(dp));
-		embed_image(QSP_ARG  vp,dp,0,0);
+		embed_image(vp,dp,0,0);
 	} else {
 		// This image has already been displayed...
 //fprintf(stderr,"load_viewer:  bringing old image %s to front\n",OBJ_NAME(dp));

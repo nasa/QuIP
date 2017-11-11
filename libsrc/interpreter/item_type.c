@@ -35,6 +35,7 @@
 #include "query_prot.h"
 #include "item_prot.h"
 #include "container.h"
+#include "debug.h"
 
 #ifdef QUIP_DEBUG
 static u_long item_debug=ITEM_DEBUG_MASK;
@@ -46,27 +47,30 @@ static u_long debug_contexts=CTX_DEBUG_MASK;
 #endif /* HAVE_HISTORY */
 
 /* local prototypes */
-//#ifdef CAUTIOUS
-//static void check_item_type(Item_Type *itp);
-//#endif /* CAUTIOUS */
-static void make_needy(Item_Type *itp);
-static void init_itp(Item_Type *itp, int container_type);
+
+// Make needy also did things to classes - need to do something about that???
+// Classes need a serial number field too?
+//static void make_needy(QSP_ARG_DECL  Item_Context *icp);
+static void _init_itp(QSP_ARG_DECL  Item_Type *itp, int container_type);
 static int item_cmp(const void *,const void *);
 static Item_Type * init_item_type(QSP_ARG_DECL  const char *name, int container_type);
-static void store_item(QSP_ARG_DECL  Item_Type *itp,Item *ip,Node *np);
+static void _store_item(QSP_ARG_DECL  Item_Context *icp, Item *ip);
 
 static ITEM_INIT_PROT(Item_Context,ctx)
 //static ITEM_GET_PROT(Item_Context,ctx)
 static ITEM_NEW_PROT(Item_Context,ctx)
 static ITEM_DEL_PROT(Item_Context,ctx)
 
-static Item_Type *	new_ittyp(QSP_ARG_DECL  const char *);
+#define init_ctxs()	_init_ctxs(SINGLE_QSP_ARG)
+#define new_ctx(name)	_new_ctx(QSP_ARG  name)
+#define del_ctx(name)	_del_ctx(QSP_ARG  name)
 
-static void		dump_item_context(QSP_ARG_DECL  Item_Context *);
+static Item_Type *	_new_ittyp(QSP_ARG_DECL  const char *);
 
+//#define IT_LIST(itp)	_item_list(QSP_ARG  itp)
 
 #define ITEM_TYPE_STRING	"Item_Type"
-Item_Type * ittyp_itp=NO_ITEM_TYPE;
+Item_Type * ittyp_itp=NULL;
 
 /*static*/ ITEM_INIT_FUNC(Item_Type,ittyp,0)
 static ITEM_NEW_FUNC(Item_Type,ittyp)
@@ -75,21 +79,18 @@ ITEM_LIST_FUNC(Item_Type,ittyp)
 // move to questions.c
 //ITEM_PICK_FUNC(Item_Type,ittyp)
 
-static Item_Type *ctx_itp=NO_ITEM_TYPE;
+static Item_Type *ctx_itp=NULL;
 
 #define CTX_IT_NAME	"Context"
 #define DEF_CTX_NAME	"default"
 
 static ITEM_INIT_FUNC(Item_Context,ctx,0)
 ITEM_CHECK_FUNC(Item_Context,ctx)
-//static ITEM_GET_FUNC(Item_Context,ctx)
-//static ITEM_LIST_FUNC(Item_Context,ctx)
 static ITEM_NEW_FUNC(Item_Context,ctx)
 static ITEM_DEL_FUNC(Item_Context,ctx)
-/* static ITEM_PICK_FUNC(Item_Context,ctx) */
 
-#define CHECK_ITEM_INDEX( itp )	if( ( itp ) == NO_ITEM_TYPE ){		\
-					WARN("Null item type");		\
+#define CHECK_ITEM_INDEX( itp )	if( ( itp ) == NULL ){		\
+					warn("Null item type");		\
 					return;				\
 				}
 
@@ -98,75 +99,76 @@ static ITEM_DEL_FUNC(Item_Context,ctx)
 u_long total_from_malloc = 0;
 
 
-//#ifdef CAUTIOUS
-//static void check_item_type(Item_Type *itp)
-//{
-//	if( itp == NO_ITEM_TYPE )
-//		NERROR1("CAUTIOUS:  Null item type");
-//}
-//#endif /* CAUTIOUS */
-
 /* If we don't use an ansii style declaration,
  * we get warnings on the pc (microsoft compiler)
  */
 
 static void no_del_method(QSP_ARG_DECL  Item *ip)
 {
-	WARN("Undefined item deletion method");
+	warn("Undefined item deletion method");
 	sprintf(ERROR_STRING,"Can't delete item '%s'",ITEM_NAME(ip));
 	advise(ERROR_STRING);
 }
 
-void set_del_method(QSP_ARG_DECL  Item_Type *itp,void (*func)(QSP_ARG_DECL  Item *))
+void _set_del_method(QSP_ARG_DECL  Item_Type *itp,void (*func)(QSP_ARG_DECL  Item *))
 {
-//#ifdef CAUTIOUS
-//	if( IT_DEL_METHOD(itp) != no_del_method ){
-//		sprintf(ERROR_STRING,
-//	"Item type %s already has a deletion method defined!?",IT_NAME(itp));
-//		WARN(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
-
 	assert( IT_DEL_METHOD(itp) == no_del_method );
 
 	SET_IT_DEL_METHOD(itp, func);
 }
 
-static void init_itp(Item_Type *itp, int container_type)
+#define init_itci(itp,idx) _init_itci(QSP_ARG  itp,idx)
+
+static void _init_itci(QSP_ARG_DECL  Item_Type *itp,int idx)
 {
-//fprintf(stderr,"init_itp %s %d BEGIN\n",itp->it_item.item_name,container_type);
+	Item_Type_Context_Info *itci_p;
+
+	itci_p = &(itp->it_itci[idx]);
+
+	SET_ITCI_ITEM_LIST(itci_p, new_list() );
+	SET_ITCI_CSTK(itci_p,new_stack());
+	SET_ITCI_CTX(itci_p,NULL);
+	// This appear to clear the restriction bit...
+	SET_ITCI_FLAGS(itci_p,0);
+	SET_ITCI_MATCH_CYCLE(itci_p,NULL);
+
+	SET_ITCI_ITEM_SERIAL(itci_p,0);
+	SET_ITCI_STACK_SERIAL(itci_p,0);
+	SET_ITCI_LIST_SERIAL(itci_p,0);
+}
+
+static void _init_itp(QSP_ARG_DECL  Item_Type *itp, int container_type)
+{
+	int i;
+
+	// first zero everything except the name (which is first)
+	memset(((char *)itp)+sizeof(char *),0,sizeof(Item_Type)-sizeof(char *));
+
 	/* should we really do this? */
-	SET_IT_LIST(itp, new_list() );
+	for(i=0;i<MAX_QUERY_STACKS;i++){
+		init_itci(itp,i);
+	}
+
+
+	// We used to only initialize the first one.
+	// What we do here is wasteful, but at least we don't
+	// have to constantly be checking!
+	/*
+	init_itci(itp,0);
+	memset(&(itp->it_itci[1]),0,(MAX_QUERY_STACKS-1)*sizeof(Item_Type_Context_Info));
+	*/
+
 	SET_IT_FREE_LIST(itp, new_list() );
-#ifdef USE_CHOICE_LIST
-	SET_IT_FLAGS(itp, NEED_CHOICES);
-	SET_IT_CHOICES(itp, NO_STR_ARRAY);
-#endif // USE_CHOICE_LIST
 
-	//SET_IT_CTX_IT(itp,NO_ITEM_TYPE);
-
-	SET_IT_CLASS_LIST(itp, NO_LIST);	// this was commented out - why?
+	SET_IT_CLASS_LIST(itp, NULL);	// this was commented out - why?
 	SET_IT_DEL_METHOD(itp, no_del_method);
-	SET_IT_CONTAINER_TYPE(itp,container_type);
-	SET_IT_FRAG_MATCH_INFO(itp,NULL);
+	SET_IT_CONTAINER_TYPE(itp,container_type);	// _init_itp
+
+	//SET_IT_FRAG_MATCH_INFO(itp,NULL);
+
+	SET_IT_MATCH_CYCLE(itp,NULL);
 
 #ifdef THREAD_SAFE_QUERY
-	{
-		int i;
-//if( n_active_threads==0 )NERROR1("init_itp:  no active threads!?");
-		/*
-		SET_IT_CSTK_AT_IDX(itp,0,new_stack());
-		for(i=1;i<n_active_threads;i++)
-			SET_IT_CSTK_AT_IDX(itp,i,new_stack());
-		for(;i<MAX_QUERY_STACKS;i++)
-			SET_IT_CSTK_AT_IDX(itp,i,NO_LIST);
-			*/
-		/* What the heck - just allocate all the lists */
-		for(i=0;i<MAX_QUERY_STACKS;i++){
-			SET_IT_CSTK_AT_IDX(itp,i,new_stack());
-			SET_IT_CTX_RESTRICTED_AT_IDX(itp,i,0);
-		}
-	}
 #ifdef HAVE_PTHREADS
 	{
 		//itp->it_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -177,21 +179,22 @@ static void init_itp(Item_Type *itp, int container_type)
 			NERROR1("error initializing mutex");
 	}
 #endif /* HAVE_PTHREADS */
-
-#else /* ! THREAD_SAFE_QUERY */
-	SET_IT_CSTK(itp,new_stack());
-	SET_IT_CTX_RESTRICTED(itp,0);
 #endif /* ! THREAD_SAFE_QUERY */
-}
+} // _init_itp
 
 #ifdef THREAD_SAFE_QUERY
 
 #ifdef NOT_USED
 
-/* In the multi-thread environment, each item type has to have a separate context stack
- * for each query stack.  When we create a new query stack, we have to initialize
+/* In the multi-thread environment, each item type has a separate context stack
+ * for each query stack.  This is done so that each thread can have different
+ * variables, for example...
+ * When we create a new query stack, we have to initialize
  * the corresponding context stack.
  * We call this when we have added a new query stream; But how do we know???
+ * There are many instances where we WANT the threads to share contexts...
+ * particularly data objects.  Maybe the best strategy is to have new threads
+ * inherit the context of their invoking thread (usually the main thread)?
  */
 
 static void setup_item_type_context(QSP_ARG_DECL  Item_Type *itp, Query_Stack *new_qsp)
@@ -212,7 +215,7 @@ void setup_all_item_type_contexts(QSP_ARG_DECL  void *new_qsp)
 
 	lp = item_list(QSP_ARG  ittyp_itp);
 	np=QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		itp = (Item_Type *)NODE_DATA(np);
 		setup_item_type_context(QSP_ARG  itp,(Query_Stack *)new_qsp);
 		np=NODE_NEXT(np);
@@ -252,13 +255,12 @@ static Item_Type * init_item_type(QSP_ARG_DECL  const char *name, int container_
 		 * the item_type for item_types!
 		 */
 
-		/* we don't call new_ittyp() to avoid a recursion problem */
+		/* we don't call _new_ittyp() to avoid a recursion problem */
 		ittyp_itp = &first_item_type;
 		SET_IT_NAME(ittyp_itp, ITEM_TYPE_STRING );
 		is_first=0;
 
-//fprintf(stderr,"calling init_itp with type code %d\n",RB_TREE_CONTAINER);
-		init_itp(ittyp_itp,/*DEFAULT_CONTAINER_TYPE*/ RB_TREE_CONTAINER );
+		_init_itp(QSP_ARG  ittyp_itp,/*DEFAULT_CONTAINER_TYPE*/ RB_TREE_CONTAINER );
 
 		/* We need to create the first context, but we don't want
 		 * infinite recursion...
@@ -274,7 +276,7 @@ static Item_Type * init_item_type(QSP_ARG_DECL  const char *name, int container_
 		SET_CTX_IT( icp, ittyp_itp );
 		/*np =*/ mk_node(icp);
 
-		PUSH_ITEM_CONTEXT(ittyp_itp, icp);
+		push_item_context(ittyp_itp, icp);
 
 		//addHead(CTX_LIST(FIRST_CONTEXT(ittyp_itp)),np);
 
@@ -286,54 +288,48 @@ static Item_Type * init_item_type(QSP_ARG_DECL  const char *name, int container_
 #endif /* THREAD_SAFE_QUERY */
 
 		/* why do this? Do we really need to? */
-		add_item(QSP_ARG  ittyp_itp,ittyp_itp,NO_NODE);
+		add_item(ittyp_itp,ittyp_itp);
 	}
-//#ifdef CAUTIOUS
-//	if( !strcmp(name,ITEM_TYPE_STRING) ){
-//		WARN("CAUTIOUS:  don't call init_item_type for item_type");
-//		return(NO_ITEM_TYPE);
-//	}
-//#endif /* CAUTIOUS */
 
 	assert( strcmp(name,ITEM_TYPE_STRING) );
 
-	itp = new_ittyp(QSP_ARG  name);
-	init_itp(itp,container_type);
-	icp = create_item_context(QSP_ARG  itp,DEF_CTX_NAME);
-	PUSH_ITEM_CONTEXT(itp,icp);
+	itp = _new_ittyp(QSP_ARG  name);
+	_init_itp(QSP_ARG  itp,container_type);
+
+	icp = create_item_context(itp,DEF_CTX_NAME);
+	push_item_context(itp,icp);
 
 	return(itp);
-}
+} // init_item_type
 
 /*
  * Create a new item type.  Allocate a hash table with hashsize
  * entries.  Return the item type index or -1 on failure.
  */
 
-Item_Type * new_item_type(QSP_ARG_DECL  const char *atypename, int container_type)
+Item_Type * _new_item_type(QSP_ARG_DECL  const char *atypename, int container_type)
 {
 	Item_Type * itp;
 
-	if( ittyp_itp != NO_ITEM_TYPE ){
+	if( ittyp_itp != NULL ){
 		Item *ip;
-		ip = item_of(QSP_ARG  ittyp_itp,atypename);
-		if( ip != NO_ITEM ){
+		ip = item_of(ittyp_itp,atypename);
+		if( ip != NULL ){
 			sprintf(ERROR_STRING,
 			"Item type name \"%s\" is already in use\n",atypename);
-			WARN(ERROR_STRING);
-			return(NO_ITEM_TYPE);
+			warn(ERROR_STRING);
+			return(NULL);
 		}
 	}
 	/* else we are initializing the item type Item_Type */
 
-	itp=init_item_type(QSP_ARG  atypename, container_type);
-//#ifdef CAUTIOUS
-//	if( itp == NO_ITEM_TYPE )
-//		WARN("CAUTIOUS:  new_item_type failed!?");
-//#endif /* CAUTIOUS */
-	assert( itp != NO_ITEM_TYPE );
+	if( container_type == 0 )
+		container_type = DEFAULT_CONTAINER_TYPE;
 
-	if( ittyp_itp==NO_ITEM_TYPE ){
+	itp=init_item_type(QSP_ARG  atypename, container_type);
+	assert( itp != NULL );
+
+	if( ittyp_itp==NULL ){
 		ittyp_itp = itp;
 	}
 
@@ -344,50 +340,105 @@ Item_Type * new_item_type(QSP_ARG_DECL  const char *atypename, int container_typ
  * Put an item into the corresponding name space
  */
 
-static void store_item( QSP_ARG_DECL  Item_Type *itp, Item *ip, Node *np )
+static void _store_item( QSP_ARG_DECL  Item_Context *icp, Item *ip )
 {
-	if(
-		/* insert_name(ip,np,CTX_DICT(CURRENT_CONTEXT(itp))) */
-		add_to_container(CTX_CONTAINER(CURRENT_CONTEXT(itp)),ip) 
-		< 0
-		){
-
-		/* We used to enlarge the hash table here, but now we automatically enlarge
-		 * the hash table before it becomes completely full...
-		 */
-
+	if( add_to_container(CTX_CONTAINER(icp),ip) < 0){
 		sprintf(ERROR_STRING,
 			"Error storing name %s",ITEM_NAME(ip));
 		NERROR1(ERROR_STRING);
 	}
+	INC_CTX_ITEM_SERIAL(icp);
 }
 
 /* This routine was eliminated, but we have reinstated it, so that
  * command tables can be preallocated items.
  */
 
-int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip, Node *np )
+int _add_item( QSP_ARG_DECL  Item_Type *itp, void *ip )
 {
-//#ifdef CAUTIOUS
-//	check_item_type( itp );
-//#endif /* CAUTIOUS */
 	assert( itp != NULL );
+	assert( ip != NULL );
 
-	store_item(QSP_ARG  itp,(Item*) ip,np);
-
-	/*
-	if( np==NO_NODE )
-	*/
-	/*
-		SET_IT_FLAG_BITS(itp, CONTEXT_CHANGED);
-
-	SET_IT_FLAG_BITS(itp, NEED_CHOICES);
-	*/
-	make_needy(itp);
+	_store_item(QSP_ARG  current_context(itp), (Item*) ip);
+	INC_ITEM_CHANGE_COUNT(itp);
 
 	return 0;
 }
 
+static int insure_item_name_available(QSP_ARG_DECL  Item_Type *itp, const char *name)
+{
+	const Item *ip;
+
+	/* We will allow name conflicts if they are not in the same context */
+
+	/* Only check for conflicts in the current context */
+	//ip = fetch_name(name,CTX_DICT(current_context(itp)));
+
+	// When we start a new thread, the current context may be null!?
+
+	ip = container_find_match(CTX_CONTAINER(current_context(itp)), name );
+
+	if( ip != NULL ){
+		sprintf(ERROR_STRING,
+	"%s name \"%s\" is already in use in context %s",
+			IT_NAME(itp),name,CTX_NAME(current_context(itp)));
+		warn(ERROR_STRING);
+		return -1;
+	}
+	return 0;
+}
+
+static inline int get_n_per_page(size_t size)
+{
+	int n_per_page;
+
+#define FOUR_K	4096
+
+	n_per_page = FOUR_K / size;	/* BUG use PAGESIZE */
+
+	if( n_per_page <= 0 ){
+		/* cast size to u_long because size_t is u_long on IA64 and
+		 * u_int on IA32!?
+		 */
+		// If the item is bigger than a page, just get one
+		n_per_page=1;
+	}
+	return n_per_page;
+}
+
+#define alloc_more_items(itp,size) _alloc_more_items(QSP_ARG  itp,size)
+
+static void _alloc_more_items(QSP_ARG_DECL  Item_Type *itp, size_t size)
+{
+	int n_per_page;
+	char *nip;
+
+	n_per_page = get_n_per_page(size);	// make a field of itp?
+#ifdef QUIP_DEBUG
+if( debug & item_debug ){
+sprintf(DEFAULT_ERROR_STRING,"malloc'ing %d more %s items",n_per_page,IT_NAME(itp));
+NADVISE(DEFAULT_ERROR_STRING);
+}
+#endif /* QUIP_DEBUG */
+	/* get a pages worth of items */
+	nip = (char*)  malloc( n_per_page * size );
+	total_from_malloc += n_per_page*size;
+
+	if( nip == NULL ){
+		sprintf(DEFAULT_ERROR_STRING,
+	"new_item:  out of memory while getting a new page of %s's",
+			IT_NAME(itp));
+		NERROR1(DEFAULT_ERROR_STRING);
+	}
+
+	while(n_per_page--){
+		Node *np;
+
+		np = mk_node(nip);
+		addTail(IT_FREE_LIST(itp),np);
+		nip += size;
+	}
+}
 /*
  * Return a ptr to a new item.  Reuse a previously freed item
  * if one exists, otherwise allocate some new memory.
@@ -400,101 +451,37 @@ int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip, Node *np )
  * for tracking down memory leaks...
  */
 
-Item *new_item( QSP_ARG_DECL  Item_Type *itp, const char* name, size_t size )
+Item *_new_item( QSP_ARG_DECL  Item_Type *itp, const char* name, size_t size )
 {
 	Item *ip;
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	if( *name == 0 ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS Can't create item of type \"%s\" with null name",
-//			IT_NAME(itp));
-//		WARN(ERROR_STRING);
-//		return(NO_ITEM);
-//	}
-//#endif /* CAUTIOUS */
-	assert( *name != 0 );
+	//assert( *name != 0 );
+	assert( name != NULL );
+	if( *name == 0 ) return NULL;
 
 	LOCK_ITEM_TYPE(itp)
 
-	/* We will allow name conflicts if they are not in the same context */
-
-	/* Only check for conflicts in the current context */
-	//ip = fetch_name(name,CTX_DICT(CURRENT_CONTEXT(itp)));
-	ip = container_find_match(CTX_CONTAINER(CURRENT_CONTEXT(itp)),
-							name );
-
-	if( ip != NO_ITEM ){
+	if( insure_item_name_available(QSP_ARG  itp, name) < 0 ){
 		UNLOCK_ITEM_TYPE(itp);
-		sprintf(ERROR_STRING,
-	"%s name \"%s\" is already in use in context %s",
-			IT_NAME(itp),name,CTX_NAME(CURRENT_CONTEXT(itp)));
-		WARN(ERROR_STRING);
-		return(NO_ITEM);
+		return NULL;
 	}
 
 	// Try to get a structure from the free list
 	// If the free list is empty, then allocate a page's worth
 
-	if( QLIST_HEAD(IT_FREE_LIST(itp)) == NO_NODE ){
-		int n_per_page;
-		char *nip;
-
-#define FOUR_K	4096
-
-		n_per_page = FOUR_K / size;	/* BUG use PAGESIZE */
-
-		if( n_per_page <= 0 ){
-			/* cast size to u_long because size_t is u_long on IA64 and
-			 * u_int on IA32!?
-			 */
-			// If the item is bigger than a page, just get one
-			n_per_page=1;
-		}
-
-#ifdef QUIP_DEBUG
-if( debug & item_debug ){
-sprintf(ERROR_STRING,"malloc'ing %d more %s items",n_per_page,IT_NAME(itp));
-NADVISE(ERROR_STRING);
-}
-#endif /* QUIP_DEBUG */
-		/* get a pages worth of items */
-		nip = (char*)  malloc( n_per_page * size );
-		total_from_malloc += n_per_page*size;
-
-		if( nip == NULL ){
-			sprintf(ERROR_STRING,
-		"new_item:  out of memory while getting a new page of %s's",
-				IT_NAME(itp));
-			NERROR1(ERROR_STRING);
-		}
-
-		while(n_per_page--){
-			np = mk_node(nip);
-			addTail(IT_FREE_LIST(itp),np);
-			nip += size;
-		}
+	if( QLIST_HEAD(IT_FREE_LIST(itp)) == NULL ){
+		alloc_more_items(itp,size);
 	}
 
 	np = remHead(IT_FREE_LIST(itp));
-
-//#ifdef CAUTIOUS
-//	if( np == NO_NODE ){
-//		NERROR1("CAUTIOUS:  new_item:  couldn't remove node from item free list!?");
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
-	assert( np != NO_NODE );
-
+	assert(np!=NULL);
 	ip = (Item *) NODE_DATA(np);
-	SET_ITEM_NAME( ip, savestr(name) );
-//sprintf(ERROR_STRING,"Item name %s stored at 0x%lx",ITEM_NAME(ip),(u_long)ITEM_NAME(ip));
-//advise(ERROR_STRING);
+	assert(ip!=NULL);
+	rls_node(np);
 
-#ifdef ITEMS_KNOW_OWN_TYPE
-	SET_ITEM_TYPE( ip, itp );
-#endif /* ITEMS_KNOW_OWN_TYPE */
+	SET_ITEM_NAME( ip, savestr(name) );
+	SET_ITEM_CTX( ip, current_context(itp) );
 
 #ifdef BUILD_FOR_OBJC
 	SET_ITEM_MAGIC(ip,QUIP_ITEM_MAGIC);
@@ -502,45 +489,31 @@ NADVISE(ERROR_STRING);
 
 	/* BUG? should we worry about nodes here? */
 
-	add_item(QSP_ARG  itp,ip,np);
+	add_item(itp,ip);
 
 	UNLOCK_ITEM_TYPE(itp)
 
 	return(ip);
 } // end new_item
 
-#ifdef NOT_USED
-void list_item_contexts( QSP_ARG_DECL   Item_Type *itp )
+int _remove_from_item_free_list(QSP_ARG_DECL  Item_Type *itp, void *ip)
 {
 	Node *np;
 
-	if( CONTEXT_LIST(itp)==NO_LIST ||
-		(np=QLIST_HEAD(CONTEXT_LIST(itp)))==NO_NODE){
+	LOCK_ITEM_TYPE(itp)
+	np = remData(IT_FREE_LIST(itp),ip);
+	UNLOCK_ITEM_TYPE(itp)
 
-		sprintf(ERROR_STRING,"Item type \"%s\" has no contexts",
-			IT_NAME(itp));
-		NADVISE(ERROR_STRING);
-		return;
-	}
-
-	while(np!=NO_NODE ){
-		Item_Context *icp;
-
-		icp=(Item_Context *) NODE_DATA(np);
-		sprintf(MSG_STR,"%s",CTX_NAME(icp));
-		prt_msg(MSG_STR);
-
-		np=NODE_NEXT(np);
-	}
+	if( np == NULL ) return -1;
+	return 0;
 }
-#endif /* NOT_USED */
 
 /* Create a new context with the given name.
  * It needs to be push'ed in order to make it be
  * the current context for new item creation.
  */
 
-Item_Context * create_item_context( QSP_ARG_DECL  Item_Type *itp, const char* name )
+Item_Context * _create_item_context( QSP_ARG_DECL  Item_Type *itp, const char* name )
 {
 	Item_Context *icp;
 	char cname[LLEN];
@@ -566,7 +539,10 @@ Item_Context * create_item_context( QSP_ARG_DECL  Item_Type *itp, const char* na
 		// to be TOO concerned with efficiency here...
 //		SET_CTX_DICT(icp , create_dictionary(CTX_NAME(icp)) );
 		SET_CTX_CONTAINER(icp , create_container(CTX_NAME(icp), IT_CONTAINER_TYPE(itp)) );
-		SET_CTX_FLAGS(icp,0);
+		//SET_CTX_FLAGS(icp,0);
+		SET_CTX_ITEM_SERIAL(icp,0);		// create_item_context
+		SET_CTX_LIST_SERIAL(icp,0);		// create_item_context
+		SET_CTX_ITEM_LIST(icp,NULL);
 		SET_CTX_FRAG_ICP(icp,NULL);
 		/* BUG?  not in the context database?? */
 		return(icp);
@@ -578,8 +554,8 @@ Item_Context * create_item_context( QSP_ARG_DECL  Item_Type *itp, const char* na
 	 * context, we have the special case above...
 	 */
 
-	if( ctx_itp == NO_ITEM_TYPE )
-		ctx_itp = new_item_type(QSP_ARG  CTX_IT_NAME, DEFAULT_CONTAINER_TYPE);
+	if( ctx_itp == NULL )
+		ctx_itp = new_item_type(CTX_IT_NAME, DEFAULT_CONTAINER_TYPE);
 
 #ifdef QUIP_DEBUG
 if( debug & qldebug ){
@@ -589,7 +565,7 @@ advise(ERROR_STRING);
 }
 #endif	/* QUIP_DEBUG */
 
-	icp = new_ctx(QSP_ARG  cname);
+	icp = new_ctx(cname);
 
 	/* If it_context_itp was null, make sure it has the right value now */
 	// This is the item type for ALL the contexts of all item types, not just
@@ -597,7 +573,7 @@ advise(ERROR_STRING);
 	// and a single dot as a prefix...
 //	SET_IT_CTX_IT(itp,ctx_itp);
 
-	if( icp == NO_ITEM_CONTEXT ){
+	if( icp == NULL ){
 		return(icp);
 	}
 
@@ -609,54 +585,21 @@ advise(ERROR_STRING);
 	// years, but a tree would be better for item types
 	// with many, many items, to speed partial name
 	// matching!
-	//SET_CTX_DICT(icp , create_dictionary(CTX_NAME(icp)) );
 	SET_CTX_CONTAINER(icp , create_container(CTX_NAME(icp),IT_CONTAINER_TYPE(itp)) );
 	SET_CTX_FRAG_ICP(icp,NULL);
-	SET_CTX_FLAGS(icp,0);
+	SET_CTX_ITEM_SERIAL(icp,0);		// create_item_context
+	SET_CTX_LIST_SERIAL(icp,0);		// create_item_context
+	SET_CTX_ITEM_LIST(icp,NULL);
 
-//#ifdef CAUTIOUS
-//	if( CTX_DICT(icp) == NO_DICTIONARY ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  error creating dictionary %s",CTX_NAME(icp));
-//		NERROR1(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
-	//assert( CTX_DICT(icp) != NO_DICTIONARY );
 	assert( CTX_CONTAINER(icp) != NULL );
 
 	return(icp);
-}
+} // create_item_context
 
-
-#ifdef FOO
-void show_context_stack(Item_Type *itp)
-{
-	Item_Context *icp;
-	Node *np;
-
-	if( CONTEXT_LIST(itp)==NO_LIST ){
-none:
-		sprintf(ERROR_STRING,"No contexts in existence for %s items",IT_NAME(itp));
-		NADVISE(ERROR_STRING);
-		return;
-	}
-	np=QLIST_HEAD(CONTEXT_LIST(itp));
-	if( np == NO_NODE ) goto none;
-
-	sprintf(ERROR_STRING,"%s contexts:",IT_NAME(itp));
-	NADVISE(ERROR_STRING);
-	while( np != NO_NODE ){
-		icp = NODE_DATA(np);
-		sprintf(ERROR_STRING,"\t%s",CTX_NAME(icp));
-		NADVISE(ERROR_STRING);
-		np=NODE_NEXT(np);
-	}
-}
-#endif /* FOO */
 
 /* push an existing context onto the top of stack for this item class */
 
-void push_item_context( QSP_ARG_DECL   Item_Type *itp, Item_Context *icp )
+void _push_item_context( QSP_ARG_DECL   Item_Type *itp, Item_Context *icp )
 {
 	Node *np;
 
@@ -664,15 +607,7 @@ void push_item_context( QSP_ARG_DECL   Item_Type *itp, Item_Context *icp )
 	 * matches itp.
 	 */
 
-//#ifdef CAUTIOUS
-//	if( icp == NO_ITEM_CONTEXT ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  attempted to push null context, %s item type!?",
-//			IT_NAME(itp));
-//		ERROR1(ERROR_STRING);
-//		return; // iOS - error1 can return
-//	}
-//#endif
-	assert( icp != NO_ITEM_CONTEXT );
+	assert( icp != NULL );
 
 #ifdef QUIP_DEBUG
 if( debug & debug_contexts ){
@@ -681,23 +616,22 @@ NADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	// This is really a stack push!
 	np=mk_node(icp);
-	if( CONTEXT_LIST(itp) == NO_LIST )
-		CONTEXT_LIST(itp) = new_list();
-	addHead(CONTEXT_LIST(itp),np);
+
+	assert(LIST_OF_CONTEXTS(itp)!=NULL);
+
+	addHead(LIST_OF_CONTEXTS(itp),np);
 
 	SET_CURRENT_CONTEXT(itp, icp);
+	INC_STACK_CHANGE_COUNT(itp);
 
-	// BUG - flags should be qsp-specific???
-	SET_IT_FLAG_BITS(itp, NEED_CHOICES|NEED_LIST );
 } // end push_item_context
 
 /*
  * Remove the top-of-stack context, but do not destroy.
  */
 
-Item_Context * pop_item_context( QSP_ARG_DECL  Item_Type *itp )
+Item_Context * _pop_item_context( QSP_ARG_DECL  Item_Type *itp )
 {
 	Node *np;
 	Item_Context *new_icp, *popped_icp;
@@ -705,19 +639,26 @@ Item_Context * pop_item_context( QSP_ARG_DECL  Item_Type *itp )
 	/* don't remove the context from the list yet, it needs
 	 * to be there to find the objects in the context...
 	 */
-	np=remHead(CONTEXT_LIST(itp));
-	if( np==NO_NODE ){
+	np=remHead(LIST_OF_CONTEXTS(itp));
+	if( np==NULL ){
 		sprintf(ERROR_STRING,
 			"Item type %s has no context to pop",IT_NAME(itp));
-		WARN(ERROR_STRING);
-		return(NO_ITEM_CONTEXT);
+		warn(ERROR_STRING);
+		return(NULL);
 	}
 	rls_node(np);
 
-	np=QLIST_HEAD(CONTEXT_LIST(itp));
-	new_icp = (Item_Context *) NODE_DATA(np);
+	np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
+	// Normally this is not null, because we always have
+	// the default context, but currently secondary threads
+	// may not inherit the default!?
+//	assert(np!=NULL);
+	if( np != NULL )
+		new_icp = (Item_Context *) NODE_DATA(np);
+	else
+		new_icp = NULL;
 
-	popped_icp = CURRENT_CONTEXT(itp);
+	popped_icp = current_context(itp);
 	SET_CURRENT_CONTEXT(itp,new_icp);
 
 #ifdef QUIP_DEBUG
@@ -728,17 +669,19 @@ NADVISE(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	// BUG - flags should be qsp-specific???
-	SET_IT_FLAG_BITS(itp, NEED_CHOICES|NEED_LIST );
+	//SET_IT_FLAG_BITS(itp, NEED_CHOICES|NEED_LIST );
+	//SET_ITCI_FLAG_BITS( THIS_ITCI(itp), ITCI_NEEDS_LIST );	// mark list as not current
+	INC_STACK_CHANGE_COUNT(itp);
 
 	return(popped_icp);
 }
 
-void delete_item_context( QSP_ARG_DECL  Item_Context *icp )
+void _delete_item_context( QSP_ARG_DECL  Item_Context *icp )
 {
-	delete_item_context_with_callback( QSP_ARG  icp, NULL );
+	delete_item_context_with_callback( icp, NULL );
 }
 
-void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*func)(Item *) )
+void _delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*func)(Item *) )
 {
 	Item_Type *itp;
 	Node *np;
@@ -757,18 +700,19 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 	 */
 
 	itp = (Item_Type *) CTX_IT(icp);
+	assert(itp!=NULL);
 
-	while( (np=remData(CONTEXT_LIST(itp),icp)) != NO_NODE ){
+	while( (np=remData(LIST_OF_CONTEXTS(itp),icp)) != NULL ){
 		rls_node(np);
 	}
 
 	/* make the context be on the top of the stack */
-	PUSH_ITEM_CONTEXT(itp,icp);
+	push_item_context(itp,icp);
 
 	if( IT_DEL_METHOD(itp) == no_del_method ){
 		sprintf(ERROR_STRING,
 	"No object deletion method provided for item type %s",IT_NAME(itp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	} else {
 		List *lp;
 
@@ -778,7 +722,7 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 		/* Don't use remHead to get the node, del_item()
 		 * will remove it for us, and put it on the free list.
 		 */
-		while( lp!=NO_LIST && (np=QLIST_HEAD(lp))!=NO_NODE ){
+		while( lp!=NULL && (np=QLIST_HEAD(lp))!=NULL ){
 			Item *ip;
 			ip = (Item*) NODE_DATA(np);
 			if( func != NULL ) (*func)(ip);
@@ -789,13 +733,10 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 		}
 	}
 
-	//delete_dictionary(CTX_DICT(icp));
-	delete_container(CTX_CONTAINER(icp));
+	//delete_container(CTX_CONTAINER(icp));
+	(*(CTX_CONTAINER(icp)->cnt_typ_p->delete))(QSP_ARG  CTX_CONTAINER(icp));
 
-	/* zap_hash_tbl(icp->ic_htp); */
-
-	del_ctx(QSP_ARG  icp);	// why shouldn't rls_item free the name?  CHECK BUG?
-	rls_str((char *)CTX_NAME(icp));
+	del_ctx(icp);
 
 	/* BUG? - perhaps we should make sure
 	 * the context is not also pushed deeper down,
@@ -804,18 +745,12 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 
 	/* Now pop the deleted context */
 
-	pop_item_context(QSP_ARG  itp);
+	pop_item_context(itp);
 }
 
 #ifdef NOT_NEEDED
 Item *check_context(Item_Context *icp, const char *name)
 {
-//#ifdef CAUTIOUS
-//	if( icp == NULL ){
-//		NERROR1("CAUTIOUS:  check_context:  null icp!?");
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif // CAUTIOUS
 	assert( icp != NULL );
 	//return fetch_name(name,CTX_DICT(icp));
 	return container_find_match(CTX_CONTAINER(icp),name);
@@ -847,44 +782,50 @@ Item *check_context(Item_Context *icp, const char *name)
  * array of context stacks?
  */
 
-Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
+Item *_item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 		/* itp = type of item to search for */
 		/* name = name of item */
 {
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	check_item_type( itp );
-//#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
-	if( *name == 0 ) return(NO_ITEM);
+	if( *name == 0 ) return(NULL);
 
-	np=QLIST_HEAD(CONTEXT_LIST(itp));
+	assert( LIST_OF_CONTEXTS(itp) != NULL );
 
-//#ifdef CAUTIOUS
-//if(np==NO_NODE ){
-//sprintf(ERROR_STRING,"CAUTIOUS:  item type %s has no contexts pushed!?",IT_NAME(itp));
-//ERROR1(ERROR_STRING);
-//}
-//#endif /* CAUTIOUS */
-	assert( np != NO_NODE );
+	np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
+
+#ifdef THREAD_SAFE_QUERY
+	if( np == NULL ){
+		Item_Context *icp;
+		// This occurs when we have a brand new thread...
+		assert(QS_SERIAL!=0);
+		// get the bottom of the stack from the root qsp, and push it...
+		np = QLIST_TAIL( FIRST_LIST_OF_CONTEXTS(itp) );
+		assert( np != NULL );
+		icp = NODE_DATA(np);
+		assert(icp!=NULL);
+		// We tried pushing
+		// BUG?  if a context can be pushed on two stacks, what happens when
+		// it is popped from one?  Will it be released?
+		push_item_context(itp, icp );
+		np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
+	}
+#endif // THREAD_SAFE_QUERY
+
+	assert( np != NULL );
 
 	/* check the top context first */
 
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Item_Context *icp;
 		Item *ip;
 
 		icp= (Item_Context*) NODE_DATA(np);
 		assert(icp!=NULL);
-//if( icp == NULL )
-//ERROR1("context stack contains null context!?");
-
-//		ip=fetch_name(name,CTX_DICT(icp));
-//		ip=check_context(icp,name);
 		ip = container_find_match(CTX_CONTAINER(icp),name);
-		if( ip!=NO_ITEM ){
+		if( ip!=NULL ){
 			return(ip);
 		}
 		if( IS_RESTRICTED(itp) ){
@@ -895,15 +836,15 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 
 			//CTX_RSTRCT_FLAG(itp)=0;
 
-			return(NO_ITEM);
+			return(NULL);
 		}
 		np=NODE_NEXT(np);
 	}
 
 	/* not found in any context, including default */
 
-	return(NO_ITEM);
-}
+	return(NULL);
+} // item_of
 
 /*
  * Return a pointer to the item of the given type with the given name,
@@ -911,22 +852,19 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
  * implies a belief that the named item does exist.
  */
 
-Item *get_item( QSP_ARG_DECL  Item_Type *itp, const char* name )
+Item *_get_item( QSP_ARG_DECL  Item_Type *itp, const char* name )
 		/* itp = type of item to search for */
 		/* name = name of item */
 {
 	Item *ip;
 
-	ip=item_of(QSP_ARG  itp,name);
-	if( ip==NO_ITEM ){
-//#ifdef CAUTIOUS
-//		check_item_type( itp );
-//#endif /* CAUTIOUS */
+	ip=item_of(itp,name);
+	if( ip==NULL ){
 		assert( itp != NULL );
 
 		sprintf(ERROR_STRING,"no %s \"%s\"",
 			IT_NAME(itp),name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return(ip);
 }
@@ -950,79 +888,65 @@ static int item_cmp(const void* ipp1,const void* ipp2)
  * What do we do with contexts?  Do we include everything in the list?
  */
 
-List *item_list(QSP_ARG_DECL  Item_Type *itp)
+List *_item_list(QSP_ARG_DECL  Item_Type *itp)
 	/* type of items to list */
 {
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	if( itp == NO_ITEM_TYPE ){
-//		WARN("CAUTIOUS:  item_list passed null item type pointer");
-//		return(NO_LIST);
-//	}
-//#endif /* CAUTIOUS */
-	assert( itp != NO_ITEM_TYPE );
+	assert( itp != NULL );
 
-//fprintf(stderr,"item_list %s BEGIN\n",ITEM_NAME((Item *)itp));
 	/* First check and see if any of the contexts have been updated */
 
-	if( CONTEXT_LIST(itp) != NO_LIST ){
+	assert(LIST_OF_CONTEXTS(itp)!=NULL);
+
+	/*if( LIST_OF_CONTEXTS(itp) != NULL )*/
+	{
 		Node *context_np;
-		context_np=QLIST_HEAD(CONTEXT_LIST(itp));
-		while(context_np!=NO_NODE){
+		context_np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
+		while(context_np!=NULL){
 			Item_Context *icp;
 			icp=(Item_Context *) NODE_DATA(context_np);
-			/* We can't look just at the dictionary LIST_IS_CURRENT
-			 * flag, because if the name space is not using hashing,
-			 * then its list is always current, although the context
-			 * may have had items added or deleted.
-			 */
-			if( CTX_FLAGS(icp) & CONTEXT_CHANGED )
-				SET_IT_FLAG_BITS(itp, CONTEXT_CHANGED);
+			if( CTX_LIST_SERIAL(icp) != CTX_ITEM_SERIAL(icp) )
+				INC_ITCI_ITEM_CHANGE_COUNT(THIS_ITCI(itp));
 			context_np=NODE_NEXT(context_np);
 		}
 	}
 
 	if( ! NEEDS_NEW_LIST(itp) ){
 		/* Nothing changed, just return the existing list */
-//fprintf(stderr,"returning existing item list...\n");
-		return(IT_LIST(itp));
+		return(current_item_list(itp));
 	}
 
 	/* Something has changed, so we have to rebuild the list.
 	 * Begin by trashing the old list.
 	 */
 	
-//fprintf(stderr,"rebuilding item list...\n");
-	while( (np=remHead(IT_LIST(itp))) != NO_NODE )
+	while( (np=remHead(current_item_list(itp))) != NULL )
 		rls_node(np);
 
 	/* now make up the new list, by concatenating the context lists */
-	if( CONTEXT_LIST(itp) != NO_LIST ){
+	if( LIST_OF_CONTEXTS(itp) != NULL ){
 		Node *context_np;
-		context_np=QLIST_HEAD(CONTEXT_LIST(itp));
-		while(context_np!=NO_NODE){
+		context_np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
+		while(context_np!=NULL){
 			Item_Context *icp;
 			icp=(Item_Context *) NODE_DATA(context_np);
-//fprintf(stderr,"adding items from context %s...\n",CTX_NAME(icp));
-//			cat_dict_items(IT_LIST(itp),CTX_DICT(icp));
-			cat_container_items(IT_LIST(itp),CTX_CONTAINER(icp));
-//fprintf(stderr,"After adding items from context %s, list len = %d...\n",CTX_NAME(icp),eltcount(IT_LIST(itp)));
+			cat_container_items(current_item_list(itp),CTX_CONTAINER(icp));
 			context_np=NODE_NEXT(context_np);
-			CLEAR_CTX_FLAG_BITS(icp,CONTEXT_CHANGED);
+			SET_CTX_LIST_SERIAL(icp, CTX_ITEM_SERIAL(icp) );
 		}
 	}
 
-	CLEAR_IT_FLAG_BITS(itp, (CONTEXT_CHANGED|NEED_LIST) );
+	//CLEAR_ITCI_FLAG_BITS(THIS_ITCI(itp), ITCI_NEEDS_LIST );
+	SET_ITCI_LIST_SERIAL( THIS_ITCI(itp), ITCI_ITEM_SERIAL(THIS_ITCI(itp)) );
 
-//fprintf(stderr,"Returning list at 0x%lx, len = %d...\n",(long)IT_LIST(itp),eltcount(IT_LIST(itp)));
-	return(IT_LIST(itp));
+	return(current_item_list(itp));
 }
 
 /* reorder a list of items into alphanumeric order of item names */
 /* the caller must dispose of the list! */
 
-List *alpha_sort(QSP_ARG_DECL  List *lp)
+List *_alpha_sort(QSP_ARG_DECL  List *lp)
 {
 	count_t n2sort;
 	void **ptr_array;
@@ -1030,13 +954,7 @@ List *alpha_sort(QSP_ARG_DECL  List *lp)
 	int i;
 
 
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
-//		WARN("CAUTIOUS:  null list passed to alpha_sort");
-//		return(NO_LIST);
-//	}
-//#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
+	assert( lp != NULL );
 
 	n2sort=eltcount(lp);
 
@@ -1051,7 +969,7 @@ List *alpha_sort(QSP_ARG_DECL  List *lp)
 	
 	np=QLIST_HEAD(lp);
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		ptr_array[i++]=NODE_DATA(np);
 		np=NODE_NEXT(np);
 	}
@@ -1068,6 +986,17 @@ List *alpha_sort(QSP_ARG_DECL  List *lp)
 	return(lp);
 }
 
+void _report_invalid_pick(QSP_ARG_DECL  Item_Type *itp, const char *s)
+{
+	sprintf(ERROR_STRING,"No %s \"%s\"",ITEM_TYPE_NAME(itp),s);
+	warn(ERROR_STRING);
+
+	sprintf(ERROR_STRING,"Possible %s choices:",ITEM_TYPE_NAME(itp));
+	advise(ERROR_STRING);
+
+	list_items(itp, tell_errfile());
+}
+
 /* BUG this should be gotten from enviroment, termcap, something... */
 #define CHARS_PER_LINE	78
 
@@ -1075,15 +1004,15 @@ List *alpha_sort(QSP_ARG_DECL  List *lp)
  * Print the names of all of the items of the given type to stdout
  */
 
-void list_items(QSP_ARG_DECL  Item_Type *itp)
+void _list_items(QSP_ARG_DECL  Item_Type *itp, FILE *fp)
 	/* type of items to list */
 {
 	List *lp;
 
 	CHECK_ITEM_INDEX(itp)
 
-	lp=item_list(QSP_ARG  itp);
-	print_list_of_items(QSP_ARG  lp);
+	lp=item_list(itp);
+	print_list_of_items(lp, fp);
 }
 
 
@@ -1126,26 +1055,26 @@ void decap(char* sto,const char* sfr)
  * BUG - should this be redone now that items are in rb trees?
  */
 
-List *find_items(QSP_ARG_DECL  Item_Type *itp,const char* frag)
+List *_find_items(QSP_ARG_DECL  Item_Type *itp,const char* frag)
 {
-	List *lp, *newlp=NO_LIST;
+	List *lp, *newlp=NULL;
 	Node *np, *newnp;
 	Item *ip;
 	char lc_frag[LLEN];
 
-	lp=item_list(QSP_ARG  itp);
-	if( lp == NO_LIST ) return(lp);
+	lp=item_list(itp);
+	if( lp == NULL ) return(lp);
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	decap(lc_frag,frag);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		char str1[LLEN];
 		ip = (Item*) np->n_data;
 		/* make the match case insensitive */
 		decap(str1,ip->item_name);
 		// strstr will match anywhere in the string!
 		if( strstr(str1,lc_frag) != NULL ){
-			if( newlp == NO_LIST )
+			if( newlp == NULL )
 				newlp=new_list();
 			newnp=mk_node(ip);
 			addTail(newlp,newnp);
@@ -1159,41 +1088,35 @@ List *find_items(QSP_ARG_DECL  Item_Type *itp,const char* frag)
 #ifdef NOT_USED
 /* Sort the item list based on node priorities (set elsewhere) */
 
-void sort_item_list(QSP_ARG_DECL  Item_Type *itp)
+void _sort_item_list(QSP_ARG_DECL  Item_Type *itp)
 {
 	List *lp;
 
 	lp=item_list(QSP_ARG  itp);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
 	p_sort(lp);
 }
 #endif /* NOT_USED */
 
-void print_list_of_items(QSP_ARG_DECL  List *lp)
+void _print_list_of_items(QSP_ARG_DECL  List *lp, FILE *fp)
 {
 	Node *np;
 	int n_per_line;
 	char fmtstr[16];
 	int i, n_lines, n_total;
 #ifdef HAVE_ISATTY
-	FILE *out_fp;
+	//FILE *out_fp;
 	int maxlen;
 #endif /* HAVE_ISATTY */
 
 	/* allocate an array of pointers for sorting */
 
-	if(lp==NO_LIST) return;
+	if(lp==NULL) return;
 	if( (n_total=eltcount(lp)) == 0 ) return;
 
-	lp=alpha_sort(QSP_ARG  lp);
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
-//		WARN("CAUTIOUS:  no items to print");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
+	lp=alpha_sort(lp);
+	assert( lp != NULL );
 
 	/* If we are printing to the terminal, then
 	 * we want as few lines as possible, but if we're
@@ -1201,13 +1124,13 @@ void print_list_of_items(QSP_ARG_DECL  List *lp)
 	 */
 
 #ifdef HAVE_ISATTY
-	out_fp = tell_msgfile(SINGLE_QSP_ARG);
-	if( isatty( fileno(out_fp) ) ){
+	//out_fp = tell_msgfile(SINGLE_QSP_ARG);
+	if( isatty( fileno(fp /*out_fp*/) ) ){
 		/* find the maximum length */
 
 		np=QLIST_HEAD(lp);
 		maxlen=0;
-		while(np!=NO_NODE){
+		while(np!=NULL){
 			int l;
 			if( (l=strlen( ITEM_NAME( ((Item *)NODE_DATA(np)) ) )) > maxlen )
 				maxlen=l;
@@ -1250,16 +1173,9 @@ void print_list_of_items(QSP_ARG_DECL  List *lp)
 				char tmp_str[LLEN];
 
 				np = nth_elt(lp,k);
-//#ifdef CAUTIOUS
-//				if( np==NO_NODE ) {
-//					NERROR1("CAUTIOUS:  missing element!?");
-//					IOS_RETURN
-//				}
-				assert( np != NO_NODE );
 
-//if( strlen( ITEM_NAME(((Item *)NODE_DATA(np)) )) > LLEN-1 )
-//NERROR1("item name too long");
-//#endif /* CAUTIOUS */
+				assert( np != NULL );
+
 				assert( strlen( ITEM_NAME(((Item *)NODE_DATA(np)) )) < LLEN );
 
 				sprintf(tmp_str,fmtstr,
@@ -1267,7 +1183,8 @@ void print_list_of_items(QSP_ARG_DECL  List *lp)
 				strcat(MSG_STR,tmp_str);
 			}
 		}
-		prt_msg(MSG_STR);
+		//prt_msg(MSG_STR);
+		fprintf(fp,"%s\n",MSG_STR);
 	}
 
 	/* now free the list */
@@ -1286,13 +1203,10 @@ void item_stats(QSP_ARG_DECL  Item_Type * itp)
 {
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	check_item_type( itp );
-//#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
-	np = QLIST_HEAD(CONTEXT_LIST(itp));
-	while(np!=NO_NODE){
+	np = QLIST_HEAD(LIST_OF_CONTEXTS(itp));
+	while(np!=NULL){
 		Item_Context *icp;
 		icp=(Item_Context *) NODE_DATA(np);
 		sprintf(MSG_STR,"Context %s:",CTX_NAME(icp));
@@ -1306,13 +1220,10 @@ void item_stats(QSP_ARG_DECL  Item_Type * itp)
 
 // used to be called add_to_item_freelist
 
-void recycle_item(Item_Type *itp, void *ip)
+void _recycle_item(QSP_ARG_DECL  Item_Type *itp, void *ip)
 {
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	check_item_type( itp );
-//#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
 	np=mk_node(ip);
@@ -1322,53 +1233,55 @@ void recycle_item(Item_Type *itp, void *ip)
 /*
  * Delete the item pointed to by ip from the item database.
  * The actual storage for the item is not freed, but is
- * added to the item type's free list.  The caller must
- * free the stored name to prevent a memory leak.
+ * added to the item type's free list.  This routine
+ * releases the name, so The caller must not
+ * free it also...
  */
 
-void del_item(QSP_ARG_DECL  Item_Type *itp,void* ip)
+void _del_item(QSP_ARG_DECL  Item_Type *itp,void* ip)
 		/* itp = type of item to be deleted */
 		/* ip = pointer to item to be deleted */
 {
-	LOCK_ITEM_TYPE(itp)
-
-//#ifdef CAUTIOUS
-//	check_item_type( itp );
-//#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
-	zombie_item(QSP_ARG  itp,(Item*) ip);
+	LOCK_ITEM_TYPE(itp)
+
+	zombie_item(itp,(Item*) ip);
+	rls_str( (char *) ITEM_NAME(((Item *)ip)) );
+	SET_ITEM_NAME( ((Item *)ip), NULL );
+
 	recycle_item(itp,ip);
+
+	INC_ITEM_CHANGE_COUNT(itp);
 
 	UNLOCK_ITEM_TYPE(itp)
 }
 
-/* Set the needy flag for this item type and any classes of which
- * it is a member.
- */
-
-static void make_needy(Item_Type *itp)
+static int remove_item_from_context(QSP_ARG_DECL  Item_Context *icp, Item *ip)
 {
-	SET_IT_FLAG_BITS(itp, NEED_CHOICES | NEED_LIST );
+	Item *tmp_ip;
 
-	if( IT_CLASS_LIST(itp) != NO_LIST ){
-		Node *np;
-
-		np = QLIST_HEAD(IT_CLASS_LIST(itp));
-		while( np != NO_NODE ){
-			Item_Class *iclp;
-
-			iclp = (Item_Class*) NODE_DATA(np);
-			SET_CL_FLAG_BITS(iclp, NEED_CLASS_CHOICES);
-			np = NODE_NEXT(np);
+	tmp_ip = container_find_match( CTX_CONTAINER(icp), ITEM_NAME((Item *)ip) );
+	if( tmp_ip == ip ){	/* found it */
+		if( remove_name_from_container(QSP_ARG  CTX_CONTAINER(icp),
+					ITEM_NAME((Item *)ip) ) < 0 ){
+			sprintf(ERROR_STRING,
+	"zombie_item:  unable to remove item %s from context %s",
+				ITEM_NAME(ip),CTX_NAME(icp));
+			warn(ERROR_STRING);
 		}
+		/* BUG make the context needy... */
+		/* does this do it? */
+		INC_CTX_ITEM_SERIAL(icp);
+		return 0;
 	}
+	return -1;
 }
 
 /* Remove an item from the item database, but do not return it to the
  * item free list.  This function was introduced to allow image objects
  * to be deleted after they have been displayed in viewers.  The
- * viewers retain a ptr to the data which they need to access in
+ * viewers can retain a ptr to the data which they need to access in
  * order to refresh the window.
  *
  * This function could have a more descriptive name, like zombieize_item,
@@ -1379,100 +1292,70 @@ static void make_needy(Item_Type *itp)
  * but this is probably not a good idea...  BUG.
  */
 
-void zombie_item(QSP_ARG_DECL  Item_Type *itp,Item* ip)
+void _zombie_item(QSP_ARG_DECL  Item_Type *itp,Item* ip)
 		/* itp = type of item to be deleted */
 		/* ip = pointer to item to be deleted */
 {
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	check_item_type( itp );
-//#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
-	/* We used to remove the item from the item list here...
-	 * but now with the dictionary abstraction, we just remove
-	 * it from the the dictionary, and count on item_list()
-	 * to detect when the list needs to be updated...
+	/* Find the context that contains the item, then remove it.
 	 */
 
-	np=QLIST_HEAD(CONTEXT_LIST(itp));
-	while(np!=NO_NODE){
-		Item *tmp_ip;
+	np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
+	while(np!=NULL){
 		Item_Context *icp;
 
 		icp = (Item_Context*) NODE_DATA(np);
-//		tmp_ip = fetch_name( ITEM_NAME(((Item *)ip)),CTX_DICT(icp));
-		tmp_ip = container_find_match( CTX_CONTAINER(icp),
-					ITEM_NAME((Item *)ip) );
-		if( tmp_ip == ip ){	/* found it */
-			if(
-			/*remove_name(ip,CTX_DICT(icp) ) */
-				remove_name_from_container(QSP_ARG  CTX_CONTAINER(icp), ITEM_NAME((Item *)ip) )
-						< 0 ){
-				sprintf(ERROR_STRING,
-		"zombie_item:  unable to remove %s item %s from context %s",
-					IT_NAME(itp),ITEM_NAME(ip),CTX_NAME(icp));
-				WARN(ERROR_STRING);
-				return;
-			}
-			/* BUG make the context needy... */
-			/* does this do it? */
-			SET_CTX_FLAG_BITS(icp, CONTEXT_CHANGED);
-
-			make_needy(itp);
-			np=NO_NODE; /* or return? */
-		} else
-			np=NODE_NEXT(np);
+		if( remove_item_from_context(QSP_ARG  icp,ip) == 0 ) return;
+		np=NODE_NEXT(np);
 	}
-}
+	// should never get here?
+	error1("zombie_item:  unable to find item!?");
+	// Is this point ever reached?
+} // zombie_item
 
 /* Rename an item.
  *
  * This function frees the old name and allocates permanent
  * storage for the new name.
+ *
+ * BUG?  It looks as if this could change the context, because it stores using
+ * the current context, not the one  associated with the original object...
  */
 
-void rename_item(QSP_ARG_DECL  Item_Type *itp,void *ip,char* newname)
+void _rename_item(QSP_ARG_DECL  Item_Type *itp,void *ip,char* newname)
 		/* itp = type of item to be deleted */
 {
-	Node *np;
-
 	LOCK_ITEM_TYPE(itp)
 
-//#ifdef CAUTIOUS
-//	check_item_type( itp );
-//#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
-	zombie_item(QSP_ARG  itp,(Item*) ip);
+	zombie_item(itp,(Item*) ip);
 	rls_str( (char *) ITEM_NAME(((Item *)ip)) );
 	SET_ITEM_NAME( ((Item *)ip), savestr(newname) );
-	np=mk_node(ip);
-	store_item(QSP_ARG  itp,(Item*) ip,np);
-
-	make_needy(itp);
+	_store_item(QSP_ARG  ITEM_CTX( (Item *)ip ),(Item*) ip);
 
 	UNLOCK_ITEM_TYPE(itp)
 }
 
-static void dump_item_context(QSP_ARG_DECL  Item_Context *icp)
+static void _dump_item_context(QSP_ARG_DECL  Item_Context *icp)
 {
 	sprintf(MSG_STR,"\tContext \"%s\"",CTX_NAME(icp));
 	prt_msg(MSG_STR);
 
-//	dump_dict_info(CTX_DICT(icp));
-	dump_container_info(QSP_ARG  CTX_CONTAINER(icp));
+	//dump_container_info(QSP_ARG  CTX_CONTAINER(icp));
+	(*(CTX_CONTAINER(icp)->cnt_typ_p->dump_info))(QSP_ARG  CTX_CONTAINER(icp));
 
-	list_item_context(QSP_ARG  icp);
+	list_item_context(icp);
 }
 
-void list_item_context(QSP_ARG_DECL  Item_Context *icp)
+void _list_item_context(QSP_ARG_DECL  Item_Context *icp)
 {
 	List *lp;
-//	lp=dictionary_list(CTX_DICT(icp));
 	lp=container_list(CTX_CONTAINER(icp));
-	print_list_of_items(QSP_ARG  lp);
+	print_list_of_items(lp, tell_msgfile());
 }
 
 /*
@@ -1480,7 +1363,7 @@ void list_item_context(QSP_ARG_DECL  Item_Context *icp)
  * preceded by the item type name and hash table size.
  */
 
-static void dump_item_type(QSP_ARG_DECL  Item_Type *itp)
+static void _dump_item_type(QSP_ARG_DECL  Item_Type *itp)
 {
 	Node *np;
 
@@ -1488,12 +1371,12 @@ static void dump_item_type(QSP_ARG_DECL  Item_Type *itp)
 		"%s items",IT_NAME(itp));
 	prt_msg(MSG_STR);
 
-	np = QLIST_HEAD(CONTEXT_LIST(itp));
-	while( np != NO_NODE ){
+	np = QLIST_HEAD(LIST_OF_CONTEXTS(itp));
+	while( np != NULL ){
 		Item_Context *icp;
 
 		icp = (Item_Context*) NODE_DATA(np);
-		dump_item_context(QSP_ARG  icp);
+		_dump_item_context(QSP_ARG  icp);
 
 		np = NODE_NEXT(np);
 	}
@@ -1503,25 +1386,25 @@ static void dump_item_type(QSP_ARG_DECL  Item_Type *itp)
  * Dump all existing item types.
  */
 
-void dump_items(SINGLE_QSP_ARG_DECL)
+void _dump_items(SINGLE_QSP_ARG_DECL)
 {
 	List *lp;
 	Node *np;
 	Item_Type *itp;
 
-	lp = item_list(QSP_ARG  ittyp_itp);
-	if( lp == NO_LIST ) return;
+	lp = item_list(ittyp_itp);
+	if( lp == NULL ) return;
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		itp=(Item_Type *) NODE_DATA(np);
-		dump_item_type(QSP_ARG  itp);
+		_dump_item_type(QSP_ARG  itp);
 		np=NODE_NEXT(np);
 	}
 }
 
-Item_Type *get_item_type(QSP_ARG_DECL  const char* name)
+Item_Type *_get_item_type(QSP_ARG_DECL  const char* name)
 {
-	return( (Item_Type *) get_item(QSP_ARG  ittyp_itp,name) );
+	return( (Item_Type *) get_item(ittyp_itp,name) );
 }
 
 #ifdef THREAD_SAFE_QUERY
@@ -1533,7 +1416,7 @@ void report_mutex_error(QSP_ARG_DECL  int status,const char *whence)
 
 	sprintf(ERROR_STRING,"%s:  report_mutex_error:  status = %d",
 		whence,status);
-	ADVISE(ERROR_STRING);
+	advise(ERROR_STRING);
 
 	switch(status){
 		case EINVAL: msg = "invalid argument"; break;
@@ -1543,15 +1426,15 @@ void report_mutex_error(QSP_ARG_DECL  int status,const char *whence)
 		case EPERM: msg = "not mutex owner"; break;
 		default: msg = "unexpected mutex error"; break;
 	}
-	WARN(msg);
+	warn(msg);
 }
 #endif /* HAVE_PTHREADS */
 
 #endif /* THREAD_SAFE_QUERY */
 
 static Item_Type *frag_itp=NULL;
-static ITEM_INIT_FUNC(Frag_Match_Info,frag,HASH_TBL_CONTAINER);
-static ITEM_NEW_FUNC(Frag_Match_Info,frag);
+static ITEM_INIT_FUNC(Frag_Match_Info,frag,HASH_TBL_CONTAINER)
+static ITEM_NEW_FUNC(Frag_Match_Info,frag)
 //static ITEM_CHECK_FUNC(Frag_Match_Info,frag);
 
 static Item_Context *setup_frag_context(QSP_ARG_DECL  Item_Context *icp)
@@ -1559,24 +1442,38 @@ static Item_Context *setup_frag_context(QSP_ARG_DECL  Item_Context *icp)
 	char cname[LLEN];
 	Item_Context *frag_icp;
 
-	if( frag_itp == NULL ) init_frags(SINGLE_QSP_ARG);
+	if( frag_itp == NULL ) _init_frags(SINGLE_QSP_ARG);
 	sprintf(cname,"fragments.%s",CTX_NAME(icp));
-	frag_icp = new_ctx(QSP_ARG  cname);
+	frag_icp = new_ctx(cname);
 	assert(frag_icp!=NULL);
 
 	// should we have a function to encapsulate the setup?
-	SET_CTX_IT( icp, frag_itp );
+	SET_CTX_IT( frag_icp, frag_itp );
 	SET_CTX_CONTAINER(frag_icp , create_container(CTX_NAME(frag_icp),HASH_TBL_CONTAINER) );
-	SET_CTX_FLAGS(icp,0);
+	//SET_CTX_FLAGS(icp,0);
 
 	return frag_icp;
 }
+
+static void rebuild_frag_match_info(QSP_ARG_DECL  Frag_Match_Info *fmi_p )
+{
+	// nothing to free, just clear old ptrs
+	bzero(&(fmi_p->fmi_u),sizeof(fmi_p->fmi_u));
+	// BUG  no need to pass all these args - sloppy
+	container_find_substring_matches(fmi_p,FMI_STRING(fmi_p));
+	SET_FMI_ITEM_SERIAL(fmi_p, CTX_ITEM_SERIAL( FMI_CTX(fmi_p) ) );
+}
+
+// return a ptr to a struct containing <a list> of all of the partial matches from a context.
+// The "list" may be ptrs into a rbtree...
+// We have a complication when we have a stack of contexts...
+// because searching a context clears the old content of the frag match info.
+// We could associate the frag_match_info with the context, but how would we cycle?
 
 static Frag_Match_Info *context_partial_match(QSP_ARG_DECL  Item_Context *icp, const char *s )
 {
 	Frag_Match_Info *fmi_p;
 
-//fprintf(stderr,"context_partial_match searching %s for %s\n",CTX_NAME(icp),s);
 	// first see if we have fragment context for this contex
 	if( CTX_FRAG_ICP(icp) == NULL ){
 		SET_CTX_FRAG_ICP( icp, setup_frag_context(QSP_ARG  icp) );
@@ -1585,78 +1482,329 @@ static Frag_Match_Info *context_partial_match(QSP_ARG_DECL  Item_Context *icp, c
 	fmi_p = (Frag_Match_Info *) container_find_match(CTX_CONTAINER(CTX_FRAG_ICP(icp)),s);
 	if( fmi_p==NULL ){
 		// create the struct
-//fprintf(stderr,"creating new struct for fragment %s\n",s);
-		push_item_context(QSP_ARG  frag_itp, CTX_FRAG_ICP(icp) );
-		fmi_p = new_frag(QSP_ARG  s );
+		push_item_context(frag_itp, CTX_FRAG_ICP(icp) );
+		fmi_p = _new_frag(QSP_ARG  s );
+		pop_item_context(frag_itp );
 		assert(fmi_p!=NULL);
-		fmi_p->icp = icp; 
-		if( icp->ic_itp->it_default_container_type == RB_TREE_CONTAINER )
+		SET_FMI_CTX(fmi_p,icp);
+#ifdef FOOBAR
+		if( IT_CONTAINER_TYPE(CTX_IT(icp)) == RB_TREE_CONTAINER )
 			fmi_p->type = RB_TREE_CONTAINER;
 		else
 			fmi_p->type = LIST_CONTAINER;
+#endif // FOOBAR
 
 		// Now we need to fill in the entries!
-		//fmi_p->u.rbti.curr_n_p=NULL;
-		//fmi_p->u.rbti.first_n_p=NULL;
-		//fmi_p->u.rbti.last_n_p=NULL;
-		bzero(&(fmi_p->u),sizeof(fmi_p->u));
-
-		// Now we need to actually search the tree...
-//fprintf(stderr,"context_partial_match calling container_find_substring_matches %s\n",s);
-		container_find_substring_matches(fmi_p,CTX_CONTAINER(icp),s);
+		rebuild_frag_match_info(QSP_ARG  fmi_p);
+	}
+	  else {
+		// If the context has changed, then we need to make sure that this
+		// fragment doesn't match something which has been deleted
+		if( FMI_ITEM_SERIAL(fmi_p) != CTX_ITEM_SERIAL(icp) ){
+			rebuild_frag_match_info(QSP_ARG  fmi_p);
+		}
+		// BUG?  do we need to re-search after rebuilding???
+		// Or does rebuild alter the target of fmi_p???
 	}
 	return fmi_p;
+} // context_partial_match
+
+static Item *current_cycle_item(Match_Cycle *mc_p)
+{
+	Frag_Match_Info *fmi_p;
+
+	assert( MATCH_CYCLE_CURR_NODE(mc_p) != NULL );
+	fmi_p = NODE_DATA(MATCH_CYCLE_CURR_NODE(mc_p));
+	assert(fmi_p!=NULL);
+
+	return current_frag_item(fmi_p);
 }
 
-static Frag_Match_Info * get_partial_match_info(QSP_ARG_DECL  Item_Type *itp, const char *s )
+static Item_Type *match_cycle_itp=NULL;
+static ITEM_INIT_FUNC(Match_Cycle,match_cycle,0)
+static ITEM_CHECK_FUNC(Match_Cycle,match_cycle)
+static ITEM_NEW_FUNC(Match_Cycle,match_cycle)
+
+#define init_match_cycles()	_init_match_cycles(SINGLE_QSP_ARG)
+#define match_cycle_of(name)	_match_cycle_of(QSP_ARG  name)
+#define new_match_cycle(name)	_new_match_cycle(QSP_ARG  name)
+
+#define find_match_cycle(itp,s)	_find_match_cycle(QSP_ARG  itp,s)
+
+static Match_Cycle * _find_match_cycle(QSP_ARG_DECL  Item_Type *itp, const char *s )
+{
+	Match_Cycle *mc_p;
+
+	if( IT_MC_CONTEXT(itp) == NULL ){
+		// Make a context
+		char cname[LLEN];
+		sprintf(cname,"Matches.%s.%d",ITEM_TYPE_NAME(itp),QS_SERIAL);	// BUG possible buffer overrun
+		if( match_cycle_itp == NULL ){
+			//match_cycle_itp = new_item_type("Match_Cycle", 0 );
+			init_match_cycles();
+			assert(match_cycle_itp!=NULL);
+		}
+		SET_IT_MC_CONTEXT(itp, create_item_context(match_cycle_itp,cname));
+	}
+
+	push_item_context(match_cycle_itp, IT_MC_CONTEXT(itp) );
+
+	mc_p = match_cycle_of(s);
+	if( mc_p != NULL ){	// already exists?
+		pop_item_context(match_cycle_itp);
+		// BUG here we need to make sure that match cycle is still current...
+		return mc_p;
+	}
+
+	mc_p = new_match_cycle(s);
+	pop_item_context(match_cycle_itp);
+	SET_MATCH_CYCLE_LIST(mc_p,new_list());
+	SET_MATCH_CYCLE_CURR_NODE(mc_p,NULL);
+	SET_MATCH_CYCLE_IT(mc_p,itp);
+	SET_MC_ITEM_SERIAL(mc_p,0);
+	SET_MC_STACK_SERIAL(mc_p,0);
+
+	return mc_p;
+} // find_match_cycle
+
+static void add_matches_to_cycle(QSP_ARG_DECL  /*Match_Cycle*/ void *mc_p, Item_Context *icp )
+{
+	Frag_Match_Info *fmi_p;
+	Node *mc_np;
+
+	fmi_p=context_partial_match(QSP_ARG  icp,MATCH_CYCLE_STRING((Match_Cycle *)mc_p));
+
+	assert( fmi_p != NULL );
+	// Should this return non-null if there are no matches?
+
+	mc_np = mk_node(fmi_p);
+	addTail(MATCH_CYCLE_LIST((Match_Cycle *)mc_p),mc_np);
+	SET_MATCH_CYCLE_CURR_NODE((Match_Cycle *)mc_p,mc_np);
+}
+
+static void apply_to_context_stack(QSP_ARG_DECL  Item_Type *itp,
+	void (*func)(QSP_ARG_DECL  void *, Item_Context *), void * ptr )
+{
+	Node *np;
+
+	np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
+	assert( np != NULL );
+
+	while(np!=NULL){
+		Item_Context *icp;
+		icp= (Item_Context*) NODE_DATA(np);
+		(*func)(QSP_ARG  ptr, icp );
+		np = NODE_NEXT(np);
+	}
+}
+
+static void insure_cycle_ready(QSP_ARG_DECL  Match_Cycle *mc_p)
+{
+	Node *first_np;
+	Node *np;
+	Frag_Match_Info *fmi_p;
+
+	first_np = MATCH_CYCLE_CURR_NODE(mc_p);
+	np = first_np;
+	do {
+		Item *ip;
+		fmi_p = NODE_DATA(np);
+		ip = current_frag_item(fmi_p);
+		if( ip != NULL ){
+			SET_MATCH_CYCLE_CURR_NODE(mc_p,np);
+			return;
+		}
+
+		np = NODE_NEXT(np);
+		if( np == NULL )
+			np = QLIST_HEAD( MATCH_CYCLE_LIST(mc_p) );
+	} while( np != first_np );
+}
+
+static Match_Cycle * get_partial_match_cycle(QSP_ARG_DECL  Item_Type *itp, const char *s )
+{
+	//Frag_Match_Info *fmi_p;
+	Match_Cycle *mc_p;
+
+	mc_p = find_match_cycle(itp, s);
+
+	apply_to_context_stack(QSP_ARG  itp, add_matches_to_cycle, mc_p );
+
+	SET_MC_STACK_SERIAL(mc_p, ITCI_STACK_SERIAL( THIS_ITCI(MATCH_CYCLE_IT(mc_p)) ) );
+
+	// Make sure that the cycle points to a node with something...
+	insure_cycle_ready(QSP_ARG  mc_p);
+
+	return mc_p;
+} // get_partial_match_cycle
+
+static int cycle_is_current(QSP_ARG_DECL  Match_Cycle *mc_p)
+{
+	if( mc_p == NULL ) return 1;
+
+	// The Match_Cycle list should match the context stack...
+	// But the context stack can have contexts pushed and popped.
+	// So we should rebuild the cycle list to match the stack -
+	// Or can we use the stack itself?
+	if( MC_STACK_SERIAL(mc_p) != ITCI_STACK_SERIAL(THIS_ITCI(MATCH_CYCLE_IT(mc_p))) )
+		return 0;
+	if( MC_ITEM_SERIAL(mc_p) != ITCI_ITEM_SERIAL(THIS_ITCI(MATCH_CYCLE_IT(mc_p))) )
+		return 0;
+	return 1;
+}
+
+// The stack may have changed, so we have to start over...
+
+static void rebuild_match_cycle(QSP_ARG_DECL  Match_Cycle *mc_p)
+{
+	// First releast everything
+	Node *np;
+
+	while( (np=remHead(MATCH_CYCLE_LIST(mc_p))) != NULL ){
+		//Frag_Match_Info *fmi_p;
+		//fmi_p = NODE_DATA(np);
+
+		// We don't have to deallocate the frag_match_info structs...
+		// they should retain references through their own context.
+		rls_node(np);
+	}
+	SET_MATCH_CYCLE_CURR_NODE(mc_p,NULL);
+
+	// Now rebuild
+	np = QLIST_HEAD( ITCI_CSTK( THIS_ITCI( MATCH_CYCLE_IT(mc_p)) ));
+	while( np != NULL ){
+		Frag_Match_Info *fmi_p;
+		Item_Context *icp;
+		Node *new_np;
+
+		icp = NODE_DATA(np);
+		fmi_p = context_partial_match( QSP_ARG  icp, MATCH_CYCLE_STRING(mc_p) );
+		new_np = mk_node(fmi_p);
+		addTail(MATCH_CYCLE_LIST(mc_p),new_np);
+		if( MATCH_CYCLE_CURR_NODE(mc_p) == NULL )
+			SET_MATCH_CYCLE_CURR_NODE(mc_p,new_np);
+
+		np = NODE_NEXT(np);
+	}
+	SET_MC_STACK_SERIAL(mc_p, ITCI_STACK_SERIAL( THIS_ITCI(MATCH_CYCLE_IT(mc_p)) ) );
+} // rebuild_match_cycle
+
+// update_frag_matches is used when the stack has not changed, but some items have
+
+static void update_frag_matches(QSP_ARG_DECL  Match_Cycle *mc_p)
 {
 	Node *np;
 	Frag_Match_Info *fmi_p;
 
-	np=QLIST_HEAD(CONTEXT_LIST(itp));
-	assert( np != NO_NODE );
-
-	/* check the top context first */
-
-	while(np!=NO_NODE){
-		Item_Context *icp;
-
-		icp= (Item_Context*) NODE_DATA(np);
-
-		fmi_p=context_partial_match(QSP_ARG  icp,s);
-
-		assert( fmi_p != NULL );
-
-		// If we have a cached set of partial matches, see if they need to be updated.
-		// This will only happen if items are added or deleted
-		// BUG test for update!
-
-		// The context may have no matches
-		if( fmi_p->u.rbti.curr_n_p != NULL )
-			return fmi_p;
-
+	assert( MATCH_CYCLE_LIST(mc_p) != NULL );
+	np = QLIST_HEAD( MATCH_CYCLE_LIST(mc_p) );
+	while( np != NULL ){
+		fmi_p = NODE_DATA(np);
+		if( FMI_ITEM_SERIAL(fmi_p) != CTX_ITEM_SERIAL( FMI_CTX(fmi_p) ) ){
+			rebuild_frag_match_info(QSP_ARG  fmi_p);
+		}
 		np = NODE_NEXT(np);
 	}
-	// nothing found
-	return NULL;
 }
 
-const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
+static void update_match_cycle(QSP_ARG_DECL  Match_Cycle *mc_p)
 {
-	Frag_Match_Info *fmi_p;
+	// The update could be required either because the stack has changed, or an item has changed...
+
+	if( MC_STACK_SERIAL(mc_p) == ITCI_STACK_SERIAL( THIS_ITCI(MATCH_CYCLE_IT(mc_p)) ) ){
+		// update items only
+		update_frag_matches(QSP_ARG  mc_p);
+	} else {
+		// The stack has changed.  We don't know how it has changed, so the most fool-proof
+		// way to go is just to release and rebuild.  BUT we would like to remember our place in
+		// the cycle...  ignore for now - BUG.
+		rebuild_match_cycle(QSP_ARG  mc_p);
+	}
+}
+
+const char *_find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
+{
+	Match_Cycle *mc_p;
 	Item *ip;
 
-	if( (fmi_p=IT_FRAG_MATCH_INFO(itp)) == NULL  ||
-			strcmp( s, IT_FRAG_MATCH_INFO(itp)->it.item_name) ){
-		// we keep the old frag match...
-		fmi_p=get_partial_match_info(QSP_ARG  itp, s);
-//fprintf(stderr,"find_partial_match %s %s, back from get_partial_match_info\n",ITEM_TYPE_NAME(itp),s);
-		SET_IT_FRAG_MATCH_INFO(itp,fmi_p);
+	if( (mc_p=IT_MATCH_CYCLE(itp)) == NULL  ||		// old match cycle cached?
+			strcmp( s, IT_MATCH_CYCLE(itp)->it.item_name) ){	// same fragment?
+		// If there is no cached cycle, or the cached cycle is for a different fragment,
+		// then we have to get a different one...
+		mc_p = get_partial_match_cycle(QSP_ARG  itp, s);
+		SET_IT_MATCH_CYCLE(itp,mc_p);
+	} else if( ! cycle_is_current(QSP_ARG  mc_p) ){
+		update_match_cycle(QSP_ARG  mc_p);
 	}
-		
-	if( fmi_p == NULL ) return "";	// there may be no matches
-	ip = current_frag_item(fmi_p);	// BUG should be agnostic with regard to container type!
+
+	if( mc_p == NULL ) return "";	// there may be no matches
+	ip = current_cycle_item(mc_p);	// BUG should be agnostic with regard to container type!
+	if( ip == NULL ) return "";
 	return ITEM_NAME(ip);
+}
+
+// These used to be accessed directly from the struct, but now we provide accessor functions
+// to insure proper initialization (necessary when multi-threading)
+
+List *_context_stack(QSP_ARG_DECL  Item_Type *itp)
+{
+	Item_Type_Context_Info *itci_p;
+
+	itci_p = THIS_ITCI(itp);
+
+	if( ITCI_CSTK( itci_p ) == NULL ){
+		SET_ITCI_CSTK(itci_p,new_list());
+	}
+	return ITCI_CSTK(itci_p);
+}
+
+List *_current_item_list(QSP_ARG_DECL  Item_Type *itp)
+{
+	return ITCI_ITEM_LIST(THIS_ITCI(itp));
+}
+
+Item_Context *_current_context(QSP_ARG_DECL  Item_Type *itp)
+{
+	List *lp;
+	Item_Context *icp;
+	Item_Type_Context_Info *itci_p;
+
+	itci_p = THIS_ITCI(itp);
+	if( ITCI_CTX( itci_p ) != NULL )
+		return ITCI_CTX(itci_p);
+
+	// If it is null, then this is probably the first access
+	// from a new thread
+
+	lp = context_stack(itp);
+	if( eltcount(lp) > 0 ){
+		Node *np;
+		np = QLIST_HEAD(lp);
+		icp = NODE_DATA(np);
+		SET_ITCI_CTX(itci_p,icp);
+		return icp;
+	}
+
+	// The context stack is empty...
+	// Get the default context from the parent thread,
+	// and push it.  It is conceivable that the parent
+	// thread doesn't have a context - then we would like
+	// it to go to its own parent.  But for now we
+	// won't worry about that...
+
+#ifdef THREAD_SAFE_QUERY
+	icp = ITCI_CTX( ITCI_AT_INDEX(itp,QS_PARENT_SERIAL(THIS_QSP)) );
+
+#else // ! THREAD_SAFE_QUERY
+	icp = ITCI_CTX( ITCI_AT_INDEX(itp,0) );
+#endif // ! THREAD_SAFE_QUERY
+
+	assert(icp!=NULL);
+
+	push_item_context(itp, icp );
+
+	assert(ITCI_CTX(itci_p)!=NULL);
+	return ITCI_CTX(itci_p);
 }
 
 

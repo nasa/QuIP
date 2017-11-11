@@ -3,14 +3,15 @@
 #include "quip_prot.h"
 #include "viewer.h"
 #include "xsupp.h"
-#include <X11/Xproto.h>	// the request codes
+#include "debug.h"
 
-static Disp_Obj *current_dop=NO_DISP_OBJ;
+static Disp_Obj *current_dop=NULL;
 
 ITEM_INTERFACE_DECLARATIONS(Disp_Obj,disp_obj,0)
 
 #ifdef HAVE_X11
 
+#include <X11/Xproto.h>	// the request codes
 #include "xsupp_prot.h"
 
 /* manipulate displays */
@@ -20,7 +21,9 @@ ITEM_INTERFACE_DECLARATIONS(Disp_Obj,disp_obj,0)
 #endif
 
 static int window_sys_inited=0;
+
 // BUG static vars not thread-safe...
+// Also, should be one per display...
 static XVisualInfo *	visualList = NULL;
 
 #if defined(__cplusplus) || defined(c_plusplus)
@@ -29,6 +32,12 @@ static XVisualInfo *	visualList = NULL;
 #define xvi_class	class
 #endif
 
+#ifdef THREAD_SAFE_QUERY
+static Query_Stack *x_error_qsp=NULL;
+#define SPECIFIED_QSP_ARG(p)	p,
+#else // ! THREAD_SAFE_QUERY
+#define SPECIFIED_QSP_ARG(p)
+#endif // ! THREAD_SAFE_QUERY
 
 void set_display( Disp_Obj *dop )
 {
@@ -37,8 +46,8 @@ void set_display( Disp_Obj *dop )
 
 List *displays_list(SINGLE_QSP_ARG_DECL)
 {
-	if( disp_obj_itp == NO_ITEM_TYPE ) return(NO_LIST);
-	return( item_list(QSP_ARG  disp_obj_itp) );
+	if( disp_obj_itp == NULL ) return(NULL);
+	return( item_list(disp_obj_itp) );
 }
 
 void info_do( Disp_Obj *dop )
@@ -55,8 +64,9 @@ void info_do( Disp_Obj *dop )
 }
 
 
+#define dop_open(dop) _dop_open(QSP_ARG  dop)
 
-static int dop_open( QSP_ARG_DECL  Disp_Obj *dop )
+static int _dop_open( QSP_ARG_DECL  Disp_Obj *dop )
 {
 	/* BUG - on Solaris, when we have DISPLAY set to :0,
 	 * but are on a remote server, this call hangs...
@@ -68,16 +78,17 @@ static int dop_open( QSP_ARG_DECL  Disp_Obj *dop )
 	if ( (SET_DO_DISPLAY(dop,XOpenDisplay(DO_NAME(dop)))) == NULL) {
 		sprintf(ERROR_STRING,
 			"dop_open:  Can't open display \"%s\"\n",DO_NAME(dop));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		/* remove the object */
-		del_disp_obj(QSP_ARG  dop);
-		rls_str((char *)DO_NAME(dop));
+		del_disp_obj(dop);
 		return(-1);
 	}
 	return(0);
 }
 
-static XVisualInfo *get_vis_list( Disp_Obj * dop, int *np )
+#define get_vis_list(dop,np) _get_vis_list(QSP_ARG  dop,np)
+
+static XVisualInfo *_get_vis_list( QSP_ARG_DECL  Disp_Obj * dop, int *np )
 {
 	XVisualInfo		vTemplate;
 
@@ -89,15 +100,17 @@ static XVisualInfo *get_vis_list( Disp_Obj * dop, int *np )
 
 #ifdef QUIP_DEBUG
 if( debug & xdebug ){
-sprintf(DEFAULT_ERROR_STRING,"%d visuals found",*np);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"%d visuals found",*np);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
 	return(visualList);
 }
 
-static XVisualInfo *get_depth_list( Disp_Obj * dop, int depth, int *np )
+#define get_depth_list(dop,depth,np) _get_depth_list( QSP_ARG  dop,depth,np)
+
+static XVisualInfo *_get_depth_list( QSP_ARG_DECL  Disp_Obj * dop, int depth, int *np )
 {
 	XVisualInfo		vTemplate;
 
@@ -111,14 +124,14 @@ static XVisualInfo *get_depth_list( Disp_Obj * dop, int depth, int *np )
 	visualList = XGetVisualInfo(DO_DISPLAY(dop),VisualScreenMask|VisualDepthMask,
 		&vTemplate,np);
 	if( visualList == NULL ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"get_depth_list(%d) got NULL from XGetVisualInfo!?",depth);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #ifdef QUIP_DEBUG
 if( debug & xdebug ){
-sprintf(DEFAULT_ERROR_STRING,"%d visuals found with depth %d",*np,depth);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"%d visuals found with depth %d",*np,depth);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -147,7 +160,9 @@ static int find_visual( XVisualInfo *list, int n, int cl, int depth )
 	return(-1);
 }
 
-static Visual *GetEightBitVisual( Disp_Obj * dop)
+#define GetEightBitVisual(dop) _GetEightBitVisual(QSP_ARG  dop)
+
+static Visual *_GetEightBitVisual( QSP_ARG_DECL  Disp_Obj * dop)
 {
 	int			visualsMatched=0;
 	Visual *vis;
@@ -160,16 +175,16 @@ static Visual *GetEightBitVisual( Disp_Obj * dop)
 
 	i=find_visual(vip,visualsMatched,PseudoColor,8);
 	if( i < 0 ){
-		NWARN("no pseudocolor visual found!?");
+		warn("no pseudocolor visual found!?");
 		return(vip[0].visual);
 	}
 #ifdef QUIP_DEBUG
 if( debug & xdebug ){
-sprintf(DEFAULT_ERROR_STRING,"using visual %ld",vip[i].visualid);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"using visual %ld",vip[i].visualid);
+advise(ERROR_STRING);
 vis=DefaultVisual(DO_DISPLAY(dop),DO_SCREEN(dop));
-sprintf(DEFAULT_ERROR_STRING,"default visual is %ld",vis->visualid);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"default visual is %ld",vis->visualid);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -185,18 +200,24 @@ NADVISE(DEFAULT_ERROR_STRING);
 #define ALTERNATE_NAME "DirectColor"
 
 
-static Visual *GetSpecifiedVisual( Disp_Obj * dop, int depth )
+#define GetSpecifiedVisual(dop,depth) _GetSpecifiedVisual(QSP_ARG  dop,depth)
+
+static Visual *_GetSpecifiedVisual(QSP_ARG_DECL  Disp_Obj * dop, int depth )
 {
 #ifdef HAVE_OPENGL
 
 	XVisualInfo *vi_p;
+	Visual *vis_p;
 	GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, depth, GLX_DOUBLEBUFFER, None };
 	vi_p = glXChooseVisual(DO_DISPLAY(dop),0,att);
 	if( vi_p == NULL ){
-		NERROR1("glXChooseVisual failed!?");
+		error1("glXChooseVisual failed!?");
 	}
-fprintf(stderr,"glXChooseVisual returned visual %p\n",(void *)vi_p->visualid);
-	return vi_p->visual;
+//fprintf(stderr,"glXChooseVisual returned visual %p\n",(void *)vi_p->visualid);
+	vis_p = vi_p->visual;
+	XFree(vi_p);
+
+	return vis_p; 
 
 #else // ! HAVE_OPENGL
 
@@ -218,29 +239,29 @@ fprintf(stderr,"glXChooseVisual returned visual %p\n",(void *)vi_p->visualid);
 		s=getenv("PREFERRED_VISUAL_ID");
 		if( s != NULL ){
 			int preferred_id;
-sprintf(DEFAULT_ERROR_STRING,"Checking for PREFERRED_VISUAL_ID %s",s);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"Checking for PREFERRED_VISUAL_ID %s",s);
+advise(ERROR_STRING);
 			preferred_id = atoi(s);	/* BUG decimal only, should parse hex too */
 			i=find_visual_by_id(vip,visualsMatched,preferred_id);
 			if( i >= 0 ){
-sprintf(DEFAULT_ERROR_STRING,"preferred visual id %d FOUND at index %d",preferred_id,i);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"preferred visual id %d FOUND at index %d",preferred_id,i);
+advise(ERROR_STRING);
 				return(vip[i].visual);
 			}
-			sprintf(DEFAULT_ERROR_STRING,"Unable to find requested visual id %d",preferred_id);
-			NWARN(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"Unable to find requested visual id %d",preferred_id);
+			warn(ERROR_STRING);
 		}
 	}
 	i=find_visual(vip,visualsMatched,PREFERRED_MODE,depth);
 	if( i < 0 ){
-		sprintf(DEFAULT_ERROR_STRING,"no %s visual found with depth %d!?",
+		sprintf(ERROR_STRING,"no %s visual found with depth %d!?",
 			PREFERRED_NAME,depth);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		i=find_visual(vip,visualsMatched,ALTERNATE_MODE,depth);
 		if( i < 0 ){
-			sprintf(DEFAULT_ERROR_STRING,"no %s visual found with depth %d!?",
+			sprintf(ERROR_STRING,"no %s visual found with depth %d!?",
 				ALTERNATE_NAME,depth);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return(vip[0].visual);
 		} else {
 			name = ALTERNATE_NAME;
@@ -250,33 +271,39 @@ NADVISE(DEFAULT_ERROR_STRING);
 	}
 
 //if( verbose ){
-sprintf(DEFAULT_ERROR_STRING,"i=%d, using visual %ld (%s, depth = %d)",
+sprintf(ERROR_STRING,"i=%d, using visual %ld (%s, depth = %d)",
 i, vip[i].visualid,name,depth);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 //}
 	return(vip[i].visual);
 #endif // ! HAVE_OPENGL
 }
 
-static Visual *Get16BitVisual( Disp_Obj * dop)
+#define Get15BitVisual(dop) _Get15BitVisual(QSP_ARG  dop)
+#define Get16BitVisual(dop) _Get16BitVisual(QSP_ARG  dop)
+#define Get24BitVisual(dop) _Get24BitVisual(QSP_ARG  dop)
+
+static Visual *_Get16BitVisual(QSP_ARG_DECL  Disp_Obj * dop)
 {
 	return( GetSpecifiedVisual(dop,16) );
 }
 
-static Visual *Get24BitVisual( Disp_Obj * dop)
+
+static Visual *_Get24BitVisual(QSP_ARG_DECL  Disp_Obj * dop)
 {
 	return( GetSpecifiedVisual(dop,24) );
 }
 
 /* powerbook display */
 
-static Visual *Get15BitVisual( Disp_Obj * dop)
+static Visual *_Get15BitVisual(QSP_ARG_DECL  Disp_Obj * dop)
 {
 	return( GetSpecifiedVisual(dop,15) );
 }
 
+#define dop_setup(dop,desired_depth) _dop_setup(QSP_ARG   dop, desired_depth)
 
-static int dop_setup( QSP_ARG_DECL   Disp_Obj *dop, int desired_depth)
+static int _dop_setup( QSP_ARG_DECL   Disp_Obj *dop, int desired_depth)
 {
 	XVisualInfo vinfo, *list;
 	int n;
@@ -293,16 +320,16 @@ static int dop_setup( QSP_ARG_DECL   Disp_Obj *dop, int desired_depth)
 if( debug & xdebug ){
 XWindowAttributes wa;
 XGetWindowAttributes(DO_DISPLAY(dop),DO_ROOTW(dop),&wa);
-sprintf(DEFAULT_ERROR_STRING,"depth of root window = %d", wa.depth);
-prt_msg(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"depth of root window = %d", wa.depth);
+prt_msg(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	SET_DO_GC(dop, DefaultGC(DO_DISPLAY(dop),DO_SCREEN(dop)));
 
 
 	if( verbose ){
-sprintf(DEFAULT_ERROR_STRING,"desired depth is %d",desired_depth);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"desired depth is %d",desired_depth);
+advise(ERROR_STRING);
 	}
 
 	if( desired_depth == 8 ){
@@ -319,7 +346,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 	if( DO_VISUAL(dop) == 0 ){
 		if( verbose )
-			NADVISE("initial attempt to get a visual failed");
+			advise("initial attempt to get a visual failed");
 	}
 
 	/* BUG? can't we do something better here? */
@@ -338,13 +365,13 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 			vlp=get_vis_list(dop,&nvis);
 
-			sprintf(DEFAULT_ERROR_STRING,"%d visuals found:",nvis);
-			NADVISE(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"%d visuals found:",nvis);
+			advise(ERROR_STRING);
 
 			for(i=0;i<nvis;i++){
-				sprintf(DEFAULT_ERROR_STRING,"class %d   depth %d",
+				sprintf(ERROR_STRING,"class %d   depth %d",
 			vlp[i].xvi_class,vlp[i].depth);
-				NADVISE(DEFAULT_ERROR_STRING);
+				advise(ERROR_STRING);
 			}
 		}
 
@@ -354,8 +381,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 	/* remember the depth of this visual - do we still need to do this? */
 	vinfo.visualid = XVisualIDFromVisual(DO_VISUAL(dop));
 	list = XGetVisualInfo(DO_DISPLAY(dop),VisualIDMask,&vinfo,&n);
+
 	if( n != 1 ){
-		NWARN("more than one visual with specified ID!?");
+		warn("more than one visual with specified ID!?");
 		//SET_DO_DEPTH(dop, 8);	// why was this 8???
 	} /*else {
 		SET_DO_DEPTH(dop, list[0].depth);
@@ -406,101 +434,118 @@ static Size_Functions dpy_sf={
  * Open the named display
  */
 
-Disp_Obj *open_display(QSP_ARG_DECL  const char *name,int desired_depth)
+Disp_Obj *_open_display(QSP_ARG_DECL  const char *name,int desired_depth)
 {
 	Disp_Obj *dop;
 	static int siz_done=0;
 
-	dop = new_disp_obj(QSP_ARG  name);
-	if( dop == NO_DISP_OBJ ){
+	dop = new_disp_obj(name);
+	if( dop == NULL ){
 		sprintf(ERROR_STRING, "Couldn't create object for display %s",
 					name);
-		NWARN(ERROR_STRING);
-		return(NO_DISP_OBJ);
+		warn(ERROR_STRING);
+		return(NULL);
 	}
 
-	if( dop_open(QSP_ARG  dop) < 0 ){
-		return(NO_DISP_OBJ);
+	if( dop_open(dop) < 0 ){
+		return(NULL);
 	}
 
-	if( dop_setup(QSP_ARG  dop,desired_depth) < 0 ){
+	if( dop_setup(dop,desired_depth) < 0 ){
 		/* Bug - XCloseDisplay?? */
 		/* need to destroy object here */
-		del_disp_obj(QSP_ARG  dop);
-		rls_str((char *)DO_NAME(dop));
-		return(NO_DISP_OBJ);
+		del_disp_obj(dop);
+		return(NULL);
 	}
 	set_display(dop);
 
 	if( ! siz_done ){
 		siz_done++;
-		add_sizable(QSP_ARG  disp_obj_itp,&dpy_sf, NULL );
+		add_sizable(disp_obj_itp,&dpy_sf, NULL );
 	}
 
+	return(dop);
+}
+
+static Disp_Obj *check_for_desired_depth(SINGLE_QSP_ARG_DECL)
+{
+	const char *s;
+	Disp_Obj *dop;
+	int desired_depth;
+	const char *dname;
+
+	s=getenv("DESIRED_DEPTH");
+	if( s == NULL ) return NULL;
+
+	desired_depth=atoi(s);
+
+	dop = open_display(dname,desired_depth);
+	if( dop == NULL ){
+		sprintf(ERROR_STRING,"Unable to open display %s with $DESIRED_DEPTH (%d)",
+			dname,desired_depth);
+		warn(ERROR_STRING);
+	}
 	return(dop);
 }
 
 #define MAX_DISPLAY_DEPTHS	4
 static int possible_depths[MAX_DISPLAY_DEPTHS]={24,8,16,15};
 
+#define check_possible_depth(d,dname) _check_possible_depth(QSP_ARG  d, dname)
+
+static Disp_Obj *_check_possible_depth(QSP_ARG_DECL  int d, const char *dname)
+{
+	Disp_Obj *dop;
+
+	dop = open_display(dname,d);
+	if( dop != NULL && verbose ){
+		sprintf(ERROR_STRING,
+			"Using depth %d on display %s",
+			d,dname);
+		advise(ERROR_STRING);
+	}
+	return(dop);
+}
+
+#define check_possible_depths(dname) _check_possible_depths(QSP_ARG  dname)
+
+static Disp_Obj *_check_possible_depths(QSP_ARG_DECL  const char *dname)
+{
+	Disp_Obj *dop;
+	int i;
+
+	for(i=0;i<MAX_DISPLAY_DEPTHS;i++){
+		dop=check_possible_depth(possible_depths[i], dname);
+		if( dop != NULL ) return dop;
+
+		if( verbose ){
+			sprintf(ERROR_STRING,
+				"Couldn't get %d bit visual on device %s",
+				possible_depths[i],dname);
+			advise(ERROR_STRING);
+		}
+	}
+	return NULL;
+}
+
 static Disp_Obj * default_x_display(SINGLE_QSP_ARG_DECL)
 {
 	const char *dname;
 	Disp_Obj *dop;
-	int which_depth;
-	char *s;
 
-	dname = check_display(SINGLE_QSP_ARG);
+	dname = check_display();
 
 	/* these two lines added so this can be called more than once */
-	dop = disp_obj_of(QSP_ARG  dname);
-	if( dop != NO_DISP_OBJ ) return(dop);
+	dop = disp_obj_of(dname);
+	if( dop != NULL ) return(dop);
 
-	s=getenv("DESIRED_DEPTH");
-	if( s != NULL ){
-		int desired_depth;
+	dop = check_for_desired_depth(SINGLE_QSP_ARG);
+	if( dop != NULL ) return dop;
 
-		desired_depth=atoi(s);
-
-sprintf(ERROR_STRING,"Desired depth %d obtained from environment",desired_depth);
-advise(ERROR_STRING);
-		dop = open_display(QSP_ARG  dname,desired_depth);
-		if( dop != NO_DISP_OBJ ) return(dop);
-
-		sprintf(ERROR_STRING,"Unable to open display %s with $DESIRED_DEPTH (%d)",
-			dname,desired_depth);
-		NWARN(ERROR_STRING);
-	}
-			
-
-	for(which_depth=0;which_depth<MAX_DISPLAY_DEPTHS;which_depth++){
-		dop = open_display(QSP_ARG  dname,possible_depths[which_depth]);
-		if( dop != NO_DISP_OBJ ){
-			if( verbose ){
-				sprintf(ERROR_STRING,
-					"Using depth %d on display %s",
-					possible_depths[which_depth],dname);
-				advise(ERROR_STRING);
-			}
-			return(dop);
-		} else {
-			if( verbose && which_depth<(MAX_DISPLAY_DEPTHS-1) ){
-				sprintf(ERROR_STRING,
-			"Couldn't get %d bit visual on device %s, trying %d",
-					possible_depths[which_depth],dname,
-					possible_depths[which_depth+1]);
-				advise(ERROR_STRING);
-			}
-		}
-	}
-	if( verbose ){
-		sprintf(ERROR_STRING,
-	"Couldn't get %d bit visual on device %s, giving up",
-			possible_depths[MAX_DISPLAY_DEPTHS-1],dname);
-		advise(ERROR_STRING);
-	}
-	return(dop);
-} /* end default_x_display */
+	dop = check_possible_depths(dname);
+	return dop;
+}
+/* end default_x_display */
 
 static char *x_request_name[128];
 
@@ -660,32 +705,42 @@ static void init_error_names(void)
 
 }
 
-static void identify_x11_request( unsigned char code )
+#define identify_x11_request(code) _identify_x11_request(QSP_ARG  code)
+
+static void _identify_x11_request( QSP_ARG_DECL  unsigned char code )
 {
 	const char *s;
 
-	assert( code < 128 );	// BUG use symbolic constant
+	//assert( code < 128 );	// BUG use symbolic constant
+	if( code >= 128 ){
+		sprintf(ERROR_STRING,
+	"identify_x11_request:  code %d out of range!?",code);
+		advise(ERROR_STRING);
+		return;
+	}
 	s = x_request_name[code];
 	if( s == NULL )
-		NERROR1("identify_x11_request:  undefined code!?");
-	sprintf(DEFAULT_ERROR_STRING,"X11 error in %s:  ",s);
-	NADVISE(DEFAULT_ERROR_STRING);
+		error1("identify_x11_request:  undefined code!?");
+	sprintf(ERROR_STRING,"X11 error in %s:  ",s);
+	advise(ERROR_STRING);
 }
 
-static void identify_x11_error( unsigned char code )
+#define identify_x11_error(code) _identify_x11_error( QSP_ARG  code )
+
+static void _identify_x11_error( QSP_ARG_DECL  unsigned char code )
 {
 	if( code >= N_X11_ERROR_CODES ){
-		sprintf(DEFAULT_ERROR_STRING,"Unexpected X11 error code %d!?",code);
-		NERROR1(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"Unexpected X11 error code %d!?",code);
+		error1(ERROR_STRING);
 	}
-	sprintf(DEFAULT_ERROR_STRING,"%s",x_error_description[code]);
-	NADVISE(DEFAULT_ERROR_STRING);
+	sprintf(ERROR_STRING,"%s",x_error_description[code]);
+	advise(ERROR_STRING);
 }
 
 static int quip_x_error_handler(Display *dpy_p, XErrorEvent *event_p)
 {
-	identify_x11_request( event_p->request_code );
-	identify_x11_error( event_p->error_code );
+	_identify_x11_request( SPECIFIED_QSP_ARG(x_error_qsp)  event_p->request_code );
+	_identify_x11_error( SPECIFIED_QSP_ARG(x_error_qsp)  event_p->error_code );
 	return -1;
 }
 
@@ -698,39 +753,41 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 	if( window_sys_inited ) return;
 
 #ifdef QUIP_DEBUG
-	xdebug = add_debug_module(QSP_ARG  "xsupp");
+	xdebug = add_debug_module("xsupp");
 #endif /* QUIP_DEBUG */
 
 //int (*XSetErrorHandler(handler))()
      // int (*handler)(Display *, XErrorEvent *)
 	init_error_names();
+	x_error_qsp = THIS_QSP;
      	old_handler = XSetErrorHandler(quip_x_error_handler);
-fprintf(stderr,"XSetErrorHandler returned 0x%lx\n",(long)old_handler);
+	if( verbose )
+		fprintf(stderr,"XSetErrorHandler returned 0x%lx\n",(long)old_handler);
 
 
-	add_event_func(QSP_ARG  i_loop);
+	add_event_func(i_loop);
 	set_discard_func( discard_events );
 
 	window_sys_inited=1;
 
-	if( current_dop == NO_DISP_OBJ ){
+	if( current_dop == NULL ){
 		current_dop = default_x_display(SINGLE_QSP_ARG);
-		if( current_dop == NO_DISP_OBJ ){
-			NWARN("Couldn't open default display!?");
+		if( current_dop == NULL ){
+			warn("Couldn't open default display!?");
 			return;
 		}
 	}
 	// Make sure DISPLAY_WIDTH and DISPLAY_HEIGHT are set...
 	// If these have been set in the environment, leave be.
-	vp = var_of(QSP_ARG  "DISPLAY_WIDTH");
+	vp = var_of("DISPLAY_WIDTH");
 	if( vp == NULL ){
 		sprintf(s,"%d",DO_WIDTH(current_dop));
-		ASSIGN_RESERVED_VAR("DISPLAY_WIDTH",s);
+		assign_reserved_var("DISPLAY_WIDTH",s);
 	}
-	vp = var_of(QSP_ARG  "DISPLAY_HEIGHT");
+	vp = var_of("DISPLAY_HEIGHT");
 	if( vp == NULL ){
 		sprintf(s,"%d",DO_HEIGHT(current_dop));
-		ASSIGN_RESERVED_VAR("DISPLAY_HEIGHT",s);
+		assign_reserved_var("DISPLAY_HEIGHT",s);
 	}
 
 	//window_sys_inited=1;
@@ -739,18 +796,18 @@ fprintf(stderr,"XSetErrorHandler returned 0x%lx\n",(long)old_handler);
 #define DEFAULT_DISPLAY_DEPTH	24
 #define ALTERNATE_DISPLAY_DEPTH	8
 
-int display_depth(SINGLE_QSP_ARG_DECL)
+int _display_depth(SINGLE_QSP_ARG_DECL)
 {
-	if( current_dop == NO_DISP_OBJ )
+	if( current_dop == NULL )
 		current_dop = default_x_display(SINGLE_QSP_ARG);
 
-	if( current_dop == NO_DISP_OBJ )
+	if( current_dop == NULL )
 		return(0);
 
 	return( DO_DEPTH(current_dop) );
 }
 
-void show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
+void _show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
 {
 	int nvis,i;
 	XVisualInfo *	vlp;
@@ -758,7 +815,7 @@ void show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
 	vlp=get_vis_list(dop,&nvis);
 
 	sprintf(ERROR_STRING,"%d visuals found:",nvis);
-	ADVISE(ERROR_STRING);
+	advise(ERROR_STRING);
 
 	for(i=0;i<nvis;i++){
 		sprintf(ERROR_STRING,"id %p    screen %d   class %d   depth %d    masks %ld %ld %ld   cmap siz %d   bits_per_rgb %d",
@@ -772,7 +829,7 @@ void show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
 			vlp[i].colormap_size,
 			vlp[i].bits_per_rgb
 			);
-		ADVISE(DEFAULT_ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 }
 

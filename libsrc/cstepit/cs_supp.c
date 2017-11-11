@@ -14,11 +14,16 @@
 #include "list.h"
 #include "variable.h"
 
+#ifdef THREAD_SAFE_QUERY
+// We assume that only one thread will use this at a time...
+static Query_Stack *cs_qsp=NULL;
+#endif // THREAD_SAFE_QUERY
+
 static int n_prms;
 
 /* local variables */
 // BUG not thread-safe
-static float (*stept_user_func)(void);
+static float (*stept_user_func)(SINGLE_QSP_ARG_DECL);
 
 static void init_cstepit_params(SINGLE_QSP_ARG_DECL)
 {
@@ -33,16 +38,16 @@ static void init_cstepit_params(SINGLE_QSP_ARG_DECL)
 	int i,n;
 	int nfmax;		/* max. # function calls */
 
-	lp = opt_param_list(SGL_DEFAULT_QSP_ARG);
-	if( lp == NO_LIST ) return;
+	lp = opt_param_list();
+	if( lp == NULL ) return;
 
 	n_prms=eltcount(lp);
 	n=reset_n_params(n_prms);
 	if( n != n_prms ) n_prms = n;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	i=0;
-	while( np!= NO_NODE && i < n_prms ){
+	while( np!= NULL && i < n_prms ){
 		opp = (Opt_Param *)(np->n_data);
 
 		xmin[i]=opp->minv;
@@ -75,35 +80,42 @@ static void cstepit_scr_funk(void)
 	List *lp;
 	Node *np;
 	double ans[MAX_OPT_PARAMS];
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+    
+	assert(cs_qsp != NULL );
+	qsp = cs_qsp;
+#endif // THREAD_SAFE_QUERY
+
 
 	/* ooh, icky:  getvals fetches global vars from cstepit module... */
 
 	getvals(ans,n_prms);
 
 	if( opt_func_string==NULL ){
-		NWARN("No optimization string defined");
+		warn("No optimization string defined");
 		return;
 	}
 
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	if( lp == NO_LIST ){
-		NWARN("No optimization parameters to vary!?");
+	lp=_opt_param_list(SGL_DEFAULT_QSP_ARG);
+	if( lp == NULL ){
+		warn("No optimization parameters to vary!?");
 		err=0.0;
 		setfobj((double)err);
 		return;
 	}
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	/* stepit has passed us params in the ans array -
 	 * we want to get them into named variables...
 	 */
 	i=0;
-	while(np!=NO_NODE && i < n_prms ){
+	while(np!=NULL && i < n_prms ){
 		Opt_Param *opp;
 
 		opp = (Opt_Param *)( np->n_data);
 		sprintf(str,"%g",ans[i]);	/* why add 1?  fortan? */
-		assign_var(DEFAULT_QSP_ARG  opp->op_name,str);
+		_assign_var(DEFAULT_QSP_ARG  opp->op_name,str);
 		i++;
 		np=np->n_next;
 	}
@@ -121,12 +133,12 @@ static void cstepit_scr_funk(void)
 	 * didn't have a quit after the call to optimize - ???
 	 */
 
-	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
+	digest(opt_func_string, OPTIMIZER_FILENAME);
 	
-	vp=var__of(DEFAULT_QSP_ARG  "error");
-	if( vp == NO_VARIABLE ) {
-		NWARN(DEFAULT_ERROR_STRING);
-		sprintf(DEFAULT_ERROR_STRING,
+	vp=var__of("error");
+	if( vp == NULL ) {
+		warn(ERROR_STRING);
+		sprintf(ERROR_STRING,
 	"variable \"error\" not set by script fragment \"%s\"!?",
 			opt_func_string);
 		err=0.0;
@@ -148,13 +160,20 @@ static void evaluate_error_c(void)
 	int i;
 	List *lp;
 	Node *np;
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+    
+	assert(cs_qsp != NULL );
+	qsp = cs_qsp;
+#endif // THREAD_SAFE_QUERY
+
 
 	getvals(x,n_prms);		/* get the parameter estimates */
 
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	np=lp->l_head;
+	lp=opt_param_list();
+	np=QLIST_HEAD(lp);
 	i=0;
-	while(np!=NO_NODE && i < n_prms ){
+	while(np!=NULL && i < n_prms ){
 		Opt_Param *opp;
 
 		opp = (Opt_Param *)(np->n_data);
@@ -163,12 +182,12 @@ static void evaluate_error_c(void)
 		np=np->n_next;
 	}
 
-	err=(*stept_user_func)();
+	err=(*stept_user_func)(SINGLE_QSP_ARG);
 
 	setfobj(err);
 }
 
-void run_cstepit_c(QSP_ARG_DECL  float (*func)())
+void run_cstepit_c(QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL))
 {
 	init_cstepit_params(SINGLE_QSP_ARG);
 

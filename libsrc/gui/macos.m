@@ -26,16 +26,19 @@
 #include "viewer.h"
 #include "cmaps.h"
 
+//#include <Foundation/NSString.h>
+#include <AppKit/NSButton.h>
+#include <AppKit/NSStringDrawing.h>
+#include <AppKit/NSColor.h>
+#include <AppKit/NSTableView.h>
+#include <AppKit/NSTextContainer.h>
+
 #include "quipWindowController.h"
 
 static NSAlert *fatal_alert_view=NULL;
 static NSAlert *busy_alert_p=NULL;
 static NSAlert *hidden_busy_p=NULL;
 static NSAlert *ending_busy_p=NULL;
-
-
-//static Panel_Obj *last_panel=NO_PANEL_OBJ;
-//static Screen_Obj *find_object(QSP_ARG_DECL  Widget obj);
 
 
 #define PIXELS_PER_CHAR 9	// BUG should depend on font, may not be fixed-width!?
@@ -61,10 +64,10 @@ Screen_Obj *find_any_scrnobj(NSView *cp)
 
 	// Does this return all objects, or just current context stack?
 	lp = all_scrnobjs(SGL_DEFAULT_QSP_ARG);
-	if( lp == NO_IOS_LIST ) return NULL;
+	if( lp == NULL ) return NULL;
 
 	np=IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		sop = (Screen_Obj *)IOS_NODE_DATA(np);
 //fprintf(stderr,"find_any_scrnobj 0x%lx:  %s, ctrl = 0x%lx\n",
 //(u_long)cp,SOB_NAME(sop),(u_long) SOB_CONTROL(sop));
@@ -94,16 +97,16 @@ Panel_Obj *find_panel(QSP_ARG_DECL  quipView *qv)
 	Panel_Obj *po;
 
 	lp=panel_obj_list(SINGLE_QSP_ARG);
-	if( lp == NO_IOS_LIST ) return(NO_PANEL_OBJ);
+	if( lp == NULL ) return(NULL);
 	np=IOS_LIST_HEAD(lp);
-	while( np!=NO_IOS_NODE ){
+	while( np!=NULL ){
 		po = (Panel_Obj *)IOS_NODE_DATA(np);
 		if( PO_QV(po) == qv ){
 			return(po);
 		}
 		np=IOS_NODE_NEXT(np);
 	}
-	return(NO_PANEL_OBJ);
+	return(NULL);
 }
 #endif // FOOBAR
 
@@ -131,7 +134,7 @@ void make_panel(QSP_ARG_DECL  Panel_Obj *po,int w,int h)
 	// check and see if there already is a viewer
 	// with this name
 	Gen_Win *gwp = genwin_of(QSP_ARG  PO_NAME(po) );
-	if( gwp == NO_GENWIN ){
+	if( gwp == NULL ){
 		gwp = make_genwin(QSP_ARG  PO_NAME(po),w,h);
 	}
 	SET_PO_GW(po,gwp);
@@ -185,7 +188,7 @@ void activate_panel(QSP_ARG_DECL  Panel_Obj *po, int yesno)
 	IOS_Node *np;
 
 	lp = PO_CHILDREN(po);
-	if( lp == NO_IOS_LIST ){
+	if( lp == NULL ){
 		WARN("activate_panel:  null widget list!?");
 		return;
 	}
@@ -193,7 +196,7 @@ void activate_panel(QSP_ARG_DECL  Panel_Obj *po, int yesno)
 
 	// It would be better to have a single subview that is the parent
 	// view for all the controls...
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Screen_Obj *sop;
 
 		sop = IOS_NODE_DATA(np);
@@ -356,9 +359,10 @@ static NSTextView * new_label(const char *s, int x, int y, int justification_cod
 	// BUG should cache these things...
 	NSFont *labelFont = [NSFont fontWithName:STRINGOBJ(label_font_name)
 							size:label_font_size];
+    // sizeWithAttributes is documented for UIKit only?
 	NSSize ns_size=[label_string sizeWithAttributes:
 		[NSDictionary dictionaryWithObject:labelFont
-				forKey:NSFontAttributeName]];
+				forKey:NSFontAttributeName]  ];
 	CGSize labelSize = NSSizeToCGSize(ns_size);
 
 	int dy=(int)ceil(labelSize.height);
@@ -1123,7 +1127,7 @@ static void dump_scrnobj_list(IOS_List *lp)
 	IOS_Node *np;
 
 	np = IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Screen_Obj *sop;
 		sop = (Screen_Obj *)IOS_NODE_DATA(np);
 		fprintf(stderr,"\t%s\n",SOB_NAME(sop));
@@ -1150,16 +1154,11 @@ Screen_Obj *find_scrnobj(SOB_CTL_TYPE *cp)
 {
 	IOS_List *lp = [Screen_Obj getListOfAllItems];
 
-#ifdef CAUTIOUS
-	if( lp == NULL ){
-		NWARN("CAUTIOUS:  find_scrnobj:  null item list!?");
-		return NULL;
-	}
-#endif // CAUTIOUS
+	assert( lp != NULL );
 
 	IOS_Node *np;
 	np=IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Screen_Obj *sop = (Screen_Obj *)IOS_NODE_DATA(np);
 
 		if( SOB_CONTROL(sop) == cp )
@@ -1551,13 +1550,7 @@ void end_busy(int final)
 	// it seems that we are getting a callback...
 
 	if( final ){
-#ifdef CAUTIOUS
-		if( ending_busy_p != NULL ){
-			fprintf(stderr,
-			"CAUTIOUS: end_busy:  ending_busy_p is not null!?");
-		}
-#endif // CAUTIOUS
-
+		assert( ending_busy_p == NULL );
 		ending_busy_p = a;
 	}
 
@@ -1591,7 +1584,7 @@ void check_deferred_alert(SINGLE_QSP_ARG_DECL)
 	deferred_alert.msg=NULL;
 }
 
-void simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
+void _simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	generic_alert(QSP_ARG  type,msg);
 }
@@ -1639,7 +1632,7 @@ static void dismiss_normal_alert(Alert_Info *aip)
 	// we now have a stored chunk...
 }
 
-static IOS_List *alert_lp=NO_IOS_LIST;
+static IOS_List *alert_lp=NULL;
 
 void dismiss_quip_alert(NSAlert *alert, NSInteger buttonIndex)
 {
@@ -1707,13 +1700,11 @@ void hide_widget(QSP_ARG_DECL  Screen_Obj *sop, int yesno)
 
 static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
-	if( alert_lp == NO_IOS_LIST ){
-		NWARN("CAUTIOUS:  node_for_alert:  no alert list!?");
-		return NO_IOS_NODE;
-	}
 	IOS_Node *np;
+
+	assert( alert_lp != NULL );
 	np=IOS_LIST_HEAD(alert_lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Alert_Info *ai;
 		ai = (Alert_Info *) IOS_NODE_DATA(np);
 		if( ALERT_INFO_OBJ(ai) == a )
@@ -1721,20 +1712,20 @@ static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 		np = IOS_NODE_NEXT(np);
 	}
 	NWARN("CAUTIOUS:  node_for_alert:  alert not found!?");
-	return NO_IOS_NODE;
+	return NULL;
 }
 
 +(Alert_Info *) alertInfoFor: (QUIP_ALERT_OBJ_TYPE *)a
 {
 	IOS_Node *np;
 	np = node_for_alert(a);
-	if(np==NO_IOS_NODE) return NULL;
+	if(np==NULL) return NULL;
 	return (Alert_Info *) IOS_NODE_DATA(np);
 }
 
 +(void) rememberAlert:(QUIP_ALERT_OBJ_TYPE *)a withType:(Quip_Alert_Type)t
 {
-	if( alert_lp == NO_IOS_LIST )
+	if( alert_lp == NULL )
 		alert_lp = new_ios_list();
 
 	Alert_Info *ai=[[Alert_Info alloc] init];
@@ -1753,21 +1744,14 @@ static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
 	IOS_Node *np;
 	np = node_for_alert(ALERT_INFO_OBJ(self));
-#ifdef CAUTIOUS
-	if( np == NO_IOS_NODE ){
-		return;
-	}
-#endif // CAUTIOUS
+	assert( np != NULL );
 	
 	np = ios_remNode(alert_lp,np);
 
-	if( np == NO_IOS_NODE )
-		NWARN("CAUTIOUS:  forget (Alert_Info):  Error removing alert node from list!?");
-	else {
-		np.data = NULL;		// ARC garbage collection
-					// will clean Alert_Info
-					// is this necessary?
-	}
+	assert( np != NULL );
+	np.data = NULL;		// ARC garbage collection
+				// will clean Alert_Info
+				// is this necessary?
 	rls_ios_node(np);
 }
 

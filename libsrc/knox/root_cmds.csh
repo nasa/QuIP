@@ -3,14 +3,21 @@
 # On different machines, we may have the switcher connected to
 # a different tty port?
 
-if( $HOSTNAME == brewster.arc.nasa.gov ) then
-  set the_tty=/dev/ttyS1
-else if( $HOSTNAME == dirac.arc.nasa.gov ) then
+#if( $HOSTNAME == brewster.arc.nasa.gov ) then
+#  set the_tty=/dev/ttyS1
+#else if( $HOSTNAME == dirac.arc.nasa.gov ) then
+#  set the_tty=/dev/ttyS0
+#else if( $HOSTNAME == purkinje.arc.nasa.gov ) then
+#  set the_tty=/dev/ttyS0
+
+# Don't seem to have documentation for galvo system (poisson?)
+if( $HOSTNAME == poisson.arc.nasa.gov ) then
   set the_tty=/dev/ttyS0
-else if( $HOSTNAME == purkinje.arc.nasa.gov ) then
+else if( $HOSTNAME == wheatstone.arc.nasa.gov ) then
   set the_tty=/dev/ttyS0
 else
   echo root_cmds.csh:  no info about knox serial port for host $HOSTNAME
+  set the_tty=/dev/null
 endif
 
 echo Assuming knox switcher connected to port $the_tty on host $HOSTNAME

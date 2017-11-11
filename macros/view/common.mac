@@ -5,15 +5,15 @@
 Start_File common.mac
 
 Define Viewer_For 2 name image
-#advise "Viewer_For $1 $2"
 Assign vfnc "ncols('$2')"
 Assign vfnr "nrows('$2')"
-#advise "requesding a viewer $vfnc by $vfnr"
 Viewer $1 $vfnc $vfnr
-#Dup_UByte vfbtmp $2
-#Convert vfbtmp $2
-#Show_Bytes vfbtmp $1
-#Delete_Image vfbtmp
+.
+
+Define Zoomed_Viewer_For 3 name image zoom_factor
+Assign vfnc "($3)*ncols('$2')"
+Assign vfnr "($3)*nrows('$2')"
+Viewer $1 $vfnc $vfnr
 .
 
 Define Scale_Gray 1 target
@@ -84,6 +84,7 @@ Delete_Image sgftmp
 .
 
 Define Show_Raw 2 'float image' 'viewer name'
+# We need to insure that this is a CPU object...
 #If !$have_luts "PB_Show_Raw $1 $2 exit_macro"
 # This will fail if the viewer name has spaces in it...
 Set bbname "sr_b.$2"

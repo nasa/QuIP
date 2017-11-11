@@ -587,7 +587,7 @@ static int stream_record_init()
 	else
 		n_channels=1;
 
-	if( init_stream_obj(n_channels) == NO_OBJ ){
+	if( init_stream_obj(n_channels) == NULL ){
 		warn("stream_record_init:  error creating audio stream object");
 		return(-1);
 	}
@@ -766,7 +766,7 @@ static int stream_play_init()
 
 	if(audio_state!=AUDIO_PLAY) audio_init(AUDIO_PLAY);
 
-	if( init_stream_obj(nchannels) == NO_OBJ ){
+	if( init_stream_obj(nchannels) == NULL ){
 		warn("stream_record_init:  error creating audio stream object");
 		return(-1);
 	}

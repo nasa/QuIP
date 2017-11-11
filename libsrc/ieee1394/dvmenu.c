@@ -88,7 +88,7 @@ static void create_frames(void)
 	Frame *frmp;
 	int i;
 
-	if( g_buffer_queue == NO_LIST )
+	if( g_buffer_queue == NULL )
 		g_buffer_queue = new_list();
 
 	i=100;
@@ -159,7 +159,7 @@ static Frame* GetNextFrame(void)
 			//np = remHead(g_output_queue);
 			np = remTail(g_output_queue);
 
-			//np = g_output_queue->l_head;
+			//np = QLIST_HEAD(g_output_queue);
 			frmp = (Frame *)np->n_data;
 			//printf("writer < out: buffer %d, output %d\n",queue_size(g_buffer_queue), queue_size(g_output_queue));
 			// fflush(stdout);
@@ -187,7 +187,7 @@ static void queue_add_elt( List *lp, void *obj )
 	Node *np;
 
 #ifdef CAUTIOUS
-	if( lp == NO_LIST )
+	if( lp == NULL )
 		NERROR1("CAUTIOUS:  Oops - missing queue");
 #endif /* CAUTIOUS */
 
@@ -214,7 +214,7 @@ static void dv_grab(QSP_ARG_DECL  int n)
 {
 	Frame *frmp = NULL;
 
-	if( grab_lp == NO_LIST ) grab_lp = new_list();
+	if( grab_lp == NULL ) grab_lp = new_list();
 
 //sprintf(DEFAULT_ERROR_STRING,"Setting up to capture %d frames",n);
 //advise(DEFAULT_ERROR_STRING);
@@ -282,7 +282,7 @@ void queue_push_back( List *lp, void *obj )
 	Node *np;
 
 #ifdef CAUTIOUS
-	if( lp == NO_LIST )
+	if( lp == NULL )
 		NERROR1("CAUTIOUS:  Oops - missing queue");
 #endif /* CAUTIOUS */
 
@@ -293,21 +293,21 @@ void queue_push_back( List *lp, void *obj )
 
 void *queue_front(List *lp)
 {
-	if( lp == NO_LIST ) return NULL;
-	if( lp->l_head == NO_NODE ) return NULL;
-	return( lp->l_head->n_data );
+	if( lp == NULL ) return NULL;
+	if( QLIST_HEAD(lp) == NULL ) return NULL;
+	return( QLIST_HEAD(lp)->n_data );
 }
 
 void queue_pop_front ( List *lp )
 {
-	if( lp == NO_LIST ) return;
-	if( lp->l_head == NO_NODE ) return;
+	if( lp == NULL ) return;
+	if( QLIST_HEAD(lp) == NULL ) return;
 	remHead(lp);
 }
 
 int queue_size(List *lp)
 {
-	if( lp == NO_LIST ) return 0;
+	if( lp == NULL ) return 0;
 	return eltcount(lp);
 }
 
@@ -451,11 +451,11 @@ static COMMAND_FUNC( do_dv_extract )
 	Node *np;
 	Frame *frmp;
 
-	dp=PICK_OBJ("destination data object");
+	dp=pick_obj("destination data object");
 	n=HOW_MANY("index of stored frame");
 	np = nth_elt(grab_lp,n);
-	if( dp == NO_OBJ ) return;
-	if( np == NO_NODE ) return;
+	if( dp == NULL ) return;
+	if( np == NULL ) return;
 	frmp = (Frame *)np->n_data;
 	// BUG check the size, type, contiguity here
 //sprintf(ERROR_STRING,"do_dv_extract:  frame %d, frmp = 0x%lx",n,(u_long)frmp);
@@ -483,6 +483,6 @@ COMMAND_FUNC( do_dv_menu )
 		g_output_queue = new_list();
 		dv_inited=1;
 	}
-	PUSH_MENU(dv);
+	CHECK_AND_PUSH_MENU(dv);
 }
 

@@ -1,6 +1,5 @@
 #include <stdio.h>		/* NULL */
 #include "data_obj.h"
-#include "query.h"
 
 /* Jeff's attempt to imitate GeoFusion's approach to dynamic LOD management */
 
@@ -129,32 +128,41 @@ extern Tile *del_tile(const char *name);
 extern Tile *pick_tile(const char *prompt);
 #endif /* HASH_TILE_NAMES */
 
-extern Vertex *new_vertex(float,float);
-extern Master_Tile * new_master_tile(Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw);
-extern Tile * new_tile(Tile *parent, Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw, int quadrant);
-extern void subdivide_tile(Tile *tp);
+extern Vertex *_new_vertex(QSP_ARG_DECL  float,float);
+#define new_vertex(x,y) _new_vertex(QSP_ARG  x,y)
+
+extern Master_Tile * _new_master_tile(QSP_ARG_DECL  Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw);
+extern Tile * _new_tile(QSP_ARG_DECL  Tile *parent, Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw, int quadrant);
+extern void _subdivide_tile(QSP_ARG_DECL  Tile *tp);
 extern Tile *add_neighbor(Tile *tp, Cardinal_Direction dir);
 extern void show_tile(QSP_ARG_DECL  Tile *tp, const char *prefix);
 extern void init_dir_names(void);
 
+#define new_tile(parent,nw,ne,se,sw,quadrant) _new_tile(QSP_ARG  parent,nw,ne,se,sw,quadrant)
+#define subdivide_tile(tp) _subdivide_tile(QSP_ARG  tp)
+#define new_master_tile(nw,ne,se,sw) _new_master_tile(QSP_ARG  nw,ne,se,sw)
+
 
 extern COMMAND_FUNC( do_tile_menu );
 
-extern void draw_tile(Tile *tp);
+extern void _draw_tile(QSP_ARG_DECL  Tile *tp);
 extern void undivide_tile(Tile *tp);
 extern void xdraw_master(QSP_ARG_DECL  Master_Tile *tp);
+#define draw_tile(tp) _draw_tile(QSP_ARG  tp)
 
 extern void tile_xform(Tile *tp,Data_Obj *matp);
 extern void master_tile_elevate(QSP_ARG_DECL  Master_Tile *tp);
 extern void master_tile_texture(QSP_ARG_DECL  Master_Tile *tp);
 extern void tile_info(QSP_ARG_DECL  Tile *tp);
-extern void set_dthresh(float);
+extern void _set_dthresh(QSP_ARG_DECL  float);
+#define set_dthresh(f) _set_dthresh(QSP_ARG  f)
 
 #ifdef FOOBAR
 extern void clear_tile_elevations(Tile *tp);
 #endif
 
-extern void tile_check_subdiv(Tile *tp,Data_Obj *matp);
+extern void _tile_check_subdiv(QSP_ARG_DECL  Tile *tp,Data_Obj *matp);
+#define tile_check_subdiv(tp,matp) _tile_check_subdiv(QSP_ARG  tp,matp)
 
 extern void set_coord_limits(float xl, float yb, float xr, float yt );
 

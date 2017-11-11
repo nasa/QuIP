@@ -11,7 +11,6 @@
 #include <math.h>
 
 #include "savestr.h"
-#include "query.h"
 #include "fitsine.h"
 #include "debug.h"
 
@@ -46,22 +45,22 @@ static void new_cstepit_scr_funk()
 
 	new_getvals(ans,n_prms);
 
-	if( opt_func_string==NO_STR ){
-		NWARN("No optimization string defined");
+	if( opt_func_string==NULL ){
+		warn("No optimization string defined");
 		return;
 	}
 
 	lp=opt_param_list();
-	if( lp == NO_LIST ){
-		NWARN("No optimization parameters to vary!?");
+	if( lp == NULL ){
+		warn("No optimization parameters to vary!?");
 		err=0.0;
 		new_setfobj((double)err);
 		return;
 	}
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	i=0;
-	while(np!=NO_NODE && i < n_prms ){
+	while(np!=NULL && i < n_prms ){
 		Opt_Param *opp;
 
 		opp = (Opt_Param *)( np->n_data);
@@ -71,11 +70,11 @@ static void new_cstepit_scr_funk()
 		np=np->n_next;
 	}
 
-	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
+	digest(opt_func_string, OPTIMIZER_FILENAME);
 
 	vp=var__of("error");
-	if( vp == NO_VAR ) {
-		NWARN(error_string);
+	if( vp == NULL ) {
+		warn(error_string);
 		sprintf(error_string,
 	"variable \"error\" not set by script fragment \"%s\"!?",
 			opt_func_string);
@@ -104,9 +103,9 @@ void new_evaluate_error_c()
 	new_getvals(x,n_prms);		/* get the parameter estimates */
 
 	lp=opt_param_list();
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	i=0;
-	while(np!=NO_NODE && i < n_prms ){
+	while(np!=NULL && i < n_prms ){
 		Opt_Param *opp;
 
 		opp = (Opt_Param *)(np->n_data);
@@ -143,15 +142,15 @@ static void new_init_cstepit_params()
 	int nfmax;		/* max. # function calls */
 
 	lp = opt_param_list();
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
 	n_prms=eltcount(lp);
 	n=new_reset_n_params(n_prms);
 	if( n != n_prms ) n_prms = n;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	i=0;
-	while( np!= NO_NODE && i < n_prms ){
+	while( np!= NULL && i < n_prms ){
 		opp = (Opt_Param *)(np->n_data);
 
 		xmin[i]=opp->minv;

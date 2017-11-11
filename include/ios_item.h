@@ -17,8 +17,6 @@
 
 @end
 
-#define NO_IOS_ITEM	((IOS_Item *) NULL)
-
 #define IOS_ITEM_NAME(ip)	ip.name.UTF8String
 #define IOS_ITEM_TYPE_NAME(itp)		IOS_ITEM_NAME(itp)
 
@@ -31,10 +29,8 @@
 
 -(IOS_List *) getListOfItems;
 -(IOS_Item *) check : (NSString *) name;
--(int) list_items;
+-(int) list_items : (FILE *) fp;
 @end
-
-#define NO_IOS_ITEM_CONTEXT		((IOS_Item_Context *)NULL)
 
 @interface IOS_Item_Type : IOS_Item
 
@@ -58,7 +54,7 @@
 -(IOS_Item_Context *) topContext;
 -(int) addItem : (IOS_Item *) ip;
 -(IOS_Item *) delItem : (IOS_Item *) ip;
--(void) list;
+-(void) list : (FILE *) fp;
 
 -(IOS_Item *) get : (NSString *) name;
 -(IOS_Item *) check : (NSString *) name;
@@ -71,12 +67,10 @@
 -(id) initWithName : (NSString *) name;
 
 +(IOS_Item_Type *) get : (NSString *) name;
-+(void) list;
++(void) list : (FILE *) fp;
 +(void) initClass;
 
 @end
-
-#define NO_IOS_ITEM_TYPE	((IOS_Item_Type *)NULL)
 
 #define IOS_IT_NAME(itp)	(itp).name.UTF8String
 #define IOS_IT_CLASS_LIST(itp)	(itp).it_class_lp
@@ -109,62 +103,62 @@ extern IOS_Item_Context *new_ctx(QSP_ARG_DECL  const char *name);
 extern IOS_Item *new_ios_item(QSP_ARG_DECL  IOS_Item_Type *itp, const char *name, int size);
 
 
-#define IOS_ITEM_INIT_PROT(type,stem)				\
+#define IOS_ITEM_INIT_PROT(type,stem)		\
 								\
-extern void init_##stem##s(SINGLE_QSP_ARG_DECL);
+extern void _init_##stem##s(SINGLE_QSP_ARG_DECL);
 
 
 #define IOS_ITEM_NEW_PROT(type,stem)				\
 								\
-extern type *new_##stem(QSP_ARG_DECL  const char *name);
+extern type *_new_##stem(QSP_ARG_DECL  const char *name);
 
 
 #define IOS_ITEM_PICK_PROT(type,stem)				\
 								\
-extern type *pick_##stem(QSP_ARG_DECL  const char *pmpt);
+extern type *_pick_##stem(QSP_ARG_DECL  const char *pmpt);
 
 
 #define IOS_ITEM_DEL_PROT(type,stem)				\
 								\
-extern type *del_##stem(QSP_ARG_DECL  type *ip);
+extern type *_del_##stem(QSP_ARG_DECL  type *ip);
 
 
 #define IOS_ITEM_GET_PROT(type,stem)				\
 								\
-extern type *get_##stem(QSP_ARG_DECL  const char *name);
+extern type *_get_##stem(QSP_ARG_DECL  const char *name);
 
 
 #define IOS_ITEM_CHECK_PROT(type,stem)				\
 								\
-extern type *stem##_of(QSP_ARG_DECL  const char *name);
+extern type *_##stem##_of(QSP_ARG_DECL  const char *name);
 
 
 #define IOS_ITEM_ENUM_PROT(type,stem)				\
 								\
-extern IOS_List *stem##_list(SINGLE_QSP_ARG_DECL );
+extern IOS_List *_##stem##_list(SINGLE_QSP_ARG_DECL );
 
 
 #define IOS_ITEM_LIST_PROT(type,stem)				\
 								\
-extern void list_##stem##s(SINGLE_QSP_ARG_DECL);
+extern void _list_##stem##s(QSP_ARG_DECL  FILE *);
 
 
 
 #define IOS_ITEM_NEW_FUNC(type,stem)				\
 								\
-type *new_##stem(QSP_ARG_DECL  const char *name)		\
+type *_new_##stem(QSP_ARG_DECL  const char *name)		\
 {								\
 	IOS_Item *ip;						\
 								\
-	if( stem##_itp == NO_IOS_ITEM_TYPE ){			\
-		init_##stem##s(SINGLE_QSP_ARG);			\
+	if( stem##_itp == NULL ){				\
+		init_##stem##s();			\
 	}							\
-	ip = stem##_of(QSP_ARG  name);				\
-	if( ip != NO_IOS_ITEM ){				\
+	ip = stem##_of(name);				\
+	if( ip != NULL ){					\
 		sprintf(ERROR_STRING,"new_%s:  \"%s\" already exists!?", \
 			#stem,name);				\
 		WARN(ERROR_STRING);				\
-		return((type *)NO_IOS_ITEM);			\
+		return((type *)NULL);				\
 	}							\
 	type *stem##_p=[[type alloc] initWithName:		\
 			STRINGOBJ(name) ];			\
@@ -174,32 +168,32 @@ type *new_##stem(QSP_ARG_DECL  const char *name)		\
 
 #define IOS_ITEM_DEL_FUNC(type,stem)				\
 								\
-type *del_##stem(QSP_ARG_DECL  type *ip)			\
+type *_del_##stem(QSP_ARG_DECL  type *ip)			\
 {								\
 	type *stem##_p;						\
 								\
-	stem##_p = stem##_of(QSP_ARG  ip.name.UTF8String);	\
+	stem##_p = stem##_of(ip.name.UTF8String);	\
 	if( stem##_p == NULL ){					\
 		/* BUG print warning */				\
 		return stem##_p;				\
 	}							\
-	del_ios_item(QSP_ARG  stem##_itp, stem##_p );		\
+	del_ios_item(stem##_itp, stem##_p );		\
 	return stem##_p;					\
 }
 
 
 #define IOS_ITEM_CHECK_FUNC(type,stem)				\
 								\
-type *stem##_of(QSP_ARG_DECL  const char *name)			\
+type *_##stem##_of(QSP_ARG_DECL  const char *name)			\
 {								\
 	return (type *)[stem##_itp check: STRINGOBJ(name) ];	\
 }
 
 // This init_func definition used to set up the itp,
 // but this is already done in the initClass method!?
-#define IOS_ITEM_INIT_FUNC(type,stem)				\
+#define IOS_ITEM_INIT_FUNC(type,stem,container_type)		\
 								\
-void init_##stem##s(SINGLE_QSP_ARG_DECL)			\
+void _init_##stem##s(SINGLE_QSP_ARG_DECL)			\
 {								\
 	[type initClass];					\
 	/*stem##_itp = [[IOS_Item_Type alloc]			\
@@ -208,32 +202,32 @@ void init_##stem##s(SINGLE_QSP_ARG_DECL)			\
 
 #define IOS_ITEM_GET_FUNC(type,stem)				\
 								\
-type *get_##stem(QSP_ARG_DECL  const char *name)		\
+type *_get_##stem(QSP_ARG_DECL  const char *name)		\
 {								\
 	return (type *)[stem##_itp get: STRINGOBJ(name) ];	\
 }
 
 #define IOS_ITEM_PICK_FUNC(type,stem)				\
 								\
-type *pick_##stem(QSP_ARG_DECL  const char *pmpt)		\
+type *_pick_##stem(QSP_ARG_DECL  const char *pmpt)		\
 {								\
-	if( stem##_itp == NO_IOS_ITEM_TYPE )			\
-		init_##stem##s(SINGLE_QSP_ARG);			\
-	return (type *)pick_ios_item(QSP_ARG  stem##_itp, pmpt);	\
+	if( stem##_itp == NULL )				\
+		init_##stem##s();			\
+	return (type *)pick_ios_item(stem##_itp, pmpt);	\
 }
 
 #define IOS_ITEM_LIST_FUNC(type,stem)				\
 								\
-void list_##stem##s(SINGLE_QSP_ARG_DECL)			\
+void _list_##stem##s(QSP_ARG_DECL  FILE *fp)			\
 {								\
-	if( stem##_itp == NO_IOS_ITEM_TYPE )			\
-		init_##stem##s(SINGLE_QSP_ARG);			\
-	[stem##_itp list];					\
+	if( stem##_itp == NULL )				\
+		init_##stem##s();				\
+	[stem##_itp list:fp];					\
 }
 
 #define IOS_ITEM_ENUM_FUNC(type,stem)				\
 								\
-IOS_List * stem##_list(SINGLE_QSP_ARG_DECL)			\
+IOS_List * _##stem##_list(SINGLE_QSP_ARG_DECL)			\
 {								\
 	return [stem##_itp getListOfItems];			\
 }
@@ -253,11 +247,20 @@ IOS_ITEM_INIT_PROT(IOS_Item_Type,ios_item_type)
 IOS_ITEM_NEW_PROT(IOS_Item_Type,ios_item_type)
 IOS_ITEM_CHECK_PROT(IOS_Item_Type,ios_item_type)
 
+#define init_ios_item_types()		_init_ios_item_types(SINGLE_QSP_ARG)
+#define new_ios_item_type(s)		_new_ios_item_type(QSP_ARG  s)
+#define ios_item_type_of(s)		_ios_item_type_of(QSP_ARG  s)
+
+
 IOS_ITEM_INIT_PROT(IOS_Item_Context,ios_ctx)
 IOS_ITEM_NEW_PROT(IOS_Item_Context,ios_ctx)
 IOS_ITEM_CHECK_PROT(IOS_Item_Context,ios_ctx)
 IOS_ITEM_DEL_PROT(IOS_Item_Context,ios_ctx)
 
+#define init_ios_ctxs()		_init_ios_ctxs(SINGLE_QSP_ARG)
+#define new_ios_ctx(s)		_new_ios_ctx(QSP_ARG  s)
+#define ios_ctx_of(s)		_ios_ctx_of(QSP_ARG  s)
+#define del_ios_ctx(s)		_del_ios_ctx(QSP_ARG  s)
 
 @interface IOS_Item_Class : IOS_Item
 
@@ -267,8 +270,6 @@ IOS_ITEM_DEL_PROT(IOS_Item_Context,ios_ctx)
 +(void) initClass;
 
 @end
-
-#define NO_IOS_ITEM_CLASS	((IOS_Item_Class *)NULL)
 
 // flag bits
 // these are the same as regular classes...
@@ -288,9 +289,6 @@ IOS_ITEM_DEL_PROT(IOS_Item_Context,ios_ctx)
 @property void *			member_data;	// this is used a table of size functions, for example
 @property IOS_Item *		(*member_lookup)(QSP_ARG_DECL  const char *);
 @end
-
-
-#define NO_IOS_MEMBER_INFO	((IOS_Member_Info *)NULL)
 
 #define IOS_MBR_ITP(mip)	(mip).member_itp
 #define IOS_MBR_DATA(mip)	(mip).member_data

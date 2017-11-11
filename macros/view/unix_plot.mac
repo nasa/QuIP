@@ -81,7 +81,7 @@ Delete_Image save_buf
 # hack we have put in a 100 msec delay here...
 
 Define Get_Legend_Image 1 string
-If $plot_foreground>=0 "advise 'Get_Legend_Image setting default foreground color' Select_Pen $plot_foreground"
+If $plot_foreground>=0 "Select_Pen $plot_foreground"
 Image save_buf nrows('$the_plotter') ncols('$the_plotter') depth('$DISPLAY')/8 u_byte
 #usleep 300000
 #advise 'Type ^D when window is visible...'
@@ -92,6 +92,7 @@ view
   #draw $the_plotter clear quit	# doesn't erase list?  Yes it does!!!
   extract save_buf $the_plotter 0 0
   quit
+# BUG this doesn't erase a previous x legend???
 X_Legend $1
 
 # Now we need to figure out more-or-less where it is!
@@ -211,12 +212,14 @@ Set iso_rev 8859
 #Set unit_font   -adobe-times-bold-r-normal--14-140-75-75-p-77-iso8859-1
 #Set legend_font -adobe-times-bold-r-normal--25-180-100-100-p-132-iso10646-1
 
-# this has been the default...
-# but these fonts are missing on Ubuntu???
-Set unit_font "-adobe-times-bold-r-normal--14-100-100-100-p-76-iso${iso_rev}-1"
-Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
-Validate_Fonts
-If $fonts_present exit_macro
+## this has been the default...
+## but these fonts are missing on Ubuntu???
+#Set unit_font "-adobe-times-bold-r-normal--14-100-100-100-p-76-iso${iso_rev}-1"
+##Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
+#Set legend_font "-adobe-times-bold-r-normal--34-240-75-75-p-132-iso${iso_rev}-1"
+#Print legend_font
+#Validate_Fonts
+#If $fonts_present exit_macro
 
 # do these work on wheatstone?
 #Set unit_font "-urw-nimbus roman no9 l-bold-i-normal--0-0-0-0-p-0-iso8859-13"
@@ -224,7 +227,9 @@ If $fonts_present exit_macro
 
 # these work on wheatstone...
 Set unit_font "-adobe-times-bold-r-normal--14-140-75-75-p-77-iso${iso_rev}-1"
+#Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
 Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
+#Print legend_font
 Validate_Fonts
 If $fonts_present exit_macro
 

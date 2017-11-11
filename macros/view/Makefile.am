@@ -6,6 +6,8 @@ macrosdir	=	$(datadir)/quip/macros/view
 macros_DATA	=	adjuster.mac		\
 			anstis_demo.mac		\
 			common.mac		\
+			def_viewers.scr		\
+			def8.scr		\
 			dither.mac		\
 			dpysize.scr		\
 			fb.mac			\
@@ -17,6 +19,7 @@ macros_DATA	=	adjuster.mac		\
 			luts.mac		\
 			opt_ht.mac		\
 			oscope.mac		\
+			plot_gui.mac		\
 			plot_utils.mac		\
 			plotsupp.mac		\
 			unix_plot.mac		\

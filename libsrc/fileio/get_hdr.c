@@ -31,10 +31,12 @@
 
 #define LINES 100
 
-static int fh_err(Header *hd,const char *s)
+#define fh_err(hd,s) _fh_err(QSP_ARG  hd,s)
+
+static int _fh_err(QSP_ARG_DECL  Header *hd,const char *s)
 {
-	NWARN("error reading HIPS file header:");
-	NWARN(s);
+	warn("error reading HIPS file header:");
+	warn(s);
 	return(0);
 }
 
@@ -157,7 +159,7 @@ if( debug ) advise("saving sequence history");
 	hd->seq_history = s;
 
 	/* get sequence description */
-	s2=savestr("");
+	s2=save_possibly_empty_str("");
 	while(1) {
 		if( (s=gtline(fd)) == NULL ) return( fh_err(hd,"no seq desc") );
 		if( (!strcmp(s,".\n")) || (!strcmp(s,".\r")) ){

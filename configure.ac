@@ -63,16 +63,6 @@ AC_ARG_ENABLE([thread-safe-query],
 	[ thread_safe_query=${enableval}], [thread_safe_query=no])
 
 
-# This flag causes escape to custom assembler code - not tested with
-# optimizer, probably better to get the compiler to do this?
-
-# disable sse extensions by default (although compiler may use them?)
-
-AC_ARG_ENABLE([sse-extensions],
-	[AS_HELP_STRING([--enable-sse-extensions],
-		[enable use of SSE extensions@<:@default: yes@:>@])],
-	[ use_sse=${enableval}], [use_sse=no])
-
 # disable multiprocessing by default
 
 AC_ARG_ENABLE([n-processors],
@@ -259,6 +249,11 @@ AC_ARG_ENABLE([opencv],
 	[AS_HELP_STRING([--disable-opencv],[disable OpenCV support@<:@default: no@:>@])],
 	[ use_opencv=${enableval}], [use_opencv=yes])
 
+# Enable FANN by default:
+AC_ARG_ENABLE([use_fann],
+	[AS_HELP_STRING([--disable-fann],[disable support for neural networks w/ libfann@<:@default: no@:>@])],
+	[ use_fann=${enableval}], [use_fann=yes])
+
 # Enable fileio by default:
 AC_ARG_ENABLE([use_fileio],
 	[AS_HELP_STRING([--disable-fileio],[disable support for image file I/O@<:@default: no@:>@])],
@@ -302,7 +297,6 @@ if test "x${minimal_build}" = xyes; then
 	# their defaults, we might print a warning?
 	async_exec=no
 	thread_safe_query=no
-	use_sse=no
 	n_processors=1
 	use_rawvol=no
 	use_v4l2=no
@@ -389,8 +383,9 @@ echo Found cuda software in $cuda_dir
       export PATH
       AC_CHECK_FILE([$cuda_dir/samples],[nv_sdk_dir="$cuda_dir/samples"],[nv_sdk_dir="no"])
 
-      nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
-      CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
+      nv_sdk_incdir="$nv_sdk_dir/common/inc"
+echo Including $nv_sdk_incdir
+      CPPFLAGS="$CPPFLAGS -I$nv_sdk_incdir"
 
       AC_CHECK_FILE([$cuda_dir/samples/common/lib/darwin],
 	  [nv_sdk_libdir="$cuda_dir/samples/common/lib/darwin"],
@@ -399,7 +394,7 @@ echo Found cuda software in $cuda_dir
       if test "x${nv_sdk_libdir}" = xno; then
         have_nv_sdk=no
       else
-#echo Adding nvidia SDK libdir $nv_sdk_libdir - 1
+echo Adding nvidia SDK libdir $nv_sdk_libdir - 1
         LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
         have_nv_sdk=yes
       fi
@@ -407,191 +402,39 @@ echo Found cuda software in $cuda_dir
     fi
   else # ! cuda_on_mac
 
-  AC_CHECK_FILE([/usr/local/cuda/include],[CPPFLAGS="$CPPFLAGS -I/usr/local/cuda/include"])
-
-  AC_CHECK_FILE([/usr/local/cuda-7.0],[have_cuda7="yes"],[have_cuda7="no"])
-
-  AC_CHECK_FILE([/usr/local/cuda-6.0],[have_cuda6="yes"],[have_cuda6="no"])
-  if test "x${have_cuda6}" = xno; then
-    AC_CHECK_FILE([/usr/local/cuda6],[have_cuda6="yes"],[have_cuda6="no"])
-  fi
-
-  if test "x${have_cuda6}" = xno; then
-    AC_CHECK_FILE([/usr/local/cuda-5.0],[have_cuda5="yes"],[have_cuda5="no"])
-    if test "x${have_cuda5}" = xno; then
-      AC_CHECK_FILE([/usr/local/cuda5],[have_cuda5="yes"],[have_cuda5="no"])
-    fi
-  fi
-
-  if test "x${have_cuda7}" = xyes; then
-    PATH=$PATH:/usr/local/cuda-7.0/bin
-    export PATH
-    AC_CHECK_FILE([/usr/local/cuda/samples],[nv_sdk_dir="/usr/local/cuda/samples"],[nv_sdk_dir="no"])
-    if test "x${nv_sdk_dir}" = xno; then
-      have_nv_sdk=no
-    else	# sdk dir found
-      nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
-      CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-      if test "x${nv_sdk_libdir}" = xno; then
-        have_nv_sdk=no
-      else
-#echo Adding nvidia SDK libdir $nv_sdk_libdir - 2
-        LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
-        have_nv_sdk=yes
-      fi
-    fi
-  else	# ! have_cuda7
+    AC_CHECK_FILE([/usr/local/cuda],[have_cuda="yes"],[have_cuda="no"])
 
 
-  if test "x${have_cuda6}" = xyes; then
-    # not sure what to do?
-    #echo Cuda 5 found...
-    PATH=$PATH:/usr/local/cuda6/bin
-    export PATH
-    AC_CHECK_FILE([/usr/local/cuda/samples],[nv_sdk_dir="/usr/local/cuda/samples"],[nv_sdk_dir="no"])
-    if test "x${nv_sdk_dir}" = xno; then
-      have_nv_sdk=no
-    else	# sdk dir found
-      nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
-      CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-  
-     AC_CHECK_FILE([/usr/local/cuda/samples/common/lib/darwin],
-	  [nv_sdk_libdir="/usr/local/cuda/samples/common/lib/darwin"],
-          [nv_sdk_libdir="no"])
-      if test "x${nv_sdk_libdir}" = xno; then
-        AC_CHECK_FILE([/usr/local/cuda/samples/common/lib/linux/x86_64],
-        [nv_sdk_libdir="/usr/local/cuda/samples/common/lib/linux/x86_64"],
-        [nv_sdk_libdir="no"])
-      fi
-      if test "x${nv_sdk_libdir}" = xno; then
-        have_nv_sdk=no
-      else
-#echo Adding nvidia SDK libdir $nv_sdk_libdir - 3
-        LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
-        have_nv_sdk=yes
-      fi
-    fi
-
-  else	# ! have_cuda6
-
-    if test "x${have_cuda5}" = xyes; then
-      # not sure what to do?
-      PATH=$PATH:/usr/local/cuda5/bin
-      #export PATH
-      #echo Cuda 5 found...
+    if test "x${have_cuda}" = xyes; then
+      AC_CHECK_FILE([/usr/local/cuda/include],[CPPFLAGS="$CPPFLAGS -I/usr/local/cuda/include"])
+      PATH=$PATH:/usr/local/cuda/bin
+      export PATH
       AC_CHECK_FILE([/usr/local/cuda/samples],[nv_sdk_dir="/usr/local/cuda/samples"],[nv_sdk_dir="no"])
       if test "x${nv_sdk_dir}" = xno; then
         have_nv_sdk=no
-      else
-        nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
-	# which directories are needed by gcc vs. nvcc???  BUG?
-        CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-  
-        AC_CHECK_FILE([/usr/local/cuda/samples/common/lib/darwin],
-  	  [nv_sdk_libdir="/usr/local/cuda/samples/common/lib/darwin"],
-  	  [nv_sdk_libdir="no"])
-        if test "x${nv_sdk_libdir}" = xno; then
-  	  AC_CHECK_FILE([/usr/local/cuda/samples/common/lib/linux/x86_64],
-  	    [nv_sdk_libdir="/usr/local/cuda/samples/common/lib/linux/x86_64"],
-  	    [nv_sdk_libdir="no"])
-        fi
-        if test "x${nv_sdk_libdir}" = xno; then
+      else	# sdk dir found
+        AC_CHECK_FILE([/usr/local/cuda/samples/common/lib/linux/x86_64],[nv_sdk_libdir="/usr/local/cuda/samples/common/lib/linux/x86_64"],[nv_sdk_libdir="no"])
+        AC_CHECK_FILE([/usr/local/cuda/samples/common/inc],[nv_sdk_incdir="/usr/local/cuda/samples/common/inc"],[nv_sdk_incdir="no"])
+        if test "x${nv_sdk_incdir}" = xno; then
           have_nv_sdk=no
-        else
-#echo Adding nvidia SDK libdir $nv_sdk_libdir - 4
-          LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
-          have_nv_sdk=yes
+	else
+          CPPFLAGS="$CPPFLAGS -I$nv_sdk_incdir"
+          if test "x${nv_sdk_libdir}" = xno; then
+            have_nv_sdk=no
+          else
+echo Adding nvidia SDK libdir $nv_sdk_libdir - 2
+            LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
+            have_nv_sdk=yes
+	  fi
         fi
       fi
-    else	# ! have_cuda5
-      # cuda4...
-      AC_CHECK_FILE([/usr/local/cuda/NVIDIA_GPU_Computing_SDK],[gpu_sdk_dir="/usr/local/cuda/NVIDIA_GPU_Computing_SDK"],[gpu_sdk_dir="no"])
-#echo gpu_sdk_dir = $gpu_sdk_dir
-  #    if test "x${gpu_sdk_dir}" = xno; then
-  #      AC_CHECK_FILE([/usr/local/cuda/CUDAToolsSDK],[gpu_sdk_dir="/usr/local/cuda/CUDAToolsSDK"],[gpu_sdk_dir="no"])
-  #    fi
-      if test "x${gpu_sdk_dir}" = xno; then
-        # BUG - jbm creating a symbolic link with an underscore replacing the space,
-        # because the space screwed up some of the scripts later on...
-        AC_CHECK_FILE([/Developer/GPU_Computing],[gpu_sdk_dir="/Developer/GPU_Computing"],[gpu_sdk_dir="no"])
-      fi
-      if test "x${gpu_sdk_dir}" = xno; then
-        AC_CHECK_FILE([/usr/local/cuda/NVIDIA_CUDA_SDK],[cuda_sdk_dir="/usr/local/cuda/NVIDIA_CUDA_SDK"],[cuda_sdk_dir="no"])
-      fi
-  #      if test "x${cuda_sdk_dir}" = xno; then
-  #        AC_CHECK_FILE([$HOME/NVIDIA_GPU_Computing_SDK],[gpu_sdk_dir="$HOME/NVIDIA_GPU_Computing_SDK"],[gpu_sdk_dir="no"])
-  #      fi
-  
-      if test "x${gpu_sdk_dir}" = xno; then
-        if test "x${cuda_sdk_dir}" = xno; then
-          have_nv_sdk=no
-        else
-          nv_sdk_inc_dir="$cuda_sdk_dir/common/inc"
-          CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-          NVCCFLAGS="-I$nv_sdk_inc_dir"
-          AC_SUBST(NVCCFLAGS,["$NVCCFLAGS"])
-          have_nv_sdk=yes
-          AC_CHECK_FILE([$cuda_sdk_dir/common/lib/linux],
-      			  [have_cuda_sdk_libdir=yes],
-      			  [have_cuda_sdk_libdir=no])
-          if test "x${have_cuda_sdk_libdir}" = xyes; then
-#echo Adding cuda SDK libdir $cuda_sdk_dir - 5
-            LDFLAGS="$LDFLAGS -L$cuda_sdk_dir/common/lib/linux"
-          fi
-        fi
-      else
-        nv_sdk_inc_dir="$gpu_sdk_dir/C/common/inc"
-        CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-        NVCCFLAGS="-I$nv_sdk_inc_dir"
-        AC_SUBST(NVCCFLAGS,["$NVCCFLAGS"])
-        have_nv_sdk=yes
-        # BUG - when we found $gpu_sdk_dir, we should know enough to know whether
-        # we are on a mac or not...
-        AC_CHECK_FILE([$gpu_sdk_dir/shared/lib/linux],
-      			  [have_cuda_sdk_libdir=yes],
-      			  [have_cuda_sdk_libdir=no])
-        if test "x${have_cuda_sdk_libdir}" = xyes; then
-#echo Adding cuda SDK libdir $gpu_sdk_dir - 6
-          LDFLAGS="$LDFLAGS -L$gpu_sdk_dir/shared/lib/linux"
-        else
-          AC_CHECK_FILE([$gpu_sdk_dir/shared/lib/darwin],
-      			  [have_cuda_sdk_libdir=yes],
-      			  [have_cuda_sdk_libdir=no])
-          if test "x${have_cuda_sdk_libdir}" = xyes; then
-#echo Adding cuda SDK libdir $gpu_sdk_dir - 7
-            LDFLAGS="$LDFLAGS -L$gpu_sdk_dir/shared/lib/darwin"
-          fi
-        fi
-      fi
-    fi		# ! have_cuda5
-  fi		# ! have_cuda6
-  fi		# ! have_cuda7
+    fi # have_cuda
   fi		# ! cuda_on_mac
 else		# ! use_cuda
   have_cuda_sdk_libdir=no
   have_nv_sdk=no
   nv_sdk_libdir=no
 fi
-
-## copied code from above, but this here for iMac 5.5 case...
-#    if test "x${nv_sdk_dir}" = xno; then
-#      have_nv_sdk=no
-#    else	# sdk dir found
-#echo nv_sdk_dir = $nv_sdk_dir
-#      nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
-#      CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-#      if test "x${nv_sdk_libdir}" = xno; then
-#        have_nv_sdk=no
-#      else
-#echo Adding nvidia SDK libdir $nv_sdk_libdir - 8
-#        LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
-#        have_nv_sdk=yes
-#      fi
-#    fi
-#
-## Check for odd lib directories
-#echo After nvidia checks, LDFLAGS = $LDFLAGS
-
 
 #################################################
 #						#
@@ -603,8 +446,9 @@ fi
 # we had a version mismatch problem with libpng (which seems
 # to exist in /opt/X11...).
 
-AC_CHECK_FILE([/sw/include],[CPPFLAGS="$CPPFLAGS -I/sw/include"])
-AC_CHECK_FILE([/sw/lib/ffmpeg-2.4/include],[CPPFLAGS="$CPPFLAGS -I/sw/lib/ffmpeg-2.4/include"])
+# use homebrew instead of fink?
+#AC_CHECK_FILE([/sw/include],[CPPFLAGS="$CPPFLAGS -I/sw/include"])
+#AC_CHECK_FILE([/sw/lib/ffmpeg-2.4/include],[CPPFLAGS="$CPPFLAGS -I/sw/lib/ffmpeg-2.4/include"])
 
 # Check for odd include directories
 if test "x${use_x11}" = xyes; then
@@ -614,7 +458,10 @@ fi
 
 # must come before compiler stuff
 # This allows us to use GNU stuff, e.g. O_DIRECT...
+
+echo calling ac_gnu_source
 AC_GNU_SOURCE
+echo DONE calling ac_gnu_source
 
 #################################################
 #
@@ -644,16 +491,16 @@ fi
 #
 ##################################################
 
-AC_CHECK_FILE([/sw/lib],[LDFLAGS="$LDFLAGS -L/sw/lib"])
-AC_CHECK_FILE([/sw/lib/ffmpeg-2.4/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.4/lib"])
-# fink puts this stuff here...
-# We should probably not use both!?
-AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-1.2/lib"])
-# We haven't ported to the newer library yet, so we prefer the old one
+#AC_CHECK_FILE([/sw/lib],[LDFLAGS="$LDFLAGS -L/sw/lib"])
+#AC_CHECK_FILE([/sw/lib/ffmpeg-2.4/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.4/lib"])
+## fink puts this stuff here...
+## We should probably not use both!?
+#AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-1.2/lib"])
+## We haven't ported to the newer library yet, so we prefer the old one
 
-if test "x${ac_cv_file__sw_lib_ffmpeg_1_2_lib}" = xno; then
-  AC_CHECK_FILE([/sw/lib/ffmpeg-2.0/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.0/lib"])
-fi
+#if test "x${ac_cv_file__sw_lib_ffmpeg_1_2_lib}" = xno; then
+#  AC_CHECK_FILE([/sw/lib/ffmpeg-2.0/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.0/lib"])
+#fi
 
 # this is for Ubuntu...
 AC_CHECK_FILE([/usr/lib/x86_64-linux-gnu],[LDFLAGS="$LDFLAGS -L/usr/lib/x86_64-linux-gnu"])
@@ -662,7 +509,7 @@ AC_CHECK_FILE([/usr/lib64],[LDFLAGS="$LDFLAGS -L/usr/lib64"])
 AC_CHECK_FILE([/usr/local/lib],[LDFLAGS="$LDFLAGS -L/usr/local/lib"])
 AC_CHECK_FILE([/usr/local/include],[CPPFLAGS="$CPPFLAGS -I/usr/local/include"])
 AC_CHECK_FILE([/usr/include/ffmpeg],[CPPFLAGS="$CPPFLAGS -I/usr/include/ffmpeg"])
-AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/include],[CPPFLAGS="$CPPFLAGS -I/sw/lib/ffmpeg-1.2/include"])
+#AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/include],[CPPFLAGS="$CPPFLAGS -I/sw/lib/ffmpeg-1.2/include"])
 
 # ffmpeg headers may be installed under /usr/include OR /usr/include/ffmpeg...
 AC_CHECK_FILE([/usr/include/ffmpeg],[CPPFLAGS="$CPPFLAGS -I/usr/include/ffmpeg"])
@@ -709,6 +556,9 @@ fi
 # check for raw volume
 if test "x${use_rawvol}" = xyes; then
   AC_CHECK_FILE([/dev/rawvol],[have_rawvol=yes],[have_rawvol=no])
+  if test "x${have_rawvol}" = xno; then
+    AC_CHECK_FILE([/dev/rawvol-disk1],[have_rawvol=yes],[have_rawvol=no])
+  fi
 fi
 
 # check for knox video switcher
@@ -749,6 +599,10 @@ TAR_OPTIONS+=--numeric-owner
 # bison -y ?
 AC_CHECK_PROGS(YACC,'bison -y' byacc yacc,[AM_MISSING_PROG(yacc)])
 
+# these didn't work
+#: ${CFLAGS="-g -O0"}
+#: ${CXXFLAGS="-g -O0"}
+
 # Check for compilers
 AC_PROG_CC
 AC_PROG_CC_C99
@@ -759,8 +613,10 @@ AM_PROG_CC_C_O
 # Check for install
 AC_PROG_INSTALL
 
-# Check for ranlib
+# Check for ranlib and ar
 AC_PROG_RANLIB
+# AM_PROG_AR not recognized on CentOS 6 ???
+#AM_PROG_AR
 
 # Check for - what?
 AM_PROG_CC_C_O
@@ -804,6 +660,7 @@ NVCC=ls	# to prevent a syntax error later, if use_cuda is no
 if test "x${use_cuda}" = xyes; then
   AC_ARG_VAR([NVCC], [nvcc compiler to use])
   AC_PATH_PROG([NVCC], [nvcc], [no])
+echo NVCC = $NVCC
   if test "x$NVCC" != "xno"; then
     AC_MSG_CHECKING([whether nvcc works])
     cat>nvcc_test.cu<<EOF
@@ -859,6 +716,9 @@ AM_CONDITIONAL([HAVE_NVCC], [test "x$working_nvcc" = "xyes"])
 # with permissions 400 - this causes the test program to
 # return 0 devices!?
 
+# On mac OSX 10.12 (Sierra), we don't seem to have the /dev/nvidia files,
+# but everything seems to work OK...
+
 have_nvidia0=no
 if test "x$working_nvcc" == xyes; then
   AC_MSG_CHECKING([for /dev/nvidia0])
@@ -874,7 +734,12 @@ if test "x$working_nvcc" == xyes; then
       AC_MSG_RESULT([present but is not readable])
     fi
   else
-   AC_MSG_RESULT([not present])
+    AC_MSG_RESULT([not present])
+    # Don't need the dev file on Mac OSX ?
+    if test "x$os_is_darwin" == xyes; then
+      AC_MSG_NOTICE([Assuming CUDA will work without /dev/nvidia0 on Mac OSX])
+      have_nvidia0=yes
+    fi
   fi
 fi
 have_nvidiactl=no
@@ -892,10 +757,15 @@ if test "x$have_nvidia0" == xyes; then
       AC_MSG_RESULT([present but is not readable])
     fi
   else
-   AC_MSG_RESULT([not present])
+    AC_MSG_RESULT([not present])
+    if test "x$os_is_darwin" == xyes; then
+      AC_MSG_NOTICE([Assuming CUDA will work without /dev/nvidiactl on Mac OSX])
+      have_nvidiactl=yes
+    fi
   fi
 fi
 have_cuda_device=no
+
 if test "x$working_nvcc" == xyes; then
   if test "x$have_nvidiactl" == xyes; then
     AC_MSG_CHECKING([for CUDA-capable device])
@@ -941,25 +811,29 @@ EOF
   # but rpath may be a Mac-ism, and not work on linux?
   # -rpath is not recognized on linux, try -R...
 
+    # On a new CentOS installation, can't execute the program in /tmp!?
+    #tmp_dir = /tmp
+    tmp_dir=.		# BUG - build_dir???
+
     if test "x${host_vendor}" = xapple; then
-      if $CC -o /tmp/gpu_test $CPPFLAGS $LDFLAGS -rpath /usr/local/cuda/lib gpu_check.c -lcudart # 2> /dev/null
+      if $CC -o $tmp_dir/gpu_test $CPPFLAGS $LDFLAGS -rpath /usr/local/cuda/lib gpu_check.c -lcudart # 2> /dev/null
       then
-        comp_cap=`/tmp/gpu_test`
-        #rm -f /tmp/gpu_test
+        comp_cap=`$tmp_dir/gpu_test`
+        rm -f $tmp_dir/gpu_test
       else
         comp_cap=0.0
       fi
     else
       # Not apple
-      if $CC $CPPFLAGS $LDFLAGS -o /tmp/gpu_test gpu_check.c -lcudart # 2> /dev/null
+      if $CC $CPPFLAGS $LDFLAGS -o $tmp_dir/gpu_test gpu_check.c -lcudart # 2> /dev/null
       then
-        comp_cap=`/tmp/gpu_test`
-        #rm -f /tmp/gpu_test
+        comp_cap=`$tmp_dir/gpu_test`
+        rm -f $tmp_dir/gpu_test
       else
         comp_cap=0.0
       fi
     fi
-    #rm -f gpu_check.c
+    rm -f gpu_check.c
     AC_MSG_RESULT([compute capability $comp_cap])
     arch_set=no
     if test "x${comp_cap}" = x1.0; then
@@ -1001,6 +875,13 @@ EOF
     if test "x${comp_cap}" = x3.0; then
       AC_DEFINE([CUDA_COMP_CAP],30,[CUDA Compute Capability 3.0])
       AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_30'])
+      arch_set=yes
+      have_cuda_device=yes
+    fi
+    # BUG - fill in the missing cases for cards we don't own!
+    if test "x${comp_cap}" = x6.1; then
+      AC_DEFINE([CUDA_COMP_CAP],61,[CUDA Compute Capability 6.1])
+      AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_61'])
       arch_set=yes
       have_cuda_device=yes
     fi
@@ -1079,8 +960,11 @@ AC_SEARCH_LIBS([stat],[c],[have_stat=yes],[have_stat=no])
 AC_SEARCH_LIBS([ctime_r],[c],[have_ctime_r=yes],[have_ctime_r=no])
 AC_SEARCH_LIBS([ctime],[c],[have_ctime=yes],[have_ctime=no])
 AC_SEARCH_LIBS([gmtime_r],[c],[have_gmtime_r=yes],[have_gmtime_r=no])
+AC_SEARCH_LIBS([gmtime],[c],[have_gmtime=yes],[have_gmtime=no])
+AC_SEARCH_LIBS([asctime_r],[c],[have_asctime_r=yes],[have_asctime_r=no])
+AC_SEARCH_LIBS([asctime],[c],[have_asctime=yes],[have_asctime=no])
 AC_SEARCH_LIBS([localtime_r],[c],[have_localtime_r=yes],[have_localtime_r=no])
-# BUG?  check for gmtime also?
+AC_SEARCH_LIBS([posix_memalign],[c],[have_posix_memalign=yes],[have_posix_memalign=no])
 
 # optional libraries
 # -lX11		X
@@ -1236,7 +1120,13 @@ if test "x${use_matio}" = xyes; then
 fi
 
 if test "x${use_opencl}" = xyes; then
+# On pavlov w/ 2.8, we need clfftSetup
   AC_SEARCH_LIBS([clfftSetup],[clFFT],[have_clfft=yes],[have_clfft=no])
+#  AC_SEARCH_LIBS([clfftInitSetupData],[clFFT],[have_clfft=yes],[have_clfft=no])
+fi
+
+if test "x${use_fann}" = xyes; then
+  AC_SEARCH_LIBS([fann_create_standard],[fann],[have_fann=yes],[have_fann=no])
 fi
 
 if test "x${use_fileio}" = xyes; then
@@ -1275,7 +1165,7 @@ if test "x${use_opencv}" = xyes; then
   AC_SEARCH_LIBS([cvSetZero],[opencv_core cxcore],[have_opencvcore=yes],[have_opencvcore=no])
   AC_SEARCH_LIBS([cvContourArea],[opencv_imgproc cv],[have_opencvimgproc=yes],[have_opencvimgproc=no])
   AC_SEARCH_LIBS([cvHaarDetectObjects],[opencv_objdetect],[have_opencvobjdetect=yes],[have_opencvobjdetect=no])
-  AC_SEARCH_LIBS([cvSaveImage],[opencv_highgui highgui],[have_opencvhighgui=yes],[have_opencvhighgui=no])
+  AC_SEARCH_LIBS([cvSaveImage],[opencv_highgui highgui opencv_imgcodecs],[have_opencvhighgui=yes],[have_opencvhighgui=no])
 fi
 
 #
@@ -1299,6 +1189,7 @@ fi
 # 
 if test "x${use_flycap}" = xyes; then
   AC_SEARCH_LIBS([fc2CreateContext],[flycapture-c],[have_libflycap=yes],[have_libflycap=no])
+  # we also need to include our interface library???
   if test "x${have_libflycap}" = xyes; then
     use_dc1394=no
   fi
@@ -1397,7 +1288,11 @@ fi
 
 if test "x${use_cuda}" = xyes; then
   # cuda libraries
+
   AC_SEARCH_LIBS([cudaUnbindTexture],[cudart],[have_libcudart=yes],[have_libcudart=no])
+
+  AC_SEARCH_LIBS([nvrtcGetPTX],[nvrtc],[have_libnvrtc=yes],[have_libnvrtc=no])
+
   # If we have the cudart lib, then we can determine the compute
   # capability of the device.
 
@@ -1472,6 +1367,7 @@ AC_HEADER_STDBOOL
 
 AC_CHECK_HEADERS([assert.h])
 AC_CHECK_HEADERS([ioctl.h])
+AC_CHECK_HEADERS([linux/ioctl.h])
 AC_CHECK_HEADERS([ctype.h])
 AC_CHECK_HEADERS([pwd.h])
 AC_CHECK_HEADERS([math.h])
@@ -1709,6 +1605,7 @@ AC_CONFIG_FILES([Makefile
 		 macros/numrec/Makefile
 		 macros/gsl/Makefile
 		 macros/knox/Makefile
+		 macros/flycap/Makefile
 		 macros/visca/Makefile
 		 macros/v4l2/Makefile
 		 macros/gui/Makefile
@@ -1732,6 +1629,7 @@ AC_CONFIG_FILES([Makefile
 		 libsrc/interpreter/Makefile
 		 libsrc/dobj/Makefile
 		 libsrc/ports/Makefile
+		 libsrc/fann/Makefile
 		 libsrc/fileio/Makefile
 		 libsrc/hips/Makefile
 		 libsrc/rawvol/Makefile
@@ -1766,6 +1664,7 @@ AC_CONFIG_FILES([Makefile
 		 libsrc/opencl/Random123/Makefile
 		 libsrc/opencl/Random123/features/Makefile
 		 libsrc/cu2/Makefile
+		 libsrc/usb2000/Makefile
 		 src/Makefile])
 
 # These modules should really be external???
@@ -1965,11 +1864,27 @@ if test "x${have_ctime}" = xyes; then
 fi
 
 if test "x${have_gmtime_r}" = xyes; then
-  AC_DEFINE([HAVE_GMTIME_R], 1, [gmtime_r available for date formatting])
+  AC_DEFINE([HAVE_GMTIME_R], 1, [gmtime_r available for Grenwich Mean Time])
+fi
+
+if test "x${have_gmtime}" = xyes; then
+  AC_DEFINE([HAVE_GMTIME], 1, [gmtime available for Grenwich Mean Time])
+fi
+
+if test "x${have_asctime_r}" = xyes; then
+  AC_DEFINE([HAVE_ASCTIME_R], 1, [asctime_r available for date formatting])
+fi
+
+if test "x${have_asctime}" = xyes; then
+  AC_DEFINE([HAVE_ASCTIME], 1, [asctime available for date formatting])
 fi
 
 if test "x${have_localtime_r}" = xyes; then
-  AC_DEFINE([HAVE_LOCALTIME_R], 1, [localtime_r available for date formatting])
+  AC_DEFINE([HAVE_LOCALTIME_R], 1, [localtime_r available])
+fi
+
+if test "x${have_posix_memalign}" = xyes; then
+  AC_DEFINE([HAVE_POSIX_MEMALIGN], 1, [posix_memalign available])
 fi
 
 if test "x${async_exec}" = xyes; then
@@ -1978,10 +1893,6 @@ fi
 
 if test "x${thread_safe_query}" = xyes; then
   AC_DEFINE([THREAD_SAFE_QUERY], 1, [thread-safe query features enabled])
-fi
-
-if test "x${use_sse}" = xyes; then
-  AC_DEFINE([USE_SSE], 1, [use of SSE* extensions enabled])
 fi
 
 if test "x${n_processors}" != xno; then
@@ -2019,9 +1930,11 @@ Building without numrec support.
 #if test "x${have_numrec}" = xyes; then
 else
   if test "x${use_numrec}" = xyes; then
-    AC_DEFINE([HAVE_NUMREC], 1, [Numerical Recipes support enabled])
+    AC_DEFINE([HAVE_NUMREC], 1, [Numerical Recipes support present])
+    AC_DEFINE([USE_NUMREC], 1, [Numerical Recipes support enabled])
   fi
 fi
+# what does this do, let use test HAVE_NUMREC in makefile's?
 AM_CONDITIONAL([HAVE_NUMREC],[test x${use_numrec} = xyes])
 
 if test "x${have_sparselm}" = xno; then
@@ -2091,6 +2004,9 @@ if test "x${use_cuda}" = xyes; then
 	    AC_DEFINE([HAVE_LIBNPP], 1, [CUDA GPU operations with libnpp enabled])
           fi
         fi
+	if test "x${have_libnvrtc}" = xyes ; then
+	  AC_DEFINE([HAVE_LIBNVRTC], 1, [CUDA runtime compilation enabled])
+	fi
       else
         AC_MSG_WARN([
 -------------------------------------------------
@@ -2302,6 +2218,10 @@ if test "x${have_libgslcblas}" = xyes; then
   fi
 fi
 
+if test "x${have_fann}" = xyes; then
+  AC_DEFINE([HAVE_FANN], 1, [FANN neural network support enabled])
+fi
+
 if test "x${have_libtiff}" = xyes; then
   AC_DEFINE([HAVE_TIFF], 1, [TIFF file support enabled])
 fi
@@ -2427,6 +2347,16 @@ if test "x${have_pthreads}" = xno; then
 Unable to find the pthreads library.
 Building without multi-threading...
 ----------------------------------------])
+fi
+
+if test "x${use_fann}" = xyes; then
+  if test "x${have_fann}" != xyes; then
+    AC_MSG_WARN([
+-----------------------------------------
+Unable to find the fann library.
+Building without FANN neural network support...
+-----------------------------------------])
+  fi
 fi
 
 if test "x${use_matio}" = xyes; then

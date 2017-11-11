@@ -207,13 +207,10 @@ static COMMAND_FUNC( do_prm_display )
 		case JDCT_ISLOW: s="slow integer"; break;
 		case JDCT_IFAST: s="fast integer"; break;
 		case JDCT_FLOAT: s="float"; break;
-//#ifdef CAUTIOUS
 		default:
 			s=NULL;		/* elim compiler warning */
-//			ERROR1("CAUTIOUS:  bad dct_method code!?");
 			assert( ! "bad dct_method code" );
 			break;
-//#endif /* CAUTIOUS */
 	}
 	prt_msg(s);
 
@@ -222,12 +219,9 @@ static COMMAND_FUNC( do_prm_display )
 		case JDITHER_FS: s="Floyd-Steinberg"; break;
 		case JDITHER_NONE: s="(none)"; break;
 		case JDITHER_ORDERED: s="ordered"; break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("CAUTIOUS:  bad dither_mode code!?");
 			assert( ! "bad dither_mode code!?");
 			break;
-//#endif /* CAUTIOUS */
 	}
 	prt_msg(s);
 
@@ -243,12 +237,9 @@ static COMMAND_FUNC( do_prm_display )
 	switch(djp_p1.djp_out_color_space){
 		case JCS_RGB: s="RGB"; break;
 		case JCS_GRAYSCALE: s="grayscale"; break;
-//#ifdef CAUTIOUS
 		default:
-			//WARN("CAUTIOUS:  bad out_color_space code!?");
 			assert( ! "bad out_color_space code!?");
 			break;
-//#endif /* CAUTIOUS */
 	}
 	prt_msg(s);
 
@@ -287,7 +278,7 @@ COMMAND_FUNC( do_djpeg_param_menu )
 {
 	if( ! defaults_initialized )
 		set_djpeg_defaults();
-	PUSH_MENU(djpeg_param);
+	CHECK_AND_PUSH_MENU(djpeg_param);
 }
 
 void install_djpeg_params(j_decompress_ptr cinfop)

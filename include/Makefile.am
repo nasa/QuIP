@@ -24,8 +24,8 @@ FORCE:
 #			stdc_defs.h
 #			function_basic.h
 #			dobj_basic.h
-#			qs_basic.h
 
+#noinst_HEADERS = llseek.h rawvol.h off64_t.h
 noinst_HEADERS =			\
 					\
 			update_quip_version.sh	\
@@ -37,6 +37,7 @@ noinst_HEADERS =			\
 			command.h	\
 			container.h	\
 			container_fwd.h	\
+			ctx_pair.h	\
 			cuda_api.h	\
 			cuda_helper.h	\
 			cuda_supp.h	\
@@ -52,6 +53,7 @@ noinst_HEADERS =			\
 			fio_api.h	\
 			freel.h		\
 			function.h	\
+			func_helper.h	\
 			gen_win.h	\
 			genwin_flags.h	\
 			getbuf.h	\
@@ -60,6 +62,7 @@ noinst_HEADERS =			\
 			gmovie.h	\
 			hash.h		\
 			history.h	\
+			identifier.h	\
 			img_file.h	\
 			ios_config.h	\
 			ios_gui.h	\
@@ -68,8 +71,11 @@ noinst_HEADERS =			\
 			item_type.h	\
 			linear.h	\
 			list.h		\
+			llen.h		\
+			llseek.h	\
 			macro.h		\
 			map_ios_item.h	\
+			my_cuda.h	\
 			my_curl.h	\
 			my_cu2.h	\
 			my_encryption.h	\
@@ -83,6 +89,7 @@ noinst_HEADERS =			\
 			nrm_api.h	\
 			ocl_api.h	\
 			ocl_platform.h	\
+			off64_t.h	\
 			opengl_utils.h	\
 			optimize.h	\
 			panel_obj.h	\
@@ -90,8 +97,8 @@ noinst_HEADERS =			\
 			pipe_support.h	\
 			pf_viewer.h	\
 			platform.h	\
+			pointer.h	\
 			polh_menu.h	\
-			query.h		\
 			query_api.h	\
 			query_bits.h	\
 			query_stack.h	\
@@ -101,10 +108,13 @@ noinst_HEADERS =			\
 			quip_prot.h	\
 			quip_version.h	\
 			rbtree.h	\
+			reference.h	\
 			rn.h		\
 			rt_sched.h	\
 			rv_api.h	\
+			scalar_value.h	\
 			screen_obj.h	\
+			seq.h		\
 			seq_api.h	\
 			serbuf.h	\
 			serial.h	\
@@ -114,15 +124,18 @@ noinst_HEADERS =			\
 			sigpush.h	\
 			sizable.h	\
 			stack.h		\
-			strbuf.h	\
 			string_ref.h	\
+			thread_safe_defs.h	\
 			treecode.h	\
 			ttyctl.h	\
 			typedefs.h	\
 			typed_scalar.h	\
+			undef_sym.h	\
 			variable.h	\
 			vec_util.h	\
 			veclib_api.h	\
+			vectree.h	\
+			vec_expr_node.h	\
 			view_cmds.h	\
 			viewer.h	\
 			vt_api.h	\

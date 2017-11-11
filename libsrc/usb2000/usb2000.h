@@ -128,7 +128,9 @@ extern u_short ascii_mode;
 /* prototypes */
 
 /* usb2000.c */
-extern void make_pkt( char *pkt, const char *cmd, u_int arg );
+extern void _make_pkt(QSP_ARG_DECL  char *pkt, const char *cmd, u_int arg );
+#define make_pkt(pkt,cmd,arg) _make_pkt(QSP_ARG  pkt,cmd,arg)
+
 extern int get_tail(SINGLE_QSP_ARG_DECL);
 extern void pxl_mode_n_args(int n, int *nbuf, char *n_args);
 extern int xmit_pkt(USB2000_Cmd_Def *ucdp, int data_word,char *n_args);

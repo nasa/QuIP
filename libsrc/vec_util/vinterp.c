@@ -78,32 +78,29 @@ void vinterp(QSP_ARG_DECL  Data_Obj *target,Data_Obj *source,Data_Obj *control)
 	float *interp_dest;
 	int32_t start_index=(-1);
 
-#ifdef CAUTIOUS
-	if( target==NO_OBJ || source==NO_OBJ || control==NO_OBJ ){
-		NWARN("CAUTIOUS:  vinterp passed null arg");
-		return;
-	}
-#endif
+	assert( target != NULL );
+	assert( source != NULL );
+	assert( control != NULL );
 
 	INSIST_RAM_OBJ(target,vinterp)
 	INSIST_RAM_OBJ(source,vinterp)
 	INSIST_RAM_OBJ(control,vinterp)
 
-	if( not_prec(QSP_ARG  target,PREC_SP) )  return;
-	if( not_prec(QSP_ARG  source,PREC_SP) )  return;
-	if( not_prec(QSP_ARG  control,PREC_SP) ) return;
+	if( not_prec(target,PREC_SP) )  return;
+	if( not_prec(source,PREC_SP) )  return;
+	if( not_prec(control,PREC_SP) ) return;
 
 
-	if( !dp_same_size(QSP_ARG  target,source,"vinterp") ){
-		NWARN("vinterp:  target/source length mismatch");
+	if( !dp_same_size(target,source,"vinterp") ){
+		warn("vinterp:  target/source length mismatch");
 		return;
 	}
-	if( !dp_same_size(QSP_ARG  target,control,"vinterp") ){
-		NWARN("vinterp:  target/control length mismatch");
+	if( !dp_same_size(target,control,"vinterp") ){
+		warn("vinterp:  target/control length mismatch");
 		return;
 	}
 	if( OBJ_COMPS(source) != 1 || OBJ_COMPS(target) != 1 ){
-		NWARN("vinterp:  component dimensions must be 1");
+		warn("vinterp:  component dimensions must be 1");
 		return;
 	}
 
@@ -167,7 +164,7 @@ advise(ERROR_STRING);
 		float fill_val;
 		int j;
 		if( start_index < 0 ){
-			NWARN("vinterp:  no valid data!?");
+			warn("vinterp:  no valid data!?");
 			fill_val=0.0;
 		} else fill_val = get_start_val(source,control,start_index);
 		for(j=0;j<n_to_interpolate;j++){

@@ -110,7 +110,7 @@ static struct timezone tz;
 
 
 static pthread_mutex_t genlock_mutex;
-static ParPort *the_ppp=NO_PARPORT;
+static ParPort *the_ppp=NULL;
 static pthread_t vboard_thr, pport_thr;
 static pthread_t gl_thr;
 static struct timeval *tvp=NULL,tv0,tv1;
@@ -487,10 +487,10 @@ static void test_parport(void)
 	pthread_attr_setinheritsched(&attr1,PTHREAD_INHERIT_SCHED);
 
 
-	fbip = PICK_FBI("frame buffer for VSYNC");
-	dp = PICK_OBJ("data vector for latencies");
+	fbip = pick_fbi("frame buffer for VSYNC");
+	dp = pick_obj("data vector for latencies");
 
-	if( fbip == NO_FBI || dp == NO_OBJ ) return;
+	if( fbip == NULL || dp == NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"test_parport")
 
@@ -528,9 +528,9 @@ static void test_parport(void)
 
 	lp ++;
 
-	if( the_ppp == NO_PARPORT ){
+	if( the_ppp == NULL ){
 		the_ppp=open_parport(QSP_ARG  NULL);	/* use default */
-		if( the_ppp == NO_PARPORT ) return;
+		if( the_ppp == NULL ) return;
 	}
 
 	ppti1.ppti_ppp = the_ppp;
@@ -579,18 +579,18 @@ int init_genlock(SINGLE_QSP_ARG_DECL)
 	}
 	gli1.gli_n_heads = n;
 	for(i=0;i<n;i++){
-		gli1.gli_fbip[i] = PICK_FBI("frame buffer for VSYNC");
+		gli1.gli_fbip[i] = pick_fbi("frame buffer for VSYNC");
 		gli1.gli_fb_latency[i] = (-1);
 		gli1.gli_pp_latency[i] = (-1);
 		gli1.gli_refractory[i]=GL_REFRACTORY;	/* wait before adjusting */
 	}
 
 	for(i=0;i<n;i++)
-		if( gli1.gli_fbip[i] == NO_FBI ) return -1;
+		if( gli1.gli_fbip[i] == NULL ) return -1;
 
-	if( the_ppp == NO_PARPORT ){
+	if( the_ppp == NULL ){
 		the_ppp=open_parport(QSP_ARG  NULL);	/* use default */
-		if( the_ppp == NO_PARPORT ) return -1;
+		if( the_ppp == NULL ) return -1;
 	}
 
 	gli1.gli_ppp = the_ppp;
@@ -777,8 +777,8 @@ COMMAND_FUNC( do_report_genlock_status )
 {
 	FB_Info *fbip;
 
-	fbip = PICK_FBI("frame buffer");
-	if( fbip == NO_FBI ) return;
+	fbip = pick_fbi("frame buffer");
+	if( fbip == NULL ) return;
 
 #ifdef HAVE_GENLOCK
 	report_genlock_status(fbip);
@@ -797,9 +797,9 @@ COMMAND_FUNC( do_fbpair_monitor )
 {
 	FB_Info *fbip1,*fbip2;
 
-	fbip1 = PICK_FBI("first frame buffer");
-	fbip2 = PICK_FBI("second frame buffer");
-	if( fbip1 == NO_FBI || fbip2 == NO_FBI ) return;
+	fbip1 = pick_fbi("first frame buffer");
+	fbip2 = pick_fbi("second frame buffer");
+	if( fbip1 == NULL || fbip2 == NULL ) return;
 
 #ifdef HAVE_GENLOCK
 	fbpair_monitor(fbip1,fbip2);

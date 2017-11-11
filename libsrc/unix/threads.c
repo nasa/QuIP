@@ -42,9 +42,10 @@ static void *thread_exec(void *argp)
 
 	// Threads can't call exit() without killing the whole
 	// process, so they set a flag instead.
-	while( ! IS_HALTING(qsp) ) qs_do_cmd(qsp);
-advise("thread_exec: DONE!!!");
-
+	while( ! IS_HALTING(qsp) ){
+		qs_do_cmd(qsp);
+	}
+	// return is like pthread_exit...
 	return(NULL);
 }
 
@@ -57,25 +58,24 @@ static COMMAND_FUNC( do_new_thread )
 	s=NAMEOF("name for thread");
 	c=NAMEOF("script to execute");
 
-	new_qsp = new_query_stack(QSP_ARG  s);
+	new_qsp = new_qstk(QSP_ARG  s);
 	if( new_qsp == NULL ) return;
 
 	// change the flags from the default values
 	CLEAR_QS_FLAG_BITS(new_qsp, QS_INTERACTIVE_TTYS|QS_FORMAT_PROMPT|QS_COMPLETING );
 
-//if( verbose ){
-//sprintf(ERROR_STRING,"do_new_thread %s:  qs_flags = 0x%x",
-//QS_NAME(new_qsp),new_qsp->qs_flags);
-//advise(ERROR_STRING);
-//}
+	SET_QS_PARENT_SERIAL(new_qsp,_QS_SERIAL(THIS_QSP));
+
+	// The new thread should inherit context stacks from the parent thread,
+	// but we don't want to bother to do all that now - ?
+
 	// We have to copy the text, because the buffer returned
 	// by nameof can get recycled, and pushtext doesn't make
 	// a copy.
 
 	// This is a potential memory leak?
-	push_text(new_qsp, savestr(c), "(new thread)" );
-	SET_QRY_FILENAME( CURR_QRY(new_qsp), "thread text" );
-//qdump(new_qsp);
+	_push_text(new_qsp, savestr(c), "(new thread)" );
+	set_query_filename( CURR_QRY(new_qsp), "thread text" );
 
 	// We want to create a new variable context for this thread...
 	// and if we have cuda, a cuda execution context...
@@ -88,7 +88,8 @@ static COMMAND_FUNC( do_new_thread )
 
 static COMMAND_FUNC( do_list_threads )
 {
-	list_query_stacks(SINGLE_QSP_ARG);
+	prt_msg("All threads:");
+	list_query_stacks(tell_msgfile());
 }
 
 static COMMAND_FUNC( do_tell_thread )
@@ -97,17 +98,37 @@ static COMMAND_FUNC( do_tell_thread )
 	prt_msg(MSG_STR);
 }
 
+static COMMAND_FUNC( do_wait_thread )
+{
+	int status;
+	void **val_ptr=NULL;
+	Query_Stack *thread_qsp;
+
+	thread_qsp = pick_query_stack("thread name");
+	if( thread_qsp == NULL ) return;
+
+	if( _QS_SERIAL(thread_qsp) == 0 ){
+		warn("do_wait_thread:  can't wait for main thread!?");
+		return;
+	}
+
+	status = pthread_join( thread_qsp->qs_thr, val_ptr );
+	if( status != 0 )
+		warn("pthread_join returned an error status!?");
+}
+
 #define ADD_CMD(s,f,h)		ADD_COMMAND(threads_menu,s,f,h)
 
 MENU_BEGIN(threads)
 ADD_CMD( new_thread,	do_new_thread,		create a new thread )
 ADD_CMD( list,		do_list_threads,	list all active threads )
 ADD_CMD( tell,		do_tell_thread,		report name of current thread )
+ADD_CMD( wait,		do_wait_thread,		wait for thread to exit )
 MENU_END(threads)
 
 COMMAND_FUNC( do_thread_menu )
 {
-	PUSH_MENU( threads );
+	CHECK_AND_PUSH_MENU( threads );
 }
 
 

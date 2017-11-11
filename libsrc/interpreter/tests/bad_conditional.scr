@@ -1,3 +1,4 @@
 
+expect_warning has_zero_value
 If xxx nop
 

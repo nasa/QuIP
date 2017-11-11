@@ -29,23 +29,19 @@
 
 static int vgat_fd=(-1);
 
-void vgat_init()
+#define vgat_init() _vgat_init(SINGLE_QSP_ARG)
+
+static void _vgat_init(SINGLE_QSP_ARG_DECL)
 {
 	static int warned=0;
 
-//#ifdef CAUTIOUS
-//	if( vgat_fd >= 0 ){
-//		NWARN("CAUTIOUS:  vgat_init:  /dev/vgat is already open!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( vgat_fd < 0 );
 
 	vgat_fd=open("/dev/vgat",O_RDONLY);
 	if( vgat_fd < 0 ){
 		if( !warned ){
 			perror("open /dev/vgat");
-			NWARN("unable to open /dev/vgat");
+			warn("unable to open /dev/vgat");
 			warned=1;
 		}
 	}

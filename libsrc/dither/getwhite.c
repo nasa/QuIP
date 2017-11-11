@@ -5,7 +5,6 @@
 #include <string.h>
 #include "quip_prot.h"
 #include "cie.h"
-#include "query.h"
 #include "ctone.h"
 
 #define W_DIR	"./"
@@ -30,7 +29,7 @@ int rwhite(char *name)
 	else {
 		fprintf(stderr,"reading white values from %s\n",name);
 		if( fscanf(fp,"%f %f %f",&_white[0],&_white[1],&_white[2])
-			!= 3 ) NERROR1("bad white file");
+			!= 3 ) error1("bad white file");
 	}
 	return(1);
 }

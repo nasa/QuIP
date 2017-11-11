@@ -29,6 +29,7 @@ SUBDIRS =			\
 		nrmenu		\
 		www		\
 		cstepit		\
+		fann		\
 		opencv		\
 		flycap		\
 		ptgrey		\
@@ -46,6 +47,7 @@ SUBDIRS =			\
 		gui		\
 		opengl		\
 		polhemus	\
+		usb2000		\
 		rawvol		\
 		mvimenu		\
 		unix		\

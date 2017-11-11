@@ -1,8 +1,13 @@
 #include <string.h>
+#include <stdlib.h>		// getenv
+#include <sys/param.h>		// MAXPATHLEN
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "item_prot.h"
 #include "quip_version.h"
+#include "variable.h"
+#include "list.h"
+#include "getbuf.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>	// getcwd
@@ -14,23 +19,23 @@
 
 static Item_Type * var__itp=NULL;
 
-extern void list_vars(SINGLE_QSP_ARG_DECL)
+extern void _list_vars(SINGLE_QSP_ARG_DECL)
 {
-	list_items(QSP_ARG  var__itp);
+	list_items(var__itp, tell_msgfile());
+fprintf(stderr,"list_vars, item_type %s at 0x%lx\n",ITEM_TYPE_NAME(var__itp),(long)var__itp);
 }
 
 const char *var_value(QSP_ARG_DECL  const char *s)
 {
 	Variable *vp;
 	
-	vp=VAR_OF(s);
-	if( vp == NO_VARIABLE ) return NULL;
+	vp=var_of(s);
+	if( vp == NULL ) return NULL;
 	return var_p_value(QSP_ARG  vp);
 }
 
 const char *var_p_value(QSP_ARG_DECL  Variable *vp)
-{
-	if( IS_DYNAMIC_VAR(vp) ){
+{ if( IS_DYNAMIC_VAR(vp) ){
 		return (*(VAR_FUNC(vp)))(SINGLE_QSP_ARG);
 	} else {
 		return VAR_VALUE(vp);
@@ -41,55 +46,58 @@ ITEM_INIT_FUNC(Variable,var_,0)
 ITEM_NEW_FUNC(Variable,var_)
 ITEM_CHECK_FUNC(Variable,var_)
 ITEM_PICK_FUNC(Variable,var_)
+ITEM_DEL_FUNC(Variable,var_)
 
-Variable *create_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
+Variable *_create_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 {
 	Variable *vp;
 
-	vp=var_of(QSP_ARG  var_name);
-	if( vp != NO_VARIABLE ){
+	vp=var_of(var_name);
+	if( vp != NULL ){
 		sprintf(ERROR_STRING,
 "create_reserved_var:  variable %s already exists!?",var_name);
-		WARN(ERROR_STRING);
-		return NO_VARIABLE;
+		warn(ERROR_STRING);
+		return NULL;
 	}
-	return force_reserved_var(QSP_ARG  var_name,var_val);
+	return force_reserved_var(var_name,var_val);
 }
 
-Variable *force_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var_val )
+Variable *_force_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var_val )
 {
 	Variable *vp;
 
-	vp = new_var_(QSP_ARG  var_name);
-	SET_VAR_VALUE(vp,savestr(var_val));
+	vp = new_var_(var_name);
+	SET_VAR_VALUE(vp,save_possibly_empty_str(var_val));
 	SET_VAR_FLAGS(vp,VAR_RESERVED);
 	return vp;
 }
 
-static Variable *insure_variable(QSP_ARG_DECL  const char *name, int creat_flags )
+#define insure_variable(name,creat_flags) _insure_variable(QSP_ARG  name,creat_flags)
+
+static Variable *_insure_variable(QSP_ARG_DECL  const char *name, int creat_flags )
 {
 	Variable *vp;
 	const char *val_str;
 
-	if( *name == 0 ) return NO_VARIABLE;
-	vp=VAR_OF(name);
-	if( vp != NO_VARIABLE ){
+	if( *name == 0 ) return NULL;
+	vp=var_of(name);
+	if( vp != NULL ){
 		return(vp);
 	}
-	vp = new_var_(QSP_ARG  name);
+	vp = new_var_(name);
 
 	// if this variable exists in the environment, then
 	// import it, and mark it as reserved...
 
 	val_str=getenv(name);
 	if( val_str != NULL ) {
-		SET_VAR_VALUE(vp, savestr(val_str) );
+		SET_VAR_VALUE(vp, save_possibly_empty_str(val_str) );
 		SET_VAR_FLAGS(vp, VAR_RESERVED );
 		if( creat_flags != VAR_RESERVED ){
 			sprintf(ERROR_STRING,
 	"insure_variable:  %s exists in environment, but reserved flag not passed!?",
 				name);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 	} else {
 		SET_VAR_FLAGS(vp, creat_flags );
@@ -98,13 +106,13 @@ static Variable *insure_variable(QSP_ARG_DECL  const char *name, int creat_flags
 	return vp;
 }
 
-Variable *assign_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
+Variable *_assign_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 {
 	Variable *vp;
 
-	vp = insure_variable(QSP_ARG  var_name, VAR_SIMPLE );
+	vp = insure_variable(var_name, VAR_SIMPLE );
 
-	if( vp == NO_VARIABLE ) return vp;
+	if( vp == NULL ) return vp;
 
 	// reserved variables are not assignable from scripts, but
 	// are assigned programmatically from code using assign_var
@@ -112,44 +120,44 @@ Variable *assign_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 	if( IS_DYNAMIC_VAR(vp) ){
 		sprintf(ERROR_STRING,"assign_var:  dynamic variable %s is not assignable!?",
 			VAR_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return NULL;
 	} else if( IS_RESERVED_VAR(vp) ){
 		sprintf(ERROR_STRING,"assign_var:  reserved variable %s is not assignable!?",
 			VAR_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return NULL;
 	}
 
 	if( VAR_VALUE(vp) != NULL ){
 		rls_str(VAR_VALUE(vp));
 	}
-	SET_VAR_VALUE(vp, savestr(var_val) );
+	SET_VAR_VALUE(vp, save_possibly_empty_str(var_val) );
 	return vp;
 }
 
 // reserved variables are not assignable from scripts, but
 // are assigned programmatically from code using assign_reserved_var
 
-Variable *assign_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
+Variable *_assign_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 {
 	Variable *vp;
 
-	vp = insure_variable(QSP_ARG  var_name, VAR_RESERVED );
+	vp = insure_variable(var_name, VAR_RESERVED );
 
-	if( vp == NO_VARIABLE ) return vp;
+	if( vp == NULL ) return vp;
 
 	if( IS_DYNAMIC_VAR(vp) ){
 		sprintf(ERROR_STRING,
 "assign_reserved_var:  dynamic variable %s is not assignable!?",
 			VAR_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return NULL;
 	} else if( ! IS_RESERVED_VAR(vp) ){
 		sprintf(ERROR_STRING,
 "assign_reserved_var:  variable %s is not reserved!?",
 			VAR_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 abort();
 		return NULL;
 	}
@@ -157,50 +165,40 @@ abort();
 	if( VAR_VALUE(vp) != NULL ){
 		rls_str(VAR_VALUE(vp));
 	}
-	SET_VAR_VALUE(vp, savestr(var_val) );
+	SET_VAR_VALUE(vp, save_possibly_empty_str(var_val) );
 	return vp;
 }
 
-Variable *get_var(QSP_ARG_DECL  const char *name)
+Variable *_get_var(QSP_ARG_DECL  const char *name)
 {
 	Variable *vp;
 
-	vp=VAR_OF(name);
-	if( vp == NO_VARIABLE ){
+	vp=var_of(name);
+	if( vp == NULL ){
 		sprintf(ERROR_STRING,"No variable \"%s\"!?",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return vp;
 }
 
-void init_dynamic_var(QSP_ARG_DECL  const char *name, const char *(*func)(SINGLE_QSP_ARG_DECL) )
+void _init_dynamic_var(QSP_ARG_DECL  const char *name, const char *(*func)(SINGLE_QSP_ARG_DECL) )
 {
 	Variable *vp;
 
-	vp=VAR_OF(name);
-//#ifdef CAUTIOUS
-//	if( vp != NO_VARIABLE ){
-//		sprintf(ERROR_STRING,
-//		"CAUTIOUS:  init_dynamic_var:  variable %s already exists!?",
-//			VAR_NAME(vp));
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
+	vp=var_of(name);
+	assert( vp == NULL );
 
-	assert( vp == NO_VARIABLE );
-
-	vp = new_var_(QSP_ARG  name);
+	vp = new_var_(name);
 	SET_VAR_FLAGS(vp, VAR_DYNAMIC | VAR_RESERVED );
 	SET_VAR_FUNC(vp, func);
 }
 
 static const char *my_getcwd(SINGLE_QSP_ARG_DECL)
 {
-	static char buf[LLEN];	// BUG should be MAXPATHLEN?
-
 #ifdef HAVE_GETCWD
-	if( getcwd(buf,LLEN) == NULL ){
+	static char buf[MAXPATHLEN];
+
+	if( getcwd(buf,MAXPATHLEN) == NULL ){
 		tell_sys_error("getcwd");
 		return ".";
 	}
@@ -210,14 +208,26 @@ static const char *my_getcwd(SINGLE_QSP_ARG_DECL)
 #endif // ! HAVE_GETCWD
 }
 
-static const char *my_getpid(SINGLE_QSP_ARG_DECL)
+// on the mac, a pid is a 32 bit integer...
+// something in excess of 4,000,000,000,000
+// So 13 digits should be enough...
+
+#define MAX_PID_DIGITS	15
+
+static const char *get_pid_string(SINGLE_QSP_ARG_DECL)
 {
 #ifdef HAVE_GETPID
-	static char buf[16];	// BUG what is the largest pid?
+	static char buf[MAX_PID_DIGITS+1];
+	int n_needed;
+
 	pid_t pid;
 
 	pid = getpid();
-	sprintf(buf,"%d",pid);
+	n_needed=snprintf(buf,MAX_PID_DIGITS+1,"%d",pid);
+	if( n_needed > (MAX_PID_DIGITS+1) ){
+		warn("get_pid_string:  Need to increase MAX_PID_DIGITS!?");
+	}
+
 	return buf;
 #else
 	return 0;
@@ -230,8 +240,10 @@ static const char *get_local_date(SINGLE_QSP_ARG_DECL)
 {
 	time_t timeval;
 	char *s;
-	// BUG - using a static string here means not thread-safe!?
-	static char buf[32];	// must be at least 26
+#ifdef HAVE_CTIME_R
+	// using a static string here means all threads share the same time
+	static char buf[32];	// must be at least 26 (why?)
+#endif // HAVE_CTIME_R
 
 	time(&timeval);
 
@@ -246,6 +258,7 @@ static const char *get_local_date(SINGLE_QSP_ARG_DECL)
 #endif // ! HAVE_CTIME_R
 
 	/* erase trailing newline... */
+	assert( s[ strlen(s)-1 ] == '\n' );
 	s[ strlen(s)-1 ] = '\0';
 
 	return s;
@@ -262,15 +275,22 @@ static const char *get_utc_date(SINGLE_QSP_ARG_DECL)
 
 #ifdef HAVE_GMTIME_R
 	tm_p = gmtime_r(&timeval,&tm1);
-	s = asctime_r(tm_p,buf);
 #else // ! HAVE_GMTIME_R
-#ifdef HAVE_CTIME
-	// BUG - this is not gmtime!!!
-	s=ctime(&timeval);
-#else // ! HAVE_CTIME
-#error NO time formatting function!?
-#endif // ! HAVE_CTIME
+#ifdef HAVE_GMTIME
+	tm_p = gmtime(&timeval);
+#else // ! HAVE_GMTIME
+#error NO gmtime_r or gmtime function!?
+#endif // ! HAVE_GMTIME
 #endif // ! HAVE_GMTIME_R
+
+#ifdef HAVE_ASCTIME_R
+	s = asctime_r(tm_p,buf);
+#else // ! HAVE_ASCTIME_R
+#ifdef HAVE_ASCTIME
+#else // ! HAVE_ASCTIME
+#error NO asctime_r or asctime function!?
+#endif // ! HAVE_ASCTIME
+#endif // ! HAVE_ASCTIME_R
 
 	/* erase trailing newline... */
 	s[ strlen(s)-1 ] = '\0';
@@ -292,49 +312,64 @@ const char *tell_version(void)
 void init_variables(SINGLE_QSP_ARG_DECL)
 {
 	// used by system builtin in ../unix
-	create_reserved_var(QSP_ARG  "exit_status","0");
-	create_reserved_var(QSP_ARG  "mouse_data","0");
-	create_reserved_var(QSP_ARG  "n_readable","0");
-	create_reserved_var(QSP_ARG  "last_line","0");
-	create_reserved_var(QSP_ARG  "serial_response","0");
-	create_reserved_var(QSP_ARG  "timex_tick","0");
-	create_reserved_var(QSP_ARG  "timex_freq","0");
-	create_reserved_var(QSP_ARG  "git_version",QUIP_VERSION_STRING);
+	create_reserved_var("exit_status","0");
+	create_reserved_var("mouse_data","0");
+	create_reserved_var("n_readable","0");
+	create_reserved_var("last_line","0");
+	create_reserved_var("serial_response","0");
+	create_reserved_var("timex_tick","0");
+	create_reserved_var("timex_freq","0");
+	create_reserved_var("git_version",QUIP_VERSION_STRING);
 
-	init_dynamic_var(QSP_ARG  "verbose",get_verbose);
-	init_dynamic_var(QSP_ARG  "cwd",my_getcwd);
+	init_dynamic_var("verbose",get_verbose);
+	init_dynamic_var("cwd",my_getcwd);
 	// BUG pid shouldn't change, but might after a fork?
-	init_dynamic_var(QSP_ARG  "pid",my_getpid);
-	init_dynamic_var(QSP_ARG  "local_date",get_local_date);
-	init_dynamic_var(QSP_ARG  "utc_date",get_utc_date);
-	ASSIGN_VAR("program_name",tell_progname());
-	ASSIGN_VAR("program_version",tell_version());
+	init_dynamic_var("pid",get_pid_string);
+	init_dynamic_var("local_date",get_local_date);
+	init_dynamic_var("utc_date",get_utc_date);
+	assign_var("program_name",tell_progname());
+	assign_var("program_version",tell_version());
 }
 
 void find_vars(QSP_ARG_DECL  const char *s)
 {
 	List *lp;
 
-	lp=find_items(QSP_ARG  var__itp,s);
-	if( lp==NO_LIST ) return;
-	print_list_of_items(QSP_ARG  lp);
+	lp=find_items(var__itp,s);
+	if( lp==NULL ) return;
+	print_list_of_items(lp, tell_msgfile());
 }
+
+#define N_EXTRA_CHARS	20
 
 void search_vars(QSP_ARG_DECL  const char *frag)
 {
 	List *lp;
 	Node *np;
 	Variable *vp;
-	char lc_frag[LLEN];
+	char *lc_frag;
+	char *str1=NULL;
+	int str1_size=0;
 
-	lp=item_list(QSP_ARG  var__itp);
-	if( lp == NO_LIST ) return;
+	lp=item_list(var__itp);
+	if( lp == NULL ) return;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
+	lc_frag = getbuf(strlen(frag)+1);
 	decap(lc_frag,frag);
-	while(np!=NO_NODE){
-		char str1[LLEN];
+	while(np!=NULL){
 		vp = (Variable *) NODE_DATA(np);
+		if( str1 == NULL ){
+			str1_size = (int) strlen(VAR_VALUE(vp)) + 1 + N_EXTRA_CHARS ;
+			str1 = getbuf( str1_size );
+		} else {
+			if( str1_size < strlen(VAR_VALUE(vp))+1 ){
+				givbuf(str1);
+				str1_size = (int) strlen(VAR_VALUE(vp)) + 1 + N_EXTRA_CHARS ;
+				str1 = getbuf( str1_size );
+			}
+		}
+
 		/* make the match case insensitive */
 		decap(str1,VAR_VALUE(vp));
 		if( strstr(str1,lc_frag) != NULL ){
@@ -343,25 +378,27 @@ void search_vars(QSP_ARG_DECL  const char *frag)
 		}
 		np=NODE_NEXT(np);
 	}
+	if( str1 != NULL ) givbuf(str1);
+	givbuf(lc_frag);
 }
 
-void reserve_variable(QSP_ARG_DECL  const char *name)
+void _reserve_variable(QSP_ARG_DECL  const char *name)
 {
 	Variable *vp;
 
-	vp = insure_variable(QSP_ARG  name,VAR_RESERVED);
+	vp = insure_variable(name,VAR_RESERVED);
 	if( IS_DYNAMIC_VAR(vp) ){
 		sprintf(ERROR_STRING,
 	"reserve_variable:  no need to reserve dynamic variable %s",
 			name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( IS_RESERVED_VAR(vp) ){
 		sprintf(ERROR_STRING,
 	"reserve_variable:  redundant call to reserve variable %s",
 			name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	SET_VAR_FLAG_BITS(vp,VAR_RESERVED);
@@ -370,7 +407,7 @@ void reserve_variable(QSP_ARG_DECL  const char *name)
 // Replace the value of a variable with a string with backslashes
 // inserted before each quote (single or double)
 
-void replace_var_string(QSP_ARG_DECL  Variable *vp, const char *find,
+void _replace_var_string(QSP_ARG_DECL  Variable *vp, const char *find,
 						const char *replace )
 {
 	const char *s, *start;
@@ -399,11 +436,11 @@ void replace_var_string(QSP_ARG_DECL  Variable *vp, const char *find,
 		}
 	} while(*start);
 
-	assign_var(QSP_ARG  VAR_NAME(vp), SB_BUF(sbp) );
+	assign_var(VAR_NAME(vp), sb_buffer(sbp) );
 	rls_stringbuf(sbp);
 }
 
-void show_var(QSP_ARG_DECL  Variable *vp)
+void _show_var(QSP_ARG_DECL  Variable *vp)
 {
 	if( IS_SIMPLE_VAR(vp) ){
 		sprintf(MSG_STR,"$%s = %s",VAR_NAME(vp),VAR_VALUE(vp));
@@ -416,13 +453,15 @@ void show_var(QSP_ARG_DECL  Variable *vp)
 	prt_msg(MSG_STR);
 }
 
+#define MAX_INT_STRING_LEN	80	// BUG should check...
+
 void set_script_var_from_int(QSP_ARG_DECL  const char *varname, long val )
 {
-	char str[LLEN];
+	char str[MAX_INT_STRING_LEN];
 
 	sprintf(str,"%ld",val);	// BUG possible buffer overrun???
 
 	// BUG should make this a reserved var?
-	ASSIGN_VAR(varname,str);
+	assign_var(varname,str);
 }
 

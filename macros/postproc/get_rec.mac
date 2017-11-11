@@ -13,14 +13,18 @@ Define Get_Retina_Data 1 filename
 # corr_norm is a hack until correlation coefficient is fixed...
 #system "dm x5 x6 x10/$corr_norm < $rawdir/$1 > $scrdir/retdata"
 advise "dm x5 x6 x10 < $rawdir/$1 > $scrdir/retdata"
-system "dm x5 x6 x10 < $rawdir/$1 > $scrdir/retdata"
+os
+  system "dm x5 x6 x10 < $rawdir/$1 > $scrdir/retdata"
+  quit
 Read_Data_With_Corr $scrdir/retdata
 .
 
 Set dm_string "x8-x10 x9-x11 1"			# this string uses CR-p4
 
 Define Get_Pupil_Data 1 filename
-system "grep FRAME $rawdir/$1 | dm $dm_string > $scrdir/retdata"
+os
+  system "grep FRAME $rawdir/$1 | dm $dm_string > $scrdir/retdata"
+  quit
 Read_Data_With_Corr $scrdir/retdata
 .
 

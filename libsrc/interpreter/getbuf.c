@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "quip_prot.h"
 #include "debug.h"
+#include "getbuf.h"
 
 #ifdef QUIP_DEBUG
 static u_long gbdebug=GETBUF_DEBUG_MASK;
@@ -28,7 +29,6 @@ static u_long gbdebug=GETBUF_DEBUG_MASK;
 #include <sys/malloc.h>	/* malloc() & _halloc(), OSX */
 #endif
 
-#include "query.h"
 #include "getbuf.h"
 #include "freel.h"
 
@@ -208,7 +208,6 @@ static void setup_heap(Heap *hp, u_long total, u_long chunksize)
 	// BUG better to use is_power_of_two() in the assertion
 	// so is meaningful...
 	assert( chunksize == 0 );
-//	if( chunksize != 0 ) NERROR1("CAUTIOUS:  setup_heap:  chunksize is not a power of 2");
 #endif /* CAUTIOUS */
 
 	freeinit(&hp->heap_fl,MAX_HEAP_CHUNKS,(u_long)total);
@@ -309,10 +308,6 @@ void * bigbuf(u_long size)
 	u_long s;
 	void *cp;
 
-//#ifdef CAUTIOUS
-//	if( size == 0 )
-//		NERROR1("CAUTIOUS:  getbuf:  0 bytes requested!?");
-//#endif /* CAUTIOUS */
 	assert( size != 0 );
 
 	if( !heap_ready ) heap_init();
@@ -336,7 +331,7 @@ void * bigbuf(u_long size)
 		if( cp == NULL ){
 			sprintf(DEFAULT_ERROR_STRING,
 				"error getting %ld (0x%lx) bytes from big heap",s,s);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(DEFAULT_ERROR_STRING);
 			showmap(&big_heap.heap_fl);
 		} else {
 			/* get_from_heap succeeded... */
@@ -362,7 +357,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		if( cp == NULL ){
 			sprintf(DEFAULT_ERROR_STRING,
 				"error getting %ld (0x%lx) bytes from small heap",s,s);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(DEFAULT_ERROR_STRING);
 			showmap(&small_heap.heap_fl);
 			NADVISE("Consider changing SMALL_HEAPSIZE");
 			sprintf(DEFAULT_ERROR_STRING,
@@ -380,7 +375,7 @@ sprintf(DEFAULT_ERROR_STRING,"getbuf:  %10ld at 0x%8lx (addr = 0x%lx)",
 NADVISE(DEFAULT_ERROR_STRING);
      */
     /* DEAFULT_ERROR_STRING not valid at startup!? */
-    fprintf(stderr,"getbuf:  %10ld at 0x%8lx (addr = 0x%lx)\n",
+    fprintf(stderr,"getbuf(1):  %10ld at 0x%8lx (addr = 0x%lx)\n",
             *((u_long *) ((u_long)cp-SIZE_OFFSET)),
             (u_long)((((char *)cp)-SIZE_OFFSET)-small_heap.heap_base),(u_long)cp );
   
@@ -414,6 +409,10 @@ void givbuf(const void* addr)
 //sprintf(DEFAULT_ERROR_STRING,"givbuf:\t\t\t  freeing addr 0x%8lx",(u_long)addr);
 //NADVISE(DEFAULT_ERROR_STRING);
 //}
+if( debug & gbdebug ){
+sprintf(DEFAULT_ERROR_STRING,"givbuf:\t\t\t  freeing addr 0x%8lx",(u_long)addr);
+NADVISE(DEFAULT_ERROR_STRING);
+}
 #endif /* QUIP_DEBUG */
 
 	caddr = (char*) addr;
@@ -422,15 +421,7 @@ void givbuf(const void* addr)
 	this_size = *ip;
 	/* zero the size so we can detect a repeated free'ing */
 	*ip = 0;
-//#ifdef CAUTIOUS
-//	if( this_size == 0 ) {
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  givbuf attempting to free a zero-length (unallocated or freed?) segment");
-//		NWARN(DEFAULT_ERROR_STRING);
-//		abort();
-//	}
-//#endif /* CAUTIOUS */
 	assert( this_size != 0 );
-
 
 	if( this_size >= BIG_HEAP_THRESH ){
 		index = caddr - big_heap.heap_base;
@@ -442,22 +433,13 @@ NADVISE(DEFAULT_ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-//#ifdef CAUTIOUS
-//		if( index >= big_heap.heap_total ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//		"Big heap block with size %ld has index %ld (0x%lx) !?",
-//				this_size,index,index);
-//			NADVISE(DEFAULT_ERROR_STRING);
-//			NERROR1("CAUTIOUS:  wrong (big) heap!?");
-//		}
-//#endif /* CAUTIOUS */
 		assert( index < big_heap.heap_total );
 
 		if( givspace(&big_heap.heap_fl,this_size,index) < 0 ){
 			sprintf(DEFAULT_ERROR_STRING,
 	"givbuf:  error in givspace returning %ld bytes at address 0x%lx to big heap",
 				this_size,(u_long)caddr);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(DEFAULT_ERROR_STRING);
 			return;
 		}
 #ifdef QUIP_DEBUG
@@ -465,15 +447,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 #endif /* QUIP_DEBUG */
 	} else {
 		index = caddr - small_heap.heap_base;
-//#ifdef CAUTIOUS
-//		if( index >= small_heap.heap_total ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//	"givbuf:  Small heap block at addr 0x%lx with size %ld has index %ld (0x%lx) !?",
-//				(u_long)caddr,this_size,index,index);
-//			NADVISE(DEFAULT_ERROR_STRING);
-//			NERROR1("CAUTIOUS:  wrong (small) heap!?");
-//		}
-//#endif /* CAUTIOUS */
 		assert( index < small_heap.heap_total );
 
 #ifdef QUIP_DEBUG
@@ -487,7 +460,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 			sprintf(DEFAULT_ERROR_STRING,
 	"givbuf:  error in givspace returning %ld bytes at address 0x%lx to small heap",
 				this_size,(u_long)caddr);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(DEFAULT_ERROR_STRING);
 			return;
 		}
 #ifdef QUIP_DEBUG
@@ -512,11 +485,13 @@ COMMAND_FUNC( heap_report )
 
 #else /* ! USE_GETBUF */
 
+#include <stdlib.h>	// calloc()
+
 #ifdef MAX_DEBUG
 static void mem_alert(size_t size)
 {
 static int n_allow=5;
-	fprintf(stderr,"getbuf %ld (0x%lx)\n",(long)size,(long)size);
+	fprintf(stderr,"getbuf(2) %ld (0x%lx)\n",(long)size,(long)size);
 	fflush(stderr);
 	if( (n_allow--) <= 0 ) abort();
 }
@@ -526,39 +501,30 @@ void * getbuf(size_t size)
 {
 	void *p;
 
-//if( size > 200000 ){
-//mem_alert(size);
-//}
-
-//#ifdef CAUTIOUS
-	// What is the difference between calloc and malloc???
-	// calloc zeroes the memory!
-//	p=calloc(size,1);
-//#else // ! CAUTIOUS
-
 	/* Call calloc instead of malloc to zero the memory.
 	 * We expect callers to do this themselves if required!
 	 *
-	 * When we changed this to malloc, it revealed a buf in vectree...
+	 * When we changed this to malloc, it revealed a bug in vectree...
 	 * something that was assumed to be NULL if not set is not getting intialized!?
+	 *
+	 * setting MallocScribble can also help reveal these problems...
 	 *
 	 * Fixed one problem with VN_DECL_OBJ, but other problems appear to remain...
 	 */
+
 //	p=malloc(size);
 
 	p=calloc(size,1);
 
-//#endif // ! CAUTIOUS
-
 	if( p == NULL ){
-		NWARN("Out of memory!?");
+		_warn(DEFAULT_QSP_ARG  "Out of memory!?");
 		NERROR1("fatal memory error");
 	}
 
 #ifdef QUIP_DEBUG
 if( debug & gbdebug ){
     /* DEAFULT_ERROR_STRING not valid at startup!? */
-    fprintf(stderr,"getbuf:  %10ld at addr = 0x%lx\n", (long)size, (u_long)p );
+    fprintf(stderr,"getbuf:  allocated %10ld at addr = 0x%lx\n", (long)size, (u_long)p );
 }
 #endif /* QUIP_DEBUG */
 
@@ -567,17 +533,18 @@ if( debug & gbdebug ){
 
 #ifdef DEBUG_GETBUF
 
-void givbuf( void * a )
+void givbuf( const void * a )
 {
+	assert(a!=NULL);
 
 #ifdef QUIP_DEBUG
 if( debug & gbdebug ){
-sprintf(DEFAULT_ERROR_STRING,"givbuf:\t\t\t  freeing addr 0x%lx)",(long)a);
+sprintf(DEFAULT_ERROR_STRING,"givbuf:\t\t\t  freeing addr 0x%lx",(long)a);
 NADVISE(DEFAULT_ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	free(a);
+	free((void *)a);
 }
 #endif // DEBUG_GETBUF
 

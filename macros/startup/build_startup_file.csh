@@ -1,7 +1,7 @@
 #!/bin/csh
 
 if( $#argv != 1 && $#argv != 2 ) then
-  echo 'usage:  ./build_startup_file.csh demo|ezjet|afalert|pvt|csf|iquip|fdm [test]'
+  echo 'usage:  ./build_startup_file.csh demo|ezjet|afalert|pvt|csf|iquip|fdm|symm [test]'
   exit
 endif
 
@@ -10,10 +10,10 @@ pushd ../../include
 popd
 
 set flavor=$1
-if( $flavor != demo && $flavor != ezjet && $flavor != afalert && $flavor != csf && $flavor != pvt && $flavor != iquip && $flavor != fdm ) then
+if( $flavor != demo && $flavor != ezjet && $flavor != afalert && $flavor != csf && $flavor != pvt && $flavor != iquip && $flavor != fdm && $flavor != symm ) then
   echo './build_startup_file.csh:  bad flavor requested:  $flavor'
   echo 'usage:  ./build_startup_file.csh <flavor> [test]'
-  echo 'known flavors:  demo ezjet afalert csf pvt iquip fdm'
+  echo 'known flavors:  demo ezjet afalert csf pvt iquip fdm symm'
   exit
 endif
 
@@ -42,6 +42,7 @@ set encfile=$out_stem.enc
 set extra_macro_dir=../../quip-extra/macros	# relative to ../macros
 
 cat < /dev/null > $outfile
+#echo verbose yes >> $outfile	# for debugging
 
 echo "If var_exists(startup_file_read) 'exit_file'" >> $outfile
 #echo 'advise "RESOURCE_DIR = $RESOURCE_DIR"' >> $outfile
@@ -72,7 +73,7 @@ set file_list=( ui )
 source add_files.csh
 
 set subdir=numrec
-set file_list=( fit_polynomial svd norm_coords )
+set file_list=( svd norm_coords fit_polynomial )
 source add_files.csh
 
 cat >> $outfile << EOF
@@ -125,16 +126,6 @@ if( $flavor == demo ) then
   # these files were added to make the old demos work:
   #set subdir=$extra_macro_dir/demo
   set subdir=demo
-  #cat ../../macros/demo/login.mac >> $outfile
-  #cat ../../macros/demo/gui_demo.mac >> $outfile
-  #cat ../../macros/demo/graph.mac >> $outfile
-  #cat ../../macros/demo/accel.mac >> $outfile
-  #cat ../../macros/demo/draw.mac >> $outfile
-  #cat ../../macros/demo/anim.mac >> $outfile
-  #cat ../../macros/demo/paint.mac >> $outfile
-  #cat ../../macros/demo/console.mac >> $outfile
-  #cat ../../macros/demo/view_test.mac >> $outfile
-  #cat ../../macros/demo/fio.mac >> $outfile
   set file_list=( login gui_demo graph accel draw anim paint console view_test fio )
   source add_files.csh
 
@@ -173,42 +164,21 @@ else if( $flavor == pvt ) then
   source add_file.csh pvt/pvt_main.scr
 else if( $flavor == csf ) then
   set subdir=$extra_macro_dir/demo
-  set file_list=( login gui_demo graph )
+  set file_list=( login gui_demo )
   source add_files.csh
-
-  #cat ../../macros/demo/login.mac >> $outfile
-  #cat ../../macros/demo/gui_demo.mac >> $outfile
-  #cat ../../macros/demo/graph.mac >> $outfile
 
   set subdir=$extra_macro_dir/csf
-  set file_list=( csf calib arrows csf_cam sync_files csf_admin psych )
+  set file_list=( csf calib arrows csf_cam sync_files csf_admin csf_util psych )
   source add_files.csh
-
-  #cat ../../macros/csf/csf.mac >> $outfile
-  #cat ../../macros/csf/calib.mac >> $outfile
-  #cat ../../macros/csf/arrows.mac >> $outfile
-  #cat ../../macros/csf/csf_cam.mac >> $outfile
-  #cat ../../macros/csf/sync_files.mac >> $outfile
 
   set subdir=ios
   set file_list=( utilz cache console )
   source add_files.csh
 
-  #cat ../../macros/ios/utilz.mac >> $outfile
-  #cat ../../macros/ios/cache.mac >> $outfile
-  #cat ../../macros/ios/console.mac >> $outfile
-
-  #cat ../../macros/pvt/pvt.mac >> $outfile
-  #cat ../../macros/pvt/dashboard.mac >> $outfile
-  #cat ../../macros/pvt/pvt_params.mac >> $outfile
-  #cat ../../macros/pvt/pvt_dist.mac >> $outfile
-  #cat ../../macros/pvt/pvt_plot.mac >> $outfile
   set subdir=$extra_macro_dir/pvt
   set file_list=( pvt dashboard pvt_params pvt_dist pvt_plot )
   source add_files.csh
 
-  #cat ../../macros/data/string_edit.mac >> $outfile
-  #cat ../../macros/data/set_sizes.mac >> $outfile
   set subdir=data
   set file_list=( string_edit set_sizes )
   source add_files.csh
@@ -216,10 +186,6 @@ else if( $flavor == csf ) then
   source add_file.csh compute/rdp.mac
   source add_file.csh view/opt_ht.mac
 
-#  cat ../../macros/compute/rdp.mac >> $outfile
-#  cat ../../macros/view/opt_ht.mac >> $outfile
-  #cat ../../macros/csf/csf_admin.mac >> $outfile	# csf
-  #cat ../../macros/csf/csf_main.scr >> $outfile
   source add_file.csh $extra_macro_dir/csf/csf_main.scr
 
 else if( $flavor == afalert ) then
@@ -310,6 +276,11 @@ else if( $flavor == fdm ) then
   cat ../../macros/compute/gaussian.mac >> $outfile
   cat $HOME/exps/uhco13/stimuli/fdm_demos.mac >> $outfile
   cat $HOME/exps/uhco13/stimuli/fdm_ipad.scr >> $outfile
+else if( $flavor == symm ) then
+  source add_file.csh ios/utilz.mac
+  cat ../$extra_macro_dir/symm/symm.mac >> $outfile
+  cat ../$extra_macro_dir/symm/symm_app.mac >> $outfile
+  cat ../$extra_macro_dir/symm/symm_main.scr >> $outfile
 else
   echo "Sorry, unhandled flavor $flavor"
   exit

@@ -23,7 +23,7 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	if( dpto == dpfr )
 		WARN("source and destination should differ for erosion!?");
 
-	if( !is_contiguous(QSP_ARG  dpfr) ){
+	if( !is_contiguous(dpfr) ){
 		sprintf(ERROR_STRING,
 			"source image %s must be contiguous for erosion",
 			OBJ_NAME(dpfr));
@@ -34,7 +34,7 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 		WARN("precision must be float for erosion");
 		return;
 	}
-	if( !dp_same_size(QSP_ARG  dpto,dpfr,"erode") ){
+	if( !dp_same_size(dpto,dpfr,"erode") ){
 		WARN("images must be equal in size for erosion");
 		return;
 	}
@@ -227,7 +227,7 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	if( dpto == dpfr )
 		WARN("source and destination should differ for dilation!?");
 
-	if( !is_contiguous(QSP_ARG  dpfr) ){
+	if( !is_contiguous(dpfr) ){
 		sprintf(ERROR_STRING,
 			"source image %s must be contiguous for dilation",
 			OBJ_NAME(dpfr));
@@ -238,7 +238,7 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 		WARN("precision must be float for dilation");
 		return;
 	}
-	if( !dp_same_size(QSP_ARG  dpto,dpfr,"dilate") ){
+	if( !dp_same_size(dpto,dpfr,"dilate") ){
 		WARN("images must be equal in size for dilation");
 		return;
 	}
@@ -403,7 +403,7 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 
 /* flood fill stuff using graphics gems routine */
 
-static Data_Obj *fill_dp=NO_OBJ;
+static Data_Obj *fill_dp=NULL;
 
 int pixelread(int x,int y)
 {
@@ -479,7 +479,7 @@ void ifl(QSP_ARG_DECL  Data_Obj *dp,dimension_t x,dimension_t y,double color,dou
 {
 
 #ifdef CAUTIOUS
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		WARN("CAUTIOUS:  ifl:  null fill object passed");
 		return;
 	}
@@ -572,7 +572,7 @@ void morph_process( QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *tbl_
 {
 	dimension_t i,j;
 	u_long *to, *from1, *from2, *from3;
-	int bitfr1,bitfr2,bitfr3;
+	uint64_t bitfr1,bitfr2,bitfr3;	// BUG need typedef for bit index!
 	u_long outbit,bit1,bit2,bit3;
 	int b0,b1,b2,b3,b4,b5,b6,b7,b8;
 	int index;

@@ -27,17 +27,108 @@
 #include "viewer.h"
 #include "cmaps.h"
 
-static UIAlertView *fatal_alert_view=NULL;
-static UIAlertView *busy_alert_p=NULL;
-static UIAlertView *hidden_busy_p=NULL;
-static UIAlertView *ending_busy_p=NULL;
+static QUIP_ALERT_OBJ_TYPE *fatal_alert_view=NULL;
+static QUIP_ALERT_OBJ_TYPE *busy_alert_p=NULL;		// the active busy alert
+static QUIP_ALERT_OBJ_TYPE *suspended_busy_p=NULL;	// suspended
+static QUIP_ALERT_OBJ_TYPE *final_ending_busy_p=NULL;	// set when active goes away forever
 
+inline static void remember_alert(QUIP_ALERT_OBJ_TYPE *alert, int code )
+{
+	[Alert_Info rememberAlert:alert withType:code];
+}
 
-//static Panel_Obj *last_panel=NO_PANEL_OBJ;
-//static Screen_Obj *find_object(QSP_ARG_DECL  Widget obj);
+inline static void remember_normal_alert(QUIP_ALERT_OBJ_TYPE *alert)
+{
+	remember_alert(alert, QUIP_ALERT_NORMAL);
+}
 
-//static Query_Stack *motif_qsp=NULL;
-//static void motif_dispatch(SINGLE_QSP_ARG_DECL);
+inline static void remember_busy_alert(QUIP_ALERT_OBJ_TYPE *alert)
+{
+	remember_alert(alert, QUIP_ALERT_BUSY);
+}
+
+inline static void remember_confirmation_alert(QUIP_ALERT_OBJ_TYPE *alert)
+{
+	remember_alert(alert, QUIP_ALERT_CONFIRMATION);
+}
+
+static void suspend_quip_interpreter(SINGLE_QSP_ARG_DECL)
+{
+	SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
+}
+
+#define show_alert( alert_p ) _show_alert( QSP_ARG   alert_p )
+
+static void _show_alert( QSP_ARG_DECL   QUIP_ALERT_OBJ_TYPE *alert_p )
+{
+#ifdef OLD
+	[alert_p show];
+#else // ! OLD
+
+	[ root_view_controller presentViewController:alert_p animated:YES completion:^(void){
+		dispatch_after(0, dispatch_get_main_queue(), ^{
+			if( alert_p == busy_alert_p ){
+				resume_quip(DEFAULT_QSP_ARG);
+			}
+		    });
+	}
+	];
+
+#endif // ! OLD
+
+	// The alert won't be shown until we relinquish control
+	// back to the system...
+	// So we need to inform the system not to interpret any more commands!
+
+	suspend_quip_interpreter(SINGLE_QSP_ARG);
+}
+
+#define resume_busy() _resume_busy(SINGLE_QSP_ARG)
+
+static void _resume_busy(SINGLE_QSP_ARG_DECL)
+{
+	if( suspended_busy_p == NULL ){
+		warn("resume_busy:  no suspended busy alert!?");
+		return;
+	}
+	busy_alert_p=suspended_busy_p;
+	suspended_busy_p=NULL;
+	// Isn't this alert already remembered?
+	remember_busy_alert(busy_alert_p);
+	show_alert(busy_alert_p);
+}
+
+void set_allowed_orientations( Quip_Allowed_Orientations o )
+{
+	UIInterfaceOrientationMask m;
+
+	switch(o){
+		case QUIP_ORI_ALL:
+			m=UIInterfaceOrientationMaskAll;
+			break;
+		case QUIP_ORI_PORTRAIT_BOTH:
+			m=UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
+			break;
+		case QUIP_ORI_PORTRAIT_UP:
+			m=UIInterfaceOrientationMaskPortrait;
+			break;
+		case QUIP_LANDSCAPE_BOTH:
+			m=UIInterfaceOrientationMaskLandscape;
+			break;
+		case QUIP_LANDSCAPE_RIGHT:
+			m=UIInterfaceOrientationMaskLandscapeRight;
+			break;
+		case QUIP_LANDSCAPE_LEFT:
+			m=UIInterfaceOrientationMaskLandscapeLeft;
+			break;
+		default:
+			m=UIInterfaceOrientationMaskAll;	// silence compiler warning
+			// use assertion instead?
+			NERROR1("set_allowed_orientations:  illegal orienation code!?");
+			break;
+	}
+	set_supported_orientations(m);
+}
 
 #define PIXELS_PER_CHAR 9	// BUG should depend on font, may not be fixed-width!?
 #define EXTRA_WIDTH	20	// pad for string length...
@@ -49,10 +140,10 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 	// nop
 }
 
-void reposition(Screen_Obj *sop)
+void _reposition(QSP_ARG_DECL  Screen_Obj *sop)
 {
 	/* Reposition frame if it has one */
-	NWARN("need to implement reposition in ios.c");
+	warn("need to implement reposition in ios.c");
 }
 
 
@@ -62,17 +153,17 @@ Panel_Obj *find_panel(QSP_ARG_DECL  quipView *qv)
 	IOS_Node *np;
 	Panel_Obj *po;
 
-	lp=panel_obj_list(SINGLE_QSP_ARG);
-	if( lp == NO_IOS_LIST ) return(NO_PANEL_OBJ);
+	lp=panel_obj_list();
+	if( lp == NULL ) return(NULL);
 	np=IOS_LIST_HEAD(lp);
-	while( np!=NO_IOS_NODE ){
+	while( np!=NULL ){
 		po = (Panel_Obj *)IOS_NODE_DATA(np);
 		if( PO_QV(po) == qv ){
 			return(po);
 		}
 		np=IOS_NODE_NEXT(np);
 	}
-	return(NO_PANEL_OBJ);
+	return(NULL);
 }
 
 
@@ -100,7 +191,7 @@ void make_panel(QSP_ARG_DECL  Panel_Obj *po,int w,int h)
 	// check and see if there already is a viewer
 	// with this name
 	Gen_Win *gwp = genwin_of(QSP_ARG  PO_NAME(po) );
-	if( gwp == NO_GENWIN ){
+	if( gwp == NULL ){
 		gwp = make_genwin(QSP_ARG  PO_NAME(po),w,h);
 	}
 	SET_PO_GW(po,gwp);
@@ -152,7 +243,7 @@ void activate_panel(QSP_ARG_DECL  Panel_Obj *po, int yesno)
 	IOS_Node *np;
 
 	lp = PO_CHILDREN(po);
-	if( lp == NO_IOS_LIST ){
+	if( lp == NULL ){
 		WARN("activate_panel:  null widget list!?");
 		return;
 	}
@@ -160,7 +251,7 @@ void activate_panel(QSP_ARG_DECL  Panel_Obj *po, int yesno)
 
 	// It would be better to have a single subview that is the parent
 	// view for all the controls...
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Screen_Obj *sop;
 
 		sop = IOS_NODE_DATA(np);
@@ -207,6 +298,11 @@ void make_separator(QSP_ARG_DECL  Screen_Obj *so)
 {
 }
 
+void delete_widget(QSP_ARG_DECL  Screen_Obj *sop)
+{
+	WARN("delete_widget:  not implemented yet for IOS!?");
+}
+
 void make_button(QSP_ARG_DECL  Screen_Obj *sop)
 {
 	/* We need the app delegate (to set event handling),
@@ -235,10 +331,23 @@ void make_button(QSP_ARG_DECL  Screen_Obj *sop)
 	SET_SOB_WIDTH(sop,button_width);
 	SET_SOB_HEIGHT(sop,BUTTON_HEIGHT);
 
-	newButton.frame = CGRectMake(PO_CURR_X(curr_panel), PO_CURR_Y(curr_panel),
-		SOB_WIDTH(sop), SOB_HEIGHT(sop) );
+//	newButton.frame = CGRectMake(PO_CURR_X(curr_panel), PO_CURR_Y(curr_panel),
+//		SOB_WIDTH(sop), SOB_HEIGHT(sop) );
 
 	[newButton setTitle:STRINGOBJ(SOB_NAME(sop)) forState:UIControlStateNormal];
+
+	[newButton.titleLabel setFont:[UIFont boldSystemFontOfSize:(newButton.titleLabel.font.pointSize * 1.5)]];
+
+	[newButton sizeToFit];	// does this work?
+
+//fprintf(stderr,"Button '%s' has width %g and height %g\n",SOB_NAME(sop),
+//newButton.frame.size.width,newButton.frame.size.height);
+
+//	newButton.frame.origin.x = PO_CURR_X(curr_panel);
+//	newButton.frame.origin.y = PO_CURR_Y(curr_panel);
+
+	newButton.frame = CGRectMake(PO_CURR_X(curr_panel),PO_CURR_Y(curr_panel),
+				   newButton.frame.size.width,newButton.frame.size.height);
 
 	[newButton addTarget:globalAppDelegate
 			action:@selector(genericButtonAction:)
@@ -311,28 +420,16 @@ void make_label(QSP_ARG_DECL  Screen_Obj *sop)
 	// or not there is more than one line, but a correct
 	// solution must incorporate the font and size etc.
 
-/* In iOS 6, use NSTextAlignment instead of UITextAlignment? */
-
 #define LABEL_CENTER_THRESHOLD	30
 
-#ifdef FOOBAR
-	// Older versions used this???
 	if( strlen(SOB_CONTENT(sop)) < LABEL_CENTER_THRESHOLD )
 		l.textAlignment = NSTextAlignmentCenter;
 	else
 		l.textAlignment = NSTextAlignmentLeft;
-#else // ! FOOBAR
-
-	if( strlen(SOB_CONTENT(sop)) < LABEL_CENTER_THRESHOLD )
-		l.textAlignment = NSTextAlignmentCenter;
-	else
-		l.textAlignment = NSTextAlignmentLeft;
-
-#endif // ! FOOBAR
 
 	l.numberOfLines = 0; //for word wrapping
 	//l.lineBreakMode = UILineBreakModeWordWrap; for word wrapping
-    [l setLineBreakMode:NSLineBreakByWordWrapping];
+	[l setLineBreakMode:NSLineBreakByWordWrapping];
 	// what does this do about the width?
 	[l sizeToFit];
 
@@ -359,7 +456,7 @@ void make_message(QSP_ARG_DECL  Screen_Obj *sop)
 
 	sprintf(s,"%s:  %s",SOB_NAME(sop),SOB_CONTENT(sop));
 	//w=PIXELS_PER_CHAR*strlen(s)+EXTRA_WIDTH;
-	w=globalAppDelegate.dev_size.width,
+	w=globalAppDelegate.dev_size.width;
 	f=CGRectMake(PO_CURR_X(curr_panel),PO_CURR_Y(curr_panel),w,BUTTON_HEIGHT);
 	l=[[UILabel alloc] initWithFrame:f];
 	l.text = STRINGOBJ( s );
@@ -372,6 +469,8 @@ void make_message(QSP_ARG_DECL  Screen_Obj *sop)
 	[ PO_QV(curr_panel) addSubview:l ];
 	SET_SOB_CONTROL(sop,l);
 }
+
+// works for choosers AND pickers?
 
 void reload_chooser(Screen_Obj *sop)
 {
@@ -386,7 +485,33 @@ void reload_picker(Screen_Obj *sop)
 	[p reloadAllComponents];
 }
 
-void set_choice(Screen_Obj *sop, int which)
+void _get_choice(QSP_ARG_DECL  Screen_Obj *sop)
+{
+	if( IS_CHOOSER(sop) ){
+		warn("get_choice:  Sorry, not implemented yet for choosers...");
+	} else if( SOB_TYPE(sop) == SOT_PICKER ){
+		if( 0 == SOB_N_SELECTORS_AT_IDX(sop,0) ){
+			assign_var(DEFAULT_QSP_ARG "choice", "no_choices_available" );
+			return;
+		}
+
+		UIPickerView *p;
+		int idx;
+		p=(UIPickerView *)SOB_CONTROL(sop);
+		idx = [p selectedRowInComponent:0];
+fprintf(stderr,"get_choice:  idx = %d\n",idx);
+		assert( idx>=0 && idx < SOB_N_SELECTORS_AT_IDX(sop,0) );
+		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTOR_AT_IDX(sop,0,idx) );
+		return;
+	} else {
+		sprintf(ERROR_STRING,
+"get_choice:  object %s is neither a picker nor a chooser!?",SOB_NAME(sop));
+		warn(ERROR_STRING);
+	}
+	assign_var("choice", "oops" );
+}
+
+void _set_choice(QSP_ARG_DECL  Screen_Obj *sop, int which)
 {
 	if( IS_CHOOSER(sop) ){
 		UITableView *t;
@@ -407,31 +532,31 @@ void set_choice(Screen_Obj *sop, int which)
 		p=(UIPickerView *)SOB_CONTROL(sop);
 		[p selectRow:which inComponent:0 animated:NO];
 	} else {
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "set_choice:  object %s is neither a picker nor a chooser!?",SOB_NAME(sop));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
-void set_pick(Screen_Obj *sop, int cyl, int which)
+void _set_pick(QSP_ARG_DECL  Screen_Obj *sop, int cyl, int which)
 {
 	if( SOB_TYPE(sop) == SOT_PICKER ){
 		UIPickerView *p;
 		p=(UIPickerView *)SOB_CONTROL(sop);
 
 		if( cyl < 0 || cyl >= SOB_N_CYLINDERS(sop) ){
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 	"set_pick:  cylinder %d is out of range for picker %s (0-%d)",
 				cyl,SOB_NAME(sop),SOB_N_CYLINDERS(sop));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 
 		[p selectRow:which inComponent:cyl animated:NO];
 	} else {
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "set_pick:  object %s is not a chooser!?",SOB_NAME(sop));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -460,7 +585,7 @@ void make_chooser(QSP_ARG_DECL  Screen_Obj *sop, int n, const char **stringlist)
 
 	[t layoutIfNeeded];
 	CGFloat tHeight = [t contentSize].height;
-	CGRect fitF = CGRectMake(f.origin.x, f.origin.y, f.size.width, tHeight); 
+	CGRect fitF = CGRectMake(f.origin.x, f.origin.y, f.size.width, tHeight);
 	[t setFrame:fitF];
 
 	// decide in the script whether or not a larger-than-device
@@ -494,7 +619,7 @@ void make_picker(QSP_ARG_DECL  Screen_Obj *sop )
 	// Now defaults to a width of 320 points on all devices...
 #define MY_DEFAULT_PICKER_HEIGHT	200
 #define GAP_FACTOR	6
-	
+
 	//f=CGRectMake(PO_CURR_X(curr_panel),PO_CURR_Y(curr_panel),PO_WIDTH(curr_panel)-2*OBJECT_GAP,0);
 	f=CGRectMake(	PO_CURR_X(curr_panel)+GAP_FACTOR*OBJECT_GAP,
 			PO_CURR_Y(curr_panel),
@@ -514,6 +639,9 @@ void make_picker(QSP_ARG_DECL  Screen_Obj *sop )
 	// BUG?  set width and height of sop here?
 }
 
+// Originally, the action string is called when the Done key is entered,
+// which can be confusing...  it would be better to have a way to pull the text
+// from the widget, or call the action every time that a keystroke is typed...
 
 void make_text_field(QSP_ARG_DECL  Screen_Obj *sop)
 {
@@ -538,7 +666,7 @@ void make_text_field(QSP_ARG_DECL  Screen_Obj *sop)
 	textField.clearButtonMode = UITextFieldViewModeWhileEditing;
 	textField.clearsOnBeginEditing = YES;
 	textField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-	textField.delegate = globalAppDelegate;
+	textField.delegate = globalAppDelegate;	// what methods are delegated???
 
 	if( SOB_TYPE(sop) == SOT_PASSWORD )
 		textField.secureTextEntry = YES;
@@ -659,10 +787,9 @@ void make_edit_box(QSP_ARG_DECL  Screen_Obj *sop)
 
 /* For a text widget, this sets the text!? */
 
-void update_prompt(Screen_Obj *sop)
+void _update_prompt(QSP_ARG_DECL  Screen_Obj *sop)
 {
-	NWARN("update_prompt not implemented!?");
-
+	warn("update_prompt not implemented!?");
 }
 
 // It is not clear that we need to have this separate!?
@@ -849,15 +976,15 @@ void make_adjuster(QSP_ARG_DECL  Screen_Obj *sop)
 	make_slider( QSP_ARG   sop );
 }
 
-void new_slider_range(Screen_Obj *sop, int xmin, int xmax)
+void _new_slider_range(QSP_ARG_DECL  Screen_Obj *sop, int xmin, int xmax)
 {
-	NWARN("new_slider_range not implemented!?");
+	warn("new_slider_range not implemented!?");
 }
 
 
-void new_slider_pos(Screen_Obj *sop, int val)
+void _new_slider_pos(QSP_ARG_DECL  Screen_Obj *sop, int val)
 {
-	NWARN("new_slider_pos not implemented!?");
+	warn("new_slider_pos not implemented!?");
 }
 
 void set_toggle_state(Screen_Obj *sop, int val)
@@ -924,7 +1051,7 @@ void update_text_box(Screen_Obj *sop)
 // what kind of object can this be?
 // UILabel, UITextField...
 
-void update_text_field(Screen_Obj *sop, const char *string)
+void _update_text_field(QSP_ARG_DECL  Screen_Obj *sop, const char *string)
 {
 	switch( SOB_TYPE(sop) ){
 
@@ -950,9 +1077,9 @@ void update_text_field(Screen_Obj *sop, const char *string)
 			break;
 
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 	"update_text_field:  unhandled object type, screen object %s",SOB_NAME(sop));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 }
@@ -978,9 +1105,9 @@ void unshow_panel(QSP_ARG_DECL  Panel_Obj *po)
 	pop_nav(QSP_ARG 1);
 }
 
-void posn_panel(Panel_Obj *po)
+void _posn_panel(QSP_ARG_DECL  Panel_Obj *po)
 {
-	NWARN("posn_panel not implemented!?");
+	warn("posn_panel not implemented!?");
 }
 
 void free_wsys_stuff(Panel_Obj *po)
@@ -988,19 +1115,19 @@ void free_wsys_stuff(Panel_Obj *po)
 	/* BUG - should check what we need to delete here */
 }
 
-void give_notice(const char **msg_array)
+void _give_notice(QSP_ARG_DECL  const char **msg_array)
 {
-	NWARN("give_notice:  notices not implemented in this version\n");
+	warn("give_notice:  notices not implemented in this version\n");
 }
 
-void set_std_cursor(void)
+void _set_std_cursor(SINGLE_QSP_ARG_DECL)
 {
-	NWARN("set_std_cursor not implemented!?");
+	warn("set_std_cursor not implemented!?");
 }
 
-void set_busy_cursor(void)
+void _set_busy_cursor(SINGLE_QSP_ARG_DECL)
 {
-	NWARN("set_busy_cursor not implemented!?");
+	warn("set_busy_cursor not implemented!?");
 }
 
 void make_scroller(QSP_ARG_DECL  Screen_Obj *sop)
@@ -1009,10 +1136,10 @@ void make_scroller(QSP_ARG_DECL  Screen_Obj *sop)
 
 }
 
-void set_scroller_list(Screen_Obj *sop, const char *string_list[],
+void _set_scroller_list(QSP_ARG_DECL  Screen_Obj *sop, const char *string_list[],
 	int nlist)
 {
-	NWARN("set_scroller_list not implemented!?");
+	warn("set_scroller_list not implemented!?");
 }
 
 void window_cm(Panel_Obj *po,Data_Obj *cm_dp)
@@ -1029,7 +1156,7 @@ static void dump_scrnobj_list(IOS_List *lp)
 	IOS_Node *np;
 
 	np = IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Screen_Obj *sop;
 		sop = (Screen_Obj *)IOS_NODE_DATA(np);
 		fprintf(stderr,"\t%s\n",SOB_NAME(sop));
@@ -1058,29 +1185,17 @@ Screen_Obj *find_scrnobj(UIView *cp)
 	IOS_Item_Context *icp;
 
 	icp = top_scrnobj_context();
-
-#ifdef CAUTIOUS
-	if( icp == NULL ){
-		NWARN("CAUTIOUS:  find_scrnobj:  null top context!?");
-		return NULL;
-	}
-#endif // CAUTIOUS
+	assert( icp != NULL );
 
 //fprintf(stderr,"find_scrnobj:  searching context %s for control 0x%lx\n",
 //IOS_CTX_NAME(icp),(u_long)cp);
 
 	IOS_List *lp = [icp getListOfItems];
-
-#ifdef CAUTIOUS
-	if( lp == NULL ){
-		NWARN("CAUTIOUS:  find_scrnobj:  null context list!?");
-		return NULL;
-	}
-#endif // CAUTIOUS
+	assert( lp != NULL );
 
 	IOS_Node *np;
 	np=IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Screen_Obj *sop = (Screen_Obj *)IOS_NODE_DATA(np);
 
 //fprintf(stderr,"find_scrnobj:  checking %s, control = 0x%lx, target = 0x%lx\n",
@@ -1107,10 +1222,10 @@ Screen_Obj *find_any_scrnobj(UIView *cp)
 
 	// Does this return all objects, or just current context stack?
 	lp = all_scrnobjs(SGL_DEFAULT_QSP_ARG);
-	if( lp == NO_IOS_LIST ) return NULL;
+	if( lp == NULL ) return NULL;
 
 	np=IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		sop = (Screen_Obj *)IOS_NODE_DATA(np);
 //fprintf(stderr,"find_any_scrnobj 0x%lx:  %s, ctrl = 0x%lx\n",
 //(u_long)cp,SOB_NAME(sop),(u_long) SOB_CONTROL(sop));
@@ -1138,12 +1253,16 @@ int n_pushed_panels(void)
 	return (int) a.count;
 }
 
+// If we call push_nav after pop_nav, the pop_nav may not have taken effect yet!?
+
 void push_nav(QSP_ARG_DECL  Gen_Win *gwp)
 {
 	// Make sure that this has not been pushed already by scanning the stack
 
 	NSArray *a = [ root_view_controller viewControllers];
+//fprintf(stderr,"push_nav:  root view controller has %lu view controllers\n",(unsigned long)a.count);
 	int i;
+//fprintf(stderr,"push_nav %s BEGIN\n",GW_NAME(gwp));
 	for(i=0;i<a.count;i++){
 		UIViewController *vc;
 		vc = [a objectAtIndex:i];
@@ -1276,28 +1395,31 @@ void pop_nav(QSP_ARG_DECL int n_levels)
 	// we do something this won't happen until a new orientation
 	// change event is generated by the accelerometer...
 
+//fprintf(stderr,"pop_nav %d:  before popping, root view controller has %lu view controllers\n",n_levels,(unsigned long)a.count);
+
+//fprintf(stderr,"pop_nav %d BEGIN\n",n_levels);
 	old_vc = (quipViewController *) root_view_controller.topViewController;
 
-	while( (n_levels--) > 1 ){
-		/*qvc = (quipViewController *) */
-			[ root_view_controller popViewControllerAnimated:NO
-				checkOrientation:[old_vc didBlockAutorotation]
-				];
-		// don't do this here any more.
-		// pop_scrnobj_context(SINGLE_QSP_ARG);
-	}
-
+	if( n_levels > 1 ){
+	NSArray *a = [ root_view_controller viewControllers];
+	if( n_levels >= a.count ){
+			WARN("pop_nav:  too many levels requested!?");
+			n_levels = (int)(a.count - 1);
+		}
+		UIViewController *target_vc;
+		target_vc = a[a.count-n_levels-1];
+		[ root_view_controller popToViewController:target_vc animated:YES ];
+	} else {
 	/* qvc = (quipViewController *) */
 		[ root_view_controller popViewControllerAnimated:YES
 			checkOrientation:[old_vc didBlockAutorotation]
 			];
+	}
 
 	// The new view controller may not be a quipViewController!?
 	// It could also be a quipTableViewController???
 
 	// pop_scrnobj_context now done in quipNavController delegate
-//	pop_scrnobj_context(SINGLE_QSP_ARG);
-
 }
 
 void make_console_panel(QSP_ARG_DECL  const char *name)
@@ -1320,69 +1442,246 @@ struct alert_data {
 
 static struct alert_data deferred_alert = { NULL, NULL };
 
-// We call suspend_busy when the busy alert is up, and we want to
-// display a different alert.  we are probably calling this from 
+static void clear_deferred_alert(void)
+{
+	assert(deferred_alert.type != NULL);
+	assert(deferred_alert.msg != NULL);
+
+	rls_str(deferred_alert.type);
+	rls_str(deferred_alert.msg);
+
+	deferred_alert.type=NULL;
+	deferred_alert.msg=NULL;
+}
+
+// We call suspend__busy when the busy alert is up, and we want to
+// display a different alert.  we are probably calling this from
 // finish_digestion...
 
-static void suspend_busy(void)
+#define suspend__busy() _suspend__busy(SINGLE_QSP_ARG)
+
+static void _suspend__busy(SINGLE_QSP_ARG_DECL)
 {
 	// we need to display an alert while we are busy...
-	hidden_busy_p = busy_alert_p;
+	suspended_busy_p = busy_alert_p;
 	end_busy(0);	// takes the alert down
 }
 
-static void generic_alert(QSP_ARG_DECL  const char *type, const char *msg)
+static void defer_alert(const char *type, const char *msg)
+{
+	if( deferred_alert.type != NULL ){
+		fprintf(stderr,"MORE THAN ONE DEFERRED ALERT!?\n");
+		fprintf(stderr,"Discarding deferred alert \"%s %s\"\n",
+			deferred_alert.type,deferred_alert.msg);
+		clear_deferred_alert();
+		defer_alert("TOO MANY DEFERRED ALERTS!?",msg);
+	} else {
+		assert(deferred_alert.msg==NULL);
+		deferred_alert.type = savestr(type);
+		deferred_alert.msg = savestr(msg);
+	}
+}
+
+static void busy_dismissal_checks(QUIP_ALERT_OBJ_TYPE *a)
+{
+	if( a == final_ending_busy_p ){	// dismissed busy alert
+		// nothing more to do.
+		final_ending_busy_p=NULL;
+	}
+	resume_quip(SGL_DEFAULT_QSP_ARG);
+}
+
+// Call this when dismissing a non-busy alert
+
+static void alert_dismissal_busy_checks(Alert_Info *aip)
+{
+	assert(aip.the_alert_p != final_ending_busy_p);
+	assert( busy_alert_p == NULL );
+
+	if( suspended_busy_p != NULL ){
+		assert( aip.the_alert_p != suspended_busy_p );
+		resume_busy();
+	} else {
+		resume_quip(DEFAULT_QSP_ARG);
+	}
+} // alert_dismissal_busy_check
+
+static void quip_alert_dismissal_actions(QUIP_ALERT_OBJ_TYPE *alertView, NSInteger buttonIndex)
+{
+	if( alertView == fatal_alert_view ){
+		[first_quip_controller qtvcExitProgram];
+	}
+
+	Alert_Info *aip;
+
+	aip = [Alert_Info alertInfoFor:alertView];
+
+	if( IS_VALID_ALERT(aip) ){
+		[aip forget];	// removes from list
+
+		alert_dismissal_busy_checks(aip);
+	}
+#ifdef CAUTIOUS
+	 else {
+		sprintf(DEFAULT_ERROR_STRING,
+"CAUTIOUS:  quip_alert_dismissal_actions:  Unrecognized alert type %d!?",aip.type);
+		_warn(DEFAULT_QSP_ARG  DEFAULT_ERROR_STRING);
+		return;
+	}
+#endif // CAUTIOUS
+}
+
+static void confirmation_alert_dismissal_actions(QUIP_ALERT_OBJ_TYPE *alertView, NSInteger buttonIndex)
+{
+	if( buttonIndex == 0 ){
+		assign_reserved_var(DEFAULT_QSP_ARG  "confirmed","0");
+	} else {
+		assign_reserved_var(DEFAULT_QSP_ARG  "confirmed","1");
+	}
+	quip_alert_dismissal_actions(alertView,buttonIndex);
+}
+
+static QUIP_ALERT_OBJ_TYPE *create_alert_with_no_buttons(const char *type, const char *msg)
+{
+	QUIP_ALERT_OBJ_TYPE *alert;
+#ifdef OLD
+	// open an alert with a single dismiss button
+	// How can we changed the behavior of the delegate???
+	alert = [[QUIP_ALERT_OBJ_TYPE alloc]
+		initWithTitle:STRINGOBJ(type)
+		message:STRINGOBJ(msg)
+		delegate:vc
+		cancelButtonTitle: @"Please be patient..."
+		otherButtonTitles: nil];
+#else // !OLD
+	alert = [UIAlertController
+				alertControllerWithTitle: STRINGOBJ(type)
+				message: STRINGOBJ(msg)
+				preferredStyle:UIAlertControllerStyleAlert];
+
+#endif // !OLD
+
+	return alert;
+}
+
+static QUIP_ALERT_OBJ_TYPE *create_alert_with_one_button(const char *type, const char *msg)
+{
+#ifdef OLD
+	// open an alert with a single dismiss button
+	QUIP_ALERT_OBJ_TYPE *alert = [[QUIP_ALERT_OBJ_TYPE alloc]
+		initWithTitle:STRINGOBJ(type)
+		message:STRINGOBJ(msg)
+		delegate:vc
+		cancelButtonTitle: is_fatal ?  @"Exit program" : @"OK"
+		otherButtonTitles: nil];
+	fatal_alert_view= is_fatal ? alert : NULL;
+	//[alert show];
+#else // ! OLD
+	UIAlertController * alert=   [UIAlertController
+		 alertControllerWithTitle: STRINGOBJ(type)
+		 message: STRINGOBJ(msg)
+		 preferredStyle:UIAlertControllerStyleAlert];
+
+	UIAlertAction* ok = [UIAlertAction
+		actionWithTitle:@"OK"
+		style:UIAlertActionStyleDefault
+		handler:^(UIAlertAction * action)	/* block */
+		{
+			// is the handler called before or after the alert
+			// is dismissed???
+				quip_alert_dismissal_actions(alert,0);
+			}];
+
+	[alert addAction:ok];
+#endif // ! OLD
+
+	return alert;
+}
+
+static QUIP_ALERT_OBJ_TYPE *create_alert_with_two_buttons(const char *type, const char *msg)
+{
+	QUIP_ALERT_OBJ_TYPE *alert;
+
+#ifdef OLD
+	// open an alert with a single dismiss button
+	alert = [[QUIP_ALERT_OBJ_TYPE alloc]
+		initWithTitle:STRINGOBJ(title)
+		message:STRINGOBJ(question)
+		delegate:vc
+		cancelButtonTitle: @"Cancel"
+		otherButtonTitles: @"Proceed", nil ];
+#else // ! OLD
+	alert = [UIAlertController
+		 alertControllerWithTitle: STRINGOBJ(type)
+		 message: STRINGOBJ(msg)
+		 preferredStyle:UIAlertControllerStyleAlert];
+
+// BUG need to copy code from the delegate into the actions!
+	UIAlertAction* ok = [UIAlertAction
+		actionWithTitle:@"Proceed"
+		style:UIAlertActionStyleDefault
+		handler:^(UIAlertAction * action) {
+			[alert dismissViewControllerAnimated:YES completion:nil];
+				confirmation_alert_dismissal_actions(alert,1);
+		}
+		];
+	UIAlertAction* cancel = [UIAlertAction
+		actionWithTitle:@"Cancel"
+		style:UIAlertActionStyleDefault
+		handler:^(UIAlertAction * action) {
+				confirmation_alert_dismissal_actions(alert,0);
+		}
+		];
+
+	[alert addAction:cancel];
+	[alert addAction:ok];
+#endif // ! OLD
+
+	return alert;
+}
+
+static void present_generic_alert(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	UIViewController *vc;
 	int is_fatal;
-
-	if( busy_alert_p != NULL ) {
-		suspend_busy();
-	}
 
 	vc = root_view_controller.topViewController;
 
 	// vc can be null if we call this before we have set
 	// root_view_controller (during startup)
 
-	if( vc != NULL ){
-
-		is_fatal = !strcmp(type,FATAL_ERROR_TYPE_STR) ? 1 : 0 ;
-
-		// open an alert with a single dismiss button
-		UIAlertView *alert = [[UIAlertView alloc]
-			initWithTitle:STRINGOBJ(type)
-			message:STRINGOBJ(msg)
-			delegate:vc
-			cancelButtonTitle: is_fatal ?  @"Exit program" : @"OK"
-			otherButtonTitles: nil];
-		fatal_alert_view= is_fatal ? alert : NULL;
-		[Alert_Info rememberAlert:alert withType:QUIP_ALERT_NORMAL];
-		[alert show];
-	} else {
-		deferred_alert.type = savestr(type);
-		deferred_alert.msg = savestr(msg);
+	if( vc == NULL ){
+		defer_alert(type,msg);
+		return;
 	}
 
-	// The alert won't be shown until we relinquish control
-	// back to the system...
-	// So we need to inform the system not to interpret any more commands!
+	is_fatal = !strcmp(type,FATAL_ERROR_TYPE_STR) ? 1 : 0 ;
 
-	// When multiple alerts are issued, it seems to put them on a stack,
-	// so they are shown in reverse order.  We would like to inhibit
-	// script execution until the alert is dismissed...
-	//
-	// BUT if vc is null, we don't trap the callback...
-
-	SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
+	QUIP_ALERT_OBJ_TYPE *alert;
+	alert = create_alert_with_one_button(type,msg);
+	remember_normal_alert(alert);
+	fatal_alert_view= is_fatal ? alert : NULL;
+	show_alert(alert);
 } // generic_alert
+
+static void generic_alert(QSP_ARG_DECL  const char *type, const char *msg)
+{
+	if( busy_alert_p != NULL ) {
+		suspend__busy();
+		// relinquish control and come back later
+		defer_alert(type,msg);
+		suspend_quip_interpreter();
+		return;
+	}
+	present_generic_alert(QSP_ARG  type, msg);
+}
 
 void get_confirmation(QSP_ARG_DECL  const char *title, const char *question)
 {
 	UIViewController *vc;
 
 	if( busy_alert_p != NULL ) {
-		suspend_busy();
+		suspend__busy();
 	}
 
 	vc = root_view_controller.topViewController;
@@ -1390,31 +1689,14 @@ void get_confirmation(QSP_ARG_DECL  const char *title, const char *question)
 	// vc can be null if we call this before we have set
 	// root_view_controller (during startup)
 
-	if( vc != NULL ){
-		// open an alert with a single dismiss button
-		UIAlertView *alert = [[UIAlertView alloc]
-			initWithTitle:STRINGOBJ(title)
-			message:STRINGOBJ(question)
-			delegate:vc
-			cancelButtonTitle: @"Cancel"
-			otherButtonTitles: @"Proceed", nil ];
-
-		[Alert_Info rememberAlert:alert withType:QUIP_ALERT_CONFIRMATION];
-		[alert show];
-	} else {
-		/*
-		deferred_alert.type = savestr(type);
-		deferred_alert.msg = savestr(msg);
-		*/
+	if( vc == NULL ){
 		assign_reserved_var(DEFAULT_QSP_ARG  "confirmed","1");
 		return;
 	}
-
-	// The alert won't be shown until we relinquish control
-	// back to the system...
-	// So we need to inform the system not to interpret any more commands!
-
-	SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
+	QUIP_ALERT_OBJ_TYPE *alert;
+	alert = create_alert_with_two_buttons(title,question);
+	remember_confirmation_alert(alert);
+	show_alert(alert);
 } // get_confirmation
 
 /* Like an alert, but we don't stop execution - but wait, we have to,
@@ -1428,7 +1710,6 @@ void notify_busy(QSP_ARG_DECL  const char *type, const char *msg)
 	if( busy_alert_p != NULL ){
 		// we have to dismiss the busy indicator
 		// to print a warning pop-up!?
-fprintf(stderr,"OOPS - notify_busy called twice!?\n");
 		return;
 	}
 
@@ -1437,45 +1718,58 @@ fprintf(stderr,"OOPS - notify_busy called twice!?\n");
 	// vc can be null if we call this before we have set
 	// root_view_controller (during startup)
 
-	if( vc != NULL ){
+	if( vc == NULL ) return;
 
-		// open an alert with a single dismiss button
-		// How can we changed the behavior of the delegate???
-		UIAlertView *alert = [[UIAlertView alloc]
-			initWithTitle:STRINGOBJ(type)
-			message:STRINGOBJ(msg)
-			delegate:vc
-			cancelButtonTitle: @"Please be patient..."
-			otherButtonTitles: nil];
+	QUIP_ALERT_OBJ_TYPE *alert;
 
-		[Alert_Info rememberAlert:alert withType:QUIP_ALERT_BUSY];
-
-		[alert show];
-		busy_alert_p=alert;	// remember for later
-	}
-
-	// The alert won't be shown until we relinquish control
-	// back to the system...
-	// So we need to inform the system not to interpret any more commands!
-
-	// BUT in the case of a busy notification,
-	// we want to resume execution when the alert
-	// displays, not when it is dismissed...
-
-	SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
+	alert = create_alert_with_no_buttons(type,msg);
+	remember_busy_alert(alert);
+	show_alert(alert);
+	busy_alert_p=alert;	// remember for later
 } // notify_busy
+
+int check_deferred_alert(SINGLE_QSP_ARG_DECL)
+{
+	if( deferred_alert.type == NULL ) return 0;
+
+	generic_alert(QSP_ARG  deferred_alert.type,deferred_alert.msg);
+
+	// We release these strings, but are we sure that the system is
+	// done with them?  Did generic_alert copy them or make NSStrings?
+	clear_deferred_alert();
+	return 1;
+}
+
+static void dismiss_busy_alert(QUIP_ALERT_OBJ_TYPE *a)
+{
+#ifdef OLD
+
+	[a dismissWithClickedButtonIndex:0 animated:YES];
+#else // ! OLD
+	[root_view_controller dismissViewControllerAnimated:YES completion:^(void)
+		{
+			dispatch_after(0, dispatch_get_main_queue(), ^{
+				if( ! check_deferred_alert() ){
+					busy_dismissal_checks(a);
+				}
+			});
+		}
+	];
+	suspend_quip_interpreter(SGL_DEFAULT_QSP_ARG);
+#endif // ! OLD
+}
 
 // When we call end_busy, we are not really suspended, we already
 // did the things as if we were dismissing the alert when we faked
 // a dismissal when the alert was shown.  Therefore, when we dismiss
 // the gui element now, we have already popped the menu...
 
-void end_busy(int final)
+void _end_busy(QSP_ARG_DECL  int final)
 {
-	UIAlertView *a;
+	QUIP_ALERT_OBJ_TYPE *a;
 
 	if( busy_alert_p == NULL ){
-		NWARN("end_busy:  no busy indicator!?");
+		warn("end_busy:  no busy indicator!?");
 		return;
 	}
 
@@ -1486,47 +1780,14 @@ void end_busy(int final)
 	// it seems that we are getting a callback...
 
 	if( final ){
-#ifdef CAUTIOUS
-		if( ending_busy_p != NULL ){
-			fprintf(stderr,
-			"CAUTIOUS: end_busy:  ending_busy_p is not null!?");
-		}
-#endif // CAUTIOUS
-
-		ending_busy_p = a;
+		assert( final_ending_busy_p == NULL );
+		final_ending_busy_p = a;
 	}
 
-	[a dismissWithClickedButtonIndex:0 animated:NO];
+	dismiss_busy_alert(a);
 } // end_busy
 
-static void resume_busy(void)
-{
-	if( hidden_busy_p == NULL ){
-		NWARN("resume_busy:  no hidden busy alert!?");
-		return;
-	}
-	busy_alert_p=hidden_busy_p;
-	hidden_busy_p=NULL;
-	[Alert_Info rememberAlert:busy_alert_p withType:QUIP_ALERT_BUSY];
-	[busy_alert_p show];
-}
-
-
-void check_deferred_alert(SINGLE_QSP_ARG_DECL)
-{
-	if( deferred_alert.type == NULL ) return;
-
-	generic_alert(QSP_ARG  deferred_alert.type,deferred_alert.msg);
-
-	// We release these strings, but are we sure that the system is
-	// done with them?  Did generic_alert copy them or make NSStrings?
-	rls_str(deferred_alert.type);
-	rls_str(deferred_alert.msg);
-	deferred_alert.type=NULL;
-	deferred_alert.msg=NULL;
-}
-
-void simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
+void _simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	generic_alert(QSP_ARG  type,msg);
 }
@@ -1536,79 +1797,15 @@ void fatal_alert(QSP_ARG_DECL  const char *msg)
 	generic_alert(QSP_ARG  FATAL_ERROR_TYPE_STR,msg);
 }
 
-static void dismiss_normal_alert(Alert_Info *aip)
-{
-	// level not used???
-    //int level;
+static IOS_List *alert_lp=NULL;
 
-	//level = aip.qlevel;
-	
-    [aip forget];	// removes from list
+// need to call this after the alert has been displayed...
+// This used to be a callback, but now with UIAlertController we don't have
+// a callback?
+//
+// Note that this is only needed for busy alerts...
 
-	if( aip.view == ending_busy_p ){	// dismissed busy alert
-		// nothing more to do.
-		ending_busy_p=NULL;
-		return;
-	}
-
-	if( aip.view == hidden_busy_p ){
-		return;
-	}
-
-	if( busy_alert_p == NULL ){	// no hidden busy alert?
-		if( hidden_busy_p != NULL ){
-			if( aip.view != hidden_busy_p ){
-				resume_busy();
-			} else {
-			// otherwise this is generated by the
-			// programmatic dismissal of the busy alert?
-				resume_quip(SGL_DEFAULT_QSP_ARG);
-			}
-		} else {
-			resume_quip(DEFAULT_QSP_ARG);
-		}
-	} else {
-		// don't allow the busy panel to be dismissed by the user
-		[busy_alert_p show];
-	}
-
-	// If we had an alarm while the alert was up, 
-	// we now have a stored chunk...
-}
-
-static IOS_List *alert_lp=NO_IOS_LIST;
-
-void dismiss_quip_alert(UIAlertView *alertView, NSInteger buttonIndex)
-{
-	if( alertView == fatal_alert_view ){
-		[first_quip_controller qtvcExitProgram];
-	}
-
-	Alert_Info *aip;
-
-	aip = [Alert_Info alertInfoFor:alertView];
-
-	if( IS_VALID_ALERT(aip) ){
-		if( aip.type == QUIP_ALERT_CONFIRMATION ){
-			if( buttonIndex == 0 ){
-				assign_reserved_var(DEFAULT_QSP_ARG  "confirmed","0");
-			} else {
-				assign_reserved_var(DEFAULT_QSP_ARG  "confirmed","1");
-			}
-		}
-		dismiss_normal_alert(aip);
-	} 
-#ifdef CAUTIOUS
-	  else {
-		sprintf(DEFAULT_ERROR_STRING,
-"CAUTIOUS:  dismiss_quip_alert:  Unrecognized alert type %d!?",aip.type);
-		NWARN(DEFAULT_ERROR_STRING);
-		return;
-	}
-#endif // CAUTIOUS
-}
-
-void quip_alert_shown(UIAlertView *alertView)
+void quip_alert_shown(QUIP_ALERT_OBJ_TYPE *alertView)
 {
 	Alert_Info *aip;
 	aip = [Alert_Info alertInfoFor:alertView];
@@ -1649,42 +1846,41 @@ void hide_widget(QSP_ARG_DECL  Screen_Obj *sop, int yesno)
 
 @implementation Alert_Info
 
-static IOS_Node *node_for_alert(UIAlertView *a)
+static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
-	if( alert_lp == NO_IOS_LIST ){
-		NWARN("CAUTIOUS:  node_for_alert:  no alert list!?");
-		return NO_IOS_NODE;
-	}
 	IOS_Node *np;
+
+	assert( alert_lp != NULL );
 	np=IOS_LIST_HEAD(alert_lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Alert_Info *ai;
 		ai = (Alert_Info *) IOS_NODE_DATA(np);
-		if( ai.view == a )
+		if( ai.the_alert_p == a )
 			return np;
 		np = IOS_NODE_NEXT(np);
 	}
-	NWARN("CAUTIOUS:  node_for_alert:  alert not found!?");
-	return NO_IOS_NODE;
+	_warn(DEFAULT_QSP_ARG  "CAUTIOUS:  node_for_alert:  alert not found!?");
+	// assert!
+	return NULL;
 }
 
-+(Alert_Info *) alertInfoFor: (UIAlertView *)a
++(Alert_Info *) alertInfoFor: (QUIP_ALERT_OBJ_TYPE *)a
 {
 	IOS_Node *np;
 	np = node_for_alert(a);
-	if(np==NO_IOS_NODE) return NULL;
+	if(np==NULL) return NULL;
 	return (Alert_Info *) IOS_NODE_DATA(np);
 }
 
-+(void) rememberAlert:(UIAlertView *)a withType:(Quip_Alert_Type)t
++(void) rememberAlert:(QUIP_ALERT_OBJ_TYPE *)a withType:(Quip_Alert_Type)t
 {
-	if( alert_lp == NO_IOS_LIST )
+	if( alert_lp == NULL )
 		alert_lp = new_ios_list();
 
 	Alert_Info *ai=[[Alert_Info alloc] init];
 
 	ai.type = t;
-	ai.view = a;
+	ai.the_alert_p = a;
 	ai.qlevel = QS_LEVEL(DEFAULT_QSP);
 
 	IOS_Node *np;
@@ -1696,22 +1892,15 @@ static IOS_Node *node_for_alert(UIAlertView *a)
 -(void) forget
 {
 	IOS_Node *np;
-	np = node_for_alert(self.view);
-#ifdef CAUTIOUS
-	if( np == NO_IOS_NODE ){
-		return;
-	}
-#endif // CAUTIOUS
-	
+	np = node_for_alert(self.the_alert_p);
+	assert( np != NULL );
+
 	np = ios_remNode(alert_lp,np);
 
-	if( np == NO_IOS_NODE )
-		NWARN("CAUTIOUS:  forget (Alert_Info):  Error removing alert node from list!?");
-	else {
-		np.data = NULL;		// ARC garbage collection
-					// will clean Alert_Info
-					// is this necessary?
-	}
+	assert( np != NULL );
+	np.data = NULL;		// ARC garbage collection
+				// will clean Alert_Info
+				// is this necessary?
 	rls_ios_node(np);
 }
 

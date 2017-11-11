@@ -72,12 +72,9 @@ static COMMAND_FUNC( do_set_colorspace )
 	switch(n){
 		case 0: cparams1.colorspace = JCS_YCbCr; break;
 		case 1: cparams1.colorspace = JCS_GRAYSCALE; break;
-//#ifdef CAUTIOUS
 		default:
-//			ERROR1("CAUTIOUS:  do_set_colorspace");
 			assert( ! "do_set_colorspace:  bad colorspace code");
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
@@ -98,7 +95,7 @@ static COMMAND_FUNC( do_set_quality )
 }
 
 
-void install_cjpeg_params(j_compress_ptr cinfo)
+void _install_cjpeg_params(QSP_ARG_DECL  j_compress_ptr cinfo)
 {
 	int ci;
 	int q_scale_factor;
@@ -117,7 +114,7 @@ void install_cjpeg_params(j_compress_ptr cinfo)
 	// check the return value just to suppress a compiler warning...
 	// The return value should be an integer representing the percentage...
 	if( q_scale_factor < 0 )
-		NWARN("install_cjpeg_params:  bad quality index!?");
+		warn("install_cjpeg_params:  bad quality index!?");
 
 	/* more stuff done by cjpeg after scanning options */
 
@@ -135,7 +132,7 @@ MENU_END(cjpeg)
 
 static COMMAND_FUNC( do_cjpeg_param_menu )
 {
-	PUSH_MENU(cjpeg);
+	CHECK_AND_PUSH_MENU(cjpeg);
 }
 
 static const char *fmt_choices[N_JPEG_INFO_FORMATS]={"binary","ascii"};
@@ -160,7 +157,7 @@ MENU_END(jpeg)
 
 COMMAND_FUNC( do_jpeg_menu )
 {
-	PUSH_MENU(jpeg);
+	CHECK_AND_PUSH_MENU(jpeg);
 }
 
 #endif /* HAVE_JPEG_SUPPORT */

@@ -1,0 +1,32 @@
+
+Set n 8
+
+Define Test_Ramp 1 stem
+Image ${1}_big 8 8 1 float
+Subimage ${1}_inset ${1}_big 4 4 2 1
+Image ${1}_rimg 4 4 1 float
+Image ${1}_cimg 4 4 1 complex
+VSetComplex ${1}_cimg 0 0
+VSet ${1}_big 99
+
+Ramp2D ${1}_rimg    0 1 10
+Ramp2D ${1}_cimg{0} 0 1 10
+Display ${1}_rimg
+Display ${1}_cimg
+
+Ramp2D ${1}_inset 0 1 10
+Display ${1}_big
+Pause
+.
+
+Test_Ramp h
+
+platforms
+  select $DEFAULT_PLATFORM $DEFAULT_GPU
+  show
+  quit
+
+Test_Ramp g
+
+exit
+

@@ -49,7 +49,6 @@
 #ifdef NOT_SURE
 #include "stamps.h"
 #include "debug.h"
-#include "query.h"		/* ttys_are_interactive */
 #include "submenus.h"
 #endif /* NOT_SURE */
 
@@ -58,19 +57,19 @@
 #include "my_stty.h"
 #endif /* TTY_CTL */
 
-static Serial_Port *default_spp=NO_SERIAL_PORT;
+static Serial_Port *default_spp=NULL;
 
 #define CHECK_DEFAULT_SERIAL_PORT(rname,return_flag)					\
 											\
-	if( default_spp == NO_SERIAL_PORT ){						\
+	if( default_spp == NULL ){						\
 		sprintf(ERROR_STRING,"%s:  no default serial port selected",rname);	\
-		WARN(ERROR_STRING);							\
+		warn(ERROR_STRING);							\
 		if( return_flag ) return;						\
 	}
 
 
 //ITEM_INTERFACE_DECLARATIONS_STATIC(Serial_Port,serial_port)
-static Item_Type *serial_port_itp=NO_ITEM_TYPE;
+static Item_Type *serial_port_itp=NULL;
 static ITEM_INIT_FUNC(Serial_Port,serial_port,0)
 static ITEM_NEW_FUNC(Serial_Port,serial_port)
 static ITEM_CHECK_FUNC(Serial_Port,serial_port)
@@ -80,9 +79,11 @@ static ITEM_LIST_FUNC(Serial_Port,serial_port)
 static ITEM_DEL_FUNC(Serial_Port,serial_port)
 static ITEM_PICK_FUNC(Serial_Port,serial_port)
 
-static COMMAND_FUNC( do_list_serial_ports );
-
-#define PICK_SERIAL_PORT(pmpt)		pick_serial_port(QSP_ARG  pmpt)
+#define pick_serial_port(pmpt)		_pick_serial_port(QSP_ARG  pmpt)
+#define serial_port_of(s)		_serial_port_of(QSP_ARG  s)
+#define new_serial_port(s)		_new_serial_port(QSP_ARG  s)
+#define del_serial_port(s)		_del_serial_port(QSP_ARG  s)
+#define list_serial_ports(fp)		_list_serial_ports(QSP_ARG  fp)
 
 // BUG - not thread safe!?
 static ssize_t n_raw_chars=0;
@@ -90,15 +91,15 @@ static int n_lin_chars=0;
 
 static char linbuf[LLEN];
 
-int open_serial_device(QSP_ARG_DECL  const char * s)
+int _open_serial_device(QSP_ARG_DECL  const char * s)
 {
 	int fd;
 	Serial_Port *spp;
 
-	spp=serial_port_of(QSP_ARG  s);
-	if( spp != NO_SERIAL_PORT ){
+	spp=serial_port_of(s);
+	if( spp != NULL ){
 		sprintf(ERROR_STRING,"Serial port %s is already open",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(spp->sp_fd);
 	}
 
@@ -106,7 +107,7 @@ fprintf(stderr,"opening %s...\n",s);
 	fd=open(s,O_RDWR);
 	if( fd < 0 ){
 		sprintf(ERROR_STRING,"error opening tty file \"%s\"",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(fd);
 	}
 fprintf(stderr,"%s opened...\n",s);
@@ -116,22 +117,22 @@ fprintf(stderr,"%s opened...\n",s);
 	if( flock(fd,LOCK_EX|LOCK_NB) < 0 ){
 		if( errno == EWOULDBLOCK ){
 			sprintf(ERROR_STRING,"Unable to obtain exclusive lock on tty file %s",s);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			advise("Make sure the port is not in use by another process");
 		} else {
 			perror("flock");
 			sprintf(ERROR_STRING,"unable to get exclusive lock on serial device %s",s);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 		return(-1);
 	}
 
 
 
-	spp = new_serial_port(QSP_ARG  s);
-	if( spp == NO_SERIAL_PORT ){
+	spp = new_serial_port(s);
+	if( spp == NULL ){
 		sprintf(ERROR_STRING,"Unable to create serial port structure for %s",s);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 		return -1;	// NOTREACHED - silence static analyzer
 	}
 
@@ -154,11 +155,11 @@ static COMMAND_FUNC( do_open )
 
 	s=NAMEOF("device file");
 
-	if( open_serial_device(QSP_ARG  s) < 0 )
-		WARN("Error opening serial device");
+	if( open_serial_device(s) < 0 )
+		warn("Error opening serial device");
 }
 
-void send_serial(QSP_ARG_DECL  int fd,const u_char *chardata,int n)
+void _send_serial(QSP_ARG_DECL  int fd,const u_char *chardata,int n)
 {
 	ssize_t n_written;
 
@@ -166,7 +167,7 @@ void send_serial(QSP_ARG_DECL  int fd,const u_char *chardata,int n)
 	if( fd < 0 ){
 		sprintf(ERROR_STRING,
 			"CAUTIOUS:  send_serial passed invalid file descriptor (%d)",fd);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 #endif /* CAUTIOUS */
@@ -175,12 +176,12 @@ try_again:
 	n_written = write(fd,chardata,n);
 	if( n_written < 0 ){
 		perror("write");
-		WARN("send_serial:  error writing string");
+		warn("send_serial:  error writing string");
 	} else if( n_written != n ){
 		sprintf(ERROR_STRING,
 			"send_serial:  %d chars requested, %zd actually written",
 			n,n_written);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		n -= n_written;
 		chardata += n_written;
 		goto try_again;
@@ -194,8 +195,9 @@ try_again:
 					*sto ++ = *sfr++;		\
 				} while( *(sfr-1) );
 
+#define expand_escape_sequences(str,buflen) _expand_escape_sequences(QSP_ARG  str,buflen)
 
-static void expand_escape_sequences(u_char *str,int buflen)
+static void _expand_escape_sequences(QSP_ARG_DECL  u_char *str,int buflen)
 {
 	u_char *sto,*sfr;
 
@@ -203,7 +205,7 @@ static void expand_escape_sequences(u_char *str,int buflen)
 		if( *str == '\\' ){
 			str++;
 			if( *str == 0 ){
-				NWARN("expand_escape_sequences:  single backslash at end of string");
+				warn("expand_escape_sequences:  single backslash at end of string");
 				return;
 			} else if( *str == 'r' ){
 				*(str-1) = '\r';
@@ -228,20 +230,20 @@ static void expand_escape_sequences(u_char *str,int buflen)
 				v=*str-'0';
 				str++;
 				if( *str == 0 ){
-					NWARN("expand_excape_sequences:  missing digit chars");
+					warn("expand_excape_sequences:  missing digit chars");
 					return;
 				} else if( !isdigit(*str) ){
-					NWARN("expand_excape_sequences:  missing second digit");
+					warn("expand_excape_sequences:  missing second digit");
 					return;
 				}
 				v *= 8;
 				v += *str - '0';
 				str++;
 				if( *str == 0 ){
-					NWARN("expand_excape_sequences:  missing digit char");
+					warn("expand_excape_sequences:  missing digit char");
 					return;
 				} else if( !isdigit(*str) ){
-					NWARN("expand_excape_sequences:  missing third digit");
+					warn("expand_excape_sequences:  missing third digit");
 					return;
 				}
 				v *= 8;
@@ -269,17 +271,19 @@ static COMMAND_FUNC( do_send )
 
 	expand_escape_sequences(str,LLEN);
 
-	send_serial(QSP_ARG  default_spp->sp_fd,str,(int)strlen((char *)str));
+	send_serial(default_spp->sp_fd,str,(int)strlen((char *)str));
 }
 
-static int get_hex_digit(QSP_ARG_DECL  int c)
+#define get_hex_digit(c)	_get_hex_digit(QSP_ARG  c)
+
+static int _get_hex_digit(QSP_ARG_DECL  int c)
 {
 	if( isdigit(c) ) return(c-'0');
 	if( c>='a' && c<= 'f' ) return(10+c-'a');
 	if( c>='A' && c<= 'F' ) return(10+c-'A');
 
 	sprintf(ERROR_STRING,"get_hex_digit:  Illegal hex digit '%c' (0x%x)",c,c);
-	NWARN(ERROR_STRING);
+	warn(ERROR_STRING);
 	return(-1);
 }
 
@@ -291,50 +295,50 @@ static COMMAND_FUNC( do_hex )
 
 	CHECK_DEFAULT_SERIAL_PORT("do_hex",1);
 
-	send_hex(QSP_ARG  default_spp->sp_fd,(const u_char *)s);
+	send_hex(default_spp->sp_fd,(const u_char *)s);
 }
 
 /* assume s points to a string of two or more hex digits...
  * return the value of the byte corresponding to the first two digits.
  */
 
-int hex_byte(QSP_ARG_DECL  const u_char *s)
+int _hex_byte(QSP_ARG_DECL  const u_char *s)
 {
 	int d1,d2;
 
 	/* get first digit */
 
-	d1=get_hex_digit(QSP_ARG  *s++);
+	d1=get_hex_digit(*s++);
 	if( d1 < 0 ) return(-1);
 
 	if( *s==0 ){
-		NWARN("missing second hex digit");
+		warn("missing second hex digit");
 		return(-1);
 	}
 
-	d2=get_hex_digit(QSP_ARG  *s++);
+	d2=get_hex_digit(*s++);
 	if( d2 < 0 ) return(-1);
 
 	return( (d1<<4) + d2 );
 }
 
-void send_hex(QSP_ARG_DECL  int fd,const u_char *s)
+void _send_hex(QSP_ARG_DECL  int fd,const u_char *s)
 {
 	u_char *to,str[LLEN];
 	int nc=0;
 
 	to=str;
 	while( *s ){
-		*to++ = (u_char) hex_byte(QSP_ARG  s);
+		*to++ = (u_char) hex_byte(s);
 		s += 2;
 		nc++;
 	}
 	*to=0;
 
-	send_serial(QSP_ARG  fd,str,nc);
+	send_serial(fd,str,nc);
 }
 
-int n_serial_chars(QSP_ARG_DECL  int fd)
+int _n_serial_chars(QSP_ARG_DECL  int fd)
 {
 #ifdef FIONREAD
 	int n;
@@ -342,37 +346,41 @@ int n_serial_chars(QSP_ARG_DECL  int fd)
 	if( ioctl(fd,FIONREAD,&n) < 0 ){
 		perror("n_serial_chars:  ioctl FIONREAD");
 		n=0;
-		ERROR1("unable to monitor serial input");
+		error1("unable to monitor serial input");
 	}
 	return(n);
 #else // ! FIONREAD
-    WARN("n_serial_chars:  No FIONREAD ioctl!?");
+    warn("n_serial_chars:  No FIONREAD ioctl!?");
     return 1;
 #endif // ! FIONREAD
 }
 
-static int int_nreadable(QSP_ARG_DECL  Serial_Port *spp)
+#define int_nreadable(spp)	_int_nreadable(QSP_ARG  spp)
+
+static int _int_nreadable(QSP_ARG_DECL  Serial_Port *spp)
 {
 	int n;
 
-	n = n_serial_chars(QSP_ARG  spp->sp_fd);
+	n = n_serial_chars(spp->sp_fd);
 	return(n);
 }
 
-static int get_nreadable(QSP_ARG_DECL  Serial_Port *spp)
+#define get_nreadable(spp)	_get_nreadable(QSP_ARG  spp)
+
+static int _get_nreadable(QSP_ARG_DECL  Serial_Port *spp)
 {
 	int n;
 	char s[32];
 
 	/* find out how many chars are there */
-	n = n_serial_chars(QSP_ARG  spp->sp_fd);
+	n = n_serial_chars(spp->sp_fd);
 	if( verbose ){
 		sprintf(ERROR_STRING,"%d readable chars on serial port %s",
 							n,spp->sp_name);
 		advise(ERROR_STRING);
 	}
 	sprintf(s,"%d",n);
-	assign_reserved_var(QSP_ARG  "n_readable",s);
+	assign_reserved_var("n_readable",s);
 	return(0);
 }
 
@@ -380,7 +388,7 @@ static COMMAND_FUNC( do_get_nreadable )
 {
 	CHECK_DEFAULT_SERIAL_PORT("do_get_nreadable",1);
 
-	get_nreadable(QSP_ARG  default_spp);
+	get_nreadable(default_spp);
 }
 
 /* It's the user's responsibility to make sure that max_want is not
@@ -388,7 +396,7 @@ static COMMAND_FUNC( do_get_nreadable )
  * If max_want <= 0, then we just read whatever is available.
  */
 
-ssize_t recv_somex(QSP_ARG_DECL  int fd,u_char *buf,int bufsize, int max_want)
+ssize_t _recv_somex(QSP_ARG_DECL  int fd,u_char *buf,int bufsize, int max_want)
 {
 	int n;
 
@@ -396,12 +404,12 @@ ssize_t recv_somex(QSP_ARG_DECL  int fd,u_char *buf,int bufsize, int max_want)
 		sprintf(ERROR_STRING,
 "recv_somex:  bufsize (%d) must be at least 1 greater than max_want (%d)",
 			bufsize,max_want);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		abort();
 	}
 
 	/* find out how many chars are there */
-	n = n_serial_chars(QSP_ARG  fd);
+	n = n_serial_chars(fd);
 
 	if( verbose ){
 		sprintf(ERROR_STRING,"%d readable chars on serial port",n);
@@ -421,7 +429,7 @@ ssize_t recv_somex(QSP_ARG_DECL  int fd,u_char *buf,int bufsize, int max_want)
 		n=(bufsize-1);
 	}
 
-	if( (n_raw_chars=read(fd,buf,n)) != n ) WARN("error reading");
+	if( (n_raw_chars=read(fd,buf,n)) != n ) warn("error reading");
 
 	buf[n_raw_chars]=0;
 /*
@@ -441,8 +449,9 @@ buf[i] &= 0x7f;
 	return(n_raw_chars);
 }
 
+#define recv_line(spp)	_recv_line(QSP_ARG  spp)
 
-static char * recv_line(QSP_ARG_DECL  Serial_Port *spp)
+static char * _recv_line(QSP_ARG_DECL  Serial_Port *spp)
 {
 	char *lin_ptr;
 	int eol_seen=0;
@@ -457,7 +466,7 @@ static char * recv_line(QSP_ARG_DECL  Serial_Port *spp)
 		int i,j;
 
 		while(n_raw_chars<=0){
-			if( recv_somex(QSP_ARG  spp->sp_fd,spp->sp_rawbuf,
+			if( recv_somex(spp->sp_fd,spp->sp_rawbuf,
 							RAWBUF_SIZE,0) == 0 )
 				sleep(1);
 		}
@@ -468,7 +477,7 @@ static char * recv_line(QSP_ARG_DECL  Serial_Port *spp)
 			spp->sp_rawbuf[i]!='\r' ){
 
 			if( n_lin_chars >= LLEN ){
-				WARN("line buffer overflow");
+				warn("line buffer overflow");
 
 				sprintf(ERROR_STRING,
 			"i = %d, n_raw_chars = %zd, n_lin_chars = %d",
@@ -513,7 +522,7 @@ static char * recv_line(QSP_ARG_DECL  Serial_Port *spp)
 		*lin_ptr=0;
 
 		if( eol_seen ){
-			assign_reserved_var(QSP_ARG  "last_line",linbuf);
+			assign_reserved_var("last_line",linbuf);
 			return(linbuf);
 		}
 	}
@@ -527,20 +536,20 @@ static COMMAND_FUNC( do_insist )
 	CHECK_DEFAULT_SERIAL_PORT("do_insist",0);
 
 	if( default_spp != NULL )
-		s=recv_line(QSP_ARG  default_spp);
+		s=recv_line(default_spp);
 	else	s=NULL;
 
 	if( s != NULL )
-		assign_reserved_var(QSP_ARG  "serial_response",s);
+		assign_reserved_var("serial_response",s);
 	else
-		assign_reserved_var(QSP_ARG  "serial_response","(null)");
+		assign_reserved_var("serial_response","(null)");
 }
 
 static COMMAND_FUNC( do_raw_recv )
 {
 	CHECK_DEFAULT_SERIAL_PORT("do_raw_recv",1);
 
-	if( recv_somex(QSP_ARG  default_spp->sp_fd,default_spp->sp_rawbuf,RAWBUF_SIZE,0) == 0 && verbose ){
+	if( recv_somex(default_spp->sp_fd,default_spp->sp_rawbuf,RAWBUF_SIZE,0) == 0 && verbose ){
 		sprintf(ERROR_STRING,"no characters to receive on serial port %s",default_spp->sp_name);
 		advise(ERROR_STRING);
 	}
@@ -553,15 +562,15 @@ static COMMAND_FUNC( do_recv )
 	CHECK_DEFAULT_SERIAL_PORT("do_recv",0);
 
 	if( default_spp != NULL )
-		n=recv_somex(QSP_ARG  default_spp->sp_fd,default_spp->sp_rawbuf,
+		n=recv_somex(default_spp->sp_fd,default_spp->sp_rawbuf,
 								RAWBUF_SIZE,0);
 	else 	n=0;
 
 	if( n > 0 )
-		assign_reserved_var(QSP_ARG  "serial_response",
+		assign_reserved_var("serial_response",
 					(char *)default_spp->sp_rawbuf);
 	else
-		assign_reserved_var(QSP_ARG  "serial_response","(null)");
+		assign_reserved_var("serial_response","(null)");
 }
 
 static COMMAND_FUNC( do_stty )
@@ -588,7 +597,7 @@ static COMMAND_FUNC( do_wtfor )
 	while(s==NULL){
 		char *l;
 
-		l=recv_line(QSP_ARG  default_spp);
+		l=recv_line(default_spp);
 
 		/* now look for a match */
 		s = strstr(l,wait_str);	/* does wait_str occur in s? */
@@ -599,7 +608,7 @@ static COMMAND_FUNC( dump_serial_chars )
 {
 	CHECK_DEFAULT_SERIAL_PORT("dump_serial_chars",1);
 
-	dump_char_buf(QSP_ARG  default_spp->sp_rawbuf);
+	dump_char_buf(default_spp->sp_rawbuf);
 }
 
 void set_raw_len(unsigned char *s)
@@ -607,7 +616,7 @@ void set_raw_len(unsigned char *s)
 	n_raw_chars = strlen((char *)s);
 }
 
-void dump_char_buf(QSP_ARG_DECL  unsigned char *buf)
+void _dump_char_buf(QSP_ARG_DECL  unsigned char *buf)
 {
 	int i;
 
@@ -634,16 +643,18 @@ void dump_char_buf(QSP_ARG_DECL  unsigned char *buf)
 	}
 }
 
-static void interp_file(QSP_ARG_DECL  const char *filename)
+#define interp_file(filename)	_interp_file(QSP_ARG  filename)
+
+static void _interp_file(QSP_ARG_DECL  const char *filename)
 {
 	FILE *fp;
 
 	if( !strcmp(filename,"-") ){
-		redir(QSP_ARG stdin,"-");
+		redir(stdin,"-");
 	} else {
 		fp=TRY_OPEN( filename,"r");
 		if( fp ){
-			redir(QSP_ARG fp,filename);
+			redir(fp,filename);
 		}
 	}
 }
@@ -654,33 +665,39 @@ static void interp_file(QSP_ARG_DECL  const char *filename)
 static COMMAND_FUNC( do_tty_redir )
 {
 	const char *s;
-	char cmd_str[LLEN];
 	Serial_Port *spp;
+#ifndef BUILD_FOR_IOS
+	char cmd_str[LLEN];
 	int status;
+#endif // ! BUILD_FOR_IOS
 
 	s = NAMEOF("serial port for input redirection");
 
-	spp = serial_port_of(QSP_ARG  s);
-	if( spp != NO_SERIAL_PORT ) {
+	spp = serial_port_of(s);
+	if( spp != NULL ) {
 		sprintf(ERROR_STRING,"Serial port %s is already open, close before calling redir",spp->sp_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	/* BUG should confirm that file exists and is a tty */
 
+#ifndef BUILD_FOR_IOS
 	// Why do we put in cooked mode???
 	// Why do we use system instead of our own stty facility?
 	// Maybe this was written before the internal stty utilities existed?
 	sprintf(cmd_str,"stty cooked < %s",s);
 	status=system(cmd_str);
 	if( status < 0 )
-		WARN("Failed to reset serial line!?");
-
+		warn("Failed to reset serial line!?");
+#else // ! BUILD_FOR_IOS
+	warn("tty_redir:  NOT setting line to cooked mode (system call not available for iOS!?");
+#endif // ! BUILD_FOR_IOS
+    
 	/* ttys_are_interactive=0; */		/* assume a machine is connected */
 	SET_QS_FLAG_BITS(THIS_QSP,QS_INTERACTIVE_TTYS);
 
-	interp_file(QSP_ARG s);
+	interp_file(s);
 	push_top_menu(SINGLE_QSP_ARG);
 }
 
@@ -689,18 +706,17 @@ static void close_serial_device(SINGLE_QSP_ARG_DECL)
 	CHECK_DEFAULT_SERIAL_PORT("close_serial_device",1);
 
 	if( default_spp->sp_fd < 0 ){
-		WARN("no serial port open, can't close");
+		warn("no serial port open, can't close");
 		return;
 	}
 
 	if( close(default_spp->sp_fd) < 0 ){
 		tell_sys_error("close");
 		sprintf(ERROR_STRING,"error closing serial device %s",default_spp->sp_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
-	del_serial_port(QSP_ARG  default_spp);
-	rls_str(default_spp->sp_name);
-	default_spp = NO_SERIAL_PORT;
+	del_serial_port(default_spp);
+	default_spp = NULL;
 }
 
 static COMMAND_FUNC( do_serial_info )
@@ -718,8 +734,8 @@ static COMMAND_FUNC( do_select_serial )
 {
 	Serial_Port *spp;
 
-	spp = PICK_SERIAL_PORT("default port for serial operations"); 
-	if( spp == NO_SERIAL_PORT ) return;
+	spp = pick_serial_port("default port for serial operations"); 
+	if( spp == NULL ) return;
 
 	default_spp = spp;
 }
@@ -735,47 +751,47 @@ static COMMAND_FUNC( do_connect )
 	int n1,n2;
 	ssize_t nr;
 
-	spp1 = PICK_SERIAL_PORT("first port"); 
-	spp2 = PICK_SERIAL_PORT("second port"); 
-	if( spp1 == NO_SERIAL_PORT || spp2 == NO_SERIAL_PORT ){
+	spp1 = pick_serial_port("first port"); 
+	spp2 = pick_serial_port("second port"); 
+	if( spp1 == NULL || spp2 == NULL ){
 		return;
 	}
 	if( spp1 == spp2 ){
-		WARN("the two serial ports must be different");
+		warn("the two serial ports must be different");
 		return;
 	}
 
 	while(1){
-		n1 = int_nreadable(QSP_ARG  spp1);
+		n1 = int_nreadable(spp1);
 		if( n1 > 0 ){
-			if( (nr=recv_somex(QSP_ARG  spp1->sp_fd,spp1->sp_rawbuf,RAWBUF_SIZE,0)) == 0 ){
-				WARN("Oops - no chars received on port 1, expected some!?");
+			if( (nr=recv_somex(spp1->sp_fd,spp1->sp_rawbuf,RAWBUF_SIZE,0)) == 0 ){
+				warn("Oops - no chars received on port 1, expected some!?");
 			} else {
 				if( nr!=n1 ){
 					sprintf(ERROR_STRING,"Expected %d chars on %s, received %zd!?",
 							n1,spp1->sp_name,nr);
 					advise(ERROR_STRING);
 				}
-				send_serial(QSP_ARG  spp2->sp_fd,spp1->sp_rawbuf,(int)nr);
+				send_serial(spp2->sp_fd,spp1->sp_rawbuf,(int)nr);
 sprintf(ERROR_STRING,"%zd chars send from %s to %s",nr,spp1->sp_name,spp2->sp_name);
 advise(ERROR_STRING);
-dump_char_buf(QSP_ARG  spp1->sp_rawbuf);
+dump_char_buf(spp1->sp_rawbuf);
 			}
 		}
-		n2 = int_nreadable(QSP_ARG  spp2);
+		n2 = int_nreadable(spp2);
 		if( n2 > 0 ){
-			if( (nr=recv_somex(QSP_ARG  spp2->sp_fd,spp2->sp_rawbuf,RAWBUF_SIZE,0)) == 0 ){
-				WARN("Oops - no chars received on port 2, expected some!?");
+			if( (nr=recv_somex(spp2->sp_fd,spp2->sp_rawbuf,RAWBUF_SIZE,0)) == 0 ){
+				warn("Oops - no chars received on port 2, expected some!?");
 			} else {
 				if( nr!=n2 ){
 					sprintf(ERROR_STRING,"Expected %d chars on %s, received %zd!?",
 							n2,spp2->sp_name,nr);
 					advise(ERROR_STRING);
 				}
-				send_serial(QSP_ARG  spp1->sp_fd,spp2->sp_rawbuf,(int)nr);
+				send_serial(spp1->sp_fd,spp2->sp_rawbuf,(int)nr);
 sprintf(ERROR_STRING,"%zd chars send from %s to %s",nr,spp2->sp_name,spp1->sp_name);
 advise(ERROR_STRING);
-dump_char_buf(QSP_ARG  spp2->sp_rawbuf);
+dump_char_buf(spp2->sp_rawbuf);
 			}
 		}
 	}
@@ -792,8 +808,8 @@ static COMMAND_FUNC( do_tty_term )
 	FILE *console_output_fp;	/* print here to display to user */
 #endif // TTY_CTL
 
-	spp = PICK_SERIAL_PORT("");
-	if( spp == NO_SERIAL_PORT ) return;
+	spp = pick_serial_port("");
+	if( spp == NULL ) return;
 
 #ifdef TTY_CTL
 
@@ -806,7 +822,7 @@ static COMMAND_FUNC( do_tty_term )
 	console_output_fp = stdout;
 #endif // ! HISTORY
 
-	console_input_fp = tfile(SINGLE_QSP_ARG);
+	console_input_fp = tfile();
 
 	/* we might like raw, but want to catch ^C etc. */
 	/* BUT we don't want to map CR to NL... */
@@ -830,17 +846,17 @@ static COMMAND_FUNC( do_tty_term )
 	while(1){
 		int n_to_print;
 
-		n_to_print = n_serial_chars(QSP_ARG  spp->sp_fd);
+		n_to_print = n_serial_chars(spp->sp_fd);
 
-		if( n_to_print == 0 && !keyboard_hit(QSP_ARG  console_input_fp) )
+		if( n_to_print == 0 && !keyboard_hit(console_input_fp) )
 			usleep(1000);
 
 		while( n_to_print > 0 ){
 			u_char *buf;
 			int i;
 
-			if( recv_somex(QSP_ARG  spp->sp_fd,spp->sp_rawbuf,RAWBUF_SIZE,0) == 0 ){
-				ERROR1("expected chars but none!?");
+			if( recv_somex(spp->sp_fd,spp->sp_rawbuf,RAWBUF_SIZE,0) == 0 ){
+				error1("expected chars but none!?");
 			}
 			buf=spp->sp_rawbuf;
 			for(i=0;i<n_raw_chars;i++){
@@ -854,10 +870,10 @@ advise(ERROR_STRING);
 				fputc(buf[i],console_output_fp);
 			}
 			fflush(console_output_fp);
-			n_to_print = n_serial_chars(QSP_ARG  spp->sp_fd);
+			n_to_print = n_serial_chars(spp->sp_fd);
 		}
 		/* now check for the users typing... */
-		while( keyboard_hit(QSP_ARG  console_input_fp) ){
+		while( keyboard_hit(console_input_fp) ){
 			u_char buf[4];
 			int c;
 
@@ -865,23 +881,23 @@ advise(ERROR_STRING);
 
 			/* BUG should test against the user's personal interrupt char... */
 			if( c == 3 ){		/* ^C */
-				nice_exit(QSP_ARG  0);
+				nice_exit(0);
 			}
 
 			/* BUG make sure not EOF */
 			buf[0]=c;
 			/* send to the serial port */
-			send_serial(QSP_ARG  spp->sp_fd,buf,1);
+			send_serial(spp->sp_fd,buf,1);
 		}
 	}
 #else // ! TTY_CTL
-	WARN("Sorry, build with TTY_CTL to connect console to a serial port.");
+	warn("Sorry, build with TTY_CTL to connect console to a serial port.");
 #endif // ! TTY_CTL
 }
 
 static COMMAND_FUNC( do_list_serial_ports )
 {
-	list_serial_ports(SINGLE_QSP_ARG);
+	list_serial_ports(tell_msgfile());
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(serial_menu,s,f,h)
@@ -916,7 +932,7 @@ MENU_END( serial )
 
 COMMAND_FUNC( do_ser_menu )
 {
-	PUSH_MENU(serial);
+	CHECK_AND_PUSH_MENU(serial);
 }
 
 
@@ -928,7 +944,6 @@ COMMAND_FUNC( do_ser_menu )
 
 #include <string.h>
 
-#include "query.h"
 #include "filerd.h"
 #include "debug.h"
 
@@ -937,17 +952,17 @@ void filerd(SINGLE_QSP_ARG_DECL)
 {
 	const char *s;
 
-	s=nameof(QSP_ARG "input file");
-	interp_file(QSP_ARG s);
+	s=nameof("input file");
+	interp_file(s);
 }
 
 void copycmd(SINGLE_QSP_ARG_DECL)
 {
 	FILE *fp;
 
-	fp=TRYNICE( nameof(QSP_ARG  "transcript file"), "w" );
+	fp=try_nice( nameof("transcript file"), "w" );
 	if( fp ) {
-		if(dupout(QSP_ARG fp)==(-1))
+		if(dupout(fp)==(-1))
 			fclose(fp);
 	}
 }

@@ -13,6 +13,7 @@
 #include "mmenu.h"
 #include "viewer.h"
 #include "rv_api.h"
+#include "debug.h"
 
 #ifdef QUIP_DEBUG
 int meteor_debug=0;
@@ -29,7 +30,7 @@ void meteor_record(QSP_ARG_DECL  uint32_t n_fields,Movie *mvip)
 	 * If not, then we can go in and set the number of frames now!
 	 */
 
-	if( ifp == NO_IMAGE_FILE ){
+	if( ifp == NULL ){
 		WARN("Image file has not been opened");
 		return;
 	}
@@ -149,7 +150,7 @@ int meteor_setup_movie(QSP_ARG_DECL  Movie *mvip,uint32_t n_fields)
 	struct meteor_geomet _geo;
 	uint32_t blocks_per_frame,n_frames;
 	int n_allocframes ;
-	int n_disks = rv_get_ndisks();
+	//int n_disks = rv_get_ndisks();
 
 	/* BUG shouldn't insist upon even field count in field mode */
 	if( n_fields % 2 ){
@@ -191,7 +192,7 @@ advise("meteor_setup_movie");
 
 	ifp = write_image_file(QSP_ARG  MOVIE_NAME(mvip),n_frames);
 
-	if( ifp == NO_IMAGE_FILE ) return(-1);
+	if( ifp == NULL ) return(-1);
 
 	mvip->mvi_data = ifp;
 
@@ -210,7 +211,7 @@ advise("meteor_setup_movie");
 
 	/* Make sure that the number of frames requested is an integral multiple of n_disks */
 
-	n_allocframes = FRAMES_TO_ALLOCATE( n_frames, n_disks );
+	n_allocframes = rv_frames_to_allocate( n_frames );
 
 	if( rv_realloc(QSP_ARG  MOVIE_NAME(mvip),n_allocframes*blocks_per_frame) < 0 ){
 		sprintf(ERROR_STRING,"meteor_setup_movie:  failed to allocate rawvol storage for %s",
@@ -268,14 +269,7 @@ advise(ERROR_STRING);
 	 */
 
 	delete_movie(QSP_ARG  mvip);
-
-//#ifdef CAUTIOUS
-//	if( inp == NO_INODE ){
-//		WARN("CAUTIOUS:  meteor_end_assemble:  missing rv inode!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( inp != NO_INODE );
+	assert( inp != NULL );
 
 	update_movie_database(QSP_ARG  inp);
 }

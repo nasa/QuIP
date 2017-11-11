@@ -1,0 +1,15 @@
+
+platforms
+  select $DEFAULT_PLATFORM $DEFAULT_GPU
+  quit
+
+Vector v 4 1 float
+Ramp1D v 10 1
+Display v
+
+Assign x value(v[3])
+advise "x (v[3]) should be 13..."
+Print x
+
+exit
+

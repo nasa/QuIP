@@ -16,6 +16,7 @@
 #include "glx_supp.h"
 
 #include "quip_prot.h"
+#include "debug.h"
 
 #include "platform.h"
 #include "pf_viewer.h"
@@ -27,6 +28,10 @@
 #include "tile.h"
 #include "glfb.h"
 #include "opengl_utils.h"
+
+#ifdef BUILD_FOR_MACOS
+#include <OpenGL/glu.h>
+#endif // BUILD_FOR_MACOS
 
 #define NOT_IMP(s)	{ sprintf(ERROR_STRING,"Sorry, %s not implemented yet.",s); NWARN(ERROR_STRING); }
 
@@ -144,7 +149,7 @@ MENU_END( color )
 
 static COMMAND_FUNC( do_color_menu )
 {
-	PUSH_MENU(color);
+	CHECK_AND_PUSH_MENU(color);
 }
 
 static GLenum current_primitive=INVALID_CONSTANT;
@@ -218,6 +223,15 @@ static COMMAND_FUNC(	do_gl_color )
 	glColor3f(r,g,b);
 }
 
+static COMMAND_FUNC(	do_gl_color_material )
+{
+	GLenum face, mode;
+
+	face = CHOOSE_FACING_DIR("facing direction of polygons");
+	mode = CHOOSE_LIGHTING_COMPONENT("reflectivity components to link with color commands");
+	glColorMaterial(face,mode);
+}
+
 static COMMAND_FUNC(	do_gl_normal )
 {
 	float x,y,z;
@@ -258,6 +272,8 @@ static const char *property_names[N_MATERIAL_PROPERTIES]={
 	"emission",
 };
 
+// missing here are GL_AMBIENT_AND_DIFFUSE and GL_COLOR_INDICES!
+
 static COMMAND_FUNC(	do_gl_material )
 {
 	int i;
@@ -271,7 +287,7 @@ static COMMAND_FUNC(	do_gl_material )
 			pvec[0] = (float)HOW_MUCH("ambient red");
 			pvec[1] = (float)HOW_MUCH("ambient green");
 			pvec[2] = (float)HOW_MUCH("ambient blue");
-			pvec[3] = 1.0;
+			pvec[3] = (float)HOW_MUCH("ambient alpha");
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_DIFFUSE (ambient?)");
 			/* diffuse or ambient??? */
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pvec);
@@ -280,7 +296,7 @@ static COMMAND_FUNC(	do_gl_material )
 			pvec[0] = (float)HOW_MUCH("diffuse red");
 			pvec[1] = (float)HOW_MUCH("diffuse green");
 			pvec[2] = (float)HOW_MUCH("diffuse blue");
-			pvec[3] = 1.0;
+			pvec[3] = (float)HOW_MUCH("diffuse alpha");
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_DUFFUSE");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pvec);
 			break; }
@@ -288,7 +304,7 @@ static COMMAND_FUNC(	do_gl_material )
 			pvec[0] = (float)HOW_MUCH("specular red");
 			pvec[1] = (float)HOW_MUCH("specular green");
 			pvec[2] = (float)HOW_MUCH("specular blue");
-			pvec[3] = 1.0;
+			pvec[3] = (float)HOW_MUCH("specular alpha");
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_SPECULAR");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, pvec);
 			break; }
@@ -297,14 +313,17 @@ static COMMAND_FUNC(	do_gl_material )
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_SHININESS");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, pvec);
 			break; }
-		case 4: {
+		case 4:
 			pvec[0] = (float)HOW_MUCH("emission red");
 			pvec[1] = (float)HOW_MUCH("emission green");
 			pvec[2] = (float)HOW_MUCH("emission blue");
-			pvec[3] = 1.0;
+			pvec[2] = (float)HOW_MUCH("emission alpha");
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_EMISSION");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, pvec);
-			break; }
+			break;
+		default:
+			error1("do_gl_material:  bad property (shouldn't happen)");
+			break;
 	}
 }
 
@@ -414,7 +433,7 @@ static COMMAND_FUNC( do_slct_obj )
 	//drawer.drawAirspace(&manager, &table);
 	
 	/* Call the user's draw routine here... */
-	chew_text(QSP_ARG  s, "(gl object selection)" );
+	chew_text(s, "(gl object selection)" );
 	rls_str(s);
 
 	// Restoring the original projection matrix.
@@ -472,7 +491,7 @@ static COMMAND_FUNC( do_slct_obj )
 //sprintf(ERROR_STRING,"front-most hit is %d",the_hit);
 //advise(ERROR_STRING);
 	sprintf(ret_str,"%d",the_hit);
-	ASSIGN_RESERVED_VAR("selection_index",ret_str);
+	assign_reserved_var("selection_index",ret_str);
 
 	//if (hits != 0) {
 	//manager.advanceTrial(processHits());
@@ -538,6 +557,7 @@ ADD_CMD( begin_obj,	do_gl_begin,	begin primitive description )
 ADD_CMD( end_obj,	do_gl_end,	end primitive description )
 ADD_CMD( vertex,	do_gl_vertex,	specify a vertex )
 ADD_CMD( color,		do_gl_color,	set current color )
+ADD_CMD( color_material,		do_gl_color_material,	specify material properties set by color command (when material_properties enabled) )
 ADD_CMD( normal,	do_gl_normal,	set normal vector )
 ADD_CMD( tex_coord,	do_gl_tc,	set texture coordinate )
 ADD_CMD( edge_flag,	do_gl_ef,	control drawing of edges )
@@ -556,7 +576,7 @@ MENU_END(object)
 
 static COMMAND_FUNC( do_gl_obj_menu )
 {
-	PUSH_MENU(object);
+	CHECK_AND_PUSH_MENU(object);
 }
 
 static COMMAND_FUNC( do_enable )
@@ -598,14 +618,14 @@ static COMMAND_FUNC( do_cap_q )
 
 	cap = CHOOSE_CAP("capability");
 	if( cap == INVALID_CONSTANT ){
-		ASSIGN_RESERVED_VAR(CAP_RESULT_VARNAME,"-1");
+		assign_reserved_var(CAP_RESULT_VARNAME,"-1");
 		return;
 	}
 
 	if( glIsEnabled(cap) == GL_TRUE ){
-		ASSIGN_RESERVED_VAR(CAP_RESULT_VARNAME,"1");
+		assign_reserved_var(CAP_RESULT_VARNAME,"1");
 	} else {
-		ASSIGN_RESERVED_VAR(CAP_RESULT_VARNAME,"0");
+		assign_reserved_var(CAP_RESULT_VARNAME,"0");
 	}
 }
 
@@ -759,9 +779,9 @@ static COMMAND_FUNC( do_check_extension )
 
 #ifndef BUILD_FOR_OBJC
 	if( check_extension(QSP_ARG  extension_table[i]) ){
-		ASSIGN_RESERVED_VAR("extension_present","1");
+		assign_reserved_var("extension_present","1");
 	} else {
-		ASSIGN_RESERVED_VAR("extension_present","0");
+		assign_reserved_var("extension_present","0");
 	}
 #else // ! BUILD_FOR_OBJC
 	WARN("Sorry, can't check for extensions in native Apple build...");
@@ -770,10 +790,10 @@ static COMMAND_FUNC( do_check_extension )
 
 static COMMAND_FUNC( do_tex_image )
 {
-	Data_Obj *dp = PICK_OBJ("image");
+	Data_Obj *dp = pick_obj("image");
 	//im_dim = HOW_MUCH("pixel dimension");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	set_texture_image(QSP_ARG  dp);
 }
@@ -833,7 +853,7 @@ MENU_END(capabilities)
 
 static COMMAND_FUNC( do_cap_menu )
 {
-	PUSH_MENU(capabilities);
+	CHECK_AND_PUSH_MENU(capabilities);
 }
 
 static COMMAND_FUNC( set_pt_size )
@@ -928,7 +948,7 @@ MENU_END(mode)
 
 static COMMAND_FUNC( do_mode_menu )
 {
-	PUSH_MENU(mode);
+	CHECK_AND_PUSH_MENU(mode);
 }
 
 static COMMAND_FUNC( set_xf_mode )
@@ -1042,8 +1062,8 @@ static COMMAND_FUNC( do_sv_mv_mat )
 	Data_Obj *dp;
 
 	const char *matrix = NAMEOF("matrix type");
-	dp=PICK_OBJ("matrix object");
-	if( dp == NO_OBJ ) return;
+	dp=pick_obj("matrix object");
+	if( dp == NULL ) return;
 
 	/* BUG check size & type here */
 
@@ -1062,8 +1082,8 @@ static COMMAND_FUNC( do_ld_mat )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ("matrix object");
-	if( dp == NO_OBJ ) return;
+	dp=pick_obj("matrix object");
+	if( dp == NULL ) return;
 
 	/* BUG check size & type here */
 
@@ -1075,8 +1095,8 @@ static COMMAND_FUNC( do_mul_mat )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ("matrix object");
-	if( dp == NO_OBJ ) return;
+	dp=pick_obj("matrix object");
+	if( dp == NULL ) return;
 
 	/* BUG check size & type here */
 
@@ -1160,7 +1180,7 @@ MENU_END(xform)
 
 static COMMAND_FUNC( do_xf_menu )
 {
-	PUSH_MENU(xform);
+	CHECK_AND_PUSH_MENU(xform);
 }
 
 static COMMAND_FUNC( set_shading_model )
@@ -1169,6 +1189,9 @@ static COMMAND_FUNC( set_shading_model )
 
 	m = CHOOSE_SHADING_MODEL("shading model");
 	// BUG need to install it!!
+
+	fprintf(stderr,"set_shading_model:  m = %d\n",m);
+	WARN("set_shading_model:  not implemented!?");
 }
 
 static GLenum which_light=INVALID_CONSTANT;
@@ -1357,10 +1380,10 @@ MENU_END(lighting)
 
 static COMMAND_FUNC( do_lighting_menu )
 {
-	PUSH_MENU(lighting);
+	CHECK_AND_PUSH_MENU(lighting);
 }
 
-static COMMAND_FUNC(do_list_dls){list_dls(SINGLE_QSP_ARG);}
+static COMMAND_FUNC(do_list_dls){list_dls(tell_msgfile());}
 
 
 #undef ADD_CMD
@@ -1379,7 +1402,7 @@ MENU_END(display_list)
 
 static COMMAND_FUNC( do_dl_menu )
 {
-	PUSH_MENU(display_list);
+	CHECK_AND_PUSH_MENU(display_list);
 }
 
 static COMMAND_FUNC(do_swap_buffers){swap_buffers();}
@@ -1428,7 +1451,7 @@ static COMMAND_FUNC( do_delete_fb )
 {
 	Framebuffer *fbp;
 
-	fbp = PICK_GLFB("");
+	fbp = pick_glfb("");
 	if( fbp == NULL ) return;
 
 	delete_framebuffer(QSP_ARG  fbp);
@@ -1436,14 +1459,14 @@ static COMMAND_FUNC( do_delete_fb )
 
 static COMMAND_FUNC( do_list_fbs )
 {
-	list_glfbs(SINGLE_QSP_ARG);
+	list_glfbs(tell_msgfile());
 }
 
 static COMMAND_FUNC( do_fb_info )
 {
 	Framebuffer *fbp;
 
-	fbp = PICK_GLFB("");
+	fbp = pick_glfb("");
 	if( fbp == NULL ) return;
 
 	glfb_info(QSP_ARG  fbp);
@@ -1461,7 +1484,7 @@ MENU_END(glfb)
 
 static COMMAND_FUNC( do_glfb_menu )
 {
-	PUSH_MENU(glfb);
+	CHECK_AND_PUSH_MENU(glfb);
 }
 
 #ifdef HAVE_OPENGL
@@ -1537,11 +1560,11 @@ static COMMAND_FUNC( do_new_gl_buffer )
 #endif // HAVE_OPENGL
 
 	s = NAMEOF("name for GL buffer object");
-	cdp = PICK_PLATFORM("platform");
-	if( cdp != NO_PLATFORM )
+	cdp = pick_platform("platform");
+	if( cdp != NULL )
 		push_pfdev_context(QSP_ARG  PF_CONTEXT(cdp) );
-	pdp = PICK_PFDEV("device");
-	if( cdp != NO_PLATFORM )
+	pdp = pick_pfdev("device");
+	if( cdp != NULL )
 		pop_pfdev_context(SINGLE_QSP_ARG);
 
 	w = (int)HOW_MANY("width");
@@ -1550,11 +1573,11 @@ static COMMAND_FUNC( do_new_gl_buffer )
 
 	/* what should the depth be??? default to 1 for now... */
 
-	if( pdp == NO_PFDEV ) return;
+	if( pdp == NULL ) return;
 
 	/* Make sure this name isn't already in use... */
-	dp = dobj_of(QSP_ARG  s);
-	if( dp != NO_OBJ ){
+	dp = dobj_of(s);
+	if( dp != NULL ){
 		sprintf(ERROR_STRING,"Data object name '%s' is already in use, can't use for GL buffer object.",s);
 		NWARN(ERROR_STRING);
 		return;
@@ -1572,10 +1595,10 @@ static COMMAND_FUNC( do_new_gl_buffer )
 	ds.ds_dimension[3]=1;
 	ds.ds_dimension[4]=1;
 	dp = _make_dp(QSP_ARG  s,&ds,PREC_FOR_CODE(PREC_UBY));
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		sprintf(ERROR_STRING,
 			"Error creating data_obj header for %s",s);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 
 	SET_OBJ_FLAG_BITS(dp, DT_NO_DATA);	/* can't free this data */
@@ -1696,10 +1719,10 @@ COMMAND_FUNC( do_gl_menu )
 	static int inited=0;
 	if( !inited ){
 		inited=1;
-		gl_debug = add_debug_module(QSP_ARG  "gl");
+		gl_debug = add_debug_module("gl");
 		DECLARE_STR1_FUNCTION(	display_list_exists,	display_list_exists )
 	}
-	PUSH_MENU(gl);
+	CHECK_AND_PUSH_MENU(gl);
 }
 
 #endif /* HAVE_OPENGL */

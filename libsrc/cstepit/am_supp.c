@@ -12,7 +12,10 @@
 #include "quip_prot.h"
 //#include "fitsine.h"
 #include "optimize.h"
+#include "list.h"
+#include "variable.h"
 
+// We assume that only one thread will use this at a time...
 static Query_Stack *am_qsp=NULL;
 
 /* local prototypes */
@@ -20,7 +23,7 @@ static Query_Stack *am_qsp=NULL;
 static float amoeba_scr_funk(float *p);
 static void run_amoeba(float (*func)(float *));
 static void show_simplex_verts(void);
-static void init_simplex(void);
+static void init_simplex(SINGLE_QSP_ARG_DECL);
 static float (*user_c_func)(SINGLE_QSP_ARG_DECL);
 
 
@@ -28,14 +31,20 @@ static float simplex_vertices[MAX_OPT_PARAMS+1][MAX_OPT_PARAMS];
 
 void halt_amoeba(void)
 {
-	NWARN("Sorry, don't know how to halt amoeba!?");
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+    
+	qsp = am_qsp;
+#endif // THREAD_SAFE_QUERY
+
+	warn("Sorry, don't know how to halt amoeba!?");
 }
 
 static void show_simplex_verts()
 {
 	int i,j,n;
 
-	n= eltcount( opt_param_list(SGL_DEFAULT_QSP_ARG) );
+	n= eltcount( _opt_param_list(SGL_DEFAULT_QSP_ARG) );
 
 	for(i=0;i<=n;i++){
 		printf("simplex vertex %d:\n",i);
@@ -45,23 +54,23 @@ static void show_simplex_verts()
 	}
 }
 
-static void init_simplex()
+static void init_simplex(SINGLE_QSP_ARG_DECL)
 {
 	List *lp;
 	Node *np;
 	int n;
 	int i,j;
 
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	if( lp == NO_LIST ){
-		NWARN("init_simplex:  no params!?");
+	lp=_opt_param_list(SGL_DEFAULT_QSP_ARG);
+	if( lp == NULL ){
+		warn("init_simplex:  no params!?");
 		return;
 	}
 	n = eltcount(lp);
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Opt_Param *opp;
 
 		opp=(Opt_Param*)np->n_data;
@@ -93,30 +102,30 @@ static float amoeba_scr_funk(float *p)
 	qsp = am_qsp;
 #endif // THREAD_SAFE_QUERY
 
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	if( lp==NO_LIST ) {
-		NWARN("no parameters!?");
+	lp=_opt_param_list(SGL_DEFAULT_QSP_ARG);
+	if( lp==NULL ) {
+		warn("no parameters!?");
 		return(0.0);
 	}
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Opt_Param *opp;
 
 		opp=(Opt_Param *)np->n_data;
 		sprintf(str,"%g",p[i+1]);
-		ASSIGN_VAR(opp->op_name,str);
+		assign_var(opp->op_name,str);
 		i++;
 		np=np->n_next;
 	}
 
-	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
+	_digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
 	
-	vp=var__of(QSP_ARG  "error");
-	if( vp == NO_VARIABLE ) {
-		NWARN("variable \"error\" not set!!!");
+	vp=var__of("error");
+	if( vp == NULL ) {
+		WARN("variable \"error\" not set!!!");
 		err=0.0;
 	} else sscanf(VAR_VALUE(vp),"%g",&err);
 
@@ -131,11 +140,11 @@ static float amoeba_c_funk(float *p)
 	Opt_Param *opp;
 	Node *np;
 
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	np=lp->l_head;
+	lp=_opt_param_list(SGL_DEFAULT_QSP_ARG);
+	np=QLIST_HEAD(lp);
 
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		opp=(Opt_Param *)np->n_data;
 		opp->ans=p[i+1];
 		np=np->n_next;
@@ -168,14 +177,20 @@ static void run_amoeba( float (*func)(float *) )
 	int nfunk;
 	int i;
 	int n;
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+    
+	qsp = am_qsp;
+#endif // THREAD_SAFE_QUERY
 
-	init_simplex();
+
+	init_simplex(SINGLE_QSP_ARG);
 
 	/* make a matrix p[][] of simplex vertices */
 
 	/* initialize row list */
 
-	n = eltcount( opt_param_list(SGL_DEFAULT_QSP_ARG) );
+	n = eltcount( _opt_param_list(SGL_DEFAULT_QSP_ARG) );
 
 	for(i=0;i<n+1;i++)
 		p_rowlist[i] = (&simplex_vertices[i][0])  - 1;

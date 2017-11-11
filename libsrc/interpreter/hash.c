@@ -8,6 +8,8 @@
 #include "quip_prot.h"
 #include "debug.h"
 #include "hash.h"
+#include "list.h"
+#include "getbuf.h"
 
 #ifdef QUIP_DEBUG
 static u_long hash_debug=HASH_DEBUG_MASK;
@@ -37,7 +39,6 @@ static u_long prime[N_PRIMES]={
 
 /* local prototypes */
 static void clear_entries(void **entry,u_long size);
-static void setup_ht(Hash_Tbl *htp,u_long size);
 
 static void clear_entries(void **entry, u_long size)
 {
@@ -48,7 +49,9 @@ static void clear_entries(void **entry, u_long size)
 
 
 
-static void setup_ht(Hash_Tbl *htp, u_long size)
+#define setup_ht(htp,size) _setup_ht(QSP_ARG  htp,size)
+
+static void _setup_ht(QSP_ARG_DECL  Hash_Tbl *htp, u_long size)
 {
 	u_long i;
 
@@ -58,25 +61,28 @@ static void setup_ht(Hash_Tbl *htp, u_long size)
 			i=N_PRIMES+2;
 		}
 	if( i == N_PRIMES ){
-		sprintf(DEFAULT_ERROR_STRING,"setup_ht( tbl = %s, size = %ld (0x%lx) )",htp->ht_name,size,size);
-		NADVISE(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"setup_ht( tbl = %s, size = %ld (0x%lx) )",htp->ht_name,size,size);
+		advise(ERROR_STRING);
 
-		NERROR1("need to enlarge prime number table in hash.c");
+		error1("need to enlarge prime number table in hash.c");
 		IOS_RETURN
 	}
 
 	htp->ht_size=size;
 	htp->ht_entries = (void**) getbuf(size * sizeof(void *));
 	//if( htp->ht_entries==NULL ) mem_err("setup_ht");
-	if( htp->ht_entries==NULL ) NWARN("setup_ht memory allocation error");
+	if( htp->ht_entries==NULL ) warn("setup_ht memory allocation error");
 
 	clear_entries(htp->ht_entries,size);
 
 	htp->ht_n_entries=0;
-	htp->ht_removals=0;
-	htp->ht_moved=0;
-	htp->ht_checked=0;
-	htp->ht_warned=0;
+	htp->ht_n_removals=0;
+	htp->ht_n_moved=0;
+	htp->ht_n_checked=0;
+
+	htp->ht_flags=0;
+
+	htp->ht_item_list = NULL;
 
 #ifdef MONITOR_COLLISIONS
 	htp->ht_searches=0;
@@ -84,7 +90,7 @@ static void setup_ht(Hash_Tbl *htp, u_long size)
 #endif
 }
 
-Hash_Tbl * enlarge_ht(Hash_Tbl *htp)
+Hash_Tbl * _enlarge_ht(QSP_ARG_DECL  Hash_Tbl *htp)
 {
 	u_long newsize;
 	u_long i;
@@ -93,9 +99,9 @@ Hash_Tbl * enlarge_ht(Hash_Tbl *htp)
 	u_long oldsize;
 
 if( verbose ){
-sprintf(DEFAULT_ERROR_STRING,"doubling size of hash table \"%s\" (old size = %ld)",
+sprintf(ERROR_STRING,"doubling size of hash table \"%s\" (old size = %ld)",
 htp->ht_name,htp->ht_size);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 
 
@@ -110,7 +116,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 	for(i=0;i<oldsize;i++)
 		if( oe[i] != NULL ){
 			if( insert_hash(oe[i],htp) < 0 ){
-				NERROR1("error growing hash table");
+				error1("error growing hash table");
 				IOS_RETURN_VAL(NULL)
 			}
 		}
@@ -125,18 +131,18 @@ NADVISE(DEFAULT_ERROR_STRING);
  * Allocate and initialize a hash table with the given name and size entries
  */
 
-Hash_Tbl *ht_init(const char *name)
+Hash_Tbl *_ht_init(QSP_ARG_DECL  const char *name)
 		/* name for hash table */
 {
 	register Hash_Tbl *htp;
 
 	htp= (Hash_Tbl*) getbuf( sizeof(*htp) );
-	//if( htp == NO_HASH_TBL ) mem_err("ht_init");
-	if( htp == NO_HASH_TBL ) {
-		NERROR1("ht_init memory allocation failure");
+	//if( htp == NULL ) mem_err("ht_init");
+	if( htp == NULL ) {
+		error1("ht_init memory allocation failure");
 		IOS_RETURN_VAL(NULL)
 	}
-	
+//fprintf(stderr,"ht_init:  name = 0x%lx  (\"%s\")\n",name,name==NULL?"<null>":name);
 	if( name != NULL )
 		htp->ht_name=savestr(name);
 	else
@@ -147,10 +153,13 @@ Hash_Tbl *ht_init(const char *name)
 	return(htp);
 }
 
-void zap_hash_tbl(Hash_Tbl *htp)
+void _zap_hash_tbl(QSP_ARG_DECL  Hash_Tbl *htp)
 {
 	givbuf(htp->ht_entries);
-	rls_str(htp->ht_name);
+	if( htp->ht_name != NULL )
+		rls_str(htp->ht_name);
+	if( HT_ITEM_LIST(htp) != NULL )
+		zap_list( HT_ITEM_LIST(htp) );
 }
 
 
@@ -177,7 +186,7 @@ void zap_hash_tbl(Hash_Tbl *htp)
  * Returns 0 on success, -1 on failure.
  */
 
-int insert_hash(void *ptr,Hash_Tbl *htp)
+int _insert_hash(QSP_ARG_DECL  void *ptr,Hash_Tbl *htp)
 			/* item to insert */
 			/* hash table */
 {
@@ -190,16 +199,14 @@ int insert_hash(void *ptr,Hash_Tbl *htp)
 	if( ((float)htp->ht_n_entries/(float)htp->ht_size) > 0.7 ){
 
 if( verbose ){
-sprintf(DEFAULT_ERROR_STRING,
+sprintf(ERROR_STRING,
 "enlarging hash table %s: %ld of %ld entries filled",
 htp->ht_name,htp->ht_n_entries,
 htp->ht_size);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 
-//fprintf(stderr,"enlarging hash table at 0x%lx\n",(long)htp);
 		htp=enlarge_ht(htp);
-//fprintf(stderr,"enlarged hash table at 0x%lx\n",(long)htp);
 	}
 
 	/*
@@ -211,9 +218,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 if( debug & hash_debug ){
-sprintf(DEFAULT_ERROR_STRING,"insert_hash: table %s at 0x%lx, item %s",
+sprintf(ERROR_STRING,"insert_hash: table %s at 0x%lx, item %s",
 htp->ht_name,(long)htp,name);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	compute_key(key,name,htp);	/* a macro for setting key */
@@ -231,15 +238,15 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 	/* now we've found an empty slot */
 
-//fprintf(stderr,"insert_hash: setting entry at 0x%lx to 0x%lx\n", (long)&entry[key],(long)ptr);
 	entry[key] = ptr;
 	htp->ht_n_entries++;
 
-//fprintf(stderr,"insert_hash: table at 0x%lx now has %d entries\n", (long)htp,htp->ht_n_entries);
+	MARK_DIRTY(htp);
+
 	return(0);
 }
 
-void show_ht(Hash_Tbl *htp)	/* print out the contents of the given hash table */
+void _show_ht(QSP_ARG_DECL  Hash_Tbl *htp)	/* print out the contents of the given hash table */
 {
 	unsigned long i;
 	register char *name;
@@ -253,8 +260,8 @@ void show_ht(Hash_Tbl *htp)	/* print out the contents of the given hash table */
 			name = * ( char ** ) entry[i];
 			s=name;
 			compute_key(key,s,htp);	/* a macro for setting key */
-			sprintf(DEFAULT_ERROR_STRING,"%ld\t%s, key = %ld",i,name,key);
-			NADVISE(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"%ld\t%s, key = %ld",i,name,key);
+			advise(ERROR_STRING);
 		}
 }
 
@@ -263,7 +270,7 @@ void show_ht(Hash_Tbl *htp)	/* print out the contents of the given hash table */
  * Returns a pointer to the item if successful, or a null pointer.
  */
 
-void *fetch_hash(const char *name,Hash_Tbl* htp)
+void *_fetch_hash(QSP_ARG_DECL  const char *name,Hash_Tbl* htp)
 		/* name = target name */
 		/* htp = table to search */
 {
@@ -272,16 +279,16 @@ void *fetch_hash(const char *name,Hash_Tbl* htp)
 	u_long start;
 	void **entry;
 
-	if( htp->ht_warned ){
+	if( HASH_TBL_WARNED(htp) ){
 		if( verbose ){
-sprintf(DEFAULT_ERROR_STRING,
+sprintf(ERROR_STRING,
 "Enlarging hash table %s due to collisions, load factor is %g",
 htp->ht_name,
 ((float)htp->ht_n_entries/(float)htp->ht_size) );
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 		}
 		htp=enlarge_ht(htp);
-		htp->ht_warned=0;
+		CLEAR_HT_FLAG_BITS(htp,HT_WARNED);
 	}
 
 	entry = htp->ht_entries;
@@ -301,14 +308,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 		/* we assume that the name is the first field */
 
 		s = *((char **)entry[key]);
-//#ifdef CAUTIOUS
-//		if( s == NULL ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  item with null name string, ip = 0x%lx!?", (u_long)entry[key]);
-//			NWARN(DEFAULT_ERROR_STRING);
-//			return(NULL);
-//		}
-//#endif /* CAUTIOUS */
 		assert( s != NULL );
 
 		if( !strcmp(s,name) ) return(entry[key]);
@@ -316,15 +315,15 @@ NADVISE(DEFAULT_ERROR_STRING);
 #ifdef MONITOR_COLLISIONS
 		if( htp->ht_collisions >
 			MAX_SILENT_COLL_RATE * htp->ht_searches
-			&& !htp->ht_warned ){
+			&& !HASH_TBL_WARNED(htp) ){
 			if( verbose ){
-				sprintf(DEFAULT_ERROR_STRING,
+				sprintf(ERROR_STRING,
 "High collision rate (%f collisions/search), hash table \"%s\"",
 					(float) htp->ht_collisions /
 					(float) htp->ht_searches, htp->ht_name);
-				NADVISE(DEFAULT_ERROR_STRING);
+				advise(ERROR_STRING);
 			}
-			htp->ht_warned = 1;
+			SET_HT_FLAG_BITS(htp,HT_WARNED);
 		}
 
 		htp->ht_collisions++;
@@ -344,7 +343,7 @@ NADVISE(DEFAULT_ERROR_STRING);
  * Returns 0 on success, -1 if the item is not found.
  */
 
-int remove_item_from_hash(const Item *ptr,Hash_Tbl *htp)
+int _remove_item_from_hash(QSP_ARG_DECL  const Item *ptr,Hash_Tbl *htp)
 			/* pointer to the item to remove */
 		/* table to search */
 {
@@ -355,7 +354,7 @@ int remove_item_from_hash(const Item *ptr,Hash_Tbl *htp)
 	return remove_name_from_hash(name,htp);
 }
 
-int remove_name_from_hash(const char * name, Hash_Tbl *htp )
+int _remove_name_from_hash(QSP_ARG_DECL  const char * name, Hash_Tbl *htp )
 {
 	u_long key;
 	const char *s;
@@ -375,8 +374,8 @@ int remove_name_from_hash(const char * name, Hash_Tbl *htp )
 
 #ifdef QUIP_DEBUG
 if( debug & hash_debug ){
-sprintf(DEFAULT_ERROR_STRING,"key:  %ld",key);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"key:  %ld",key);
+advise(ERROR_STRING);
 }
 #endif
 
@@ -390,13 +389,15 @@ NADVISE(DEFAULT_ERROR_STRING);
 		if( !strcmp(s,name) ){
 #ifdef QUIP_DEBUG
 if( debug & hash_debug ){
-sprintf(DEFAULT_ERROR_STRING,"removing item at location %ld",key);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"removing item at location %ld",key);
+advise(ERROR_STRING);
 }
 #endif
 			/* found the one to remove */
 			entry[key] = NULL;
 			start=key;
+			MARK_DIRTY(htp);
+
 			/* now check for collisions */
 			while(1){
 				char **sp;
@@ -405,7 +406,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 				if( key >= htp->ht_size ) key=0;
 
 				if( entry[key] == NULL ){
-					htp->ht_removals++;
+					htp->ht_n_removals++;
 					htp->ht_n_entries--;
 					return(0);
 				}
@@ -414,8 +415,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 				s=(*sp);
 #ifdef QUIP_DEBUG
 if( debug & hash_debug ){
-sprintf(DEFAULT_ERROR_STRING,"considering shifting item %s",s);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"considering shifting item %s",s);
+advise(ERROR_STRING);
 }
 #endif
 				compute_key(k2,s,htp);	/* a macro for setting key */
@@ -426,17 +427,17 @@ NADVISE(DEFAULT_ERROR_STRING);
 				|| ( k2 > key &&  key > start ) ){
 #ifdef QUIP_DEBUG
 if( debug & hash_debug ){
-sprintf(DEFAULT_ERROR_STRING,"shifting at %ld",key);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"shifting at %ld",key);
+advise(ERROR_STRING);
 }
 #endif
 					entry[start]
 					  = entry[key];
-					htp->ht_moved++;
+					htp->ht_n_moved++;
 					entry[key] = NULL;
 					start=key;
 				}
-				htp->ht_checked++;
+				htp->ht_n_checked++;
 			}
 		}
 
@@ -449,9 +450,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 		if( key==start ) goto not_found;
 	}
 not_found:
-	sprintf(DEFAULT_ERROR_STRING,"word \"%s\" not found in hash table \"%s\"",
+	sprintf(ERROR_STRING,"word \"%s\" not found in hash table \"%s\"",
 		name,htp->ht_name);
-	NADVISE(DEFAULT_ERROR_STRING);
+	advise(ERROR_STRING);
 	return(-1);
 }
 
@@ -488,12 +489,12 @@ void tell_hash_stats(QSP_ARG_DECL  Hash_Tbl *htp)
 		prt_msg(DEFAULT_MSG_STR);
 	}
 #endif
-	if( htp->ht_removals > 0 ){
-		sprintf(DEFAULT_MSG_STR,"\t%ld removals",htp->ht_removals);
+	if( htp->ht_n_removals > 0 ){
+		sprintf(DEFAULT_MSG_STR,"\t%ld removals",htp->ht_n_removals);
 		prt_msg(DEFAULT_MSG_STR);
-		sprintf(DEFAULT_MSG_STR,"\t%ld items checked",htp->ht_checked);
+		sprintf(DEFAULT_MSG_STR,"\t%ld items checked",htp->ht_n_checked);
 		prt_msg(DEFAULT_MSG_STR);
-		sprintf(DEFAULT_MSG_STR,"\t%ld items moved",htp->ht_moved);
+		sprintf(DEFAULT_MSG_STR,"\t%ld items moved",htp->ht_n_moved);
 		prt_msg(DEFAULT_MSG_STR);
 	}
 	if( verbose ) show_ht(htp);
@@ -502,20 +503,19 @@ void tell_hash_stats(QSP_ARG_DECL  Hash_Tbl *htp)
 
 /* Build a list of all the items in this hash table */
 
-List *ht_list(QSP_ARG_DECL  Hash_Tbl *htp)
+List *_ht_list(QSP_ARG_DECL  Hash_Tbl *htp)
 {
 	void **entry;
 	unsigned int i;
 	List *lp;
 
-//advise("ht_list creating list for table");
 	lp=new_list();
 	entry = htp->ht_entries;
 	for(i=0;i<htp->ht_size;i++){
 		Item *ip;
 
 		ip = (Item*) entry[i];
-		if( ip != NO_ITEM ){
+		if( ip != NULL ){
 			Node *np;
 			np=mk_node(ip);
 			addTail(lp,np);
@@ -547,7 +547,12 @@ Item *ht_enumerator_item(Hash_Tbl_Enumerator *htep)
 	return (Item *) *(htep->current_entry);
 }
 
-Hash_Tbl_Enumerator *new_hash_tbl_enumerator(Hash_Tbl *htp)
+void rls_hash_tbl_enumerator(Hash_Tbl_Enumerator *ep)
+{
+	givbuf(ep);	// We might save a bit by keeping a pool of these?
+}
+
+Hash_Tbl_Enumerator *_new_hash_tbl_enumerator(QSP_ARG_DECL  Hash_Tbl *htp)
 {
 	Hash_Tbl_Enumerator *htep;
 
@@ -557,16 +562,26 @@ Hash_Tbl_Enumerator *new_hash_tbl_enumerator(Hash_Tbl *htp)
 
 	// advance to the first non-null entry
 	while( *(htep->current_entry) == NULL && htep->current_entry < htep->htp->ht_entries+htep->htp->ht_size ){
-//fprintf(stderr,"new_hash_tbl_enumerator:  * 0x%lx = 0x%lx\n", (long)htep->current_entry,(long)*htep->current_entry);
 		htep->current_entry ++;
 	}
 	if( htep->current_entry == htep->htp->ht_entries+htep->htp->ht_size ){
 		htep->current_entry = NULL;	// nothing there.
-//fprintf(stderr,"new_hash_tbl_enumerator:  table at 0x%lx is empty!?\n",(long)htp);
 	}
-//else
-//fprintf(stderr,"new_hash_tbl_enumerator:  first item is 0x%lx\n",(long)*(htep->current_entry));
-
 	return htep;
+}
+
+List *_hash_tbl_list(QSP_ARG_DECL  Hash_Tbl *htp)
+{
+	if( HT_ITEM_LIST(htp) == NULL ){
+		SET_HT_ITEM_LIST(htp, ht_list(htp) );	// allocates and populates a new list
+		MARK_CURRENT(htp);
+	} else {
+		if( ! HASH_TBL_LIST_IS_CURRENT(htp) ){
+			zap_list( HT_ITEM_LIST(htp) );
+			SET_HT_ITEM_LIST(htp, ht_list(htp) );	// allocates and populates a new list
+			MARK_CURRENT(htp);
+		}
+	}
+	return HT_ITEM_LIST(htp);
 }
 

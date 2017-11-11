@@ -49,26 +49,15 @@
 
 /* BUG?  Should we let this directory be set in configure? */
 #define QUIP_DEFAULT_DIR	"/usr/local/share/quip/macros/startup"
-//#define QUIP_DEFAULT_FMT	"/usr/local/share/%s/macros/startup"
 
 #define STARTUP_DIRNAME	"QUIPSTARTUPDIR"
 
 #include "debug.h"		/* verbose */
-#include "query.h"
 
-static int read_global_startup(QSP_ARG_DECL const char *progname)
+#ifdef BUILD_FOR_CMD_LINE
+
+static int read_traditional_startup(QSP_ARG_DECL  const char *progname)
 {
-#ifdef BUILD_FOR_OBJC
-#ifdef BUILD_FOR_IOS
-	// this is called from the main thread at startup...
-	return ios_read_global_startup(SINGLE_QSP_ARG);	// in .m file
-#endif // BUILD_FOR_IOS
-#ifdef BUILD_FOR_MACOS
-	// this is called from the main thread at startup...
-	return macos_read_global_startup(SINGLE_QSP_ARG);
-#endif // BUILD_FOR_MACOS
-#else /* ! BUILD_FOR_OBJC */
-
 	char *home;
 	char filename[MAXPATHLEN];
 	FILE *fp;
@@ -76,7 +65,7 @@ static int read_global_startup(QSP_ARG_DECL const char *progname)
 	home=getenv("HOME");
 
 	if( home == NULL ){
-		WARN("read_global_startup:  no HOME in environment");
+		warn("read_traditional_startup:  no HOME in environment");
 		return -1;
 	}
 
@@ -85,12 +74,10 @@ static int read_global_startup(QSP_ARG_DECL const char *progname)
 	// we copy the file to the device...
 
 	// BUG possible buffer overrun
-	sprintf(filename,"%s/.%src",home,progname);
+	sprintf(filename,"%s/.%src",home,progname);	// e.g. .quiprc
 	fp=fopen(filename,"r");
 
 	if( fp!=NULL ) {
-//		int lvl;
-
 		if( verbose ){
 			sprintf(ERROR_STRING,
 	"Interpreting global startup file %s",filename);
@@ -101,7 +88,7 @@ static int read_global_startup(QSP_ARG_DECL const char *progname)
 		 * but no menus have been pushed, so we can't!?
 		 * Could perhaps use builtin menu only?
 		 */
-		redir(QSP_ARG  fp, filename );
+		redir(fp, filename );
 
 		// If the startup file contains widget creation commands,
 		// they can't run before the appDelegate has started (ios).
@@ -111,7 +98,31 @@ static int read_global_startup(QSP_ARG_DECL const char *progname)
 		return 0;
 	}
 	return -1;
-#endif /* ! BUILD_FOR_OBJC */
+}
+#endif // BUILD_FOR_CMD_LINE
+
+static int read_global_startup(QSP_ARG_DECL const char *progname)
+{
+#ifdef BUILD_FOR_CMD_LINE
+
+	return read_traditional_startup(QSP_ARG  progname);
+
+#else // ! BUILD_FOR_CMD_LINE
+
+#ifdef BUILD_FOR_IOS
+	// this is called from the main thread at startup...
+	return ios_read_global_startup(SINGLE_QSP_ARG);	// in .m file
+#endif // BUILD_FOR_IOS
+
+#ifdef BUILD_FOR_MACOS_APP
+	// We do this only when building a cocoa app, but not
+	// for the native Mac command line version...
+	//
+	// this is called from the main thread at startup...
+	return macos_read_global_startup(SINGLE_QSP_ARG);
+#endif // BUILD_FOR_MACOS_APP
+
+#endif /* ! BUILD_FOR_CMD_LINE */
 
 }
 
@@ -127,7 +138,9 @@ static int read_global_startup(QSP_ARG_DECL const char *progname)
 /* I used #elif here, but the mac choked on it  - jbm */
 #define DIR_DELIM	"/"
 
-static char *try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
+#define try_directory(dir,progname) _try_directory(QSP_ARG  dir,progname)
+
+static char *_try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
 {
 	FILE *fp;
 	static char filename[MAXPATHLEN];
@@ -143,17 +156,15 @@ static char *try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
 	fp=fopen(filename,"r");
 
 	if( fp!=NULL ) {
-		redir(QSP_ARG  fp, filename );
+		redir(fp, filename );
 		if( *dir ){
-//sprintf(ERROR_STRING,"Setting %s to %s",STARTUP_DIRNAME,dir);
-//advise(ERROR_STRING);
 			// We should only set the variable here if
 			// it doesn't already exist - vars defined
 			// in the environment are reserved!
 			Variable *vp;
-			vp = VAR_OF(STARTUP_DIRNAME);
-			if( vp == NO_VARIABLE ){
-				assign_var(QSP_ARG  STARTUP_DIRNAME,dir);
+			vp = var_of(STARTUP_DIRNAME);
+			if( vp == NULL ){
+				assign_var(STARTUP_DIRNAME,dir);
 			}
 		}
 		return(filename);
@@ -164,7 +175,7 @@ static char *try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
 
 static char *try_cwd(QSP_ARG_DECL  char *progname)
 {
-	return( try_directory(QSP_ARG  ".",progname) );
+	return( try_directory(".",progname) );
 }
 
 static char *try_home(QSP_ARG_DECL  char *progname)	/* look for dotfile in user's home directory */
@@ -174,10 +185,10 @@ static char *try_home(QSP_ARG_DECL  char *progname)	/* look for dotfile in user'
 	home=getenv("HOME");
 
 	if( home == NULL ){
-		WARN("try_home:  no HOME in environment");
+		warn("try_home:  no HOME in environment");
 		return(NULL);
 	}
-	return( try_directory(QSP_ARG  home,progname) );
+	return( try_directory(home,progname) );
 }
 
 static char *try_user_spec(QSP_ARG_DECL  char *progname) /* look for dotfile in user-specified directory */
@@ -186,23 +197,12 @@ static char *try_user_spec(QSP_ARG_DECL  char *progname) /* look for dotfile in 
 
 	dir=getenv(STARTUP_DIRNAME);
 	if( dir == NULL ) return(NULL);
-	return( try_directory(QSP_ARG  dir,progname) );
+	return( try_directory(dir,progname) );
 }
 
 static char *try_default(QSP_ARG_DECL  char *progname) /* look for dotfile in default system directory */
 {
-#ifdef FOOBAR
-	char default_dir_name[MAXPATHLEN];
-
-	// This test is conservative because we count the 2 chars in %s 
-	if( strlen(progname) + strlen(QUIP_DEFAULT_FMT) >= MAXPATHLEN ){
-		sprintf(ERROR_STRING,"try_default:  Program name '%s' is too long!?",progname);
-		ERROR1(ERROR_STRING);
-	}
-	sprintf(default_dir_name,QUIP_DEFAULT_FMT,progname);
-#endif // FOOBAR
-
-	return( try_directory(QSP_ARG  /*default_dir_name*/ QUIP_DEFAULT_DIR,progname) );
+	return( try_directory(QUIP_DEFAULT_DIR,progname) );
 }
 
 #endif // BUILD_FOR_OBJC
@@ -216,6 +216,8 @@ void rcfile( Query_Stack *qsp, char* progname )
 	set_progname(progname); 	/* this is for get_progfile */
 
 #ifndef BUILD_FOR_OBJC
+	// For unix, the user can put their own startup in:
+	// current directory, $STARTUP_DIRNAME, $HOME, and QUIP_DEFAULT_DIR (/usr/local/share/quip/macros/startup/)
 	strip_fullpath(&progname);	/* strip leading components */
 
 	s=try_cwd(QSP_ARG  progname);
@@ -224,14 +226,11 @@ void rcfile( Query_Stack *qsp, char* progname )
 	if( s == NULL ) s=try_default(QSP_ARG  progname);
 #endif /* ! BUILD_FOR_OBJC */
 
-	// We probably don't want to print this message if we are using the global startup...
-
-
 	/* Because these functions push the input but do not execute,
 	 * this one is interpreted first, because it is pushed last.
 	 * It would be better to execute right away, so that settings
 	 * such as verbose and QUIPSTARTUPDIR could be put there and
-	 * used here, but when this is executed no menus have been pushed...
+	 * used here, but, when this is executed, no menus have been pushed...
 	 * We could push the builtin menu?
 	 */
 	status = read_global_startup(QSP_ARG  progname);
@@ -240,6 +239,7 @@ void rcfile( Query_Stack *qsp, char* progname )
 		advise("No startup file found");
 	} else if( verbose ){
 		/* How would verbose ever be set here? Only by changing compilation default? */
+		// We may not want to print this message if we are using the global startup?
 		if( s != NULL ){
 			sprintf(ERROR_STRING,"Interpreting startup file %s",s);
 			advise(ERROR_STRING);

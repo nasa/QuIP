@@ -1,6 +1,10 @@
 #ifndef _FUNCTION_H_
 #define _FUNCTION_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "item_type.h"
 #include "shape_bits.h"
 #include "data_obj.h"
@@ -27,6 +31,7 @@ typedef enum {
 	POSN_FUNCTYP,	// 12	1 positionable arg
 	ILACE_FUNCTYP,	// 13	1 interlaceable arg
 	STRV2_FUNCTYP,	// 14	string-valued function, two string args
+	DOBJV_STR_ARG_FUNCTYP,	// 15	data_obj-valued function, one string arg
 	N_FUNC_TYPES	// must be last
 } Function_Type;
 
@@ -45,12 +50,13 @@ typedef union {
  	double	      (*str2_func)(const char *,const char *);
  	double	      (*str3_func)(const char *,const char *,int);
  	double	      (*dobj_func)(QSP_ARG_DECL  Data_Obj *);
+ 	Data_Obj *    (*dobjv_str_arg_func)(QSP_ARG_DECL  const char *);
 	int           (*char_func)(char);
 	double        (*il_func)(QSP_ARG_DECL  Item *);
 	double        (*posn_func)(QSP_ARG_DECL  Item *);
 } Fn_Func;
 
-struct function {
+struct quip_function {
 	const char *	fn_name;
 	int		fn_type;
 	Fn_Func		fn_u;
@@ -81,8 +87,6 @@ struct function {
 #define SET_FUNC_VS_CODE(f,c)		(f)->fn_vs_code = c
 #define FUNC_VS_CODE2(f)		((f)->fn_vs_code2)
 #define SET_FUNC_VS_CODE2(f,c)		(f)->fn_vs_code2 = c
-
-#define NO_FUNCTION		((Function *)NULL)
 
 #define FN_NAME(funcp)		(funcp)->fn_name
 
@@ -130,31 +134,30 @@ typedef struct genwin_functions {
 
 
 
-ITEM_INIT_PROT(Function,function)
-ITEM_NEW_PROT(Function,function)
-ITEM_CHECK_PROT(Function,function)
+ITEM_INIT_PROT(Quip_Function,function)
+ITEM_NEW_PROT(Quip_Function,function)
+ITEM_CHECK_PROT(Quip_Function,function)
+
+#define init_functions()	_init_functions(SINGLE_QSP_ARG)
+#define new_function(name)	_new_function(QSP_ARG  name)
+#define function_of(name)	_function_of(QSP_ARG  name)
 
 
 #define DECLARE_FUNCTION(name,func,code1,code2,code3,type,member,dim_index)	\
-									\
-									\
-{									\
-	Function *func_p;						\
-									\
-	func_p = new_function(QSP_ARG  #name);				\
-	if( func_p == NO_FUNCTION ){					\
-		sprintf(ERROR_STRING,					\
-	"error creating function \"%s\"!?",#name);			\
-		WARN(ERROR_STRING);					\
-	} else {							\
-		func_p->fn_type = type;					\
-		func_p->fn_u.member = func;				\
-		func_p->fn_vv_code = code1;				\
-		func_p->fn_vs_code = code2;				\
-		func_p->fn_vs_code2 = code3;				\
-		func_p->fn_serial = func_serial++;			\
-		func_p->fn_dim_index = dim_index;			\
-	}								\
+										\
+										\
+{										\
+	Quip_Function *func_p;							\
+										\
+	func_p = new_function(#name);					\
+	assert(func_p!=NULL);							\
+	func_p->fn_type = type;							\
+	func_p->fn_u.member = func;						\
+	func_p->fn_vv_code = code1;						\
+	func_p->fn_vs_code = code2;						\
+	func_p->fn_vs_code2 = code3;						\
+	func_p->fn_serial = func_serial++;					\
+	func_p->fn_dim_index = dim_index;					\
 }
 
 
@@ -196,6 +199,9 @@ ITEM_CHECK_PROT(Function,function)
 
 #define DECLARE_DOBJ_FUNCTION( name, func )	\
 	DECLARE_SCALAR_FUNCTION(name,func,DOBJ_FUNCTYP,dobj_func,-1)
+
+#define DECLARE_DOBJV_STR_ARG_FUNCTION( name, func )	\
+	DECLARE_SCALAR_FUNCTION(name,func,DOBJV_STR_ARG_FUNCTYP,dobjv_str_arg_func,-1)
 
 #define DECLARE_TS_FUNCTION( name, func )	\
 	DECLARE_SCALAR_FUNCTION(name,func,TS_FUNCTYP,ts_func,-1)
@@ -244,26 +250,31 @@ extern Item *find_tsable(QSP_ARG_DECL  const char *name);
 extern double erfinv(double);
 extern float erfinvf(float);
 
-// from psych library...
+// formerly from psych library...
+// now in libinterpreter to support expressions
 extern double ptoz( double p );
 extern double ztop( double z );
 
 #define ADD_CLASS_PROTOTYPE(type_stem,func_type)		\
-extern void add_##type_stem(QSP_ARG_DECL  Item_Type *itp,	\
+extern void _add_##type_stem(QSP_ARG_DECL  Item_Type *itp,	\
 	func_type *func_str_ptr, Item *(*lookup)(QSP_ARG_DECL  const char *));
-
-#ifdef FOOBAR
-extern void add_sizable(QSP_ARG_DECL  Item_Type *itp,Size_Functions *sfp,
-			Item *(*lookup)(QSP_ARG_DECL  const char *));
-extern void add_tsable(QSP_ARG_DECL  Item_Type *itp,Timestamp_Functions *sfp,
-			Item *(*lookup)(QSP_ARG_DECL  const char *));
-#endif // FOOBAR
 
 ADD_CLASS_PROTOTYPE(sizable,Size_Functions)
 ADD_CLASS_PROTOTYPE(tsable,Timestamp_Functions)
 ADD_CLASS_PROTOTYPE(interlaceable,Interlace_Functions)
 ADD_CLASS_PROTOTYPE(positionable,Position_Functions)
 ADD_CLASS_PROTOTYPE(subscriptable,Subscript_Functions)
+
+#define add_sizable(itp,ftype,lookup)		_add_sizable(QSP_ARG  itp,ftype,lookup)
+#define add_tsable(itp,ftype,lookup)		_add_tsable(QSP_ARG  itp,ftype,lookup)
+#define add_interlaceable(itp,ftype,lookup)	_add_interlaceable(QSP_ARG  itp,ftype,lookup)
+#define add_positionable(itp,ftype,lookup)	_add_positionable(QSP_ARG  itp,ftype,lookup)
+#define add_subscriptable(itp,ftype,lookup)	_add_subscriptable(QSP_ARG  itp,ftype,lookup)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ! _FUNCTION_H_ */
 

@@ -76,9 +76,9 @@ double get_ferror(Data_Obj *edp,Data_Obj *fdp,dimension_t x,dimension_t y)
 #ifdef QUIP_DEBUG
 /*
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"get_ferror %d %d:  %d %d, err = %g, filt = %g, running total %g",
+sprintf(ERROR_STRING,"get_ferror %d %d:  %d %d, err = %g, filt = %g, running total %g",
 x,y,i,j,*(eptr+eoffset),*(fptr+foffset),err);
-advise(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 */
 #endif /* QUIP_DEBUG */
@@ -87,8 +87,8 @@ advise(DEFAULT_ERROR_STRING);
 #ifdef QUIP_DEBUG
 /*
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"get_ferror %d %d:  TOTAL err = %g",x,y,err);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"get_ferror %d %d:  TOTAL err = %g",x,y,err);
+advise(ERROR_STRING);
 }
 */
 #endif /* QUIP_DEBUG */
@@ -128,7 +128,7 @@ double get_sos(Data_Obj *edp,Data_Obj *fdp)		/* get the total sq'd error */
  * value.
  */
 
-double add_to_sos(dimension_t x,dimension_t y,Data_Obj *edp,Data_Obj *fdp,int factor)
+double _add_to_sos(QSP_ARG_DECL  dimension_t x,dimension_t y,Data_Obj *edp,Data_Obj *fdp,int factor)
 {
 	dimension_t i,j;
 	double err,adj;
@@ -171,8 +171,8 @@ double add_to_sos(dimension_t x,dimension_t y,Data_Obj *edp,Data_Obj *fdp,int fa
 		adj /= - (OBJ_COLS(edp) * OBJ_ROWS(edp));
 #ifdef CAUTIOUS
 	else {
-		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  add_to_sos:  factor (%d) is not 1 or -1 !?",factor);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"CAUTIOUS:  add_to_sos:  factor (%d) is not 1 or -1 !?",factor);
+		warn(ERROR_STRING);
 		return(0.0);
 	}
 #endif /* CAUTIOUS */
@@ -180,7 +180,7 @@ double add_to_sos(dimension_t x,dimension_t y,Data_Obj *edp,Data_Obj *fdp,int fa
 	return(adj);
 }
 	
-void get_xy_scattered_point(dimension_t n,dimension_t xsize,dimension_t ysize,dimension_t *xp,dimension_t *yp)
+void _get_xy_scattered_point(QSP_ARG_DECL  dimension_t n,dimension_t xsize,dimension_t ysize,dimension_t *xp,dimension_t *yp)
 {
 	int x,y;
 	/* size is (square) linear dimension */
@@ -194,9 +194,9 @@ void get_xy_scattered_point(dimension_t n,dimension_t xsize,dimension_t ysize,di
 	/* This method does something, but doesn't work for non-square images... */
 
 	if( xsize!=ysize ){
-		sprintf(DEFAULT_ERROR_STRING,"get_xy_scattered_point:  width (%d) and height (%d) should match!?",
+		sprintf(ERROR_STRING,"get_xy_scattered_point:  width (%d) and height (%d) should match!?",
 			xsize,ysize);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		get_xy_random_point(n,xsize,ysize,xp,yp);
 		return;
 	}
@@ -217,13 +217,13 @@ void get_xy_scattered_point(dimension_t n,dimension_t xsize,dimension_t ysize,di
 	*yp = y;
 }
 
-void get_xy_raster_point(dimension_t n,dimension_t xsize,dimension_t ysize,dimension_t *xp,dimension_t *yp)
+void _get_xy_raster_point(QSP_ARG_DECL  dimension_t n,dimension_t xsize,dimension_t ysize,dimension_t *xp,dimension_t *yp)
 {
 	*xp = n % xsize;
 	*yp = n / xsize;
 }
 
-void get_xy_random_point(dimension_t n,dimension_t xsize,dimension_t ysize,dimension_t *xp,dimension_t *yp)
+void _get_xy_random_point(QSP_ARG_DECL  dimension_t n,dimension_t xsize,dimension_t ysize,dimension_t *xp,dimension_t *yp)
 {
 	*xp = (dimension_t)(drand48() * (double)xsize);
 	if( *xp == xsize ) *xp=0;

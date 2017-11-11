@@ -48,8 +48,6 @@ typedef struct movie {
 #define SET_MOVIE_HEIGHT(mvip,h)	SET_SHP_ROWS(MOVIE_SHAPE(mvip),h)
 #define SET_MOVIE_FRAMES(mvip,n)	SET_SHP_FRAMES(MOVIE_SHAPE(mvip),n)
 
-#define NO_MOVIE	((Movie *)NULL)
-
 /* flag bits */
 #define MVI_PLAYABLE		1
 #define MVI_ASSEMBLING		2
@@ -105,10 +103,6 @@ typedef struct mvi_module {
 } Movie_Module;
 
 
-#define NO_MOVIE_MODULE	((Movie_Module *)NULL)
-
-
-
 /* global vars */
 extern int n_refresh;
 //extern Movie_Module x_movie_module;
@@ -121,12 +115,16 @@ extern int n_refresh;
 
 extern List *movie_list(SINGLE_QSP_ARG_DECL);
 extern int movie_ok(void);
-extern Movie *create_movie(QSP_ARG_DECL  const char *moviename);
 extern void close_movie(QSP_ARG_DECL  Movie *mvip);
-extern void delete_movie(QSP_ARG_DECL  Movie *mvip);
 extern void add_playable(Item_Type * itp,void *vp);
-extern void load_movie_module(QSP_ARG_DECL  Movie_Module *mmp);
 extern const char *movie_pathname(const char *filename);
 
+extern void _load_movie_module(QSP_ARG_DECL  Movie_Module *mmp);
+extern Movie *_create_movie(QSP_ARG_DECL  const char *moviename);
+extern void _delete_movie(QSP_ARG_DECL  Movie *mvip);
+
+#define load_movie_module(mmp) _load_movie_module(QSP_ARG  mmp)
+#define create_movie(moviename) _create_movie(QSP_ARG  moviename)
+#define delete_movie(mvip) _delete_movie(QSP_ARG  mvip)
 
 #endif /* ! _GMOVIE_H_ */

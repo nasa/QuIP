@@ -60,10 +60,14 @@ libinterpreter_a_SOURCES =		\
 
 #		expr_node.h
 
+# moved to ../../include
+#		func_helper.h
+
 noinst_HEADERS =			\
 					\
-		chewtext.h		\
-		func_helper.h		\
+		strbuf.h		\
+		list_private.h		\
+		query_private.h		\
 		query_prot.h
 
 win_nexpr.c:	nexpr.c

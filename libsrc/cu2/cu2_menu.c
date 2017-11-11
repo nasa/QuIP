@@ -53,7 +53,7 @@ MENU_END(unary)
 
 static PF_COMMAND_FUNC( unary )
 {
-	PUSH_MENU(unary);
+	CHECK_AND_PUSH_MENU(unary);
 }
 
 #ifdef NOT_YET
@@ -84,7 +84,7 @@ MENU_END(trig)
 
 static PF_COMMAND_FUNC( trig )
 {
-	PUSH_MENU(trig);
+	CHECK_AND_PUSH_MENU(trig);
 }
 
 //OpenCL LOGICAL COMMAND TABLE - ALL KNOWN FUNCTIONS ACCOUNTED FOR
@@ -112,7 +112,7 @@ MENU_END(logical)
 
 static PF_COMMAND_FUNC( logic )
 {
-	PUSH_MENU(logical);
+	CHECK_AND_PUSH_MENU(logical);
 }
 
 #endif // NOT_YET
@@ -133,7 +133,7 @@ MENU_END(vvector)
 
 static PF_COMMAND_FUNC( vv )
 {
-	PUSH_MENU(vvector);
+	CHECK_AND_PUSH_MENU(vvector);
 }
 
 #ifdef NOT_YET
@@ -160,7 +160,7 @@ MENU_END(svector)
 
 static PF_COMMAND_FUNC( rvs )
 {
-	PUSH_MENU(svector);
+	CHECK_AND_PUSH_MENU(svector);
 }
 
 //OpenCL CSV COMMAND TABLE
@@ -179,7 +179,7 @@ MENU_END(csvector)
 
 static PF_COMMAND_FUNC( cvs )
 {
-	PUSH_MENU(csvector);
+	CHECK_AND_PUSH_MENU(csvector);
 }
 
 //OpenCL QSV COMMAND TABLE
@@ -197,7 +197,7 @@ MENU_END(qsvector)
 
 static PF_COMMAND_FUNC( qvs )
 {
-	PUSH_MENU(qsvector);
+	CHECK_AND_PUSH_MENU(qsvector);
 }
 
 //OpenCL MINMAX COMMAND TABLE - ALL KNOWN FUNCTIONS ACCOUNTED FOR
@@ -221,7 +221,7 @@ MENU_END(minmax)
 
 static PF_COMMAND_FUNC( minmax )
 {
-	PUSH_MENU(minmax);
+	CHECK_AND_PUSH_MENU(minmax);
 }
 
 //OpenCL CMP COMMAND TABLE
@@ -268,7 +268,7 @@ MENU_END(compare)
 
 static PF_COMMAND_FUNC( docmp )
 {
-	PUSH_MENU(compare);
+	CHECK_AND_PUSH_MENU(compare);
 }
 
 //CUFFT COMMAND TABLE
@@ -300,7 +300,7 @@ MENU_END( fft )
 
 static PF_COMMAND_FUNC( fft )
 {
-	PUSH_MENU(fft);
+	CHECK_AND_PUSH_MENU(fft);
 }
 
 // NOTE:  NPP is cuda-only... - but this is 
@@ -324,7 +324,7 @@ MENU_END( npp )
 
 static PF_COMMAND_FUNC( npp_menu )
 {
-	PUSH_MENU(npp);
+	CHECK_AND_PUSH_MENU(npp);
 }
 
 
@@ -416,7 +416,7 @@ MENU_END( misc )
 
 static PF_COMMAND_FUNC( misc )
 {
-	PUSH_MENU(misc);
+	CHECK_AND_PUSH_MENU(misc);
 }
 
 #endif // NOT_YET
@@ -444,7 +444,7 @@ MENU_END( compute )
 static PF_COMMAND_FUNC(func_menu)
 {
 	/* Do platform-specific init here? */
-	PUSH_MENU(compute);
+	CHECK_AND_PUSH_MENU(compute);
 }
 
 #ifdef HAVE_OPENGL
@@ -467,7 +467,7 @@ MENU_END( pf_gl )
 static PF_COMMAND_FUNC(pf_gl_menu)
 {
 	/* Do platform-specific init here? */
-	PUSH_MENU(pf_gl);
+	CHECK_AND_PUSH_MENU(pf_gl);
 }
 
 #endif /* HAVE_GLUT */
@@ -487,7 +487,7 @@ MENU_END( event )
 
 static PF_COMMAND_FUNC( event_menu )
 {
-	PUSH_MENU(event);
+	CHECK_AND_PUSH_MENU(event);
 }
 
 
@@ -504,7 +504,7 @@ MENU_END( stream )
 
 static PF_COMMAND_FUNC( stream_menu )
 {
-	PUSH_MENU(stream);
+	CHECK_AND_PUSH_MENU(stream);
 }
 
 static PF_COMMAND_FUNC( prt_cap )
@@ -542,7 +542,7 @@ static PF_COMMAND_FUNC( select_device )
 	Platform_Device *pdp;
 
 	pdp = PICK_PFDEV((char *)"device");
-	if( pdp == NO_PFDEV ) return;
+	if( pdp == NULL ) return;
 
 	curr_pdp = pdp;
 }
@@ -584,7 +584,7 @@ PF_COMMAND_FUNC( menu )
 		inited=1;
 	}
 
-	PUSH_MENU(platform);
+	CHECK_AND_PUSH_MENU(platform);
 }
 
 #endif // FOOBAR

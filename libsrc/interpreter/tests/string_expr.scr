@@ -2,8 +2,15 @@
 # tests for the parser
 
 Define Testit 1 string
-advise "testing first character of '$1'"
-Assign x isdigit('$1'[0])	# works
+advise "testing first character of '$1' with isdigit"
+Assign x isdigit(string_obj('$1')[0])
+Print x
+.
+
+Define Testit2 1 string
+advise "testing last character of '$1' with isdigit"
+Assign n strlen('$1')
+Assign x isdigit(string_obj('$1')[$n-1])
 Print x
 .
 
@@ -11,6 +18,10 @@ Print x
 Testit 0
 Testit kitty
 Testit kitty.cat
+
+Testit2 0
+Testit2 kitty
+Testit2 kitty.4
 
 exit
 

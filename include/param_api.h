@@ -2,7 +2,6 @@
 #ifndef NO_PARAM
 
 #include <stdio.h>
-#include "query.h"
 
 typedef struct param {
 	const char *	p_name; /* usually = variable name */
@@ -32,8 +31,6 @@ typedef struct param {
 
 #define NULL_UPARAM	(const char *)NULL,			\
 			(const char *)NULL,0L,(void *)NULL
-
-#define NO_PARAM	((Param *)NULL)
 
 #define NO_PTYPE	NULL
 

@@ -9,6 +9,7 @@
 
 
 /* flag bits */
+// These used to be data_obj flags (hence the DT prefix), but now they are all shape_info flags
 
 enum {
 	DT_SEQ_BIT,		/* 0:6 object types */
@@ -45,6 +46,7 @@ enum {
 	DT_SHP_BIT,		/* 31 shape checked */
 	DT_PAS_BIT,		/* 32 partially assigned */
 	DT_CBT_BIT,		/* 33 contiguous bitmap data */
+	DT_BMI_BIT,		/* 34 Bitmap_GPU_Info present */
 	N_DP_FLAGS		/* must be last */
 };
 
@@ -68,6 +70,7 @@ enum {
 #define DT_ZOMBIE	SHIFT_IT(DT_ZMB_BIT)		/* set if an application needs to keep this data */
 #define	DT_CONTIG	SHIFT_IT(DT_CNT_BIT)		/* object is known to be contiguous */
 #define	DT_CONTIG_BITMAP_DATA	SHIFT_IT(DT_CBT_BIT)		/* bitmap with contiguous enclosing data */
+#define	DT_HAS_BITMAP_GPU_INFO	SHIFT_IT(DT_BMI_BIT)		/* non-contiguous bitmap gpu info present */
 #define	DT_CHECKED	SHIFT_IT(DT_CHK_BIT)		/* contiguity checked */
 #define	DT_EVENLY	SHIFT_IT(DT_EVN_BIT)		/* evenly spaced data */
 #define	DT_ALIGNED	SHIFT_IT(DT_ALN_BIT)		/* data area from memalign */
@@ -151,6 +154,9 @@ typedef enum {
 
 
 #if __WORDSIZE == 64
+
+#define BITMAP_WORD_IS_64_BITS
+
 #define BITMAP_DATA_TYPE		uint64_t
 #define BITMAP_MACH_PREC		PREC_ULI
 #define bitmap_scalar			u_ull
@@ -174,9 +180,43 @@ typedef enum {
 
 #endif
 
-typedef BITMAP_DATA_TYPE bitmap_word;
+typedef BITMAP_DATA_TYPE bitmap_word;		// BUG?  do we really need both a macro AND a typedef???
+
+// We should get these from a system include file???
+#define MAX_BYTE	0x7f
+#define MIN_BYTE	(-(MAX_BYTE/*+1*/))
+#define MAX_SHORT	0x7fff
+#define MIN_SHORT	(-(MAX_SHORT/*+1*/))
+#define MAX_INT32	0x7fffffff
+#define MIN_INT32	(-(MAX_INT32/*+1*/))
+#define MAX_INT64	0x7fffffffffffffff
+#define MIN_INT64	(-(MAX_INT64/*+1*/))
+
+
+#define MAX_UBYTE	0xff
+#define MIN_UBYTE	0
+#define MAX_USHORT	0xffff
+#define MIN_USHORT	0
+#define MAX_UINT32	0xffffffff
+#define MIN_UINT32	0
+#define MAX_UINT64	0xffffffffffffffff
+#define MIN_UINT64	0
+
+
+// bitnum_t is used to hold the starting bit number of a subobject within a larger object.
+// Thus the maximum conceivable value is the word size in bits (32 or 64) times the largest possible
+// dimension.  So, if dimension_t is 32 bits, we might need 40 bits to hold a start bit.  However,
+// This is unlikely to arise in practice as 32 bits already gets us to a billion.  But I don't think
+// the code checks for overflow...
+//#define BITNUM_64	// comment out for 32 bit bit numbers
+#ifdef BITNUM_64
+typedef uint64_t	bitnum_t;	// could be uint32_t?
+#else
+typedef uint32_t	bitnum_t;	// should be uint64_t?
+#endif // ! BITNUM_64
+
 #define BITS_PER_BYTE			8
-#define BYTES_PER_BITMAP_WORD		(sizeof(BITMAP_DATA_TYPE))
+#define BYTES_PER_BITMAP_WORD		((int)sizeof(BITMAP_DATA_TYPE))
 #define BITS_PER_BITMAP_WORD		(BYTES_PER_BITMAP_WORD*BITS_PER_BYTE)
 #define BIT_NUMBER_MASK			(BITS_PER_BITMAP_WORD-1)
 
@@ -192,7 +232,8 @@ typedef BITMAP_DATA_TYPE bitmap_word;
 /* This macro just divides by bits per word and rounds up to the nearest integer */
 #define N_BITMAP_WORDS(n)	(((n)+BITS_PER_BITMAP_WORD-1)/BITS_PER_BITMAP_WORD)
 
-#define BITMAP_WORD_COUNT(dp)	(N_BITMAP_WORDS(OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp))+OBJ_BIT0(dp))*(OBJ_N_TYPE_ELTS(dp)/OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp))))
+//#define BITMAP_WORD_COUNT(dp)	(N_BITMAP_WORDS(OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp))+OBJ_BIT0(dp))*(OBJ_N_TYPE_ELTS(dp)/OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp))))
+#define BITMAP_WORD_COUNT(dp)	bitmap_obj_word_count(dp)
 
 // The mask wasn't needed before - that is this worked with n greater than
 // the number of bits, it just rolled around.  But on iOS devices, this failed.
@@ -361,11 +402,11 @@ typedef int32_t prec_t;
 #define PREC_OF( dp )		( OBJ_PREC( dp ) )
 
 
-#define FLOATING_OBJ( dp )	FLOATING_PREC( OBJ_PREC(dp) )
+#define FLOATING_OBJ( dp )	IS_FLOATING_PREC_CODE( OBJ_PREC(dp) )
 #ifdef USE_LONG_DOUBLE
-#define FLOATING_PREC( prec )	((MP_BITS(prec)==PREC_SP)||(MP_BITS(prec)==PREC_DP)||(MP_BITS(prec)==PREC_LP))
+#define IS_FLOATING_PREC_CODE( prec )	((MP_BITS(prec)==PREC_SP)||(MP_BITS(prec)==PREC_DP)||(MP_BITS(prec)==PREC_LP))
 #else // ! USE_LONG_DOUBLE
-#define FLOATING_PREC( prec )	((MP_BITS(prec)==PREC_SP)||(MP_BITS(prec)==PREC_DP))
+#define IS_FLOATING_PREC_CODE( prec )	((MP_BITS(prec)==PREC_SP)||(MP_BITS(prec)==PREC_DP))
 #endif // USE_LONG_DOUBLE
 
 #define INTEGER_PREC( prec )	(   (MP_BITS(prec)==PREC_BY)  \
@@ -391,7 +432,7 @@ typedef int32_t prec_t;
 
 #define N_DIMENSIONS	5	/* color, x, y, t, hyper_t */
 
-typedef uint32_t dimension_t;
+typedef uint32_t dimension_t;	// If this is changed, must also change opencl/ocl_kern_call_defs.m4!
 typedef uint32_t index_t;
 typedef int32_t incr_t;
 

@@ -4,7 +4,7 @@
 
 #ifdef HAVE_CUDA
 
-#include "my_cuda.h"
+#include "my_cu2.h"
 #include "cuda_supp.h"
 
 #define CUDA_RUNTIME_ERROR( e , s )					\

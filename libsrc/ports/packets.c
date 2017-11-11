@@ -20,7 +20,11 @@ static ITEM_NEW_FUNC(Port_Data_Type,pdt)
 static ITEM_PICK_FUNC(Port_Data_Type,pdt)
 static ITEM_ENUM_FUNC(Port_Data_Type,pdt)
 
-Packet *last_packet=NO_PACKET;
+#define new_pdt(s)	_new_pdt(QSP_ARG  s)
+#define pick_pdt(p)	_pick_pdt(QSP_ARG  p)
+#define pdt_list()	_pdt_list(SINGLE_QSP_ARG)
+
+Packet *last_packet=NULL;
 
 #ifdef FOOBAR
 static const char *null_recv(QSP_ARG_DECL  Port *mpp)
@@ -76,7 +80,7 @@ static void set_port_text_var(QSP_ARG_DECL  Port *mpp, const char *s )
 		sprintf(ERROR_STRING,
 	"set_port_text_var %s:  previous variable name '%s' never used!?",
 			mpp->mp_name, mpp->mp_text_var_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		rls_str(mpp->mp_text_var_name);
 	}
 	mpp->mp_text_var_name=savestr(s);
@@ -87,10 +91,10 @@ COMMAND_FUNC( do_set_text_var )
 	Port *mpp;
 	const char *s;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	s=NAMEOF("variable name for storage of next text");
 
-	if( mpp == NO_PORT ) return;
+	if( mpp == NULL ) return;
 
 	set_port_text_var(QSP_ARG  mpp,s);
 }
@@ -101,7 +105,7 @@ static void set_port_output_file(QSP_ARG_DECL  Port *mpp, const char *s )
 		sprintf(ERROR_STRING,
 	"set_port_output_file %s:  previous output filename '%s' never used!?",
 			mpp->mp_name, mpp->mp_output_filename);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		rls_str(mpp->mp_output_filename);
 	}
 	mpp->mp_output_filename=savestr(s);
@@ -112,10 +116,10 @@ COMMAND_FUNC( do_set_port_output_file )
 	Port *mpp;
 	const char *s;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	s=NAMEOF("local filename for next received file");
 
-	if( mpp == NO_PORT ) return;
+	if( mpp == NULL ) return;
 
 	set_port_output_file(QSP_ARG  mpp,s);
 }
@@ -127,21 +131,21 @@ COMMAND_FUNC( do_port_xmit )
 	const void *vp;
 	Port *mpp;
 
-	pdtp=pick_pdt(QSP_ARG  "");
-	mpp = PICK_PORT("");
+	pdtp=pick_pdt("");
+	mpp = pick_port("");
 
-	if( pdtp==NULL || mpp==NO_PORT ) goto oops;
+	if( pdtp==NULL || mpp==NULL ) goto oops;
 
 	vp=(*(pdtp->data_func))(QSP_ARG  pdtp->pdt_prompt);
 
 	if( ! IS_CONNECTED(mpp) ){
 		sprintf(ERROR_STRING,"do_port_xmit:  Port %s is not connected",
 			mpp->mp_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		goto oops;
 	}
 
-	if( vp == NULL || mpp == NO_PORT ){
+	if( vp == NULL || mpp == NULL ){
 oops:
 		/* eat a word to avoid a syntax error */
 		/*vp = (void *)*/ NAMEOF("something");
@@ -165,7 +169,7 @@ oops:
  * between separate processes
  */
 
-int define_port_data_type(QSP_ARG_DECL  int code,const char *my_typename,const char *prompt,
+int _define_port_data_type(QSP_ARG_DECL  int code,const char *my_typename,const char *prompt,
 	//const char * (*recvfunc)(QSP_ARG_DECL  Port *),
 	long (*recvfunc)(QSP_ARG_DECL  Port *, Packet *pkp),
 	const char * (*datafunc)(QSP_ARG_DECL const char *),
@@ -178,29 +182,29 @@ int define_port_data_type(QSP_ARG_DECL  int code,const char *my_typename,const c
 	if( code < 0 || code >= MAX_PORT_CODES ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  define_port_data_type:  invalid port data type code (%d), should be in the range 0-%d",
 			code,MAX_PORT_CODES-1);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 #endif /* CAUTIOUS */
 
 #ifdef CAUTIOUS
-	pdtp = pdt_of(QSP_ARG  my_typename);
+	pdtp = pdt_of(my_typename);
 	if( pdtp != NULL ){
 		sprintf(ERROR_STRING,
 	"CAUTIOUS:  define_port_data_type:  %s already defined!?",
 			PORT_DATATYPE_NAME(pdtp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 #endif /* CAUTIOUS */
 
-	pdtp = new_pdt(QSP_ARG  my_typename);
+	pdtp = new_pdt(my_typename);
 #ifdef CAUTIOUS
 	if( pdtp == NULL ){
 		sprintf(ERROR_STRING,
 "CAUTIOUS:  define_port_data_type:  couldn't create new data type for %s!?",
 			my_typename);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 #endif /* CAUTIOUS */
@@ -264,10 +268,10 @@ static Port_Data_Type *port_data_type_for_code(QSP_ARG_DECL  Packet_Type code)
 	Node *np;
 	Port_Data_Type *pdtp;
 
-	lp = pdt_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return NULL;
+	lp = pdt_list();
+	if( lp == NULL ) return NULL;
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		pdtp=(Port_Data_Type *)NODE_DATA(np);
 		if( pdtp->pdt_code == code )
 			return pdtp;
@@ -297,13 +301,13 @@ Packet *recv_data(QSP_ARG_DECL  Port *mpp)
 
 top:
 	// receive a magic word before the port data code
-	code=get_port_int32(QSP_ARG  mpp);
+	code=get_port_int32(mpp);
 	if( code == -1L ){
 		// We don't log this, this is what happens
 		// when an upload client closes.
 		//log_message("Missing magic number, resetting port");
 		if( reset_port(QSP_ARG  mpp) ) goto top;
-		else return(NO_PACKET);
+		else return(NULL);
 	}
 
 	if( code != PORT_MAGIC_NUMBER ){
@@ -311,16 +315,16 @@ top:
 			code);
 		log_message(MSG_STR);
 		if( reset_port(QSP_ARG  mpp) ) goto top;
-		else return(NO_PACKET);
+		else return(NULL);
 	}
 
 	SET_PORT_FLAG_BITS(mpp,PORT_RECEIVING_PACKET);
 
-	code=get_port_int32(QSP_ARG  mpp);
+	code=get_port_int32(mpp);
 	if( code == -1L ){
 		log_message("Missing packet code, resetting port");
 		if( reset_port(QSP_ARG  mpp) ) goto top;
-		else return(NO_PACKET);
+		else return(NULL);
 	}
 
 	pdtp = port_data_type_for_code(QSP_ARG  code);
@@ -335,7 +339,7 @@ top:
 			"Unrecognized packet code (0x%x), resetting port",code);
 		log_message(MSG_STR);
 		if( reset_port(QSP_ARG  mpp) ) goto top;
-		else return(NO_PACKET);
+		else return(NULL);
 	}
 
 	// error msg printed from port_data_type_for_code...
@@ -350,8 +354,8 @@ top:
 		log_message("Bad packet data, resetting port");
 		if( reset_port(QSP_ARG  mpp) ) goto top;
 		else {
-//advise("recv_data:  reset failed, returning NO_PACKET");
-			return(NO_PACKET);
+//advise("recv_data:  reset failed, returning NULL");
+			return(NULL);
 		}
 	}
 
@@ -377,13 +381,13 @@ static void save_data_to_file(QSP_ARG_DECL  const char *filename, const char *bu
 {
 	FILE *fp;
 
-	fp = try_open(QSP_ARG  filename,"w");
+	fp = try_open(filename,"w");
 	if( !fp ) return;
 
 	if( fwrite(buf,1,size,fp) != size ){
 		sprintf(ERROR_STRING,
 	"save_data_to_file:  fwrite error!?");
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	fclose(fp);
 }
@@ -396,7 +400,7 @@ void receive_port_file( QSP_ARG_DECL  Port *mpp, Packet *pkp )
 		rls_str(mpp->mp_output_filename);
 		mpp->mp_output_filename=NULL;	// single use!
 	} else {
-WARN("receive_port_file:  No output filename specified!?\n   --> Use port_output_file command");
+warn("receive_port_file:  No output filename specified!?\n   --> Use port_output_file command");
 	}
 }
 
@@ -407,18 +411,18 @@ COMMAND_FUNC( do_port_recv )
 	//int type;
 	Port_Data_Type *pdtp;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 
 	// We specify what type of packet we want - why not just
 	// take what we get?
-	pdtp = pick_pdt(QSP_ARG "");
+	pdtp = pick_pdt("");
 
-	if( mpp==NO_PORT || pdtp==NULL ) return;
+	if( mpp==NULL || pdtp==NULL ) return;
 
 	if( ! IS_CONNECTED(mpp) ){
 		sprintf(ERROR_STRING,"do_port_recv:  Port %s is not connected",
 			mpp->mp_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -432,14 +436,14 @@ COMMAND_FUNC( do_port_recv )
 
 	do {
 		pkp=recv_data(QSP_ARG  mpp);
-		if( pkp == NO_PACKET ){
+		if( pkp == NULL ){
 			return;
 		}
 		if( pkp->pk_pdt != pdtp ){
 			sprintf(ERROR_STRING,
 		"Received %s packet after request for %s!?",
 				PORT_DATATYPE_NAME(pkp->pk_pdt),PORT_DATATYPE_NAME(pdtp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 
 	} while ( pkp->pk_pdt != pdtp );
@@ -449,11 +453,11 @@ COMMAND_FUNC( do_port_recv )
 			|| pkp->pk_pdt->pdt_code == P_ENCRYPTED_TEXT ){
 		if( mpp->mp_text_var_name != NULL ){
 			// Save the text to a variable
-			ASSIGN_VAR(mpp->mp_text_var_name,(const char *)pkp->pk_user_data);
+			assign_var(mpp->mp_text_var_name,(const char *)pkp->pk_user_data);
 			rls_str(mpp->mp_text_var_name);
 			mpp->mp_text_var_name=NULL;	// single use!
 		} else {
-WARN("do_port_recv text:  No variable name specified!?\n   --> Use text_variable command");
+warn("do_port_recv text:  No variable name specified!?\n   --> Use text_variable command");
 		}
 	} else if( pkp->pk_pdt->pdt_code == P_PLAIN_FILE ||
 			pkp->pk_pdt->pdt_code == P_ENCRYPTED_FILE ){
@@ -465,7 +469,7 @@ WARN("do_port_recv text:  No variable name specified!?\n   --> Use text_variable
 		sprintf(ERROR_STRING,
 "do_port_recv:  no action implemented for %s packet!?",
 				PORT_DATATYPE_NAME(pkp->pk_pdt));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 

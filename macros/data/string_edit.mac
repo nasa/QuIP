@@ -15,6 +15,7 @@ Get_String $1 tmpstring
 .
 
 Define Insure_String_Obj 2 obj_name string
+# make sure the current data area is CPU...
 # bug broken if string contains a quote???
 If !obj_exists('$1') "Vector $1 1 strlen('$2')+1 string expressions export $1 quit"
 If ncomps('$1')<=strlen('$2') "Delete_Image $1"

@@ -24,7 +24,9 @@
 
 static int vbl_inited=0;
 
-static void vbl_init()
+#define vbl_init() _vbl_init(SINGLE_QSP_ARG)
+
+static void _vbl_init(SINGLE_QSP_ARG_DECL)
 {
 	uid_t uid;
 
@@ -32,16 +34,16 @@ static void vbl_init()
 
 	if( seteuid(0) < 0 ){
 		perror("seteuid");	/* if we were suid root */
-		NWARN("vbl_init:  unable to set effective uid to 0 for ioperm");
-		NADVISE("Make sure program is suid root.");
+		warn("vbl_init:  unable to set effective uid to 0 for ioperm");
+		advise("Make sure program is suid root.");
 		vbl_inited = (-1);
 		return;
 	}
 
 	if( ioperm(0x3c0,32,1) != 0 ){
 		perror("ioperm");
-		NWARN("vbl_init:  unable to map VGA registers.");
-		NADVISE("Make sure program is suid root.");
+		warn("vbl_init:  unable to map VGA registers.");
+		advise("Make sure program is suid root.");
 		vbl_inited = (-1);
 		return;
 	}
@@ -87,7 +89,7 @@ static void dump_all_regs()
 // #define MAX_WAITS	0x1000000
 #define MAX_WAITS	100000
 
-void vbl_wait(void)
+void _vbl_wait(SINGLE_QSP_ARG_DECL)
 {
 	int regval;
 	int ctr;
@@ -102,7 +104,7 @@ void vbl_wait(void)
 #ifdef QUIP_DEBUG
 //if( debug & xdebug ){
 //sprintf(ERROR_STRING,"vbl_wait:  reg 0x3da = 0x%x",regval);
-//NADVISE(ERROR_STRING);
+//advise(ERROR_STRING);
 //}
 #endif /* QUIP_DEBUG */
 
@@ -118,7 +120,7 @@ void vbl_wait(void)
 #ifdef QUIP_DEBUG
 //if( debug & xdebug ){
 //sprintf(ERROR_STRING,"vbl_wait:  reg 0x3da = 0x%x   (ctr = %d)",regval,ctr);
-//NADVISE(ERROR_STRING);
+//advise(ERROR_STRING);
 //}
 #endif /* QUIP_DEBUG */
 	}
@@ -130,10 +132,10 @@ void vbl_wait(void)
 #endif /* QUIP_DEBUG */
 
 	if( ctr >= MAX_WAITS ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "vbl_wait:  polled MAX_WAITS (0x%x) times waiting for VBLANK bit to clear",
 			MAX_WAITS);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	ctr=0;
@@ -150,16 +152,16 @@ void vbl_wait(void)
 
 #ifdef QUIP_DEBUG
 if( debug & xdebug ){
-sprintf(DEFAULT_ERROR_STRING,"vbl_wait:  bit set after %d counts",ctr);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"vbl_wait:  bit set after %d counts",ctr);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
 	if( ctr >= MAX_WAITS ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "vbl_wait:  polled MAX_WAITS (0x%x) times waiting for VBLANK bit to set",
 			MAX_WAITS);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 

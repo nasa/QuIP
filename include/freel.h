@@ -16,10 +16,6 @@ struct freelist {
 	FreeBlk *	fl_blockp;
 } ;
 
-#define NO_FREELIST	((FreeList *) NULL)
-#define NO_FREEBLK	((FreeBlk *) NULL )
-
-
 extern void freeinit(FreeList *list,count_t n_elts,u_long ntotal);
 extern long getspace(FreeList *list,u_long s);
 extern int givspace(FreeList *list,u_long size,u_long addr);
@@ -27,7 +23,8 @@ extern int addspace(FreeList *list,u_long size,u_long addr);
 extern void showmap(FreeList *list);
 extern int n_map_frags(FreeList *list);
 
-extern int takespace(FreeList *,u_long,u_long);
+extern int _takespace(QSP_ARG_DECL  FreeList *,u_long,u_long);
+#define takespace(flp,l,m) _takespace(QSP_ARG  flp,l,m)
 
 #endif /* NO_FREEL */
 

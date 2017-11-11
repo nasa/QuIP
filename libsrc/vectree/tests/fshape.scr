@@ -1,0 +1,27 @@
+
+Set h 4
+Set w 3
+
+expressions
+  read -
+
+float func1()
+{
+	float f[$h][$w];
+	f=ramp(0,1,10);
+	return(f);
+}
+
+float x[$h][$w];
+
+void func2()
+{
+	x=func1();
+	display(x);
+}
+
+func2();
+
+end
+  exit
+

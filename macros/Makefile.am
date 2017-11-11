@@ -9,6 +9,7 @@ SUBDIRS = 			\
 		data		\
 		em_exp		\
 		eyemov		\
+		flycap		\
 		gsl		\
 		gui		\
 		knox		\

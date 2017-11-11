@@ -18,16 +18,18 @@ If $argc==3
 
 #verbose yes
 
-Filetype jpeg
+Filetype jpeg			# this program ought to work for other types like png!?
 Read_File_Header $jpeg_file
-#fileio info $jpeg_file quit
+fileio info $jpeg_file quit
 
-Image big_img nrows('$jpeg_file') ncols('$jpeg_file') ncomps('$jpeg_file') u_byte
-Image small_img floor(nrows('$jpeg_file')/$factor) floor(ncols('$jpeg_file')/$factor) ncomps('$jpeg_file') u_byte
-# for color images, we need to put into bgr order for display...
-Image tmp nrows('$jpeg_file') ncols('$jpeg_file') 1 u_byte
-
+Assign nr nrows('$jpeg_file')
+Assign nc ncols('$jpeg_file')
 Assign depth ncomps('$jpeg_file')
+Image big_img $nr $nc $depth u_byte
+Image small_img floor($nr/$factor) floor($nc/$factor) $depth u_byte
+Info small_img
+# for color images, we need to put into bgr order for display...
+Image tmp $nr $nc 1 u_byte
 
 Define Mono_Viewer 0
 #advise Mono_Viewer
@@ -107,6 +109,10 @@ Downsample small_img{1} big_img{1}
 Downsample small_img{2} big_img{2}
 .
 
+Define Alpha_Shrink 0
+Downsample small_img{3} big_img{3}
+.
+
 Define Mono_Shrink 0
 Reduce small_img big_img
 .
@@ -123,6 +129,7 @@ repeat nframes('$jpeg_file')
   Get_Next big_img $jpeg_file
   #If $depth==3 Rotate_Colors
   If $depth==3 Color_Shrink
+  If $depth==4 'Color_Shrink Alpha_Shrink'
   If $depth==1 Mono_Shrink
 
   Write_File_Header $outfile 1

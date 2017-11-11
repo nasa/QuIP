@@ -12,13 +12,13 @@ typedef enum {
 	RBT_BLACK
 } rbnode_color;
 
-typedef struct rb_node {
+typedef struct qrb_node {
 //	const void * key;
 	Item *			data;	// Item *
 	rbnode_color		color;
-	struct rb_node *	left;
-	struct rb_node *	right;
-	struct rb_node *	parent;
+	struct qrb_node *	left;
+	struct qrb_node *	right;
+	struct qrb_node *	parent;
 
 #ifdef RB_TREE_DEBUG
 	// these fields are for debugging consistency checks
@@ -28,7 +28,7 @@ typedef struct rb_node {
 	int			min_black_leaf;
 #endif // RB_TREE_DEBUG
 
-} rb_node;
+} qrb_node;
 
 #define IS_BLACK(np)	( (np) == NULL || (np)->color == RBT_BLACK )
 #define IS_RED(np)	( (np) != NULL && (np)->color == RBT_RED )
@@ -39,60 +39,93 @@ typedef struct rb_node {
 
 // This assumes that all nodes point to Items
 #define RB_NODE_KEY(np)	(((Item *)((np)->data))->item_name)
+#define RB_NODE_ITEM(np)	((Item *)((np)->data))
+
+#define RB_NODE_DATA(np)	(np)->data
 
 /* (*comp_func)(a,b) should return 1 if *a > *b, -1 if *a < *b, and 0 otherwise */
 /* Destroy(a) takes a pointer to whatever key might be and frees it accordingly */
-typedef struct rb_tree {
+
+// This used to just be called rb_tree, but it conflicts with sys/rbtree.h on Mac OS X
+// There might be some advantage to adopting their interface and using their routines
+// when available...
+
+typedef struct qrb_tree {
 	int (*comp_func)(const void* a, const void* b); 
 	void (*key_destroy_func)(void* a);
 	void (*data_destroy_func)(void* a);
 
-	long	node_count;
-	rb_node* root;             
-} rb_tree;
+	long		node_count;
+	qrb_node* 	root;
+
+	int		flags;
+	List *		item_lp;
+} qrb_tree;
+
+// flags bits
+#define RBT_LIST_IS_CURRENT	1
+
 
 #define RB_TREE_ROOT(tp)	((tp)->root)
+#define RB_TREE_ITEM_LIST(tp)	(tp)->item_lp
+#define SET_RB_TREE_ITEM_LIST(tp,lp)	(tp)->item_lp = lp
 
-//extern rb_tree* create_rb_tree(int  (*comp_func)(const void*, const void*),
+#define RB_TREE_FLAGS(tp)	(tp)->flags
+#define SET_RBT_FLAG_BITS(tp,bits)	(tp)->flags |= (bits)
+#define CLEAR_RBT_FLAG_BITS(tp,bits)	(tp)->flags &= ~(bits)
+
+#define RB_TREE_LIST_IS_CURRENT(tp)	(RB_TREE_FLAGS(tp) & RBT_LIST_IS_CURRENT)
+#define MARK_RB_TREE_CURRENT(tp)	SET_RBT_FLAG_BITS(tp, RBT_LIST_IS_CURRENT)
+#define MARK_RB_TREE_DIRTY(tp)		CLEAR_RBT_FLAG_BITS(tp, RBT_LIST_IS_CURRENT)
+
+//extern qrb_tree* create_rb_tree(int  (*comp_func)(const void*, const void*),
 //			     void (*key_destroy)(void*), 
 //			     void (*data_destroy)(void*)
 //			     );
 
-extern rb_tree* create_rb_tree(void);
+extern qrb_tree* _create_rb_tree(SINGLE_QSP_ARG_DECL);
+#define create_rb_tree() _create_rb_tree(SINGLE_QSP_ARG)
 
-extern rb_node * rb_insert_item(rb_tree*, Item * ip );
-extern int rb_delete_key(rb_tree*, const char *);
-extern int rb_delete_named_item(rb_tree*, const char *name);
-extern int rb_delete_item(rb_tree*, Item *ip);
-extern rb_node* rb_find(rb_tree*, const char * key );
-extern void rb_substring_find(Frag_Match_Info * fmi_p, rb_tree*, const char * frag );
-extern void rb_traverse( rb_node *np, void (*func)(rb_node *) );
-#ifdef RB_TREE_DEBUG
-extern void rb_check(rb_tree *);
-#endif //  RB_TREE_DEBUG
-extern rb_node * rb_successor_node( rb_node *n_p );
-extern rb_node * rb_predecessor_node( rb_node *n_p );
+extern qrb_node * _rb_insert_item(QSP_ARG_DECL  qrb_tree*, Item * ip );
+#define rb_insert_item(p,ip) _rb_insert_item(QSP_ARG  p,ip)
 
-//void RBTreePrint(rb_tree*);
+extern int rb_delete_key(qrb_tree*, const char *);
+extern int rb_delete_named_item(qrb_tree*, const char *name);
+extern int rb_delete_item(qrb_tree*, Item *ip);
+extern qrb_node* rb_find(qrb_tree*, const char * key );
+extern void rb_substring_find(Frag_Match_Info * fmi_p, qrb_tree*, const char * frag );
+extern void _rb_traverse(QSP_ARG_DECL  qrb_node *np, void (*func)(QSP_ARG_DECL  qrb_node *,qrb_tree *), qrb_tree *tree_p );
+#define rb_traverse(np,func,tree_p) _rb_traverse(QSP_ARG  np, func,tree_p )
+extern void rb_check(qrb_tree *);
+extern qrb_node * rb_successor_node( qrb_node *n_p );
+extern qrb_node * rb_predecessor_node( qrb_node *n_p );
 
-//void RBDelete(rb_tree* , rb_node* );
-//void RBTreeDestroy(rb_tree*);
-//rb_node* TreePredecessor(rb_tree*,rb_node*);
-//rb_node* TreeSuccessor(rb_tree*,rb_node*);
+//void RBTreePrint(qrb_tree*);
 
-//stk_stack * RBEnumerate(rb_tree* tree,void* low, void* high);
+//void RBDelete(qrb_tree* , qrb_node* );
+//void RBTreeDestroy(qrb_tree*);
+//qrb_node* TreePredecessor(qrb_tree*,qrb_node*);
+//qrb_node* TreeSuccessor(qrb_tree*,qrb_node*);
+
+//stk_stack * RBEnumerate(qrb_tree* tree,void* low, void* high);
 //void NullFunction(void*);
 
 typedef struct {
-	rb_tree *	tree_p;
-	rb_node *	node_p;
+	qrb_tree *	tree_p;
+	qrb_node *	node_p;
 } RB_Tree_Enumerator;
 
-extern RB_Tree_Enumerator *new_rbtree_enumerator(rb_tree *tp);
-extern void advance_rbtree_enumerator(RB_Tree_Enumerator *rbtep);
-extern Item * rbtree_enumerator_item(RB_Tree_Enumerator *rbtep);
-extern long rb_node_count(rb_tree *tree_p);
-extern void release_rb_tree(rb_tree *tree_p);
+extern RB_Tree_Enumerator *_new_rb_tree_enumerator(QSP_ARG_DECL  qrb_tree *tp);
+#define new_rb_tree_enumerator(tp) _new_rb_tree_enumerator(QSP_ARG  tp)
+
+extern void advance_rb_tree_enumerator(RB_Tree_Enumerator *rbtep);
+extern void rls_rb_tree_enumerator(RB_Tree_Enumerator *rbtep);
+extern Item * rb_tree_enumerator_item(RB_Tree_Enumerator *rbtep);
+extern long rb_node_count(qrb_tree *tree_p);
+extern void release_rb_tree(qrb_tree *tree_p);
+
+extern List *_rb_tree_list(QSP_ARG_DECL  qrb_tree *tree_p);
+#define rb_tree_list(tree_p) _rb_tree_list(QSP_ARG  tree_p)
 
 #endif // ! _RBTREE_H_
 

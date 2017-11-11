@@ -27,7 +27,8 @@ static int  n_debug_modules=(-1);
 #endif /* QUIP_DEBUG_SYSTEM */
 
 /* local prototypes */
-static void	init_dbm(SINGLE_QSP_ARG_DECL);
+#define init_dbm()	_init_dbm(SINGLE_QSP_ARG)
+
 static Debug_Module *	add_auto_module(QSP_ARG_DECL  const char *, debug_flag_t mask);
 
 static Item_Type *debug_itp=NULL;
@@ -63,15 +64,8 @@ static Debug_Module * add_auto_module(QSP_ARG_DECL  const char *name, debug_flag
 	/* user of savestr() eliminates a warning, but wastes some memory... */
 	//auto_dbm_tbl[n_debug_modules].db_name = (char *) name;
 
-	dmp = new_debug(QSP_ARG  name);
-
-//#ifdef CAUTIOUS
-//	if( dmp == NO_DEBUG_MODULE ){
-//		ERROR1("CAUTIOUS:  add_auto_module:  Error creating debug module!?");
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
-	assert( dmp != NO_DEBUG_MODULE );
+	dmp = new_debug(name);
+	assert( dmp != NULL );
 
 	SET_DEBUG_MASK(dmp, mask );
 	SET_DEBUG_FLAGS(dmp, DEBUG_SET);	// default
@@ -82,7 +76,7 @@ static Debug_Module * add_auto_module(QSP_ARG_DECL  const char *name, debug_flag
 			sprintf(ERROR_STRING,
 		"Debug module %s (mask = 0x%x) added out of sequence (n_debug_modules = %d)!?",
 				name,mask,n_debug_modules);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 		n_debug_modules++;
 	}
@@ -94,11 +88,11 @@ static Debug_Module * add_auto_module(QSP_ARG_DECL  const char *name, debug_flag
 								\
 	dmp = add_auto_module(QSP_ARG  code, mask );		\
 	if( dmp == NULL ){					\
-		ERROR1("init_dbm:  Error adding automatic debug module!?");	\
+		error1("init_dbm:  Error adding automatic debug module!?");	\
 		return;						\
 	}
 
-static void init_dbm(SINGLE_QSP_ARG_DECL)
+static void _init_dbm(SINGLE_QSP_ARG_DECL)
 {
 	Debug_Module *dmp;
 
@@ -122,12 +116,6 @@ static void init_dbm(SINGLE_QSP_ARG_DECL)
 	AUTO_MODULE(  AUTO_MODULE_ITEMS,	ITEM_DEBUG_MASK		)
 	AUTO_MODULE(  AUTO_MODULE_CONTEXTS,	CTX_DEBUG_MASK		)
 
-//#ifdef CAUTIOUS
-//	if( n_debug_modules != N_AUTO_DEBUG_MODULES ){
-//		NERROR1("CAUTIOUS:  bad number of automatic debug modules");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
 	assert( n_debug_modules == N_AUTO_DEBUG_MODULES );
 	// what about ios return?  will abort do it right away?
 #endif /* QUIP_DEBUG */
@@ -141,13 +129,13 @@ static void init_dbm(SINGLE_QSP_ARG_DECL)
 	CLEAR_DEBUG_FLAG_BITS(dmp,DEBUG_SET);
 }
 
-void set_debug(QSP_ARG_DECL  Debug_Module *dbmp)
+void _set_debug(QSP_ARG_DECL  Debug_Module *dbmp)
 {
 	sprintf(ERROR_STRING,"enabling debugging messages for %s module",
 		DEBUG_NAME(dbmp));
-	ADVISE(ERROR_STRING);
+	advise(ERROR_STRING);
 //sprintf(ERROR_STRING,"mask = 0x%x",DEBUG_MASK(dbmp));
-//ADVISE(ERROR_STRING);
+//advise(ERROR_STRING);
 
 	if( DEBUG_FLAGS(dbmp) & DEBUG_SET )
 		debug |= DEBUG_MASK(dbmp);
@@ -155,7 +143,7 @@ void set_debug(QSP_ARG_DECL  Debug_Module *dbmp)
 		debug &= ~DEBUG_MASK(dbmp);
 
 //sprintf(ERROR_STRING,"debug = 0x%x",debug);
-//ADVISE(ERROR_STRING);
+//advise(ERROR_STRING);
 }
 
 #ifdef NOT_NEEDED
@@ -163,29 +151,29 @@ void clr_debug(QSP_ARG_DECL  Debug_Module *dbmp)
 {
 	sprintf(ERROR_STRING,"suppressing debugging messages for %s module",
 		DEBUG_NAME(dbmp));
-	ADVISE(ERROR_STRING);
+	advise(ERROR_STRING);
 	debug &= ~ QUIP_DEBUG_MASK(dbmp);
 }
 #endif /* NOT_NEEDED */
 
-debug_flag_t add_debug_module(QSP_ARG_DECL  const char *name)
+debug_flag_t _add_debug_module(QSP_ARG_DECL  const char *name)
 {
 	Debug_Module *dmp;
 
-	dmp = new_debug(QSP_ARG  name);
-	if( dmp == NO_DEBUG_MODULE ) return 0;
+	dmp = new_debug(name);
+	if( dmp == NULL ) return 0;
 
-	if( n_debug_modules < 0 ) init_dbm(SINGLE_QSP_ARG);
+	if( n_debug_modules < 0 ) init_dbm();
 
 	if( n_debug_modules >= MAX_DEBUG_MODULES ){
 		sprintf(ERROR_STRING,"Can't add debug module %s",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		sprintf(ERROR_STRING,"n is %d",n_debug_modules);
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 		sprintf(ERROR_STRING,"Max is %ld",(long)MAX_DEBUG_MODULES);
-		ADVISE(ERROR_STRING);
-		ADVISE("Modules:");
-		list_debugs(SINGLE_QSP_ARG);
+		advise(ERROR_STRING);
+		advise("Modules:");
+		list_debugs(tell_errfile());
 		return(0);
 	}
 
@@ -199,13 +187,13 @@ debug_flag_t add_debug_module(QSP_ARG_DECL  const char *name)
 
 void clr_verbose(SINGLE_QSP_ARG_DECL)
 {
-	if( debug )  ADVISE("suppressing verbose messages");
+	if( debug )  advise("suppressing verbose messages");
 	quip_verbose=0;
 }
 
 void set_verbose(SINGLE_QSP_ARG_DECL)
 {
-	if( debug ) ADVISE("printing verbose messages");
+	if( debug ) advise("printing verbose messages");
 	quip_verbose=1;
 }
 

@@ -1,0 +1,20 @@
+
+Set l "a b c"
+
+foreach x ( $l )
+  echo "x = '$x'"
+end
+
+Set cmd "foreach x ( $l )"
+
+#interpret $cmd
+#  echo "x = '$x'"
+#end
+
+Set cmd2 'echo "x = \'$x\'" end'
+Set cmd3 "$cmd $cmd2"
+echo "cmd3 = '$cmd3'"
+interpret $cmd3
+
+exit
+

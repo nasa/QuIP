@@ -45,19 +45,19 @@ static dimension_t _npixels=NO_PIXELS;
 static int initialized=0;
 
 /* user-supplied images */
-static Data_Obj *deslum_dp=NO_OBJ;		/* desired luminance image */
-static Data_Obj *desrg_dp=NO_OBJ;		/* desired red-green image */
-static Data_Obj *halftone_dp=NO_OBJ;		/* output composite halftone */
-static Data_Obj *lum_filt_dp=NO_OBJ;
-static Data_Obj *rg_filt_dp=NO_OBJ;
+static Data_Obj *deslum_dp=NULL;		/* desired luminance image */
+static Data_Obj *desrg_dp=NULL;		/* desired red-green image */
+static Data_Obj *halftone_dp=NULL;		/* output composite halftone */
+static Data_Obj *lum_filt_dp=NULL;
+static Data_Obj *rg_filt_dp=NULL;
 static Data_Obj *dich2opp_mat;			/* dichromatic color (RG) to opponent matrix */
 
 /* program private */
-static Data_Obj *lum_ferr_dp=NO_OBJ;		/* filtered error images */
-static Data_Obj *rg_ferr_dp=NO_OBJ;
+static Data_Obj *lum_ferr_dp=NULL;		/* filtered error images */
+static Data_Obj *rg_ferr_dp=NULL;
 
-static Data_Obj *lum_err_dp=NO_OBJ;		/* error images */
-static Data_Obj *rg_err_dp=NO_OBJ;
+static Data_Obj *lum_err_dp=NULL;		/* error images */
+static Data_Obj *rg_err_dp=NULL;
 
 /* local prototypes */
 
@@ -67,26 +67,28 @@ static double dich_sos(void);
 static void adjust_dich_sos(dimension_t x,dimension_t y,double factor);
 static void adjust_dich_ferror(dimension_t x,dimension_t y,double factor);
 
-static int good_location(incr_t x, incr_t y)
+#define good_location(x, y) _good_location(QSP_ARG  x, y)
+
+static int _good_location(QSP_ARG_DECL  incr_t x, incr_t y)
 {
 	if( !initialized ) {
-		NWARN("not initialized");
+		warn("not initialized");
 		return(0);
 	}
 
 	if( x < 0 || x >= OBJ_COLS(halftone_dp) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "good_location:  x coordinate %d is out of range for image %s (0-%d)",
 			x,OBJ_NAME(halftone_dp),OBJ_COLS(halftone_dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 
 	if( y < 0 || y >= OBJ_ROWS(halftone_dp) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "good_location:  y coordinate %d is out of range for image %s (0-%d)",
 			y,OBJ_NAME(halftone_dp),OBJ_ROWS(halftone_dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 	return(1);
@@ -110,8 +112,8 @@ static void init_ferror(void)
 static void adjust_dich_ferror(dimension_t x,dimension_t y,double factor)
 {
 /*
-sprintf(DEFAULT_ERROR_STRING,"adjust_dich_ferror %d %d:  factor = %g",x,y,factor);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"adjust_dich_ferror %d %d:  factor = %g",x,y,factor);
+advise(ERROR_STRING);
 */
 	adjust_ferror(lum_ferr_dp,lum_err_dp,lum_filt_dp,x,y,factor);
 	adjust_ferror(rg_ferr_dp,rg_err_dp,rg_filt_dp,x,y,factor);
@@ -122,36 +124,36 @@ static void act_init(SINGLE_QSP_ARG_DECL)
 	int mask,r,g;
 	float *fptr;
 
-	if( dich2opp_mat == NO_OBJ ){
-		WARN("transformation matrix not defined");
+	if( dich2opp_mat == NULL ){
+		warn("transformation matrix not defined");
 		return;
 	}
 sprintf(ERROR_STRING,"BEGIN act_init, matrix = %s",OBJ_NAME(dich2opp_mat));
 advise(ERROR_STRING);
 	if( ! IS_CONTIGUOUS(dich2opp_mat) ){
 		sprintf(ERROR_STRING,"Matrix %s must be contiguous",OBJ_NAME(dich2opp_mat));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	if( OBJ_PREC(dich2opp_mat) != PREC_SP ){
 		sprintf(ERROR_STRING,"Matrix %s (%s) must have %s precision",
 			OBJ_NAME(dich2opp_mat),PREC_NAME(OBJ_PREC_PTR(dich2opp_mat)),
 			PREC_NAME(PREC_FOR_CODE(PREC_SP)));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	if( OBJ_COMPS(dich2opp_mat) != 1 ){
 		sprintf(ERROR_STRING,"Matrix %s (%d) must have component dimension = 1",
 			OBJ_NAME(dich2opp_mat),OBJ_COMPS(dich2opp_mat));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	if( OBJ_PXL_INC(dich2opp_mat) != 1 ){
 		sprintf(ERROR_STRING,"Matrix %s (%d) must have pixel increment = 1",
 			OBJ_NAME(dich2opp_mat),OBJ_PXL_INC(dich2opp_mat));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	if( OBJ_COLS(dich2opp_mat) != 2 || OBJ_ROWS(dich2opp_mat) != 2 ){
 		sprintf(ERROR_STRING,"Matrix %s (%d x %d) must be 2x2",
 			OBJ_NAME(dich2opp_mat),OBJ_ROWS(dich2opp_mat),OBJ_COLS(dich2opp_mat));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	fptr = (float *) OBJ_DATA_PTR(dich2opp_mat);
 	for(mask=0;mask<4;mask++){
@@ -184,7 +186,9 @@ advise(ERROR_STRING);
  *	try_it
  */
 
-static void recalc_error(QSP_ARG_DECL  dimension_t x,dimension_t y,int mask)
+#define recalc_error(x,y,m)	_recalc_error(QSP_ARG  x,y,m)
+
+static void _recalc_error(QSP_ARG_DECL  dimension_t x,dimension_t y,int mask)
 {
 	double lum, rg;
 	double deslum, desrg;
@@ -211,12 +215,12 @@ static void recalc_error(QSP_ARG_DECL  dimension_t x,dimension_t y,int mask)
 #ifdef QUIP_DEBUG
 /*
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"recalc_error %d %d  %d:  act %f %f",
+sprintf(ERROR_STRING,"recalc_error %d %d  %d:  act %f %f",
 x,y,mask,lum,rg);
-advise(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"recalc_error %d %d  %d:  des %f %f",
+advise(ERROR_STRING);
+sprintf(ERROR_STRING,"recalc_error %d %d  %d:  des %f %f",
 x,y,mask,deslum,desrg);
-advise(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 */
 #endif /* QUIP_DEBUG */
@@ -237,7 +241,7 @@ static void calc_errors(SINGLE_QSP_ARG_DECL)
 				*OBJ_PXL_INC(halftone_dp);
 			mask = (*bptr);
 
-			recalc_error(QSP_ARG  x,y,mask);
+			recalc_error(x,y,mask);
 		}
 	}
 	advise("finished calculating initial error image");
@@ -249,57 +253,57 @@ static int setup_dich_requantize(SINGLE_QSP_ARG_DECL)
 	long tvec;
 	Precision *prec_p;
 
-	if( halftone_dp == NO_OBJ ){
-		WARN("output image not specified");
+	if( halftone_dp == NULL ){
+		warn("output image not specified");
 		return(ERROR_RETURN);
 	}
-	if( deslum_dp == NO_OBJ || desrg_dp == NO_OBJ ){
-		WARN("input images not specified");
+	if( deslum_dp == NULL || desrg_dp == NULL ){
+		warn("input images not specified");
 		return(ERROR_RETURN);
 	}
 
-	if( lum_filt_dp == NO_OBJ ){
-		WARN("filters not specified");
+	if( lum_filt_dp == NULL ){
+		warn("filters not specified");
 		return(ERROR_RETURN);
 	}
 
 	if( OBJ_ROWS(halftone_dp) != OBJ_ROWS(deslum_dp) ||
 		OBJ_COLS(halftone_dp) != OBJ_COLS(deslum_dp) ){
-		WARN("input/output size mismatch");
+		warn("input/output size mismatch");
 		return(ERROR_RETURN);
 	}
 
 	if( (OBJ_ROWS(deslum_dp) != OBJ_COLS(deslum_dp)) &&
-		( scan_func == get_xy_scattered_point) ){
+		( scan_func == _get_xy_scattered_point) ){
 
-		WARN("input image must be square for scattered scanning");
+		warn("input image must be square for scattered scanning");
 		return(ERROR_RETURN);
 	}
 
 	_npixels = OBJ_ROWS(halftone_dp) * OBJ_COLS(halftone_dp);
 
-	if( lum_err_dp != NO_OBJ ){
-		delvec(QSP_ARG  lum_err_dp);
-		delvec(QSP_ARG  rg_err_dp);
-		delvec(QSP_ARG  lum_ferr_dp);
-		delvec(QSP_ARG  rg_ferr_dp);
+	if( lum_err_dp != NULL ){
+		delvec(lum_err_dp);
+		delvec(rg_err_dp);
+		delvec(lum_ferr_dp);
+		delvec(rg_ferr_dp);
 	}
 	prec_p = PREC_FOR_CODE(PREC_SP);
-	lum_ferr_dp = mk_img(QSP_ARG  "lum_ferror",
+	lum_ferr_dp = mk_img("lum_ferror",
 		OBJ_ROWS(halftone_dp),OBJ_COLS(halftone_dp),1,prec_p);
-	rg_ferr_dp = mk_img(QSP_ARG  "rg_ferror",
+	rg_ferr_dp = mk_img("rg_ferror",
 		OBJ_ROWS(halftone_dp),OBJ_COLS(halftone_dp),1,prec_p);
-	if( lum_ferr_dp == NO_OBJ || rg_ferr_dp == NO_OBJ ){
-		WARN("couldn't create filtered error images");
+	if( lum_ferr_dp == NULL || rg_ferr_dp == NULL ){
+		warn("couldn't create filtered error images");
 		return(ERROR_RETURN);
 	}
 
-	lum_err_dp = mk_img(QSP_ARG  "lum_error",
+	lum_err_dp = mk_img("lum_error",
 		OBJ_ROWS(halftone_dp),OBJ_COLS(halftone_dp),1,prec_p);
-	rg_err_dp = mk_img(QSP_ARG  "rg_error",
+	rg_err_dp = mk_img("rg_error",
 		OBJ_ROWS(halftone_dp),OBJ_COLS(halftone_dp),1,prec_p);
-	if( lum_err_dp == NO_OBJ || rg_err_dp == NO_OBJ ){
-		WARN("couldn't create error images");
+	if( lum_err_dp == NULL || rg_err_dp == NULL ){
+		warn("couldn't create error images");
 		return(ERROR_RETURN);
 	}
 
@@ -329,15 +333,15 @@ COMMAND_FUNC( init_dich_requant )
 
 	/* initialize error images */
 
-	if( halftone_dp == NO_OBJ ){
-		NWARN("init_dich_requant:  no halftone image specified");
+	if( halftone_dp == NULL ){
+		warn("init_dich_requant:  no halftone image specified");
 		return;
 	}
 	advise("init_dich_requant:  calculating error");
 	for(y=0;y<OBJ_ROWS(halftone_dp);y++){
 		for(x=0;x<OBJ_COLS(halftone_dp);x++){
 			mask = get_ht( x, y );
-			recalc_error(QSP_ARG  x,y,mask);
+			recalc_error(x,y,mask);
 		}
 	}
 	/* filter the error */
@@ -372,22 +376,24 @@ static void adjust_dich_sos(dimension_t x,dimension_t y,double factor)
 #ifdef QUIP_DEBUG
 /*
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"adjust_dich_sos %d %d %g:  lum_sos = %g, rg_sos = %g,   total = %g",
+sprintf(ERROR_STRING,"adjust_dich_sos %d %d %g:  lum_sos = %g, rg_sos = %g,   total = %g",
 x,y,factor,lum_sos,rg_sos,the_sos);
-advise(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 */
 #endif /* QUIP_DEBUG */
 
 }
 
-static void try_it(QSP_ARG_DECL  int mask,dimension_t x,dimension_t y)
+#define try_it(m,x,y)	_try_it(QSP_ARG  m,x,y)
+
+static void _try_it(QSP_ARG_DECL  int mask,dimension_t x,dimension_t y)
 {
 #ifdef QUIP_DEBUG
 /*
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"try_it %d  %d %d",mask,x,y);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"try_it %d  %d %d",mask,x,y);
+advise(ERROR_STRING);
 }
 */
 #endif /* QUIP_DEBUG */
@@ -397,7 +403,7 @@ advise(DEFAULT_ERROR_STRING);
 	adjust_dich_ferror(x,y,-1.0);
 
 	/* update error */
-	recalc_error(QSP_ARG  x,y,mask);
+	recalc_error(x,y,mask);
 
 	/* add new contribution from this point */
 	adjust_dich_ferror(x,y,1.0);
@@ -450,7 +456,9 @@ static int _dy[8]={ 1, 1, 1, 0, 0, -1, -1, -1 };
 
 #define NO_GO	100000.0
 
-static void dich_migrate_pixel2(QSP_ARG_DECL  incr_t x, incr_t y)
+#define dich_migrate_pixel2(x,y)	_dich_migrate_pixel2(QSP_ARG  x,y)
+
+static void _dich_migrate_pixel2(QSP_ARG_DECL  incr_t x, incr_t y)
 {
 	double delta_arr[N_MASKS][N_DIRS][N_MASKS];
 	double orig_sos, min_delta;
@@ -476,7 +484,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	for(mask1=0;mask1<N_MASKS;mask1++){
-		try_it(QSP_ARG  mask1,x,y);
+		try_it(mask1,x,y);
 		/* now for this component, try to migrate in all directions */
 		for(dir=0;dir<N_DIRS;dir++){
 			if( (x+_dx[dir]) < 0 || (x+_dx[dir]) >= OBJ_COLS(halftone_dp) ||
@@ -487,7 +495,7 @@ advise(ERROR_STRING);
 			}
 			neighbor = get_ht(x+_dx[dir],y+_dy[dir]);
 			for(mask2=0;mask2<N_MASKS;mask2++){
-				try_it(QSP_ARG  mask2,x+_dx[dir],y+_dy[dir]);
+				try_it(mask2,x+_dx[dir],y+_dy[dir]);
 				delta_arr[mask1][dir][mask2] = the_sos - orig_sos;
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
@@ -498,10 +506,10 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 			}
 			/* restore former state! */
-			try_it(QSP_ARG  neighbor,x+_dx[dir],y+_dy[dir]);
+			try_it(neighbor,x+_dx[dir],y+_dy[dir]);
 		}
 	}
-	try_it(QSP_ARG  init_state,x,y);
+	try_it(init_state,x,y);
 	min_delta=NO_GO;
 	min_dir=(-1);
 	for(mask1=0;mask1<N_MASKS;mask1++){
@@ -538,13 +546,13 @@ advise(ERROR_STRING);
 }
 #endif /* ALLOW_WARNINGFUL_STATEMENTS */
 #endif /* QUIP_DEBUG */
-	try_it(QSP_ARG  min_mask1,x,y);
+	try_it(min_mask1,x,y);
 	set_ht(min_mask1,x,y);
-	try_it(QSP_ARG  min_mask2,x+_dx[min_dir],y+_dy[min_dir]);
+	try_it(min_mask2,x+_dx[min_dir],y+_dy[min_dir]);
 	set_ht(min_mask2,x+_dx[min_dir],y+_dy[min_dir]);
 }
 
-void dich_migrate_pixel(QSP_ARG_DECL  incr_t x, incr_t y)
+void _dich_migrate_pixel(QSP_ARG_DECL  incr_t x, incr_t y)
 {
 	double delta_arr[3][N_DIRS];
 	double orig_sos, min_delta;
@@ -568,7 +576,7 @@ advise(ERROR_STRING);
 
 	bit=1;
 	for(i=0;i<2 /* BUG use symbolic constant */ ;i++){
-		try_it(QSP_ARG  init_state ^ bit,x,y);
+		try_it(init_state ^ bit,x,y);
 		this_bit = init_state & bit;
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
@@ -598,7 +606,7 @@ advise(ERROR_STRING);
 			/* Now we know that these two pixels have different states;
 			 * Try flipping.
 			 */
-			try_it(QSP_ARG  neighbor ^ bit,x+_dx[j],y+_dy[j]);
+			try_it(neighbor ^ bit,x+_dx[j],y+_dy[j]);
 			delta_arr[i][j] = the_sos - orig_sos;
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
@@ -607,7 +615,7 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 			/* restore former state! */
-			try_it(QSP_ARG  neighbor,x+_dx[j],y+_dy[j]);
+			try_it(neighbor,x+_dx[j],y+_dy[j]);
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
 sprintf(ERROR_STRING,"dich_migrate %d %d:  %d %d  %d, %d %d  %d, delta = %g",i,j,
@@ -616,7 +624,7 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		}
-		try_it(QSP_ARG  init_state,x,y);
+		try_it(init_state,x,y);
 
 		bit <<= 1;
 	}
@@ -652,10 +660,10 @@ advise(ERROR_STRING);
 
 	n_pixels_changed += 2;
 
-	try_it(QSP_ARG  init_state^min_bit,x,y);
+	try_it(init_state^min_bit,x,y);
 	set_ht(init_state^min_bit,x,y);
 	neighbor = get_ht(x+_dx[min_dir],y+_dy[min_dir]);
-	try_it(QSP_ARG  neighbor^min_bit,x+_dx[min_dir],y+_dy[min_dir]);
+	try_it(neighbor^min_bit,x+_dx[min_dir],y+_dy[min_dir]);
 	set_ht(neighbor^min_bit,x+_dx[min_dir],y+_dy[min_dir]);
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
@@ -680,7 +688,7 @@ advise(ERROR_STRING);
  * but we haven't been able to get it right yet.
  */
 
-void dich_redo_pixel(QSP_ARG_DECL  incr_t x,incr_t y)
+void _dich_redo_pixel(QSP_ARG_DECL  incr_t x,incr_t y)
 {
 
 	/*
@@ -708,7 +716,7 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	for(mask=0;mask<N_MASKS;mask++){
-		try_it(QSP_ARG  mask,x,y);
+		try_it(mask,x,y);
 		delta = the_sos - orig_sos;
 		del_sos[mask]=delta;
 #ifdef QUIP_DEBUG
@@ -733,11 +741,11 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	/* set error image & sos */
-	try_it(QSP_ARG  min_mask,x,y);
+	try_it(min_mask,x,y);
 	set_ht(min_mask,x,y);
 }
 
-void dich_scan_requant(QSP_ARG_DECL  uint32_t ntimes)
+void _dich_scan_requant(QSP_ARG_DECL  uint32_t ntimes)
 {
 	dimension_t i;
 	uint32_t j;
@@ -745,7 +753,7 @@ void dich_scan_requant(QSP_ARG_DECL  uint32_t ntimes)
 
 
 	if( _npixels == NO_PIXELS ){
-		NWARN("have to tell me which images first!");
+		warn("have to tell me which images first!");
 		return;
 	}
 
@@ -755,8 +763,8 @@ void dich_scan_requant(QSP_ARG_DECL  uint32_t ntimes)
 
 	for(j=0;j<ntimes;j++){
 		for(i=0;i<_npixels;i++){
-			(*scan_func)(i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
-			dich_redo_pixel(QSP_ARG  x,y);
+			(*scan_func)(QSP_ARG  i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
+			dich_redo_pixel(x,y);
 		}
 	}
 }
@@ -767,7 +775,7 @@ void dich_scan_requant(QSP_ARG_DECL  uint32_t ntimes)
  * Here we try linearly...
  */
 
-void dich_scan_anneal(QSP_ARG_DECL  uint32_t ntimes,double start_temp, double end_temp)
+void _dich_scan_anneal(QSP_ARG_DECL  uint32_t ntimes,double start_temp, double end_temp)
 {
 	dimension_t i;
 	uint32_t j;
@@ -777,7 +785,7 @@ void dich_scan_anneal(QSP_ARG_DECL  uint32_t ntimes,double start_temp, double en
 
 
 	if( _npixels == NO_PIXELS ){
-		NWARN("have to tell me which images first!");
+		warn("have to tell me which images first!");
 		return;
 	}
 
@@ -791,15 +799,15 @@ void dich_scan_anneal(QSP_ARG_DECL  uint32_t ntimes,double start_temp, double en
 
 	for(j=0;j<ntimes;j++){
 		for(i=0;i<_npixels;i++){
-			(*scan_func)(i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
+			(*scan_func)(QSP_ARG  i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
 			/*
 			dich_anneal_pixel(x,y,temp);
 			*/
-			dich_anneal_migrate(QSP_ARG  x,y,temp);
+			dich_anneal_migrate(x,y,temp);
 			temp += delta_t;
 #ifdef CAUTIOUS
 			if( temp < 0 ){
-				NWARN("CAUTIOUS:  dich_scan_anneal:  temperature is negative!?");
+				warn("CAUTIOUS:  dich_scan_anneal:  temperature is negative!?");
 				temp=0.0;
 			}
 #endif /* CAUTIOUS */
@@ -807,14 +815,14 @@ void dich_scan_anneal(QSP_ARG_DECL  uint32_t ntimes,double start_temp, double en
 	}
 }
 
-void dich_scan_migrate(QSP_ARG_DECL  uint32_t n_times)
+void _dich_scan_migrate(QSP_ARG_DECL  uint32_t n_times)
 {
 	dimension_t i;
 	uint32_t j;
 	dimension_t x,y;
 
 	if( _npixels == NO_PIXELS ){
-		NWARN("have to tell me which images first!");
+		warn("have to tell me which images first!");
 		return;
 	}
 
@@ -826,16 +834,16 @@ void dich_scan_migrate(QSP_ARG_DECL  uint32_t n_times)
 
 	for(j=0;j<n_times;j++){
 		for(i=0;i<_npixels;i++){
-			(*scan_func)(i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
-			dich_migrate_pixel2(QSP_ARG  x,y);
+			(*scan_func)(QSP_ARG  i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
+			dich_migrate_pixel2(x,y);
 		}
 	}
 
 	if( n_pixels_changed == 0 ){
 		advise("No pixels changed.");
 	} else {
-		sprintf(DEFAULT_ERROR_STRING,"%d pixels changed.",n_pixels_changed);
-		advise(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"%d pixels changed.",n_pixels_changed);
+		advise(ERROR_STRING);
 	}
 }
 
@@ -854,9 +862,9 @@ COMMAND_FUNC( dich_tell_sos )
 	prt_msg(msg_str);
 
 	sprintf(str,"%f",lum_sos);
-	ASSIGN_VAR("lum_sos",str);
+	assign_var("lum_sos",str);
 	sprintf(str,"%f",rg_sos);
-	ASSIGN_VAR("rg_sos",str);
+	assign_var("rg_sos",str);
 
 	/* now recompute... */
 	the_sos = dich_sos();
@@ -872,7 +880,7 @@ COMMAND_FUNC( dich_tell_sos )
 
 }
 
-void set_dich_input(QSP_ARG_DECL  Data_Obj *lumdp,Data_Obj *rgdp)
+void _set_dich_input(QSP_ARG_DECL  Data_Obj *lumdp,Data_Obj *rgdp)
 {
 	deslum_dp = check_not_temp(lumdp);
 	desrg_dp  = check_not_temp(rgdp);
@@ -883,7 +891,7 @@ if( debug & spread_debug ){
 sprintf(ERROR_STRING,"input images:  lum %s, rg %s",
 OBJ_NAME(deslum_dp),OBJ_NAME(desrg_dp));
 advise(ERROR_STRING);
-longlist(QSP_ARG  deslum_dp);
+longlist(deslum_dp);
 }
 #endif /* QUIP_DEBUG */
 
@@ -917,14 +925,14 @@ if( debug & spread_debug ){
 
 COMMAND_FUNC( dspread_tell )
 {
-	LONGLIST(deslum_dp);
-	LONGLIST(desrg_dp);
-	LONGLIST(halftone_dp);
-	LONGLIST(lum_filt_dp);
-	LONGLIST(rg_filt_dp);
-	LONGLIST(dich2opp_mat);
-	LONGLIST(lum_err_dp);
-	LONGLIST(rg_err_dp);
+	longlist(deslum_dp);
+	longlist(desrg_dp);
+	longlist(halftone_dp);
+	longlist(lum_filt_dp);
+	longlist(rg_filt_dp);
+	longlist(dich2opp_mat);
+	longlist(lum_err_dp);
+	longlist(rg_err_dp);
 }
 
 
@@ -952,7 +960,7 @@ COMMAND_FUNC( dspread_tell )
  * The initial body of code was swiped from dich_redo_pixel().
  */
 
-void dich_anneal_pixel( QSP_ARG_DECL  incr_t x, incr_t y, double temp )
+void _dich_anneal_pixel( QSP_ARG_DECL  incr_t x, incr_t y, double temp )
 {
 	double delta, min_delta=0.0;
 	int min_mask,mask;
@@ -975,7 +983,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	for(mask=0;mask<N_MASKS;mask++){
-		try_it(QSP_ARG  mask,x,y);
+		try_it(mask,x,y);
 		delta = the_sos - orig_sos;
 		delta += THERMAL_NOISE( temp );
 		del_sos[mask]=delta;
@@ -1000,7 +1008,7 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	/* set error image & sos */
-	try_it(QSP_ARG  min_mask,x,y);
+	try_it(min_mask,x,y);
 	set_ht(min_mask,x,y);
 }
 
@@ -1010,7 +1018,7 @@ void set_dich_weights( double w_lum, double w_rg )
 	_w_rg = (float) w_rg;
 }
 
-void dich_anneal_migrate( QSP_ARG_DECL  incr_t x, incr_t y, double temp )
+void _dich_anneal_migrate( QSP_ARG_DECL  incr_t x, incr_t y, double temp )
 {
 	double delta_arr[N_MASKS][N_DIRS][N_MASKS];
 	double orig_sos, min_delta;
@@ -1030,7 +1038,7 @@ void dich_anneal_migrate( QSP_ARG_DECL  incr_t x, incr_t y, double temp )
 	init_state = get_ht(x,y);
 
 	for(mask1=0;mask1<N_MASKS;mask1++){
-		try_it(QSP_ARG  mask1,x,y);
+		try_it(mask1,x,y);
 		/* now for this component, try to migrate in all directions */
 		for(dir=0;dir<N_DIRS;dir++){
 			if( (x+_dx[dir]) < 0 || (x+_dx[dir]) >= OBJ_COLS(halftone_dp) ||
@@ -1041,15 +1049,15 @@ void dich_anneal_migrate( QSP_ARG_DECL  incr_t x, incr_t y, double temp )
 			}
 			neighbor = get_ht(x+_dx[dir],y+_dy[dir]);
 			for(mask2=0;mask2<N_MASKS;mask2++){
-				try_it(QSP_ARG  mask2,x+_dx[dir],y+_dy[dir]);
+				try_it(mask2,x+_dx[dir],y+_dy[dir]);
 				delta_arr[mask1][dir][mask2] = the_sos - orig_sos;
 				delta_arr[mask1][dir][mask2] -= THERMAL_NOISE( temp );
 			}
 			/* restore former state! */
-			try_it(QSP_ARG  neighbor,x+_dx[dir],y+_dy[dir]);
+			try_it(neighbor,x+_dx[dir],y+_dy[dir]);
 		}
 	}
-	try_it(QSP_ARG  init_state,x,y);
+	try_it(init_state,x,y);
 	min_delta=NO_GO;
 	min_dir=(-1);
 	for(mask1=0;mask1<N_MASKS;mask1++){
@@ -1083,8 +1091,8 @@ advise(ERROR_STRING);
 #endif /* ALLOW_WARNINGFUL_STATEMENTS */
 #endif /* QUIP_DEBUG */
 
-	try_it(QSP_ARG  min_mask1,x,y);
+	try_it(min_mask1,x,y);
 	set_ht(min_mask1,x,y);
-	try_it(QSP_ARG  min_mask2,x+_dx[min_dir],y+_dy[min_dir]);
+	try_it(min_mask2,x+_dx[min_dir],y+_dy[min_dir]);
 	set_ht(min_mask2,x+_dx[min_dir],y+_dy[min_dir]);
 }

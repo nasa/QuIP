@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _METEOR_H
-#define _METEOR_H
+#ifndef _METEOR_H_
+#define _METEOR_H_
 
 #include "ioctl_meteor.h"
 
@@ -40,14 +40,7 @@
 /* Uncomment if you want FIFO overflow and DMA address error messages. */
 /*#define SHOW_CAPT_ERRORS  */
 
-/* Frame buffer RAM source defines */
-/* Uncomment if you wish to use external RAM other than bigphusarea */
-#define METEOR_EXT_FRAME_BUF
-/* Uncomment if you wish to include bigphysarea code */
-/* jbm:  himemfb works so well, I removed the ifdef BIGPHYSAREA code... */
-/*#define METEOR_BIGPHYSAREA */
-
-#define METEOR_VERSION "2.2"
+#define METEOR_VERSION "3.0"
 
 #define METEOR_MAJOR 40
 
@@ -250,8 +243,9 @@ talk_i2c(mtr,  PCF8574_CTRL_I2C_ADDR_W, data, data), \
    uint32_t	dma_add_o[3];
    uint32_t	dma_str_e[3];
    uint32_t	dma_str_o[3];
-   struct meteor_fbuf	fbuf;	/* used to describe extern RAM if used as fb */ 
+   //struct meteor_fbuf	fbuf;	/* used to describe extern RAM if used as fb */ 
    uint32_t	frame_offset[MAX_NUM_FRAMES];
  };
 
-#endif
+#endif // ! _METEOR_H_
+

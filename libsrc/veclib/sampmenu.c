@@ -10,10 +10,10 @@ static COMMAND_FUNC( do_samp_image )
 {
 	Data_Obj *intens_dp, *image_dp, *coord_dp;
 
-	intens_dp=PICK_OBJ( "target list for sampled intensities" );
-	image_dp=PICK_OBJ( "source image for intensities" );
-	coord_dp=PICK_OBJ( "coordinate list" );
-	if( intens_dp==NO_OBJ || image_dp==NO_OBJ || coord_dp==NO_OBJ )
+	intens_dp=pick_obj( "target list for sampled intensities" );
+	image_dp=pick_obj( "source image for intensities" );
+	coord_dp=pick_obj( "coordinate list" );
+	if( intens_dp==NULL || image_dp==NULL || coord_dp==NULL )
 		return;
 
 	sample_image(QSP_ARG  intens_dp,image_dp,coord_dp);
@@ -23,10 +23,10 @@ static COMMAND_FUNC( do_render )
 {
 	Data_Obj *intens_dp, *image_dp, *coord_dp;
 
-	image_dp=PICK_OBJ( "target image" );
-	intens_dp=PICK_OBJ( "source list of sampled intensities" );
-	coord_dp=PICK_OBJ( "coordinate list" );
-	if( intens_dp==NO_OBJ || image_dp==NO_OBJ || coord_dp==NO_OBJ )
+	image_dp=pick_obj( "target image" );
+	intens_dp=pick_obj( "source list of sampled intensities" );
+	coord_dp=pick_obj( "coordinate list" );
+	if( intens_dp==NULL || image_dp==NULL || coord_dp==NULL )
 		return;
 
 	render_samples(QSP_ARG  image_dp,coord_dp,intens_dp);
@@ -36,10 +36,10 @@ static COMMAND_FUNC( do_render2 )
 {
 	Data_Obj *intens_dp, *image_dp, *coord_dp;
 
-	image_dp=PICK_OBJ( "target image" );
-	intens_dp=PICK_OBJ( "source list of sampled intensities" );
-	coord_dp=PICK_OBJ( "coordinate list" );
-	if( intens_dp==NO_OBJ || image_dp==NO_OBJ || coord_dp==NO_OBJ )
+	image_dp=pick_obj( "target image" );
+	intens_dp=pick_obj( "source list of sampled intensities" );
+	coord_dp=pick_obj( "coordinate list" );
+	if( intens_dp==NULL || image_dp==NULL || coord_dp==NULL )
 		return;
 
 	render_samples2(QSP_ARG  image_dp,coord_dp,intens_dp);
@@ -55,7 +55,7 @@ MENU_END(sample)
 
 COMMAND_FUNC( do_samp_menu )
 {
-	PUSH_MENU(sample);
+	CHECK_AND_PUSH_MENU(sample);
 }
 
 

@@ -42,29 +42,28 @@
 //#include "dataprot.h"
 #include "xsupp.h"
 //#include "img_file.h"
-#include "query.h"
 #include "my_fb.h"
 #include "view_cmds.h"
 
 ITEM_INTERFACE_DECLARATIONS(FB_Info,fbi,0)
 
-static FB_Info *curr_fbip=NO_FBI;
+static FB_Info *curr_fbip=NULL;
 
 #define DEFAULT_FB_DEVICE	"/dev/fb0"
 
 #define INSURE_FB(subrt_name)						\
 									\
-	if( curr_fbip == NO_FBI ){					\
+	if( curr_fbip == NULL ){					\
 		sprintf(ERROR_STRING,					\
 		"%s:  no frame buffer open, trying %s",subrt_name,	\
 			DEFAULT_FB_DEVICE);				\
 		WARN(ERROR_STRING);					\
-		fb_open(QSP_ARG DEFAULT_FB_DEVICE);			\
-		if( curr_fbip == NO_FBI ){				\
+		fb_open(DEFAULT_FB_DEVICE);				\
+		if( curr_fbip == NULL ){				\
 			sprintf(ERROR_STRING,				\
 			"unable to open default frame buffer %s",	\
 				DEFAULT_FB_DEVICE);			\
-			ERROR1(ERROR_STRING);				\
+			error1(ERROR_STRING);				\
 		}							\
 	}
 
@@ -73,7 +72,9 @@ static FB_Info *curr_fbip=NO_FBI;
  * a new item.
  */
 
-static void fb_open(QSP_ARG_DECL const char *fb_name)
+#define fb_open(name)	_fb_open(QSP_ARG  name)
+
+static void _fb_open(QSP_ARG_DECL const char *fb_name)
 {
 #ifdef HAVE_FB_DEV
 
@@ -82,8 +83,8 @@ static void fb_open(QSP_ARG_DECL const char *fb_name)
 
 	long nbytes;
 
-	fbip = new_fbi(QSP_ARG  fb_name);
-	if( fbip == NO_FBI ) return;
+	fbip = new_fbi(fb_name);
+	if( fbip == NULL ) return;
 
 	fbip->fbi_fd = open(fb_name,O_RDWR);
 	if( fbip->fbi_fd < 0 ){
@@ -91,7 +92,7 @@ static void fb_open(QSP_ARG_DECL const char *fb_name)
 		sprintf(ERROR_STRING,"couldn't open device %s",fb_name);
 		WARN(ERROR_STRING);
 		/* BUG? - do we need any more cleanup? */
-		del_fbi(QSP_ARG  fbip);
+		del_fbi(fbip);
 		return;
 	}
 
@@ -112,12 +113,12 @@ static void fb_open(QSP_ARG_DECL const char *fb_name)
 	SET_DS_FRAMES(&dimset, 1 );
 	SET_DS_SEQS(&dimset, 1 );
 
-	fbip->fbi_dp = _make_dp(QSP_ARG  fb_name,&dimset,PREC_FOR_CODE(PREC_UBY));
-	if( fbip->fbi_dp == NO_OBJ ){
+	fbip->fbi_dp = make_dp(fb_name,&dimset,PREC_FOR_CODE(PREC_UBY));
+	if( fbip->fbi_dp == NULL ){
 		sprintf(ERROR_STRING,"Unable to create data object structure for %s",fb_name);
 		WARN(ERROR_STRING);
 		close(fbip->fbi_fd);
-		del_fbi(QSP_ARG  fbip);
+		del_fbi(fbip);
 		return;
 	}
 
@@ -131,7 +132,7 @@ advise(ERROR_STRING);
 		perror("mmap /dev/fb");
 		close(fbip->fbi_fd);
 		fbip->fbi_fd = -1;
-		del_fbi(QSP_ARG  fbip);
+		del_fbi(fbip);
 		return;
 	}
 
@@ -149,15 +150,15 @@ static COMMAND_FUNC( do_open_fb_dev )
 	s=NAMEOF("frame buffer device");
 
 	/* See if requested frame buffer is the current frame buffer */
-	if( curr_fbip != NO_FBI && !strcmp(s,curr_fbip->fbi_name) ){
+	if( curr_fbip != NULL && !strcmp(s,curr_fbip->fbi_name) ){
 		sprintf(ERROR_STRING,"Frame buffer device %s is already the current frame buffer.",s);
 		advise(ERROR_STRING);
 		return;
 	}
 
 	/* See if requested frame buffer is already open*/
-	fbip = fbi_of(QSP_ARG  s);
-	if( fbip != NO_FBI ){
+	fbip = fbi_of(s);
+	if( fbip != NULL ){
 		curr_fbip = fbip;
 		sprintf(ERROR_STRING,"Frame buffer device %s is already open, making current.",s);
 		advise(ERROR_STRING);
@@ -165,13 +166,13 @@ static COMMAND_FUNC( do_open_fb_dev )
 	}
 
 	save_fbip = curr_fbip;		/* save */
-	fb_open(QSP_ARG s);
+	fb_open(s);
 
-	if( curr_fbip == NO_FBI ){
+	if( curr_fbip == NULL ){
 		sprintf(ERROR_STRING,"unable to open frame buffer device %s",s);
 		WARN(ERROR_STRING);
 		curr_fbip = save_fbip;	/* un-save */
-		if( curr_fbip != NO_FBI ){
+		if( curr_fbip != NULL ){
 			sprintf(ERROR_STRING,"Reverting to previous frame buffer device %s",curr_fbip->fbi_name);
 			advise(ERROR_STRING);
 		}
@@ -182,13 +183,15 @@ static COMMAND_FUNC( do_select_fb_dev )
 {
 	FB_Info *fbip;
 
-	fbip = PICK_FBI("frame buffer device");
-	if( fbip == NO_FBI ) return;
+	fbip = pick_fbi("frame buffer device");
+	if( fbip == NULL ) return;
 
 	curr_fbip = fbip;
 }
 
-static void fb_load(QSP_ARG_DECL Data_Obj *dp,int x, int y)
+#define fb_load(dp,x,y)		_fb_load(QSP_ARG  dp,x,y)
+
+static void _fb_load(QSP_ARG_DECL Data_Obj *dp,int x, int y)
 {
 #ifdef HAVE_FB_DEV
 	dimension_t i,j;
@@ -221,7 +224,9 @@ static void fb_load(QSP_ARG_DECL Data_Obj *dp,int x, int y)
 #endif /* HAVE_FB_DEV */
 }
 
-static void fb_save(QSP_ARG_DECL Data_Obj *dp,int x, int y)
+#define fb_save(dp,x,y)	_fb_save(QSP_ARG  dp,x,y)
+
+static void _fb_save(QSP_ARG_DECL Data_Obj *dp,int x, int y)
 {
 #ifdef HAVE_FB_DEV
 	dimension_t i,j,k;
@@ -254,15 +259,15 @@ static COMMAND_FUNC( do_save_fb )
 	Data_Obj *dp;
 	int x,y;
 
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	x=(int)HOW_MANY("x origin");
 	y=(int)HOW_MANY("y origin");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"save_fb")
 
-	fb_save(QSP_ARG dp,x,y);
+	fb_save(dp,x,y);
 }
 
 static COMMAND_FUNC( do_load_fb )
@@ -270,15 +275,15 @@ static COMMAND_FUNC( do_load_fb )
 	Data_Obj *dp;
 	int x,y;
 
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	x=(int)HOW_MANY("x origin");
 	y=(int)HOW_MANY("y origin");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"load_fb")
 
-	fb_load(QSP_ARG dp,x,y);
+	fb_load(dp,x,y);
 }
 
 /* BUG this should be allocated dynamically */
@@ -490,7 +495,7 @@ static COMMAND_FUNC( do_fb_pan )
 
 	return;
 #else /* ! HAVE_FB_DEV */
-	ERROR1("do_fb_pan:  Program not configured with framebuffer device support.");
+	error1("do_fb_pan:  Program not configured with framebuffer device support.");
 #endif /* ! HAVE_FB_DEV */
 }
 
@@ -519,12 +524,14 @@ static COMMAND_FUNC( do_new_fb_pan )
 
 	return;
 #else /* ! HAVE_FB_DEV */
-	ERROR1("do_new_fb_pan:  Program not configured with framebuffer device support.");
+	error1("do_new_fb_pan:  Program not configured with framebuffer device support.");
 #endif /* ! HAVE_FB_DEV */
 }
 
 #ifdef HAVE_FB_DEV
-static void show_var_info(QSP_ARG_DECL  FB_Info *fbip)
+#define show_var_info(fbip)	_show_var_info(QSP_ARG  fbip)
+
+static void _show_var_info(QSP_ARG_DECL  FB_Info *fbip)
 {
 	/* Now display the contents */
 	sprintf(msg_str,"Frame buffer %s:",fbip->fbi_name);			prt_msg(msg_str);
@@ -568,7 +575,7 @@ static COMMAND_FUNC( do_get_var )
 	/*
 	nc_show_var_info(curr_fbip);
 	*/
-	show_var_info(QSP_ARG  curr_fbip);
+	show_var_info(curr_fbip);
 #endif /* HAVE_FB_DEV */
 }
 
@@ -595,7 +602,9 @@ static void write_back_var_info(SINGLE_QSP_ARG_DECL)
 #define N_FB_LUT_ENTRIES	256
 #define N_FB_LUT_COMPONENTS	1
 
-static int good_for_lut(QSP_ARG_DECL  Data_Obj *dp)
+#define good_for_lut(dp)	_good_for_lut(QSP_ARG  dp)
+
+static int _good_for_lut(QSP_ARG_DECL  Data_Obj *dp)
 {
 	/* check for proper size and type - should be short... */
 	if( dp == NULL ) return 0;
@@ -635,13 +644,13 @@ static COMMAND_FUNC( do_get_cmap )
 	struct fb_cmap fbcm;
 #endif // HAVE_FB_DEV
 
-	red_dp = PICK_OBJ("color map RED data object");
-	green_dp = PICK_OBJ("color map GREEN data object");
-	blue_dp = PICK_OBJ("color map BLUE data object");
+	red_dp = pick_obj("color map RED data object");
+	green_dp = pick_obj("color map GREEN data object");
+	blue_dp = pick_obj("color map BLUE data object");
 
-	if( ! good_for_lut(QSP_ARG  red_dp) ) return;
-	if( ! good_for_lut(QSP_ARG  green_dp) ) return;
-	if( ! good_for_lut(QSP_ARG  blue_dp) ) return;
+	if( ! good_for_lut(red_dp) ) return;
+	if( ! good_for_lut(green_dp) ) return;
+	if( ! good_for_lut(blue_dp) ) return;
 
 	INSIST_RAM_OBJ(red_dp,"get_cmap")
 	INSIST_RAM_OBJ(green_dp,"get_cmap")
@@ -672,10 +681,10 @@ static COMMAND_FUNC( do_set_cmap )
 	struct fb_cmap fbcm;
 #endif // HAVE_FB_DEV
 
-	red_dp = PICK_OBJ("color map RED data object");
-	green_dp = PICK_OBJ("color map GREEN data object");
-	blue_dp = PICK_OBJ("color map BLUE data object");
-	if( red_dp == NO_OBJ || green_dp == NO_OBJ || blue_dp == NO_OBJ ) return;
+	red_dp = pick_obj("color map RED data object");
+	green_dp = pick_obj("color map GREEN data object");
+	blue_dp = pick_obj("color map BLUE data object");
+	if( red_dp == NULL || green_dp == NULL || blue_dp == NULL ) return;
 
 	INSIST_RAM_OBJ(red_dp,"set_cmap")
 	INSIST_RAM_OBJ(green_dp,"set_cmap")
@@ -777,7 +786,7 @@ MENU_END(var_info)
 
 static COMMAND_FUNC( do_var_info )
 {
-	PUSH_MENU(var_info);
+	CHECK_AND_PUSH_MENU(var_info);
 }
 
 static COMMAND_FUNC( do_init_gl )
@@ -823,7 +832,7 @@ MENU_END(fb)
 COMMAND_FUNC( do_fb_menu )
 {
 	/* insure_x11_server(); */	/* not clear we really need this for *this* menu!? BUG? */
-	PUSH_MENU(fb);
+	CHECK_AND_PUSH_MENU(fb);
 }
 
 

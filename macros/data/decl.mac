@@ -195,7 +195,7 @@ data image $1 $ysize $xsize 1 short quit
 .
 
 Define Long_Image 1 'name for long image'
-data image $1 $ysize $xsize 1 int32 quit
+data image $1 $ysize $xsize 1 int quit
 .
 
 Define Double_Image 1 'name for double image'
@@ -263,12 +263,13 @@ Define Dup_Bit 2 'name for bitmap image' prototype
 Dup_Obj_With_Prec $1 $2 bit
 .
 
-Define Dup_Long 2 'name for int32 image' prototype
-Dup_Obj_With_Prec $1 $2 int32
+# Kind of a misnomer, now int means int32 and long means int64
+Define Dup_Long 2 'name for int image' prototype
+Dup_Obj_With_Prec $1 $2 int
 .
 
-Define Dup_ULong 2 'name for uint32 image' prototype
-Dup_Obj_With_Prec $1 $2 uint32
+Define Dup_ULong 2 'name for u_int image' prototype
+Dup_Obj_With_Prec $1 $2 u_int
 .
 
 Define Dup_Double 2 'name for double image' prototype
@@ -319,6 +320,8 @@ Dup_Obj_With_Prec $1 $2 $3
 
 Define Match_Area 1 sizable
 If !obj_exists('$1') exit_macro
+advise "Match_Area matching to $1"
+Info $1
 data
   areas match $1 quit
   quit
@@ -408,6 +411,15 @@ Count_Lines nl $2
 Count_Columns nc $2
 Vector $1 $nl $nc float
 Get_Ascii $1 $2
+.
+
+Define Vector_If 4 name ncols ncomps type
+Delete_If $1
+Vector $1 $2 $3 $4
+.
+
+Define Delete_If 1 obj
+If obj_exists('$1') "Delete_Image $1"
 .
 
 Stop_File decl.mac

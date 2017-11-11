@@ -18,8 +18,6 @@
 
 @end
 
-#define NO_IOS_NODE 	((IOS_Node *)NULL)
-
 #define IOS_NODE_DATA(np)	(np).data
 #define IOS_NODE_NEXT(np)	(np).next
 #define IOS_NODE_PREV(np)	(np).prev

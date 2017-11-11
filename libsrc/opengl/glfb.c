@@ -10,9 +10,11 @@
 // this line was commented out to compile on ace...
 //#include <GL/glew.h>	// on craik???
 // needed on poisson...
+#ifndef BUILD_FOR_OBJC
 #ifdef HAVE_GL_GLEW_H
 #include <GL/glew.h>	// on craik???
 #endif // HAVE_GL_GLEW_H
+#endif // BUILD_FOR_OBJC
 
 #ifdef HAVE_GL_GLX_H
 #include <GL/glx.h>
@@ -40,7 +42,7 @@ Framebuffer *create_framebuffer(QSP_ARG_DECL  const char *name, int width, int h
 	Framebuffer *fbp;
 	GLenum status;
 
-	fbp = new_glfb(QSP_ARG  name);
+	fbp = new_glfb(name);
 	if( fbp == NULL ) return NULL;
 
 	fbp->fb_width = width;
@@ -66,7 +68,7 @@ Framebuffer *create_framebuffer(QSP_ARG_DECL  const char *name, int width, int h
 	return( fbp );
 
 #else // ! HAVE_LIBGLEW
-	ERROR1("Sorry, need libglew to be present for gl frame buffers.");
+	error1("Sorry, need libglew to be present for gl frame buffers.");
 	return NULL;	// NOTREACHED
 #endif  // ! HAVE_LIBGLEW
 }
@@ -80,9 +82,9 @@ void delete_framebuffer(QSP_ARG_DECL  Framebuffer *fbp)
 	glDeleteRenderbuffersEXT(1,&(fbp->fb_renderbuffer));
 	glDeleteFramebuffersEXT(1,&(fbp->fb_id));
 #else // ! HAVE_LIBGLEW
-	ERROR1("Sorry, need libglew to be present for gl frame buffers.");
+	error1("Sorry, need libglew to be present for gl frame buffers.");
 #endif // ! HAVE_LIBGLEW
-	del_glfb(QSP_ARG  fbp);
+	del_glfb(fbp);
 }
 
 void glfb_info(QSP_ARG_DECL  Framebuffer *fbp)

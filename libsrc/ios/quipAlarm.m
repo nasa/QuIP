@@ -1,5 +1,6 @@
 #include "quipAlarm.h"
 #include "quip_prot.h"
+#include "query_stack.h"
 
 // Code found on the web - thanks!
 

@@ -1,0 +1,17 @@
+
+Image x 4 4 1 float
+Vector v 4 1 float
+
+VSet x 2
+VSet v 1
+
+# when we provide a bad index, a null object should result?
+VSAdd v x[6] 2
+VSAdd x[6] v 2
+
+VVAdd x[6] v v
+VVAdd v x[6] v
+VVAdd v v x[6]
+
+exit
+

@@ -1,5 +1,4 @@
 
-
 #include "quip_config.h"
 
 #import "quip_prot.h"
@@ -10,7 +9,6 @@
 #ifdef BUILD_FOR_OBJC
 
 @implementation Panel_Obj
-
 
 @synthesize currx;
 @synthesize curry;
@@ -56,22 +54,14 @@
 
 @end
 
-#ifdef FOOBAR
-static IOS_Size_Functions panel_sf={
-		get_panel_size,
-		NULL,
-		NULL,
-		NULL
-};
-#endif // FOOBAR
 
-static IOS_Item_Type *panel_obj_itp=NO_IOS_ITEM_TYPE;
+static IOS_Item_Type *panel_obj_itp=NULL;
 
 // Don't use the macro for the init func, so that we can
 // also call the size function thingy...
 //IOS_ITEM_INIT_FUNC(Panel_Obj,panel_obj)
 
-void init_panel_objs(SINGLE_QSP_ARG_DECL)
+void _init_panel_objs(SINGLE_QSP_ARG_DECL)
 {
 	[Panel_Obj initClass];
 	panel_obj_itp = [[IOS_Item_Type alloc]
@@ -98,11 +88,7 @@ void add_to_panel(Panel_Obj *po, Screen_Obj *sop)
 #ifdef BUILD_FOR_MACOS
 	NSView *cp = SOB_CONTROL(sop);
 
-#ifdef CAUTIOUS
-	if( [GW_WINDOW(PO_GW(po)) contentView] == nil ){
-		fprintf(stderr,"CAUTIOUS:  add_to_panel:  window contentView is null!?\n");
-	}
-#endif // CAUTIOUS
+	assert( [GW_WINDOW(PO_GW(po)) contentView] != nil );
 
 	[[GW_WINDOW(PO_GW(po)) contentView] addSubview : cp ];
 #endif // BUILD_FOR_MACOS

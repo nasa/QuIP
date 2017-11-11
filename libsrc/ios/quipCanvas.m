@@ -26,13 +26,6 @@
 // takes a timer argument, but the one that works is the one
 // with no arg.  (The other throws a missing selector error!?)
 
-#ifdef FOOBAR
--(void) canvasFireTimer:(NSTimer *) timer
-{
-	MAKE_NEEDY(CANVAS_VW(self));
-}
-#endif /* FOOBAR */
-
 // This is called from drawRect, and would seem to request another call to drawRect???
 
 -(void) canvasFire2
@@ -66,7 +59,7 @@
 //sprintf(DEFAULT_ERROR_STRING,"drawRect:  canvas = 0x%lx",(long)self);
 //advise(DEFAULT_ERROR_STRING);
 	// This is a quip viewer
-	if( VW_DRAW_LIST(CANVAS_VW(self)) != NO_IOS_LIST ){
+	if( VW_DRAW_LIST(CANVAS_VW(self)) != NULL ){
 //		fprintf(stderr,"drawRect %s calling exec_drawlist\n",VW_NAME(CANVAS_VW(self)));
 		// erasure is implemented by merely clearing the drawlist.
 		// But nothing gets erased until drawRect is called again!?

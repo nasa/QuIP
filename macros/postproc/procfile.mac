@@ -1,0 +1,547 @@
+# %Z% $RCSfile: procfile.mac,v $ ver: $Revision: 1.31 $ $Date: 2004/08/31 18:30:04 $
+
+Start_File procfile.mac
+
+# some default values
+Set top_fill	0
+Set bot_fill	0
+Set fill_val	0
+
+Set min_height	32	# default
+Set file_is_rtv	0	# parallax RTV (vs. regular unix file)
+Set file_is_rv	0	# raw volume (vs. regular unix file)
+#Set interlaced	0	# source images are frames if set
+
+Set reversing	0
+
+Set first_time 1
+
+# BAD PRACTICE - input_frame used to be called rgba, there are probably
+# some old scripts that expect it to be called rgba.  When this code was
+# first written, the capture system was the metor RGB, so there were
+# always multiple components in the raw data...
+
+Define Setup_Interlace 0
+# this stuff is here in case the input is frames...
+Interlace oddlines input_frame odd
+#echo "Subimage odd_cropped oddlines $crop_width $dest_height 0 0"
+advise "odd_cropped w = $crop_width   h = $dest_height"
+Subimage odd_cropped oddlines $crop_width $dest_height 0 0
+
+Interlace evenlines input_frame even
+Subimage even_cropped evenlines $crop_width $dest_height 0 0
+.
+
+# These images are the largest in the pyramid, and incorporate
+# the cropping parameters for the camera_index
+
+# Now, do we ever do two cameras?  I guess that we could someday, so
+# we'll leave the index stuff in...
+
+Define Decl_Images_For_Index 1 index
+If obj_exists(bigf) "advise 'Decl_Images_For_Index popping, bigf exists' exit_macro"
+
+Image bigf $crop_height $crop_width 1 float
+
+Setup_Interlace_Correction bigf
+Tell_If 'interlace correction set up'
+
+If $filling
+  "Subimage top_rows_$1 bigf $crop_width $top_fill 0 0"
+If $filling
+  "Subimage $bot_fill bigf $crop_width $bot_fill 0 $crop_height-$bot_fill"
+
+Assign h $max_out_height
+If $max_out_width!=$max_out_height "warn 'max_out_width ($max_out_width) not equal to max_out_height ($max_out_height)'"
+
+#Print max_out_height
+#Print min_height
+do
+  Image smallf.$h $h $h 1 float
+  Image smallb.$h $h $h 1 byte
+  #If $SAVE_AS_JPEG "Image small_rgb.$h $h $h 3 byte"
+  Mul_Var h 0.5
+  while $h>=$min_height
+
+Tell_If 'Pyramid declared'
+
+Subimage cropped input_frame $crop_width $dest_height 0 0
+
+If $interlaced Setup_Interlace
+
+Subimage dest bigf $crop_width $dest_height 0 0
+.
+# end Decl_Images_For_Index
+
+Set viewers_ready 0
+
+Define Setup_Viewers 1 camera_index
+If $viewers_ready
+  "advise 'OOPS - Redundant call to Setup_Viewers!?' exit_macro"
+Set viewers_ready 1
+
+Tell_If "Setting up viewers"
+Viewer_For v1 bigf
+Posn_Viewer v1 20 20
+Assign h $max_out_height
+Set i 2
+Set xp 600
+do
+  Set vn "v$i"
+  Increment i
+  advise "Viewer_For $vn smallf.$h"
+  Viewer_For $vn "smallf.$h"
+  Posn_Viewer $vn $xp 20
+  Add_Var xp $h+10
+  Mul_Var h 0.5
+  while "$h>=$min_height"
+.
+
+Define Multi_Show 0
+Set h $max_out_height
+Set viewer_index 2
+do
+  Set sm_im "smallf.$h"
+  Show_If $sm_im $viewer_index "$h x $h"
+  Increment viewer_index
+  Mul_Var h 0.5
+  while $h>=$min_height
+.
+
+#Define RGBCopy 0
+#VMov small_rgb.$h{0} smallb.$h
+#VMov small_rgb.$h{1} smallb.$h
+#VMov small_rgb.$h{2} smallb.$h
+#.
+
+Define Multi_Write 1 outfile_stem
+Set h $max_out_height
+Set viewer_index 2
+do
+  Set sm_im "smallf.$h"
+  Set sm_b smallb.$h
+
+  # use fixed scaling - assume worst case range: -50 - 300
+  VSAdd $sm_im $sm_im 50
+  VSMul $sm_im $sm_im 255/350
+  # I'm not really sure why we would ever need to compress the range
+  # so much, I think the range must have been set by looking at some
+  # images and adjusting so as not to clip the ringing...
+  # nevertheless, we have subsequently seen some overflows,
+  # therefore we also do a hard clip now
+  VSMin $sm_im $sm_im 255
+  VSMax $sm_im $sm_im 0
+  Convert $sm_b $sm_im
+  # until we get grayscale compreesion working, expand to rgb for jpeg
+  # If $SAVE_AS_JPEG "RGBCopy Set sm_b small_rgb.$h"
+  Get_Output_Filename $h $1
+  If !iof_exists('$output_file')
+    "error_exit 'Wrong output file $output_file!?'"
+  Put_Next $sm_b $output_file
+
+  Mul_Var h 0.5
+  while $h>=$min_height
+.
+
+Define Reverse 2 dest src
+data
+  subsample revdest $1
+	"ncols($1)" "ncols($1)-1" -1
+	"nrows($1)" 0 1
+  quit
+Convert revdest $2
+Delete_Image revdest
+.
+
+# the field index is in script variable $frame_index
+
+Define Do_Component 2 out_file_stem comp_index
+#Print camera_index
+Set index $2
+Set top_rows "top_rows_$index"
+Set bigf bigf
+If $interlaced
+  Then "Do_Two_Fields $1"
+  Else "Do_One_Field $1 cropped"
+Increment frame_index
+.
+
+Define Do_Two_Fields 1 out_file_stem
+Tell_If "Do_Two_Fields $1"
+Do_One_Field $1 even_cropped
+Do_One_Field $1 odd_cropped
+.
+
+Define Show_Input_Bytes 1 image
+If !viewer_exists(vraw) "Viewer_For vraw $1 Posn_Window vraw 600 400"
+Show_Bytes $1 vraw
+.
+
+Define Convert_Input_Frame 1 image
+If $showing "Show_Input_Bytes $1"
+If $reversing
+  Then "Reverse dest $1"
+  Else "Convert dest $1"
+.
+
+Define Convert_Input_Component 2 image idx
+If $reversing
+  Then "Reverse dest $1{$2}"
+  Else "Convert dest $1{$2}"
+.
+
+Define Do_One_Field 2 out_file_stem input_subimage
+
+Tell_If "Do_One_Field $1 $2"
+Relocate $2 $crop_x0 $crop_y0 0
+If depth('$2')==1
+  Then "Convert_Input_Frame $2"
+  Else "Convert_Input_Component $2 $index"
+If $filling "VSet $top_rows $fill_val"
+If $filling "VSet $bot_fill $fill_val"
+#advise "Showing converted image in raw window..."
+#Disp_Raw bigf vraw
+#Pause
+Show_If bigf 1 "$input_file    field $field_index"
+Set h $max_out_height
+Set big_im $bigf
+Set viewer_index 2
+
+Assign n_levels 1+log($max_out_height/$min_height)/log(2)
+
+Multi_Subsample smallf $big_im $n_levels $max_out_height
+Multi_Show		# show and write out
+Tell_If "calling Multi_Write $1"
+Multi_Write $1
+Tell_If "field $field_index written"
+Increment field_index
+.
+
+#Define FILE 7 filename junk junk junk start junk end
+#Assign len "$7+1-$5"
+#Process $1 $5 $len
+#.
+
+Define ERROR 7 paramlist junk tzero junk stim1 junk stim2
+warn "Not processing trial $1, bad synchronization"
+.
+
+Define PARAMS 7 paramlist junk junk junk start junk end
+Assign len "$7+1-$5"
+Set infile "$RUN_STEM.$1.dsk"
+Set outstem "CAM.$camera_index.$1"
+Process_Camera $outstem $infile $5 $len
+.
+
+# Old obsolete function, for when calib files didn't have .dsk suffix
+
+Define Process_Calib 3 paramstr start len
+Set infile "$RUN_STEM.$1"
+Set outstem "CAM.$camera_index.$1"
+Process_Camera $outstem $infile $2 $3
+.
+
+
+Define Process_Calibration 3 paramstr start len
+Process_Movie_Helper $1 $2 $3 1
+.
+
+Define Process_Movie 3 paramstr start len
+Process_Movie_Helper $1 $2 $3 0
+.
+
+Define Process_Movie_Helper 4 paramstr start len is_calib
+Set infile "$1"
+# For readability...
+Set outstem "CAM.$camera_index.$1"
+Tell_If "Process_Camera $outstem $infile $2 $3"
+Filetype rv
+Process_Camera $outstem $infile $2 $3 $4
+.
+
+# obsolete, lousy output filename
+
+Define Process 3 filename start len
+Tell_If "Processing file $1, $3 field starting at field $2"
+Set infile $1
+warn 'Macro "Process" is obsolete'
+#Set outstem "$infile.$camera_index"
+Process_Camera $outstem $infile $2 $3
+.
+
+Define Open_Unix_Movie 1 filename
+Filetype disk
+
+Check_File_Existence $input_data_directory
+If !$file_exists exit_macro
+Hips_Read_Directory $input_data_directory
+
+Check_File_Existence "$input_data_directory/$1"
+If !$file_exists exit_macro
+Read_File_Header $input_file
+.
+
+Define Open_Fusion_Or_RTV 0
+If $file_is_rtv
+  Then	"Open_Movie $input_file"
+  Else	"Open_Unix_Movie $input_file"
+.
+
+Define Open_RV_Movie 0
+Filetype rv
+#fileio read $input_file quit
+Read_File_Header $input_file
+.
+
+# assume input is monochrome, compress to grayscale
+
+Define Jpeg_Init 0
+fileio
+  jpeg
+    compressor
+      colorspace grayscale
+      quit
+    quit
+  quit
+.
+
+# We used to just call nframes('input_file') but this doesn't
+# work when we are getting the images from a remote file server...
+
+Define Get_Remote_Framecount 2 varname filename
+Rawvold_Send "Assign $1 nframes('$2') Print $1"
+Rawvold_Send "Set xfer_var $1"
+Rawvold_Send 'Xmit_Text rawvol_server_mouth "Set xfer_var $$xfer_var"'
+# now need to receive text...
+ports 
+  receive rawvol_server_client_ear text xfer_text 
+  push_text $xfer_text 
+  Print xfer_var
+  quit 
+Assign $1 $xfer_var
+.
+
+
+Set remote_rawvol_server 0
+
+Define Get_Movie_Size 2 varname filename
+# This version ONLY works with the rawvol server...
+If $remote_rawvol_server 
+  Then "Get_Remote_Framecount $1 $2"
+  Else "Assign $1 nframes('$2')"
+If $remote_rawvol_server 
+  Then "Get_Remote_Rowcount in_height $2"
+  Else "Assign in_height nrows('$2')"
+If $remote_rawvol_server 
+  Then "Get_Remote_Colcount in_width $2"
+  Else "Assign in_width ncols('$2')"
+.
+
+Define First_Time_Stuff 0
+advise "First_Time_Stuff:  first_time = $first_time"
+
+# used to declare this here - what is correct?
+#Image input_frame $in_height $in_width 4 u_byte
+
+If !var_exists(crop_width) Get_Crop_Params
+
+Decl_Images_For_Index $CAMERA
+If $showing "Setup_Viewers $CAMERA"
+Set first_time 0
+.
+
+Define Get_Output_Filename 2 h filename_stem
+Set output_file "i.$1.$2.$out_suffix"
+.
+# There is some confusion with field_index/frame_index.
+# On grabbers like sirius, we grab fields, so we can treat
+# frames as fields...  But on the meteor (and rtv) we
+# get interlaced frames...
+# We finesse this with rtv by using the Get_Field macro...
+# But we haven't implemented that in the c code yet for the meteor...
+
+Define Process_Camera 5 outfile_stem infile start desired_input_frames is_calib
+os get_time start_time quit
+Tell_If "Processing file $2, writing $4 fields starting at field $3"
+Tell_If "Output filestem:  $1"
+Set input_file $2
+Tell_If "Input file:  $input_file"
+Assign start $3
+#Assign desired_input_fields $4
+Assign desired_input_frames $4
+Assign is_calib $5
+
+# we don't have any open movie here, because for local execution, all
+# the rv movies are opened when the volume is mounted...
+
+# this stuff is for regular unix disk files
+#If $file_is_rv
+#  Then Open_RV_Movie
+##  Else Open_Fusion_Or_RTV
+#  Else "Filetype hips2 Set input_file $rawvol_backup_dir/$2.CAM.$CAMERA.hips"
+
+# this works when we are local to the rv server,
+# but seems to hang otherwise...
+#Open_RV_Movie
+
+#Assign movie_frames "nframes('$input_file')"
+#Get_Movie_Frames movie_frames $input_file
+Get_Movie_Size movie_frames $input_file
+If is_interlaced('$input_file')
+  Then "Set interlaced 1"
+  Else "Set interlaced 0"
+
+fileio info $input_file quit
+
+#This line was here because of a bug which has since been fixed
+#If $is_calib "Assign movie_frames '$movie_frames-3'"
+
+# Here the interlaced variable tells us whether we need to extract the fields from
+# a frame image...   We may have recorded fields from an interlaced camera, in which
+# case the interlaced flag will NOT be set (because the fields are recorded separately),
+# however there will still be a vertical offset to be corrected later!
+
+# BUG do we need these "desired" variables???
+
+If $interlaced
+  Then "Assign movie_fields 2*$movie_frames Assign desired_input_fields 2*$desired_input_frames"
+  Else "Assign movie_fields $movie_frames Assign desired_input_fields $desired_input_frames"
+
+Tell_If "Movie has $movie_frames frames ($movie_fields fields)"
+
+If $start+$desired_input_fields>$movie_fields
+  'advise "requested desired_input_fields $desired_input_fields" Assign desired_input_fields $movie_fields-$start advise "desired_input_fields reset to $desired_input_fields"'
+
+If $first_time First_Time_Stuff
+  
+#fileio info $input_file quit
+
+# Read the file once, write all the output files in parallel
+
+Set h $max_out_height
+do
+  # We don't want to do this if we are working with template files...
+  #Set output_data_directory "$project_dir/sub.$h/$RUN_STEM"
+
+  #Set dirname "$output_data_prefix/$RUN_STEM"
+  Set dirname "$output_data_prefix"
+  Insure_Directory $dirname
+  #Set dirname "$output_data_prefix/$RUN_STEM/subsamp.$h"
+  Set dirname "$output_data_prefix/subsamp.$h"
+  Insure_Directory $dirname
+  Set output_data_directory $dirname
+
+  Hips_Write_Directory $output_data_directory
+  #
+  # The input files are $RUN_STEM.$paramlist.dsk
+  # want to write cam.$CAMERA.$paramlist.hips2
+  #
+
+
+  # If the input movie is interlaced, we might want to insure that the
+  # number of fields is even?
+
+  #If $file_is_rv
+  #  Then "Assign inframes floor(0.5+$desired_input_fields/2)"
+  #  Else "Assign inframes $desired_input_fields"
+  # if we rounded up to get an integral number of frames
+  # after an odd number of fields requested, round up
+  # so they match
+  #If $file_is_rv
+  #  "Assign desired_input_fields 2*$inframes"
+
+
+  If $SAVE_AS_JPEG
+    Then "Set out_suffix jpg   Filetype jpeg Jpeg_Init"
+    Else "Set out_suffix hips2 Filetype hips2"
+
+  Get_Output_Filename $h $1
+
+  Tell_If "Write_File_Header $output_file $movie_fields"
+#advise "Write_File_Header $output_file $movie_fields"
+  Write_File_Header $output_file $movie_fields
+
+  Mul_Var h 0.5
+  while $h>=$min_height
+
+Set frame_index $start
+#Set field_index $start		# bug but here for compatibility
+Assign field_index 2*$frame_index
+
+#repeat $movie_frames
+repeat $desired_input_fields	# is this right for interlaced frames???
+				# probably NOT!
+  Tell_If "Processing frame $frame_index of file $input_file"
+
+#  If $file_is_rtv
+#    Then	"Get_Field input_frame $input_file $field_index"
+#    Else	"File_Seek $input_file $frame_index \
+#		 Get_Next input_frame $input_file"
+
+  File_Seek $input_file $frame_index
+  Get_Next input_frame $input_file
+  Do_Component $1 $camera_index
+  Tell_If "frame $frame_index processed"
+  end
+
+# do we need to do this if we have processed all the frames???
+
+# BUG need to do this in a more filetype-independent way...
+#If !$file_is_rtv "advise 'calling Close_Hips_Movie $input_file fileio info $input_file quit' Close_Hips_Movie $input_file"
+
+If $remote_rawvol_server "Close_Remote_Movie $input_file"
+
+os get_time finish_time quit
+
+Assign delta_time $finish_time-$start_time
+Assign secs_per_field $delta_time/$movie_fields
+
+# might change to Tell_If...
+advise "Finished subsampling file $input_file    $secs_per_field avg secs/frame"
+
+.
+# end Process_Camera
+
+# The default situation is a video field, 646x243 (or 640x248)
+# and, by default, we use as much of the image as we can,
+# which here means a rectangle 512x256
+
+Define Set_Default_Crop 0
+Set crop_width	512
+Set crop_height	256
+Assign crop_x0	(640-512)/2
+Assign crop_y0	0
+.
+
+# We want to process buffers that have sizes that are powers of 2,
+# so we can use the FFT.  If the image is a little larger, we round
+# down and crop.  If it is just a little smaller, then we round up
+# and fill...  For the moment, we are going to hack this to work
+# with the Flea3 512 rows x 640 colums
+
+Define Set_Custom_Crop 0
+Set crop_width 512
+Set crop_height 512
+Assign crop_x0	(640-512)/2
+Assign crop_y0	0
+.
+
+Define Get_Crop_Params 0
+Set cropfile ${CROPSTEM}.$CAMERA
+Print_If cropfile
+If "exists('$cropfile')"
+  Then "< $cropfile"
+  Else "advise 'cropfile $cropfile does not exist, using default values' Set_Default_Crop"
+Set_Destination_Height
+.
+
+Define Set_Destination_Height 0
+Print_If interlaced
+If $interlaced
+  Then "Assign dest_height min($crop_height,$in_height/2)"
+  Else "Assign dest_height min($crop_height,$in_height)"
+Print_If dest_height
+.
+
+Stop_File procfile.mac
+

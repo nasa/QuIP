@@ -11,27 +11,27 @@
 #include "item_type.h"
 
 // BUG not thread-safe
-Viewer *curr_vp=NO_VIEWER;
+Viewer *curr_vp=NULL;
 
 static int siz_done=0;
 
 //ITEM_INTERFACE_DECLARATIONS(Viewer,vwr)
 
-static IOS_Item_Type *vwr_itp=NO_IOS_ITEM_TYPE;
+static IOS_Item_Type *vwr_itp=NULL;
 
 // This is almost all of them!?
 #ifdef BUILD_FOR_OBJC
 
-IOS_ITEM_INIT_FUNC(Viewer,vwr)
+IOS_ITEM_INIT_FUNC(Viewer,vwr,0)
 
 #else /* ! BUILD_FOR_OBJC */
 
 // override init func to call declare_canvas_events
 // For IOS, this is done in initClass
 
-void init_vwrs(SINGLE_QSP_ARG_DECL)
+void _init_vwrs(SINGLE_QSP_ARG_DECL)
 {
-	vwr_itp = new_item_type(QSP_ARG  "Viewer", DEFAULT_CONTAINER_TYPE);
+	vwr_itp = new_item_type("Viewer", DEFAULT_CONTAINER_TYPE);
 	declare_canvas_events(SINGLE_QSP_ARG);
 }
 
@@ -45,7 +45,7 @@ IOS_ITEM_LIST_FUNC(Viewer,vwr)
 IOS_ITEM_DEL_FUNC(Viewer,vwr)
 
 
-static IOS_Item_Type *canvas_event_itp=NO_IOS_ITEM_TYPE;
+static IOS_Item_Type *canvas_event_itp=NULL;
 IOS_ITEM_INIT_FUNC(Canvas_Event,canvas_event,0)
 IOS_ITEM_NEW_FUNC(Canvas_Event,canvas_event)
 IOS_ITEM_CHECK_FUNC(Canvas_Event,canvas_event)
@@ -145,30 +145,18 @@ static void rls_vw_lists(Viewer *vp)
 {
 	rls_list(vp->vw_image_list);
 	rls_list(vp->vw_draglist);
-	if( vp->vw_drawlist != NO_LIST )
+	if( vp->vw_drawlist != NULL )
 		rls_list(vp->vw_drawlist);
 }
 
-void zap_image_list(Viewer *vp)
-{
-	Node *np,*np2;
-
-	np = vp->vw_image_list->l_head;
-	while(np!=NO_NODE){
-		np2=np->n_next;
-		rls_node(np);
-		np=np2;
-	}
-	vp->vw_image_list->l_head=vp->vw_image_list->l_tail=NO_NODE;
-}
 #endif /* ! BUILD_FOR_OBJC */
 
 // We would like to be able to select a drawable (pixmap or viewer)
 // rather than just a viewer...
 
-void select_viewer(QSP_ARG_DECL  Viewer *vp)
+void _select_viewer(QSP_ARG_DECL  Viewer *vp)
 {
-	if( vp == NO_VIEWER ) return;
+	if( vp == NULL ) return;
 
 
 	curr_vp = vp;		// BUG should phase out curr_vp...
@@ -176,7 +164,7 @@ void select_viewer(QSP_ARG_DECL  Viewer *vp)
 #ifdef HAVE_X11
     
 	/* when creating the viewer this hasn't been done yet... */
-	if( VW_CMAP_OBJ(vp) != NO_OBJ ){
+	if( VW_CMAP_OBJ(vp) != NULL ){
 		select_cmap_display( VW_DPYABLE(vp) );
 		set_colormap(VW_CMAP_OBJ(vp));
 	} else {
@@ -186,47 +174,47 @@ advise(ERROR_STRING);
 #endif /* HAVE_X11 */
 
 #ifndef BUILD_FOR_OBJC
-	if( VW_LINTBL_OBJ(vp) != NO_OBJ )
+	if( VW_LINTBL_OBJ(vp) != NULL )
 		set_lintbl(QSP_ARG  VW_LINTBL_OBJ(vp));
 #endif /* ! BUILD_FOR_OBJC */
 }
 
-void release_image(QSP_ARG_DECL  Data_Obj *dp)
+void _release_image(QSP_ARG_DECL  Data_Obj *dp)
 {
 	dp->dt_refcount --;
 //sprintf(ERROR_STRING,"release_image %s:  refcount = %d",OBJ_NAME(dp),dp->dt_refcount);
 //advise(ERROR_STRING);
 	if( dp->dt_refcount <= 0 /* && IS_ZOMBIE(dp) */ )
-		delvec(QSP_ARG  dp);
+		delvec(dp);
 }
 
-void delete_viewer(QSP_ARG_DECL  Viewer *vp)
+void _delete_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	zap_viewer(vp);		/* window sys specific, no calls to givbuf... */
-	zap_image_list(vp);	/* release nodes of image_list */
 #ifndef BUILD_FOR_OBJC
+	rls_list_nodes(vp->vw_image_list);	// necessary???
 	rls_vw_lists(vp);	/* release list heads */
 #endif /* BUILD_FOR_OBJC */
 
-	if( VW_OBJ(vp) != NO_OBJ )
-		release_image(QSP_ARG  VW_OBJ(vp) );
+	if( VW_OBJ(vp) != NULL )
+		release_image(VW_OBJ(vp) );
 #ifndef BUILD_FOR_OBJC
-	if( VW_CMAP_OBJ(vp) != NO_OBJ )
-		release_image(QSP_ARG  VW_CMAP_OBJ(vp));
+	if( VW_CMAP_OBJ(vp) != NULL )
+		release_image(VW_CMAP_OBJ(vp));
 //}
 	/* BUG the linearization table is owned by the display, not the viewer */
 	/*
-	if( VW_LINTBL_OBJ(vp) != NO_OBJ )
+	if( VW_LINTBL_OBJ(vp) != NULL )
 		release_image(QSP_ARG  VW_LINTBL_OBJ(vp));
 	*/
 
 #endif /* ! BUILD_FOR_OBJC */
 
-	if( VW_LABEL(vp) != VW_NAME(vp) )
+	if( VW_LABEL(vp) != NULL )
 		rls_str((char *)VW_LABEL(vp));
-	del_vwr(QSP_ARG  vp);
-	rls_str((char *)VW_NAME(vp));
-	select_viewer(QSP_ARG  NO_VIEWER);
+
+	del_vwr(vp);	// releases the name
+	select_viewer(NULL);
 }
 
 // For ios viewers, see genwin.c
@@ -257,7 +245,7 @@ static double get_vw_posn(QSP_ARG_DECL  IOS_Item *ip, int index )
 		case 1: d = VW_Y_REQUESTED(vp); break;
 #ifdef CAUTIOUS
 		default:
-			ERROR1("CAUTIOUS:  get_vw_posn:  bad index!?");
+			error1("CAUTIOUS:  get_vw_posn:  bad index!?");
 			break;
 #endif // CAUTIOUS
 	}
@@ -273,7 +261,7 @@ static IOS_Position_Functions view_pf={
 	get_vw_posn
 };
 
-Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
+Viewer *_viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 {
 	Viewer *vp;
 #ifdef HAVE_X11
@@ -286,23 +274,23 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 	"Dimensions for viewer %s (%d,%d) must be positive",
 			name,dx,dy);
 		WARN(ERROR_STRING);
-		return(NO_VIEWER);
+		return(NULL);
 	}
 
-	vp=new_vwr(QSP_ARG  name);
-	if( vp == NO_VIEWER ) return(vp);
+	vp=new_vwr(name);
+	if( vp == NULL ) return(vp);
 
 	/* this might be better done in a global init routine... */
 	if( !siz_done ){
 		/* Can we handle mixed Item_Types and IOS_Item_Types??? */
-		add_ios_sizable(QSP_ARG  vwr_itp,&view_sf, NULL );
+		add_ios_sizable(vwr_itp,&view_sf, NULL );
 #ifndef BUILD_FOR_OBJC
-		add_positionable(QSP_ARG  vwr_itp,&view_pf,NULL );
+		add_positionable(vwr_itp,&view_pf,NULL );
 #endif // BUILD_FOR_OBJC
 		siz_done=1;
 	}
 
-	SET_VW_LABEL(vp, VW_NAME(vp));		/* default label */
+	SET_VW_LABEL(vp, NULL);		/* use name if null */
 	SET_VW_TIME(vp, (time_t) 0 );
 
 	SET_VW_WIDTH(vp,dx);
@@ -316,7 +304,7 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 	/* should adopt a consistent policy re initializing these lists!? */
 	SET_VW_IMAGE_LIST(vp, new_list());
 	SET_VW_DRAG_LIST(vp, new_list());
-	SET_VW_DRAW_LIST(vp, NO_IOS_LIST);		/* BUG should be in view_xlib.c */
+	SET_VW_DRAW_LIST(vp, NULL);		/* BUG should be in view_xlib.c */
 
 #ifdef HAVE_X11
 	vp->vw_ip = (XImage *) NULL;
@@ -342,13 +330,13 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 	 */
 #ifdef HAVE_X11
 	window_sys_init(SINGLE_QSP_ARG);/* make sure that the_dop is not NULL */
-	set_viewer_display(vp);		/* sets vw_dop... */
+	set_viewer_display(QSP_ARG  vp);		/* sets vw_dop... */
 	cmap_setup(vp);		/* refers to vw_dop, but that's not set until later? */
 
 	install_default_lintbl(QSP_ARG  VW_DPYABLE(vp) );
 	sprintf(str,"colormap.%s",name);
 
-	VW_CMAP_OBJ(vp) = new_colormap(QSP_ARG  str);
+	VW_CMAP_OBJ(vp) = new_colormap(str);
 
 	/* new_colormap() used to call set_colormap(),
 	 * but that generated a warning because the window
@@ -365,28 +353,27 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 	/* do window system specific stuff */
 
 	if( flags & VIEW_ADJUSTER )
-		stat=make_2d_adjuster(QSP_ARG  vp,dx,dy);
+		stat=make_2d_adjuster(vp,dx,dy);
 	else if( flags & VIEW_DRAGSCAPE )
-		stat=make_dragscape(QSP_ARG  vp,dx,dy);
+		stat=make_dragscape(vp,dx,dy);
 	else if( flags & VIEW_MOUSESCAPE )
-		stat=make_mousescape(QSP_ARG  vp,dx,dy);
+		stat=make_mousescape(vp,dx,dy);
 	else if( flags & (VIEW_BUTTON_ARENA|VIEW_PLOTTER) ){
-		stat=make_button_arena(QSP_ARG  vp,dx,dy);
+		stat=make_button_arena(vp,dx,dy);
 	}
 #ifdef SGI_GL
 	else if( flags & VIEW_GL )
-		stat=make_gl_window(QSP_ARG  vp,dx,dy);
+		stat=make_gl_window(vp,dx,dy);
 #endif /* SGI_GL */
 	else
-		stat=make_viewer(QSP_ARG  vp,dx,dy);
+		stat=make_viewer(vp,dx,dy);
 
 	if( stat < 0 ){		/* probably can't open DISPLAY */
 #ifndef BUILD_FOR_OBJC
 		rls_vw_lists(vp);
 #endif /* BUILD_FOR_OBJC */
-		del_vwr(QSP_ARG  vp);
-		rls_str((char *)VW_NAME(vp));
-		return(NO_VIEWER);
+		del_vwr(vp);
+		return(NULL);
 	}
 
 	// in ios, these properties are part of the associated Gen_Win,
@@ -402,9 +389,9 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 #endif /* BUILD_FOR_IOS */
 
 
-	SET_VW_DEPTH(vp, display_depth(SINGLE_QSP_ARG) );
+	SET_VW_DEPTH(vp, display_depth() );
 
-	SET_VW_OBJ(vp, NO_OBJ);
+	SET_VW_OBJ(vp, NULL);
 
 #ifdef HAVE_OPENGL
 	SET_VW_OGL_CTX(vp,NULL);
@@ -412,27 +399,27 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 
 	SET_GW_TYPE( VW_GW(vp), GW_VIEWER );
 
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 
 	return(vp);
 } // end viewer_init
 
 
-IOS_Node *first_viewer_node(SINGLE_QSP_ARG_DECL)
+IOS_Node *_first_viewer_node(SINGLE_QSP_ARG_DECL)
 {
 	IOS_List *lp;
 
-	lp=ios_item_list(QSP_ARG  vwr_itp);
-	if( lp==NO_IOS_LIST ) return(NO_IOS_NODE);
+	lp=ios_item_list(vwr_itp);
+	if( lp==NULL ) return(NULL);
 	else return(IOS_LIST_HEAD(lp));
 }
 
-IOS_List *viewer_list(SINGLE_QSP_ARG_DECL)
+IOS_List *_viewer_list(SINGLE_QSP_ARG_DECL)
 {
-	return( ios_item_list(QSP_ARG  vwr_itp) );
+	return( ios_item_list(vwr_itp) );
 }
 
-void info_viewer(QSP_ARG_DECL  Viewer *vp)
+void _info_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	const char *vtyp;
 
@@ -446,7 +433,7 @@ void info_viewer(QSP_ARG_DECL  Viewer *vp)
 		VW_HEIGHT(vp),VW_WIDTH(vp),VW_X(vp),VW_Y(vp));
 	prt_msg(msg_str);
 
-	if( VW_OBJ(vp) != NO_OBJ ){
+	if( VW_OBJ(vp) != NULL ){
 		sprintf(msg_str,
 			"\tassociated data object:  %s",OBJ_NAME(VW_OBJ(vp)));
 		prt_msg(msg_str);
@@ -457,14 +444,14 @@ void info_viewer(QSP_ARG_DECL  Viewer *vp)
 		prt_msg("\tSimulating LUT color mapping");
 		sprintf(msg_str,"\t\tcolormap object:  %s",OBJ_NAME(VW_CMAP_OBJ(vp)));
 		prt_msg(msg_str);
-		if( VW_LINTBL_OBJ(vp) != NO_OBJ ){
+		if( VW_LINTBL_OBJ(vp) != NULL ){
 			sprintf(msg_str,"\t\tlinearization table object:  %s",OBJ_NAME(VW_LINTBL_OBJ(vp)));
 			prt_msg(msg_str);
 		}
 	}
 #endif /* HAVE_X11 */
 
-	extra_viewer_info(QSP_ARG  vp);
+	extra_viewer_info(vp);
 }
 
 /* genwin support */
@@ -480,9 +467,9 @@ static void genwin_viewer_show(QSP_ARG_DECL  const char *s)
 {
 	Viewer *vp;
 
-	vp=GET_VWR(s);
-	if( vp == NO_VIEWER ) return;
-	show_viewer(QSP_ARG  vp);
+	vp=get_vwr(s);
+	if( vp == NULL ) return;
+	show_viewer(vp);
 	return;
 }
 
@@ -490,9 +477,9 @@ static void genwin_viewer_unshow(QSP_ARG_DECL  const char *s)
 {
 	Viewer *vp;
 
-	vp=GET_VWR(s);
-	if( vp == NO_VIEWER ) return;
-	unshow_viewer(QSP_ARG  vp);
+	vp=get_vwr(s);
+	if( vp == NULL ) return;
+	unshow_viewer(vp);
 	return;
 }
 
@@ -500,8 +487,8 @@ static void genwin_viewer_posn(QSP_ARG_DECL  const char *s, int x, int y)
 {
 	Viewer *vp;
 
-	vp=GET_VWR(s);
-	if( vp == NO_VIEWER ) return;
+	vp=get_vwr(s);
+	if( vp == NULL ) return;
 	posn_viewer(vp, x, y);
 	return;
 }
@@ -510,9 +497,9 @@ static void genwin_viewer_delete(QSP_ARG_DECL  const char *s)
 {
 	Viewer *vp;
 
-	vp=GET_VWR(s);
-	if( vp == NO_VIEWER ) return;
-	delete_viewer(QSP_ARG  vp);
+	vp=get_vwr(s);
+	if( vp == NULL ) return;
+	delete_viewer(vp);
 	return;
 }
 
@@ -524,18 +511,18 @@ static Genwin_Functions gwfp={
 };
 #endif /* ! BUILD_FOR_OBJC */
 
-void init_viewer_genwin(SINGLE_QSP_ARG_DECL)
+void _init_viewer_genwin(SINGLE_QSP_ARG_DECL)
 {
-	if( vwr_itp == NO_IOS_ITEM_TYPE ) init_vwrs(SINGLE_QSP_ARG);
+	if( vwr_itp == NULL ) init_vwrs();
 #ifndef BUILD_FOR_OBJC
-	add_genwin(QSP_ARG  vwr_itp, &gwfp, NULL);
+	add_genwin(vwr_itp, &gwfp, NULL);
 #endif /* ! BUILD_FOR_OBJC */
 	return;
 }
 
 #define DECLARE_CANVAS_EVENT(name,code)			\
 							\
-	cep = new_canvas_event(QSP_ARG  #name);		\
+	cep = new_canvas_event(#name);			\
 	SET_CE_CODE(cep,code);
 
 void declare_canvas_events(SINGLE_QSP_ARG_DECL)

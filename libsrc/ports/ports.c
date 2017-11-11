@@ -17,13 +17,12 @@ ITEM_INTERFACE_DECLARATIONS(Port,port,0)
 void delport(QSP_ARG_DECL  Port *mpp)
 {
 #ifdef CAUTIOUS
-	if( mpp==NO_PORT ) {
-		ERROR1("delport passed NULL");
+	if( mpp==NULL ) {
+		error1("delport passed NULL");
 		return; // NOTREACHED - silence analyzer
 	}
 #endif /* CAUTIOUS */
-	del_item(QSP_ARG  port_itp,mpp);
-	rls_str((char *)mpp->mp_name);
+	del_item(port_itp,mpp);
 }
 
 void portinfo(QSP_ARG_DECL  Port *mpp)
@@ -62,7 +61,7 @@ void init_my_ports(SINGLE_QSP_ARG_DECL)
 	if( ports_inited ) return;
 
 #ifdef QUIP_DEBUG
-	debug_ports = add_debug_module(QSP_ARG  "ports");
+	debug_ports = add_debug_module("ports");
 #endif /* QUIP_DEBUG */
 
 	init_pdt_tbl();

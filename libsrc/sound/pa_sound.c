@@ -49,7 +49,7 @@ int set_playback_nchan(QSP_ARG_DECL  int channels)
 #ifdef FOOBAR
 	return(0);
 #else // ! FOOBAR
-	WARN("set output n_channels not implemented yet for portaudio!?");
+	warn("set output n_channels not implemented yet for portaudio!?");
 	return -1;
 #endif // ! FOOBAR
 }
@@ -79,16 +79,18 @@ int set_playback_nchan(QSP_ARG_DECL  int channels)
 	}							\
 }
 
-static void copy_sound_data(void *dest, Sound_Data *sdp, int frames_to_copy, int frames_to_zero )
+#define copy_sound_data(dest,sdp,frames_to_copy,frames_to_zero ) _copy_sound_data(QSP_ARG  dest,sdp,frames_to_copy,frames_to_zero )
+
+static void _copy_sound_data(QSP_ARG_DECL  void *dest, Sound_Data *sdp, int frames_to_copy, int frames_to_zero )
 {
 	switch( PREC_CODE( sdp->src_prec_p ) ){
 		case PREC_BY:  COPY_SOUND(char,0) break;
 		case PREC_IN:  COPY_SOUND(short,0) break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 				"copy_sound_data:  unsupported sound precision %s!?",
 					PREC_NAME(sdp->src_prec_p));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 }
@@ -110,12 +112,13 @@ static int play_dp_callback( const void *inputBuffer, void *outputBuffer,
 	int frames_to_copy;
 	int frames_to_zero;
 	int finished;
+	Query_Stack *qsp;
+
+	qsp = userData;
+
 	//(void) inputBuffer; /* Prevent unused variable warnings. */
 
-#ifdef CAUTIOUS
-	if( sdp->src_frames_to_go < 0 )
-		error1(DEFAULT_QSP_ARG  "CAUTIOUS:  play_dp_callback:  source frames_to_go less than zero!?");
-#endif // CAUTIOUS
+	assert( sdp->src_frames_to_go >= 0 );
 	
 	if( sdp->src_frames_to_go < frames_per_buffer ) {
 		frames_to_copy = sdp->src_frames_to_go;
@@ -144,7 +147,7 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 	if( OBJ_MACH_PREC(dp) != PREC_IN ){
 		sprintf(ERROR_STRING,"Object %s has precision %s, should be %s for sounds",OBJ_NAME(dp),
 			PREC_NAME(OBJ_MACH_PREC_PTR(dp)),NAME_FOR_PREC_CODE(PREC_IN));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 #endif // FOOBAR
@@ -173,7 +176,7 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 
 	outputParameters.device = Pa_GetDefaultOutputDevice(); /* Default output device. */
 	if (outputParameters.device == paNoDevice) {
-		WARN("No default output audio device!?");
+		warn("No default output audio device!?");
 		return;
 	}
 	outputParameters.channelCount = 2;			/* Stereo output. */
@@ -187,7 +190,7 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 		default:
 			sprintf(ERROR_STRING,"play_sound:  unhandled obj precision %s!?",
 				PREC_NAME(OBJ_PREC_PTR(dp)));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			outputParameters.sampleFormat = paInt32 ;
 			break;
 	}
@@ -203,13 +206,13 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 		256,       /* Frames per buffer. */
 		paClipOff, /* We won't output out of range samples so don't bother clipping them. */
 		play_dp_callback,
-		the_sdp );
+		THIS_QSP );
 
 	streamOpened = Pa_GetStreamTime( playback_stream ); /* Time in seconds when stream was opened (approx). */
 
 	err = Pa_StartStream( playback_stream );
 	if( err != paNoError ){
-		WARN("Error starting playback stream!?");
+		warn("Error starting playback stream!?");
 		goto close_it;
 	}
 
@@ -221,13 +224,13 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 	}
 
 	if( err < 0 ){
-		WARN("Error occurred during sound playback!?");
+		warn("Error occurred during sound playback!?");
 	}
 
 close_it:
 	err = Pa_CloseStream( playback_stream );
 	if( err != paNoError ){
-		WARN("Error closing playback stream!?");
+		warn("Error closing playback stream!?");
 	}
 }
 
@@ -244,10 +247,10 @@ void set_sound_volume(QSP_ARG_DECL  int g)
 	ioctl(mfd, SOUND_MIXER_WRITE_VOLUME, &g);
 	ioctl(mfd, SOUND_MIXER_WRITE_PCM, &pcm_gain);
 #else
-	WARN("set_sound_volume:  don't know how to do this!?");
+	warn("set_sound_volume:  don't know how to do this!?");
 #endif
 #else // ! FOOBAR
-	WARN("set_sound_volume not implemented yet for portaudio!?");
+	warn("set_sound_volume not implemented yet for portaudio!?");
 #endif // ! FOOBAR
 }
 
@@ -262,7 +265,7 @@ void set_samp_freq(QSP_ARG_DECL  unsigned int req_rate)
 static void portaudio_playback_init(SINGLE_QSP_ARG_DECL)
 {
 	if( Pa_Initialize() != paNoError )
-		WARN("Error initializing portaudio for playback!?");
+		warn("Error initializing portaudio for playback!?");
 }
 
 void audio_init(QSP_ARG_DECL  int mode)
@@ -272,7 +275,7 @@ void audio_init(QSP_ARG_DECL  int mode)
 
 
 	if( ! ts_class_inited ){
-		add_tsable(QSP_ARG  dobj_itp,&dobj_tsf,(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
+		add_tsable(dobj_itp,&dobj_tsf,(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
 		ts_class_inited++;
 	}
 
@@ -289,25 +292,19 @@ void audio_init(QSP_ARG_DECL  int mode)
 		/* should we reset the interface??? */
 	}
 
-	if(mode == AUDIO_RECORD)
-	{
+	if(mode == AUDIO_RECORD) {
 		/* what do we need to do here??? */
-		WARN("audio_init:  don't know how to record!?");
+		warn("audio_init:  don't know how to record!?");
 
 	} else if( mode == AUDIO_PLAY ) {
 		/* open the device for playback */
 		portaudio_playback_init(SINGLE_QSP_ARG);
-	} else if( mode == AUDIO_UNINITED ){	/* de-initialize */
+	} else {
+		assert( mode == AUDIO_UNINITED );
+		/* de-initialize */
 		audio_state = mode;
 		return;
 	}
-#ifdef CAUTIOUS
-	else {
-		WARN("unexpected audio mode requested!?");
-	}
-#endif	/* CAUTIOUS */
-
-
 
 	channels = nchannels;
 
@@ -329,9 +326,9 @@ void audio_init(QSP_ARG_DECL  int mode)
 void halt_play_stream(SINGLE_QSP_ARG_DECL)
 {
 	if( halting )
-		WARN("halt_play_stream:  already halting!?");
+		warn("halt_play_stream:  already halting!?");
 	if( !streaming )
-		WARN("halt_play_stream:  not streaming!?");
+		warn("halt_play_stream:  not streaming!?");
 	halting=1;
 
 	/* wait for disk_reader & audio_writer to finish - should call pthread_join (BUG)! */
@@ -342,17 +339,17 @@ void halt_play_stream(SINGLE_QSP_ARG_DECL)
 
 void play_stream(QSP_ARG_DECL  int fd)
 {
-	WARN("unimplemented for portaudio:  play_stream");
+	warn("unimplemented for portaudio:  play_stream");
 }
 
 void set_stereo_output(QSP_ARG_DECL  int is_stereo)
 {
-	WARN("unimplemented for portaudio:  set_stereo_output");
+	warn("unimplemented for portaudio:  set_stereo_output");
 }
 
 void pause_sound(SINGLE_QSP_ARG_DECL)
 {
-	WARN("unimplemented for portaudio:  pause_sound");
+	warn("unimplemented for portaudio:  pause_sound");
 }
 
 #endif /* HAVE_PORTAUDIO */

@@ -257,10 +257,10 @@ String_Buf *get_url_contents( QSP_ARG_DECL  const char *url )
 
 	sbp = new_stringbuf();
 
-	if( sbp->sb_size <= data.length )
+	if( sb_size(sbp) <= data.length )
 		enlarge_buffer(sbp,1+data.length);
-	memcpy(sbp->sb_buf,data.bytes,data.length);
-	sbp->sb_buf[data.length] = 0;
+	memcpy(sb_buffer(sbp),data.bytes,data.length);
+	*(sb_buffer(sbp) + data.length) = 0;
 	return sbp;
 }
 

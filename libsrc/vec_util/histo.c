@@ -7,12 +7,13 @@
 
 static void zero_dimension(Data_Obj *dp,float *base,int dim,long index);
 
+// it would be convenient to support double destination also?
 
-#define HISTOGRAM(type)							\
+#define HISTOGRAM(src_type)						\
 									\
 	{								\
-	type *frm_base, *row_base, *p_ptr;				\
-	frm_base = (type *) OBJ_DATA_PTR(data_dp);			\
+	src_type *frm_base, *row_base, *p_ptr;				\
+	frm_base = (src_type *) OBJ_DATA_PTR(data_dp);			\
 	n_bins = OBJ_COLS(histo_dp);					\
 	histbuf = (float *) OBJ_DATA_PTR(histo_dp);			\
 									\
@@ -83,7 +84,8 @@ void compute_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,double bin
 		case PREC_UDI: HISTOGRAM(u_long) break;
 		case PREC_DI: HISTOGRAM(long) break;
 		default:
-			NWARN("unhandled source precision in histogram");
+			sprintf(ERROR_STRING,"Sorry, precision %s not allowed for histogram source",PREC_NAME(OBJ_PREC_PTR(data_dp)));
+			WARN(ERROR_STRING);
 			return;
 	}
 
@@ -126,27 +128,27 @@ void multivariate_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,float
 	INSIST_RAM_OBJ(data_dp,compute_histo);
 
 	if( OBJ_PREC(histo_dp) != PREC_SP ){
-		NWARN("2D histogram precision must be float");
+		warn("2D histogram precision must be float");
 		return;
 	}
 	if( OBJ_COMPS(histo_dp) != 1 ){
-		NWARN("2D histogram data must be real");
+		warn("2D histogram data must be real");
 		return;
 	}
 	if( OBJ_PXL_INC(histo_dp) != 1 ){
-		NWARN("2D histogram data must be contiguous");
+		warn("2D histogram data must be contiguous");
 		return;
 	}
 
 	n_dimensions = OBJ_COMPS(data_dp);
 
 	if( n_dimensions > MAX_DIMENSIONS ){
-		NWARN("Too many 2D histogram dimensions");
+		warn("Too many 2D histogram dimensions");
 		return;
 	}
 
 	if( OBJ_PREC(data_dp) != PREC_SP ){
-		NWARN("2D data precision must be float");
+		warn("2D data precision must be float");
 		return;
 	}
 

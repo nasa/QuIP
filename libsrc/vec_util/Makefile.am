@@ -3,7 +3,7 @@ all:	libvec_util.a
 
 noinst_LIBRARIES = libvec_util.a
 
-libvec_util_a_CPPFLAGS = -I$(top_srcdir)/include -DNOWRAP -Wall -Wmissing-prototypes
+libvec_util_a_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -DNOWRAP -Wall -Wmissing-prototypes
 
 #				bessel.c	\
 #				oddeven.c	\

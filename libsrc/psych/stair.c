@@ -5,6 +5,8 @@
 #include "stc.h"
 #include "rn.h"
 #include "item_type.h"
+#include "list.h"
+#include "getbuf.h"
 
 /* If CATCH_SIGS is defined, then we can use ^C to interrupt trials...
  *
@@ -51,16 +53,15 @@ static SCRAMBLE_TYPE *order=NULL;	/* permutation buffer */
 
 static int nstairs=0;
 
-#define NO_STAIR_PTR	((Staircase **)NULL)
-static Staircase **stair_tbl=NO_STAIR_PTR;
+static Staircase **stair_tbl=NULL;
 
 ITEM_INTERFACE_DECLARATIONS(Trial_Class,trial_class,0)
 ITEM_INTERFACE_DECLARATIONS(Staircase,stc,0)
 
 static List *stair_list(SINGLE_QSP_ARG_DECL)
 {
-	if( stc_itp==NO_ITEM_TYPE ) return(NO_LIST);
-	return(item_list(QSP_ARG  stc_itp) );
+	if( stc_itp==NULL ) return(NULL);
+	return(item_list(stc_itp) );
 }
 
 //static int nullstim(QSP_ARG_DECL  int c,int v,Staircase *stcp)
@@ -79,14 +80,14 @@ void new_exp(SINGLE_QSP_ARG_DECL)		/** discard old stairs */
 	nstairs=0;
 
 	lp = stair_list(SINGLE_QSP_ARG);
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 
 	/* Don't we have a routine to delete all staircases? */
-	np=lp->l_head;
-	while(np!=NO_NODE){
+	np=QLIST_HEAD(lp);
+	while(np!=NULL){
 		stcp = (Staircase *)np->n_data;
 		np=np->n_next;		/* must do this before freeing item! */
-		del_stc(QSP_ARG  stcp);
+		del_stc(stcp);
 		givbuf((void *)stcp->stc_name);
 	}
 }
@@ -195,16 +196,10 @@ void save_response(QSP_ARG_DECL  int rsp,Staircase *stc)
 		assert( incorrect_feedback_string != NULL );
 
 		if( rsp == STAIR_CRCT_RSP(stc) ){
-			chew_text(QSP_ARG correct_feedback_string,
-				FEEDBACK_FILENAME);
+			chew_text(correct_feedback_string, FEEDBACK_FILENAME);
 		}
-//#ifdef CAUTIOUS
-//		else if( incorrect_feedback_string == NULL )
-//			ERROR1("CAUTIOUS: save_response: correct_feedback_string is set, but incorrect_feedback string is not!?");
-//#endif /* CAUTIOUS */
 		else if( rsp != REDO && rsp != ABORT ){
-			chew_text(QSP_ARG incorrect_feedback_string,
-				FEEDBACK_FILENAME);
+			chew_text(incorrect_feedback_string, FEEDBACK_FILENAME);
 		}
 
 	}
@@ -279,17 +274,11 @@ int makestair( QSP_ARG_DECL  int st,	/* staircase type */
 	char str[64];
 	Staircase *stcp;
 
-//#ifdef CAUTIOUS
-//	if( sc < 0 ){
-//		WARN("CAUTIOUS:  negative class specification");
-//		return(-1);
-//	}
-//#endif /* CAUTIOUS */
 	assert( tcp != NULL );
 
 	sprintf(str,"staircase.%s.%d",CLASS_NAME(tcp),CLASS_N_STAIRS(tcp) );
-	stcp = new_stc(QSP_ARG  str);
-	if( stcp == NO_STAIR )
+	stcp = new_stc(str);
+	if( stcp == NULL )
 		return(-1);
 	stcp->stc_tcp = tcp;
 	stcp->stc_index = CLASS_N_STAIRS(tcp);
@@ -391,10 +380,10 @@ static void mk_stair_array(SINGLE_QSP_ARG_DECL)
 	Staircase **stcp;
 	int n;
 
-	if( stc_itp == NO_ITEM_TYPE )
-		init_stcs(SINGLE_QSP_ARG);
+	if( stc_itp == NULL )
+		init_stcs();
 
-	if( stair_tbl != NO_STAIR_PTR )
+	if( stair_tbl != NULL )
 		givbuf(stair_tbl);
 	if( order != NULL )
 		givbuf(order);
@@ -403,8 +392,8 @@ static void mk_stair_array(SINGLE_QSP_ARG_DECL)
 	n = eltcount(lp);
 	stcp = stair_tbl = (Staircase **)getbuf( n * sizeof(stcp) );
 	order = (SCRAMBLE_TYPE *) getbuf( n * sizeof(*order) );
-	np = lp->l_head;
-	while( np != NO_NODE ){
+	np = QLIST_HEAD(lp);
+	while( np != NULL ){
 		*stcp++ = (Staircase *)np->n_data;
 		np = np->n_next;
 	}
@@ -435,7 +424,7 @@ static void stepall(SINGLE_QSP_ARG_DECL)	/** step each stair in a random order *
 {
 	int i;
 
-if( nstairs==0 ) ERROR1("stepall:  no staircases!?");
+if( nstairs==0 ) error1("stepall:  no staircases!?");
 
 	permute(QSP_ARG  order,nstairs);
 	for(i=0;i<nstairs;i++){
@@ -518,7 +507,7 @@ void add_stair(QSP_ARG_DECL  int type,Trial_Class *tcp )
 
 void del_stair(QSP_ARG_DECL  Staircase *stcp)
 {
-	del_item(QSP_ARG  stc_itp,stcp);
+	del_item(stc_itp,stcp);
 	givbuf((void *)stcp->stc_name);
 }
 
@@ -528,15 +517,15 @@ COMMAND_FUNC( del_all_stairs )
 	Node *np;
 	Staircase *stcp;
 
-	if( stc_itp == NO_ITEM_TYPE ) return;	/* nothing to do */
+	if( stc_itp == NULL ) return;	/* nothing to do */
 
 advise("deleting all staircases");
 
 	lp=stair_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
-	np=lp->l_head;
-	while( np != NO_NODE ){
+	np=QLIST_HEAD(lp);
+	while( np != NULL ){
 		stcp = (Staircase *) np->n_data;
 		del_stair(QSP_ARG  stcp);
 		np=np->n_next;
@@ -551,17 +540,11 @@ Trial_Class *index_class(QSP_ARG_DECL  int index)
 	Trial_Class *tcp;
 	List *lp;
 
-	lp=item_list(QSP_ARG  trial_class_itp);
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
-//		WARN("CAUTIOUS:  index_class:  no classes defined");
-//		return(NO_CLASS);
-//	}
-//#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
+	lp=item_list(trial_class_itp);
+	assert( lp != NULL );
 
-	np=lp->l_head;
-	while(np!=NO_NODE){
+	np=QLIST_HEAD(lp);
+	while(np!=NULL){
 		tcp=(Trial_Class *)np->n_data;
 		if( CLASS_INDEX(tcp) == index ) return(tcp);
 		np=np->n_next;
@@ -570,7 +553,7 @@ Trial_Class *index_class(QSP_ARG_DECL  int index)
 		"index_class:  no class with index %d",index);
 	WARN(ERROR_STRING);
 
-	return(NO_CLASS);
+	return(NULL);
 }
 
 void del_class(QSP_ARG_DECL  Trial_Class *tcp)
@@ -580,8 +563,7 @@ void del_class(QSP_ARG_DECL  Trial_Class *tcp)
 	/* what is this data field? */
 	if( CLASS_CMD(tcp) != NULL ) rls_str(CLASS_CMD(tcp));
 
-	del_trial_class(QSP_ARG  tcp);
-	rls_str( CLASS_NAME(tcp) );
+	del_trial_class(tcp);
 }
 
 Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
@@ -590,24 +572,22 @@ Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 	List *lp;
 	int n;
 
-	if( trial_class_itp == NO_ITEM_TYPE )
-		init_trial_classs(SINGLE_QSP_ARG);
+	if( trial_class_itp == NULL )
+		init_trial_classs();
 
-//#ifdef CAUTIOUS
-//	if( trial_class_itp == NO_ITEM_TYPE )
-//		ERROR1("CAUTIOUS:  error creating class item type");
-//#endif /* CAUTIOUS */
-	assert( trial_class_itp != NO_ITEM_TYPE );
+	assert( trial_class_itp != NULL );
 
-	lp=item_list(QSP_ARG  trial_class_itp);
-	if( lp == NO_LIST ) n=0;
+	lp=item_list(trial_class_itp);
+	if( lp == NULL ) n=0;
 	else n=(int)eltcount(lp);
 
 	tcp = class_for(QSP_ARG  n);
 	return(tcp);
 }
 
-static void init_data_tbl(Data_Tbl *dtp)
+#define init_data_tbl(dtp) _init_data_tbl(QSP_ARG  dtp)
+
+static void _init_data_tbl(QSP_ARG_DECL  Data_Tbl *dtp)
 {
 	SET_DTBL_N(dtp,0);
 	if( _nvals > 0 ){
@@ -616,7 +596,7 @@ static void init_data_tbl(Data_Tbl *dtp)
 	} else {
 		SET_DTBL_SIZE(dtp,0);
 		SET_DTBL_DATA(dtp,NULL);
-		NWARN("init_data_tbl:  number of x-values is not set!?");
+		warn("init_data_tbl:  number of x-values is not set!?");
 	}
 }
 
@@ -628,20 +608,13 @@ Trial_Class *class_for( QSP_ARG_DECL  int class_index )
 	Trial_Class *tcp;
 
 	sprintf(newname,"class%d",class_index);
-	tcp = trial_class_of(QSP_ARG  newname);
-	if( tcp != NO_CLASS )
+	tcp = trial_class_of(newname);
+	if( tcp != NULL )
 		return(tcp);
 
-	tcp = new_trial_class(QSP_ARG  newname);
+	tcp = new_trial_class(newname);
 
-//#ifdef CAUTIOUS
-//	if( tcp == NO_CLASS ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  new_class:  error creating %s!?",newname);
-//		ERROR1(ERROR_STRING);
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
-	assert( tcp != NO_CLASS );
+	assert( tcp != NULL );
 
 	/* Now do the initial setup for the class structure */
 
@@ -667,9 +640,9 @@ static void clear_data(Trial_Class *tcp)	/* clear data table for this class */
 	}
 }
 
-List *class_list(SINGLE_QSP_ARG_DECL)
+List *_class_list(SINGLE_QSP_ARG_DECL)
 {
-	if( trial_class_itp == NO_ITEM_TYPE ) return(NO_LIST);
-	return( item_list(QSP_ARG  trial_class_itp) );
+	if( trial_class_itp == NULL ) return(NULL);
+	return( item_list(trial_class_itp) );
 }
 

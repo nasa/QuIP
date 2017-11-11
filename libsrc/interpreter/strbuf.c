@@ -1,5 +1,6 @@
 
 #include "quip_config.h"
+#include "quip_prot.h"
 
 /* utilities for manipulating strings of arbitrary length */
 
@@ -22,13 +23,13 @@ void enlarge_buffer(String_Buf *sbp,size_t size)
 
 	size += 32;	/* give us some headroom */
 
-//fprintf(stderr,"enlarge_buffer calling Getbuf\n");
 	newbuf = (char*) getbuf(size);
 	if( sbp->sb_size > 0 ){
 		/* copy old contents */
 		memcpy(newbuf,sbp->sb_buf,sbp->sb_size);
 		givbuf(sbp->sb_buf);
 	} else {
+		assert(sbp->sb_buf==NULL);
 		/* if this is a new buffer, initialize w/ null string.
 		 * This insures that cat_string will work to a null stringbuf.
 		 */
@@ -62,16 +63,29 @@ void cat_string(String_Buf *sbp,const char *str)
 {
 	u_int need;
 
-	if( (need=(int)(strlen(sbp->sb_buf)+strlen(str)+1)) > sbp->sb_size )
+	if( sbp->sb_buf == NULL ){
+		assert( sbp->sb_size == 0 );
+		need = (u_int) strlen(str)+1;
 		enlarge_buffer(sbp,need);
+	}
+
+	if( (need=(int)(strlen(sbp->sb_buf)+strlen(str)+1)) > sbp->sb_size ){
+		enlarge_buffer(sbp,need);
+	}
 	strcat(sbp->sb_buf,str);
 }
 
 void cat_string_n(String_Buf *sbp, const char *str, int n)
 {
 	u_int need;
-	if( (need=(int)(strlen(sbp->sb_buf)+n+1)) > sbp->sb_size )
+
+	if( SB_SIZE(sbp) == 0 )
+		enlarge_buffer(sbp,n+1);
+
+	if( (need=(int)(strlen(sbp->sb_buf)+n+1)) > sbp->sb_size ){
 		enlarge_buffer(sbp,need);
+	}
+
 	strncat(sbp->sb_buf,str,n);
 }
 
@@ -89,8 +103,27 @@ String_Buf *new_stringbuf(void)
 
 void rls_stringbuf(String_Buf *sbp)
 {
+	assert( sbp != NULL ); 
 	if( sbp->sb_buf != NULL )
 		givbuf(sbp->sb_buf);
 	givbuf(sbp);
+}
+
+inline char * sb_buffer(String_Buf *sbp)
+{
+	return sbp->sb_buf;
+}
+
+inline size_t sb_size(String_Buf *sbp)
+{
+	return SB_SIZE(sbp);
+}
+
+inline String_Buf *create_stringbuf(const char *str)
+{
+	String_Buf *sbp;
+	sbp = new_stringbuf();
+	copy_string(sbp,str);
+	return sbp;
 }
 

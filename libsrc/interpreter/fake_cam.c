@@ -18,83 +18,83 @@ IOS_ITEM_LIST_FUNC(Camera,camera)
 static COMMAND_FUNC( do_list_cams )
 {
 	prt_msg("A/V Capture Devices:");
-	list_cameras(SINGLE_QSP_ARG);
+	_list_cameras(QSP_ARG  tell_msgfile());
 }
 
 static COMMAND_FUNC( do_cam_info )
 {
 	Camera *cam;
 
-	cam = pick_camera(QSP_ARG  "");
+	cam = _pick_camera(QSP_ARG  "");
 	if( cam == NULL ) return;
 
-	WARN("do_cam_info:  not implemented!?");
+	warn("do_cam_info:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_get_cams )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("string table");
-	if( dp == NO_OBJ ) return;
+	dp = pick_obj("string table");
+	if( dp == NULL ) return;
 
-	WARN("do_get_cams:  not implemented!?");
+	warn("do_get_cams:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_mon_cam )
 {
 	Viewer *vp;
 
-	vp = PICK_VWR("");
-	if( vp == NO_VIEWER ) return;
+	vp = pick_vwr("");
+	if( vp == NULL ) return;
 
-	WARN("do_mon_cam:  not implemented!?");
+	warn("do_mon_cam:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_stop_mon )
 {
-	WARN("do_stop_mon:  not implemented!?");
+	warn("do_stop_mon:  not implemented!?");
 }
 
 
 static COMMAND_FUNC( do_chk_session )
 {
-	WARN("do_chk_session:  not implemented!?");
+	warn("do_chk_session:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_stop_session )
 {
-	WARN("do_stop_session:  not implemented!?");
+	warn("do_stop_session:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_pause_session )
 {
-	WARN("do_pause_session:  not implemented!?");
+	warn("do_pause_session:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_restart_session )
 {
-	WARN("do_restart_session:  not implemented!?");
+	warn("do_restart_session:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_start_session )
 {
 	Camera *cam;
 
-	cam = pick_camera(QSP_ARG  "");
+	cam = _pick_camera(QSP_ARG  "");
 	if( cam == NULL ) return;
 
-	WARN("do_start_session:  not implemented!?");
+	warn("do_start_session:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_grab_cam )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("target image object");
-	if( dp == NO_OBJ ) return;
+	dp = pick_obj("target image object");
+	if( dp == NULL ) return;
 
-	WARN("do_grab_cam:  not implemented!?");
+	warn("do_grab_cam:  not implemented!?");
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(camera_menu,s,f,h)
@@ -121,6 +121,6 @@ COMMAND_FUNC(do_cam_menu)
 		inited=1;
 	}
 
-	PUSH_MENU(camera);
+	CHECK_AND_PUSH_MENU(camera);
 }
 

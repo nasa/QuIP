@@ -16,13 +16,15 @@
 #endif
 
 #include "quip_prot.h"		/* verbose */
+#include "query_bits.h"		// LLEN - BUG
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
 #include "stc.h"
-#include "query.h"
+#include "getbuf.h"
+#include "list.h"
 
 
 /* printf/scanf format strings */
@@ -117,7 +119,7 @@ static void write_data_preamble(QSP_ARG_DECL  FILE *fp)
 
 	assert(xval_array != NULL);
 
-	nclasses = eltcount( class_list(SINGLE_QSP_ARG) );
+	nclasses = eltcount( class_list() );
 
 	fprintf(fp,topline,nclasses,_nvals);
 	for(i=0;i<_nvals;i++)
@@ -136,9 +138,9 @@ void write_exp_data(QSP_ARG_DECL  FILE *fp)	/* replaces routine formerly in stai
 	write_data_preamble(QSP_ARG  fp);
 	fputs(summline,fp);
 
-	lp = class_list(SINGLE_QSP_ARG);
-	np=lp->l_head;
-	while(np!=NO_NODE){
+	lp = class_list();
+	np=QLIST_HEAD(lp);
+	while(np!=NULL){
 		tcp=(Trial_Class *)np->n_data;
 		write_class_data(tcp,fp);
 		np=np->n_next;
@@ -154,16 +156,10 @@ static int read_class_summary(QSP_ARG_DECL  FILE *fp)
 	int j;
 
 	if( fscanf(fp,class_header,&index,&np) != 2 ){
-		WARN("error reading class header");
+		warn("error reading class header");
 		return(-1);
 	}
 	tcp=index_class(QSP_ARG  index);
-//#ifdef CAUTIOUS
-//	if( tcp == NO_CLASS ){
-//		WARN("CAUTIOUS:  missing class");
-//		return(-1);
-//	}
-//#endif
 	assert( tcp != NO_CLASS );
 
 	dtp = CLASS_DATA_TBL(tcp);
@@ -178,7 +174,7 @@ static int read_class_summary(QSP_ARG_DECL  FILE *fp)
 		short di,nt,nc;
 
 		if( fscanf(fp,pointline,&di,&nt,&nc) != 3 ){
-			WARN("error reading data line");
+			warn("error reading data line");
 			return(-1);
 		} else {
 			SET_DATUM_NTOTAL( DTBL_ENTRY(dtp,j), nt );
@@ -244,23 +240,23 @@ static int read_class_data(QSP_ARG_DECL  FILE *fp,int n_classes)
 	/* determine data format type */
 	/* fscanf(fp,"%s data\n",tstr); */
 	if( next_input_line(fp) < 0 ){
-		WARN("read_class_data:  premature eof on input file");
+		warn("read_class_data:  premature eof on input file");
 		return(-1);
 	}
 	if( sscanf(input_line,"%s data\n",tstr) != 1 ){
 		sprintf(ERROR_STRING,"read_class_data:  unexpected data description:  %s",tstr);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( !strcmp(tstr,"Summary") ){
-		if( verbose ) ADVISE("Reading data in summary format");
+		if( verbose ) advise("Reading data in summary format");
 		return( read_class_summaries(QSP_ARG  n_classes,fp) );
 	} else if( !strcmp(tstr,"Raw") ){
-		if( verbose ) ADVISE("Reading data in raw format");
+		if( verbose ) advise("Reading data in raw format");
 		return( rd_dribble(QSP_ARG  fp) );
 	} else {
 		sprintf(ERROR_STRING,"bizarre data format:  \"%s\"\n",tstr);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	/* NOTREACHED */
@@ -277,26 +273,26 @@ static void xform_xvals(SINGLE_QSP_ARG_DECL)
 	/*
 	tmpfilename=tmpnam(NULL);
 	if( tmpfilename == NULL ){
-		WARN("error creating temporary name, NOT transforming");
+		warn("error creating temporary name, NOT transforming");
 		return;
 	}
 	*/
 	strcpy(tmpfilename,"/tmp/dmdata_XXXXXX");
 	fd = mkstemp(tmpfilename);
 	if( fd < 0 ){
-		NWARN("xform_xvals:  unable to create temporary file");
+		warn("xform_xvals:  unable to create temporary file");
 		return;
 	}
 	if( close(fd) < 0 ){
 		perror("close");
 		sprintf(ERROR_STRING,"xform_xvals:  unable to close temp file %s",tmpfilename);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	sprintf(line,"dm %s > %s",dm_arg_str,tmpfilename);
 	fp = popen(line,"w");
 	if( !fp ){
-		NWARN("error opening dm pipe");
+		warn("error opening dm pipe");
 		return;
 	}
 	for(i=0;i<_nvals;i++)
@@ -312,10 +308,10 @@ again:
 		sprintf(ERROR_STRING,
 			"giving up after %d retries to read file %s",
 			MAX_RETRIES,tmpfilename);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
-	fp=try_open(DEFAULT_QSP_ARG  tmpfilename,"r");
+	fp=try_open(tmpfilename,"r");
 	if( !fp ) {
 		advise("retrying");
 		sleep(1);
@@ -325,7 +321,7 @@ again:
 
 	for(i=0;i<_nvals;i++)
 		if( fscanf(fp,"%f",&xval_array[i]) != 1 )
-			NWARN("error scanning transformed x value");
+			warn("error scanning transformed x value");
 	fclose(fp);
 
 	unlink(tmpfilename);
@@ -353,20 +349,20 @@ static int read_data_preamble(QSP_ARG_DECL  FILE *fp)
 		 * line and can skip this step.
 		 */
 		if( next_input_line(fp) < 0 ){
-			WARN("read_data_preamble:  no top line");
+			warn("read_data_preamble:  no top line");
 			return(-1);
 		}
 	}
 
 	if( sscanf(input_line,topline,&n,&_nvals) != 2 ){
 		sprintf(ERROR_STRING,"read_data_preamble:  bad top line:  %s",input_line);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	if( _nvals < 2 || _nvals > MAX_X_VALUES ){
 		sprintf(ERROR_STRING,"read_data_preamble:  ridiculous number of x values (%d)!?",_nvals);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -384,7 +380,7 @@ static int read_data_preamble(QSP_ARG_DECL  FILE *fp)
 	 */
 	for(i=0;i<_nvals;i++)
 		if( fscanf(fp,xvline,&xval_array[i]) != 1 ){
-			WARN("error reading an x value");
+			warn("error reading an x value");
 			return(-1);
 		}
 
@@ -402,7 +398,7 @@ int read_exp_data(QSP_ARG_DECL  FILE *fp)
 	have_input_line=0;
 
 	if( (n_classes=read_data_preamble(QSP_ARG  fp)) < 0 ){
-		WARN("Error in data file preamble!?");
+		warn("Error in data file preamble!?");
 		return -1;
 	}
 	status=read_class_data(QSP_ARG  fp,n_classes);
@@ -423,7 +419,7 @@ void setup_classes(QSP_ARG_DECL  int n)
 		Trial_Class *tcp;
 
 		sprintf(name,"class%d",i);
-		tcp = trial_class_of(QSP_ARG  name);
+		tcp = trial_class_of(name);
 		if( tcp == NO_CLASS ){
 			/*
 			if(verbose){
@@ -448,7 +444,7 @@ void init_dribble_file(SINGLE_QSP_ARG_DECL)
 	FILE *fp;
 
 	// BUG - we should only keep trying if interactive!?
-	while( (fp=TRYNICE(NAMEOF("dribble data file"),"w")) == NULL )
+	while( (fp=try_nice(nameof("dribble data file"),"w")) == NULL )
 		;
 	set_dribble_file(fp);
 	write_data_preamble(QSP_ARG  fp);

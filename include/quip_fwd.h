@@ -12,15 +12,24 @@ typedef int QUIP_BOOL;
 /* BUT conflicts with X11 !? */
 #define Quip_String	const char
 
+union scalar_value; typedef union scalar_value Scalar_Value;
 
 #define FWD_TYPEDEF(struct_name,typedef_name)			\
 struct struct_name; typedef struct struct_name typedef_name;
 
 FWD_TYPEDEF(query,Query)
 FWD_TYPEDEF(query_stack,Query_Stack)
+FWD_TYPEDEF(typed_scalar,Typed_Scalar)
+FWD_TYPEDEF(scalar_expr_node,Scalar_Expr_Node)
+FWD_TYPEDEF(subrt,Subrt)
+FWD_TYPEDEF(identifier,Identifier)
+FWD_TYPEDEF(cuda_kernel_info,CUDA_Kernel_Info)
+
+FWD_TYPEDEF(rv_inode,RV_Inode)
 FWD_TYPEDEF(mouthful,Mouthful)
 FWD_TYPEDEF(my_pipe,Pipe)
 FWD_TYPEDEF(list,List)
+FWD_TYPEDEF(list_enumerator,List_Enumerator)
 FWD_TYPEDEF(item_type,Item_Type)
 FWD_TYPEDEF(item_context,Item_Context)
 FWD_TYPEDEF(menu,Menu)
@@ -30,41 +39,51 @@ FWD_TYPEDEF(node,Node)
 FWD_TYPEDEF(string_buf,String_Buf)
 FWD_TYPEDEF(macro_arg,Macro_Arg)
 FWD_TYPEDEF(macro,Macro)
-FWD_TYPEDEF(function,Function)
+FWD_TYPEDEF(quip_function,Quip_Function)
 FWD_TYPEDEF(variable,Variable)
 FWD_TYPEDEF(debug_module,Debug_Module)
 FWD_TYPEDEF(freelist,FreeList)
 FWD_TYPEDEF(container,Container)
+FWD_TYPEDEF(container_type,Container_Type)
+FWD_TYPEDEF(enumerator,Enumerator)
+FWD_TYPEDEF(enumerator_type,Enumerator_Type)
 FWD_TYPEDEF(data_obj,Data_Obj)
+FWD_TYPEDEF(vec_expr_node,Vec_Expr_Node)
+FWD_TYPEDEF(input_format_spec,Input_Format_Spec)
 FWD_TYPEDEF(shape_info,Shape_Info)
 FWD_TYPEDEF(precision,Precision)
 FWD_TYPEDEF(dimension_set,Dimension_Set)
 FWD_TYPEDEF(increment_set,Increment_Set)
 FWD_TYPEDEF(item_class,Item_Class)
 FWD_TYPEDEF(member_info,Member_Info)
-FWD_TYPEDEF(viewer,Viewer)
 FWD_TYPEDEF(foreach_loop,Foreach_Loop)
 FWD_TYPEDEF(frag_match_info,Frag_Match_Info)
+FWD_TYPEDEF(match_cycle,Match_Cycle)
 FWD_TYPEDEF(hash_tbl,Hash_Tbl)
 FWD_TYPEDEF(command,Command)
 FWD_TYPEDEF(vec_obj_args,Vec_Obj_Args)
 FWD_TYPEDEF(platform_device,Platform_Device)
+FWD_TYPEDEF(platform_stream,Platform_Stream)
 FWD_TYPEDEF(curl_info,Curl_Info)
 
 typedef List Stack;
+
+#ifndef BUILD_FOR_OBJC
+FWD_TYPEDEF(viewer,Viewer)
+#endif // ! BUILD_FOR_OBJC
 
 #include "thread_safe_defs.h"
 
 #define COMMAND_FUNC(name)  void name(SINGLE_QSP_ARG_DECL)
 
-#define ITEM_NEW_PROT(type,stem)	type * new_##stem(QSP_ARG_DECL  const char *name);
-#define ITEM_INIT_PROT(type,stem)	void init_##stem##s(SINGLE_QSP_ARG_DECL );
-#define ITEM_CHECK_PROT(type,stem)	type * stem##_of(QSP_ARG_DECL  const char *name);
-#define ITEM_GET_PROT(type,stem)	type * get_##stem(QSP_ARG_DECL  const char *name);
-#define ITEM_LIST_PROT(type,stem)	void  list_##stem##s(SINGLE_QSP_ARG_DECL );
-#define ITEM_PICK_PROT(type,stem)	type *pick_##stem(QSP_ARG_DECL  const char *pmpt);
-#define ITEM_ENUM_PROT(type,stem)	List *stem##_list(SINGLE_QSP_ARG_DECL);
-#define ITEM_DEL_PROT(type,stem)	void del_##stem(QSP_ARG_DECL  type *ip);
+#define ITEM_NEW_PROT(type,stem)	type * _new_##stem(QSP_ARG_DECL  const char *name);
+#define ITEM_INIT_PROT(type,stem)	void _init_##stem##s(SINGLE_QSP_ARG_DECL );
+#define ITEM_CHECK_PROT(type,stem)	type * _##stem##_of(QSP_ARG_DECL  const char *name);
+#define ITEM_GET_PROT(type,stem)	type * _get_##stem(QSP_ARG_DECL  const char *name);
+#define ITEM_LIST_PROT(type,stem)	void  _list_##stem##s(QSP_ARG_DECL FILE *fp);
+#define ITEM_PICK_PROT(type,stem)	type *_pick_##stem(QSP_ARG_DECL  const char *pmpt);
+#define ITEM_ENUM_PROT(type,stem)	List *_##stem##_list(SINGLE_QSP_ARG_DECL);
+#define ITEM_DEL_PROT(type,stem)	void _del_##stem(QSP_ARG_DECL  type *ip);
 
 #define ITEM_INTERFACE_PROTOTYPES(type,stem)	IIF_PROTS(type,stem,extern)
 #define ITEM_INTERFACE_PROTOTYPES_STATIC(type,stem)		\
@@ -80,6 +99,9 @@ storage ITEM_LIST_PROT(type,stem)				\
 storage ITEM_ENUM_PROT(type,stem)				\
 storage ITEM_DEL_PROT(type,stem)				\
 storage ITEM_PICK_PROT(type,stem)
+
+#define STRINGIFY(s)	_STRINGIFY(s)
+#define _STRINGIFY(s)	#s
 
 #endif // ! _QUIP_FWD_H_
 

@@ -24,10 +24,6 @@ extern "C" {
 //#include "new_chains.h"
 #include "vec_chain.h"
 
-#ifdef USE_SSE
-extern int use_sse_extensions;
-#endif /* USE_SSE */
-
 #ifndef N_PROCESSORS
 #define N_PROCESSORS 1
 #endif /* undef N_PROCESSORS */
@@ -38,11 +34,8 @@ extern const char *argset_type_name[N_ARGSET_TYPES];
 extern const Vector_Function *this_vfp;		/* a global */
 extern int for_real;
 extern const char *type_strings[];		/* see obj_args.c */
-//extern Vec_Func_Array quip_vfa_tbl[N_VEC_FUNCS];
-//extern Vector_Function vec_func_tbl[N_VEC_FUNCS];
 extern dimension_t bitrev_size;
 extern dimension_t *bitrev_data;
-extern int insist_real, insist_cpx, insist_quat;
 extern int n_processors;
 
 
@@ -63,10 +56,9 @@ extern void launch_threads(QSP_ARG_DECL
 	void (*func)(HOST_CALL_ARG_DECLS),
 	int vf_code, Vec_Obj_Args oa[]);
 extern COMMAND_FUNC( set_n_processors );
-extern COMMAND_FUNC( set_use_sse );
 
 /* fftsupp.c */
-#include "veclib/fftsupp.h"
+//#include "veclib/fftsupp.h"
 
 //extern void bitrev_init(dimension_t);
 //extern int real_fft_check(QSP_ARG_DECL  Data_Obj *, Data_Obj *, const char *);
@@ -80,7 +72,6 @@ extern COMMAND_FUNC( set_use_sse );
 //extern void vl_init(SINGLE_QSP_ARG_DECL);
 
 /* vec_args.c */
-extern int check_obj_devices( Vec_Obj_Args *oap );
 extern int is_ram(Data_Obj *);
 extern void zero_oargs(Vec_Obj_Args *oap);
 extern void do_vfunc( QSP_ARG_DECL   Vector_Function *vfp );
@@ -90,10 +81,10 @@ extern int are_ram_args(Vec_Obj_Args *oap);
 extern int are_gpu_args(Vec_Obj_Args *oap);
 #endif /* HAVE_CUDA */
 
+extern int _check_obj_devices( QSP_ARG_DECL  Vec_Obj_Args *oap );
+#define check_obj_devices(oap) _check_obj_devices(QSP_ARG  oap)
+
 /* vec_call.c */
-#ifdef HAVE_CUDA
-extern void set_gpu_dispatch_func( int (*)(Vector_Function *vfp, Vec_Obj_Args *oap) );
-#endif /* HAVE_CUDA */
 extern int perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap);
 extern int cktype(Data_Obj *dp1,Data_Obj *dp2);
 
@@ -114,12 +105,11 @@ extern void set_perf(int);
 
 /* lin_util.c */
 extern int prodimg(QSP_ARG_DECL  Data_Obj *,Data_Obj *,Data_Obj *);
-extern void inner(QSP_ARG_DECL  Data_Obj *, Data_Obj *, Data_Obj *);
 extern void transpose(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
-extern int xform_chk(Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform);
-extern double determinant(Data_Obj *);
 extern void vec_xform(QSP_ARG_DECL  Data_Obj *,Data_Obj *,Data_Obj *);
 extern void homog_xform(QSP_ARG_DECL  Data_Obj *,Data_Obj *,Data_Obj *);
+extern double _determinant(QSP_ARG_DECL  Data_Obj *dp);
+#define determinant(dp) _determinant(QSP_ARG  dp)
 
 /* wrap.c */
 //extern void dp_scroll(QSP_ARG_DECL  Data_Obj *,Data_Obj *,incr_t,incr_t);
@@ -140,26 +130,7 @@ extern COMMAND_FUNC( do_samp_menu );
 /* typtbl.c */
 extern int check_vfa_tbl_size(QSP_ARG_DECL  Vec_Func_Array vfa_tbl[], int size);
 
-//#ifdef USE_SSE
-///* fast_mov.c */
-//extern void simd_vec_rvmov(float *,float *,u_long);
-//extern void simd_obj_rvmov(Vec_Obj_Args *oap);
-//
-///* fast_sp.c */
-//extern void simd_obj_rvadd(Vec_Obj_Args *oap);
-//extern void simd_obj_rvsub(Vec_Obj_Args *oap);
-//extern void simd_obj_rvmul(Vec_Obj_Args *oap);
-//extern void simd_obj_rvdiv(Vec_Obj_Args *oap);
-//extern void simd_obj_rvsadd(Vec_Obj_Args *oap);
-//extern void simd_obj_rvssub(Vec_Obj_Args *oap);
-//extern void simd_obj_rvsmul(Vec_Obj_Args *oap);
-//extern void simd_obj_rvsdiv(Vec_Obj_Args *oap);
-//#endif /* USE_SSE */
-
-/* bm_funcs.c */
-
 #include "veclib_prot.h"
-
 
 #ifdef __cplusplus
 }

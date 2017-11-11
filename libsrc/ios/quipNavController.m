@@ -1,7 +1,23 @@
 #include "quipNavController.h"
 #include "quip_prot.h"
 #include "ios_gui.h"
+#include "nav_panel.h"
 #include "screen_obj.h"
+
+// global var for whole app...
+// default is all
+static UIInterfaceOrientationMask quipSupportedInterfaceOrientations=UIInterfaceOrientationMaskAll;
+static BOOL quipShouldAutorotate=YES;
+
+void set_supported_orientations( UIInterfaceOrientationMask m )
+{
+	quipSupportedInterfaceOrientations=m;
+}
+
+void set_autorotation_allowed( BOOL yesno )
+{
+	quipShouldAutorotate = yesno;
+}
 
 @implementation quipNavController
 
@@ -11,6 +27,7 @@
 	return YES;
 }
 
+#ifdef FOOBAR
 // is this needed??
 
 /********** UIAlertView delegate methods ************/
@@ -26,6 +43,7 @@
 }
 
 /********** end UIAlertView delegate methods ************/
+#endif // FOOBAR
 
 
 /***************** UINavigationControllerDelegate methods ********/
@@ -53,18 +71,10 @@ fprintf(stderr,"No genwin found associated with view controller 0x%lx\n",
 
 	icp = GW_CONTEXT(gwp);
 
-	if( icp != NULL ){
-		if( [Screen_Obj contextStackDepth] > 1 )
-			pop_scrnobj_context();
-		push_scrnobj_context(GW_CONTEXT(gwp));
-	}
-#ifdef CAUTIOUS
-	  else {
-		sprintf(DEFAULT_ERROR_STRING,
-		"Genwin '%s' has no item context!?\n",GW_NAME(gwp));
-		NWARN(DEFAULT_ERROR_STRING);
-	}
-#endif // CAUTIOUS
+	assert( icp != NULL );
+	if( [Screen_Obj contextStackDepth] > 1 )
+		pop_scrnobj_context();
+	push_scrnobj_context(GW_CONTEXT(gwp));
 }
 
 /***************** end UINavigationControllerDelegate methods ********/
@@ -105,7 +115,8 @@ fprintf(stderr,"No genwin found associated with view controller 0x%lx\n",
 	// what is backItem???
 	//nvc.navigationBar.backItem.title = @"Custom";
     
-	self.delegate = self;
+	// inherit delegate from parent/super?
+	//self.delegate = self;
 #endif // BUILD_FOR_IOS
 
 	return self;
@@ -113,10 +124,12 @@ fprintf(stderr,"No genwin found associated with view controller 0x%lx\n",
 
 #ifdef BUILD_FOR_IOS
 
+// BUG - these things need to be user-settable!
+
 - (BOOL) shouldAutorotate
 {
-	if( [self topViewController]  == NULL ){
-		return YES;
+	if( [self topViewController] == NULL ){
+		return quipShouldAutorotate;
 	}
 	BOOL yn;
 	yn=[[self topViewController] shouldAutorotate];
@@ -127,15 +140,25 @@ fprintf(stderr,"No genwin found associated with view controller 0x%lx\n",
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations
 {
 	// BUG find out the good mask...
-	if( [self topViewController] == NULL )
+	if( [self topViewController] == NULL ){
 		return UIInterfaceOrientationMaskAll;
-	else
+	//	return UIInterfaceOrientationMaskPortrait;
+    } else {
 		return [[self topViewController] supportedInterfaceOrientations];
+    }
 }
+
+#ifdef FOOBAR
+- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
+{
+	return UIInterfaceOrientationPortrait;	// FOOBAR
+}
+#endif // FOOBAR
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
 	if( [self topViewController] == NULL ) return YES;
+	//if( [self topViewController] == NULL ) return NO;
 
 	// The view controller might have a flag that says one thing
 	// or another?

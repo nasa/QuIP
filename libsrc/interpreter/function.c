@@ -1,4 +1,5 @@
 #include <string.h>
+#include <ctype.h>
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "function.h"
@@ -28,14 +29,14 @@
 //#import "nexpr_func.h"
 
 
-//void addFunctionWithCode(Function *f,int code);
-//const char *function_name(Function *f);
+//void addFunctionWithCode(Quip_Function *f,int code);
+//const char *function_name(Quip_Function *f);
 
 static Item_Type *function_itp=NULL;
 
-ITEM_INIT_FUNC(Function,function,0)
-ITEM_NEW_FUNC(Function,function)
-ITEM_CHECK_FUNC(Function,function)
+ITEM_INIT_FUNC(Quip_Function,function,0)
+ITEM_NEW_FUNC(Quip_Function,function)
+ITEM_CHECK_FUNC(Quip_Function,function)
 
 #define DECLARE_CHAR_FUNC( fname )					\
 									\
@@ -69,7 +70,7 @@ static const char * funcname(QSP_ARG_DECL  const char *s )				\
 	p=t;								\
 	while( *s ){							\
 		if( test_macro(*s) )					\
-			*p = map_macro(*s);				\
+			*p = (char) map_macro(*s);				\
 		else							\
 			*p = *s;					\
 		p++;							\
@@ -99,6 +100,28 @@ static double modtimefunc(QSP_ARG_DECL  const char *s)
 #endif /* ! HAVE_SYS_STAT_H */
 }
 
+#ifndef BUILD_FOR_IOS
+int is_portrait(void)
+{
+	NADVISE("is_portrait() called in non-tablet environment!?");
+
+	return 0;
+}
+#endif // ! BUILD_FOR_IOS
+
+static double is_landscape_dbl(void)
+{
+	if( is_portrait() )
+		return 0.0;
+	else
+		return 1.0;
+}
+
+static double is_portrait_dbl(void)
+{
+	return (double) is_portrait();
+}
+
 static double rn_uni(double arg)		/* arg is not used... */
 {
 	double d;
@@ -106,7 +129,7 @@ static double rn_uni(double arg)		/* arg is not used... */
 #ifdef HAVE_DRAND48
 	d=drand48();
 #else
-	NWARN("rn_uni:  no drand48!?");
+	_warn(DEFAULT_QSP_ARG  "rn_uni:  no drand48!?");
 	d=1.0;
 #endif // ! HAVE_DRAND48
 	return( d );
@@ -156,12 +179,12 @@ static double ascii_val(QSP_ARG_DECL  const char *s)
 {
 	unsigned long l;
 	if( (l=strlen(s)) == 0 ){
-		WARN("ascii() passed an empty string!?");
+		warn("ascii() passed an empty string!?");
 		return 0;
 	}
 	if( l > 1 ){
 		sprintf(ERROR_STRING,"ascii() passed a string of length %lu, returning value of 1st char.",l);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return (double) s[0];
 }
@@ -170,8 +193,8 @@ static double dvarexists(QSP_ARG_DECL  const char *s)
 {
 	Variable *vp;
 
-	vp = var_of(QSP_ARG  s);
-	if( vp == NO_VARIABLE ) return 0.0;
+	vp = var_of(s);
+	if( vp == NULL ) return 0.0;
 	return 1.0;
 }
 
@@ -179,28 +202,28 @@ static double dmacroexists(QSP_ARG_DECL  const char *s)
 {
 	Macro *mp;
 
-	mp = macro_of(QSP_ARG  s);
-	if( mp == NO_MACRO ) return 0.0;
+	mp = macro_of(s);
+	if( mp == NULL ) return 0.0;
 	return 1.0;
 }
 
 static double dexists(QSP_ARG_DECL  const char *fname)
 {
-	if( path_exists(QSP_ARG  fname) )
+	if( path_exists(fname) )
 		return(1.0);
 	else	return(0.0);
 }
 
 static double disdir(QSP_ARG_DECL  const char *path)
 {
-	if( directory_exists(QSP_ARG path) )
+	if( directory_exists(path) )
 		return 1.0;
 	else	return 0.0;
 }
 
 static double disreg(QSP_ARG_DECL  const char *path)
 {
-	if( regfile_exists(QSP_ARG path) )
+	if( regfile_exists(path) )
 		return 1.0;
 	else	return 0.0;
 }
@@ -234,23 +257,23 @@ static double minfunc(double a1,double a2)
 	else return(a2);
 }
 
-static Item_Class *sizable_icp=NO_ITEM_CLASS;
-static Item_Class *interlaceable_icp=NO_ITEM_CLASS;
-static Item_Class *positionable_icp=NO_ITEM_CLASS;
-static Item_Class *tsable_icp=NO_ITEM_CLASS;
-static Item_Class *subscriptable_icp=NO_ITEM_CLASS;
+static Item_Class *sizable_icp=NULL;
+static Item_Class *interlaceable_icp=NULL;
+static Item_Class *positionable_icp=NULL;
+static Item_Class *tsable_icp=NULL;
+static Item_Class *subscriptable_icp=NULL;
 
 #define DECLARE_CLASS_INITIALIZER(type_stem)				\
 									\
 static void init_##type_stem##_class(SINGLE_QSP_ARG_DECL)		\
 {									\
-	if( type_stem##_icp != NO_ITEM_CLASS ){				\
+	if( type_stem##_icp != NULL ){				\
 		sprintf(ERROR_STRING,					\
 	"Redundant call to %s class initializer",#type_stem);		\
-		WARN(ERROR_STRING);					\
+		warn(ERROR_STRING);					\
 		return;							\
 	}								\
-	type_stem##_icp = new_item_class(QSP_ARG  #type_stem );		\
+	type_stem##_icp = new_item_class(#type_stem );		\
 }
 
 DECLARE_CLASS_INITIALIZER(sizable)
@@ -268,11 +291,11 @@ DECLARE_CLASS_INITIALIZER(positionable)
 
 #define DECLARE_ADD_FUNCTION(type_stem,func_type)			\
 									\
-void add_##type_stem(QSP_ARG_DECL  Item_Type *itp,			\
+void _add_##type_stem(QSP_ARG_DECL  Item_Type *itp,			\
 		func_type *func_str_ptr,				\
 		Item *(*lookup)(QSP_ARG_DECL  const char *))		\
 {									\
-	if( type_stem##_icp == NO_ITEM_CLASS )				\
+	if( type_stem##_icp == NULL )					\
 		init_##type_stem##_class(SINGLE_QSP_ARG);		\
 	add_items_to_class(type_stem##_icp,itp,func_str_ptr,lookup);	\
 }
@@ -290,10 +313,10 @@ DECLARE_ADD_FUNCTION(subscriptable,Subscript_Functions)
 									\
 Item *find_##type_stem(QSP_ARG_DECL  const char *name )			\
 {									\
-	if( type_stem##_icp == NO_ITEM_CLASS )				\
+	if( type_stem##_icp == NULL )				\
 		init_##type_stem##_class(SINGLE_QSP_ARG);		\
 									\
-	return( get_member(QSP_ARG  type_stem##_icp,name) );		\
+	return( get_member(type_stem##_icp,name) );		\
 }
 
 DECLARE_FIND_FUNCTION(sizable)
@@ -315,10 +338,10 @@ DECLARE_FIND_FUNCTION(subscriptable)
 Item *check_##type_stem(QSP_ARG_DECL  const char *name )		\
 {									\
 	Item *ip;							\
-	if( type_stem##_icp == NO_ITEM_CLASS )				\
+	if( type_stem##_icp == NULL )				\
 		init_##type_stem##_class(SINGLE_QSP_ARG);		\
 									\
-	ip = check_member(QSP_ARG  type_stem##_icp, name );		\
+	ip = check_member(type_stem##_icp, name );		\
 	OBJC_CHECK(type_stem)						\
 	return ip;							\
 }
@@ -332,19 +355,19 @@ DECLARE_CHECK_FUNC(sizable)
 func_type *get_##type_stem##_functions(QSP_ARG_DECL  Item *ip)		\
 {									\
 	Member_Info *mip;						\
-	if( type_stem##_icp == NO_ITEM_CLASS )				\
+	if( type_stem##_icp == NULL )				\
 		init_##type_stem##_class(SINGLE_QSP_ARG);		\
-	mip = get_member_info(QSP_ARG  type_stem##_icp,ip->item_name);	\
+	mip = get_member_info(type_stem##_icp,ip->item_name);	\
 	/*MEMBER_CAUTIOUS_CHECK(type_stem)*/				\
-	assert( mip != NO_MEMBER_INFO );				\
+	assert( mip != NULL );				\
 	return (func_type *) mip->mi_data;				\
 }
 
-DECLARE_GETFUNCS_FUNC(sizable,Size_Functions)
-DECLARE_GETFUNCS_FUNC(tsable,Timestamp_Functions)
-DECLARE_GETFUNCS_FUNC(interlaceable,Interlace_Functions)
-DECLARE_GETFUNCS_FUNC(positionable,Position_Functions)
-DECLARE_GETFUNCS_FUNC(subscriptable,Subscript_Functions)
+DECLARE_GETFUNCS_FUNC(sizable,Size_Functions)		// get_sizable_functions
+DECLARE_GETFUNCS_FUNC(tsable,Timestamp_Functions)	// get_tsable_functions
+DECLARE_GETFUNCS_FUNC(interlaceable,Interlace_Functions)	// get_interlaceable_functions
+DECLARE_GETFUNCS_FUNC(positionable,Position_Functions)	// get_positionable_functions
+DECLARE_GETFUNCS_FUNC(subscriptable,Subscript_Functions)	// get_subscriptable_functions
 
 
 #ifndef BUILD_FOR_OBJC
@@ -362,13 +385,9 @@ const char *get_object_prec_string(QSP_ARG_DECL  Item *ip )	// non-iOS
 {
 	Size_Functions *sfp;
 
-	if( ip == NO_ITEM ) return("u_byte");
+	if( ip == NULL ) return("u_byte");
 
 	sfp = get_sizable_functions(QSP_ARG  ip);
-
-//#ifdef CAUTIOUS
-//	if( sfp == NULL ) ERROR1("CAUTIOUS:  precision_string:  shouldn't happen");
-//#endif /* CAUTIOUS */
 	assert( sfp != NULL );
 
 	return( (*sfp->prec_func)(QSP_ARG  ip) );
@@ -378,13 +397,9 @@ double get_object_size(QSP_ARG_DECL  Item *ip,int d_index)
 {
 	Size_Functions *sfp;
 
-	if( ip == NO_ITEM ) return(0.0);
+	if( ip == NULL ) return(0.0);
 
 	sfp = get_sizable_functions(QSP_ARG  ip);
-
-//#ifdef CAUTIOUS
-//	if( sfp == NULL ) ERROR1("CAUTIOUS:  get_object_size:  shouldn't happen");
-//#endif /* CAUTIOUS */
 	assert( sfp != NULL );
 
 	return( (*sfp->sz_func)(QSP_ARG  ip,d_index) );
@@ -395,16 +410,10 @@ double get_object_size(QSP_ARG_DECL  Item *ip,int d_index)
 static double get_posn(QSP_ARG_DECL  Item *ip, int index)
 {
 	Position_Functions *pfp;
-	if( ip == NO_ITEM ) return(0.0);
+	if( ip == NULL ) return(0.0);
 	pfp = get_positionable_functions(QSP_ARG  ip);
-//#ifdef CAUTIOUS
-//	if( pfp == NULL )
-//		ERROR1("CAUTIOUS:  get_posn:  null func struct ptr!?");
-	assert( pfp != NULL && index >= 0 && index <= 1 );
-
-//	if( index < 0 || index > 1 )
-//		ERROR1("CAUTIOUS:  get_posn:  bad index!?");
-//#endif // CAUTIOUS
+	assert( pfp != NULL );
+	assert( index >= 0 && index <= 1 );
 
 	return( (*pfp->posn_func)(QSP_ARG  ip,index) );
 }
@@ -413,22 +422,10 @@ static double get_interlace_flag(QSP_ARG_DECL  Item *ip)
 {
 	Interlace_Functions *ifp;
 
-	if( ip == NO_ITEM ) return(0.0);
+	if( ip == NULL ) return(0.0);
 
 	ifp = get_interlaceable_functions(QSP_ARG  ip);
-
-//#ifdef CAUTIOUS
-//	if( ifp == NULL ) ERROR1("CAUTIOUS:  get_interlace_flag:  shouldn't happen");
-//#endif /* CAUTIOUS */
 	assert( ifp != NULL );
-
-//#ifdef CAUTIOUS
-//	if( ifp->ilace_func == NULL ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  get_interlace_flag:  Sorry, is_interlaced() is not defined for object %s",ip->item_name);
-//		WARN(ERROR_STRING);
-//		return(0.0);
-//	}
-//#endif // CAUTIOUS
 	assert( ifp->ilace_func != NULL );
 
 	return( (*ifp->ilace_func)(QSP_ARG  ip) );
@@ -440,23 +437,13 @@ static double get_timestamp(QSP_ARG_DECL  Item *ip,int func_index,dimension_t fr
 	Member_Info *mip;
 	double d;
 
-	if( ip == NO_ITEM ) return(0.0);
+	if( ip == NULL ) return(0.0);
 
-	if( tsable_icp == NO_ITEM_CLASS )
+	if( tsable_icp == NULL )
 		init_tsable_class(SINGLE_QSP_ARG);
 
-	mip = get_member_info(QSP_ARG  tsable_icp,ip->item_name);
-
-//#ifdef CAUTIOUS
-//	if( mip == NO_MEMBER_INFO ){
-//		sprintf(ERROR_STRING,
-//			"CAUTIOUS:  get_timestamp %s %d, missing member info",
-//			ip->item_name,func_index);
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
-	assert( mip != NO_MEMBER_INFO );
-
+	mip = get_member_info(tsable_icp,ip->item_name);
+	assert( mip != NULL );
 
 	tsfp = (Timestamp_Functions *) mip->mi_data;
 
@@ -472,26 +459,21 @@ Item *sub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
 	/* currently data objects are the only sizables
 		which can be subscripted */
 
-	if( ip == NO_ITEM ) return(ip);
+	if( ip == NULL ) return(ip);
 
-	if( subscriptable_icp == NO_ITEM_CLASS )
+	if( subscriptable_icp == NULL )
 		init_subscriptable_class(SINGLE_QSP_ARG);
 
-	mip = get_member_info(QSP_ARG  subscriptable_icp,ip->item_name);
-
-//#ifdef CAUTIOUS
-//	if( mip == NO_MEMBER_INFO )
-//		ERROR1("CAUTIOUS:  missing member info #3");
-//#endif /* CAUTIOUS */
-	assert( mip != NO_MEMBER_INFO );
+	mip = get_member_info(subscriptable_icp,ip->item_name);
+	assert( mip != NULL );
 
 	sfp = (Subscript_Functions *) mip->mi_data;
 
 	if( sfp->subscript == NULL ){
 		sprintf(ERROR_STRING,"Can't subscript object %s!?",
 			ip->item_name);
-		WARN(ERROR_STRING);
-		return(NO_ITEM);
+		warn(ERROR_STRING);
+		return(NULL);
 	}
 
 	return( (*sfp->subscript)(QSP_ARG  ip,index) );
@@ -505,26 +487,21 @@ Item *csub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
 	/* currently data objects are the only sizables
 		which can be subscripted */
 
-	if( ip == NO_ITEM ) return(ip);
+	if( ip == NULL ) return(ip);
 
-	if( subscriptable_icp == NO_ITEM_CLASS )
+	if( subscriptable_icp == NULL )
 		init_subscriptable_class(SINGLE_QSP_ARG);
 
-	mip = get_member_info(QSP_ARG  subscriptable_icp,ip->item_name);
-
-//#ifdef CAUTIOUS
-//	if( mip == NO_MEMBER_INFO )
-//		ERROR1("CAUTIOUS:  missing member info #1");
-//#endif /* CAUTIOUS */
-	assert( mip != NO_MEMBER_INFO );
+	mip = get_member_info(subscriptable_icp,ip->item_name);
+	assert( mip != NULL );
 
 	sfp = (Subscript_Functions *) mip->mi_data;
 
 	if( sfp->csubscript == NULL ){
 		sprintf(ERROR_STRING,"Can't subscript object %s",
 			ip->item_name);
-		WARN(ERROR_STRING);
-		return(NO_ITEM);
+		warn(ERROR_STRING);
+		return(NULL);
 	}
 
 	return( (*sfp->csubscript)(QSP_ARG  ip,index) );
@@ -642,7 +619,6 @@ static double _msecfunc(QSP_ARG_DECL  Item *ip, dimension_t frame )
 static double _usecfunc(QSP_ARG_DECL  Item *ip, dimension_t frame )
 { return( get_timestamp(QSP_ARG  ip,2,frame) ); }
 
-
 static double signfunc(double x)
 { if( x > 0 ) return(1.0); else if( x < 0 ) return(-1.0); else return(0.0); }
 
@@ -677,6 +653,9 @@ int func_serial=0;
 
 void declare_functions( SINGLE_QSP_ARG_DECL )
 {
+
+DECLARE_D0_FUNCTION(	is_portrait,	is_portrait_dbl,		INVALID_VFC,	INVALID_VFC,	INVALID_VFC	)
+DECLARE_D0_FUNCTION(	is_landscape,	is_landscape_dbl,		INVALID_VFC,	INVALID_VFC,	INVALID_VFC	)
 
 DECLARE_D1_FUNCTION(	uni,	rn_uni,		FVUNI,		INVALID_VFC,	INVALID_VFC	)
 DECLARE_D1_FUNCTION(	sqrt,	sqrt,		FVSQRT,		INVALID_VFC,	INVALID_VFC	)
@@ -783,78 +762,71 @@ DECLARE_POSITION_FUNCTION(	y_position,	_y_func,	1	)
 DECLARE_TS_FUNCTION(	seconds,	_secfunc	)
 DECLARE_TS_FUNCTION(	milliseconds,	_msecfunc	)
 DECLARE_TS_FUNCTION(	microseconds,	_usecfunc	)
-
 }
 
 
 #ifdef NOT_NEEDED
 void assign_func_ptr(const char *name,double (*func)(void))
 {
-	Function *func_p;
+	Quip_Function *func_p;
 
 	func_p = function_of(DEFAULT_QSP_ARG  name);
-//#ifdef CAUTIOUS
-//	if( func_p == NO_FUNCTION ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  assgn_func:  no function for \"%s\"!?",name);
-//		NERROR1(DEFAULT_ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
-	assert( func_p != NO_FUNCTION );
+	assert( func_p != NULL );
 
 	func_p->fn_u.d0_func = func;
 }
 #endif /* NOT_NEEDED */
 
-double evalD0Function( Function *func_p )
+double evalD0Function( Quip_Function *func_p )
 {
 	return (*(func_p->fn_u.d0_func))();
 }
 
-double evalD1Function( Function *func_p, double arg )
+double evalD1Function( Quip_Function *func_p, double arg )
 {
 	return (*(func_p->fn_u.d1_func))(arg);
 }
 
-double evalD2Function( Function *func_p, double arg1, double arg2 )
+double evalD2Function( Quip_Function *func_p, double arg1, double arg2 )
 {
 	return (*(func_p->fn_u.d2_func))(arg1,arg2);
 }
 
-int evalI1Function( Function *func_p, double arg )
+int evalI1Function( Quip_Function *func_p, double arg )
 {
 	return (*(func_p->fn_u.i1_func))(arg);
 }
 
-double evalStr1Function( QSP_ARG_DECL  Function *func_p, const char *s )
+double evalStr1Function( QSP_ARG_DECL  Quip_Function *func_p, const char *s )
 {
 	return (*(func_p->fn_u.str1_func))(QSP_ARG  s);
 }
 
 #ifdef FOOBAR
 // original
-void evalStrVFunction( Function *func_p, char *dst, const char *s )
+void evalStrVFunction( Quip_Function *func_p, char *dst, const char *s )
 {
 	(*(func_p->fn_u.strv_func))(dst,s);
 }
 
 // new
-const char * evalStrVFunction( QSP_ARG_DECL  Function *func_p, Item *ip )
+const char * evalStrVFunction( QSP_ARG_DECL  Quip_Function *func_p, Item *ip )
 {
 	return (*(func_p->fn_u.strv_func))(QSP_ARG  ip);
 }
 #endif // FOOBAR
 
-int evalCharFunction( Function *func_p, char c )
+int evalCharFunction( Quip_Function *func_p, char c )
 {
 	return (*(func_p->fn_u.char_func))(c);
 }
 
-double evalStr2Function( Function *func_p, const char *s1, const char *s2 )
+double evalStr2Function( Quip_Function *func_p, const char *s1, const char *s2 )
 {
 	return (*(func_p->fn_u.str2_func))(s1,s2);
 }
 
-double evalStr3Function( Function *func_p, const char *s1, const char *s2, int n )
+double evalStr3Function( Quip_Function *func_p, const char *s1, const char *s2, int n )
 {
 	return (*(func_p->fn_u.str3_func))(s1,s2,n);
 }

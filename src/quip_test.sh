@@ -1,5 +1,5 @@
 #!/bin/sh
 
-echo "versions list features exit" | ./quip
+echo "version features exit" | ./quip
 
 

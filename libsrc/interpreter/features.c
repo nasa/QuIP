@@ -24,13 +24,13 @@ typedef enum {
 
 	SWF_CURL,
 	SWF_SOUND,
-	SWF_MPLAYER,
-	SWF_XINE,
-	SWF_SSE,
+//	SWF_MPLAYER,	// doesn't seem to be used anywhere???
+//	SWF_XINE,
 	SWF_NUMREC,
 	SWF_CUDA,
 	SWF_OPENCL,
 	SWF_LIBAVCODEC,
+	SWF_X11,
 	SWF_X11_EXT,
 	SWF_OPENGL,
 	SWF_MOTIF,
@@ -38,6 +38,11 @@ typedef enum {
 	SWF_GCRYPT,
 	SWF_FLYCAP,
 	SWF_DC1394,
+	SWF_DAS1602,
+	SWF_V4L2,
+
+	SWF_KNOX,	// Knox video 8x8 switcher
+	SWF_VISCA,	// SONY Visca interface
 	N_SW_FEATURES
 } sw_feature_t;
 
@@ -74,27 +79,31 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 
 { UNKNOWN, SWF_CURL,		"www i/o (w/ libcurl)"		},
 { UNKNOWN, SWF_SOUND,		"sound (portaudio/ALSA)"	},
-{ UNKNOWN, SWF_MPLAYER,		"mplayer"			},
-{ UNKNOWN, SWF_XINE,		"Xine"				},
-{ UNKNOWN, SWF_SSE,		"SSE processor acceleration"	},
+//{ UNKNOWN, SWF_MPLAYER,		"mplayer"			},
+//{ UNKNOWN, SWF_XINE,		"Xine"				},
 { UNKNOWN, SWF_NUMREC,		"Numerical Recipes library"	},
 { UNKNOWN, SWF_CUDA,		"nVidia CUDA"			},
 { UNKNOWN, SWF_OPENCL,		"OpenCL acceleration"		},
 { UNKNOWN, SWF_LIBAVCODEC,	"AVI files (w/ libavcodec)"	},
+{ UNKNOWN, SWF_X11,		"X11 window system"	},
 { UNKNOWN, SWF_X11_EXT,		"shared memory display w/ libXext"	},
 { UNKNOWN, SWF_OPENGL,		"OpenGL graphics"		},
 { UNKNOWN, SWF_MOTIF,		"Motif GUI widgets with libXm"	},
 { UNKNOWN, SWF_GSL,		"GNU Scientific Library"	},
 { UNKNOWN, SWF_GCRYPT,		"encryption w/ libgcrypt"	},
 { UNKNOWN, SWF_FLYCAP,		"firewire cameras w/ libflycap"	},
-{ UNKNOWN, SWF_DC1394,		"firewire cameras w/ libdc1394"	}
+{ UNKNOWN, SWF_DC1394,		"firewire cameras w/ libdc1394"	},
+{ UNKNOWN, SWF_DAS1602,		"analog I/O w/ Measurement Computing DAS1602"	},
+{ UNKNOWN, SWF_V4L2,		"video-for-Linux II"		},
+{ UNKNOWN, SWF_KNOX,		"Knox Video 8x8 switcher"	},
+{ UNKNOWN, SWF_VISCA,		"Sony VISCA camera control protocol"	}
 };
 
 #ifdef NOW_DONE_WITH_ASSERTION
 #ifdef CAUTIOUS
 #define CHECKIT(code)						\
 	if( swf_tbl[code].swf_code != code )			\
-		ERROR1("CAUTIOUS:  Software feature table corruption!?");
+		error1("CAUTIOUS:  Software feature table corruption!?");
 #else
 #define CHECKIT(code)
 #endif
@@ -173,11 +182,12 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 #endif
 
 
-#ifdef HAVE_MPLAYER
-	FEATURE_PRESENT(SWF_MPLAYER);
-#else
-	FEATURE_ABSENT(SWF_MPLAYER);
-#endif
+// HAVE_MPLAYER is not ever defined in configure.ac???
+//#ifdef HAVE_MPLAYER
+//	FEATURE_PRESENT(SWF_MPLAYER);
+//#else
+//	FEATURE_ABSENT(SWF_MPLAYER);
+//#endif
 
 // HAVE_NUMREC can be set by autoconf based on whether numerical recipes is present
 // on the system.  But USE_NUMREC is set by the user to indicate whether it should be used...
@@ -242,10 +252,17 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 #endif
 
 
-#ifdef HAVE_XINE
-	FEATURE_PRESENT(SWF_XINE);
+//#ifdef HAVE_XINE
+//	FEATURE_PRESENT(SWF_XINE);
+//#else
+//	FEATURE_ABSENT(SWF_XINE);
+//#endif
+
+
+#ifdef HAVE_X11
+	FEATURE_PRESENT(SWF_X11);
 #else
-	FEATURE_ABSENT(SWF_XINE);
+	FEATURE_ABSENT(SWF_X11);
 #endif
 
 
@@ -294,6 +311,34 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 #endif
 
 
+#ifdef HAVE_DAS1602
+	FEATURE_PRESENT(SWF_DAS1602);
+#else
+	FEATURE_ABSENT(SWF_DAS1602);
+#endif
+
+
+#ifdef HAVE_V4L2
+	FEATURE_PRESENT(SWF_V4L2);
+#else
+	FEATURE_ABSENT(SWF_V4L2);
+#endif
+
+
+#ifdef HAVE_KNOX
+	FEATURE_PRESENT(SWF_KNOX);
+#else
+	FEATURE_ABSENT(SWF_KNOX);
+#endif
+
+
+#ifdef HAVE_VISCA
+	FEATURE_PRESENT(SWF_VISCA);
+#else
+	FEATURE_ABSENT(SWF_VISCA);
+#endif
+
+
 #ifdef HELPFUL
 	FEATURE_PRESENT(SWF_HELPFUL);
 #else
@@ -305,13 +350,6 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 	FEATURE_PRESENT(SWF_MONITOR_COLLISIONS);
 #else
 	FEATURE_ABSENT(SWF_MONITOR_COLLISIONS);
-#endif
-
-
-#ifdef USE_SSE
-	FEATURE_PRESENT(SWF_SSE);
-#else
-	FEATURE_ABSENT(SWF_SSE);
 #endif
 
 
@@ -372,14 +410,6 @@ COMMAND_FUNC( do_list_features )
 
 #ifdef CAUTIOUS
 	for(i=0;i<N_SW_FEATURES;i++){
-//		if( swf_tbl[i].swf_state != ABSENT &&
-//			swf_tbl[i].swf_state != PRESENT ){
-//
-//			sprintf(ERROR_STRING,
-//		"CAUTIOUS:  need to test state of feature %d (%s)",i,
-//				swf_tbl[i].swf_desc);
-//			ERROR1(ERROR_STRING);
-//		}
 		assert( swf_tbl[i].swf_state == ABSENT || swf_tbl[i].swf_state == PRESENT );
 	}
 #endif /* CAUTIOUS */

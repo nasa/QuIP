@@ -10,9 +10,11 @@
 #include "quip_prot.h"
 #include "nvf.h"
 #include "rn.h"		/* set_random_seed */
+#include "platform.h"
 
-static Item_Type *vec_func_itp=NO_ITEM_TYPE;
+static Item_Type *vec_func_itp=NULL;
 static ITEM_INIT_PROT(Vector_Function, vec_func)
+#define init_vec_funcs()	_init_vec_funcs(SINGLE_QSP_ARG)
 
 static ITEM_INIT_FUNC(Vector_Function, vec_func, 0)
 ITEM_LIST_FUNC(Vector_Function, vec_func)
@@ -46,6 +48,7 @@ CREAT_VEC_FUNC( vssub,		FVSSUB,		VS_BINARY,	M_ALL,	RCMQP_MASK	)
 CREAT_VEC_FUNC( vsmul,		FVSMUL,		VS_BINARY,	M_ALL,	RCMQP_MASK	)
 CREAT_VEC_FUNC( vsdiv,		FVSDIV,		VS_BINARY,	M_ALL,	RCMQP_MASK	)
 CREAT_VEC_FUNC( vsdiv2,		FVSDIV2,	VS_BINARY,	M_ALL,	RCMQP_MASK	)
+CREAT_VEC_FUNC( vssub2,		FVSSUB2,	VS_BINARY,	M_ALL,	RCMQP_MASK	)
 CREAT_VEC_FUNC( vabs,		FVABS,		V_UNARY,	M_ALL,	REAL_ARG_MASK	)
 CREAT_VEC_FUNC( vsign,		FVSIGN,		V_UNARY,	M_ALL,	REAL_ARG_MASK	)
 
@@ -237,7 +240,7 @@ CREAT_VEC_FUNC( vuli2udi,	FVULI2UDI,	V_UNARY,	0,	REAL_ARG_MASK	)
 /* max mag,	min max changed to M_ALL to allow long destination... */
 CREAT_VEC_FUNC( vsum,		FVSUM,		V_PROJECTION,	M_ALL,	RCQ_MASK	)
 CREAT_VEC_FUNC( vdot,		FVDOT,		V_PROJECTION2,	M_ALL,	RC_MASK	)
-CREAT_CPU_VEC_FUNC( vrand,		FVRAND,		V_UNARY,	M_ALL,	RC_MASK	)
+CREAT_CPU_VEC_FUNC( vrand,	FVRAND,		V_UNARY,	M_ALL,	RC_MASK	)
 
 CREAT_VEC_FUNC( vsm_lt,		FVSMLT,		VS_TEST,	M_ALL,	REAL_ARG_MASK	)
 CREAT_VEC_FUNC( vsm_gt,		FVSMGT,		VS_TEST,	M_ALL,	REAL_ARG_MASK	)
@@ -310,6 +313,11 @@ CREAT_VEC_FUNC( vconj,		FVCONJ,		V_UNARY,	M_ALL,	CPX_ARG_MASK	)
 CREAT_VEC_FUNC( vfft,		FVFFT,		V_FWD_FFT,	M_BP,	RCM_MASK	)
 CREAT_VEC_FUNC( vift,		FVIFT,		V_INV_FFT,	M_BP,	RCM_MASK	)
 
+CREAT_VEC_FUNC( vfft2d,		FVFFT2D,	V_FWD_FFT,	M_BP,	RCM_MASK	)
+CREAT_VEC_FUNC( vift2d,		FVIFT2D,	V_INV_FFT,	M_BP,	RCM_MASK	)
+CREAT_VEC_FUNC( vfftrows,	FVFFTROWS,	V_FWD_FFT,	M_BP,	RCM_MASK	)
+CREAT_VEC_FUNC( viftrows,	FVIFTROWS,	V_INV_FFT,	M_BP,	RCM_MASK	)
+
 CREAT_VEC_FUNC( vbnd,		FVBND,		VV_BINARY,	M_ALL,	REAL_ARG_MASK	)
 CREAT_VEC_FUNC( vibnd,		FVIBND,		VV_BINARY,	M_ALL,	REAL_ARG_MASK	)
 CREAT_VEC_FUNC( vclip,		FVCLIP,		VS_BINARY,	M_ALL,	REAL_ARG_MASK	)
@@ -332,25 +340,8 @@ CREAT_VEC_FUNC( visspace,	FVISSPACE,	V_UNARY,	M_AI,	REAL_ARG_MASK	)
 CREAT_VEC_FUNC( visblank,	FVISBLANK,	V_UNARY,	M_AI,	REAL_ARG_MASK	)
 CREAT_VEC_FUNC( viscntrl,	FVISCNTRL,	V_UNARY,	M_AI,	REAL_ARG_MASK	)
 
-#ifdef NOT_YET
-CREAT_VEC_FUNC( vcsadd,		FVCSADD,	VS_BINARY,	M_ALL,	CM	)
-CREAT_VEC_FUNC( vcssub,		FVCSSUB,	VS_BINARY,	M_ALL,	CM	)
-CREAT_VEC_FUNC( vcsmul,		FVCSMUL,	VS_BINARY,	M_ALL,	CM	)
-CREAT_VEC_FUNC( vcsdiv,		FVCSDIV,	VS_BINARY,	M_ALL,	CM	)
-CREAT_VEC_FUNC( vcsdiv2,	FVCSDIV2,	VS_BINARY,	M_ALL,	CM	)
-#endif
-/*
-CREAT_VEC_FUNC( vqsadd,		FVQSADD,	VS_BINARY,	M_ALL,	QP	)
-CREAT_VEC_FUNC( vqssub,		FVQSSUB,	VS_BINARY,	M_ALL,	QP	)
-CREAT_VEC_FUNC( vqsmul,		FVQSMUL,	VS_BINARY,	M_ALL,	QP	)
-CREAT_VEC_FUNC( vqsdiv,		FVQSDIV,	VS_BINARY,	M_ALL,	QP	)
-CREAT_VEC_FUNC( vqsdiv2,	FVQSDIV2,	VS_BINARY,	M_ALL,	QP	)
-*/
-
-#ifdef NOT_YET
-CREAT_VEC_FUNC( vd2sp,		FVD2SP,		V_UNARY,	no_func, 0,	0	)
-CREAT_VEC_FUNC( vsp2d,		FVSP2D,		V_UNARY,	no_func, 0,	0	)
-#endif
+CREAT_VEC_FUNC( vlutmapb,	FVLUTMAPB,	VV_BINARY,	M_ALL,	REAL_ARG_MASK	)
+CREAT_VEC_FUNC( vlutmaps,	FVLUTMAPS,	VV_BINARY,	M_ALL,	REAL_ARG_MASK	)
 
 END_VFUNC_DECLS
 
@@ -365,10 +356,10 @@ static void create_vfs(SINGLE_QSP_ARG_DECL)
 {
 	u_int i;
 
-	init_vec_funcs(SINGLE_QSP_ARG);	// init item type
+	init_vec_funcs();	// init item type
 
 	for(i=0;i<N_NVFS;i++){
-		add_item(QSP_ARG  vec_func_itp, &vec_func_tbl[i], NO_NODE );
+		add_item(vec_func_itp, &vec_func_tbl[i] );
 	}
 }
 
@@ -386,12 +377,7 @@ static int vfa_cmp(const void *vfp1,const void *vfp2)
 
 int check_vfa_tbl_size(QSP_ARG_DECL  Vec_Func_Array vfa_tbl[], int size)
 {
-	if( size != N_VEC_FUNCS ){
-sprintf(ERROR_STRING,"CAUTIOUS:  %d inititialized vfa_tbl entries, expected %d!?",
-			size,N_VEC_FUNCS);
-		WARN(ERROR_STRING);
-		return -1;
-	}
+	assert( size == N_VEC_FUNCS );
 	return 0;
 }
 
@@ -403,7 +389,12 @@ void check_vfa_tbl(QSP_ARG_DECL  Vec_Func_Array *vfa_tbl, int size)
 //	if( check_vfa_tbl_size(QSP_ARG  vfa_tbl, size) < 0 )
 //		return -1;
 
-	assert( size == N_VEC_FUNCS );
+//	assert( size == N_VEC_FUNCS );
+	if( size != N_VEC_FUNCS ){
+		sprintf(ERROR_STRING,"check_vfa_tbl:  size (%d) not equal to N_VEC_FUNCS (%d)!?",
+			size,N_VEC_FUNCS);
+		warn(ERROR_STRING);
+	}
 
 	qsort(vfa_tbl,size,sizeof(Vec_Func_Array),vfa_cmp);
 
@@ -418,18 +409,18 @@ i, VF_NAME(&vec_func_tbl[i]),
 vfa_tbl[i].vfa_code,
 VF_NAME(&vec_func_tbl[ vfa_tbl[i].vfa_code ])
 );
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 }
 */
 
-//		if( vfa_tbl[i].vfa_code != i ){
-//			sprintf(ERROR_STRING,
-//	"CAUTIOUS:  check_vfa_tbl:  Vec_Func_Array table entry %d (%s) has code %d (%s)!?",
-//		i,VF_NAME(&vec_func_tbl[i]),
-//		vfa_tbl[i].vfa_code,VF_NAME(&vec_func_tbl[ vfa_tbl[i].vfa_code ]) );
-//			WARN(ERROR_STRING);
+		if( vfa_tbl[i].vfa_code != i ){
+			sprintf(ERROR_STRING,
+	"CAUTIOUS:  check_vfa_tbl:  Vec_Func_Array table entry %d (%s) has code %d (%s)!?",
+		i,VF_NAME(&vec_func_tbl[i]),
+		vfa_tbl[i].vfa_code,VF_NAME(&vec_func_tbl[ vfa_tbl[i].vfa_code ]) );
+			warn(ERROR_STRING);
 //			retval = (-1);
-//		}
+		}
 
 		assert( vfa_tbl[i].vfa_code == i );
 	}
@@ -448,16 +439,16 @@ void vl_init(SINGLE_QSP_ARG_DECL)
 	}
 
 	if( veclib_debug == 0 )
-		veclib_debug = add_debug_module(QSP_ARG  "veclib");
+		veclib_debug = add_debug_module("veclib");
 
 	/* sort the table to insure that each entry is at the location of its code */
-//#ifdef CAUTIOUS
-//	if( N_VEC_FUNCS != N_NVFS ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  vl_init:  Vector function table is missing %ld entries!?",
-//			N_VEC_FUNCS-N_NVFS);
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif // CAUTIOUS
+#ifdef CAUTIOUS
+	if( N_VEC_FUNCS != N_NVFS ){
+		sprintf(ERROR_STRING,"CAUTIOUS:  vl_init:  Vector function table is missing %ld entries!?",
+			N_VEC_FUNCS-N_NVFS);
+		error1(ERROR_STRING);
+	}
+#endif // CAUTIOUS
 
 	assert( N_VEC_FUNCS == N_NVFS );
 
@@ -472,21 +463,14 @@ sprintf(ERROR_STRING,"vl_init:  vec_func_tbl[%d] (%s):  code %d (%s)",
 i, VF_NAME(&vec_func_tbl[i]),
 VF_CODE(&vec_func_tbl[i]), VF_NAME(&vec_func_tbl[ VF_CODE(&vec_func_tbl[i]) ])
 );
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 }
-
-//		if( VF_CODE(&vec_func_tbl[i]) != i ){
-//			sprintf(ERROR_STRING,
-//	"CAUTIOUS:  vl_init:  Vec_Func table entry %d (%s) has code %d (%s)!?",
-//		i, VF_NAME(&vec_func_tbl[i]),
-//		VF_CODE(&vec_func_tbl[i]),
-//		VF_NAME(&vec_func_tbl[ VF_CODE(&vec_func_tbl[i]) ]) );
-//			ERROR1(ERROR_STRING);
-//		}
 
 		assert( VF_CODE(&vec_func_tbl[i]) == i );
 	}
 #endif /* CAUTIOUS */
+
+	init_argset_objects(SINGLE_QSP_ARG);
 
 	// Initialize the platforms
 	//init_all_platforms(SINGLE_QSP_ARG);

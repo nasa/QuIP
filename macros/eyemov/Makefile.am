@@ -2,14 +2,14 @@
 macrosdir	=	$(datadir)/quip/macros/eyemov
 
 macros_DATA	=	calib.mac	\
-			uhco.mac	\
 			corrplot.mac	\
-			lpsigma.mac	\
 			correlogram.mac	\
 			expon.mac	\
 			hmc_record.mac	\
+			lpsigma.mac	\
+			newfit.mac	\
 			regression.mac	\
-			newfit.mac
+			uhco.mac
 
 EXTRA_DIST	=	$(macros_DATA)
 

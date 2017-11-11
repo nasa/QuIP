@@ -40,13 +40,13 @@ static int lat_long_hack=0;	/* BUG for plotting the globe we don't want to wrap
 									\
 				p += OBJ_PXL_INC(dp);			\
 									\
-				if( j==0 ) xp_fmove((float)x,(float)y);	\
+				if( j==0 ) xplot_fmove((float)x,(float)y);	\
 									\
 			/* remove the "else" here so that		\
 			 * column vectors will draw as single points	\
 			 */						\
 									\
-				xp_fcont((float)x,(float)y);		\
+				xplot_fcont((float)x,(float)y);		\
 			}						\
 		}							\
 	}
@@ -61,7 +61,7 @@ static COMMAND_FUNC( do_xp_arc )
 	y1=(std_type)HOW_MUCH("arc start y");
 	x2=(std_type)HOW_MUCH("arc end x");
 	y2=(std_type)HOW_MUCH("arc end y");
-	xp_farc(cx,cy,x1,y1,x2,y2);
+	xplot_farc(cx,cy,x1,y1,x2,y2);
 }
 
 static COMMAND_FUNC( do_xp_fill_arc )
@@ -74,7 +74,7 @@ static COMMAND_FUNC( do_xp_fill_arc )
 	y1=(std_type)HOW_MUCH("arc start y");
 	x2=(std_type)HOW_MUCH("arc end x");
 	y2=(std_type)HOW_MUCH("arc end y");
-	xp_ffill_arc(cx,cy,x1,y1,x2,y2);
+	xplot_ffill_arc(cx,cy,x1,y1,x2,y2);
 }
 
 static COMMAND_FUNC( do_xp_fill_polygon )
@@ -95,7 +95,7 @@ static COMMAND_FUNC( do_xp_fill_polygon )
 		y_vals[i] = (float)HOW_MUCH(s);
 	}
 
-	xp_fill_polygon(num_points, x_vals, y_vals);
+	xplot_fill_polygon(num_points, x_vals, y_vals);
 
 	givbuf(x_vals);
 	givbuf(y_vals);
@@ -132,7 +132,7 @@ static COMMAND_FUNC( do_xp_space )
 		return;
 	}
 
-	xp_fspace(sx1,sy1,sx2,sy2);
+	xplot_fspace(sx1,sy1,sx2,sy2);
 }
 
 static COMMAND_FUNC( do_xp_move )
@@ -141,7 +141,7 @@ static COMMAND_FUNC( do_xp_move )
 
 	x=(std_type)HOW_MUCH("x coord");
 	y=(std_type)HOW_MUCH("y coord");
-	xp_fmove(x,y);
+	xplot_fmove(x,y);
 }
 
 static COMMAND_FUNC( do_xp_cont )
@@ -150,7 +150,7 @@ static COMMAND_FUNC( do_xp_cont )
 
 	x=(std_type)HOW_MUCH("x coord");
 	y=(std_type)HOW_MUCH("y coord");
-	xp_fcont(x,y);
+	xplot_fcont(x,y);
 }
 
 static COMMAND_FUNC( do_xp_point )
@@ -159,7 +159,7 @@ static COMMAND_FUNC( do_xp_point )
 
 	x=(std_type)HOW_MUCH("x coord");
 	y=(std_type)HOW_MUCH("y coord");
-	xp_fpoint(x,y);
+	xplot_fpoint(x,y);
 }
 
 static COMMAND_FUNC( do_xp_line )
@@ -170,7 +170,7 @@ static COMMAND_FUNC( do_xp_line )
 	y1=(std_type)HOW_MUCH("first y coord");
 	x2=(std_type)HOW_MUCH("second x coord");
 	y2=(std_type)HOW_MUCH("second y coord");
-	xp_fline(x1,y1,x2,y2);
+	xplot_fline(x1,y1,x2,y2);
 }
 
 static COMMAND_FUNC( do_xp_select )
@@ -178,7 +178,7 @@ static COMMAND_FUNC( do_xp_select )
 	int color;
 	
 	color=(int)HOW_MANY("color index");
-	xp_select(color);
+	xplot_select(color);
 }
 
 static COMMAND_FUNC( do_rdplot )
@@ -192,7 +192,7 @@ static COMMAND_FUNC( do_rdplot )
 
 static COMMAND_FUNC( do_xp_erase )
 {
-	xp_erase();
+	xplot_erase();
 }
 
 static COMMAND_FUNC( do_dumpdraw )
@@ -208,14 +208,14 @@ static COMMAND_FUNC( do_dumpdraw )
 	 */
 
 	GET_VIEWER("do_dumpdraw")
-	if( vp == NO_VIEWER ) return;
+	if( vp == NULL ) return;
 
-	dump_drawlist(QSP_ARG  vp);
+	dump_drawlist(vp);
 }
 
 static int bad_plot_vec2(QSP_ARG_DECL Data_Obj *dp,dimension_t n_comps_expected,const char *funcname)
 {
-	if( dp==NO_OBJ ) return 1;
+	if( dp==NULL ) return 1;
 
 	if( OBJ_PREC(dp) != PREC_SP && OBJ_PREC(dp) != PREC_DP ){
 		sprintf(ERROR_STRING,
@@ -236,7 +236,7 @@ static int bad_plot_vec2(QSP_ARG_DECL Data_Obj *dp,dimension_t n_comps_expected,
 
 static int bad_plot_vec(QSP_ARG_DECL Data_Obj *dp,dimension_t n_comps_expected,const char *funcname)
 {
-	if( dp==NO_OBJ ) return 1;
+	if( dp==NULL ) return 1;
 
 	if( OBJ_PREC(dp) != PREC_SP ){
 		sprintf(ERROR_STRING,
@@ -275,7 +275,7 @@ static COMMAND_FUNC( do_xplot )
 
 	std_type x,y,y0,dy,*p;
 
-	dp=PICK_OBJ("data vector");
+	dp=pick_obj("data vector");
 
 	if( bad_plot_vec(QSP_ARG dp,1,"xplot") ) return;
 
@@ -294,7 +294,7 @@ static COMMAND_FUNC( do_yplot )
 	std_type x,y,dx,*p;
 	std_type x0;
 
-	dp=PICK_OBJ("data vector");
+	dp=pick_obj("data vector");
 
 	if( bad_plot_vec(QSP_ARG dp,1,"yplot") ) return;
 
@@ -316,11 +316,11 @@ static COMMAND_FUNC( do_cyplot )
 	std_type x,y,dx,*yp;
 	char *cp;
 
-	dp=PICK_OBJ("data vector");
-	cdp=PICK_OBJ("color vector");
+	dp=pick_obj("data vector");
+	cdp=pick_obj("color vector");
 
-	if( dp==NO_OBJ ) return;
-	if( cdp==NO_OBJ ) return;
+	if( dp==NULL ) return;
+	if( cdp==NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"cyplot")
 	INSIST_RAM_OBJ(cdp,"cyplot")
@@ -333,7 +333,7 @@ static COMMAND_FUNC( do_cyplot )
 		WARN("color vector should be byte");
 		return;
 	}
-	if( !dp_same_size(QSP_ARG  dp,cdp,"do_cyplot") ){
+	if( !dp_same_size(dp,cdp,"do_cyplot") ){
 		sprintf(ERROR_STRING,"data vector %s and color vector %s must have identical sizes",
 			OBJ_NAME(dp),OBJ_NAME(cdp));
 		WARN(ERROR_STRING);
@@ -357,20 +357,22 @@ static COMMAND_FUNC( do_cyplot )
 	yp = (std_type *) OBJ_DATA_PTR(dp);
 	cp = (char *) OBJ_DATA_PTR(cdp);
 
-	xp_fmove(x,*yp);
-	xp_select(*cp);
-	xp_fcont(x,*yp);
+	xplot_fmove(x,*yp);
+	xplot_select(*cp);
+	xplot_fcont(x,*yp);
 	while(i--){
 		yp += inc;
 		cp += cinc;
 		x += dx;
 		y = *yp;
-		xp_select(*cp);
-		xp_fcont(x,y);
+		xplot_select(*cp);
+		xplot_fcont(x,y);
 	}
 }
 
-static void double_xyplot(Data_Obj *dp)
+#define double_xyplot(dp) _double_xyplot(QSP_ARG  dp)
+
+static void _double_xyplot(QSP_ARG_DECL  Data_Obj *dp)
 {
 	u_long i,j,k;
 	double x,y,*p;
@@ -378,7 +380,9 @@ static void double_xyplot(Data_Obj *dp)
 	XYPLOT_LOOP( double, , x = *p; y = *(p+OBJ_COMP_INC(dp)) )
 }
 
-static void float_xyplot(Data_Obj *dp)
+#define float_xyplot(dp) _float_xyplot(QSP_ARG  dp)
+
+static void _float_xyplot(QSP_ARG_DECL  Data_Obj *dp)
 {
 	u_long i,j,k;
 	float x,y,*p;
@@ -390,8 +394,8 @@ static COMMAND_FUNC( do_xyplot )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ("data vector");
-	if( dp==NO_OBJ ) return;
+	dp=pick_obj("data vector");
+	if( dp==NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"xyplot")
 
@@ -426,8 +430,8 @@ static COMMAND_FUNC( do_xyzplot )
 #define UP	2
 	int pen_state=UP;
 
-	dp=PICK_OBJ("data vector");
-	if( dp==NO_OBJ ) return;
+	dp=pick_obj("data vector");
+	if( dp==NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"xyzplot")
 
@@ -455,21 +459,21 @@ static COMMAND_FUNC( do_xyzplot )
 				 * wrap-around...  BUG
 				 */
 				if( pen_state == UP ){
-					xp_fmove(x,y);
+					xplot_fmove(x,y);
 				}
 				if( lat_long_hack ){
 					if( fabs(lastx-x) < 180 &&
 						fabs(lasty-y) < 180 ){
-						xp_fcont(x,y);
+						xplot_fcont(x,y);
 						lastx=x;
 						lasty=y;
 					} else {
-						xp_move((int)x,(int)y);
+						xplot_move((int)x,(int)y);
 						lastx=x;
 						lasty=y;
 					}
 				} else {
-					xp_fcont(x,y);
+					xplot_fcont(x,y);
 					lastx=x;
 					lasty=y;
 				}
@@ -484,7 +488,7 @@ static COMMAND_FUNC( do_xp_circ )
 	std_type rad;
 
 	rad = (std_type)HOW_MUCH("radius");
-	xp_circle(rad);
+	xplot_circle(rad);
 }
 
 static COMMAND_FUNC( do_plot_string )
@@ -492,27 +496,19 @@ static COMMAND_FUNC( do_plot_string )
 	const char *s;
 
 	s=NAMEOF("string");
-	xp_text(s);
+	xplot_text(s);
 }
 
 static COMMAND_FUNC( do_update_plot )
 {
 #ifdef BUILD_FOR_IOS
-	xp_update();
-#endif /* BUILD_FOR_IOS */
+	xplot_update();
+#else /* ! BUILD_FOR_IOS */
+	advise("update_plot does nothing (except on iOS)");
+#endif /* ! BUILD_FOR_IOS */
 }
 
-#ifdef FOOBAR
-static COMMAND_FUNC( do_end_plot )
-{
-#ifdef BUILD_FOR_IOS
-	xp_update();
-#endif /* BUILD_FOR_IOS */
-	POP_MENU;
-}
-#endif /* FOOBAR */
-
-static COMMAND_FUNC( do_tell_plot_space ){ tell_plot_space(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_tell_plot_space ){ tell_plot_space(); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(xplot_menu,s,f,h)
 
@@ -553,9 +549,9 @@ COMMAND_FUNC( do_xp_menu )
 
 	INSURE_X11_SERVER
 	GET_VIEWER("xp_menu")
-	if( vp != NO_VIEWER )
-		xp_setup(QSP_ARG  vp);
+	if( vp != NULL )
+		xplot_setup(vp);
 
-	PUSH_MENU(xplot);
+	CHECK_AND_PUSH_MENU(xplot);
 }
 

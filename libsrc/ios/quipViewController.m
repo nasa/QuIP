@@ -40,6 +40,7 @@
 #endif // BUILD_FOR_IOS
 
 
+#ifdef OLD
 /********** UIAlertView delegate methods ************/
 
 - (void)alertView:(QUIP_ALERT_OBJ_TYPE *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex
@@ -53,6 +54,8 @@
 }
 
 /********** end UIAlertView delegate methods ************/
+#endif // OLD
+
 #ifdef BUILD_FOR_IOS
 - (void)didReceiveMemoryWarning
 {
@@ -74,13 +77,7 @@
 -(void) qvcDoneButtonPressed
 {
 	done_button_pushed=1;
-#ifdef CAUTIOUS
-	if( qvc_done_action == NULL ){
-		NWARN("qvcDoneButtonPushed:  no action!?");
-		return;
-	}
-#endif // CAUTIOUS
-
+	assert( qvc_done_action != NULL );
 	chew_text(DEFAULT_QSP_ARG  qvc_done_action, "(done button)" );
 }
 
@@ -238,6 +235,7 @@
 -(void) releaseView
 {
 	if( self.view != NULL )
+        // This line generates a compiler warning???  Null passed to a callee that requires a non-null argument
 		self.view = NULL;	// remove the ref, should free the view?
 }
 
@@ -250,6 +248,7 @@
 	self=[super initWithNibName:nil bundle:nil];
 #endif // BUILD_FOR_MACOS
 
+//fprintf(stderr,"quipViewController initWithSize delegate = 0x%lx\n",(long)adp);
 	qadp=adp;
 	CGRect r;
 	// This is the view controller???
@@ -259,14 +258,15 @@
 	_size = size;
 
 #ifdef BUILD_FOR_IOS
-	qvc_flags = QVC_ALLOWS_AUTOROTATION;
+	//qvc_flags = QVC_ALLOWS_AUTOROTATION;
+	qvc_flags = 0;
 #endif // BUILD_FOR_IOS
 
 	// The view property is set by loadView
 
+//fprintf(stderr,"quipViewController initWithSize DONE\n");
 	return self;
 }
-
 
 @end
 

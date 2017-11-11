@@ -4,11 +4,9 @@
 
 //#include "shape_bits.h"
 //#include "dobj_basic.h"
+#include "quip_fwd.h"
 #include "data_obj.h"
 #include "typed_scalar.h"
-
-struct scalar_expression_node;
-typedef struct scalar_expression_node Scalar_Expr_Node;
 
 typedef enum {
 	N_OBJNAME,			/*  0 */
@@ -59,24 +57,22 @@ typedef enum {
 	N_POSNFUNC,			/* 45 */
 	N_STRING,			/* 46 */
 	N_STRV2FUNC,			/* 47 */
-	/* N_SLCT_CHAR */		/* 40 */	/* obsolete? */
+	N_DOBJV_STR_ARG_FUNC,		/* 48 */
+	/* N_SLCT_CHAR */		/* 49 */	/* obsolete? */
 } Scalar_Expr_Node_Code;
 
 #define MAX_SEN_CHILDREN  3
 
-struct scalar_expression_node {
+struct scalar_expr_node {
 	Scalar_Expr_Node_Code	sen_code;
 //	const char *		sen_string;
 //	const char *		sen_string2;
 	index_t			sen_index;
-	Function *		sen_func_p;
+	Quip_Function *		sen_func_p;
 	Scalar_Expr_Node	*sen_child[MAX_SEN_CHILDREN];
 	//double		sen_dblval;
 	Typed_Scalar *		sen_tsp;
 };
-
-#define NO_EXPR_NODE ((Scalar_Expr_Node *)NULL)
-
 
 /* globals */
 
@@ -94,10 +90,10 @@ extern void set_obj_funcs(
 	Data_Obj *(*csub_func)(QSP_ARG_DECL  Data_Obj*,index_t) );
 
 #ifdef BUILD_FOR_OBJC
-extern int check_ios_sizable_func( double *retval, Function *funcp, Scalar_Expr_Node *argp );
-extern int check_ios_strv_func( const char **strptr, Function *funcp, Scalar_Expr_Node *argp );
-extern int check_ios_positionable_func( double *retval, Function *funcp, Scalar_Expr_Node *argp );
-extern int check_ios_interlaceable_func( double *retval, Function *funcp, Scalar_Expr_Node *argp );
+extern int check_ios_sizable_func( double *retval, Quip_Function *funcp, Scalar_Expr_Node *argp );
+extern int check_ios_strv_func( const char **strptr, Quip_Function *funcp, Scalar_Expr_Node *argp );
+extern int check_ios_positionable_func( double *retval, Quip_Function *funcp, Scalar_Expr_Node *argp );
+extern int check_ios_interlaceable_func( double *retval, Quip_Function *funcp, Scalar_Expr_Node *argp );
 #endif /* BUILD_FOR_OBJC */
 
 extern void set_eval_szbl_func(QSP_ARG_DECL  Item * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) );

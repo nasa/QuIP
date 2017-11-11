@@ -34,6 +34,10 @@ int cksiz(QSP_ARG_DECL  int argtyp,Data_Obj *src_dp,Data_Obj *dst_dp)
 		if( OBJ_TYPE_DIM(src_dp,i) != OBJ_TYPE_DIM(dst_dp,i) ){
 
 			/* special case for real/cpx fft */
+
+			/* This is usually a row, but for a 1-D fft of a column, this test wouldn't
+			 * be triggered !?  BUG
+			 */
 			if( i==1 ){
 				if( (argtyp & FWD_FT) && IS_REAL(src_dp) && IS_COMPLEX(dst_dp) ){
 					if( OBJ_COLS(dst_dp) == (1+OBJ_COLS(src_dp)/2) )
@@ -62,9 +66,36 @@ int cksiz(QSP_ARG_DECL  int argtyp,Data_Obj *src_dp,Data_Obj *dst_dp)
 					dimension_name[i],
 					OBJ_NAME(src_dp),OBJ_TYPE_DIM(src_dp,i),
 					OBJ_NAME(dst_dp),OBJ_TYPE_DIM(dst_dp,i));
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				return(-1);
 			}
+		} else {	/* dimensions match */
+
+			/* special case for real/cpx fft */
+
+			/* This is usually a row, but for a 1-D fft of a column, this test wouldn't
+			 * be triggered !?  BUG
+			 */
+			if( i==1 ){
+				if( (argtyp & FWD_FT) && IS_REAL(src_dp) && IS_COMPLEX(dst_dp) ){
+					if( OBJ_COLS(dst_dp) != (1+OBJ_COLS(src_dp)/2) ){
+						sprintf(ERROR_STRING,
+"For FFT, number of columns of transform %s (%d) should 1 plus the half number of columns of the destination %s (%d)",
+OBJ_NAME(dst_dp),OBJ_COLS(dst_dp),OBJ_NAME(src_dp),OBJ_COLS(src_dp));
+						warn(ERROR_STRING);
+						return -1;
+					}
+				} else if( (argtyp & INV_FT) && IS_COMPLEX(src_dp) && IS_REAL(dst_dp) ){
+					if( OBJ_COLS(src_dp) == (1+OBJ_COLS(dst_dp)/2) ){
+						sprintf(ERROR_STRING,
+"For inverse FFT, number of columns of transform %s (%d) should 1 plus the half number of columns of the destination %s (%d)",
+OBJ_NAME(src_dp),OBJ_COLS(src_dp),OBJ_NAME(dst_dp),OBJ_COLS(dst_dp));
+						warn(ERROR_STRING);
+						return -1;
+					}
+				}
+			}
+
 		}
 	}
 	return(0);
@@ -91,21 +122,24 @@ int old_cksiz(QSP_ARG_DECL  int argtyp,Data_Obj *src_dp,Data_Obj *dst_dp)
 				dimension_name[i],
 				OBJ_NAME(src_dp),OBJ_TYPE_DIM(src_dp,i),
 				OBJ_NAME(dst_dp),OBJ_TYPE_DIM(dst_dp,i));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(-1);
 		}
 	}
 	return(0);
 } /* end old_cksiz() */
 
+// BUG - Please add a comment concerning the purpose of this function!
+
 int check_bitmap(QSP_ARG_DECL  Data_Obj *bitmap,Data_Obj *dst_dp)
 {
-	if( bitmap==NO_OBJ ) {
-		ERROR1("no bitmap???");
+	if( bitmap==NULL ) {
+		error1("no bitmap???");
 		IOS_RETURN_VAL(-1)
 	}
+	// BUG?  Is this code correct for a "gappy" bitmap?
 	if( (OBJ_N_TYPE_ELTS(bitmap) * BITS_PER_BITMAP_WORD ) < OBJ_N_TYPE_ELTS(dst_dp) ){
-		WARN("bitmap size too small");
+		warn("bitmap size too small");
 		return(-1);
 	}
 	return(0);

@@ -14,10 +14,10 @@
 #include "function.h"
 #include "nexpr.h"
 #include "veclib_api.h"
-#include "query.h"
 #include "warn.h"
 
 #include "vectree.h"
+#include "subrt.h"
 
 /* for definition of function codes */
 /* #include "wartbl.h" */
@@ -26,8 +26,6 @@
 static Keyword *curr_native_func_tbl=vt_native_func_tbl;
 #endif /* NOT_YET */
 
-#define _DUMP_TREE(enp)		_dump_tree(QSP_ARG  enp)
-#define _DUMP_NODE(enp)		_dump_node(QSP_ARG  enp)
 
 
 /* Dump flags */
@@ -109,7 +107,7 @@ static void prt_node(Vec_Expr_Node *enp,char *buf)
 {
 	int key;
 
-	if( VN_SHAPE(enp) == NO_SHAPE ) key='_';
+	if( VN_SHAPE(enp) == NULL ) key='_';
 	else if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ) key='?';
 	else if ( OWNS_SHAPE(enp) ) key='*';
 	else key='@';
@@ -121,17 +119,15 @@ static void prt_node(Vec_Expr_Node *enp,char *buf)
 		);
 }
 
-static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
+static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Tree_Code code;
 	int i;
 	const char *s;
 
-	if( enp==NO_VEXPR_NODE ) return;
+	if( enp==NULL ) return;
 
 	/* print the node "name", and a code that tells about shape knowledge */
-
-//DEBUG_IT_3(enp,_dump_node)
 
 // Temporarily print to stderr instead of stdout for debugging...
 	prt_node(enp,msg_str);
@@ -143,7 +139,7 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 
 	if( SHOWING_COST ){
-		if( VN_SHAPE(enp) != NO_SHAPE ){
+		if( VN_SHAPE(enp) != NULL ){
 			sprintf(msg_str,"\t%d", SHP_N_MACH_ELTS(VN_SHAPE(enp)));
 		}
 
@@ -172,9 +168,9 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		if( code == T_POINTER ){
 			Identifier *idp;
 			/* We don't use get_set_ptr() here because we don't want an error msg... */
-			idp = ID_OF(VN_STRING(enp));
-			if( idp != NO_IDENTIFIER && IS_POINTER(idp) && POINTER_IS_SET(idp) ){
-				if( PTR_REF(ID_PTR(idp)) == NO_REFERENCE ){
+			idp = id_of(VN_STRING(enp));
+			if( idp != NULL && IS_POINTER(idp) && POINTER_IS_SET(idp) ){
+				if( PTR_REF(ID_PTR(idp)) == NULL ){
 					/* how could this ever happen??? */
 					prt_msg_frag("->???");
 				} else {
@@ -188,6 +184,11 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	} else if( code == T_STATIC_OBJ ){
 		sprintf(msg_str,"\t%s",OBJ_NAME(VN_OBJ(enp)));
 		prt_msg_frag(msg_str);
+#ifdef SCALARS_NOT_OBJECTS
+	} else if( code == T_SCALAR_VAR ){
+		sprintf(msg_str,"\t%s",VN_STRING(enp));
+		prt_msg_frag(msg_str);
+#endif // SCALARS_NOT_OBJECTS
 	} else if ( code == T_FUNCREF ){
 		Subrt *srp;
 		srp=VN_SUBRT(enp);
@@ -210,7 +211,7 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		//sprintf(msg_str,"  %s",NAME_FOR_PREC_CODE(VN_INTVAL(enp)));
 		sprintf(msg_str,"  %s",PREC_NAME(VN_PREC_PTR(enp)));
 		prt_msg_frag(msg_str);
-	} else if( code == T_SUBRT || code == T_SCRIPT ){
+	} else if( code == T_SUBRT_DECL || code == T_SCRIPT ){
 		Subrt *srp;
 		srp=VN_SUBRT(enp);
 		sprintf(msg_str,"\t%s",SR_NAME(srp));
@@ -224,12 +225,12 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		prt_msg_frag(msg_str);
 	} else if( code==T_ADVISE ){
 		/* BUG need to elim yylex_qsp */
-		s=eval_string(QSP_ARG  VN_CHILD(enp,0));
+		s=eval_string(VN_CHILD(enp,0));
 		sprintf(msg_str,"\t\"%s\"",s);
 		prt_msg_frag(msg_str);
 	} else if( code==T_WARN ){
 		/* BUG need to elim yylex_qsp */
-		s=eval_string(QSP_ARG  VN_CHILD(enp,0));
+		s=eval_string(VN_CHILD(enp,0));
 		sprintf(msg_str,"\t\"%s\"",s);
 		prt_msg_frag(msg_str);
 	} else if( code==T_STRING ){
@@ -280,19 +281,19 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	/* Now print the addresses of the child nodes */
 
-	if( VN_CHILD(enp,0)!=NO_VEXPR_NODE){
+	if( VN_CHILD(enp,0)!=NULL){
 		sprintf(msg_str,"\t\tn%d",VN_SERIAL(VN_CHILD(enp,0)));
 		prt_msg_frag(msg_str);
 	}
 	for(i=1;i<MAX_CHILDREN(enp);i++){
-		if( VN_CHILD(enp,i)!=NO_VEXPR_NODE){
+		if( VN_CHILD(enp,i)!=NULL){
 			sprintf(msg_str,", n%d",VN_SERIAL(VN_CHILD(enp,i)));
 			prt_msg_frag(msg_str);
 		}
 	}
 	prt_msg("");
 
-	if( SHOWING_SHAPES && VN_SHAPE(enp) != NO_SHAPE ){
+	if( SHOWING_SHAPES && VN_SHAPE(enp) != NULL ){
 		prt_msg_frag("\t");
 		if( OWNS_SHAPE(enp) ){
 			sprintf(msg_str,"* 0x%lx  ",(u_long)VN_SHAPE(enp));
@@ -303,14 +304,14 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			prt_msg_frag(msg_str);
 		}
 		prt_msg_frag("\t");
-		DESCRIBE_SHAPE(VN_SHAPE(enp));
+		describe_shape(VN_SHAPE(enp));
 	}
 
-	if( SHOWING_RESOLVERS && VN_RESOLVERS(enp)!=NO_LIST ){
+	if( SHOWING_RESOLVERS && VN_RESOLVERS(enp)!=NULL ){
 		Node *np; Vec_Expr_Node *enp2;
 		prt_msg("\tResolvers:");
 		np=QLIST_HEAD(VN_RESOLVERS(enp));
-		while(np!=NO_NODE){
+		while(np!=NULL){
 			enp2=(Vec_Expr_Node *)NODE_DATA(np);
 			sprintf(msg_str,"\t\t%s",node_desc(enp2));
 			prt_msg(msg_str);
@@ -319,39 +320,39 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 }
 
-static void _dump_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
+static void _dump_subtree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
 
-	_dump_node(QSP_ARG  enp);
+	_dump_node_with_shape(QSP_ARG  enp);
 
 	for(i=0;i<MAX_CHILDREN(enp);i++){
-		if( VN_CHILD(enp,i)!=NO_VEXPR_NODE){
-			_DUMP_TREE(VN_CHILD(enp,i));
+		if( VN_CHILD(enp,i)!=NULL){
+			_dump_subtree(QSP_ARG  VN_CHILD(enp,i));
 		}
 	}
 }
 
 
-void dump_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _dump_tree_with_key(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	if( dump_flags & SHOW_KEY ){
 		print_shape_key(SINGLE_QSP_ARG);
 		dump_flags &= ~SHOW_KEY;	/* clear flag bit */
 	}
 	dumping=1;
-	_DUMP_TREE(enp);
+	_dump_subtree(QSP_ARG  enp);
 	dumping=0;
 }
 
-void dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _dump_node_with_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	if( dump_flags & SHOW_KEY ){
 		print_shape_key(SINGLE_QSP_ARG);
 		dump_flags &= ~SHOW_KEY;	/* clear flag bit */
 	}
 	dumping=1;
-	_DUMP_NODE(enp);
+	_dump_node_basic(QSP_ARG  enp);
 	dumping=0;
 }
 

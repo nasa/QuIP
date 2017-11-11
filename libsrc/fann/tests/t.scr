@@ -1,0 +1,45 @@
+Vector xor_in 4 2 float
+Vector xor_out 4 1 float
+Get_Ascii xor_in tests/xor_in.asc
+Get_Ascii xor_out tests/xor_out.asc
+
+fann
+  create_std 	xor_nn	#	nickname
+  		2	#	inputs
+  		1	#	outputs 
+		3	#	layers
+		3	#	hidden units - is this per layer?
+  create_std 	nn1	#	nickname
+  		3	#	inputs
+  		3	#	outputs 
+		3	#	layers
+		3	#	hidden units - is this per layer?
+  init_weights xor_nn xor_in xor_out
+  train xor_nn xor_in xor_out
+  train xor_nn xor_in xor_out
+  train xor_nn xor_in xor_out
+  quit
+
+# now test on some random data
+repeat 10
+  VUni xor_in
+  VSMul xor_in xor_in 2
+  VSAdd xor_in xor_in -1
+  Display xor_in
+  fann run xor_nn xor_in xor_out quit
+  Display xor_out
+  echo ' '
+  end
+
+Image tst_in 256 256 2 float
+Image tst_out 256 256 1 float
+Ramp2D tst_in{0} -1 2/(ncols(tst_in)-1) 0
+Ramp2D tst_in{1} -1 0 2/(ncols(tst_in)-1)
+
+fann
+  run xor_nn tst_in tst_out 
+  quit
+Viewer_For v tst_out
+Show_Image tst_out v
+Pause
+

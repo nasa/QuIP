@@ -14,6 +14,9 @@
 
 typedef struct png_hdr {
 	
+	dimension_t	n_frames;	// jbm extension
+	long		frame_size;
+
 	png_uint_32 width;       /* width of image in pixels */
 	png_uint_32 height;      /* height of image in pixels */
 

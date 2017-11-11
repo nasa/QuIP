@@ -91,7 +91,7 @@ MENU_END(video)
 
 COMMAND_FUNC( do_video_controls )
 {
-	PUSH_MENU(video);
+	CHECK_AND_PUSH_MENU(video);
 }
 
 #endif /* HAVE_METEOR */

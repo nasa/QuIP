@@ -1,0 +1,40 @@
+# When multi-threading, object types can have their own context stacks.
+# But should a thread inherit all contexts from its parent?
+
+Vector v1 4 1 float
+
+Ramp1D v1 0 1
+Display v1
+
+Define Test_Thread 0
+advise 'Test_Thread BEGIN'
+Display v1
+advise 'Test_Thread DONE'
+.
+
+os
+  threads
+    new_thread thr1 Test_Thread
+    quit
+  quit
+Pause_If
+
+platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
+
+Vector g1 4 1 float
+Ramp1D g1 0 1
+Display g1
+
+Define Test_Thread2 0
+Display g1
+.
+
+os
+  threads
+    new_thread thr2 Test_Thread2
+    quit
+  quit
+
+Pause_If
+exit
+

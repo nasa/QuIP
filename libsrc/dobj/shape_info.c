@@ -1,9 +1,14 @@
 #include "quip_config.h"
 
+#include <math.h>	// FLT_MIN etc
 #include "quip_prot.h"
 #include "dobj_prot.h"
+#include "dobj_private.h"
+#include "ascii_fmts.h"
+#include "query_stack.h"	// like to eliminate this dependency...
+#include "debug.h"
 
-Item_Type *prec_itp=NO_ITEM_TYPE;
+Item_Type *prec_itp=NULL;
 
 #define INIT_VOID_PREC(name,type,code)			\
 	INIT_GENERIC_PREC(name,type,code)		\
@@ -13,50 +18,506 @@ Item_Type *prec_itp=NO_ITEM_TYPE;
 	INIT_GENERIC_PREC(name,type,code)		\
 	SET_PREC_SIZE(prec_p, sizeof(type));
 
+#define new_prec(name)	_new_prec(QSP_ARG  name)
+
 #define INIT_GENERIC_PREC(name,type,code)		\
-	prec_p = new_prec(QSP_ARG  #name);		\
+	prec_p = new_prec(#name);		\
 	SET_PREC_CODE(prec_p, code);			\
+	SET_PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p,name##_set_value_from_input);	\
+	SET_PREC_INDEXED_DATA_FUNC(prec_p,name##_indexed_data);	\
+	SET_PREC_IS_NUMERIC_FUNC(prec_p,name##_is_numeric);	\
+	SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,name##_assign_scalar_obj);	\
+	SET_PREC_EXTRACT_SCALAR_FUNC(prec_p,name##_extract_scalar);	\
+	SET_PREC_CAST_TO_DOUBLE_FUNC(prec_p,cast_##name##_to_double);	\
+	SET_PREC_CAST_FROM_DOUBLE_FUNC(prec_p,cast_##name##_from_double);	\
+	SET_PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p,cast_indexed_##name##_from_double);	\
+	SET_PREC_COPY_VALUE_FUNC(prec_p,copy_##name##_value);	\
 	if( (code & PSEUDO_PREC_MASK) == 0 )		\
 		SET_PREC_MACH_PREC_PTR(prec_p, prec_p);	\
-	else						\
+	else {						\
 		SET_PREC_MACH_PREC_PTR(prec_p,		\
-		prec_for_code( code & MACH_PREC_MASK ) );
+		prec_for_code( code & MACH_PREC_MASK ) ); \
+	}
 
-static Precision *new_prec(QSP_ARG_DECL  const char *name)
+static Precision *_new_prec(QSP_ARG_DECL  const char *name)
 {
 	Precision *prec_p;
 
-	prec_p = (Precision *) new_item(QSP_ARG  prec_itp, name, sizeof(Precision) );
-	// BUG make sure name is not already in use
-
-//#ifdef CAUTIOUS
-//	if( prec_p == NO_PRECISION) ERROR1("CAUTIOUS:  new_prec:  Error creating precision!?");
-//#endif /* CAUTIOUS */
-	assert( prec_p != NO_PRECISION );
+	prec_p = (Precision *) new_item(prec_itp, name, sizeof(Precision) );
+	assert( prec_p != NULL );
 
 	return(prec_p);
 }
 
-Precision *get_prec(QSP_ARG_DECL  const char *name)
+Precision *_get_prec(QSP_ARG_DECL  const char *name)
 {
-	return (Precision *)get_item(QSP_ARG  prec_itp, name);
+	return (Precision *)get_item(prec_itp, name);
 }
 
-void init_precisions(SINGLE_QSP_ARG_DECL)
+/////////////////////////////////
+
+#define DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)						\
+												\
+static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
+{												\
+assert( AERROR(#stem"_set_value_from_input should never be called, not a machine precision!?") );\
+}
+
+// BUG need special case for bitmap!
+// Floating point values aren't signed...
+
+#define DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,next_input_func,type_min,type_max)	\
+												\
+static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
+{												\
+	read_type val;										\
+												\
+	if( ! HAS_FORMAT_LIST )									\
+		val = query_func(prompt );							\
+	else											\
+		val = next_input_func(QSP_ARG  prompt);						\
+												\
+	if( val < type_min || val > type_max ){							\
+		sprintf(ERROR_STRING,								\
+			"%s_set_value_from_input:  Truncation error converting %s to %s (%s)",	\
+			#stem,#read_type,#stem,#type);						\
+		warn(ERROR_STRING);								\
+		sprintf(ERROR_STRING,"val = %ld, type_min = %ld, type_max = %ld",		\
+			(long)val,(long)type_min,(long)type_max);				\
+		advise(ERROR_STRING);								\
+	}											\
+												\
+	if( vp != NULL )									\
+		* ((type *)vp) = (type) val;							\
+}
+
+#define DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,next_input_func,type_min,type_max)	\
+												\
+static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
+{												\
+	read_type val;										\
+												\
+	if( ! HAS_FORMAT_LIST )									\
+		val = query_func(prompt );							\
+	else											\
+		val = next_input_func(QSP_ARG  prompt);						\
+												\
+	if( val < (-type_max) || val > type_max ){						\
+		sprintf(ERROR_STRING,"%s_set_value_from_input:  Truncation error converting %s to %s (%s)",#stem,#read_type,#stem,#type);		\
+		warn(ERROR_STRING);								\
+	}											\
+												\
+	if( (val < (type_min) && val > 0) || (val > (-type_min) && val < 0) ){			\
+		sprintf(ERROR_STRING,"Rounding error converting %s to %s (%s)",#read_type,#stem,#type);			\
+		warn(ERROR_STRING);								\
+	}											\
+												\
+	if( vp != NULL )									\
+		* ((type *)vp) = (type) val;							\
+}
+
+DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(float,float,double,how_much,next_input_flt_with_format,__FLT_MIN__,__FLT_MAX__)
+DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(double,double,double,how_much,next_input_flt_with_format,__DBL_MIN__,__DBL_MAX__)
+
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(byte,char,long,how_many,next_input_int_with_format,MIN_BYTE,MAX_BYTE)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(short,short,long,how_many,next_input_int_with_format,MIN_SHORT,MAX_SHORT)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(int,int32_t,long,how_many,next_input_int_with_format,MIN_INT32,MAX_INT32)
+// This one generates warnings when building for iOS?
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(long,int64_t,long,how_many,next_input_int_with_format,MIN_INT64,MAX_INT64)
+
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_byte,u_char,long,how_many,next_input_int_with_format,MIN_UBYTE,MAX_UBYTE)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_short,u_short,long,how_many,next_input_int_with_format,MIN_USHORT,MAX_USHORT)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_int,int32_t,long,how_many,next_input_int_with_format,MIN_UINT32,MAX_UINT32)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_long,int64_t,long,how_many,next_input_int_with_format,MIN_UINT64,MAX_UINT64)
+
+/////////////////////////////////
+
+#define DECLARE_INDEXED_DATA_FUNC(stem,type)				\
+									\
+static double stem##_indexed_data(Data_Obj *dp, int index)		\
+{									\
+	return (double) (* (((type *)OBJ_DATA_PTR(dp))+index) );	\
+}
+
+static inline double fetch_bit(Data_Obj *dp, bitnum_t bitnum)
+{
+	bitmap_word bit, *word_p;
+
+	bitnum += OBJ_BIT0(dp);
+	word_p = (bitmap_word *)OBJ_DATA_PTR(dp);
+	word_p += bitnum/BITS_PER_BITMAP_WORD;
+	bitnum %= BITS_PER_BITMAP_WORD;
+	bit = 1 << bitnum;
+	if( *word_p & bit )
+		return 1.0;
+	else
+		return 0.0;
+}
+
+#define DECLARE_POSSIBLY_BITMAP_INDEXED_DATA_FUNC(stem,type)			\
+										\
+static double stem##_indexed_data(Data_Obj *dp, int index)			\
+{										\
+	if( IS_BITMAP(dp) ){							\
+		return fetch_bit( dp, OBJ_BIT0(dp)+index );			\
+	} else {								\
+		return (double) (* (((type *)OBJ_DATA_PTR(dp))+index) );	\
+	}									\
+}
+
+
+#define DECLARE_BAD_INDEXED_DATA_FUNC(stem)				\
+									\
+static double stem##_indexed_data(Data_Obj *dp, int index)		\
+{									\
+	assert( AERROR(#stem" indexed data function does not exist (not a machine precision)!?") );	\
+}
+
+
+/////////////////////////////////
+
+#define DECLARE_IS_NUMERIC_FUNC(stem)		\
+						\
+static int stem##_is_numeric(void)		\
+{						\
+	return 1;				\
+}
+
+#define DECLARE_NOT_NUMERIC_FUNC(stem)		\
+						\
+static int stem##_is_numeric(void)		\
+{						\
+	return 0;				\
+}
+
+/////////////////////////////////
+
+#define DECLARE_ASSIGN_REAL_SCALAR_FUNC(stem,type,member)		\
+									\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
+{									\
+	*((type *)OBJ_DATA_PTR(dp)) = svp->member ;					\
+	return 0;							\
+}
+
+#define DECLARE_ASSIGN_CPX_SCALAR_FUNC(stem,type,member)		\
+									\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
+{									\
+	*( (type *)(OBJ_DATA_PTR(dp))  ) = svp->member[0];				\
+	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
+	return 0;							\
+}
+
+#define DECLARE_ASSIGN_QUAT_SCALAR_FUNC(stem,type,member)		\
+									\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
+{									\
+	*( (type *)(OBJ_DATA_PTR(dp))  ) = svp->member[0];				\
+	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
+	*(((type *)(OBJ_DATA_PTR(dp)))+2) = svp->member[2];				\
+	*(((type *)(OBJ_DATA_PTR(dp)))+3) = svp->member[3];				\
+	return 0;							\
+}
+
+#define DECLARE_ASSIGN_COLOR_SCALAR_FUNC(stem,type,member)		\
+									\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
+{									\
+	*( (type *)(OBJ_DATA_PTR(dp))   ) = svp->member[0];				\
+	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
+	*(((type *)(OBJ_DATA_PTR(dp)))+2) = svp->member[2];				\
+	return 0;							\
+}
+
+#define DECLARE_BAD_ASSIGN_SCALAR_FUNC(stem)				\
+									\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
+{									\
+	return -1;							\
+}
+
+//////////////////////////////////////////////
+
+#define DECLARE_EXTRACT_REAL_SCALAR_FUNC(stem,type,member)		\
+									\
+static void stem##_extract_scalar(Scalar_Value *svp, Data_Obj *dp)		\
+{									\
+	svp->member = *((type     *)OBJ_DATA_PTR(dp));				\
+}
+
+#define DECLARE_EXTRACT_CPX_SCALAR_FUNC(stem,type,member)		\
+									\
+static void stem##_extract_scalar(Scalar_Value *svp, Data_Obj *dp)		\
+{									\
+	svp->member[0] = *(((type *)OBJ_DATA_PTR(dp)));				\
+	svp->member[1] = *(((type *)OBJ_DATA_PTR(dp))+1);				\
+}
+
+#define DECLARE_EXTRACT_QUAT_SCALAR_FUNC(stem,type,member)		\
+									\
+static void stem##_extract_scalar(Scalar_Value *svp, Data_Obj *dp)		\
+{									\
+	svp->member[0] = *(((type *)OBJ_DATA_PTR(dp)));				\
+	svp->member[1] = *(((type *)OBJ_DATA_PTR(dp))+1);				\
+	svp->member[2] = *(((type *)OBJ_DATA_PTR(dp))+2);				\
+	svp->member[3] = *(((type *)OBJ_DATA_PTR(dp))+3);				\
+}
+
+#define DECLARE_EXTRACT_COLOR_SCALAR_FUNC(stem,type,member)		\
+									\
+static void stem##_extract_scalar(Scalar_Value *svp, Data_Obj *dp)		\
+{									\
+	svp->member[0] = *(((type *)OBJ_DATA_PTR(dp)));				\
+	svp->member[1] = *(((type *)OBJ_DATA_PTR(dp))+1);				\
+	svp->member[2] = *(((type *)OBJ_DATA_PTR(dp))+2);				\
+}
+
+#define DECLARE_BAD_EXTRACT_SCALAR_FUNC(stem)				\
+									\
+static void stem##_extract_scalar(Scalar_Value *svp, Data_Obj *dp)		\
+{									\
+	sprintf(DEFAULT_ERROR_STRING,"Nonsensical call to %s_extract_scalar!?", #stem);\
+	NWARN(DEFAULT_ERROR_STRING);					\
+}
+
+////////////////////////////
+
+#define DECLARE_CAST_TO_DOUBLE_FUNC(stem,member)			\
+									\
+static double cast_##stem##_to_double(Scalar_Value *svp)		\
+{									\
+	return (double) svp->member;					\
+}
+
+#define DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)				\
+									\
+static double cast_##stem##_to_double(Scalar_Value *svp)		\
+{									\
+	sprintf(DEFAULT_ERROR_STRING,					\
+		"Can't cast %s to double!?",#stem);			\
+	NWARN(DEFAULT_ERROR_STRING);					\
+	return 0.0;							\
+}
+
+////////////////////////////////
+
+#define DECLARE_CAST_FROM_DOUBLE_FUNC(stem,type,member)			\
+									\
+static void cast_##stem##_from_double(Scalar_Value *svp, double val)	\
+{									\
+	svp->member = (type) val;					\
+}
+
+#define DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)				\
+									\
+static void cast_##stem##_from_double(Scalar_Value *svp, double val)	\
+{									\
+	sprintf(DEFAULT_ERROR_STRING,					\
+		"Can't cast %s from double!?",#stem);			\
+	NWARN(DEFAULT_ERROR_STRING);					\
+}
+
+////////////////////////////
+
+#define DECLARE_COPY_VALUE_FUNC(stem,member)				\
+									\
+static void copy_##stem##_value						\
+			(Scalar_Value *dst_svp, Scalar_Value *src_svp)	\
+{									\
+	dst_svp->member = src_svp->member;				\
+}
+
+DECLARE_COPY_VALUE_FUNC(string,u_b)
+DECLARE_COPY_VALUE_FUNC(bit,u_bit)
+
+static void copy_void_value(Scalar_Value *dst_svp, Scalar_Value *src_svp) {}
+
+
+#define DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,member)	\
+									\
+static void cast_indexed_##stem##_from_double				\
+			(Scalar_Value *svp, int idx, double val)	\
+{									\
+	svp->member[idx] = (type) val;					\
+}
+
+
+#define DECLARE_BAD_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem)		\
+									\
+static void cast_indexed_##stem##_from_double				\
+			(Scalar_Value *svp, int idx, double val)	\
+{									\
+	sprintf(DEFAULT_ERROR_STRING,					\
+		"cast_indexed_%s_from_double:  Can't cast to %s with an index (%d)!?",#stem,#stem,idx);		\
+	NWARN(DEFAULT_ERROR_STRING);					\
+}
+
+/////////////////////////////
+
+#define DECLARE_REAL_SCALAR_FUNCS(stem,type,member)			\
+									\
+DECLARE_ALMOST_REAL_SCALAR_FUNCS(stem,type,member)			\
+DECLARE_INDEXED_DATA_FUNC(stem,type)
+
+#define DECLARE_BITMAP_REAL_SCALAR_FUNCS(stem,type,member)		\
+									\
+DECLARE_ALMOST_REAL_SCALAR_FUNCS(stem,type,member)			\
+DECLARE_POSSIBLY_BITMAP_INDEXED_DATA_FUNC(stem,type)
+
+#define DECLARE_ALMOST_REAL_SCALAR_FUNCS(stem,type,member)		\
+									\
+DECLARE_IS_NUMERIC_FUNC(stem)						\
+DECLARE_COPY_VALUE_FUNC(stem,member)					\
+DECLARE_CAST_FROM_DOUBLE_FUNC(stem,type,member)				\
+DECLARE_CAST_TO_DOUBLE_FUNC(stem,member)				\
+DECLARE_BAD_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem)			\
+DECLARE_ASSIGN_REAL_SCALAR_FUNC(stem,type,member)			\
+DECLARE_EXTRACT_REAL_SCALAR_FUNC(stem,type,member)
+
+
+#define DECLARE_CPX_SCALAR_FUNCS(stem,type,indexable_member,copyable_member) \
+									\
+DECLARE_COPY_VALUE_FUNC(stem,copyable_member)				\
+DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)				\
+DECLARE_BAD_INDEXED_DATA_FUNC(stem)					\
+DECLARE_IS_NUMERIC_FUNC(stem)						\
+DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)					\
+DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)					\
+DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,indexable_member)	\
+DECLARE_ASSIGN_CPX_SCALAR_FUNC(stem,type,indexable_member)		\
+DECLARE_EXTRACT_CPX_SCALAR_FUNC(stem,type,indexable_member)
+
+
+#define DECLARE_QUAT_SCALAR_FUNCS(stem,type,indexable_member,copyable_member) \
+									\
+DECLARE_COPY_VALUE_FUNC(stem,copyable_member)				\
+DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)				\
+DECLARE_BAD_INDEXED_DATA_FUNC(stem)					\
+DECLARE_IS_NUMERIC_FUNC(stem)						\
+DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)					\
+DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)					\
+DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,indexable_member)	\
+DECLARE_ASSIGN_QUAT_SCALAR_FUNC(stem,type,indexable_member)		\
+DECLARE_EXTRACT_QUAT_SCALAR_FUNC(stem,type,indexable_member)
+
+
+#define DECLARE_COLOR_SCALAR_FUNCS(stem,type,indexable_member,copyable_member) \
+									\
+DECLARE_COPY_VALUE_FUNC(stem,copyable_member)				\
+DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)				\
+DECLARE_BAD_INDEXED_DATA_FUNC(stem)					\
+DECLARE_IS_NUMERIC_FUNC(stem)						\
+DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)					\
+DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)					\
+DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,indexable_member)	\
+DECLARE_ASSIGN_COLOR_SCALAR_FUNC(stem,type,indexable_member)		\
+DECLARE_EXTRACT_COLOR_SCALAR_FUNC(stem,type,indexable_member)
+
+////////////////////////////////
+
+static int bit_assign_scalar_obj(Data_Obj *dp,Scalar_Value *svp)
+{
+	if( svp->bitmap_scalar )
+		*( (BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp) ) |= 1 << OBJ_BIT0(dp) ;
+	else
+		*( (BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp) ) &= ~( 1 << OBJ_BIT0(dp) );
+	return 0;
+}
+
+static void bit_extract_scalar(Scalar_Value *svp, Data_Obj *dp)
+{
+	svp->bitmap_scalar = *( (BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp) ) & (1 << OBJ_BIT0(dp)) ;
+}
+
+
+static void cast_bit_from_double(Scalar_Value *svp,double val)
+{
+	if( val == 0.0 )
+		svp->bitmap_scalar = 0;
+	else
+		svp->bitmap_scalar = 1;
+}
+
+static double cast_bit_to_double(Scalar_Value *svp)
+{
+	if( svp->bitmap_scalar )  return 1;
+	else		return 0;
+}
+
+DECLARE_IS_NUMERIC_FUNC(bit)
+DECLARE_BAD_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(bit)
+DECLARE_BAD_INDEXED_DATA_FUNC(bit)
+DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(bit)
+
+/////////////////////////////////
+
+// The machine precisions
+DECLARE_REAL_SCALAR_FUNCS(byte,char,u_b)
+DECLARE_REAL_SCALAR_FUNCS(short,short,u_s)
+DECLARE_REAL_SCALAR_FUNCS(int,int32_t,u_l)
+DECLARE_REAL_SCALAR_FUNCS(long,int64_t,u_ll)
+DECLARE_REAL_SCALAR_FUNCS(u_byte,u_char,u_ub)
+DECLARE_REAL_SCALAR_FUNCS(u_short,u_short,u_us)
+DECLARE_REAL_SCALAR_FUNCS(float,float,u_f)
+DECLARE_REAL_SCALAR_FUNCS(double,double,u_d)
+
+#ifdef BITMAP_WORD_IS_64_BITS
+DECLARE_REAL_SCALAR_FUNCS(u_int,uint32_t,u_ul)
+DECLARE_BITMAP_REAL_SCALAR_FUNCS(u_long,uint64_t,u_ull)
+#else // ! BITMAP_WORD_IS_64_BITS
+DECLARE_BITMAP_REAL_SCALAR_FUNCS(u_int,uint32_t,u_ul)
+DECLARE_REAL_SCALAR_FUNCS(u_long,uint64_t,u_ull)
+#endif // ! BITMAP_WORD_IS_64_BITS
+
+DECLARE_ALMOST_REAL_SCALAR_FUNCS(char,char,u_b)
+DECLARE_BAD_INDEXED_DATA_FUNC(char)
+DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(char)
+
+DECLARE_CPX_SCALAR_FUNCS(complex,float,u_fc,u_spc)
+DECLARE_CPX_SCALAR_FUNCS(dblcpx,double,u_dc,u_dpc)
+
+DECLARE_QUAT_SCALAR_FUNCS(quaternion,float,u_fq,u_spq)
+DECLARE_QUAT_SCALAR_FUNCS(dblquat,double,u_dq,u_dpq)
+
+DECLARE_COLOR_SCALAR_FUNCS(color,float,u_color_comp,u_color)
+
+DECLARE_NOT_NUMERIC_FUNC(string)
+DECLARE_BAD_ASSIGN_SCALAR_FUNC(string)
+DECLARE_BAD_EXTRACT_SCALAR_FUNC(string)
+DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(string)
+DECLARE_BAD_CAST_TO_DOUBLE_FUNC(string)
+DECLARE_BAD_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(string) // BUG - we could do string!!!
+DECLARE_BAD_INDEXED_DATA_FUNC(string)
+DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(string)
+
+DECLARE_NOT_NUMERIC_FUNC(void)
+DECLARE_BAD_ASSIGN_SCALAR_FUNC(void)
+DECLARE_BAD_EXTRACT_SCALAR_FUNC(void)
+DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(void)
+DECLARE_BAD_CAST_TO_DOUBLE_FUNC(void)
+DECLARE_BAD_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(void)
+DECLARE_BAD_INDEXED_DATA_FUNC(void)
+DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(void)
+
+
+////////////////////////////////
+
+void _init_precisions(SINGLE_QSP_ARG_DECL)
 {
 	Precision *prec_p;
 
-	prec_itp = new_item_type(QSP_ARG  "Precision", LIST_CONTAINER);	// used to be hashed, but not many of these?
+	prec_itp = new_item_type("Precision", LIST_CONTAINER);	// used to be hashed, but not many of these?
 									// should sort based on access?
 
 	INIT_PREC(byte,char,PREC_BY)
 	INIT_PREC(u_byte,u_char,PREC_UBY)
 	INIT_PREC(short,short,PREC_IN)
 	INIT_PREC(u_short,u_short,PREC_UIN)
-	INIT_PREC(int32,int32_t,PREC_DI)
-	INIT_PREC(uint32,uint32_t,PREC_UDI)
-	INIT_PREC(int64,int64_t,PREC_LI)
-	INIT_PREC(uint64,uint64_t,PREC_ULI)
+	INIT_PREC(int,int32_t,PREC_DI)
+	INIT_PREC(u_int,uint32_t,PREC_UDI)
+	INIT_PREC(long,int64_t,PREC_LI)
+	INIT_PREC(u_long,uint64_t,PREC_ULI)
 	INIT_PREC(float,float,PREC_SP)
 	INIT_PREC(double,double,PREC_DP)
 
@@ -80,24 +541,21 @@ void init_precisions(SINGLE_QSP_ARG_DECL)
 
 List *prec_list(SINGLE_QSP_ARG_DECL)
 {
-	if( prec_itp == NO_ITEM_TYPE )
-		init_precisions(SINGLE_QSP_ARG);
+	if( prec_itp == NULL ){
+		init_precisions();
+	}
 
-	return item_list(QSP_ARG  prec_itp);
+	return item_list(prec_itp);
 }
 
 Precision *const_precision(Precision *prec_p)
 {
 	NERROR1("Sorry, const_precision not implemented yet.");
-	return NO_PRECISION;
+	return NULL;
 }
 
 Precision *complex_precision(Precision *prec_p)
 {
-//#ifdef CAUTIOUS
-//	if( COMPLEX_PRECISION(PREC_CODE(prec_p)) )
-//		NERROR1("CAUTIOUS:  complex_precision:  pass a complex precision!?");
-//#endif /* CAUTIOUS */
 	assert( ! COMPLEX_PRECISION(PREC_CODE(prec_p)) );
 
 	return PREC_FOR_CODE( PREC_CODE(prec_p) | DT_COMPLEX );

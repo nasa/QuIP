@@ -10,6 +10,8 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "dobj_prot.h"
+#include "debug.h"
+#include "platform.h"
 
 // BUG prec_for_code should use table lookup instead of list search
 
@@ -23,17 +25,11 @@ Precision *prec_for_code(prec_t prec)
 	Precision *prec_p;
 
 	lp = prec_list(SGL_DEFAULT_QSP_ARG);
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ) {
-//		NERROR1("CAUTIOUS:  prec_for_code:  Empty list of precisions!?");
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
+	assert( lp != NULL );
 
 	np = QLIST_HEAD(lp);
 
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		prec_p = (Precision *) NODE_DATA(np);
 		if( prec_p->prec_code == prec )
 			return( prec_p );
@@ -41,38 +37,21 @@ Precision *prec_for_code(prec_t prec)
 	}
 	// shouldn't happen!
 
-//#ifdef CAUTIOUS
-//	sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  prec_for_code:  missing precision %"PREC_FMT_D" (0x%x)!?",prec,prec);
-//	NERROR1(DEFAULT_ERROR_STRING);
-//#endif /* CAUTIOUS */
 	assert( AERROR("Missing precision code in list of precisions!?") );
 
-	return NO_PRECISION;
+	return NULL;
 }
 
-void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
+void _describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 {
-#ifdef CAUTIOUS
-	if( SHP_PREC_PTR(shpp) == NULL ){
-		WARN("CAUTIOUS:  describe_shape:  null shape prec ptr!?");
-		return;
-	}
-#endif // CAUTIOUS
+	assert( SHP_PREC_PTR(shpp) != NULL );
 	
 	if( SHP_PREC(shpp) == PREC_VOID ){
 		prt_msg("void (no shape)");
 		return;
 	}
-#ifdef CAUTIOUS
-	if( SHP_TYPE_DIMS(shpp) == NULL ){
-		WARN("CAUTIOUS:  describe_shape:  null type dims!?");
-		return;
-	}
-	if( SHP_MACH_DIMS(shpp) == NULL ){
-		WARN("CAUTIOUS:  describe_shape:  null mach dims!?");
-		return;
-	}
-#endif // CAUTIOUS
+	assert( SHP_TYPE_DIMS(shpp) != NULL );
+	assert( SHP_MACH_DIMS(shpp) != NULL );
 
 	if( HYPER_SEQ_SHAPE(shpp) )
 		sprintf(MSG_STR,"hyperseq, %3u sequences          ",
@@ -96,42 +75,18 @@ void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 		sprintf(MSG_STR,"shape unknown at this time       ");
 	else if( VOID_SHAPE(shpp) )
 		sprintf(MSG_STR,"void shape                            ");
-//#ifdef CAUTIOUS
 	else {
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  describe_shape:  unrecognized object type flag 0x%llx",
-//			(long long unsigned int) SHP_FLAGS(shpp));
-//		WARN(DEFAULT_ERROR_STRING);
-//		sprintf(MSG_STR,"                                 ");
+fprintf(stderr,"no categorization of shape at 0x%lx!?\n",(long)shpp);
 		assert( AERROR("describe_shape:  bad object type flag!?") );
 	}
-//#endif /* CAUTIOUS */
 	prt_msg_frag(MSG_STR);
 
 	if( BITMAP_PRECISION(SHP_PREC(shpp)) ){
-//#ifdef CAUTIOUS
-//		if( (SHP_PREC(shpp) & MACH_PREC_MASK) != BITMAP_MACH_PREC ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//		"CAUTIOUS:  describe_shape:  prec = 0x%"PREC_FMT_X", BIT pseudo precision is set, but machine precision is not %s!?",
-//				SHP_PREC(shpp),PREC_NAME(PREC_FOR_CODE(BITMAP_MACH_PREC)) );
-//			NERROR1(DEFAULT_ERROR_STRING);
-//			IOS_RETURN
-//		}
-//#endif /* CAUTIOUS */
 		assert( (SHP_PREC(shpp) & MACH_PREC_MASK) == BITMAP_MACH_PREC );
 		
 		prt_msg("     bit");
 		return;
 	} else if( STRING_PRECISION(SHP_PREC(shpp)) || CHAR_PRECISION(SHP_PREC(shpp)) ){
-//#ifdef CAUTIOUS
-//		if( (SHP_PREC(shpp) & MACH_PREC_MASK) != PREC_BY ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//		"CAUTIOUS:  describe_shape:  prec = 0x%"PREC_FMT_X", STRING or CHAR  pseudo precision is set, but machine precision is not byte!?",
-//				SHP_PREC(shpp));
-//			NERROR1(DEFAULT_ERROR_STRING);
-//			IOS_RETURN
-//		}
-//#endif /* CAUTIOUS */
-
 		assert( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_BY );
 
 		if( STRING_PRECISION(SHP_PREC(shpp)) )
@@ -148,27 +103,17 @@ void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 			sprintf(MSG_STR,", complex");
 		else if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_DP )
 			sprintf(MSG_STR,", dblcpx");
-#ifdef CAUTIOUS
 		else {
-//			sprintf(MSG_STR,", unknown_precision_cpx");
-//			sprintf(ERROR_STRING,
-//	"CAUTIOUS:  describe_shape:  unexpected complex machine precision (%s)!?",PREC_NAME(SHP_MACH_PREC_PTR(shpp)));
-//			WARN(ERROR_STRING);
 			assert( AERROR("Unexpected complex machine precision!?") );
 		}
-#endif /* CAUTIOUS */
 	} else if( QUAT_PRECISION(SHP_PREC(shpp)) ){
 		if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_SP )
 			sprintf(MSG_STR,", quaternion");
 		else if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_DP )
 			sprintf(MSG_STR,", dblquat");
-#ifdef CAUTIOUS
 		else {
-//			sprintf(MSG_STR,", unknown_precision_quaternion");
-//			WARN("CAUTIOUS:  describe_shape:  unexpected quaternion machine precision!?");
 			assert( AERROR("unexpected quaternion machine precision!?") );
 		}
-#endif /* CAUTIOUS */
 	} else {
 		sprintf(MSG_STR,", real");
 	}
@@ -193,7 +138,7 @@ void dump_shape(QSP_ARG_DECL  Shape_Info *shpp)
 	sprintf(MSG_STR,"shpp = 0x%lx",(int_for_addr)shpp);
 	prt_msg(MSG_STR);
 
-	describe_shape(QSP_ARG  shpp);
+	describe_shape(shpp);
 	sprintf(MSG_STR,"prec = 0x%"PREC_FMT_X,SHP_PREC(shpp));
 	prt_msg(MSG_STR);
 	for(i=0;i<N_DIMENSIONS;i++){
@@ -219,17 +164,17 @@ void dump_shape(QSP_ARG_DECL  Shape_Info *shpp)
 	*/
 }
 
-void list_dobj(QSP_ARG_DECL  Data_Obj *dp)
+void _list_dobj(QSP_ARG_DECL  Data_Obj *dp)
 {
 	char string[128];
 
-	if( OBJ_AREA(dp) == NO_AREA )
+	if( OBJ_AREA(dp) == NULL )
 		sprintf(string,"(no data area):%s", OBJ_NAME(dp) );
 	else
 		sprintf(string,"%s:%s", AREA_NAME( OBJ_AREA(dp) ), OBJ_NAME(dp) );
-	sprintf(MSG_STR,"%-20s",string);
+	sprintf(MSG_STR,"%-40s",string);
 	prt_msg_frag(MSG_STR);
-	describe_shape(QSP_ARG   OBJ_SHAPE(dp) );
+	describe_shape(OBJ_SHAPE(dp) );
 
 	/*
 	if( dp->dt_extra != NULL ){
@@ -287,6 +232,7 @@ struct _flagtbl {
 	{	"shape checked",	DT_SHAPE_CHECKED	},
 	{	"partially assigned",	DT_PARTIALLY_ASSIGNED	},
 	{	"contiguous bitmap data",	DT_CONTIG_BITMAP_DATA	},
+	{	"bitmap GPU info present",	DT_HAS_BITMAP_GPU_INFO	},
 };
 
 static void list_dp_flags(QSP_ARG_DECL  Data_Obj *dp)
@@ -304,18 +250,7 @@ static void list_dp_flags(QSP_ARG_DECL  Data_Obj *dp)
 
 	flags = OBJ_FLAGS(dp);
 	for(i=0;i<N_DP_FLAGS;i++){
-
-//#ifdef CAUTIOUS
-//		if( flagtbl[i].flagmask == 0 ){
-//			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  list_dp_flags:  flagtbl[%d].flagmask = 0!?",i);
-//			WARN(DEFAULT_ERROR_STRING);
-//			sprintf(DEFAULT_ERROR_STRING,"make sure flagtbl has %d initialization entries in dplist.c",N_DP_FLAGS);
-//			NERROR1(DEFAULT_ERROR_STRING);
-//			IOS_RETURN
-//		}
-//#endif /* CAUTIOUS */
 		assert( flagtbl[i].flagmask != 0 );
-
 		if( flags & flagtbl[i].flagmask ){
 			sprintf(MSG_STR,"\t\t%s (0x%llx)",flagtbl[i].flagname,
 				(long long unsigned int)flagtbl[i].flagmask);
@@ -325,17 +260,10 @@ static void list_dp_flags(QSP_ARG_DECL  Data_Obj *dp)
 		}
 	}
 	fflush(stdout);
-
-//#ifdef CAUTIOUS
-//	if( flags ){	/* any bits still set */
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  list_dp_flags:  unhandled flag bit(s) 0x%llx!?",(long long unsigned int)flags);
-//		WARN(DEFAULT_ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( flags == 0 );
 }
 
-/*static*/ void show_dimensions(QSP_ARG_DECL  Data_Obj *dp, Dimension_Set *dsp, Increment_Set *isp)
+/*static*/ void show_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp, Dimension_Set *dsp, Increment_Set *isp)
 {
 	int i;
 	char dn[32];
@@ -390,17 +318,17 @@ static void list_sizes(QSP_ARG_DECL  Data_Obj *dp)
 		OBJ_RANGE_MINDIM(dp),OBJ_RANGE_MAXDIM(dp));
 	prt_msg(MSG_STR);
 
-	show_dimensions(QSP_ARG  dp,OBJ_TYPE_DIMS(dp),OBJ_TYPE_INCS(dp));
+	show_obj_dimensions(QSP_ARG  dp,OBJ_TYPE_DIMS(dp),OBJ_TYPE_INCS(dp));
 	if( debug & debug_data ){
 		prt_msg("machine type dimensions:");
-		show_dimensions(QSP_ARG  dp,OBJ_MACH_DIMS(dp),OBJ_MACH_INCS(dp));
+		show_obj_dimensions(QSP_ARG  dp,OBJ_MACH_DIMS(dp),OBJ_MACH_INCS(dp));
 	}
 }
 
 
 static void list_relatives(QSP_ARG_DECL  Data_Obj *dp)
 {
-	if( OBJ_PARENT(dp) != NO_OBJ ){
+	if( OBJ_PARENT(dp) != NULL ){
 		sprintf(MSG_STR,"\tparent data object:  %s",
 			OBJ_NAME(OBJ_PARENT( dp) ));
 		prt_msg(MSG_STR);
@@ -408,8 +336,8 @@ static void list_relatives(QSP_ARG_DECL  Data_Obj *dp)
 		sprintf(MSG_STR,"\tdata offset:  0x%x", OBJ_OFFSET(dp));
 		prt_msg(MSG_STR);
 	}
-	if( OBJ_CHILDREN(dp) != NO_LIST &&
-		QLIST_HEAD( OBJ_CHILDREN(dp) ) != NO_NODE ){
+	if( OBJ_CHILDREN(dp) != NULL &&
+		QLIST_HEAD( OBJ_CHILDREN(dp) ) != NULL ){
 
 		Node *np;
 		Data_Obj *dp2;
@@ -417,7 +345,7 @@ static void list_relatives(QSP_ARG_DECL  Data_Obj *dp)
 		sprintf(MSG_STR,"\tsubobjects:");
 		prt_msg(MSG_STR);
 		np = QLIST_HEAD( OBJ_CHILDREN(dp) );
-		while( np != NO_NODE ){
+		while( np != NULL ){
 			dp2=(Data_Obj *) NODE_DATA(np);
 			sprintf(MSG_STR,"\t\t%s",OBJ_NAME(dp2));
 			prt_msg(MSG_STR);
@@ -445,10 +373,12 @@ static void list_device(QSP_ARG_DECL  Data_Obj *dp)
 // This was originally written to be a CAUTIOUS error,
 // but in fact this seems like the correct behavior.
 // The alternative would be for the objects to keep a pointer
-// to their context (BETTER SOLUTION, BUG, FIXME), but
+// to their context (BETTER SOLUTION, BUG), but
 // for now it's not worth the trouble.
+// Another solution would be to search ALL of the contexts, not
+// just those currently on the stack...
 
-static void list_context(QSP_ARG_DECL  Data_Obj *dp)
+static void show_dobj_context(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Item_Context *icp;
 	Node *np;
@@ -463,25 +393,18 @@ static void list_context(QSP_ARG_DECL  Data_Obj *dp)
 	 * of the parent instead.
 	 */
 
-	if( OBJ_PARENT(dp) != NO_OBJ ){
-		list_context(QSP_ARG  OBJ_PARENT( dp) );
+	if( OBJ_PARENT(dp) != NULL ){
+		show_dobj_context(QSP_ARG  OBJ_PARENT( dp) );
 		return;
 	}
 
 	/* BUG this is the list of the current context stack,
 	 * not ALL the contexts!?
 	 */
-	//np=QLIST_HEAD( CONTEXT_LIST(dobj_itp) );
-	np=QLIST_HEAD( DOBJ_CONTEXT_LIST );
-//#ifdef CAUTIOUS
-//	if( np == NO_NODE ){
-//		NERROR1("CAUTIOUS:  list_context:  no data object context");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
-	assert( np != NO_NODE );
+	np=QLIST_HEAD( LIST_OF_DOBJ_CONTEXTS );
+	assert( np != NULL );
 
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		icp=(Item_Context *)NODE_DATA(np);
 		/* can we search this context only? */
 /*
@@ -489,10 +412,7 @@ sprintf(ERROR_STRING,
 "Searching context %s for object %s",CTX_NAME(icp),OBJ_NAME(dp));
 advise(ERROR_STRING);
 */
-		//ip=fetch_name(OBJ_NAME(dp),icp->ic_nsp);
-		//ip=FETCH_NAME_FROM_CONTEXT( OBJ_NAME(dp), icp );
 		ip=FETCH_OBJ_FROM_CONTEXT( dp, icp );
-//		ip = container_find_match( CTX_CONTAINER(icp), OBJ_NAME(dp) );
 		if( ((Data_Obj *)ip) == dp ){	/* found it! */
 			cname=CTX_NAME(icp);
 			goto show_context;
@@ -512,20 +432,27 @@ show_context:
 
 static void list_data(QSP_ARG_DECL  Data_Obj *dp)
 {
-	dimension_t n;
+	bitnum_t n;
 
 	if( IS_BITMAP(dp) )
-		n = BITMAP_WORD_COUNT(dp);
+		n = bitmap_obj_word_count(dp);
 	else
 		n = OBJ_N_MACH_ELTS(dp);
-
-	sprintf(MSG_STR,"\t%d %s element%s",n,OBJ_MACH_PREC_NAME(dp),n==1?"":"s");
+#ifdef BITNUM_64
+	sprintf(MSG_STR,"\t%llu %s element%s",n,OBJ_MACH_PREC_NAME(dp),n==1?"":"s");
+#else // ! BITNUM_64
+    sprintf(MSG_STR,"\t%u %s element%s",n,OBJ_MACH_PREC_NAME(dp),n==1?"":"s");
+#endif // ! BITNUM_64
 	prt_msg(MSG_STR);
 
 	sprintf(MSG_STR,"\tdata at   0x%lx",(int_for_addr)OBJ_DATA_PTR(dp));
 	prt_msg(MSG_STR);
 	if( IS_BITMAP(dp) ){
-		sprintf(MSG_STR,"\t\tbit0 = %d",OBJ_BIT0(dp));
+#ifdef BITNUM_64
+		sprintf(MSG_STR,"\t\tbit0 = %llu",OBJ_BIT0(dp));
+#else
+		sprintf(MSG_STR,"\t\tbit0 = %u",OBJ_BIT0(dp));
+#endif
 		prt_msg(MSG_STR);
 	}
 }
@@ -543,11 +470,11 @@ static void list_increments(QSP_ARG_DECL  Data_Obj *dp)
 }
 #endif /* QUIP_DEBUG */
 
-void longlist(QSP_ARG_DECL  Data_Obj *dp)
+void _longlist(QSP_ARG_DECL  Data_Obj *dp)
 {
-	list_dobj(QSP_ARG  dp);
+	list_dobj(dp);
 	list_device(QSP_ARG  dp);
-	list_context(QSP_ARG  dp);
+	show_dobj_context(QSP_ARG  dp);
 	list_sizes(QSP_ARG  dp);
 	list_data(QSP_ARG  dp);
 	list_relatives(QSP_ARG  dp);
@@ -566,13 +493,13 @@ void info_area(QSP_ARG_DECL  Data_Area *ap)
 	Node *np;
 	Data_Obj *dp;
 
-	lp=dobj_list(SINGLE_QSP_ARG);
-	if( lp==NO_LIST ) return;
+	lp=dobj_list();
+	if( lp==NULL ) return;
 	np=QLIST_HEAD( lp );
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		dp = (Data_Obj *)NODE_DATA(np);
 		if( OBJ_AREA(dp) == ap )
-			list_dobj(QSP_ARG   dp );
+			list_dobj(dp);
 		np=NODE_NEXT(np);
 	}
 }
@@ -582,10 +509,10 @@ void info_all_dps(SINGLE_QSP_ARG_DECL)
 	List *lp;
 	Node *np;
 
-	lp=data_area_list(SINGLE_QSP_ARG);
-	if( lp==NO_LIST ) return;
+	lp=data_area_list();
+	if( lp==NULL ) return;
 	np=QLIST_HEAD( lp );
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		info_area( QSP_ARG  (Data_Area *) NODE_DATA(np) );
 		np=NODE_NEXT(np);
 	}

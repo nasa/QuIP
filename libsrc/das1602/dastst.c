@@ -140,10 +140,10 @@ static COMMAND_FUNC( get_reg )
 	advise(ERROR_STRING);
 
 	sprintf(ERROR_STRING,"0x%x",reg_setting.reg_data.u_s);
-	ASSIGN_VAR("reg_data",ERROR_STRING);
+	assign_var("reg_data",ERROR_STRING);
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
-	ASSIGN_VAR("reg_data","0");
+	assign_var("reg_data","0");
 #endif /* ! HAVE_DAS1602 */
 }
 
@@ -170,7 +170,7 @@ MENU_END(registers)
 
 static COMMAND_FUNC( do_reg_menu )
 {
-	PUSH_MENU(registers);
+	CHECK_AND_PUSH_MENU(registers);
 }
 
 static int get_adc_channel(QSP_ARG_DECL  const char *pmpt,
@@ -283,9 +283,9 @@ static COMMAND_FUNC( read_adc )
 	uint32_t nw=0;
 #endif // HAVE_DAS1602
 
-	dp = PICK_OBJ("data vector");
+	dp = pick_obj("data vector");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 #ifdef HAVE_DAS1602
 	if( ! VALID_ADC_PREC(dp) ){
@@ -388,7 +388,7 @@ static COMMAND_FUNC( adc_range )
 			case 3:	range = RANGE_1_25V_UNI; break;
 #ifdef CAUTIOUS
 			default:
-				ERROR1("CAUTIOUS:  adc_range:  impossible unipolar value!?");
+				error1("CAUTIOUS:  adc_range:  impossible unipolar value!?");
 				range=(-1);	/* quiet compiler */
 				break;
 #endif /* CAUTIOUS */
@@ -401,7 +401,7 @@ static COMMAND_FUNC( adc_range )
 			case 3:	range = RANGE_1_25V_BI; break;
 #ifdef CAUTIOUS
 			default:
-				ERROR1("CAUTIOUS:  adc_range:  impossible bipolar value!?");
+				error1("CAUTIOUS:  adc_range:  impossible bipolar value!?");
 				range=(-1);	/* quiet compiler */
 				break;
 #endif /* CAUTIOUS */
@@ -503,7 +503,7 @@ static COMMAND_FUNC( adc_mode )
 		case 2: arg = ADC_MODE_PACED; break;
 #ifdef CAUTIOUS
 		default:
-			ERROR1("CAUTIOUS:  adc_mode:  impossible mode!?");
+			error1("CAUTIOUS:  adc_mode:  impossible mode!?");
 			arg = (-1);	/* quiet compiler */
 			break;
 #endif /* CAUTIOUS */
@@ -711,7 +711,7 @@ MENU_END(adc_calib)
 
 static COMMAND_FUNC( adc_calib )
 {
-	PUSH_MENU(adc_calib);
+	CHECK_AND_PUSH_MENU(adc_calib);
 }
 
 
@@ -735,7 +735,7 @@ MENU_END(adc)
 
 static COMMAND_FUNC( do_adc_menu )
 {
-	PUSH_MENU(adc);
+	CHECK_AND_PUSH_MENU(adc);
 }
 
 static int dac_chno;
@@ -791,13 +791,13 @@ static COMMAND_FUNC( write_dac )
 	int n;
 #endif /* HAVE_DAS1602 */
 
-	dp=PICK_OBJ("data vector");
+	dp=pick_obj("data vector");
 
 #ifdef HAVE_DAS1602
 
 	CONFIRM_DAC
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	if( ! VALID_ADC_PREC(dp) ){
 		sprintf(ERROR_STRING,
 		"Object %s has precision %s, should be %s or %s",
@@ -844,7 +844,7 @@ static COMMAND_FUNC( set_dac_mode )
 		case 3: arg=DAC_MODE_EXT_FALLING; break;
 #ifdef CAUTIOUS
 		default:
-			ERROR1("CAUTIOUS:  set_dac_mode:  impossible DAC mode!?");
+			error1("CAUTIOUS:  set_dac_mode:  impossible DAC mode!?");
 			arg=(INVALID_DAC_MODE);	/* quiet compiler */
 			break;
 #endif /* CAUTIOUS */
@@ -929,7 +929,7 @@ static COMMAND_FUNC( set_dac_range )
 		case 3: arg=RANGE_5V_UNI; break;
 #ifdef CAUTIOUS
 		default:
-			ERROR1("CAUTIOUS:  set_dac_range:  impossible range index!?");
+			error1("CAUTIOUS:  set_dac_range:  impossible range index!?");
 			arg=(-1);	/* quiet compiler */
 			break;
 #endif
@@ -1000,7 +1000,7 @@ MENU_END(dac)
 
 static COMMAND_FUNC( do_dac_menu )
 {
-	PUSH_MENU(dac);
+	CHECK_AND_PUSH_MENU(dac);
 }
 
 #ifdef HAVE_DAS1602
@@ -1087,10 +1087,10 @@ static COMMAND_FUNC( write_dio )
 #endif // HAVE_DAS1602
 
 	i=get_dio_channel(SINGLE_QSP_ARG);
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 
 	if( i < 0 ) return;
-	if(dp==NO_OBJ) return;
+	if(dp==NULL) return;
 
 #ifdef HAVE_DAS1602
 
@@ -1134,9 +1134,9 @@ static COMMAND_FUNC( read_dio )
 #endif // HAVE_DAS1602
 
 	i=get_dio_channel(SINGLE_QSP_ARG);
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 
-	if(dp==NO_OBJ) return;
+	if(dp==NULL) return;
 	if( i < 0 ) return;
 
 #ifdef HAVE_DAS1602
@@ -1188,7 +1188,7 @@ MENU_END(dio)
 
 static COMMAND_FUNC( do_dio_menu )
 {
-	PUSH_MENU(dio);
+	CHECK_AND_PUSH_MENU(dio);
 }
 
 
@@ -1236,13 +1236,13 @@ static COMMAND_FUNC( read_nvram )
 #endif // HAVE_DAS1602
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 
-	if(dp==NO_OBJ) return;
+	if(dp==NULL) return;
 
 #ifdef HAVE_DAS1602
 
-	if( nvram_fd < 0 ) ERROR1("unable to open nvram");
+	if( nvram_fd < 0 ) error1("unable to open nvram");
 
 	if( ! VALID_NVRAM_PREC(dp) ){
 		sprintf(ERROR_STRING,
@@ -1279,13 +1279,13 @@ static COMMAND_FUNC( write_nvram )		/* sq */
 #endif // HAVE_DAS1602
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 
-	if(dp==NO_OBJ) return;
+	if(dp==NULL) return;
 
 #ifdef HAVE_DAS1602
 
-	if( nvram_fd < 0 ) ERROR1("unable to open nvram");
+	if( nvram_fd < 0 ) error1("unable to open nvram");
 
 	if( ! VALID_NVRAM_PREC(dp) ){
 		sprintf(ERROR_STRING,
@@ -1327,12 +1327,12 @@ static COMMAND_FUNC( ld_nvram )		/*sq */
 
 	addr = HOW_MANY("NVRAM starting addr (0-255)");
 
-	dp = PICK_OBJ("");
-	if(dp==NO_OBJ) return;
+	dp = pick_obj("");
+	if(dp==NULL) return;
 
 #ifdef HAVE_DAS1602
 
-	if( nvram_fd < 0 ) ERROR1("nvram not open");
+	if( nvram_fd < 0 ) error1("nvram not open");
 
 	original_fd_position = lseek(nvram_fd,0,SEEK_CUR);
 
@@ -1388,12 +1388,12 @@ static COMMAND_FUNC( rd_nvram )		/*sq */
 
 	addr = HOW_MANY("NVRAM starting addr (0-255)");
 
-	dp = PICK_OBJ("");
-	if(dp==NO_OBJ) return;
+	dp = pick_obj("");
+	if(dp==NULL) return;
 
 #ifdef HAVE_DAS1602
 
-	if( nvram_fd < 0 ) ERROR1("nvram not open");
+	if( nvram_fd < 0 ) error1("nvram not open");
 
 	original_fd_position = lseek(nvram_fd,0,SEEK_CUR);
 
@@ -1454,7 +1454,7 @@ MENU_END(nvram)
 
 static COMMAND_FUNC( do_nvram_menu )
 {
-	PUSH_MENU(nvram);
+	CHECK_AND_PUSH_MENU(nvram);
 }
 
 
@@ -1471,6 +1471,6 @@ MENU_END(das1602)
 
 COMMAND_FUNC( do_aio_menu )
 {
-	PUSH_MENU(das1602);
+	CHECK_AND_PUSH_MENU(das1602);
 }
 

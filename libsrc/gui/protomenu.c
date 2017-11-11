@@ -30,19 +30,19 @@ static COMMAND_FUNC( do_panel_cmap )
 	Panel_Obj *po;
 	Data_Obj *cm_dp;
 
-	po = PICK_PANEL("");
-	cm_dp = PICK_OBJ("colormap object");
+	po = pick_panel("");
+	cm_dp = pick_obj("colormap object");
 
-	if( po == NO_PANEL_OBJ || cm_dp == NO_OBJ )
+	if( po == NULL || cm_dp == NULL )
 		return;
 	panel_cmap(po,cm_dp);
 }
 
-void prepare_for_decoration( QSP_ARG_DECL  Panel_Obj *pnl_p )
+void _prepare_for_decoration( QSP_ARG_DECL  Panel_Obj *pnl_p )
 {
 	curr_panel=pnl_p;
 	if( pnl_p != NULL ){
-		push_scrnobj_context(QSP_ARG  PO_CONTEXT(pnl_p));
+		push_scrnobj_context(PO_CONTEXT(pnl_p));
 
 #ifdef PO_XWIN
 		/* what is PO_XWIN??? */
@@ -52,17 +52,17 @@ void prepare_for_decoration( QSP_ARG_DECL  Panel_Obj *pnl_p )
 	}
 }
 
-void unprepare_for_decoration(SINGLE_QSP_ARG_DECL)
+void _unprepare_for_decoration(SINGLE_QSP_ARG_DECL)
 {
 	if( curr_panel != NULL ){
-		pop_scrnobj_context(SINGLE_QSP_ARG);
+		pop_scrnobj_context();
 	}
 }
 
 static COMMAND_FUNC( end_decorate )
 {
-	unprepare_for_decoration(SINGLE_QSP_ARG);
-	pop_menu(SINGLE_QSP_ARG);
+	unprepare_for_decoration();
+	pop_menu();
 }
 
 static COMMAND_FUNC( do_hide_back )
@@ -73,7 +73,10 @@ static COMMAND_FUNC( do_hide_back )
 	quipViewController *qvc;
 	qvc= (quipViewController *)PO_VC(curr_panel);
 	[ qvc hideBackButton:hide ];
-#endif // BUILD_FOR_IOS
+#else // ! BUILD_FOR_IOS
+	sprintf(ERROR_STRING,"do_hide_back:  not implemented, ignoring value %d",hide);
+	advise(ERROR_STRING);
+#endif // ! BUILD_FOR_IOS
 }
 
 
@@ -87,29 +90,76 @@ static COMMAND_FUNC( do_show_done )
 	quipViewController *qvc;
 	qvc= (quipViewController *)PO_VC(curr_panel);
 	[ qvc setDoneAction:s ];
-#endif // BUILD_FOR_IOS
+#else // ! BUILD_FOR_IOS
+	sprintf(ERROR_STRING,"do_show_done:  not implemented, ignoring action '%s'",s);
+	advise(ERROR_STRING);
+#endif // ! BUILD_FOR_IOS
+}
+
+// BUG - the order in this table has to match the enum declarations in screen_obj.h!
+static const char *orientation_choices[N_TABLET_ORIENTATIONS]={
+	"all",
+	"portrait_both",
+	"portrait_up",
+	"landscape_both",
+	"landscape_right",
+	"landscape_left"
+};
+
+static COMMAND_FUNC( do_allow_oris )
+{
+	int i;
+
+	i=WHICH_ONE("allowed orientations",N_TABLET_ORIENTATIONS,orientation_choices);
+	if( i < 0 ) return;
+#ifdef BUILD_FOR_IOS
+	set_allowed_orientations(i);
+#else // ! BUILD_FOR_IOS
+	advise("Specifying allowed orientations will have no effect!");
+#endif // ! BUILD_FOR_IOS
+}
+
+static COMMAND_FUNC( do_allow_autorot )
+{
+	int yesno;
+
+	yesno=ASKIF("allow autorotation");
+#ifdef BUILD_FOR_IOS
+	set_autorotation_allowed(yesno);
+#else // ! BUILD_FOR_IOS
+	advise("Specifying autorotation will have no effect!");
+#endif // ! BUILD_FOR_IOS
 }
 
 static COMMAND_FUNC(do_accept_edits)
 {
 	Screen_Obj *sop;
 
-	sop=PICK_SCRNOBJ("edit box");
-	if( sop == NO_SCREEN_OBJ ) return;
+	sop=pick_scrnobj("edit box");
+	if( sop == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
 	dismiss_keyboard(sop);
 #endif // BUILD_FOR_IOS
 
-	chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), SOB_FILENAME );
+	_chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), SOB_FILENAME );
 }
 
+static COMMAND_FUNC( do_del_widget )
+{
+	Screen_Obj *sop;
+
+	sop=pick_scrnobj("widget name");
+	if( sop == NULL ) return;
+
+	delete_widget(sop);
+}
 static COMMAND_FUNC( do_scrnobj_info )
 {
 	Screen_Obj *sop;
 
-	sop=PICK_SCRNOBJ("widget name");
-	if( sop == NO_SCREEN_OBJ ) return;
+	sop=pick_scrnobj("widget name");
+	if( sop == NULL ) return;
 
 	switch(SOB_TYPE(sop)){
 		case SOT_CHOOSER:
@@ -180,6 +230,7 @@ ADD_CMD( del_choice,		do_del_choice,		delete a selection from a chooser )
 ADD_CMD( set_picks,		do_set_picks,		reset the choices in a picker )
 
 ADD_CMD( set_choice,		do_set_choice,		set state of chooser )
+ADD_CMD( get_choice,		do_get_choice,		get state of chooser )
 ADD_CMD( clear_choices,		do_clear_choices,	clear all choices )
 ADD_CMD( range,			set_new_range,		reset slider range )
 ADD_CMD( slide_pos,		set_new_pos,		set slider position )
@@ -187,6 +238,7 @@ ADD_CMD( enable,		do_enable_widget,	enable/disable widget )
 ADD_CMD( label_window,		set_panel_label,	set panel window label )
 ADD_CMD( hide_back_button,	do_hide_back,		hide/reveal the nav back button on new panels )
 ADD_CMD( show_done_button,	do_show_done,		specify action for the done button )
+ADD_CMD( delete,		do_del_widget,		delete a widget from the panel )
 ADD_CMD( quit,			end_decorate,		exit submenu )
 MENU_SIMPLE_END(decorate)
 
@@ -194,9 +246,9 @@ static COMMAND_FUNC( do_decorate_panel )
 {
 	Panel_Obj *po;
 
-	po=PICK_PANEL( "" );
-	prepare_for_decoration(QSP_ARG  po);
-	PUSH_MENU(decorate);
+	po=pick_panel( "" );
+	prepare_for_decoration(po);
+	CHECK_AND_PUSH_MENU(decorate);
 }
 
 /*
@@ -214,17 +266,20 @@ static COMMAND_FUNC(do_scroll)
 	Panel_Obj *po;
 	int yn;
 
-	po=PICK_PANEL( "" );
+	po=pick_panel( "" );
 	yn = ASKIF("allow scrolling for panel");
 
-	if( po == NO_PANEL_OBJ ) return;
+	if( po == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
 	if( yn )
 		[po enableScrolling];
 	else
 		[po disableScrolling];
-#endif /* BUILD_FOR_IOS */
+#else /* ! BUILD_FOR_IOS */
+	sprintf(ERROR_STRING,"do_scroll:  not implemented, ignoring value %d",yn);
+	advise(ERROR_STRING);
+#endif /* ! BUILD_FOR_IOS */
 }
 
 // What does check_first do???
@@ -233,9 +288,9 @@ static COMMAND_FUNC( do_check_first )
 {
 	Panel_Obj *po;
 
-	po=PICK_PANEL( "" );
+	po=pick_panel( "" );
 
-	if( po == NO_PANEL_OBJ ) return;
+	if( po == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
 	check_first(po);
@@ -246,12 +301,12 @@ static COMMAND_FUNC( do_activate )
 {
 	Panel_Obj *po;
 
-	po=PICK_PANEL( "" );
+	po=pick_panel( "" );
 
-	if( po == NO_PANEL_OBJ ) return;
+	if( po == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
-	activate_panel(QSP_ARG  po,1);
+	activate_panel(po,1);
 #endif /* BUILD_FOR_IOS */
 }
 
@@ -259,12 +314,12 @@ static COMMAND_FUNC( do_deactivate )
 {
 	Panel_Obj *po;
 
-	po=PICK_PANEL( "" );
+	po=pick_panel( "" );
 
-	if( po == NO_PANEL_OBJ ) return;
+	if( po == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
-	activate_panel(QSP_ARG  po,0);
+	activate_panel(po,0);
 #endif /* BUILD_FOR_IOS */
 }
 
@@ -295,10 +350,10 @@ MENU_END(control)
 
 static COMMAND_FUNC( do_control_menu )
 {
-	PUSH_MENU(control);
+	CHECK_AND_PUSH_MENU(control);
 }
 
-static COMMAND_FUNC( do_list_panels ){ list_panel_objs(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_list_panels ){ list_panel_objs(tell_msgfile()); }
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(objects_menu,s,f,h)
@@ -311,7 +366,7 @@ MENU_END(objects)
 
 static COMMAND_FUNC( do_so_menu )
 {
-	PUSH_MENU(objects);
+	CHECK_AND_PUSH_MENU(objects);
 }
 
 #ifdef MALLOC_DEBUG
@@ -335,14 +390,14 @@ static COMMAND_FUNC( do_sel_panel )
 {
 	Panel_Obj *po;
 
-	po=PICK_PANEL( "" );
+	po=pick_panel( "" );
 	set_curr_win( po->po_xwin );
 	set_colormap( PO_CMAP_OBJ(po) );
 }
 #endif /* HAVE_MOTIF */
 
-static Nav_Panel *curr_nav_p=NO_NAV_PANEL;
-static Nav_Group *curr_nav_g=NO_NAV_GROUP;
+static Nav_Panel *curr_nav_p=NULL;
+static Nav_Group *curr_nav_g=NULL;
 
 static COMMAND_FUNC( do_new_nav_group )
 {
@@ -351,18 +406,19 @@ static COMMAND_FUNC( do_new_nav_group )
 
 	s=NAMEOF("name for group");
 
-	nav_g = create_nav_group(QSP_ARG  curr_nav_p, s);
+	nav_g = create_nav_group(curr_nav_p, s);
 
-	if( nav_g == NO_NAV_GROUP ) return;
+	if( nav_g == NULL ) return;
 
 	// push the group context here...
 	// and pop the old one if there is one.
 
-	if( curr_nav_g != NO_NAV_GROUP ){
+	if( curr_nav_g != NULL ){
 		IOS_Item_Context *icp;
-		icp=pop_navitm_context(SINGLE_QSP_ARG);
+		icp=pop_navitm_context();
+		assert(icp!=NULL);
 	}
-	push_navitm_context(QSP_ARG  NAVGRP_ITEM_CONTEXT(nav_g) );
+	push_navitm_context(NAVGRP_ITEM_CONTEXT(nav_g) );
 	pushed_navitm_context = NAVGRP_ITEM_CONTEXT(nav_g);
 
 	curr_nav_g = nav_g;
@@ -375,8 +431,8 @@ static COMMAND_FUNC( do_new_nav_group )
 	// BUG?  why get action text for a message???
 	// Here the action text is not the action, it is the message.
 	// The message can be different from the name.
-	sop = simple_object(QSP_ARG  s);
-	if( sop == NO_SCREEN_OBJ ) return;
+	sop = simple_object(s);
+	if( sop == NULL ) return;
 	SET_SOB_ACTION(sop, savestr(s));
 
 	SET_SOB_TYPE(sop, SOT_LABEL);
@@ -384,7 +440,7 @@ static COMMAND_FUNC( do_new_nav_group )
 	SET_SOB_ACTION(sop, NULL);
 	SET_SOB_HEIGHT(sop, MESSAGE_HEIGHT);
 
-	make_label(QSP_ARG  sop);
+	make_label(sop);
 
 	add_to_panel(curr_panel,sop);
 //fprintf(stderr,"before increment, panel %s y = %d\n",PO_NAME(curr_panel),PO_CURR_Y(curr_panel));
@@ -396,6 +452,10 @@ static COMMAND_FUNC( do_new_nav_group )
 
 //fprintf(stderr,"after increment, panel %s y = %d\n",PO_NAME(curr_panel),PO_CURR_Y(curr_panel));
 
+	// We need to associate the label object with the nav_group,
+	// in case we ever want to delete the nav_group!
+	SET_NAVGRP_SCRNOBJ(nav_g,sop);
+	SET_NAVGRP_PANEL(nav_g,curr_panel);
 #endif // ! BUILD_FOR_OBJC
 }
 
@@ -403,22 +463,25 @@ static COMMAND_FUNC( do_set_nav_group )
 {
 	Nav_Group *nav_g;
 
-	nav_g = PICK_NAV_GROUP("existing navigation group");
+	nav_g = pick_nav_group("existing navigation group");
 
-	if( nav_g == NO_NAV_GROUP ) return;
+	if( nav_g == NULL ) return;
 
-	if( curr_nav_g != NO_NAV_GROUP ){
+	if( curr_nav_g != NULL ){
 		IOS_Item_Context *icp;
-		icp=pop_navitm_context(SINGLE_QSP_ARG);
+		icp=pop_navitm_context();
+		assert(icp!=NULL);
 	}
-	push_navitm_context(QSP_ARG  NAVGRP_ITEM_CONTEXT(nav_g) );
+	push_navitm_context(NAVGRP_ITEM_CONTEXT(nav_g) );
 	pushed_navitm_context = NAVGRP_ITEM_CONTEXT(nav_g);
 
 	curr_nav_g = nav_g;
 }
 
 
-static void do_table_item(QSP_ARG_DECL  Table_Item_Type t)
+#define do_table_item(t) _do_table_item(QSP_ARG  t)
+
+static void _do_table_item(QSP_ARG_DECL  Table_Item_Type t)
 {
 	const char *s;
 	const char *e;
@@ -429,13 +492,13 @@ static void do_table_item(QSP_ARG_DECL  Table_Item_Type t)
 	e=NAMEOF("short explanatory text for item");
 	a=NAMEOF("navigation item action text");
 
-	if( curr_nav_g == NO_NAV_GROUP ){
+	if( curr_nav_g == NULL ){
 		WARN("do_table_item:  no group declared!?");
 		return;
 	}
 
-	nav_i = new_nav_item(QSP_ARG  s);
-	if( nav_i == NO_NAV_ITEM ) return;
+	nav_i = new_nav_item(s);
+	if( nav_i == NULL ) return;
 
 #ifdef BUILD_FOR_OBJC
 	nav_i.explanation = [[NSString alloc] initWithUTF8String:e];
@@ -457,30 +520,35 @@ static void do_table_item(QSP_ARG_DECL  Table_Item_Type t)
 	str=getbuf( strlen(s)+strlen(e)+6 );
 	sprintf(str,"%s  -  %s",s,e);
 
-	bo = simple_object(QSP_ARG  str);
-	if( bo == NO_SCREEN_OBJ ) return;
+	bo = simple_object(str);
+	if( bo == NULL ) return;
 
 	SET_SOB_ACTION(bo, savestr(a));
 
 	SET_SOB_TYPE(bo, SOT_BUTTON);
 
-	make_button(QSP_ARG  bo);
+	make_button(bo);
 	add_to_panel(curr_panel,bo);
 
 //fprintf(stderr,"do_table_item:  before increment, panel %s y = %d\n",PO_NAME(curr_panel),PO_CURR_Y(curr_panel));
 	INC_PO_CURR_Y(curr_panel, BUTTON_HEIGHT + GAP_HEIGHT );
 //fprintf(stderr,"do_table_item:  after increment, panel %s y = %d\n",PO_NAME(curr_panel),PO_CURR_Y(curr_panel));
-#endif /* BUILD_FOR_OBJC */
+
+	// Now give the item a link to the screen object in case
+	// we ever want to delete it...
+	SET_NAVITM_SCRNOBJ(nav_i,bo);
+	SET_NAVITM_PANEL(nav_i,curr_panel);
+#endif /* ! BUILD_FOR_OBJC */
 }
 
 static COMMAND_FUNC( do_nav_item )
 {
-	do_table_item(QSP_ARG  TABLE_ITEM_TYPE_NAV);
+	do_table_item(TABLE_ITEM_TYPE_NAV);
 }
 
 static COMMAND_FUNC( do_plain_item )
 {
-	do_table_item(QSP_ARG  TABLE_ITEM_TYPE_PLAIN);
+	do_table_item(TABLE_ITEM_TYPE_PLAIN);
 }
 
 static COMMAND_FUNC( do_set_desc )
@@ -488,10 +556,10 @@ static COMMAND_FUNC( do_set_desc )
 	Nav_Item *nav_i;
 	const char *s;
 
-	nav_i=pick_nav_item( QSP_ARG  "item name" );
+	nav_i=pick_nav_item( "item name" );
 	s = NAMEOF("description string");
 
-	if( curr_nav_g == NO_NAV_GROUP ){
+	if( curr_nav_g == NULL ){
 		WARN("do_set_desc:  no group selected");
 		return;
 	}
@@ -512,20 +580,20 @@ static COMMAND_FUNC( do_del_nav_item )
 {
 	Nav_Item *nav_i;
 
-	nav_i=pick_nav_item( QSP_ARG  "item name" );
+	nav_i=pick_nav_item( "item name" );
 	if( nav_i == NULL ) return;
 
-	remove_nav_item(QSP_ARG  nav_i);
+	remove_nav_item(nav_i);
 }
 
 static COMMAND_FUNC( do_del_nav_group )
 {
 	Nav_Group *nav_g;
 
-	nav_g=pick_nav_group( QSP_ARG  "group name" );
+	nav_g=pick_nav_group( "group name" );
 	if( nav_g == NULL ) return;
 
-	remove_nav_group(QSP_ARG  nav_g);
+	remove_nav_group(nav_g);
 }
 
 static COMMAND_FUNC( do_hide_nav_bar )
@@ -533,7 +601,7 @@ static COMMAND_FUNC( do_hide_nav_bar )
 	int hide;
 
 	hide = ASKIF("hide navigation bar");
-	hide_nav_bar( QSP_ARG  hide );
+	hide_nav_bar( hide );
 }
 
 #ifdef FOOBAR
@@ -544,7 +612,7 @@ static COMMAND_FUNC( do_set_done )
 	s=NAMEOF("action for done button");
 
 #ifdef BUILD_FOR_IOS
-	if( curr_nav_p != NO_NAV_PANEL ){
+	if( curr_nav_p != NULL ){
 		[curr_nav_p setDoneAction:s];
 	} else {
 		WARN("done_button:  current nav panel!?");
@@ -559,23 +627,23 @@ static COMMAND_FUNC( do_end_navigation )
 
 #ifndef BUILD_FOR_OBJC
 	assert( curr_panel != NULL );
-	icp=pop_scrnobj_context(SINGLE_QSP_ARG);
+	icp=pop_scrnobj_context();
 #endif // BUILD_FOR_OBJC
 
 	assert( curr_nav_p != NULL );
 
-	icp=pop_navgrp_context( SINGLE_QSP_ARG  );
+	icp=pop_navgrp_context();
 
 	// We can't be sure that we have pushed a navitm context
 	// without checking the flag...
 	if( pushed_navitm_context != NULL ){
-		icp=pop_navitm_context(SINGLE_QSP_ARG);
+		icp=pop_navitm_context();
 		assert( icp == pushed_navitm_context );
 		pushed_navitm_context = NULL;
 
 	}
 
-	pop_menu(SINGLE_QSP_ARG);
+	pop_menu();
 }
 
 #undef ADD_CMD
@@ -602,7 +670,7 @@ static COMMAND_FUNC( mk_nav_panel )
 
 	// make sure doesn't already exist.
 	// Is this check done by new_nav_panel???
-	nav_p = create_nav_panel(QSP_ARG  s);
+	nav_p = create_nav_panel(s);
 
 	// BUG - shouldn't we put this in when
 	// we enter the navigation submenu???
@@ -629,20 +697,20 @@ static COMMAND_FUNC( do_nav_menu )
 	Panel_Obj *pnl_p;
 #endif // ! BUILD_FOR_OBJC
 
-	curr_nav_p = PICK_NAV_PANEL("navigation panel");
+	curr_nav_p = pick_nav_panel("navigation panel");
 
 	// Need to push the item context for the panel!
-	if( curr_nav_p == NO_NAV_PANEL ) return;
+	if( curr_nav_p == NULL ) return;
 
 #ifndef BUILD_FOR_OBJC
 	pnl_p = NAVP_PANEL(curr_nav_p);
 	assert( pnl_p != NULL );
 
 	// do what we do in decorate...
-	prepare_for_decoration(QSP_ARG  pnl_p);
+	prepare_for_decoration(pnl_p);
 #endif // ! BUILD_FOR_OBJC
 
-	push_navgrp_context(QSP_ARG  NAVP_GRP_CONTEXT(curr_nav_p));
+	push_navgrp_context(NAVP_GRP_CONTEXT(curr_nav_p));
 	// we push the item context when we have the group...
 	// But how do we know whether or not we pushed a navitm context???
 	// We use a (non thread-safe) global, pushed_navitm_context
@@ -652,9 +720,9 @@ static COMMAND_FUNC( do_nav_menu )
 	// Setting the group to nothing makes sense for creation,
 	// but what about deletion?
 	// What does this comment mean?
-	curr_nav_g = NO_NAV_GROUP;
+	curr_nav_g = NULL;
 
-	PUSH_MENU(navigation);
+	CHECK_AND_PUSH_MENU(navigation);
 } // do_nav_menu
 
 static COMMAND_FUNC( do_push_nav )
@@ -664,11 +732,11 @@ static COMMAND_FUNC( do_push_nav )
 	const char *s;
 
 	// Are nav panels really regular panels???
-	//po = PICK_PANEL("");
-	//if( po == NO_PANEL_OBJ ) return;
+	//po = pick_panel("");
+	//if( po == NULL ) return;
 
 	s = NAMEOF("name of panel or viewer");
-	gwp = find_genwin(QSP_ARG  s);
+	gwp = find_genwin(s);
 	if( gwp == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
@@ -678,7 +746,7 @@ static COMMAND_FUNC( do_push_nav )
 	}
 #endif /* BUILD_FOR_IOS */
 
-	push_nav(QSP_ARG  gwp);
+	push_nav(gwp);
 }
 
 static COMMAND_FUNC(do_pop_nav)
@@ -690,7 +758,7 @@ static COMMAND_FUNC(do_pop_nav)
 		WARN("pop_nav:  number of levels must be positive!?");
 		return;
 	}
-	pop_nav(QSP_ARG n);
+	pop_nav(n);
 }
 
 static COMMAND_FUNC(do_top_nav)
@@ -698,7 +766,7 @@ static COMMAND_FUNC(do_top_nav)
 	int n;
 
 	n = n_pushed_panels();
-	if( n > 1 ) pop_nav(QSP_ARG n-1);
+	if( n > 1 ) pop_nav(n-1);
 }
 
 Panel_Obj *console_po=NULL;
@@ -717,10 +785,13 @@ static COMMAND_FUNC( mk_console )
 	}
 
 #ifdef BUILD_FOR_IOS
-	make_console_panel(QSP_ARG  s);
+	make_console_panel(s);
 
-	console_po = panel_obj_of(QSP_ARG  s);
-#endif /* BUILD_FOR_IOS */
+	console_po = panel_obj_of(s);
+#else /* ! BUILD_FOR_IOS */
+	sprintf(ERROR_STRING,"mk_console:  not implemented, ignoring value '%s'",s);
+	advise(ERROR_STRING);
+#endif /* ! BUILD_FOR_IOS */
 }
 
 static COMMAND_FUNC( do_alert )
@@ -730,7 +801,7 @@ static COMMAND_FUNC( do_alert )
 	type=NAMEOF("type of alert");
 	msg=NAMEOF("alert message");
 
-	simple_alert(QSP_ARG  type,msg);
+	simple_alert(type,msg);
 
 	// another event can occur while the alert is getting
 	// ready to go up, pushing text onto the command stack.
@@ -744,7 +815,7 @@ static COMMAND_FUNC( do_confirm )
 	title=NAMEOF("title for alert");
 	question=NAMEOF("confirmation question");
 
-	get_confirmation(QSP_ARG  title,question);
+	get_confirmation(title,question);
 
 	// another event can occur while the alert is getting
 	// ready to go up, pushing text onto the command stack.
@@ -763,7 +834,7 @@ static COMMAND_FUNC( do_notify_busy )
 	title=NAMEOF("title for alert");
 	msg=NAMEOF("alert message");
 
-	notify_busy(QSP_ARG  title,msg);
+	notify_busy(title,msg);
 
 	// another event can occur while the alert is getting
 	// ready to go up, pushing text onto the command stack.
@@ -804,6 +875,8 @@ ADD_CMD( notice,	do_notice,		give a notice )
 #endif /* HAVE_MOTIF */
 /* support for genwin */
 ADD_CMD( genwin,	do_genwin_menu,		general window operations submenu )
+ADD_CMD( allow_autorotation,	do_allow_autorot,	specify whether tablet autorotation is allowed )
+ADD_CMD( allow_orientations,	do_allow_oris,		specify valid tablet orientations )
 #ifdef NOT_YET
 ADD_CMD( luts,		do_lut_menu,		color map submenu )
 #endif /* NOT_YET */
@@ -823,11 +896,17 @@ COMMAND_FUNC( do_protomenu )
 		const char *prog_name;
 #ifdef HAVE_X11
 		const char *display_name;
-		display_name = which_display(SINGLE_QSP_ARG);
+		// why call this - does this force an init of X11?
+		display_name = which_display();
+		// the next lines suppress a warning about unused value of s
+		if( verbose ){
+			sprintf(MSG_STR,"Using display '%s'",display_name);
+			prt_msg(MSG_STR);
+		}
 #endif /* HAVE_X11 */
 
 		prog_name = tell_progname();
-		so_init(QSP_ARG  1,&prog_name);
+		so_init(1,&prog_name);
 
 		DECLARE_STR1_FUNCTION(	panel_exists,	panel_exists )
 
@@ -840,6 +919,6 @@ COMMAND_FUNC( do_protomenu )
 	advise("Commands will parse but have no effect.");
 #endif /* ! HAVE_MOTIF */
 #endif /* ! BUILD_FOR_OBJC */
-	PUSH_MENU(interface);
+	CHECK_AND_PUSH_MENU(interface);
 }
 

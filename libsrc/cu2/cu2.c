@@ -20,9 +20,12 @@
 #endif // HAVE_GL_GLEW_H
 
 #include "veclib/cu2_veclib_prot.h"
-#include "veclib/platform_funcs.h"
+//#include "veclib/platform_funcs.h"
+#include "my_cu2.h"	// query_cuda_device()
+#include "my_cuda.h"	// MAX_CUDA_DEVICES - merge w/ my_cu2.h ???
 #include "cuda_supp.h"
 #include <cuda_gl_interop.h>
+#include <nvrtc.h>	// run-time compilation
 #include "gl_info.h"
 
 #ifdef HAVE_CUDA
@@ -57,8 +60,8 @@ static const char * available_pfdev_name(QSP_ARG_DECL  const char *name,char *sc
 
 	s=name;
 	while(n<=max_devices){
-		pdp = pfdev_of(QSP_ARG  s);
-		if( pdp == NO_PFDEV ) return(s);
+		pdp = pfdev_of(s);
+		if( pdp == NULL ) return(s);
 
 		// This name is in use
 		n++;
@@ -68,7 +71,7 @@ static const char * available_pfdev_name(QSP_ARG_DECL  const char *name,char *sc
 	sprintf(ERROR_STRING,"Number of %s %s devices exceed configured maximum %d!?",
 		name,PLATFORM_NAME(cpp),max_devices);
 	WARN(ERROR_STRING);
-	ERROR1(ERROR_STRING);
+	error1(ERROR_STRING);
 	return(NULL);	// NOTREACHED - quiet compiler
 }
 
@@ -88,7 +91,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	if( index >= MAX_CUDA_DEVICES ){
 		sprintf(ERROR_STRING,"Program is compiled for a maximum of %d CUDA devices, can't inititialize device %d.",
 			MAX_CUDA_DEVICES,index);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 
 	if( verbose ){
@@ -122,7 +125,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	 * correctly for the current context!?
 	 */
 	sprintf(ERROR_STRING,"%d.%d",deviceProp.major,deviceProp.minor);
-	assign_var(QSP_ARG  "cuda_comp_cap",ERROR_STRING);
+	assign_var("cuda_comp_cap",ERROR_STRING);
 
 
 	/* What does this do??? */
@@ -148,15 +151,8 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	 * a number to the string...
 	 */
 	name_p = available_pfdev_name(QSP_ARG  name,dev_name,cpp,MAX_CUDA_DEVICES);	// reuse name as scratch string
-	pdp = new_pfdev(QSP_ARG  name_p);
-
-#ifdef CAUTIOUS
-	if( pdp == NO_PFDEV ){
-		sprintf(ERROR_STRING,"CAUTIOUS:  init_cu2_device:  Error creating cuda device struct for %s!?",name_p);
-		WARN(ERROR_STRING);
-		return;
-	}
-#endif /* CAUTIOUS */
+	pdp = new_pfdev(name_p);
+	assert( pdp != NULL );
 
 	/* Remember this name in case the default is not found */
 	if( first_cuda_dev_name == NULL )
@@ -184,15 +180,16 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	}
 
 	//set_cuda_device(pdp);	// is this call just so we can call cudaMalloc?
-	PF_FUNC_NAME(set_device)(QSP_ARG  pdp);	// is this call just so we can call cudaMalloc?
+	//PF_FUNC_NAME(set_device)(QSP_ARG  pdp);	// is this call just so we can call cudaMalloc?
+	cu2_set_device(QSP_ARG  pdp);	// is this call just so we can call cudaMalloc?
 
 	// address set to NULL says use custom allocator - see dobj/makedobj.c
 
 	// BUG??  with pdp we may not need the DA_ flag???
 	sprintf(area_name,"%s.%s",PLATFORM_NAME(cpp),name_p);
-	ap = pf_area_init(QSP_ARG  area_name,NULL,0,
+	ap = pf_area_init(area_name,NULL,0,
 			MAX_CUDA_GLOBAL_OBJECTS,DA_CUDA_GLOBAL,pdp);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_cu2_device:  error creating global data area %s",area_name);
 		WARN(ERROR_STRING);
@@ -222,12 +219,12 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	//strcpy(area_name,name_p);
 	//strcat(area_name,"_host");
 	sprintf(area_name,"%s.%s_host",PLATFORM_NAME(cpp),name_p);
-	ap = pf_area_init(QSP_ARG  area_name,(u_char *)NULL,0,MAX_CUDA_MAPPED_OBJECTS,
+	ap = pf_area_init(area_name,(u_char *)NULL,0,MAX_CUDA_MAPPED_OBJECTS,
 								DA_CUDA_HOST,pdp);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_cu2_device:  error creating host data area %s",area_name);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	SET_AREA_CUDA_DEV(ap, pdp);
 	//cuda_data_area[index][CUDA_HOST_AREA_INDEX] = ap;
@@ -246,12 +243,12 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	//strcpy(area_name,name_p);
 	//strcat(area_name,"_host_mapped");
 	sprintf(area_name,"%s.%s_host_mapped",PLATFORM_NAME(cpp),name_p);
-	ap = pf_area_init(QSP_ARG  area_name,(u_char *)NULL,0,MAX_CUDA_MAPPED_OBJECTS,
+	ap = pf_area_init(area_name,(u_char *)NULL,0,MAX_CUDA_MAPPED_OBJECTS,
 							DA_CUDA_HOST_MAPPED,pdp);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_cu2_device:  error creating host-mapped data area %s",area_name);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	SET_AREA_CUDA_DEV(ap,pdp);
 	//cuda_data_area[index][CUDA_HOST_MAPPED_AREA_INDEX] = ap;
@@ -275,8 +272,8 @@ int cu2_dispatch( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 
 	i = vfp->vf_code;
 	if( cu2_func_tbl[i].cu2_func == NULL){
-		sprintf(DEFAULT_ERROR_STRING,"Sorry, function %s has not yet been implemented for the cuda2 platform.",VF_NAME(vfp));
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"Sorry, function %s has not yet been implemented for the cuda2 platform.",VF_NAME(vfp));
+		warn(ERROR_STRING);
 		return(-1);
 	}
 // BUG?  why not typtbl???
@@ -291,41 +288,57 @@ int cu2_dispatch( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 // BUG - these are for host global - can we determine from the data area exactly
 // which type of memory we should allocate?
 
-static int cu2_mem_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align)
+static void *cu2_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align)
 {
 	cudaError_t e;
+	void *ptr;
 
 	// BUG?  align arg is ignored here?
 
 	// GLOBAL
-	e = cudaMalloc( &OBJ_DATA_PTR(dp), size);
+	e = cudaMalloc( &ptr, size);
 	if( e != cudaSuccess ){
 		if( e == cudaErrorDevicesUnavailable )
-			ERROR1("Cuda devices unavailable!?");
+			error1("Cuda devices unavailable!?");
 		describe_cuda_driver_error2("cu2_mem_alloc","cudaMalloc",e);
 		sprintf(ERROR_STRING,"Attempting to allocate %d bytes.",size);
 		advise(ERROR_STRING);
-		return(-1);
+		return NULL;
 	}
+	return ptr;
+}
+
+static int cu2_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align)
+{
+	void *ptr;
+	ptr=cu2_mem_alloc(QSP_ARG  OBJ_PFDEV(dp), size, align);
+	SET_OBJ_DATA_PTR(dp,ptr);
+	if( ptr == NULL ) return -1;
 	return 0;
 }
 
-static void cu2_mem_free(QSP_ARG_DECL  Data_Obj *dp)
+
+static void cu2_mem_free(QSP_ARG_DECL  void *ptr)
 {
 	cudaError_t e;
 
 	// GLOBAL
-	e = cudaFree(OBJ_DATA_PTR(dp));
+	e = cudaFree(ptr);
 	if( e != cudaSuccess ){
-		describe_cuda_driver_error2("release_data","cudaFree",e);
+		describe_cuda_driver_error2("cu2_mem_free","cudaFree",e);
 	}
+}
+
+static void cu2_obj_free(QSP_ARG_DECL  Data_Obj *dp)
+{
+	cu2_mem_free(QSP_ARG  OBJ_DATA_PTR(dp));
 }
 
 static void (*cu2_offset_data)(QSP_ARG_DECL  Data_Obj *dp, index_t o ) = default_offset_data_func;
 static void cu2_update_offset(QSP_ARG_DECL  Data_Obj *dp)
 { WARN("cu2_update_offset not implemented!?"); }
 
-static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platform_Device *pdp )
+static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, Platform_Device *pdp )
 {
 #ifdef HAVE_CUDA
 
@@ -335,6 +348,10 @@ static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 #ifdef OLD_CUDA4
 	cutilSafeCall( cudaMemcpy(dst, src, siz, cudaMemcpyDeviceToHost) );
 #else // ! OLD_CUDA4
+
+//fprintf(stderr,"cu2_mem_dnload:  dst = 0x%lx   src = 0x%lx   siz = %ld\n",
+//(long)dst,(long)src,siz);
+
 	error = cudaMemcpy(dst, src, siz, cudaMemcpyDeviceToHost) ;
 	if( error != cudaSuccess ){
 		// BUG report cuda error
@@ -342,6 +359,8 @@ static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 		sprintf(ERROR_STRING,"dst = 0x%lx, src = 0x%lx, size = %ld",
 			(u_long) dst, (u_long) src, siz );
 		advise(ERROR_STRING);
+		describe_cuda_driver_error2("cu2_mem_dnload",
+				"cudaMemcpy",error);
 	}
 #endif // ! OLD_CUDA4
 #else // ! HAVE_CUDA
@@ -350,8 +369,11 @@ static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 }
 
 // We treat the device as a server, so "upload" transfers from host to device
+//
+// For cuda, we ignore the offset argument, because it is already added into ptr.
+// (The offset arg was added for OpenCL, where the memory "pointer" is not really the address)
 
-static void cu2_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platform_Device *pdp )
+static void cu2_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, Platform_Device *pdp )
 {
 #ifdef HAVE_CUDA
 	cudaError_t error;
@@ -421,7 +443,7 @@ static int cu2_unmap_buf(QSP_ARG_DECL  Data_Obj *dp)
 	if( e != cudaSuccess ){
 		describe_cuda_driver_error2("cu2_unmap_buf",
 			"cudaGLUnmapBufferObject",e);
-		ERROR1("failed to unmap buffer object");
+		error1("failed to unmap buffer object");
 		return -1;
 	}
 	return 0;
@@ -435,14 +457,130 @@ static void cu2_dev_info(QSP_ARG_DECL  Platform_Device *pdp)
 {
 	sprintf(MSG_STR,"%s:",PFDEV_NAME(pdp));
 	prt_msg(MSG_STR);
-	prt_msg("Sorry, Cuda-specific device info not implemented yet!?");
+
+	// should print info from device query...
+	//prt_msg("Sorry, Cuda-specific device info not implemented yet!?");
+
+	query_cuda_device(QSP_ARG  PFDEV_CUDA_DEV_INDEX(pdp) );
 }
 
 static void cu2_info(QSP_ARG_DECL  Compute_Platform *cdp)
 {
 	sprintf(MSG_STR,"%s:",PLATFORM_NAME(cdp));
 	prt_msg(MSG_STR);
+
+	// Should print the names of the available devices...
 	prt_msg("Sorry, Cuda-specific platform info not implemented yet!?");
+}
+
+static const char *cu2_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID which )
+{
+	const char *s;
+
+	switch(which){
+		case PKS_KERNEL_QUALIFIER:
+			s="__global__";
+			break;
+		case PKS_ARG_QUALIFIER:
+			s="";
+			break;
+		case N_PLATFORM_KERNEL_STRINGS:
+			error1("unexpected platform kernel string ID");
+			s=NULL;
+			break;
+		default:
+			error1("invalid platform kernel string ID");
+			s=NULL;
+			break;
+	}
+	return s;
+}
+
+static void * cu2_make_kernel(QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp)
+{
+	nvrtcProgram prog;
+	const char *opts[]={"",""};	// put options here
+	size_t logSize;
+	size_t ptxSize;
+	char *log, *ptx;
+
+	nvrtcCreateProgram(&prog,src,name,0,	// numHeaders
+		NULL,	// headers
+		NULL	// includeNames
+		);
+	nvrtcCompileProgram(prog,0,opts);
+
+	nvrtcGetProgramLogSize(prog,&logSize);
+fprintf(stderr,"log size is %ld\n",logSize);
+	log = getbuf(logSize);
+	nvrtcGetProgramLog(prog,log);
+fprintf(stderr,"Compilation Log for %s:\n\n%s\n\n",name,log);
+
+	nvrtcGetPTXSize(prog,&ptxSize);
+fprintf(stderr,"log size is %ld\n",logSize);
+	ptx = getbuf(logSize);
+	nvrtcGetPTX(prog,ptx);
+fprintf(stderr,"Compilation Log for %s:\n\n%s\n\n",name,log);
+
+	nvrtcDestroyProgram(&prog);
+
+	return ptx;
+}
+
+static void cu2_store_kernel(QSP_ARG_DECL  Kernel_Info_Ptr *kip_p, void *kp, Platform_Device *pdp)
+{
+	Kernel_Info_Ptr kip;
+	int idx;
+
+	if( (*kip_p).cuda_kernel_info_p == NULL ){
+		kip.cuda_kernel_info_p = getbuf( sizeof(CUDA_Kernel_Info) );
+		*kip_p = kip;
+	} else {
+		kip = (*kip_p);
+	}
+
+	idx = PFDEV_SERIAL(pdp);
+	assert( idx >=0 && idx < MAX_CUDA_DEVICES );
+	SET_CUDA_KI_KERNEL( kip, idx, kp ); 
+}
+
+static void * cu2_fetch_kernel(QSP_ARG_DECL  Kernel_Info_Ptr kip, Platform_Device *pdp)
+{
+	int idx;
+	char * kp;
+
+	idx = PFDEV_SERIAL(pdp);
+	assert( idx >=0 && idx < MAX_CUDA_DEVICES );
+
+	if(kip.any_kernel_info_p == NULL)	// No stored kernel info?
+		return NULL;
+
+	kp = CUDA_KI_KERNEL( kip, idx ); 
+	return kp;
+}
+
+static void cu2_run_kernel(QSP_ARG_DECL  void *kp, Vec_Expr_Node *arg_enp, Platform_Device *pdp)
+{
+	WARN("sorry, cu2_run_kernel not implemented!?");
+}
+
+static void cu2_set_kernel_arg(QSP_ARG_DECL  /*cl_kernel*/ void * kp, int *idx_p, void *vp, Kernel_Arg_Type arg_type)
+{
+	switch( arg_type ){
+		case KERNEL_ARG_VECTOR:
+//fprintf(stderr,"Setting kernel arg %d with vector at 0x%lx\n",*idx_p,(long)vp);
+			break;
+		case KERNEL_ARG_DBL:
+//fprintf(stderr,"Setting kernel arg %d with double at 0x%lx\n",*idx_p,(long)vp);
+			break;
+		case KERNEL_ARG_INT:
+//fprintf(stderr,"Setting kernel arg %d with int at 0x%lx\n",*idx_p,(long)vp);
+			break;
+		default:
+			WARN("cu2_set_kernel_arg:  BAD ARG TYPE CODE!?");
+			break;
+	}
+	(*idx_p)++;
 }
 
 
@@ -454,8 +592,11 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 	 * are not readable...  So we check that first.
 	 */
 
+	// This file doesn't seem to be present on Mac OSX!?
+	/*
 	if( check_file_access(QSP_ARG  "/dev/nvidiactl") < 0 )
 		return -1;
+		*/
 
 	cudaGetDeviceCount(&n_devs);
 
@@ -473,6 +614,7 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 	/* may be null */
 
 	for(i=0;i<n_devs;i++){
+#ifdef GENERATES_ERROR_ON_MAC
 		char s[32];
 
 		sprintf(s,"/dev/nvidia%d",i);
@@ -485,6 +627,7 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 			// is also likely to be missing, trapped above...
 			return -1;
 		}
+#endif // GENERATES_ERROR_ON_MAC
 
 		init_cu2_device(QSP_ARG  i, cpp);
 	}
@@ -492,7 +635,7 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 	if( default_cuda_dev_name == NULL ){
 		/* Not specified in environment */
 		// reserved var if set in environment?
-		assign_var(QSP_ARG  DEFAULT_CUDA_DEV_VAR,first_cuda_dev_name);
+		assign_var(DEFAULT_CUDA_DEV_VAR,first_cuda_dev_name);
 		default_cuda_dev_found=1;	// not really necessary?
 	} else if( ! default_cuda_dev_found ){
 		/* specified incorrectly */
@@ -501,7 +644,7 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 			first_cuda_dev_name);
 		WARN(ERROR_STRING);
 
-		assign_var(QSP_ARG  DEFAULT_CUDA_DEV_VAR,first_cuda_dev_name);
+		assign_var(DEFAULT_CUDA_DEV_VAR,first_cuda_dev_name);
 		default_cuda_dev_found=1;	// not really necessary?
 	}
 
@@ -529,13 +672,7 @@ void cu2_init_platform(SINGLE_QSP_ARG_DECL)
 	Compute_Platform *cpp;
 
 	cpp = creat_platform(QSP_ARG  "CUDA", PLATFORM_CUDA );
-
-	//init_platform(QSP_ARG  cpp, PLATFORM_CUDA);
-
-#ifdef CAUTIOUS
-	if( cpp == NULL )
-ERROR1("CAUTIOUS:  cu2_init_platform:  Couldn't create Cuda2 platform!?");
-#endif // CAUTIOUS
+	assert( cpp != NULL );
 
 	push_pfdev_context(QSP_ARG  PF_CONTEXT(cpp) );
 	if( init_cu2_devices(QSP_ARG  cpp) < 0 ){
@@ -543,8 +680,9 @@ ERROR1("CAUTIOUS:  cu2_init_platform:  Couldn't create Cuda2 platform!?");
 		 */
 		inited = -1;
 	}
-	if( pop_pfdev_context(SINGLE_QSP_ARG) == NO_ITEM_CONTEXT )
-		ERROR1("cu2_init_platform:  Failed to pop platform device context!?");
+	if( pop_pfdev_context(SINGLE_QSP_ARG) == NULL )
+		error1("cu2_init_platform:  Failed to pop platform device context!?");
+
 	check_vfa_tbl(QSP_ARG  cu2_vfa_tbl, N_VEC_FUNCS);
 
 	if( inited < 0 ){
@@ -563,111 +701,6 @@ ERROR1("CAUTIOUS:  cu2_init_platform:  Couldn't create Cuda2 platform!?");
 #define MAXD(m,n)	(m>n?m:n)
 #define MAX2(szi_p)	MAXD(szi_p->szi_dst_dim[i_dim],szi_p->szi_src_dim[1][i_dim])
 #define MAX3(szi_p)	MAXD(MAX2(szi_p),szi_p->szi_src_dim[1][i_dim])
-
-
-PF_COMMAND_FUNC( list_devs )
-{
-	list_pfdevs(SINGLE_QSP_ARG);
-}
-
-void PF_FUNC_NAME(set_device)( QSP_ARG_DECL  Platform_Device *pdp )
-{
-#ifdef HAVE_CUDA
-	cudaError_t e;
-#endif // HAVE_CUDA
-
-	if( curr_pdp == pdp ){
-		sprintf(DEFAULT_ERROR_STRING,"%s:  current device is already %s!?",
-			STRINGIFY(HOST_CALL_NAME(set_device)),PFDEV_NAME(pdp));
-		NWARN(DEFAULT_ERROR_STRING);
-		return;
-	}
-	if( PFDEV_PLATFORM_TYPE(pdp) != PLATFORM_CUDA ){
-		sprintf(ERROR_STRING,"%s:  device %s is not a CUDA device!?",
-			STRINGIFY(HOST_CALL_NAME(set_device)),PFDEV_NAME(pdp));
-		WARN(ERROR_STRING);
-		return;
-	}
-
-#ifdef HAVE_CUDA
-	e = cudaSetDevice( PFDEV_CUDA_DEV_INDEX(pdp) );
-	if( e != cudaSuccess )
-		describe_cuda_driver_error2(STRINGIFY(HOST_CALL_NAME(set_device)),"cudaSetDevice",e);
-	else
-		curr_pdp = pdp;
-#else // ! HAVE_CUDA
-	NO_CUDA_MSG(set_device)
-#endif // ! HAVE_CUDA
-}
-
-void insure_cu2_device( QSP_ARG_DECL  Data_Obj *dp )
-{
-	Platform_Device *pdp;
-
-	if( AREA_FLAGS(OBJ_AREA(dp)) & DA_RAM ){
-		sprintf(DEFAULT_ERROR_STRING,
-	"insure_cu2_device:  Object %s is a host RAM object!?",OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
-		return;
-	}
-
-	pdp = AREA_PFDEV(OBJ_AREA(dp));
-
-#ifdef CAUTIOUS
-	if( pdp == NULL )
-		NERROR1("CAUTIOUS:  null cuda device ptr in data area!?");
-#endif /* CAUTIOUS */
-
-	if( curr_pdp != pdp ){
-sprintf(DEFAULT_ERROR_STRING,"insure_cu2_device:  curr_pdp = 0x%lx  pdp = 0x%lx",
-(int_for_addr)curr_pdp,(int_for_addr)pdp);
-NADVISE(DEFAULT_ERROR_STRING);
-
-sprintf(DEFAULT_ERROR_STRING,"insure_cu2_device:  current device is %s, want %s",
-PFDEV_NAME(curr_pdp),PFDEV_NAME(pdp));
-NADVISE(DEFAULT_ERROR_STRING);
-		PF_FUNC_NAME(set_device)(QSP_ARG  pdp);
-	}
-
-}
-
-void *TMPVEC_NAME(size_t size,size_t len,const char *whence)
-{
-/*
-	void *cuda_mem;
-	cudaError_t drv_err;
-
-	drv_err = cudaMalloc(&cuda_mem, size * len );
-	if( drv_err != cudaSuccess ){
-		sprintf(DEFAULT_MSG_STR,"tmpvec (%s)",whence);
-		describe_cuda_driver_error2(DEFAULT_MSG_STR,"cudaMalloc",drv_err);
-		NERROR1("CUDA memory allocation error");
-	}
-
-//sprintf(ERROR_STRING,"tmpvec:  %d bytes allocated at 0x%lx",len,(int_for_addr)cuda_mem);
-//advise(ERROR_STRING);
-
-//sprintf(ERROR_STRING,"tmpvec %s:  0x%lx",whence,(int_for_addr)cuda_mem);
-//advise(ERROR_STRING);
-	return(cuda_mem);
-	*/
-	return NULL;
-}
-
-void FREETMP_NAME(void *ptr,const char *whence)
-{
-	/*
-	cudaError_t drv_err;
-
-//sprintf(ERROR_STRING,"freetmp %s:  0x%lx",whence,(int_for_addr)ptr);
-//advise(ERROR_STRING);
-	drv_err=cudaFree(ptr);
-	if( drv_err != cudaSuccess ){
-		sprintf(DEFAULT_MSG_STR,"freetmp (%s)",whence);
-		describe_cuda_driver_error2(DEFAULT_MSG_STR,"cudaFree",drv_err);
-	}
-	*/
-}
 
 #ifdef FOOBAR
 //CUFFT
@@ -708,7 +741,7 @@ void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 	status = cufftPlan1d(&plan, NX, CUFFT_C2C, BATCH);
 	if (status != CUFFT_SUCCESS) {
 		sprintf(ERROR_STRING, "Error in cufftPlan1d: %s\n", getCUFFTError(status));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	//Run forward fft on data
@@ -716,7 +749,7 @@ void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 			(cufftComplex *)result, CUFFT_FORWARD);
 	if (status != CUFFT_SUCCESS) {
 		sprintf(ERROR_STRING, "Error in cufftExecC2C: %s\n", getCUFFTError(status));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	//Run inverse fft on data
@@ -724,7 +757,7 @@ void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 	if (status != CUFFT_SUCCESS)
 	{
 		sprintf(ERROR_STRING, "Error in cufftExecC2C: %s\n", getCUFFTError(status));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}*/
 
 	//Free resources
@@ -732,57 +765,6 @@ void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 	cudaFree(data);
 }
 #endif // FOOBAR
-
-
-typedef struct {
-	const char *	ckpt_tag;
-#ifdef FOOBAR
-	cudaEvent_t	ckpt_event;
-#endif // FOOBAR
-} CU2_Checkpoint;
-
-static CU2_Checkpoint *ckpt_tbl=NULL;
-//static int max_cu2_ckpts=0;	// size of checkpoit table
-static int n_cu2_ckpts=0;	// number of placements
-
-static void init_cu2_ckpts(int n)
-{
-	/*
-	//CUresult e;
-	cudaError_t drv_err;
-	int i;
-
-	if( max_cu2_ckpts > 0 ){
-		sprintf(DEFAULT_ERROR_STRING,
-"init_cu2_ckpts (%d):  already initialized with %d checpoints",
-			n,max_cu2_ckpts);
-		NWARN(DEFAULT_ERROR_STRING);
-		return;
-	}
-	ckpt_tbl = (Cuda_Checkpoint *) getbuf( n * sizeof(*ckpt_tbl) );
-	if( ckpt_tbl == NULL ) NERROR1("failed to allocate checkpoint table");
-
-	max_cu2_ckpts = n;
-
-	for(i=0;i<max_cu2_ckpts;i++){
-		drv_err=cudaEventCreate(&ckpt_tbl[i].ckpt_event);
-		if( drv_err != cudaSuccess ){
-			describe_cuda_driver_error2("init_cu2_ckpts",
-				"cudaEventCreate",drv_err);
-			NERROR1("failed to initialize checkpoint table");
-		}
-		ckpt_tbl[i].ckpt_tag=NULL;
-	}
-	*/
-}
-
-PF_COMMAND_FUNC( init_ckpts )
-{
-	int n;
-
-	n = HOW_MANY("maximum number of checkpoints");
-	init_cu2_ckpts(n);
-}
 
 #define CUDA_DRIVER_ERROR_RETURN(calling_funcname, cuda_funcname )	\
 								\
@@ -804,91 +786,8 @@ PF_COMMAND_FUNC( init_ckpts )
 								\
 	if( e != CUDA_SUCCESS ){					\
 		describe_cuda_error2(calling_funcname,cuda_funcname,e); \
-		ERROR1("Fatal cuda error.");			\
+		error1("Fatal cuda error.");			\
 	}
-
-
-PF_COMMAND_FUNC( set_ckpt )
-{
-	/*
-	//cudaError_t e;
-	cudaError_t drv_err;
-	const char *s;
-
-	s = NAMEOF("tag for this checkpoint");
-
-	if( max_cu2_ckpts == 0 ){
-		NWARN("do_place_ckpt:  checkpoint table not initialized, setting to default size");
-		init_cu2_ckpts(256);
-	}
-
-	if( n_cu2_ckpts >= max_cu2_ckpts ){
-		sprintf(ERROR_STRING,
-	"do_place_ckpt:  Sorry, all %d checkpoints have already been placed",
-			max_cu2_ckpts);
-		WARN(ERROR_STRING);
-		return;
-	}
-
-	ckpt_tbl[n_cu2_ckpts].ckpt_tag = savestr(s);
-
-	// use default stream (0) for now, but will want to introduce
-	// more streams later?
-	drv_err = cudaEventRecord( ckpt_tbl[n_cu2_ckpts++].ckpt_event, 0 );
-	CUDA_DRIVER_ERROR_RETURN( "do_place_ckpt","cudaEventRecord")
-	*/
-}
-
-PF_COMMAND_FUNC( show_ckpts )
-{
-	/*
-	CUresult e;
-	cudaError_t drv_err;
-	float msec, cum_msec;
-	int i;
-
-	if( n_cu2_ckpts <= 0 ){
-		NWARN("do_show_cu2_ckpts:  no checkpoints placed!?");
-		return;
-	}
-
-	drv_err = cudaEventSynchronize(ckpt_tbl[n_cu2_ckpts-1].ckpt_event);
-	CUDA_DRIVER_ERROR_RETURN("do_show_cu2_ckpts", "cudaEventSynchronize")
-
-	drv_err = cudaEventElapsedTime( &msec, ckpt_tbl[0].ckpt_event, ckpt_tbl[n_cu2_ckpts-1].ckpt_event);
-	CUDA_DRIVER_ERROR_RETURN("do_show_cu2_ckpts", "cudaEventElapsedTime")
-	sprintf(msg_str,"Total GPU time:\t%g msec",msec);
-	prt_msg(msg_str);
-
-	// show the start tag
-	sprintf(msg_str,"GPU  %3d  %12.3f  %12.3f  %s",1,0.0,0.0,
-		ckpt_tbl[0].ckpt_tag);
-	prt_msg(msg_str);
-	cum_msec =0.0;
-	for(i=1;i<n_cu2_ckpts;i++){
-		drv_err = cudaEventElapsedTime( &msec, ckpt_tbl[i-1].ckpt_event,
-			ckpt_tbl[i].ckpt_event);
-		CUDA_DRIVER_ERROR_RETURN("do_show_cu2_ckpts", "cudaEventElapsedTime")
-
-		cum_msec += msec;
-		sprintf(msg_str,"GPU  %3d  %12.3f  %12.3f  %s",i+1,msec,
-			cum_msec, ckpt_tbl[i].ckpt_tag);
-		prt_msg(msg_str);
-	}
-	*/
-}
-
-PF_COMMAND_FUNC( clear_ckpts )
-{
-	int i;
-
-	for(i=0;i<n_cu2_ckpts;i++){
-		rls_str(ckpt_tbl[i].ckpt_tag);
-		ckpt_tbl[i].ckpt_tag=NULL;
-	}
-	n_cu2_ckpts=0;
-}
-
 
 
 

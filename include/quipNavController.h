@@ -14,6 +14,7 @@
 #endif //BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
+#include <AppKit/NSViewController.h>
 @interface quipNavController : NSViewController
 #endif // BUILD_FOR_MACOS
 

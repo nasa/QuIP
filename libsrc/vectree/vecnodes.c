@@ -8,6 +8,7 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "vectree.h"
+#include "query_stack.h"	// BUG?
 
 /* for definition of function codes */
 #include "veclib/vecgen.h"
@@ -68,27 +69,33 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	int i;
 
 	for(i=0;i<MAX_NODE_CHILDREN;i++)
-		SET_VN_CHILD(enp,i,NO_VEXPR_NODE);
-	SET_VN_PARENT(enp,NO_VEXPR_NODE);
-	SET_VN_SHAPE(enp, NO_SHAPE);
+		SET_VN_CHILD(enp,i,NULL);
+	SET_VN_PARENT(enp,NULL);
+	SET_VN_SHAPE(enp, NULL);
+	SET_VN_PFDEV(enp, NULL);
 	SET_VN_FLAGS(enp, 0);
 	SET_VN_SERIAL(enp, node_serial++);
-	SET_VN_LINENO(enp, PARSER_LINENO);	/* BUG need to point to filename also */
-	SET_VN_INFILE(enp, CURR_INFILE);
-	if( CURR_INFILE != NULL ){
-		INC_SR_COUNT(CURR_INFILE);
+	if( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL ){
+		SET_VN_LINENO(enp, PARSER_LINE_NUM);	/* BUG need to point to filename also */
+		SET_VN_INFILE(enp, CURR_INFILE);
+		if( CURR_INFILE != NULL ){
+			INC_SR_COUNT(CURR_INFILE);
+		}
+	} else {
+		SET_VN_LINENO(enp, 0);
+		SET_VN_INFILE(enp, NULL);
 	}
-	SET_VN_RESOLVERS(enp, NO_LIST);
+	SET_VN_RESOLVERS(enp, NULL);
 
 	switch( VN_DATA_TYPE(enp) ){
 		case ND_DECL:
 //fprintf(stderr,"initializing ND_DECL data for node at 0x%lx, code = %d\n",(long)enp,VN_CODE(enp));
 			SET_VN_DECL_NAME(enp, NULL);
-			SET_VN_DECL_CTX(enp, NO_ITEM_CONTEXT);
-			SET_VN_DECL_PREC(enp, NO_PRECISION );
-			SET_VN_DECL_REFS(enp, NO_LIST);
+			SET_VN_DECL_CTX(enp, NULL);
+			SET_VN_DECL_PREC(enp, NULL );
+			SET_VN_DECL_REFS(enp, NULL);
 			SET_VN_DECL_FLAGS(enp, 0);
-			SET_VN_DECL_OBJ(enp, NO_OBJ);
+			SET_VN_DECL_OBJ(enp, NULL);
 			break;
 		case ND_LIST:
 			SET_VN_N_ELTS(enp, 0);
@@ -99,18 +106,15 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case ND_INT:
 			SET_VN_INTVAL(enp, 0);
 			break;
-		case ND_SUBRT:
-			SET_VN_SUBRT(enp, NO_SUBRT);
-			break;
 		case ND_CALLF:
-			SET_VN_UK_ARGS(enp, NO_LIST);
-			SET_VN_CALL_SUBRT(enp, NO_SUBRT);
+			SET_VN_UK_ARGS(enp, NULL);
+			SET_VN_SUBRT(enp, NULL);
 			break;
 		case ND_STRING:
 			SET_VN_STRING(enp, NULL);
 			break;
 		case ND_CAST:
-			SET_VN_CAST_PREC_PTR(enp, NO_PRECISION );
+			SET_VN_CAST_PREC_PTR(enp, NULL );
 			break;
 		case ND_VFUNC:
 			SET_VN_VFUNC_CODE(enp, N_VEC_FUNCS);	/* illegal value? */
@@ -119,11 +123,11 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			SET_VN_FUNC_PTR(enp, NULL);
 			break;
 		case ND_SIZE_CHANGE:
-			SET_VN_SIZCH_SHAPE(enp, NO_SHAPE);
+			SET_VN_SIZCH_SHAPE(enp, NULL);
 			break;
 		case ND_BMAP:
 			SET_VN_BM_CODE(enp, N_VEC_FUNCS);		/* illegal value */
-			SET_VN_BM_SHAPE(enp, NO_SHAPE);
+			SET_VN_BM_SHAPE(enp, NULL);
 			break;
 
 		case ND_NONE:
@@ -133,21 +137,9 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case ND_UNUSED:
 		case N_NODE_DATA_TYPES:
 			/* just here to suppress a compiler warning */
-//#ifdef CAUTIOUS
-//			sprintf(DEFAULT_ERROR_STRING,
-//		"CAUTIOUS:  init_expr_node:  %s has bad data type code %d",
-//				node_desc(enp),VN_DATA_TYPE(enp));
-//			NERROR1(DEFAULT_ERROR_STRING);
-//#endif /* CAUTIOUS */
 			assert( AERROR("init_expr_node:  bad data type code!?") );
 			break;
 	}
-
-	/*
-	SET_VN_REF_LIST(enp, NO_LIST);
-	SET_VN_UK_ARGS(enp, NO_LIST);
-	*/
-
 }
 
 static const char *data_type_names[N_NODE_DATA_TYPES];
@@ -164,7 +156,6 @@ const char *node_data_type_desc(Node_Data_Type t)
 		data_type_names[ ND_LIST ] = "list";
 		data_type_names[ ND_DBL ] = "dbl";
 		data_type_names[ ND_INT ] = "int";
-		data_type_names[ ND_SUBRT ] = "subrt";
 		data_type_names[ ND_CALLF ] = "callf";
 		data_type_names[ ND_STRING ] = "string";
 		data_type_names[ ND_CAST ] = "cast";
@@ -190,8 +181,9 @@ static Vec_Expr_Node *nother_node(QSP_ARG_DECL  Tree_Code code)
 
 	enp=alloc_node();
 	SET_VN_CODE(enp,code);
+	SET_LAST_NODE(NULL);
 	init_expr_node(QSP_ARG  enp);
-	LAST_NODE=enp;
+	SET_LAST_NODE(enp);
 	return(enp);
 }
 
@@ -201,14 +193,14 @@ static Vec_Expr_Node *nother_node(QSP_ARG_DECL  Tree_Code code)
 static void nother_child(Vec_Expr_Node * enp,Vec_Expr_Node * child,int index)
 {
 	SET_VN_CHILD(enp,index, child);
-	if( child != NO_VEXPR_NODE ){
+	if( child != NULL ){
 //#ifdef CAUTIOUS
 		/* The strict tree structure is violated by plus-eq, do-while, etc */
 		/* what does that comment mean??? */
 		/* Perhaps something about how the nodes are created? */
 
 		/*
-//		if( VN_PARENT(child) != NO_VEXPR_NODE ){
+//		if( VN_PARENT(child) != NULL ){
 //			sprintf(ERROR_STRING,
 //				"CAUTIOUS:  nother_child:  node n%d (%s) has parent n%d (%s), rival n%d (%s)!?",
 //				child->en_serial,
@@ -218,9 +210,9 @@ static void nother_child(Vec_Expr_Node * enp,Vec_Expr_Node * child,int index)
 //				enp->en_serial,
 //				NNAME(enp)
 //				);
-//			WARN(ERROR_STRING);
+//			warn(ERROR_STRING);
 //		}
-		assert( VN_PARENT(child) == NO_VEXPR_NODE );
+		assert( VN_PARENT(child) == NULL );
 		*/
 //#endif /* CAUTIOUS */
 		SET_VN_PARENT(child, enp);
@@ -228,21 +220,14 @@ static void nother_child(Vec_Expr_Node * enp,Vec_Expr_Node * child,int index)
 }
 
 #define VERIFY_N_CHILDREN(code,n)							\
-	/*if( tnt_tbl[code].tnt_nchildren != n ){						\
-		sprintf(DEFAULT_ERROR_STRING,"%s node expects %d children, assigned %d!?",	\
-		tnt_tbl[code].tnt_name,tnt_tbl[code].tnt_nchildren,n);			\
-		NERROR1(DEFAULT_ERROR_STRING);							\
-	}*/											\
 	assert( tnt_tbl[code].tnt_nchildren == n );
 
 
-Vec_Expr_Node *node3(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_Node *rchld,Vec_Expr_Node *chld3)
+Vec_Expr_Node *_node3(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_Node *rchld,Vec_Expr_Node *chld3)
 {
 	Vec_Expr_Node *enp;
 
-//#ifdef CAUTIOUS
 	VERIFY_N_CHILDREN(code,3);
-//#endif /* CAUTIOUS */
 
 	enp=NOTHER_NODE(code);
 	nother_child(enp,lchld,0);
@@ -254,13 +239,11 @@ Vec_Expr_Node *node3(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_
 
 
 
-Vec_Expr_Node *node2(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_Node *rchld)
+Vec_Expr_Node *_node2(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_Node *rchld)
 {
 	Vec_Expr_Node *enp;
 
-//#ifdef CAUTIOUS
 	VERIFY_N_CHILDREN(code,2);
-//#endif /* CAUTIOUS */
 
 	enp=NOTHER_NODE(code);
 	nother_child(enp,lchld,0);
@@ -270,13 +253,11 @@ Vec_Expr_Node *node2(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_
 }
 
 
-Vec_Expr_Node *node1(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld)
+Vec_Expr_Node *_node1(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld)
 {
 	Vec_Expr_Node *enp;
 
-//#ifdef CAUTIOUS
 	VERIFY_N_CHILDREN(code,1);
-//#endif /* CAUTIOUS */
 
 	enp=NOTHER_NODE(code);
 	nother_child(enp,lchld,0);
@@ -285,11 +266,9 @@ Vec_Expr_Node *node1(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld)
 }
 
 
-Vec_Expr_Node *node0(QSP_ARG_DECL  Tree_Code code)
+Vec_Expr_Node *_node0(QSP_ARG_DECL  Tree_Code code)
 {
-//#ifdef CAUTIOUS
 	VERIFY_N_CHILDREN(code,0);
-//#endif /* CAUTIOUS */
 
 	return( NOTHER_NODE(code) );
 }
@@ -370,13 +349,13 @@ static Vec_Expr_Node *dup_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			break;
 
 		default:
-			MISSING_CASE(enp,"dup_node");
+			missing_case(enp,"dup_node");
 			break;
 	}
 	return(new_enp);
 }
 
-Vec_Expr_Node *dup_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
+Vec_Expr_Node *_dup_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Vec_Expr_Node *new_enp;
 	int i;
@@ -384,9 +363,9 @@ Vec_Expr_Node *dup_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	new_enp = DUP_NODE(enp);
 
 	for(i=0;i<MAX_CHILDREN(enp);i++)
-		if( VN_CHILD(enp,i) != NO_VEXPR_NODE ){
+		if( VN_CHILD(enp,i) != NULL ){
 			Vec_Expr_Node *new_child;
-			new_child = DUP_TREE(VN_CHILD(enp,i));
+			new_child = dup_tree(VN_CHILD(enp,i));
 			SET_VN_CHILD(new_enp,i, new_child);
 			SET_VN_PARENT(new_child, new_enp);
 		}
@@ -394,7 +373,7 @@ Vec_Expr_Node *dup_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	return(new_enp);
 }
 
-void check_release(Vec_Expr_Node *enp)
+void _check_release(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	if( enp == NULL ) return;
 	if( NODE_IS_FINISHED(enp) ){
@@ -420,7 +399,7 @@ void check_release(Vec_Expr_Node *enp)
  * Another way to deal with that problem might be to have a reference count...
  */
 
-void rls_vectree(Vec_Expr_Node *enp)
+void _rls_vectree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
 
@@ -429,19 +408,12 @@ void rls_vectree(Vec_Expr_Node *enp)
 
 // BUG?  we could use the expected number of children based on node code...
 	for(i=0;i<MAX_CHILDREN(enp);i++)
-		if( VN_CHILD(enp,i) != NO_VEXPR_NODE ){
-//#ifdef CAUTIOUS
-//			if( VN_PARENT(VN_CHILD(enp,i)) != enp ){
-//				sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  rls_vectree:  %s child %d does not point to parent!?",
-//					node_desc(enp),i);
-//				NWARN(DEFAULT_ERROR_STRING);
-//			}
-//#endif // CAUTIOUS
+		if( VN_CHILD(enp,i) != NULL ){
 			assert( VN_PARENT(VN_CHILD(enp,i)) == enp );
 			rls_vectree(VN_CHILD(enp,i));
 		}
 
+//fprintf(stderr,"releasing %s\n",node_desc(enp));
 
 	/* now release this node */
 	if( VN_INFILE(enp) != NULL ){
@@ -454,19 +426,18 @@ void rls_vectree(Vec_Expr_Node *enp)
 		case ND_DECL:
 // we used to dump here, but children have already been freed!
  //           fprintf(stderr,"VN_DECL_OBJ(0x%lx) = 0x%lx\n",(long)enp,(long)VN_DECL_OBJ(enp));
-//if( VN_DECL_OBJ(enp) != NO_OBJ )
+//if( VN_DECL_OBJ(enp) != NULL )
 //longlist(DEFAULT_QSP_ARG  VN_DECL_OBJ(enp) );
 //else
 //fprintf(stderr,"VN_DECL_OBJ is NULL...\n");
 //DEBUG_IT_3(enp,checking)
 			// Does this get initialized?
-			if( VN_DECL_OBJ(enp) != NO_OBJ )
+			if( VN_DECL_OBJ(enp) != NULL )
 				SET_OBJ_EXTRA(VN_DECL_OBJ(enp),NULL);
 			break;
 		case ND_LIST:
 		case ND_DBL:
 		case ND_INT:
-		case ND_SUBRT:
 		case ND_CALLF:
 		case ND_STRING:
 		case ND_CAST:
@@ -476,7 +447,7 @@ void rls_vectree(Vec_Expr_Node *enp)
 			break;
 
 		case ND_BMAP:
-			if( VN_BM_SHAPE(enp) != NO_SHAPE )
+			if( VN_BM_SHAPE(enp) != NULL )
 				RELEASE_SHAPE_PTR( VN_BM_SHAPE(enp) );
 			break;
 		case ND_NONE:
@@ -485,22 +456,14 @@ void rls_vectree(Vec_Expr_Node *enp)
 
 		case N_NODE_DATA_TYPES:
 			/* just here to suppress a compiler warning */
-//#ifdef CAUTIOUS
-//			sprintf(DEFAULT_ERROR_STRING,
-//		"CAUTIOUS:  init_expr_node:  %s has bad data type code %d",
-//				node_desc(enp),VN_DATA_TYPE(enp) );
-//			NERROR1(DEFAULT_ERROR_STRING);
-//#endif /* CAUTIOUS */
 			assert( AERROR("init_expr_node:  bad data type code!?") );
 			break;
-		/*
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 "rls_vectree:  missing case for tree node data type %s",
 tnt_tbl[VN_CODE(enp)].tnt_name);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
-			*/
 	}
 
 	/* BUG we should check whether or not the node owns any lists,
@@ -533,32 +496,28 @@ tnt_tbl[VN_CODE(enp)].tnt_name);
 		case T_SEQ_DECL:
 		case T_CSEQ_DECL:
 		case T_PTR_DECL:
-//DEBUG_IT_3(enp,releasing decl name)
-//fprintf(stderr,"node at 0x%lx has decl name at 0x%lx\n",(long)enp,(long)VN_DECL_NAME(enp));
 			rls_str(VN_DECL_NAME(enp));
-//DEBUG_IT_3(enp,done releasing decl name)
 			break;
 
 		default:
 			// do nothing?
 			break;
 	}
+
 	if( OWNS_SHAPE(enp) ){
-//DEBUG_IT_3(enp,releasing shape)
-//fprintf(stderr,"rls_vectree releasing shape for %s node 0x%lx\n",node_desc(enp),(long)enp);
 		rls_shape(VN_SHAPE(enp));
-//DEBUG_IT_3(enp,done releasing shape)
 	}
-//DEBUG_IT_3(enp,releasing node itself)
+
+	// Maybe better to have a free list of nodes?
+
 	givbuf(enp);
-//DEBUG_IT_3(enp,done releasing node itself)
 }
 
 void set_global_ctx(SINGLE_QSP_ARG_DECL)
 {
 	Item_Context *icp;
 
-	icp = (Item_Context *)NODE_DATA(QLIST_TAIL(DOBJ_CONTEXT_LIST));
+	icp = (Item_Context *)NODE_DATA(QLIST_TAIL(LIST_OF_DOBJ_CONTEXTS));
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
 sprintf(ERROR_STRING,"set_global_ctx:  pushing global context %s",CTX_NAME(icp));
@@ -566,8 +525,8 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	//PUSH_ITEM_CONTEXT(DOBJ_ITEM_TYPE,icp);
-	PUSH_DOBJ_CONTEXT(icp);
-	icp = (Item_Context *)NODE_DATA(QLIST_TAIL(ID_CONTEXT_LIST));
+	push_dobj_context(icp);
+	icp = (Item_Context *)NODE_DATA(QLIST_TAIL(LIST_OF_ID_CONTEXTS));
 	PUSH_ID_CONTEXT(icp);
 }
 
@@ -575,7 +534,7 @@ void unset_global_ctx(SINGLE_QSP_ARG_DECL)
 {
 #ifdef QUIP_DEBUG
 	Item_Context *icp;
-	icp= pop_item_context(QSP_ARG  dobj_itp);
+	icp= pop_item_context(dobj_itp);
 if( debug & scope_debug ){
 sprintf(ERROR_STRING,"unset_global_ctx:  global context %s popped",CTX_NAME(icp));
 advise(ERROR_STRING);
@@ -584,7 +543,7 @@ advise(ERROR_STRING);
 	pop_item_context(QSP_ARG  dobj_itp);
 #endif /* QUIP_DEBUG */
 	
-	/*icp=*/ pop_item_context(QSP_ARG  id_itp);
+	/*icp=*/ pop_item_context(id_itp);
 }
 
 
@@ -596,17 +555,17 @@ void show_context_stack(QSP_ARG_DECL  Item_Type *itp)
 	sprintf(ERROR_STRING,"Context stack for item type %s",IT_NAME(itp));
 	advise(ERROR_STRING);
 
-	np=QLIST_HEAD(CONTEXT_LIST(itp));
+	np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
 
-	if( np==NO_NODE ) {
-		WARN("context list is empty");
+	if( np==NULL ) {
+		warn("context list is empty");
 		return;
 	}
 	icp=(Item_Context *)NODE_DATA(np);
-	sprintf(ERROR_STRING,"%s (%s)",CTX_NAME(icp),CTX_NAME(CURRENT_CONTEXT(itp)));
+	sprintf(ERROR_STRING,"%s (%s)",CTX_NAME(icp),CTX_NAME(current_context(itp)));
 	advise(ERROR_STRING);
 	np=NODE_NEXT(np);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		icp=(Item_Context *)NODE_DATA(np);
 		sprintf(ERROR_STRING,"%s",CTX_NAME(icp));
 		advise(ERROR_STRING);
@@ -614,40 +573,13 @@ void show_context_stack(QSP_ARG_DECL  Item_Type *itp)
 	}
 }
 
-#ifdef CAUTIOUS
-//static int not_printable(const char *s)
-//{
-//	while( *s ){
-//		if( ! isprint(*s) ) return(1);
-//		s++;
-//	}
-//	return(0);
-//}
-
-static int string_is_printable(const char *s)
-{
-	while( *s ){
-		if( ! isprint(*s) ) return(0);
-		s++;
-	}
-	return(1);
-}
-
-#endif /* CAUTIOUS */
-
-void node_error(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _node_error(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	/* infile may be null if we are reading stdin??? */
 	if( VN_INFILE(enp) == NULL ){
 		return;
 	}
 
-//#ifdef CAUTIOUS
-//	if( not_printable(SR_STRING(VN_INFILE(enp))) ){
-//		dump_node(QSP_ARG  enp);
-//		NERROR1("node infile not printable!?");
-//	}
-//#endif /* CAUTIOUS */
 	assert( string_is_printable(SR_STRING(VN_INFILE(enp))) );
 
 	sprintf(DEFAULT_ERROR_STRING,"File %s, line %d:",SR_STRING(VN_INFILE(enp)),VN_LINENO(enp));

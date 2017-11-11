@@ -1,7 +1,9 @@
 
 #include "quip_config.h"
 #include "query_prot.h"
-#include "data_obj.h"
+#include "query_stack.h"
+#include "query_private.h"
+//#include "data_obj.h"
 #include "veclib_api.h"
 #include "vt_api.h"
 #include "camera_api.h"
@@ -28,16 +30,16 @@ static Menu *first_menu=NULL;
 void push_first_menu(Query_Stack *qsp)
 {
 	assert( first_menu != NULL );
-	PUSH_MENU_PTR(first_menu);
+	push_menu(first_menu);
 }
 
 void start_quip_with_menu(int argc, char **argv, Menu *initial_menu_p )
 {
 	Query_Stack *qsp;
 
-    assert( initial_menu_p != NULL );
-    
-    set_progname(argv[0]);
+	assert( initial_menu_p != NULL );
+
+	set_progname(argv[0]);
 	first_menu = initial_menu_p;
 
 	//debug |= CTX_DEBUG_MASK;
@@ -49,8 +51,7 @@ void start_quip_with_menu(int argc, char **argv, Menu *initial_menu_p )
 	init_variables(SINGLE_QSP_ARG);	// specify dynamic variables
 	declare_functions(SINGLE_QSP_ARG);
 
-	//PUSH_MENU(quip);
-	PUSH_MENU_PTR(initial_menu_p);
+	push_menu(initial_menu_p);
 
 	set_args(QSP_ARG  argc,argv);
 	rcfile(qsp,argv[0]);
@@ -58,7 +59,7 @@ void start_quip_with_menu(int argc, char **argv, Menu *initial_menu_p )
 	// If we have commands to create a widget in the startup file,
 	// we get an error, so don't call exec_quip until after the appDelegate
 	// has started...
-	
+
 } // end start_quip_with_menu
 
 // start_quip executes on the main thread...
@@ -69,10 +70,8 @@ static void exec_qs_cmds( void *_qsp )
 {
 	Query_Stack *qsp=(Query_Stack *)_qsp;
 
-	while( lookahead_til(QSP_ARG  0) ){
-		while( QS_HAS_SOMETHING(qsp) && ! IS_HALTING(qsp) ){
-			QS_DO_CMD(qsp);
-		}
+	while( QLEVEL >= 0 && ! IS_HALTING(qsp) ){
+		qs_do_cmd(qsp);
 	}
 }
 
@@ -90,7 +89,6 @@ void exec_this_level(SINGLE_QSP_ARG_DECL)
 void exec_quip(SINGLE_QSP_ARG_DECL)
 {
 #ifdef USE_QS_QUEUE
-
 	// This is iOS only!
 
 	//dispatch_async_f(QS_QUEUE(THIS_QSP),qsp,exec_qs_cmds);

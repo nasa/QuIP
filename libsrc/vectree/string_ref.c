@@ -20,3 +20,13 @@ void rls_stringref( String_Ref *srp )
 	givbuf(srp);
 }
 
+inline void increment_stringref_count( String_Ref *srp )
+{
+	srp->sr_count ++;
+}
+
+inline void decrement_stringref_count( String_Ref *srp )
+{
+	srp->sr_count --;
+}
+

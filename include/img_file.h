@@ -4,9 +4,6 @@
 
 #include "quip_config.h"
 
-#include "query.h"
-
-//#include "rawvol.h"
 #include "data_obj.h"
 
 #include "nports_api.h"
@@ -60,9 +57,9 @@ typedef struct filetype {
 				index_t,index_t,index_t);
 	int		(*wt_func)(QSP_ARG_DECL  Data_Obj *,struct image_file *);
 	void		(*close_func)(QSP_ARG_DECL  struct image_file *);
-	int		(*unconv_func)(void *,Data_Obj *);
+	int		(*unconv_func)(QSP_ARG_DECL  void *,Data_Obj *);
 					/* from dp to whatever */
-	int		(*conv_func)(Data_Obj *, void *);
+	int		(*conv_func)(QSP_ARG_DECL  Data_Obj *, void *);
 					/* from whatever to dp */
 	void		(*info_func)(QSP_ARG_DECL  struct image_file *);
 	int		(*seek_func)(QSP_ARG_DECL  struct image_file *,dimension_t);	/* might need to be 64 bit... */
@@ -96,13 +93,19 @@ typedef struct filetype {
 #define SET_FT_INFO_FUNC(ftp,f)		(ftp)->info_func = f
 
 
-#define NO_FILETYPE	((Filetype *)NULL)
-
 ITEM_INIT_PROT(Filetype,file_type)
 ITEM_NEW_PROT(Filetype,file_type)
 ITEM_CHECK_PROT(Filetype,file_type)
 ITEM_PICK_PROT(Filetype,file_type)
 ITEM_ENUM_PROT(Filetype,file_type)
+ITEM_LIST_PROT(Filetype,file_type)	// added for debugging
+
+#define init_file_types()	_init_file_types(SINGLE_QSP_ARG)
+#define new_file_type(s)	_new_file_type(QSP_ARG  s)
+#define file_type_of(s)		_file_type_of(QSP_ARG  s)
+#define pick_file_type(s)	_pick_file_type(QSP_ARG  s)
+#define file_type_list()	_file_type_list(SINGLE_QSP_ARG)
+#define list_file_types(fp)	_list_file_types(QSP_ARG  fp)
 
 typedef struct image_file {
 	Item		if_item;
@@ -140,14 +143,18 @@ typedef struct image_file {
 #define if_tiff	if_file_u.u_tiff
 #endif /* HAVE_TIFF */
 
-#define NO_IMAGE_FILE		((Image_File*) NULL )
-
+#ifdef FOOBAR
+// Moved to fio_api.h
 ITEM_INIT_PROT(Image_File,img_file)
 ITEM_NEW_PROT(Image_File,img_file)
 ITEM_CHECK_PROT(Image_File,img_file)
 ITEM_PICK_PROT(Image_File,img_file)
 
-#define PICK_IMG_FILE(pmpt)	pick_img_file(QSP_ARG  pmpt)
+#define init_img_files(s)	_init_img_files(SINGLE_QSP_ARG)
+#define new_img_file(s)		_new_img_file(QSP_ARG  s)
+#define img_file_of(s)		_img_file_of(QSP_ARG  s)
+#define pick_img_file(pmpt)	_pick_img_file(QSP_ARG  pmpt)
+#endif // FOOBAR
 
 /* flag values for ifp's & filetype's */
 

@@ -3,36 +3,53 @@
 #include <stdio.h>
 
 #include "stc.h"
-#include "query.h"
 
-void rdxvals(QSP_ARG_DECL  const char *fnam)
+void rdxvals(QSP_ARG_DECL  const char *filename)
 {
         FILE *fp;
 	float ftmp;
 	char str[32];
+	int n;
 
-        fp=TRY_OPEN(fnam,"r");
+	// It would make more sense to determine the number from
+	// the file!
+	if( insure_xval_array() < 0 ) return;
+
+        fp=try_open(filename,"r");
 	if(fp){
-		sprintf(ERROR_STRING,"reading x values from file %s",fnam);
+		sprintf(ERROR_STRING,"reading x values from file %s",filename);
 		advise(ERROR_STRING);
 	} else {
-		WARN("Must specify a valid file for xvalues before running!!!");
-		_nvals = -1 ;
+		warn("Must specify a valid file for xvalues before running!!!");
 		return;
 	}
 
-	_nvals=0;
-	while( _nvals < MAX_X_VALUES && fscanf(fp,"%f",&xval_array[_nvals]) == 1 )
-		_nvals++;
-	if( _nvals == MAX_X_VALUES ){
-		if( fscanf(fp,"%f",&ftmp) == 1 )
-			WARN("warning: extra x values");
+	n=0;
+	while( n < _nvals && fscanf(fp,"%f",&xval_array[n]) == 1 )
+		n++;
+
+	if( n == _nvals ){
+		if( fscanf(fp,"%f",&ftmp) == 1 ){
+			sprintf(ERROR_STRING,
+				"File %s contains more than %d values!?",
+				filename,_nvals);
+			warn(ERROR_STRING);
+		}
 	}
-	sprintf(str,"%d",_nvals);
-	// BUG should be a reserved var!
-	ASSIGN_VAR("nxvals",str);
 
 	fclose(fp);
+
+	if( n < _nvals ){
+		sprintf(ERROR_STRING,"File %s contains %d values, expected %d!?",
+			filename,n,_nvals);
+		warn(ERROR_STRING);
+
+		set_n_xvals(n);
+		rdxvals(QSP_ARG  filename);
+	} else {
+		sprintf(str,"%d",n);
+		assign_var("nxvals",str);
+	}
 }
 
 

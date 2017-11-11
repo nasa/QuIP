@@ -38,7 +38,7 @@ void inhibit_sigs()
  * void sigpush(int sig, void (*action)(int asig))
  */
 
-void sigpush(int sig, void (*action)(int asig))
+void _sigpush(QSP_ARG_DECL  int sig, void (*action)(int asig))
 {
 	int i;
 
@@ -52,7 +52,7 @@ void sigpush(int sig, void (*action)(int asig))
 	sdepth[sig]++;
 	while( sdepth[sig] >= MAXDEPTH ){
 		sdepth[sig]--;
-		NWARN("sigpush:  too many pushes");
+		warn("sigpush:  too many pushes");
 	}
 	handler_stack[sig][sdepth[sig]] = action;
 	signal(sig,action);
@@ -69,7 +69,7 @@ void sigreinstate(int sig)		/* give another signal() call to top of stack */
  * Pop current handler from the signal handler stack
  */
 
-void sigpop(int sig)
+void _sigpop(QSP_ARG_DECL  int sig)
 		/* which signal */
 {
 	int i;
@@ -82,7 +82,7 @@ void sigpop(int sig)
 	}
 
 	if( sdepth[sig] < 0 ){
-		NWARN("sigpop:  nothing to pop");
+		warn("sigpop:  nothing to pop");
 		return;
 	}
 	sdepth[sig]--;

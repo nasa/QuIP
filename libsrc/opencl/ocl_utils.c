@@ -5,11 +5,12 @@
 #include <string.h>
 #include "quip_prot.h"
 #include "my_ocl.h"
-#include "veclib/ocl_port.h"
+//#include "veclib/ocl_port.h"
 #include "veclib_api.h"
 #include "veclib/vec_func.h"
 #include "ocl_platform.h"
 #include "fileck.h"
+#include "platform.h"
 
 //#define MEM_SIZE (16)//suppose we have a vector with 128 elements
 #define MAX_SOURCE_SIZE (0x100000)
@@ -21,6 +22,7 @@
 //static cl_kernel	kernel = NULL;		//kernel function
 //	cl_int i;
 
+#ifdef FOOBAR
 
 //#define DEFAULT_OCL_DEV_VAR	"DEFAULT_OCL_DEVICE"
 #define OCL_STATUS_CHECK(stat,whence)				\
@@ -29,18 +31,9 @@
 		report_ocl_error(QSP_ARG  stat, #whence );	\
 		return;						\
 	}
+#endif // FOOBAR
 
 #define ERROR_CASE(code,string)	case code: msg = string; break;
-
-#ifdef CAUTIOUS
-#define INSURE_CURR_ODP(whence)					\
-	if( curr_pdp == NULL ){					\
-		sprintf(ERROR_STRING,"CAUTIOUS:  %s:  curr_pdp is null!?",#whence);	\
-		WARN(ERROR_STRING);				\
-	}
-#else // ! CAUTIOUS
-#define INSURE_CURR_ODP(whence)
-#endif // ! CAUTIOUS
 
 void report_ocl_error(QSP_ARG_DECL  cl_int status, const char *whence)
 {
@@ -378,6 +371,7 @@ static void display_dev_param(QSP_ARG_DECL  OCL_Dev_Param_Spec *psp,
 	"CAUTIOUS:  display_dev_param:  unexpected parameter type (%d)!?",
 				PS_TYPE(psp));
 			WARN(ERROR_STRING);
+			assert(0);
 			break;
 	}
 }
@@ -412,6 +406,7 @@ void shutdown_opencl_platform(void)
 	// Need to iterate over all devices...
 }
 
+#ifdef NOT_USED
 /* This utility routine could useful beyond opencl... */
 
 static const char *load_file(QSP_ARG_DECL  const char *pathname, size_t *len)
@@ -451,6 +446,7 @@ done:
 	*len=siz;
 	return buf;
 }
+#endif // NOT_USED
 
 /* This utility routine could useful beyond opencl... */
 
@@ -459,15 +455,14 @@ done:
 cl_program ocl_create_program( const char *buf, Platform_Device *pdp )
 {
 	cl_program program;	//cl_program is a program executable
-	size_t len;
+	//size_t len;		// NULL len array indicates null-terminated strings
 	cl_int status;
 
-//fprintf(stderr,"ocl_create_program:  program source is:\n%s\n",buf);
-//fflush(stderr);
-	len = strlen(buf);		// count trailing null?
+	//len = strlen(buf);		// don't count trailing null
+
 	// BUG?  should we check that device is OCL device?
 	program = clCreateProgramWithSource(OCLDEV_CTX(pdp), 1,
-		(const char **)&buf, (const size_t *)&len, &status);
+		(const char **)&buf, /*(const size_t *)&len*/ NULL, &status);
 
 	if( status != CL_SUCCESS ){
 		report_ocl_error(DEFAULT_QSP_ARG  status,
@@ -477,10 +472,12 @@ cl_program ocl_create_program( const char *buf, Platform_Device *pdp )
 	return program;
 }
 
+#define BUF_SIZE	256
+
 static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pdp)
 {
 	cl_int ret;
-	char buf[LLEN];
+	char buf[BUF_SIZE];
 	char *bufp=buf;
 	size_t bytes_returned;
 	cl_build_status bs;
@@ -508,15 +505,15 @@ static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pd
 		ret = clGetProgramBuildInfo( prog,
 				OCLDEV_DEV_ID(pdp),
 				CL_PROGRAM_BUILD_LOG,
-				LLEN,
+				BUF_SIZE,
 				bufp,
 				&bytes_returned
 				);
 		if( ret == CL_INVALID_VALUE ){
 			// probably insufficient buffer size?
-			if( bytes_returned > LLEN ){
+			if( bytes_returned > BUF_SIZE ){
 				int n;
-				bufp = getbuf(n=bytes_returned);
+				bufp = getbuf(n=(int)bytes_returned);	// BUG?  memory leak?
 				ret = clGetProgramBuildInfo( prog,
 						OCLDEV_DEV_ID(pdp),
 						CL_PROGRAM_BUILD_LOG,
@@ -531,8 +528,8 @@ static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pd
 			report_ocl_error(QSP_ARG  ret,"clGetProgramBuildInfo");
 		}
 
-fprintf(stderr,"%zu log bytes returned, strlen(bufp) = %ld...\n",bytes_returned,
-strlen(bufp));
+//fprintf(stderr,"%zu log bytes returned, strlen(bufp) = %ld...\n",bytes_returned,
+//strlen(bufp));
 		//prt_msg(bufp);
 		fputs(bufp,stderr);
 
@@ -554,28 +551,8 @@ strlen(bufp));
 	}
 }
 
-// this routine seems to only be used for the random number generator???
 
-cl_kernel ocl_make_kernel(const char *ksrc,const char *kernel_name,Platform_Device *pdp)
-{
-	cl_program program;
-	cl_kernel kernel;
-
-	program = ocl_create_program(ksrc,pdp);
-	if( program == NULL )
-		NERROR1("program creation failure!?");
-
-	kernel = ocl_create_kernel(program, kernel_name, pdp);
-	if( kernel == NULL ){
-		NADVISE("Source code of failed program:");
-		NADVISE(ksrc);
-		NERROR1("kernel creation failure!?");
-	}
-
-	return kernel;
-}
-
-cl_kernel ocl_create_kernel(/*QSP_ARG_DECL*/  cl_program program,
+cl_kernel ocl_create_kernel(cl_program program,
 			const char *name, Platform_Device *pdp )
 {
 	cl_kernel kernel;
@@ -583,8 +560,6 @@ cl_kernel ocl_create_kernel(/*QSP_ARG_DECL*/  cl_program program,
 
 	// build (compiles and links) a program executable
 	// from the program source or binary
-fprintf(stderr,"ocl_create_kernel %s BEGIN\n",name);
-fflush(stderr);
 	status = clBuildProgram(program,	// compiled program
 				1,		// num_devices
 				&OCLDEV_DEV_ID(pdp),	// device list
@@ -606,13 +581,18 @@ fflush(stderr);
 	kernel = clCreateKernel(program, name, &status);
 	if( status != CL_SUCCESS ){
 		report_ocl_error(DEFAULT_QSP_ARG  status,"clCreateKernel");
+		if( status == CL_INVALID_KERNEL_NAME ){
+			sprintf(DEFAULT_ERROR_STRING,"Name:  \"%s\"",name);
+			NADVISE(DEFAULT_ERROR_STRING);
+		}
 		return NULL;
 	}
 
 	return kernel;
 }
 
-cl_kernel create_kernel(QSP_ARG_DECL  const char * name, const char *pathname)
+#ifdef NOT_USED
+cl_kernel create_kernel_from_file(QSP_ARG_DECL  const char * name, const char *pathname)
 {
 	const char *buf;
 	size_t len;
@@ -640,13 +620,14 @@ cl_kernel create_kernel(QSP_ARG_DECL  const char * name, const char *pathname)
 
 	return kern;
 }
+#endif // NOT_USED
 
 #ifdef NOT_USED
 static void PF_FUNC_NAME(sync)(SINGLE_QSP_ARG_DECL)
 {
 	cl_int status;
 
-	INSURE_CURR_ODP(ocl_sync);
+	assert( curr_pdp != NULL );
 
 	if( OCLDEV_QUEUE(curr_pdp) == NULL ){
 		WARN("ocl_sync:  no command queue!?");
@@ -682,11 +663,13 @@ void delete_kernel(QSP_ARG_DECL  Kernel *kp)
 }
 
 
+#ifdef FOOBAR
 int get_max_threads_per_block(Data_Obj *dp)
 {
 	NWARN("get_max_threads_per_block:  unimplemented, returning 8!?");
 	return 8;
 }
+#endif // FOOBAR
 
 #endif // HAVE_OPENCL
 

@@ -1,0 +1,27 @@
+
+platforms
+  select Apple Iris_Pro
+  quit
+
+Image x 4 4 1 float
+Info x
+VSet x 1
+Display x
+
+platforms select Apple $DEFAULT_GPU quit
+Image y 4 4 1 float
+Info y
+VSet y 1
+Display y
+
+Vector d 4 1 double
+VSet d 1
+Display d
+
+Vector c 4 1 dblcpx
+VSet c{0} 1
+VSet c{1} 0
+Display c
+
+Pause
+

@@ -1,6 +1,8 @@
 #ifndef _NODE_H_
 #define _NODE_H_
 
+#include "quip_fwd.h"
+
 struct node {
 	void *		n_data;
 	struct node *	n_next;
@@ -8,11 +10,7 @@ struct node {
 	int		n_pri;
 } ;
 
-
-#define NO_NODE 	((Node *)NULL)
-
 extern void rls_node(Node *np);
-extern Node *mk_node( void * ip );
 extern void init_node(Node *np,void* dp);
 //extern Node *nodeOf( struct list *lp, void * ip );
 

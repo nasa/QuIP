@@ -16,6 +16,9 @@
 #include "cmaps.h"
 #include "linear.h"
 #include "xsupp.h"		/* x_dump_lut() */
+#ifdef BUILD_FOR_MACOS
+#include <AppKit/NSColor.h>
+#endif // BUILD_FOR_MACOS
 
 #define MAX_CHAR		80
 
@@ -33,7 +36,7 @@ Dpyable *current_dpyp;
 #include "gen_win.h"
 #endif /* BUILD_FOR_IOS */
 
-Data_Obj *new_colormap(QSP_ARG_DECL  const char *name)
+Data_Obj *_new_colormap(QSP_ARG_DECL  const char *name)
 {
 	Data_Obj *dp;
 
@@ -50,19 +53,19 @@ Data_Obj *new_colormap(QSP_ARG_DECL  const char *name)
 	return(dp);
 }
 
-void push_cm_state(void)
+void _push_cm_state(SINGLE_QSP_ARG_DECL)
 {
 	while( depth >= MAXIMMEDDEPTH ){
 		depth--;
-		NWARN("push_cm_state:  too many pushes");
+		warn("push_cm_state:  too many pushes");
 	}
 	state_stack[depth++] = cm_state;
 }
 
-void pop_cm_state(void)
+void _pop_cm_state(SINGLE_QSP_ARG_DECL)
 {
 	if( depth <= 0 ){
-		NWARN("pop_cm_state:  nothing to pop");
+		warn("pop_cm_state:  nothing to pop");
 		return;
 	}
 	cm_state = state_stack[--depth];
@@ -98,32 +101,32 @@ void _setcolor(QSP_ARG_DECL  int c,int r,int g,int b)
 {
 	/*insure_linearization(); */
 
-	if( color_index_out_of_range(QSP_ARG  c) )
+	if( color_index_out_of_range(c) )
 		return;
 
 	/* we've checked the index; now check the phosphor levels */
 
 	if( r < 0 ) r=0;
 	else if( r>phosmax ){
-		sprintf(DEFAULT_ERROR_STRING,"Clipping red value %d to maximum %d",
+		sprintf(ERROR_STRING,"Clipping red value %d to maximum %d",
 			r,phosmax);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		r=phosmax;
 	}
 
 	if( g < 0 ) g=0;
 	else if( g>phosmax ){
-		sprintf(DEFAULT_ERROR_STRING,"Clipping green value %d to maximum %d",
+		sprintf(ERROR_STRING,"Clipping green value %d to maximum %d",
 			g,phosmax);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		g=phosmax;
 	}
 
 	if( b < 0 ) b=0;
 	else if( b>phosmax ){
-		sprintf(DEFAULT_ERROR_STRING,"Clipping blue value %d to maximum %d",
+		sprintf(ERROR_STRING,"Clipping blue value %d to maximum %d",
 			b,phosmax);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		b=phosmax;
 	}
 
@@ -174,7 +177,7 @@ void _setcolor(QSP_ARG_DECL  int c,int r,int g,int b)
 
 }
 
-void const_cmap(QSP_ARG_DECL  int base,int n,int r,int g,int b)
+void _const_cmap(QSP_ARG_DECL  int base,int n,int r,int g,int b)
 {
 	push_cm_state();
 	CLR_CM_STATE(IMMEDIATE);
@@ -185,7 +188,7 @@ void const_cmap(QSP_ARG_DECL  int base,int n,int r,int g,int b)
 	update_if();
 }
 
-void make_grayscale(QSP_ARG_DECL  int base,int n_colors)
+void _make_grayscale(QSP_ARG_DECL  int base,int n_colors)
 {
 	int i;
 	int inc,v;
@@ -205,7 +208,7 @@ void make_grayscale(QSP_ARG_DECL  int base,int n_colors)
 	update_if();
 }
 
-void make_rgb(QSP_ARG_DECL  int base,int nr,int ng,int nb)
+void _make_rgb(QSP_ARG_DECL  int base,int nr,int ng,int nb)
 {
 	int ir,ig,ib;
 	int rinc,ginc,binc;
@@ -223,11 +226,11 @@ void make_rgb(QSP_ARG_DECL  int base,int nr,int ng,int nb)
 	ncolors = nr*ng*nb;
 	saved_ncolors = ncolors;
 	if( base < 0 ){
-		NWARN("wacky base");
+		warn("wacky base");
 		return;
 	}
 	if( (base + ncolors) >= N_COLORS){
-		NWARN("too many RGB levels requested");
+		warn("too many RGB levels requested");
 		ncolors = N_COLORS - base - 1;
 	}
 
@@ -245,14 +248,14 @@ void make_rgb(QSP_ARG_DECL  int base,int nr,int ng,int nb)
 
 	if( (base + saved_ncolors) >= N_COLORS){
 		sprintf(str,"too many colors specified, used %d", ncolors);
-		NWARN(str);
+		warn(str);
 		return;
 	}
 }
 
-void poke_lut(QSP_ARG_DECL  int c,int r,int g,int b)
+void _poke_lut(QSP_ARG_DECL  int c,int r,int g,int b)
 {
-	if( color_index_out_of_range(QSP_ARG  c) ) return;
+	if( color_index_out_of_range(c) ) return;
 
 #ifdef HAVE_X11
 	CM_DATA( DPA_CMAP_OBJ(current_dpyp),0,c)= (unsigned char)r;
@@ -263,31 +266,31 @@ void poke_lut(QSP_ARG_DECL  int c,int r,int g,int b)
 	update_if();
 }
 
-void setmap(QSP_ARG_DECL  Data_Obj *dp)
+void _setmap(QSP_ARG_DECL  Data_Obj *dp)
 {
 	short nc,ci,pxl_inc;
 	float *fptr;
 	short i,r,g,b;
 	char str[256];
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if( OBJ_PREC(dp) != PREC_SP ){
-		NWARN("setmap(): precision must be float");
+		warn("setmap(): precision must be float");
 		return;
 	}
 	if( ! IS_ROWVEC(dp) ){
-		NWARN("setmap(): should be a row vector");
+		warn("setmap(): should be a row vector");
 		return;
 	}
 	if( (nc=(short)OBJ_COLS(dp)) > N_COLORS ){
 		sprintf(str,"setmap(): too many vector elements, using %d",
 			N_COLORS);
-		NWARN(str);
+		warn(str);
 		nc=N_COLORS;
 	}
 	if( OBJ_COMPS(dp) != 3 ){
-		NWARN("setmap(): vector should be tridimensional");
+		warn("setmap(): vector should be tridimensional");
 		return;
 	}
 
@@ -309,32 +312,32 @@ void setmap(QSP_ARG_DECL  Data_Obj *dp)
 	update_if();
 }
 
-void getmap(Data_Obj *dp)
+void _getmap(QSP_ARG_DECL  Data_Obj *dp)
 {
 	short nc,ci,pxl_inc;
 	float *fptr;
 	short i;
 	char str[256];
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if( OBJ_PREC(dp) != PREC_SP ){
-		NWARN("getmap(): precision must be float");
+		warn("getmap(): precision must be float");
 		return;
 	}
 	if( ! IS_ROWVEC(dp) ){
-		NWARN("getmap(): should be a row vector");
+		warn("getmap(): should be a row vector");
 		return;
 	}
 
 	if( (nc=(short)OBJ_COLS(dp)) > N_COLORS ){
 		sprintf(str,"getmap(): too many vector elements, using %d",
 			N_COLORS);
-		NWARN(str);
+		warn(str);
 		nc=N_COLORS;
 	}
 	if( OBJ_COMPS(dp) != 3 ){
-		NWARN("getmap(): vector should be tridimensional");
+		warn("getmap(): vector should be tridimensional");
 		return;
 	}
 
@@ -365,12 +368,12 @@ void print_cm(QSP_ARG_DECL  u_int from, u_int to)
 #endif /* NOT_USED */
 
 #ifdef HAVE_X11
-void select_cmap_display(Dpyable *dpyp)
+void _select_cmap_display(QSP_ARG_DECL  Dpyable *dpyp)
 {
 #ifdef CAUTIOUS
-	if( dpyp == NO_DISPLAY ){
-		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  select_cmap_display:  null display!?");
-		NWARN(DEFAULT_ERROR_STRING);
+	if( dpyp == NULL ){
+		sprintf(ERROR_STRING,"CAUTIOUS:  select_cmap_display:  null display!?");
+		warn(ERROR_STRING);
 		return;
 	}
 #endif /* CAUTIOUS */
@@ -378,7 +381,7 @@ void select_cmap_display(Dpyable *dpyp)
 	current_dpyp = dpyp;		/* default_cmap() */
 }
 
-void default_cmap(QSP_ARG_DECL  Dpyable *dpyp)
+void _default_cmap(QSP_ARG_DECL  Dpyable *dpyp)
 {
 	current_dpyp = dpyp;		/* default_cmap() */
 
@@ -386,19 +389,19 @@ void default_cmap(QSP_ARG_DECL  Dpyable *dpyp)
 		advise("Initializing default color map");
 
 	/* grayscale */
-	make_grayscale(QSP_ARG  GRAYSCALE_BASE,NC_GRAYSCALE);
+	make_grayscale(GRAYSCALE_BASE,NC_GRAYSCALE);
 
 	/* color */
-	make_rgb(QSP_ARG  COLOR_BASE,N_RED_LEVELS,N_GREEN_LEVELS,N_BLUE_LEVELS);
+	make_rgb(COLOR_BASE,N_RED_LEVELS,N_GREEN_LEVELS,N_BLUE_LEVELS);
 }
 #endif /* HAVE_X11 */
 
-int color_index_out_of_range(QSP_ARG_DECL  unsigned int index)
+int _color_index_out_of_range(QSP_ARG_DECL  unsigned int index)
 {
 #ifdef HAVE_X11
 	// This condition can happen if the window name has a space!?
 	// BUG we should replace with underscore...
-	if(  DPA_CMAP_OBJ(current_dpyp) == NO_OBJ )
+	if(  DPA_CMAP_OBJ(current_dpyp) == NULL )
 		return 1;
 
 	if( /* index < 0 || */	// index is unsigned...
@@ -420,12 +423,8 @@ void set_colormap(Data_Obj *dp)
 	/* BUG verify here that this object is a valid colormap */
 
 #ifdef HAVE_X11
-#ifdef CAUTIOUS
-	if( current_dpyp == NO_DISPLAY )
-		NERROR1("CAUTIOUS:  set_colormap:  no current window");
-	else
-#endif /* CAUTIOUS */
-		 DPA_CMAP_OBJ(current_dpyp)=dp;
+	assert(current_dpyp!=NULL);
+	DPA_CMAP_OBJ(current_dpyp)=dp;
 #endif /* HAVE_X11 */
 
 }

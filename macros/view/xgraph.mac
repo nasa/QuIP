@@ -83,8 +83,8 @@ Set argname argv$j_arg
 Assign plot_xmax $$argname
 Add_Var i_arg 3
 Set argname argv$i_arg
-Assign x value('$$argname'[0])
-#If isdigit('$$argname'[0])
+Assign x value(string_obj('$$argname')[0])
+#If isdigit(string_obj('$$argname')[0])
 If isdigit($x)
   "Set x_tick_spacing $$argname Increment i_arg"
 Set x_scale_determined 1
@@ -104,7 +104,7 @@ Add_Var i_arg 3
 Set argname argv$i_arg
 advise "Y_Axis_Option:  3rd arg $argname = $$argname"
 # If the next arg is not a number, then it is probably a filename...
-If isdigit('$$argname'[0])
+If isdigit(string_obj('$$argname')[0])
   "Set y_tick_spacing $$argname Increment i_arg"
 Set y_scale_determined 1
 If $x_scale_determined&&$y_scale_determined "Set scale_determined 1"

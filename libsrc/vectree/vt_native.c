@@ -12,6 +12,7 @@
 #endif /* USE_NUMREC */
 #endif /* HAVE_NUMREC */
 #include "debug.h"		/* verbose */
+#include "platform.h"		/* dp_convert - should be declared elsewhere!? */
 
 #define EVAL_VT_NATIVE_WORK(enp)		eval_vt_native_work(QSP_ARG enp)
 
@@ -33,45 +34,42 @@ Keyword vt_native_func_tbl[N_VT_NATIVE_FUNCS+1]={
 {	"foobar",	-1		}		/* must be last */
 };
 
-const char *eval_vt_native_string(Vec_Expr_Node *enp)
+const char *_eval_vt_native_string(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
-	NWARN("eval_vt_native_string:  not implemented for vt!?");
+	warn("eval_vt_native_string:  not implemented for vt!?");
 	return("");
 }
 
-float eval_vt_native_flt(Vec_Expr_Node *enp)
+float _eval_vt_native_flt(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
-	NWARN("eval_vt_native_flt:  not implemented for vt!?");
+	warn("eval_vt_native_flt:  not implemented for vt!?");
 	return(0.0);
 }
 
-void eval_vt_native_assignment(Data_Obj *dp, Vec_Expr_Node *enp )
+void _eval_vt_native_assignment(QSP_ARG_DECL  Data_Obj *dp, Vec_Expr_Node *enp )
 {
 	switch(VN_INTVAL(enp)){
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  eval_vt_native_assignment (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
-//			NWARN(DEFAULT_ERROR_STRING);
 			assert( AERROR("eval_vt_native_assignment:  unhandled keyword!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
 #define CHECK_ARGLIST(enp,name)							\
 										\
-	if( enp == NO_VEXPR_NODE ){						\
-		NWARN(ERROR_STRING);						\
+	if( enp == NULL ){							\
 		sprintf(ERROR_STRING,"missing arg list for native function %s",name);	\
+		warn(ERROR_STRING);						\
 		return;								\
 	}									\
 	if( VN_CODE(enp) != T_ARGLIST ){					\
 		sprintf(ERROR_STRING,"Oops, missing arglist for native function %s!?",name);	\
-		DUMP_TREE(enp);							\
+		warn(ERROR_STRING);						\
+		dump_tree(enp);							\
 		return;								\
 	}
 
-void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
+void _eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 {
 	Vec_Expr_Node *arg_enp;
 	int vf_code=(-1);
@@ -86,20 +84,20 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			Data_Obj *dst_dp,*src_dp;
 
 			if( arg_count(VN_CHILD(enp,0)) != 2 ){
-				NODE_ERROR(enp);
-				NWARN("cumsum function requires 2 args");
+				node_error(enp);
+				warn("cumsum function requires 2 args");
 				return;
 			}
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),0);
-			dst_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),0);
+			dst_dp = eval_obj_ref(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			src_dp = EVAL_OBJ_EXP(arg_enp,NO_OBJ);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
+			src_dp = eval_obj_exp(arg_enp,NULL);
 
-			if( dst_dp == NO_OBJ || src_dp == NO_OBJ ){
-				NODE_ERROR(enp);
-				NWARN("problem with cumsum args");
+			if( dst_dp == NULL || src_dp == NULL ){
+				node_error(enp);
+				warn("problem with cumsum args");
 				break;
 			}
 
@@ -111,26 +109,26 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			Data_Obj *dst_dp,*coord_dp,*src_dp;
 
 			if( arg_count(VN_CHILD(enp,0)) != 3 ){
-				NODE_ERROR(enp);
-				NWARN("render function requires 3 args");
+				node_error(enp);
+				warn("render function requires 3 args");
 				return;
 			}
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),0);
-			dst_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),0);
+			dst_dp = eval_obj_ref(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			coord_dp = EVAL_OBJ_EXP(arg_enp,NO_OBJ);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
+			coord_dp = eval_obj_exp(arg_enp,NULL);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),2);
-			src_dp = EVAL_OBJ_EXP(arg_enp,NO_OBJ);
+			arg_enp = nth_arg(VN_CHILD(enp,0),2);
+			src_dp = eval_obj_exp(arg_enp,NULL);
 
-			if( dst_dp == NO_OBJ || coord_dp == NO_OBJ || src_dp == NO_OBJ ){
-				NODE_ERROR(enp);
-				NWARN("problem with render args");
+			if( dst_dp == NULL || coord_dp == NULL || src_dp == NULL ){
+				node_error(enp);
+				warn("problem with render args");
 				break;
 			}
-			if( FLOATING_PREC(OBJ_PREC(coord_dp)) )
+			if( IS_FLOATING_PREC_CODE(OBJ_PREC(coord_dp)) )
 				render_samples2(QSP_ARG  dst_dp,coord_dp,src_dp);
 			else
 				render_samples(QSP_ARG  dst_dp,coord_dp,src_dp);
@@ -142,16 +140,16 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			Data_Obj *dst_dp, *src_dp;
 
 			if( arg_count(VN_CHILD(enp,0)) != 2 ){
-				NODE_ERROR(enp);
-				NWARN("invert function requires 2 args");
+				node_error(enp);
+				warn("invert function requires 2 args");
 				return;
 			}
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),0);
-			dst_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),0);
+			dst_dp = eval_obj_ref(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			src_dp = EVAL_OBJ_EXP(arg_enp,NO_OBJ);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
+			src_dp = eval_obj_exp(arg_enp,NULL);
 
 			/* BUG I use convert() here because I am lazy */
 			/* should just use vmov... */
@@ -172,14 +170,16 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			char stat_str[32];
 			Variable *vp;
 
-			s=EVAL_STRING(VN_CHILD(enp,0));
+			s=eval_string(VN_CHILD(enp,0));
+#ifndef BUILD_FOR_IOS
 			status = system(s);
+#else // ! BUILD_FOR_IOS
+            warn("Sorry, system() is temporarily unavailable for iOS!?");
+                status=(-1);
+#endif // ! BUILD_FOR_IOS
+                
 			sprintf(stat_str,"%d",status);	// BUG?  protect against buffer overflow?
-			vp=assign_reserved_var(DEFAULT_QSP_ARG  "exit_status",stat_str);
-//#ifdef CAUTIOUS
-//			if( vp == NULL )
-//NWARN("CAUTIOUS:  eval_vt_native_work (system):  assign_reserved_var(\"exit_status\",...) failed!?");
-//#endif // CAUTIOUS
+			vp=_assign_reserved_var(DEFAULT_QSP_ARG  "exit_status",stat_str);
 			assert( vp != NULL );
 				
 			}
@@ -191,30 +191,30 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 
 advise("evaluating choldc...");
 			if( arg_count(VN_CHILD(enp,0)) != 2) {
-				NODE_ERROR(enp);
-				NWARN("choldc requires 2 args");
+				node_error(enp);
+				warn("choldc requires 2 args");
 				return;
 			}
 
 			/* first arg is the input matrix, second arg is for the diagonal elements... */
-			arg_enp  = NTH_ARG(VN_CHILD(enp,0),0);
-			inmat_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp  = nth_arg(VN_CHILD(enp,0),0);
+			inmat_dp = eval_obj_ref(arg_enp);
 		
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			diag_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
+			diag_dp = eval_obj_ref(arg_enp);
 
-			if ( inmat_dp == NO_OBJ || diag_dp == NO_OBJ )
+			if ( inmat_dp == NULL || diag_dp == NULL )
 				return;
 
 #ifdef HAVE_NUMREC
 #ifdef USE_NUMREC
 			dp_choldc(inmat_dp,diag_dp);
 #else // ! USE_NUMREC	
-			NWARN("Program not configured to use numerical recipes library, can't compute CHOLESKY");
+			warn("Program not configured to use numerical recipes library, can't compute CHOLESKY");
 #endif // ! USE_NUMREC	
 
 #else // ! HAVE_NUMREC
-			NWARN("No numerical recipes library, can't compute CHOLESKY");
+			warn("No numerical recipes library, can't compute CHOLESKY");
 #endif // ! HAVE_NUMREC
 
 			}
@@ -225,21 +225,21 @@ advise("evaluating choldc...");
 			Data_Obj *umat_dp, *vmat_dp, *ev_dp;
 			/* We need to get three args... */
 			if( arg_count(VN_CHILD(enp,0)) != 3 ){
-				NODE_ERROR(enp);
-				NWARN("svdcmp requires 3 args");
+				node_error(enp);
+				warn("svdcmp requires 3 args");
 				return;
 			}
 			/* v matrix on the second branch */
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),0);
-			umat_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),0);
+			umat_dp = eval_obj_ref(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			ev_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
+			ev_dp = eval_obj_ref(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),2);
-			vmat_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),2);
+			vmat_dp = eval_obj_ref(arg_enp);
 
-			if( ev_dp == NO_OBJ || umat_dp == NO_OBJ || vmat_dp == NO_OBJ )
+			if( ev_dp == NULL || umat_dp == NULL || vmat_dp == NULL )
 				return;
 				
 			/*
@@ -252,10 +252,10 @@ advise("evaluating choldc...");
 #ifdef USE_NUMREC
 			dp_svd(umat_dp,ev_dp,vmat_dp);
 #else // USE_NUMREC
-			NWARN("Program not configured to use numerical recipes library, can't compute SVD! - try GSL?");
+			warn("Program not configured to use numerical recipes library, can't compute SVD! - try GSL?");
 #endif // USE_NUMREC
 #else
-			NWARN("Numerical recipes library not present, can't compute SVD");
+			warn("Numerical recipes library not present, can't compute SVD");
 #endif
 			}
 			break;
@@ -267,30 +267,30 @@ advise("evaluating choldc...");
 
 			enp=VN_CHILD(enp,0);		/* the arg list */
 			CHECK_ARGLIST(enp,"svbksb")
-			b_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
+			b_dp = eval_obj_ref(VN_CHILD(enp,1));
 			enp=VN_CHILD(enp,0);
 			CHECK_ARGLIST(enp,"svbksb")
-			vmat_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
+			vmat_dp = eval_obj_ref(VN_CHILD(enp,1));
 			enp=VN_CHILD(enp,0);
 			CHECK_ARGLIST(enp,"svbksb")
-			ev_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
+			ev_dp = eval_obj_ref(VN_CHILD(enp,1));
 			enp=VN_CHILD(enp,0);
 			CHECK_ARGLIST(enp,"svbksb")
-			umat_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
-			x_dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
+			umat_dp = eval_obj_ref(VN_CHILD(enp,1));
+			x_dp = eval_obj_ref(VN_CHILD(enp,0));
 
-			if( x_dp == NO_OBJ || umat_dp == NO_OBJ || ev_dp == NO_OBJ ||
-				vmat_dp == NO_OBJ || b_dp == NO_OBJ )
+			if( x_dp == NULL || umat_dp == NULL || ev_dp == NULL ||
+				vmat_dp == NULL || b_dp == NULL )
 				return;
 
 #ifdef HAVE_NUMREC
 #ifdef USE_NUMREC
 			dp_svbksb(x_dp,umat_dp,ev_dp,vmat_dp,b_dp);
 #else // ! USE_NUMREC
-			NWARN("Program not configured to use numerical recipes library, can't compute SVBKSB");
+			warn("Program not configured to use numerical recipes library, can't compute SVBKSB");
 #endif // ! USE_NUMREC
 #else // ! HAVE_NUMREC
-			NWARN("No numerical recipes library, can't compute SVBKSB");
+			warn("No numerical recipes library, can't compute SVBKSB");
 #endif // ! HAVE_NUMREC
 			}
 			break;
@@ -299,18 +299,22 @@ advise("evaluating choldc...");
 			/* jacobi(eigenvectors,eigenvalues,input_matrix,nrot) */
 			/* do we use nrot?? */
 			Data_Obj *a_dp,*d_dp,*v_dp;
+#ifdef HAVE_NUMREC
+#ifdef USE_NUMREC
 			int nrot;
+#endif  // USE_NUMREC
+#endif // HAVE_NUMREC
 
 			enp=VN_CHILD(enp,0);		/* the arg list */
 			CHECK_ARGLIST(enp,"jacobi")
-			a_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
+			a_dp = eval_obj_ref(VN_CHILD(enp,1));
 
 			enp=VN_CHILD(enp,0);
 			CHECK_ARGLIST(enp,"jacobi")
-			d_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
-			v_dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
+			d_dp = eval_obj_ref(VN_CHILD(enp,1));
+			v_dp = eval_obj_ref(VN_CHILD(enp,0));
 
-			if( a_dp == NO_OBJ || d_dp == NO_OBJ || v_dp == NO_OBJ )
+			if( a_dp == NULL || d_dp == NULL || v_dp == NULL )
 				return;
 
 #ifdef HAVE_NUMREC
@@ -324,11 +328,11 @@ advise("evaluating choldc...");
 			//SET_OBJ_FLAG_BITS(v_dp, DT_ASSIGNED);
 			note_assignment(v_dp);
 #else // ! USE_NUMREC
-			NWARN("Program not configured to use numerical recipes library, can't compute JACOBI");
+			warn("Program not configured to use numerical recipes library, can't compute JACOBI");
 #endif // ! USE_NUMREC
 
 #else // ! HAVE_NUMREC
-			NWARN("No numerical recipes library, can't compute JACOBI");
+			warn("No numerical recipes library, can't compute JACOBI");
 #endif // ! HAVE_NUMREC
 			}
 			break;
@@ -338,21 +342,21 @@ advise("evaluating choldc...");
 			/* eigsrt(eigenvectors,eigenvalues) */
 			enp=VN_CHILD(enp,0);
 			CHECK_ARGLIST(enp,"eigsrt")
-			d_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
-			v_dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
+			d_dp = eval_obj_ref(VN_CHILD(enp,1));
+			v_dp = eval_obj_ref(VN_CHILD(enp,0));
 
-			if( d_dp == NO_OBJ || v_dp == NO_OBJ )
+			if( d_dp == NULL || v_dp == NULL )
 				return;
 
 #ifdef HAVE_NUMREC
 #ifdef USE_NUMREC
 			dp_eigsrt(QSP_ARG  v_dp,d_dp);
 #else // ! USE_NUMREC
-			NWARN("Program not configured to use numerical recipes library, can't compute EIGSRT");
+			warn("Program not configured to use numerical recipes library, can't compute EIGSRT");
 #endif // ! USE_NUMREC
 
 #else // ! HAVE_NUMREC
-			NWARN("No numerical recipes library, can't compute EIGSRT");
+			warn("No numerical recipes library, can't compute EIGSRT");
 #endif // ! HAVE_NUMREC
 			}
 			break;
@@ -365,22 +369,13 @@ advise("evaluating choldc...");
 			enp=VN_CHILD(enp,0);
 			CHECK_ARGLIST(enp,"xform_list")
 			/* left child is an arglist */
-//#ifdef CAUTIOUS
-//			if( VN_CODE(VN_CHILD(enp,0)) != T_ARGLIST ){
-//				NODE_ERROR(enp);
-//				sprintf(ERROR_STRING,
-//	"CAUTIOUS:  NATIVE_XFORM_LIST arglist left child should be T_ARGLIST");
-//				NWARN(ERROR_STRING);
-//				return;
-//			}
-//#endif /* CAUTIOUS */
 			assert( VN_CODE(VN_CHILD(enp,0)) == T_ARGLIST );
 				
-			dst_dp = EVAL_OBJ_REF(VN_CHILD(VN_CHILD(enp,0),0));
-			src_dp = EVAL_OBJ_REF(VN_CHILD(VN_CHILD(enp,0),1));
-			mat_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
+			dst_dp = eval_obj_ref(VN_CHILD(VN_CHILD(enp,0),0));
+			src_dp = eval_obj_ref(VN_CHILD(VN_CHILD(enp,0),1));
+			mat_dp = eval_obj_ref(VN_CHILD(enp,1));
 
-			if( dst_dp == NO_OBJ || src_dp == NO_OBJ || mat_dp == NO_OBJ )
+			if( dst_dp == NULL || src_dp == NULL || mat_dp == NULL )
 				return;
 
 			// OLD
@@ -395,27 +390,23 @@ advise("evaluating choldc...");
 #ifdef CAUTIOUS
 		default:
 			sprintf(ERROR_STRING,"CAUTIOUS:  eval_vt_native_work (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 //			assert( AERROR("eval_vt_native_work:  unhandled keyword!?") );
 			break;
 #endif /* CAUTIOUS */
 	}
 }
 
-void update_vt_native_shape(Vec_Expr_Node *enp)
+void _update_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	switch(VN_INTVAL(enp)){
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  update_native_shape (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
-//			NWARN(DEFAULT_ERROR_STRING);
 			assert( AERROR("update_native_shape:  unhandled keyword!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
-void prelim_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _prelim_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 
 	// All of these have no shape, so there's not
@@ -439,19 +430,12 @@ void prelim_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 //#endif // USE_NUMREC
 //#endif /* HAVE_NUMREC */
 			/* no shape, do nothing */
-//#ifdef CAUTIOUS
-//			verify_null_shape(QSP_ARG  enp);
-//#endif /* CAUTIOUS */
-			assert( VN_SHAPE(enp) == NO_SHAPE );
+			assert( VN_SHAPE(enp) == NULL );
 			break;
 
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,"CAUTIOUS:  prelim_vt_native_shape (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
-//			NWARN(ERROR_STRING);
 			assert( AERROR("prelim_vt_native_shape:  unhandled native func!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 

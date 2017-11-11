@@ -21,7 +21,7 @@
 
 void vl_close(QSP_ARG_DECL  Image_File *ifp)
 {
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 Image_File *		/**/
@@ -33,11 +33,11 @@ vl_open(QSP_ARG_DECL  const char *name,int rw)		/**/
 if( debug ) advise("opening image file");
 #endif /* QUIP_DEBUG */
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_VL) );
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_VL) );
 
 	/* img_file_creat creates dummy if_dp only if readable */
 
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 #ifdef QUIP_DEBUG
 if( debug ) advise("allocating hips header");
@@ -85,20 +85,20 @@ if( debug ) advise("allocating hips header");
 		WARN("Sorry, can't write VL files");
 dun:
 		vl_close(QSP_ARG  ifp);
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 	return(ifp);
 }
 
-int vl_unconv(void *hdr_pp,Data_Obj *dp)
+int _vl_unconv(QSP_ARG_DECL  void *hdr_pp,Data_Obj *dp)
 {
-	NWARN("vl_unconv not implemented");
+	warn("vl_unconv not implemented");
 	return(-1);
 }
 
-int vl_conv(Data_Obj *dp,void *hd_pp)
+int _vl_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 {
-	NWARN("vl_conv not implemented");
+	warn("vl_conv not implemented");
 	return(-1);
 }
 

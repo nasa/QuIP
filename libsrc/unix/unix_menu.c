@@ -41,6 +41,8 @@
 #include "sigpush.h"
 #include "unix_prot.h"
 #include "dobj_prot.h"
+#include "stack.h"	// BUG
+#include "query_stack.h"	// BUG
 
 #ifdef BUILD_FOR_IOS
 #include "ios_prot.h"
@@ -55,14 +57,14 @@ static const char *intr_str="";
 
 static void my_onintr(int asig /* what is this arg??? */)
 {
-	if( *intr_str == 0 ) nice_exit(DEFAULT_QSP_ARG  0);
+	if( *intr_str == 0 ) _nice_exit(DEFAULT_QSP_ARG  0);
 
 	// like top_menu - but pops everything
 	// Maybe we should then flush any pending input too?
 	while( STACK_DEPTH(QS_MENU_STACK(DEFAULT_QSP)) > MIN_CMD_DEPTH )
-		pop_menu(SGL_DEFAULT_QSP_ARG);
+		_pop_menu(SGL_DEFAULT_QSP_ARG);
 
-	push_text(DEFAULT_QSP_ARG  intr_str, "intr_handler" );
+	_push_text(DEFAULT_QSP_ARG  intr_str, "intr_handler" );
 
 	//curr_qsp->qs_flags &= ~QS_HAD_INTR;	/* clear flag */
 	CLEAR_QS_FLAG_BITS(DEFAULT_QSP,QS_HAD_INTR);
@@ -75,7 +77,7 @@ static COMMAND_FUNC( set_onintr )
 	s=NAMEOF("text to interpret upon interrupt");
 	if( *intr_str == 0 ) {
 		sigpush((int)SIGINT,my_onintr);
-		/*WARN("no previous interrupt action"); */
+		/*warn("no previous interrupt action"); */
 	} else {
 		if( verbose ){
 			sprintf(ERROR_STRING,
@@ -110,7 +112,7 @@ static COMMAND_FUNC( do_showmaps )
 #ifdef USE_GETBUF
 	showmaps();
 #else /* ! USE_GETBUF */
-	WARN("do_showmaps:  program not configured with USE_GETBUF, nothing to show.");
+	warn("do_showmaps:  program not configured with USE_GETBUF, nothing to show.");
 #endif /* ! USE_GETBUF */
 }
 
@@ -127,7 +129,7 @@ void set_discard_func(void (*func)(SINGLE_QSP_ARG_DECL) )
 static COMMAND_FUNC( do_flush_events )
 { 
 	if( discard_event_func_vec == NULL ){
-		WARN("do_flush_events:  no discard function specified!?");
+		warn("do_flush_events:  no discard function specified!?");
 	} else {
 		(*discard_event_func_vec)(SINGLE_QSP_ARG);
 	}
@@ -169,7 +171,7 @@ static COMMAND_FUNC( do_ckpt )
 		else if( siz == 4 ) prec=PREC_UDI;
 #ifdef CAUTIOUS
 		else {
-			ERROR1("CAUTIOUS:  do_ckpt:  unhandled size of time_t");
+			error1("CAUTIOUS:  do_ckpt:  unhandled size of time_t");
 			prec=PREC_ULI;	// silence compiler - doesn't know error1 never returns
 		}
 		
@@ -177,7 +179,7 @@ static COMMAND_FUNC( do_ckpt )
 		if( siz2 > siz ) {
 			sprintf(ERROR_STRING,
 "CAUTIOUS:  do_ckpt:  size of suseconds_t (%d) is greater than that of time_t (%d).",siz2,siz);
-			ERROR1(ERROR_STRING);
+			error1(ERROR_STRING);
 		}
 
 #endif /* CAUTIOUS */
@@ -187,11 +189,11 @@ static COMMAND_FUNC( do_ckpt )
 #endif /* HAVE_CUDA */
 
 		ckpt_tbl_dp = mk_vec(QSP_ARG  CKPT_TBL_NAME, MAX_CKPTS, 2, PREC_FOR_CODE(prec) );
-		if( ckpt_tbl_dp == NULL ) ERROR1("Error creating checkpoint table");
+		if( ckpt_tbl_dp == NULL ) error1("Error creating checkpoint table");
 
-		ckpt_msg_dp = mk_img(QSP_ARG  CKPT_MSG_NAME, MAX_CKPTS, MAX_MSG_LEN, 1,
+		ckpt_msg_dp = mk_img(CKPT_MSG_NAME, MAX_CKPTS, MAX_MSG_LEN, 1,
 			PREC_FOR_CODE(PREC_STR) );
-		if( ckpt_msg_dp == NULL ) ERROR1("Error creating checkpoint messages");
+		if( ckpt_msg_dp == NULL ) error1("Error creating checkpoint messages");
 
 #ifdef HAVE_CUDA
 		pop_data_area();
@@ -202,17 +204,17 @@ static COMMAND_FUNC( do_ckpt )
 	if( strlen(s) >= MAX_MSG_LEN ){
 		sprintf(ERROR_STRING,"Sorry, checkpoint tag has too many characters (%ld, max %d), truncating...",
 			(long)strlen(s),MAX_MSG_LEN-1);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	if( n_ckpts >= MAX_CKPTS ){
 		sprintf(ERROR_STRING,"Sorry, %d checkpoints already placed, can't place '%s'.",n_ckpts,s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( gettimeofday(&tv,NULL) < 0 ){
 		perror("gettimeofday");
-		WARN("error reading system time");
+		warn("error reading system time");
 		return;
 	}
 
@@ -230,7 +232,7 @@ static COMMAND_FUNC( do_ckpt )
 
 	n_ckpts++;
 #else // ! HAVE_GETTIMEOFDAY
-	WARN("Sorry, no checkpointing available in this build!?");
+	warn("Sorry, no checkpointing available in this build!?");
 #endif // ! HAVE_GETTIMEOFDAY
 }
 
@@ -244,7 +246,7 @@ static COMMAND_FUNC( do_tell_ckpts )
 	double delta_ms, cum_ms;
 
 	if( n_ckpts == 0 ){
-		WARN("do_tell_ckpts:  no checkpoints set.");
+		warn("do_tell_ckpts:  no checkpoints set.");
 		return;
 	}
 
@@ -295,19 +297,19 @@ static COMMAND_FUNC( get_time_of_day )
 #ifdef HAVE_GETTIMEOFDAY
 	if( gettimeofday(&tv,NULL) < 0 ){
 		perror("gettimeofday");
-		WARN("error reading system time");
+		warn("error reading system time");
 		return;
 	}
 
 	sprintf(msg_str,"%ld",tv.tv_sec);
-	ASSIGN_VAR(s1,msg_str);
+	assign_var(s1,msg_str);
 	// on mac, tv_usec has a wierd type?
 	sprintf(msg_str,"%ld",(long)tv.tv_usec);
-	ASSIGN_VAR(s2,msg_str);
+	assign_var(s2,msg_str);
 #else // ! HAVE_GETTIMEOFDAY
-	ASSIGN_VAR(s1,"0");
-	ASSIGN_VAR(s2,"0");
-	WARN("Sorry, no gettimeofday!?");
+	assign_var(s1,"0");
+	assign_var(s2,"0");
+	warn("Sorry, no gettimeofday!?");
 #endif // ! HAVE_GETTIMEOFDAY
 }
 
@@ -323,7 +325,7 @@ static COMMAND_FUNC( get_time )
 		t = (time_t) 0;
 	}
 	sprintf(msg_str,"%ld",t);
-	ASSIGN_VAR(s,msg_str);
+	assign_var(s,msg_str);
 }
 
 static COMMAND_FUNC( do_system )				/** execute a shell command */
@@ -340,24 +342,29 @@ static COMMAND_FUNC( do_system )				/** execute a shell command */
 	ruid = getuid();
 	
 	if( euid == 0 && ruid != 0 ){
-		WARN("Sorry, shell commands not allowed for set-uid root programs");
+		warn("Sorry, shell commands not allowed for set-uid root programs");
 		return;
 	}
 #endif // HAVE_GETUID
-	
+
+
+#ifndef BUILD_FOR_IOS
 	// On IOS, there is no stdout, so we don't see any output!?
 	stat=system(s);
 	
 	if( stat == -1 )
 		tell_sys_error("system");
-
 	else if( verbose ){
 		sprintf(ERROR_STRING,"Exit status %d",stat);
 		advise(ERROR_STRING);
 	}
-	
+#else // ! BUILD_FOR_IOS
+	warn("Sorry, system command is temporarily unavailable for iOS!?");
+	stat=(-1);
+#endif // ! BUILD_FOR_IOS
+
 	sprintf(msg_str,"%d",stat);
-	assign_reserved_var(QSP_ARG  "exit_status",msg_str);
+	assign_reserved_var("exit_status",msg_str);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(os_menu,s,f,h)
@@ -433,6 +440,6 @@ MENU_END(os)
 
 COMMAND_FUNC( do_unix_menu )
 {
-	PUSH_MENU(os);
+	CHECK_AND_PUSH_MENU(os);
 }
 

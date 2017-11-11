@@ -78,6 +78,8 @@ timebase_info.denom);
 #ifdef BUILD_FOR_IOS
 		char time_buf[64];
 #endif // BUILD_FOR_IOS
+
+fprintf(stderr,"_refresh:  cycle_func = '%s'\n",cycle_func);
 		// This is a one-shot
 		[self disableUpdates];
 #ifdef BUILD_FOR_IOS
@@ -110,12 +112,14 @@ timebase_info.denom);
 		/* If there is no cycle_func, we count up until we cycle frames */
 
 		if( _vbl_count < _frame_duration ){
+//fprintf(stderr,"refresh:  _vbl_count = %d\n",_vbl_count);
 			_vbl_count ++;
 			return;
 		}
 
 		_vbl_count = 1;		// We count this frame
 
+//fprintf(stderr,"refresh:  cycling image\n",_vbl_count);
 		[self cycle_images];
 	}
 }
@@ -210,6 +214,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 -(void) reveal
 {
 #ifdef BUILD_FOR_IOS
+fprintf(stderr,"reveal:  bringing subview to front...\n");
 	[self.superview bringSubviewToFront:self];
 #endif
 }
@@ -293,6 +298,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 	// What does _updateTimer do???
 
+fprintf(stderr,"enableUpdates:  adding updateTimer to run loop?\n");
 	[_updateTimer addToRunLoop:[NSRunLoop currentRunLoop]
 			forMode:NSDefaultRunLoopMode];
 #endif // BUILD_FOR_IOS
@@ -315,6 +321,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 -(void) set_refresh:(int) duration
 {
 	if( duration > 0 ){
+fprintf(stderr,"set_refresh(%d):  enabling updates\n",duration);
 		_frame_duration = duration;
 		[self enableUpdates];
 	} else {
@@ -358,6 +365,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 	_updateTimer = [CADisplayLink
 			displayLinkWithTarget:self
 			selector:@selector(_refresh)];
+fprintf(stderr,"initWithSize:  created updateTimer\n");
 #endif // BUILD_FOR_IOS
 
 	return self;

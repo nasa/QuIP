@@ -36,12 +36,22 @@ typedef struct splm_info {
 // function to calculate the prediction (hat_x) from the current guess
 // of the parameters
 
+#ifdef THREAD_SAFE_QUERY
+static Query_Stack *sparse_qsp=NULL;
+#endif // THREAD_SAFE_QUERY
+
 static void predictor_func( double *parameters, double *hat_x, int nvars,
 				int nobs, void *adata )
 {
 	SpLM_Info *splmi_p;
 	Query_Stack *qsp;
 	double *p,*q;
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+
+	assert(sparse_qsp!=NULL);
+	qsp = sparse_qsp;
+#endif // THREAD_SAFE_QUERY
 
 	// pass these things to a script function???
 	splmi_p = (SpLM_Info *) adata;
@@ -55,7 +65,7 @@ static void predictor_func( double *parameters, double *hat_x, int nvars,
 //fprintf(stderr,"Pushing command \"%s\"\n",splmi_p->_cmd);
 	qsp = splmi_p->_qsp;
 
-	chew_text( QSP_ARG  splmi_p->_cmd, "Sparse LM optimization" );
+	chew_text( splmi_p->_cmd, "Sparse LM optimization" );
 	// now need to execute...
 
 	// after execution, store the results in hat_x
@@ -95,25 +105,25 @@ static void jac_func_crs( double *parameters, struct splm_crsm *jac, int nvars,
 	mat_dp = splmi_p->_jac_dp;
 
 	if( OBJ_PREC(mat_dp) != PREC_SP ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "Jacobian structure specification matrix %s (%s) should have %s precision!?",
 			OBJ_NAME(mat_dp),PREC_NAME(OBJ_PREC_PTR(mat_dp)),
 			PREC_NAME(PREC_FOR_CODE(PREC_SP)) );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( OBJ_COLS(mat_dp) != nvars ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "Number of columns of %s (%d) does not match number of variables (%d)!?",
 			OBJ_NAME(mat_dp),OBJ_COLS(mat_dp),nvars);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( OBJ_ROWS(mat_dp) != nobs ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "Number of rows of %s (%d) does not match number of observations (%d)!?",
 			OBJ_NAME(mat_dp),OBJ_COLS(mat_dp),nvars);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -185,14 +195,14 @@ static COMMAND_FUNC( do_difcrs )
 
 	Data_Obj *param_dp, *true_dp, *trial_dp, *jac_dp;
 
-	param_dp = PICK_OBJ("data object for parameter values (will be overwritten)");
-	true_dp = PICK_OBJ("data object for target values");
-	trial_dp = PICK_OBJ("data object for trial values");
-	jac_dp = PICK_OBJ("data object holding Jacobian info");
+	param_dp = pick_obj("data object for parameter values (will be overwritten)");
+	true_dp = pick_obj("data object for target values");
+	trial_dp = pick_obj("data object for trial values");
+	jac_dp = pick_obj("data object holding Jacobian info");
 	Jnnz = HOW_MANY("number of non-zero Jacobian entries");
 	splm_i1._cmd = NAMEOF("script to evaluate parameters");
 
-	if( param_dp == NO_OBJ || true_dp == NO_OBJ || trial_dp == NO_OBJ || jac_dp == NO_OBJ )
+	if( param_dp == NULL || true_dp == NULL || trial_dp == NULL || jac_dp == NULL )
 		return;
 
 fprintf(stderr,"do_difcrs:  app data at 0x%lx\n",
@@ -223,20 +233,20 @@ fprintf(stderr,"do_difcrs:  app data at 0x%lx\n",
 	nvars = (int) OBJ_N_MACH_ELTS(param_dp);
 
 	if( OBJ_COLS(jac_dp) != nvars ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "Number of columns (%d) of Jacobian (%s) does not match number of elements (%d) of param vector %s!?",
 			OBJ_COLS(jac_dp),OBJ_NAME(jac_dp),
 			nvars,OBJ_NAME(param_dp) );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( OBJ_ROWS(jac_dp) != nobs ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "Number of rows (%d) of Jacobian (%s) does not match number of elements (%d) of observation vector %s!?",
 			OBJ_ROWS(jac_dp),OBJ_NAME(jac_dp),
 			nobs,OBJ_NAME(true_dp) );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -315,6 +325,6 @@ MENU_END(sparse)
 
 COMMAND_FUNC( do_sparse_menu )
 {
-	PUSH_MENU(sparse);
+	CHECK_AND_PUSH_MENU(sparse);
 }
 

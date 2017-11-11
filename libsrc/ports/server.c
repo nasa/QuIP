@@ -67,7 +67,7 @@ static int port_listen(QSP_ARG_DECL  Port *mpp)
 #endif /* QUIP_DEBUG */
 
 	if( ! IS_SERVER(mpp) ){
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		sprintf(ERROR_STRING,"port_listen:  %s is not a server port",mpp->mp_name);
 		return(-1);
 	}
@@ -115,18 +115,18 @@ int open_server_port(QSP_ARG_DECL  const char *name,int  port_no)
 	int on=1;
 
 	if ( (port_no < 2001) || (port_no > 6999) ) {
-		WARN("Illegal port number");
+		warn("Illegal port number");
 		advise("Use 2001-6999");
 		advise("Check /etc/services for other conflicts");
 		return(-1);
 	}
 
-	mpp=new_port(QSP_ARG  name);
-	if( mpp==NO_PORT ){
+	mpp=new_port(name);
+	if( mpp==NULL ){
 		if( verbose ){
 			sprintf(ERROR_STRING,"open_server_port %s %d failed to create port struct",
 				name,port_no);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 		return(-1);
 	}
@@ -140,7 +140,7 @@ int open_server_port(QSP_ARG_DECL  const char *name,int  port_no)
 	mpp->mp_o_sock=socket(PF_INET,SOCK_STREAM,0);
 #endif /* FOOBAR */
 #else // ! HAVE_SOCKET
-	WARN("open_server_port:  Sorry, no socket implementation available!?");
+	warn("open_server_port:  Sorry, no socket implementation available!?");
 	mpp->mp_o_sock=(-1);
 #endif // HAVE_SOCKET
 
@@ -151,10 +151,10 @@ int open_server_port(QSP_ARG_DECL  const char *name,int  port_no)
 		fprintf(stderr,"Invalid socket, error code = %d\n",e);
 		switch(e){
 			case WSANOTINITIALISED:
-				WARN("Missing call to WSAStartup!?");
+				warn("Missing call to WSAStartup!?");
 				break;
 			default:
-				WARN("Unclassified error.");
+				warn("Unclassified error.");
 				break;
 		}
 	}
@@ -167,7 +167,7 @@ int open_server_port(QSP_ARG_DECL  const char *name,int  port_no)
 		
 	if( mpp->mp_o_sock<0 ){
 		tell_sys_error("open_server_port (socket)");
-		WARN("error opening stream socket");
+		warn("error opening stream socket");
 		delport(QSP_ARG  mpp);
 		return(-1);
 	}
@@ -183,7 +183,7 @@ fprintf(stderr,"Setting socket options...\n");
 
 	mpp->mp_flags = 0;
 	mpp->mp_flags |= PORT_SERVER;	// makes it keep trying!
-	mpp->mp_pp = NO_PORT;
+	mpp->mp_pp = NULL;
 	mpp->mp_text_var_name=NULL;
 	mpp->mp_output_filename=NULL;
 	mpp->mp_auth_string=NULL;
@@ -196,14 +196,14 @@ fprintf(stderr,"Setting socket options...\n");
 fprintf(stderr,"Binding socket...\n");
 	if( bind(mpp->mp_o_sock,(struct sockaddr *)(mpp->mp_addrp), length) ){
 		tell_sys_error("bind");
-		WARN("open_server_port:  couldn't bind to port");
+		warn("open_server_port:  couldn't bind to port");
 		goto cleanup;
 	}
 
 fprintf(stderr,"Getting socket name...\n");
 	if( getsockname(mpp->mp_o_sock,
 		(struct sockaddr *)mpp->mp_addrp,&length) ){
-		WARN("open_server_port:  error getting socket name");
+		warn("open_server_port:  error getting socket name");
 		goto cleanup;
 	}
 	/* We used to make sure that the port number
@@ -307,11 +307,11 @@ advise(ERROR_STRING);
 	}
 
 	if( !FD_ISSET(mpp->mp_o_sock,&rd_fds) ){
-		WARN("get_connection:  shouldn't happen");
+		warn("get_connection:  shouldn't happen");
 		return(-1);
 	}
 #else /* ! HAVE_SELECT */
-	WARN("No select function!?");
+	warn("No select function!?");
 #endif /* ! HAVE_SELECT */
 #endif // ! BUILD_FOR_WINDOWS
 
@@ -329,7 +329,7 @@ advise(ERROR_STRING);
 #ifdef BUILD_FOR_WINDOWS
 		switch( WSAGetLastError() ){
 			default:
-				WARN("Unknown Windows error!?");
+				warn("Unknown Windows error!?");
 				break;
 		}
 #endif // BUILD_FOR_WINDOWS
@@ -355,7 +355,7 @@ advise(ERROR_STRING);
 		
 	}
 #else // ! HAVE_SOCKET
-	WARN("Sorry, no accept implementation!?");
+	warn("Sorry, no accept implementation!?");
 #endif // ! HAVE_SOCKET
 
 //fprintf(stderr,"get_connection:  setting mp_sock to %d\n",msg_sock);

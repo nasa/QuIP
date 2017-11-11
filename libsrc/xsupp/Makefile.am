@@ -17,9 +17,7 @@ libxsupp_a_SOURCES =				\
 			view_xlib.c		\
 			vbl.c
 
-#			handle.c
-
-noinst_HEADERS =	handle.h		\
+noinst_HEADERS =				\
 			vgat_ioctl.h		\
 			xsupp_prot.h
 

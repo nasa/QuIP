@@ -1,11 +1,16 @@
 
 #include "quip_config.h"
+
 #include "quip_prot.h"
+
+//#ifdef HAVE_ANY_GPU
 
 #include "veclib/slow_len.h"
 
 // This file is a helper function for gpu routines - it is here
 // because it is shared by all gpu platforms...
+
+// OLD:
 
 /* The setup_slow_len functions initialize the len variable (dim3),
  * and return the number of dimensions that are set.  We also need to
@@ -29,21 +34,36 @@
  * hold this value.
  */
 
+// NEW:
+
+/* We don't use the multi-dimensional kernel array feature of CUDA etc,
+ * instead we pass the number of dimensions and increments as a kernel parameter,
+ * from which we can compute the indices...  This frees us to work with objects
+ * with more than 3 dimensions.
+ */
+
 // BUG name conflict!?
 #define MAXD(m,n)	(m>n?m:n)
 //#define MAX2(szi_p)	MAXD(szi_p->szi_dst_dim[i_dim],szi_p->szi_src_dim[1][i_dim])
 //#define MAX3(szi_p)	MAXD(MAX2(szi_p),szi_p->szi_src_dim[1][i_dim])
 
 
-int setup_slow_len(	Vector_Args *vap,
-			dimension_t start_dim,
-			int i_first,
-			int n_vec,
+int _setup_slow_len(	QSP_ARG_DECL
+			Vector_Args *vap,
+			dimension_t start_dim,	// 0, or 1 for complex?
+			int i_first,		// index of first source vector
+			int n_vec,		// number of source vectors
 			Platform_Device *pdp )
 {
 	int i_dim;
 	dimension_t max_d;
+#ifdef FOOBAR
 	int n_set=0;
+#endif // FOOBAR
+
+	SET_VA_ITERATION_TOTAL(vap,1);
+	for(i_dim=0;i_dim<start_dim;i_dim++)
+		SET_VA_SLOW_SIZE_DIM(vap,i_dim,1);
 
 	for(i_dim=start_dim;i_dim<N_DIMENSIONS;i_dim++){
 		int i_src;
@@ -55,7 +75,9 @@ int setup_slow_len(	Vector_Args *vap,
 				DIMENSION(VARG_DIMSET(VA_SRC(vap,i_src)),i_dim));
 //fprintf(stderr,"setup_slow_len:  i_dim = %d, i_src = %d, max_d = %d\n",i_dim,i_src,max_d);
 		}
+		SET_VA_SLOW_SIZE_DIM(vap,i_dim,max_d);
 
+#ifdef FOOBAR
 		if( max_d > 1 ){
 			if( n_set == 0 ){
 				SET_VA_LEN_X(vap,max_d);
@@ -70,18 +92,22 @@ int setup_slow_len(	Vector_Args *vap,
 	 * we need to conditionally complain if the number set is 3.
 	 */
 				if( PFDEV_MAX_DIMS(pdp) == 2 ){
-NWARN("Sorry, CUDA compute capability >= 2.0 required for 3-D array operations");
+warn("Sorry, CUDA compute capability >= 2.0 required for 3-D array operations");
 					return(-1);
 				}
 				SET_VA_LEN_Z(vap,max_d);
 				SET_VA_DIM_INDEX(vap,n_set,i_dim);
 				n_set ++;
 			} else {
-				NWARN("setup_slow_len:  Too many dimensions requested.");
+				warn("setup_slow_len:  Too many dimensions requested.");
 				return(-1);
 			}
 		}
+#endif // FOOBAR
+		//SET_VA_ITERATION_COUNT(vap,i_dim,max_d);
+		SET_VA_ITERATION_TOTAL(vap,VA_ITERATION_TOTAL(vap)*max_d);
 	}
+#ifdef FOOBAR
 //fprintf(stderr,"setup_slow_len:  n_set = %d\n",n_set);
 	if( n_set == 0 ){
 		SET_VA_LEN_X(vap,1);
@@ -100,5 +126,9 @@ NWARN("Sorry, CUDA compute capability >= 2.0 required for 3-D array operations")
 		SET_VA_DIM_INDEX(vap,2,(-1));
 	}
 	return(n_set);
+#endif // FOOBAR
+	return 1;
 }
+
+//#endif // HAVE_ANY_GPU
 

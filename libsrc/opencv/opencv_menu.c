@@ -5,6 +5,7 @@
 #include "quip_prot.h"
 #include "opencv_glue.h"
 #include "data_obj.h"
+#include <math.h>	// fabs
 
 // local prototypes
 static COMMAND_FUNC( do_ocv_smooth );
@@ -51,11 +52,11 @@ static COMMAND_FUNC( do_ocv_smooth )
 	OpenCV_Image *src, *dst;
 	int blur_size;
 
-	dst = PICK_OCVI("destination image");
-	src = PICK_OCVI("source image");
+	dst = pick_ocvi("destination image");
+	src = pick_ocvi("source image");
 	blur_size = HOW_MANY("blur size in pixels");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	/* BUG?  need to verify order of args... */
 	cvSmooth( src->ocv_image, dst->ocv_image, CV_BLUR, blur_size, blur_size, 0, 0 );
@@ -66,11 +67,11 @@ static COMMAND_FUNC( do_convert_color )
 	OpenCV_Image *src, *dst;
 	const char * s;
 
-	dst = PICK_OCVI("destination image");
-	src = PICK_OCVI("source image");
+	dst = pick_ocvi("destination image");
+	src = pick_ocvi("source image");
 	s = NAMEOF("OpenCV conversion code");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	int code;
 	if (strcmp(s, "CV_RGB2GRAY") == 0) {
@@ -94,10 +95,10 @@ static COMMAND_FUNC( do_ocv_not )
 {
 	OpenCV_Image *src, *dst;
 
-	dst = PICK_OCVI("destination image");
-	src = PICK_OCVI("source image");
+	dst = pick_ocvi("destination image");
+	src = pick_ocvi("source image");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	cvNot( src->ocv_image, dst->ocv_image );
 }
@@ -108,11 +109,11 @@ static COMMAND_FUNC( do_ocv_erode )
 	OpenCV_Image *src, *dst;
 	int iterations;
 
-	dst = PICK_OCVI("destination image");
-	src = PICK_OCVI("source image");
+	dst = pick_ocvi("destination image");
+	src = pick_ocvi("source image");
 	iterations = HOW_MANY("number of iterations");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	// Perform an erosion for the given number of iterations.
 	cvErode(src->ocv_image, dst->ocv_image, NULL, iterations);
@@ -124,11 +125,11 @@ static COMMAND_FUNC( do_ocv_dilate )
 	OpenCV_Image *src, *dst;
 	int iterations;
 
-	dst = PICK_OCVI("destination image");
-	src = PICK_OCVI("source image");
+	dst = pick_ocvi("destination image");
+	src = pick_ocvi("source image");
 	iterations = HOW_MANY("number of iterations");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	// Perform an erosion for the given number of iterations.
 	cvDilate(src->ocv_image, dst->ocv_image, NULL, iterations);
@@ -141,12 +142,12 @@ static COMMAND_FUNC( do_ocv_binary_threshold )
 	double threshold;
 	double max_value;
 
-	dst = PICK_OCVI("destination image");
-	src = PICK_OCVI("source image");
+	dst = pick_ocvi("destination image");
+	src = pick_ocvi("source image");
 	threshold = HOW_MANY("threshold above which will be on");
 	max_value = HOW_MANY("on value");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 	cvThreshold(src->ocv_image, dst->ocv_image, threshold, max_value, CV_THRESH_BINARY);
 }
 
@@ -156,12 +157,12 @@ static COMMAND_FUNC( do_ocv_canny )
 	int edge_thresh;
 	int edge_thresh2;
 
-	dst = PICK_OCVI("destination image");
-	src = PICK_OCVI("source image");
+	dst = pick_ocvi("destination image");
+	src = pick_ocvi("source image");
 	edge_thresh = HOW_MANY("edge threshold");
 	edge_thresh2 = HOW_MANY("edge threshold 2");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	// Run the edge detector on grayscale.
 	// The optional aperture_size parameter has been omitted.
@@ -172,9 +173,9 @@ static COMMAND_FUNC( do_ocv_zero )
 {
 	OpenCV_Image *dst;
 
-	dst = PICK_OCVI("destination image");
+	dst = pick_ocvi("destination image");
 
-	if( dst == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL ) return;
 
 	cvZero( dst->ocv_image );
 }
@@ -240,12 +241,12 @@ static COMMAND_FUNC( do_create_seq )
 static COMMAND_FUNC( do_seq_is_null )
 {
 	OpenCV_Seq *ocv_seq_p;
-	ocv_seq_p=PICK_OCV_SEQ("sequence");
-	if( ocv_seq_p == NO_OPENCV_SEQ ) return;
+	ocv_seq_p=pick_ocv_seq("sequence");
+	if( ocv_seq_p == NULL ) return;
 	if( ocv_seq_p->ocv_seq == NULL ) {
-		ASSIGN_VAR("seq_is_null", "1");
+		assign_var("seq_is_null", "1");
 	} else {
-		ASSIGN_VAR("seq_is_null", "0");
+		assign_var("seq_is_null", "0");
 	}
 }
 
@@ -269,9 +270,9 @@ static COMMAND_FUNC( do_save_img )
 	const char *filename;
 	OpenCV_Image *ocvi_p;
 
-	ocvi_p=PICK_OCVI("openCV image");
+	ocvi_p=pick_ocvi("openCV image");
 	filename=NAMEOF("file name");
-	if( ocvi_p == NO_OPENCV_IMAGE ) return;
+	if( ocvi_p == NULL ) return;
 
 	save_ocv_image(ocvi_p, filename);
 }
@@ -282,12 +283,12 @@ static COMMAND_FUNC( do_find_contours )
 	OpenCV_Image *ocvi_p;
 	/* OpenCV_MemStorage *ocv_mem_p; */
 
-	ocv_scanner_p=PICK_OCV_SCANNER("scanner");
-	ocvi_p=PICK_OCVI("binary image");
+	ocv_scanner_p=pick_ocv_scanner("scanner");
+	ocvi_p=pick_ocvi("binary image");
 	/* ocv_mem_p=PICK_OCV_MEM("memory storage"); */
-	if( ocv_scanner_p == NO_OPENCV_SCANNER ) return;
-	if( ocvi_p == NO_OPENCV_IMAGE ) return;
-	/* if( ocv_mem_p == NO_OPENCV_MEM ) return; */
+	if( ocv_scanner_p == NULL ) return;
+	if( ocvi_p == NULL ) return;
+	/* if( ocv_mem_p == NULL ) return; */
 	ocv_scanner_p->ocv_scanner = cvStartFindContours(ocvi_p->ocv_image,
 			ocv_scanner_p->ocv_mem, sizeof(CvContour), CV_RETR_EXTERNAL,
 			CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
@@ -300,25 +301,25 @@ static COMMAND_FUNC( do_find_next_contour )
 	OpenCV_Seq *ocv_seq_p;
 	/*int success = 0;*/
 
-	ocv_scanner_p=PICK_OCV_SCANNER("scanner");
-	ocv_seq_p=PICK_OCV_SEQ("sequence");
-	/*success=PICK_OBJ("success flag");*/
+	ocv_scanner_p=pick_ocv_scanner("scanner");
+	ocv_seq_p=pick_ocv_seq("sequence");
+	/*success=pick_obj("success flag");*/
 
-	if( ocv_scanner_p == NO_OPENCV_SCANNER ) return;
-	if( ocv_seq_p == NO_OPENCV_SEQ ) return;
+	if( ocv_scanner_p == NULL ) return;
+	if( ocv_seq_p == NULL ) return;
 
 	if ((ocv_seq_p->ocv_seq = cvFindNextContour(ocv_scanner_p->ocv_scanner)) != NULL) {
-		ASSIGN_VAR("contour_success", "1");
+		assign_var("contour_success", "1");
 	} else {
-		ASSIGN_VAR("contour_success", "0");
+		assign_var("contour_success", "0");
 	}
 }
 
 static COMMAND_FUNC( do_aspect_ratio )
 {
 	OpenCV_Seq *ocv_seq_p;
-	ocv_seq_p=PICK_OCV_SEQ("sequence");
-	if( ocv_seq_p == NO_OPENCV_SEQ ) return;
+	ocv_seq_p=pick_ocv_seq("sequence");
+	if( ocv_seq_p == NULL ) return;
 	if( ocv_seq_p->ocv_seq == NULL ) {
 		sprintf(ERROR_STRING, "do_aspect_ratio: sequence is NULL.\n");
 		//WARN(ERROR_STRING);
@@ -328,7 +329,7 @@ static COMMAND_FUNC( do_aspect_ratio )
 	float aspectRatio = (float)(r.width)/(float)(r.height);
 	char aspect[30];
 	sprintf(aspect, "%f", aspectRatio);
-	ASSIGN_VAR("contour_aspect", aspect);
+	assign_var("contour_aspect", aspect);
 	/*sprintf(ERROR_STRING,"Aspect ratio = %f", aspectRatio);
 	WARN(ERROR_STRING);*/
 }
@@ -336,8 +337,8 @@ static COMMAND_FUNC( do_aspect_ratio )
 static COMMAND_FUNC( do_ocv_area )
 {
 	OpenCV_Seq *ocv_seq_p;
-	ocv_seq_p=PICK_OCV_SEQ("sequence");
-	if( ocv_seq_p == NO_OPENCV_SEQ ) return;
+	ocv_seq_p=pick_ocv_seq("sequence");
+	if( ocv_seq_p == NULL ) return;
 	if( ocv_seq_p->ocv_seq == NULL ) {
 		sprintf(ERROR_STRING, "do_ocv_area: sequence is NULL.\n");
 		WARN(ERROR_STRING);
@@ -354,14 +355,14 @@ static COMMAND_FUNC( do_ocv_area )
 
 	char area_string[30];
 	sprintf(area_string, "%f", area);
-	ASSIGN_VAR("contour_area", area_string);
+	assign_var("contour_area", area_string);
 }
 
 static COMMAND_FUNC( do_centroid )
 {
 	OpenCV_Seq *ocv_seq_p;
-	ocv_seq_p=PICK_OCV_SEQ("sequence");
-	if( ocv_seq_p == NO_OPENCV_SEQ ) return;
+	ocv_seq_p=pick_ocv_seq("sequence");
+	if( ocv_seq_p == NULL ) return;
 	if( ocv_seq_p->ocv_seq == NULL ) {
 		sprintf(ERROR_STRING, "do_centroid: sequence is NULL.\n");
 		//WARN(ERROR_STRING);
@@ -382,9 +383,9 @@ static COMMAND_FUNC( do_centroid )
 
 	char number[30];
 	sprintf(number, "%f", x);
-	ASSIGN_VAR("centroid_x", number);
+	assign_var("centroid_x", number);
 	sprintf(number, "%f", y);
-	ASSIGN_VAR("centroid_y", number);
+	assign_var("centroid_y", number);
 
 
 }
@@ -392,8 +393,8 @@ static COMMAND_FUNC( do_centroid )
 static COMMAND_FUNC( do_image_info )
 {
 	OpenCV_Image *ocvi_p;
-	ocvi_p=PICK_OCVI("openCV image");
-	if( ocvi_p == NO_OPENCV_IMAGE ) return;
+	ocvi_p=pick_ocvi("openCV image");
+	if( ocvi_p == NULL ) return;
 
 	sprintf(ERROR_STRING,"Image Info for \"%s\":",ocvi_p->ocv_name);
 	prt_msg(ERROR_STRING);
@@ -429,11 +430,11 @@ static COMMAND_FUNC( do_import_img )
 	Data_Obj *dp;
 	OpenCV_Image *ocvi_p;
 
-	dp = PICK_OBJ("image");
+	dp = pick_obj("image");
 
 	/* Possibly do some tests here */
 
-	if( (ocvi_p = creat_ocvi_from_dp(QSP_ARG  dp) ) == NO_OPENCV_IMAGE ){
+	if( (ocvi_p = creat_ocvi_from_dp(QSP_ARG  dp) ) == NULL ){
 		sprintf(ERROR_STRING,"Error creating OpenCV image from QuIP image %s",OBJ_NAME(dp));
 		WARN(ERROR_STRING);
 	}
@@ -448,15 +449,15 @@ static COMMAND_FUNC( do_new_cascade )
 	s=NAMEOF("classifier cascade");
 	cascade_name = NAMEOF("classifier specification file");
 
-	casc_p = ocv_ccasc_of(QSP_ARG  s);
-	if( casc_p != NO_CASCADE ){
+	casc_p = ocv_ccasc_of(s);
+	if( casc_p != NULL ){
 		sprintf(ERROR_STRING,"Classifier cascade %s already exists!?",s);
 		WARN(ERROR_STRING);
 		return;
 	}
 
-	casc_p = new_ocv_ccasc(QSP_ARG  s);
-	if( casc_p == NO_CASCADE ){
+	casc_p = new_ocv_ccasc(s);
+	if( casc_p == NULL ){
 		sprintf(ERROR_STRING,"Error creating classifier cascade %s",s);
 		WARN(ERROR_STRING);
 		return;
@@ -473,7 +474,11 @@ static COMMAND_FUNC( do_new_cascade )
 
 #define false 0
 #define true 1
+
+#ifndef bool
+// When do we need this definition?
 #define bool int
+#endif // undef bool
 
 static CvPoint2D32f* FindFace(QSP_ARG_DECL  IplImage* img, CvMemStorage* storage, CvHaarClassifierCascade* cascade, int frame_number)
 {
@@ -537,7 +542,7 @@ CVAPI(CvSeq*) cvHaarDetectObjects( const CvArr* image,
 		char msg[60];
 
 		sprintf(msg,"%d",faces->total);
-		ASSIGN_VAR("n_faces",msg);
+		assign_var("n_faces",msg);
 
 		sprintf(ERROR_STRING, "faces %d %d ", frame_number, faces->total);
 
@@ -550,19 +555,19 @@ CVAPI(CvSeq*) cvHaarDetectObjects( const CvArr* image,
 
 			sprintf(vname,"face%d_x",i+1);
 			sprintf(vval,"%d",r->x);
-			ASSIGN_VAR(vname,vval);
+			assign_var(vname,vval);
 
 			sprintf(vname,"face%d_y",i+1);
 			sprintf(vval,"%d",r->y);
-			ASSIGN_VAR(vname,vval);
+			assign_var(vname,vval);
 
 			sprintf(vname,"face%d_w",i+1);
 			sprintf(vval,"%d",r->width);
-			ASSIGN_VAR(vname,vval);
+			assign_var(vname,vval);
 
 			sprintf(vname,"face%d_h",i+1);
 			sprintf(vval,"%d",r->height);
-			ASSIGN_VAR(vname,vval);
+			assign_var(vname,vval);
 
 #ifdef FOOBAR
 			/* don't draw here - we might not be viewing... */
@@ -604,11 +609,11 @@ static COMMAND_FUNC( do_find_face )
 	CvPoint2D32f* features;
 	int frame_number;
 
-	src = PICK_OCVI("input OpenCV image");
-	casc_p = PICK_CASCADE("classifier cascade");
+	src = pick_ocvi("input OpenCV image");
+	casc_p = pick_cascade("classifier cascade");
 	frame_number = HOW_MANY("frame number");
 
-	if( src == NO_OPENCV_IMAGE || casc_p == NO_CASCADE ) return;
+	if( src == NULL || casc_p == NULL ) return;
 
 	if( storage == NULL )
 		storage = cvCreateMemStorage(0); // what is the arg here?
@@ -632,7 +637,7 @@ MENU_END(face_finder)
 
 static COMMAND_FUNC( do_face_finder )
 {
-	PUSH_MENU(face_finder);
+	CHECK_AND_PUSH_MENU(face_finder);
 }
 
 #undef ADD_CMD
@@ -668,7 +673,7 @@ MENU_END(open_cv)
 
 COMMAND_FUNC( do_ocv_menu )
 {
-	PUSH_MENU( open_cv );
+	CHECK_AND_PUSH_MENU( open_cv );
 }
 
 

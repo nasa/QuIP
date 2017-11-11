@@ -1,0 +1,24 @@
+#Set w 64	# fast
+
+#Set w 10	# slow
+#Set h 3
+
+Set w 8	# slow
+Set h 8
+
+Image x1 $h $w 1 float
+Image bm $h $w 1 bit
+Info bm
+Ramp2D x1 0 1 1
+Display x1
+#verbose yes
+#Print verbose
+#debug veclib
+veclib
+  execute vsm_le bm x1 6
+  quit
+#verbose no
+Display bm
+
+
+

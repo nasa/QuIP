@@ -10,9 +10,9 @@ static COMMAND_FUNC( do_vf_exec )
 {
 	Vector_Function *vfp;
 
-	vfp = PICK_VEC_FUNC("");
+	vfp = pick_vec_func("");
 
-	if( vfp == NO_VEC_FUNC ) return;
+	if( vfp == NULL ) return;
 
 	do_vfunc(QSP_ARG  vfp);
 }
@@ -67,13 +67,13 @@ static COMMAND_FUNC( do_vf_info )
 {
 	Vector_Function *vfp;
 
-	vfp=PICK_VEC_FUNC("");
-	if( vfp==NO_VEC_FUNC ) return;
+	vfp=pick_vec_func("");
+	if( vfp==NULL ) return;
 	vf_info(QSP_ARG  vfp);
 }
 
 static COMMAND_FUNC( do_list_vfs )
-{ list_vec_funcs(SINGLE_QSP_ARG); }
+{ list_vec_funcs(tell_msgfile()); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(veclib_menu,s,f,h)
 
@@ -93,7 +93,7 @@ COMMAND_FUNC( do_vl_menu )
 		//init_vl_menu();
 		inited=1;
 	}
-	PUSH_MENU(veclib);
+	CHECK_AND_PUSH_MENU(veclib);
 }
 
 

@@ -22,11 +22,16 @@
 
 #define NPP_VERSION	NPP_VERSION_CODE(NPP_VERSION_MAJOR,NPP_VERSION_MINOR,NPP_VERSION_BUILD)
 
+#else
+#undef HAVE_LIBNPP	// we may hand-edit out HAVE_CUDA on a system that has it?
 #endif // HAVE_CUDA
 
+extern "C" {
 #include "quip_prot.h"
-#include "my_cuda.h"
 #include "data_obj.h"
+}
+
+#include "my_cuda.h"
 #include "cuda_supp.h"
 
 #ifndef HAVE_LIBNPP
@@ -44,6 +49,7 @@
 	}
 
 
+#ifdef HAVE_CUDA
 #ifdef HAVE_LIBNPP
 
 #define NPP_ERR_CASE(code,msg)					\
@@ -59,6 +65,7 @@ static void report_npp_error(const char *whence, const char *funcname, NppStatus
 		NPP_ERR_CASE(NPP_OVERFLOW_ERROR,"overflow")
 #endif
 		NPP_ERR_CASE(NPP_NOT_SUPPORTED_MODE_ERROR, "unsupported mode" )
+		NPP_ERR_CASE(NPP_CORRUPTED_DATA_ERROR, "corrupted data" )
 		NPP_ERR_CASE(NPP_ROUND_MODE_NOT_SUPPORTED_ERROR,"unsupported round mode" )
 		NPP_ERR_CASE( NPP_RESIZE_NO_OPERATION_ERROR, "No resize operation" )
 		NPP_ERR_CASE( NPP_NOT_SUFFICIENT_COMPUTE_CAPABILITY, "insufficient compute capability" )
@@ -181,7 +188,6 @@ static void report_npp_error(const char *whence, const char *funcname, NppStatus
 		NWARN(DEFAULT_ERROR_STRING);
 	}
 }
-#endif /* HAVE_LIBNPP */
 
 /* For dilation and erosion, the mask needs to fall completely
  * within the input image.  So the output that we can set is
@@ -222,24 +228,23 @@ static void report_npp_error(const char *whence, const char *funcname, NppStatus
 
 #define GET_MORPH_ARGS					\
 							\
-	dst_dp = PICK_OBJ("target image");		\
-	src_dp = PICK_OBJ("source image");		\
-	mask_dp = PICK_OBJ("mask image");		\
+	dst_dp = pick_obj("target image");		\
+	src_dp = pick_obj("source image");		\
+	mask_dp = pick_obj("mask image");		\
 	anchor.x = HOW_MANY("anchor x");		\
 	anchor.y = HOW_MANY("anchor y");
 
 
 #define GET_FILTER_ARGS					\
 							\
-	dst_dp = PICK_OBJ("target image");		\
-	src_dp = PICK_OBJ("source image");		\
-	mask_dp = PICK_OBJ("kernel image");		\
+	dst_dp = pick_obj("target image");		\
+	src_dp = pick_obj("source image");		\
+	mask_dp = pick_obj("kernel image");		\
 	anchor.x = HOW_MANY("anchor x");		\
 	anchor.y = HOW_MANY("anchor y");		\
 	divisor = HOW_MANY("divisor");
 
 
-#ifdef HAVE_CUDA
 static int good_img_for_morph(QSP_ARG_DECL  Data_Obj *dp, const char *whence )
 {
 	if( OBJ_PREC(dp) != PREC_UBY ){
@@ -297,14 +302,11 @@ static int good_kernel_for_filter(Data_Obj *dp, const char *whence )
 	}
 	return(1);
 }
-#endif // HAVE_CUDA
-
-#ifdef HAVE_LIBNPP
 
 static int good_for_morph( QSP_ARG_DECL   Data_Obj *dst_dp, Data_Obj *src_dp,
 				Data_Obj *mask_dp, const char * whence )
 {
-	if( ! dp_same_size(QSP_ARG  dst_dp,src_dp,whence) )
+	if( ! dp_same_size(dst_dp,src_dp,whence) )
 		return(0);
 	if( ! good_img_for_morph(QSP_ARG  dst_dp,whence) )
 		return(0);
@@ -327,9 +329,9 @@ static int good_for_morph( QSP_ARG_DECL   Data_Obj *dst_dp, Data_Obj *src_dp,
 static int good_for_filter( QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp,
 				Data_Obj *mask_dp, const char * whence )
 {
-	if( ! dp_same_size(QSP_ARG  dst_dp,src_dp,whence) )
+	if( ! dp_same_size(dst_dp,src_dp,whence) )
 		return(0);
-	if( ! dp_same_prec(QSP_ARG  dst_dp,src_dp,whence) )
+	if( ! dp_same_prec(dst_dp,src_dp,whence) )
 		return(0);
 	if( OBJ_PREC(mask_dp) != PREC_DI ){
 		sprintf(ERROR_STRING,
@@ -358,10 +360,11 @@ static int good_for_filter( QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp,
 }
 
 #endif // HAVE_LIBNPP
+#endif // HAVE_CUDA
 
 #define CHECK_MORPH_ARGS(whence)					\
 									\
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ || mask_dp == NO_OBJ )	\
+	if( dst_dp == NULL || src_dp == NULL || mask_dp == NULL )	\
 		return;							\
 									\
 	if( !good_for_morph(QSP_ARG  dst_dp,src_dp,mask_dp,whence) )		\
@@ -370,7 +373,7 @@ static int good_for_filter( QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp,
 
 #define CHECK_FILTER_ARGS(whence)					\
 									\
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ || mask_dp == NO_OBJ )	\
+	if( dst_dp == NULL || src_dp == NULL || mask_dp == NULL )	\
 		return;							\
 									\
 	if( !good_for_filter(QSP_ARG  dst_dp,src_dp,mask_dp,whence) )		\
@@ -488,7 +491,7 @@ static Precision * validate_npp_prec( Precision * prec_p )
 "Sorry, no NPP allocator for %s precision with %d channels",	\
 		PREC_NAME(prec_p),ds.ds_dimension[0]);		\
 	NWARN(DEFAULT_ERROR_STRING);				\
-	delvec(QSP_ARG  dp);					\
+	delvec(dp);						\
 	return;
 
 COMMAND_FUNC( do_npp_malloc )
@@ -527,7 +530,7 @@ COMMAND_FUNC( do_npp_malloc )
 	ds.ds_dimension[4] = 1;
 
 	dp = _make_dp(QSP_ARG  s,&ds,prec_p);
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* Now call the allocator */
 	if( ds.ds_dimension[0] == 1 ){
@@ -604,9 +607,9 @@ COMMAND_FUNC( do_npp_vadd )
 	NppiSize size;
 	int pxl_size;
 
-	dst_dp = PICK_OBJ("destination image");
-	src1_dp = PICK_OBJ("first source image");
-	src2_dp = PICK_OBJ("second source image");
+	dst_dp = pick_obj("destination image");
+	src1_dp = pick_obj("first source image");
+	src2_dp = pick_obj("second source image");
 
 	/* BUG - make sure that the sizes all match */
 
@@ -714,8 +717,8 @@ COMMAND_FUNC( do_npp_sum_scratch )
 {
 	Data_Obj *src_dp;
 
-	src_dp = PICK_OBJ("source object");
-	if( src_dp == NO_OBJ ) return;
+	src_dp = pick_obj("source object");
+	if( src_dp == NULL ) return;
 
 	// BUG make sure correct type...
 	// BUG make sure contiguous...
@@ -732,10 +735,10 @@ COMMAND_FUNC( do_npp_sum )
 	NppStatus s;
 #endif // HAVE_LIBNPP
 
-	dst_dp = PICK_OBJ("destination object");
-	src_dp = PICK_OBJ("source object");
+	dst_dp = pick_obj("destination object");
+	src_dp = pick_obj("source object");
 
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ )
+	if( dst_dp == NULL || src_dp == NULL )
 		return;
 
 #ifdef HAVE_LIBNPP
@@ -769,11 +772,11 @@ COMMAND_FUNC( do_nppi_vmul )
 	NppiSize roi_size;
 #endif // HAVE_LIBNPP
 
-	dst_dp = PICK_OBJ("destination object");
-	src1_dp = PICK_OBJ("first source object");
-	src2_dp = PICK_OBJ("second source object");
+	dst_dp = pick_obj("destination object");
+	src1_dp = pick_obj("first source object");
+	src2_dp = pick_obj("second source object");
 
-	if( dst_dp == NO_OBJ || src1_dp == NO_OBJ || src2_dp == NO_OBJ )
+	if( dst_dp == NULL || src1_dp == NULL || src2_dp == NULL )
 		return;
 
 	// BUG make sure sizes match
@@ -799,10 +802,10 @@ COMMAND_FUNC( do_npps_vmul )
 	NppStatus s;
 #endif // HAVE_LIBNPP
 
-	dst_dp = PICK_OBJ("destination/source object");
-	src_dp = PICK_OBJ("source object");
+	dst_dp = pick_obj("destination/source object");
+	src_dp = pick_obj("source object");
 
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ )
+	if( dst_dp == NULL || src_dp == NULL )
 		return;
 
 	// BUG make sure sizes match

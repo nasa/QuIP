@@ -18,8 +18,10 @@ static float ierror3[3][MAXCOLS];
 static unsigned char image[3][MAXCOLS];
 //static float qerror[3][MAXCOLS];	/* the actual pointwise error */
 
+// raw causes a symbol conflict w/ ncurses!?
 
-static float raw[3], rbraw[3];
+//static float fraw[3];
+static float rbraw[3];
 //static int zz;
 
 /* pseudo-impulse responses */
@@ -45,8 +47,10 @@ float s3_pir[4][4]={
 static void get_raw_err(QSP_ARG_DECL  int col)		/* get raw rgb error */
 {
 	int zz;
-	for(zz=0;zz<3;zz++)
-		rbraw[zz]=raw[zz]=desired[zz][col]-quant_level[ thebest[zz] ];
+	for(zz=0;zz<3;zz++){
+		rbraw[zz]=desired[zz][col]-quant_level[ thebest[zz] ];
+		//fraw[zz]=rbraw[zz];	// not needed?
+	}
 	rgb2o(QSP_ARG  rbraw);	/* tranform to r,b,l */
 }
 
@@ -183,12 +187,14 @@ static void sprd_e3(float * cvec,int col)
 	}
 }
 
-static int not_float(Data_Obj *dp)
+#define not_float(dp) _not_float(QSP_ARG  dp)
+
+static int _not_float(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( OBJ_PREC(dp) != PREC_SP ){
-		sprintf(DEFAULT_ERROR_STRING,"object %s (%s) must have float precision",
+		sprintf(ERROR_STRING,"object %s (%s) must have float precision",
 			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(1);
 	}
 	return(0);
@@ -203,15 +209,15 @@ void ctoneit(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp)
 sprintf(ERROR_STRING,"BEGIN ctoneit, dst = %s",OBJ_NAME(dst_dp));
 advise(ERROR_STRING);
 
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ ){
-		NWARN("ctoneit:  missing object");
+	if( dst_dp == NULL || src_dp == NULL ){
+		warn("ctoneit:  missing object");
 		return;
 	}
 	if( not_float(dst_dp) ) return;
 	if( not_float(src_dp) ) return;
 
 	if( nlevels <= 0 ){
-		NWARN("ctoneit:  need to specify number of quantization levels first");
+		warn("ctoneit:  need to specify number of quantization levels first");
 		return;
 	}
 

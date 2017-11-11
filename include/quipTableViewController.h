@@ -6,11 +6,13 @@
 @class Nav_Item;
 
 #ifdef BUILD_FOR_IOS
+//#include <NSString.h>
 
 @interface quipTableViewController : UITableViewController <UIAlertViewDelegate>
 #endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
+#include <AppKit/NSViewController.h>
 @interface quipTableViewController : NSViewController
 #endif // BUILD_FOR_MACOS
 

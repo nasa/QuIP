@@ -1,4 +1,5 @@
 #include "quip_config.h"
+#include "container_fwd.h"
 
 #ifdef HAVE_PARPORT
 
@@ -46,31 +47,31 @@ ParPort * open_parport(QSP_ARG_DECL  const char *name)
 		}
 	}
 	ppp = parport_of(QSP_ARG  name);
-	if( ppp != NO_PARPORT ){
+	if( ppp != NULL ){
 		sprintf(ERROR_STRING,"ParPort %s is already open",name);
 		WARN(ERROR_STRING);
-		return NO_PARPORT;
+		return NULL;
 	}
 
 	ppp = new_parport(QSP_ARG  name);
-	if( ppp == NO_PARPORT ) {
+	if( ppp == NULL ) {
 		sprintf(ERROR_STRING,"Unable to create new parallel port structure %s",name);
 		WARN(ERROR_STRING);
-		return NO_PARPORT;
+		return NULL;
 	}
 
 	ppp->pp_fd = open(ppp->pp_name,O_RDWR);
 	if( ppp->pp_fd < 0 ){
 		perror("open");
 		WARN("error opening parallel port device");
-		return NO_PARPORT;
+		return NULL;
 	}
 	if( ioctl(ppp->pp_fd,PPCLAIM,NULL) < 0 ){
 		perror("ioctl");
 		WARN("error claiming parallel port device");
 		close(ppp->pp_fd);
 		del_parport(QSP_ARG  ppp);
-		return NO_PARPORT;
+		return NULL;
 	}
 	return ppp;
 }

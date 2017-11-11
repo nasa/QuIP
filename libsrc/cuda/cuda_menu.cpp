@@ -24,72 +24,19 @@
 #include <cuda_runtime_api.h>
 #include <curand.h>
 
-
-#ifdef FOOBAR
-// BUG - why include this twice???
-#ifdef HAVE_OPENGL
-#ifdef HAVE_GLUT
-#include "cuda_viewer.h"
-#endif /* HAVE_GLUT */
-#endif /* HAVE_OPENGL */
-#endif // FOOBAR
-
 #endif // HAVE_CUDA
 
+extern "C" {
 #include "quip_prot.h"	// can this come after cuda includes?
+}
 
 #include "cuda_api.h"
 #include "my_cuda.h"
 #include "cuda_supp.h"
 
-#ifdef FOOBAR
-// BUG - why include this twice???
-#ifdef HAVE_CUDA
-#ifdef HAVE_OPENGL
-#ifdef HAVE_GLUT
-#include "cuda_viewer.h"
-#endif /* HAVE_GLUT */
-#endif /* HAVE_OPENGL */
-#endif // HAVE_CUDA
-#endif // FOOBAR
-
-// includes, project
-//#include <cutil_inline.h>
-
-// includes, kernels
-//#include <myproject_kernel.cu>
-
 ////////////////////////////////////////////////////////////////////////////////
 // declaration, forward
 void runTest( int argc, char** argv);
-
-//static int gl_argc;
-//static char ** gl_argv;
-
-/*
-static COMMAND_FUNC( test_cuda )
-{
-	runTest( gl_argc, gl_argv );
-}
-
-static COMMAND_FUNC( exit_cuda )
-{
-	//advise("exit_cuda calling cutilExit");
-	//cutilExit(gl_argc, gl_argv);
-	nice_exit(0);
-}
-*/
-
-#ifdef FOOBAR
-static COMMAND_FUNC( do_test_blas )
-{
-#ifdef HAVE_CUDA
-	if( test_cublas() != EXIT_SUCCESS )
-		NWARN("BLAS test failed");
-#endif
-}
-#endif /* FOOBAR */
-
 
 //COMMAND TABLE FOR CUDA NPP LIBRARY
 #undef ADD_CMD
@@ -110,7 +57,7 @@ MENU_END( npp )
 
 static COMMAND_FUNC( do_npp_menu )
 {
-	PUSH_MENU(npp);
+	CHECK_AND_PUSH_MENU(npp);
 }
 
 #ifdef NOT_YET	// not obsolete, but not ready to integrate...
@@ -223,7 +170,7 @@ MENU_END( cuda_gl )
 static COMMAND_FUNC(do_cuda_gl_menu)
 {
 	/* Do cuda-specific init here? */
-	PUSH_MENU(cuda_gl);
+	CHECK_AND_PUSH_MENU(cuda_gl);
 }
 
 #endif /* HAVE_GLUT */
@@ -244,7 +191,7 @@ MENU_END( cuda_event )
 
 static COMMAND_FUNC( do_cuda_event_menu )
 {
-	PUSH_MENU(cuda_event);
+	CHECK_AND_PUSH_MENU(cuda_event);
 }
 
 
@@ -261,7 +208,7 @@ MENU_END( cuda_stream )
 
 static COMMAND_FUNC( do_cuda_stream_menu )
 {
-	PUSH_MENU(cuda_stream);
+	CHECK_AND_PUSH_MENU(cuda_stream);
 }
 
 static COMMAND_FUNC( do_prt_cap )
@@ -327,18 +274,6 @@ extern "C" {
 //#include "veclib/cu2_menu_prot.h"	// cu2_init_platform()
 extern void cu2_init_platform(SINGLE_QSP_ARG_DECL);	// BUG include file conflicts with old macros...
 
-void init_cuda_devices(SINGLE_QSP_ARG_DECL)
-{
-#ifdef HAVE_CUDA
-#ifdef FOOBAR
-	_init_cuda_devices(SINGLE_QSP_ARG);
-#endif // FOOBAR
-	cu2_init_platform(SINGLE_QSP_ARG);
-#else // ! HAVE_CUDA
-	WARN("init_cuda_devices:  no CUDA support in this build!?");
-#endif // ! HAVE_CUDA
-}
-
 COMMAND_FUNC( do_cuda_menu )
 {
 	static int cuda_inited=0;
@@ -350,7 +285,7 @@ COMMAND_FUNC( do_cuda_menu )
 		cuda_inited=1;
 	}
 
-	PUSH_MENU(cuda);
+	CHECK_AND_PUSH_MENU(cuda);
 }
 
 }

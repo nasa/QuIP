@@ -14,10 +14,9 @@
 
 //#include "uio.h"
 
-#define N_DUMPER_BYTES	0x2000		/* 8k */
+#define TRASH_BUF_SIZE	0x2000		/* 8k */
 
-static char dumper[N_DUMPER_BYTES];	/* BUG need to check that 1024
-							is really max size */
+static char write_only_buffer[TRASH_BUF_SIZE];
 
 /* We used to read() in chunks - WHY???
  * The code had a bug, it counted pixels and assumed that the number of bytes
@@ -89,7 +88,7 @@ void rd_raw_gaps(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 	}
 }
 
-void read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
+void _read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 {
 	dimension_t n, size;
 	size_t n2;
@@ -98,7 +97,7 @@ void read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 	int goofed=0;
 #endif /* CRAY */
 
-	if( !same_type(QSP_ARG  dp,ifp) ) return;
+	if( !same_type(dp,ifp) ) return;
 
 	/* this wants nframes the same too!?
 	 * same_size() checks only rows & cols
@@ -219,11 +218,13 @@ advise(ERROR_STRING);
 
 
 
-/* read an image which is too small or too big.
+/* read an image which is too small or too big for the target.
  * The offsets are offsets into the target data object.
  */
 
-int frag_read(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,index_t t_offset)
+#define frag_read(dp,ifp,x_offset,y_offset,t_offset) _frag_read(QSP_ARG  dp,ifp,x_offset,y_offset,t_offset)
+
+static int _frag_read(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,index_t t_offset)
 {
 	dimension_t x_fill, y_fill;	/* number of cols,rows to draw */
 	dimension_t dx,dy;		/* dimensions of input file */
@@ -231,14 +232,14 @@ int frag_read(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,ind
 	dimension_t x_dump, y_dump;	/* data to read and throw away */
 	dimension_t i;
 	char *p;
-	dimension_t size, dump_count, n_dumper_elements;
+	dimension_t size, n_elements_to_discard, n_trash_elements_per_buf;
 
 	size = PREC_SIZE(OBJ_PREC_PTR(dp));
 	size *= OBJ_COMPS(dp);
 	x_fill=(OBJ_COLS(dp)-x_offset);
 	y_fill=(OBJ_ROWS(dp)-y_offset);
 	if( x_fill <= 0 || y_fill <= 0 ){
-		NWARN("frag_read:  offset too great for this object");
+		warn("frag_read:  offset too great for this object");
 		return(-1);
 	}
 	dx=OBJ_COLS(ifp->if_dp);
@@ -248,21 +249,21 @@ int frag_read(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,ind
 		x_dump=dx-x_fill;
 		//x_skip=0;
 if( ! THICK_TOLD ){
-sprintf(DEFAULT_ERROR_STRING,"image in file %s too wide (%d) for object %s (%d)",
+sprintf(ERROR_STRING,"image in file %s too wide (%d) for object %s (%d)",
 ifp->if_name,dx,OBJ_NAME(dp),x_fill);
-NWARN(DEFAULT_ERROR_STRING);
+warn(ERROR_STRING);
 /*
-//sprintf(DEFAULT_ERROR_STRING,"xskip = %d    x_fill = %d    dx = %d    x_dump = %d\n",x_skip,x_fill,dx,x_dump);
-//advise(DEFAULT_ERROR_STRING);
+//sprintf(ERROR_STRING,"xskip = %d    x_fill = %d    dx = %d    x_dump = %d\n",x_skip,x_fill,dx,x_dump);
+//advise(ERROR_STRING);
 */
 TELL_THICK;
 }
 	} else {		/* image thinner that data area? */
 
 if( dx < x_fill && (! THIN_TOLD) ){
-sprintf(DEFAULT_ERROR_STRING,"image in file %s too thin (%d) for object %s (%d)",
+sprintf(ERROR_STRING,"image in file %s too thin (%d) for object %s (%d)",
 ifp->if_name,dx,OBJ_NAME(dp),x_fill);
-NWARN(DEFAULT_ERROR_STRING);
+warn(ERROR_STRING);
 TELL_THIN;
 }
 		//x_skip=x_fill-dx;
@@ -272,9 +273,9 @@ TELL_THIN;
 	if( dy > y_fill ){	/* image taller than data area */
 
 if( ! TALL_TOLD ){
-sprintf(DEFAULT_ERROR_STRING,"image in file %s too tall (%d) for object %s (%d)",
+sprintf(ERROR_STRING,"image in file %s too tall (%d) for object %s (%d)",
 ifp->if_name,dy,OBJ_NAME(dp),y_fill);
-NWARN(DEFAULT_ERROR_STRING);
+warn(ERROR_STRING);
 TELL_TALL;
 }
 		x_skip=x_fill-dx;
@@ -282,9 +283,9 @@ TELL_TALL;
 	} else {		/* image shorter than data area */
 
 if( dy < y_fill && (! SHORT_TOLD) ){
-sprintf(DEFAULT_ERROR_STRING,"image in file %s too short (%d) for object %s (%d)",
+sprintf(ERROR_STRING,"image in file %s too short (%d) for object %s (%d)",
 ifp->if_name,dy,OBJ_NAME(dp),y_fill);
-NWARN(DEFAULT_ERROR_STRING);
+warn(ERROR_STRING);
 TELL_SHORT;
 }
 		x_skip=x_fill-dx;
@@ -294,7 +295,7 @@ TELL_SHORT;
 	p=(char *)OBJ_DATA_PTR(dp) + t_offset;
 	p += y_offset * size * OBJ_COLS(dp);
 
-	n_dumper_elements = N_DUMPER_BYTES/(OBJ_COMPS(ifp->if_dp)*ELEMENT_SIZE(ifp->if_dp));
+	n_trash_elements_per_buf = TRASH_BUF_SIZE/(OBJ_COMPS(ifp->if_dp)*ELEMENT_SIZE(ifp->if_dp));
 
 	for(i=0;i<y_fill;i++){
 		p += (x_offset*size);
@@ -303,51 +304,49 @@ TELL_SHORT;
 				!= (size_t)x_fill )
 				return(-1);
 			/* now read the trash... */
-			dump_count = x_dump;
+			n_elements_to_discard = x_dump;
 			do {
-				dimension_t n;
-				if( dump_count > n_dumper_elements )
-					n = n_dumper_elements;
+				dimension_t n_to_read;
+				if( n_elements_to_discard > n_trash_elements_per_buf )
+					n_to_read = n_trash_elements_per_buf;
 				else
-					n = dump_count;
+					n_to_read = n_elements_to_discard;
 
-				if( fread(dumper,(size_t)size,(size_t)n,ifp->if_fp) != (size_t)n )
+				if( fread(write_only_buffer,(size_t)size,(size_t)n_to_read,ifp->if_fp) != (size_t)n_to_read )
 					return(-1);
 
-				dump_count -= n;
-			} while( dump_count > 0 );
+				n_elements_to_discard -= n_to_read;
+			} while( n_elements_to_discard > 0 );
 		} else {
 			/* BUG casting for pc */
 			if( read(ifp->if_fd,p,(u_int)(size*x_fill))
 				!= (int)(size*x_fill) )
 				return(-1);
 			/* now read the trash... */
-			dump_count = x_dump;
+			n_elements_to_discard = x_dump;
 			do {
-				dimension_t n;
-				if( dump_count > n_dumper_elements )
-					n = n_dumper_elements;
+				dimension_t n_to_read;
+				if( n_elements_to_discard > n_trash_elements_per_buf )
+					n_to_read = n_trash_elements_per_buf;
 				else
-					n = dump_count;
+					n_to_read = n_elements_to_discard;
 
-				if( read(ifp->if_fd,dumper,(u_int)(size*n)) != (int)(size*n) )
+				if( read(ifp->if_fd,write_only_buffer,(u_int)(size*n_to_read)) != (int)(size*n_to_read) )
 					return(-1);
-				dump_count -= n;
-			} while( dump_count > 0 );
+				n_elements_to_discard -= n_to_read;
+			} while( n_elements_to_discard > 0 );
 		}
 		p += ( (x_fill+x_skip) *size);
 	}
 	for(i=0;i<y_dump;i++)
-		/* BUG need to limit read size to dumper */
-		if( dx > n_dumper_elements )
-			NERROR1("There is a bug in fileio/read_raw.c - FIXME");
-
+		assert(dx > n_trash_elements_per_buf );
+		/* BUG need to limit read size to write_only_buffer */
 		if( USES_STDIO(ifp) ){
-			if( fread(dumper,(size_t)size,(size_t)dx,ifp->if_fp)
+			if( fread(write_only_buffer,(size_t)size,(size_t)dx,ifp->if_fp)
 				!= (size_t)dx )
 				return(-1);
 		} else {
-			if( read(ifp->if_fd,dumper,(u_int)(size*dx))
+			if( read(ifp->if_fd,write_only_buffer,(u_int)(size*dx))
 				!= (int)(size*dx) )
 				return(-1);
 		}
@@ -359,7 +358,7 @@ FIO_RD_FUNC( raw )
 {
 	uint32_t totfrms;
 
-	if( !same_type(QSP_ARG  dp,ifp) ) return;
+	if( !same_type(dp,ifp) ) return;
 
 	if( t_offset >= OBJ_FRAMES(dp) ){
 		sprintf(ERROR_STRING,
@@ -381,7 +380,7 @@ FIO_RD_FUNC( raw )
 		OBJ_COLS(dp)==OBJ_COLS(ifp->if_dp) &&
 		x_offset==0 && y_offset==0 ){
 
-		read_object(QSP_ARG  dp,ifp);
+		read_object(dp,ifp);
 	} else {
 		if( frag_read(dp,ifp,x_offset,y_offset,t_offset) < 0 )
 			goto readerr;
@@ -396,12 +395,12 @@ FIO_RD_FUNC( raw )
 
 	if( FILE_FINISHED(ifp) ){
 
-		//if( verbose ){
+		if( verbose ){
 			sprintf(ERROR_STRING,
 				"closing file \"%s\" after reading %d frames",
 				ifp->if_name,ifp->if_nfrms);
 			advise(ERROR_STRING);
-		//}
+		}
 		(*FT_CLOSE_FUNC(IF_TYPE(ifp)))(QSP_ARG  ifp);
 	}
 	return;

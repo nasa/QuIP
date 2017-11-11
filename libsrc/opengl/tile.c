@@ -12,6 +12,7 @@
 #endif
 
 #include "quip_prot.h"
+#include "debug.h"
 #include "tile.h"
 #include "gl_util.h"
 #include "data_obj.h"
@@ -31,9 +32,9 @@
 			/* if( vp->v_nref == 0 ){					\
 				release_vertex(vp);				\
 			}*/							\
-			vp = NO_VERTEX;
+			vp = NULL;
 
-List *free_pts_lp=NO_LIST;
+List *free_pts_lp=NULL;
 
 Vertex vertex_tbl[MAX_VERTICES];
 int n_pts_used=0;
@@ -73,7 +74,8 @@ const char *dem_directory=NULL, *tex_directory=NULL;
 
 int opposite_dir[4]={ SOUTH, WEST, NORTH, EAST };	/* relies on NESW = 0123 */
 
-static void xdraw_tile(Tile *tp,Quad_Coords *qcp);
+static void _xdraw_tile(QSP_ARG_DECL  Tile *tp,Quad_Coords *qcp);
+#define xdraw_tile(tp,qcp) _xdraw_tile(QSP_ARG  tp,qcp)
 
 #ifdef HASH_TILE_NAMES
 
@@ -81,10 +83,10 @@ ITEM_INTERFACE_DECLARATIONS(Tile,tile_)
 
 #endif /* HASH_TILE_NAMES */
 
-void set_dthresh(float d)
+void _set_dthresh(QSP_ARG_DECL  float d)
 {
 	if( d_thresh <= 0 ){
-		NWARN("set_dthresh:  distance threshold must be positive");
+		warn("set_dthresh:  distance threshold must be positive");
 		return;
 	}
 	d_thresh=d;
@@ -105,10 +107,10 @@ static void release_vertex(Vertex *vp)
 {
 	Node *np;
 
-//sprintf(DEFAULT_ERROR_STRING,"\t\tFreeing vertex at 0x%lx",(int_for_addr)vp);
-//NADVISE(DEFAULT_ERROR_STRING);
+//sprintf(ERROR_STRING,"\t\tFreeing vertex at 0x%lx",(int_for_addr)vp);
+//advise(ERROR_STRING);
 	np = mk_node(vp);
-	if( free_pts_lp == NO_LIST )
+	if( free_pts_lp == NULL )
 		free_pts_lp = new_list();
 	addTail(free_pts_lp,np);
 
@@ -139,47 +141,49 @@ void init_dir_names()
 	quad_name[SE]="se";
 }
 
-static Vertex *find_free_vertex()
+#define find_free_vertex() _find_free_vertex(SINGLE_QSP_ARG)
+
+static Vertex *_find_free_vertex(SINGLE_QSP_ARG_DECL)
 {
 	Node *np;
 	Vertex *vp;
 
-	if( free_pts_lp == NO_LIST ) return(NO_VERTEX);
-	if( free_pts_lp->l_head == NO_NODE ) return(NO_VERTEX);
+	if( free_pts_lp == NULL ) return(NULL);
+	if( QLIST_HEAD(free_pts_lp) == NULL ) return(NULL);
 	np = remHead(free_pts_lp);
 	vp = (Vertex *)np->n_data;
 	rls_node(np);
 #ifdef CAUTIOUS
 if( vp->v_x != WACKY_NUM || vp->v_y != WACKY_NUM || vp->v_z != WACKY_NUM ){
-sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  find_free_vertex:  supposedly free vertex at 0x%lx does not have expected wacky coord vals",(int_for_addr)vp);
-NERROR1(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"CAUTIOUS:  find_free_vertex:  supposedly free vertex at 0x%lx does not have expected wacky coord vals",(int_for_addr)vp);
+error1(ERROR_STRING);
 }
 #endif /* CAUTIOUS */
 	return(vp);
 }
 
-Vertex *new_vertex( float x, float y )
+Vertex *_new_vertex(QSP_ARG_DECL  float x, float y )
 {
 	Vertex *vp;
 
 	if( n_pts_used >= MAX_VERTICES ){
-		sprintf(DEFAULT_ERROR_STRING,"too many tile vertices requested (%d max)",MAX_VERTICES);
-		NERROR1(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"too many tile vertices requested (%d max)",MAX_VERTICES);
+		error1(ERROR_STRING);
 	}
 
 	vp = find_free_vertex();
-	if( vp==NO_VERTEX ){
+	if( vp==NULL ){
 		vp = &vertex_tbl[n_pts_used++];
-sprintf(DEFAULT_ERROR_STRING,"new_vertex %d at %g %g",n_pts_used,x,y);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"new_vertex %d at %g %g",n_pts_used,x,y);
+advise(ERROR_STRING);
 	}
 	vp->v_x = x;
 	vp->v_y = y;
 	vp->v_z = 0.0;		/* maybe this is where we should load the elevation value? */
 				/* BUT we don't know the level-of-detail... */
 /*
-sprintf(DEFAULT_ERROR_STRING,"new_vertex %g %g",x,y);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"new_vertex %g %g",x,y);
+advise(ERROR_STRING);
 */
 	vp->v_nref = 0;		/* we assume caller increments this as needed? */
 	return(vp);
@@ -189,14 +193,14 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #define VERIFY_NEIGHBOR_IS_NULL(new_tp,new_dir,old_tp,old_dir)						\
 													\
-		if( new_tp->t_n[new_dir] != NO_TILE )							\
-			NERROR1("CAUTIOUS:  check_if_neighbors:  new tile neighbor is not null!?");	\
-		if( old_tp->t_n[old_dir] != NO_TILE ){							\
+		if( new_tp->t_n[new_dir] != NULL )							\
+			error1("CAUTIOUS:  check_if_neighbors:  new tile neighbor is not null!?");	\
+		if( old_tp->t_n[old_dir] != NULL ){							\
 show_tile(QSP_ARG  old_tp,"");\
-			sprintf(DEFAULT_ERROR_STRING,								\
+			sprintf(ERROR_STRING,								\
 	"CAUTIOUS:  check_if_neighbors:  existing tile %s, %s neighbor is %s (expected null)!?",	\
 			old_tp->t_name,dir_name[old_dir], old_tp->t_n[old_dir]->t_name);		\
-			NERROR1(DEFAULT_ERROR_STRING);								\
+			error1(ERROR_STRING);								\
 		}
 
 #else /* ! CAUTIOUS */
@@ -211,7 +215,7 @@ show_tile(QSP_ARG  old_tp,"");\
 													\
 		tp->t_flags &= ~BOUNDARY_FLAGS_MASK;							\
 		for(i=0;i<4;i++){									\
-			if( tp->t_n[i] == NO_TILE )							\
+			if( tp->t_n[i] == NULL )							\
 				tp->t_flags |= TILE_BOUNDARY_FLAG(i);					\
 		}											\
 	}
@@ -222,41 +226,41 @@ show_tile(QSP_ARG  old_tp,"");\
 											\
 			vp->v_nref --;		/* free vertex */			\
 			if( vp->v_nref != 0 ){						\
-				sprintf(DEFAULT_ERROR_STRING,"Attempt to free multiply-referenced vertex!?");\
-				NWARN(DEFAULT_ERROR_STRING);					\
-				NERROR1("Check declaration order of master tiles");	\
+				sprintf(ERROR_STRING,"Attempt to free multiply-referenced vertex!?");\
+				warn(ERROR_STRING);					\
+				error1("Check declaration order of master tiles");	\
 			} else {							\
 				release_vertex(vp);					\
 			}								\
-			vp = NO_VERTEX;
+			vp = NULL;
 
 #define TEST_IF_NEIGHBORS(new_tp,new_dir,new_corner1,new_corner2,old_tp,old_dir,old_corner1,old_corner2) \
 													\
 	if( new_tp->t_v[new_corner1]->v_y == old_tp->t_v[old_corner1]->v_y &&				\
 	    new_tp->t_v[new_corner1]->v_x == old_tp->t_v[old_corner1]->v_x ){				\
 		/* release the two vertices */								\
-sprintf(DEFAULT_ERROR_STRING,"%s corner of tile %s (%g,%g) matches %s corner of tile %s (%g,%g)",\
+sprintf(ERROR_STRING,"%s corner of tile %s (%g,%g) matches %s corner of tile %s (%g,%g)",\
 quad_name[new_corner1],new_tp->t_name,new_tp->t_v[new_corner1]->v_x,new_tp->t_v[new_corner1]->v_y,\
 quad_name[old_corner1],old_tp->t_name,old_tp->t_v[old_corner1]->v_x,old_tp->t_v[old_corner1]->v_y);\
-NADVISE(DEFAULT_ERROR_STRING);\
-sprintf(DEFAULT_ERROR_STRING,"releasing %s and %s vertices at 0x%lx and 0x%lx",\
+advise(ERROR_STRING);\
+sprintf(ERROR_STRING,"releasing %s and %s vertices at 0x%lx and 0x%lx",\
 quad_name[new_corner1],quad_name[new_corner2],(int_for_addr)new_tp->t_v[new_corner1],(int_for_addr)new_tp->t_v[new_corner2]);\
-NADVISE(DEFAULT_ERROR_STRING);\
+advise(ERROR_STRING);\
 		if( new_tp->t_v[new_corner1] != old_tp->t_v[old_corner1] ){				\
 			FREE_VERTEX(new_tp->t_v[new_corner1]);						\
 			new_tp->t_v[new_corner1] = old_tp->t_v[old_corner1];				\
 			new_tp->t_v[new_corner1]->v_nref++;						\
-sprintf(DEFAULT_ERROR_STRING,"%s corner of tile %s  reset to %g,%g",\
+sprintf(ERROR_STRING,"%s corner of tile %s  reset to %g,%g",\
 quad_name[new_corner1],new_tp->t_name,new_tp->t_v[new_corner1]->v_x,new_tp->t_v[new_corner1]->v_y);\
-NADVISE(DEFAULT_ERROR_STRING);\
+advise(ERROR_STRING);\
 		}											\
 		if( new_tp->t_v[new_corner2] != old_tp->t_v[old_corner2] ){				\
 			FREE_VERTEX(new_tp->t_v[new_corner2]);						\
 			new_tp->t_v[new_corner2] = old_tp->t_v[old_corner2];				\
 			new_tp->t_v[new_corner2]->v_nref++;						\
-sprintf(DEFAULT_ERROR_STRING,"%s corner of tile %s  reset to %g,%g",\
+sprintf(ERROR_STRING,"%s corner of tile %s  reset to %g,%g",\
 quad_name[new_corner2],new_tp->t_name,new_tp->t_v[new_corner2]->v_x,new_tp->t_v[new_corner2]->v_y);\
-NADVISE(DEFAULT_ERROR_STRING);\
+advise(ERROR_STRING);\
 		}											\
 													\
 		VERIFY_NEIGHBOR_IS_NULL(new_tp,new_dir,old_tp,old_dir)					\
@@ -283,13 +287,13 @@ NADVISE(DEFAULT_ERROR_STRING);\
 #endif /* FOOBAR */
 
 
-Master_Tile * new_master_tile(Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw)
+Master_Tile * _new_master_tile(QSP_ARG_DECL  Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw)
 {
 	Master_Tile *mtp;
 	int i;
 
 	mtp = (Master_Tile *)getbuf(sizeof(*mtp));
-	mtp->mt_tp=new_tile(NO_TILE,nw,ne,se,sw,-1);
+	mtp->mt_tp=new_tile(NULL,nw,ne,se,sw,-1);
 
 	/* the vertices have no elevation set yet...
 	 * But we can't do anything now because the DEM's haven't been read.
@@ -299,16 +303,16 @@ Master_Tile * new_master_tile(Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw)
 	mtp->mt_dem_name = NULL;
 	mtp->mt_tex_name = NULL;
 	for(i=0;i<MAX_DEM_LEVELS;i++)
-		mtp->mt_dem_dp[i] = NO_OBJ;
+		mtp->mt_dem_dp[i] = NULL;
 	for(i=0;i<MAX_TEX_LEVELS;i++)
-		mtp->mt_tex_dp[i] = NO_OBJ;
+		mtp->mt_tex_dp[i] = NULL;
 
 	/* now determine whether or not this tile is a boundary tile */
 	/* When two master tiles abut, we would really like for them to share vertices.
 	 * But this is not implemented yet.
 	 */
 
-	if( tile_lp == NO_LIST )
+	if( tile_lp == NULL )
 		mtp->mt_tp->t_flags |= BOUNDARY_FLAGS_MASK;
 	else {
 		/* the new master tile is a boundary unless it is flanked on all 4 sides.
@@ -317,19 +321,17 @@ Master_Tile * new_master_tile(Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw)
 		 */
 		Node *np;
 
-		np = tile_lp->l_head;
+		np = QLIST_HEAD(tile_lp);
 /*
-sprintf(DEFAULT_ERROR_STRING,"searching for neighbors of tile %s",mtp->mt_tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"searching for neighbors of tile %s",mtp->mt_tp->t_name);
+advise(ERROR_STRING);
 */
-		while(np!= NO_NODE){
+		while(np!= NULL){
 			Master_Tile *mtp2;
 
 			mtp2 = (Master_Tile *)np->n_data;
-/*
-sprintf(DEFAULT_ERROR_STRING,"checking tile %s",mtp2->mt_tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
-*/
+sprintf(ERROR_STRING,"NOT checking tile %s",mtp2->mt_tp->t_name);
+advise(ERROR_STRING);
 			/* Not used?  why not? */
 			/*
 			CHECK_IF_NEIGHBORS(mtp->mt_tp,mtp2->mt_tp);
@@ -341,11 +343,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #ifdef FOOBAR
 /* show all the tiles for debugging */
-if( tile_lp!=NO_LIST){
+if( tile_lp!=NULL){
 Node *np;
 Master_Tile *mtp;
-np = tile_lp->l_head;
-while(np!= NO_NODE){
+np = QLIST_HEAD(tile_lp);
+while(np!= NULL){
 mtp=np->n_data;
 show_tile(QSP_ARG  mtp->mt_tp,"");
 np = np->n_next;
@@ -356,7 +358,7 @@ np = np->n_next;
 	return(mtp);
 }
 
-Tile * new_tile(Tile *parent, Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw,int quadrant)
+Tile * _new_tile(QSP_ARG_DECL  Tile *parent, Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw,int quadrant)
 {
 	Tile *tp;
 	char name[128];
@@ -381,7 +383,7 @@ Tile * new_tile(Tile *parent, Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw,int
 
 
 #ifdef CAUTIOUS
-	if( tp == NO_TILE ) NERROR1("CAUTIOUS:  new_tile:  couldn't allocate new tile");
+	if( tp == NULL ) error1("CAUTIOUS:  new_tile:  couldn't allocate new tile");
 #endif /* CAUTIOUS */
 
 	nw->v_nref ++;
@@ -396,22 +398,22 @@ Tile * new_tile(Tile *parent, Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw,int
 	tp->t_v[SE] = se;
 	tp->t_v[SW] = sw;
 
-	tp->t_q[0] = NO_TILE;
-	tp->t_q[1] = NO_TILE;
-	tp->t_q[2] = NO_TILE;
-	tp->t_q[3] = NO_TILE;
+	tp->t_q[0] = NULL;
+	tp->t_q[1] = NULL;
+	tp->t_q[2] = NULL;
+	tp->t_q[3] = NULL;
 
 #ifdef TRACK_NEIGHBORS
-	tp->t_n[0] = NO_TILE;
-	tp->t_n[1] = NO_TILE;
-	tp->t_n[2] = NO_TILE;
-	tp->t_n[3] = NO_TILE;
+	tp->t_n[0] = NULL;
+	tp->t_n[1] = NULL;
+	tp->t_n[2] = NULL;
+	tp->t_n[3] = NULL;
 #endif /* TRACK_NEIGHBORS */
 
 	tp->t_flags = 0;
 
 	tp->t_parent = parent;
-	if( parent == NO_TILE ){
+	if( parent == NULL ){
 		tp->t_level=0;
 		tp->t_max=0;
 		tp->t_mtp = NULL;
@@ -421,7 +423,7 @@ Tile * new_tile(Tile *parent, Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw,int
 		tp->t_mtp = parent->t_mtp;
 	}
 
-	if( parent == NO_TILE ){
+	if( parent == NULL ){
 		tp->t_ix = tp->t_iy = 0;
 	} else {
 		/* ix, iy give the coords within the master tile.
@@ -456,16 +458,18 @@ Tile * new_tile(Tile *parent, Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw,int
 /* The max level is the max number of subdivisions in any of this tile's quadrants - right?
  */
 
-static void set_max_level(Tile *tp,int level, int count /* for debugging */ )
+#define set_max_level(tp,level,count) _set_max_level(QSP_ARG  tp,level,count)
+
+static void _set_max_level(QSP_ARG_DECL  Tile *tp,int level, int count /* for debugging */ )
 {
 if( count > 50 )
 {
-NWARN("too many recursive calls to set_max_level");
+warn("too many recursive calls to set_max_level");
 return;
 }
 	if( tp->t_max < level ){
 		tp->t_max = level;
-		if( tp->t_parent != NO_TILE )
+		if( tp->t_parent != NULL )
 			set_max_level(tp->t_parent,level, count+1 );
 	}
 }
@@ -474,12 +478,12 @@ return;
 
 /* debug print statements...
  *
-sprintf(DEFAULT_ERROR_STRING,"using %s neighbor edge vertex for tile %s",dir_name[neighbor],tp->t_name);\
-NADVISE(DEFAULT_ERROR_STRING);\
+sprintf(ERROR_STRING,"using %s neighbor edge vertex for tile %s",dir_name[neighbor],tp->t_name);\
+advise(ERROR_STRING);\
  *
  *
-sprintf(DEFAULT_ERROR_STRING,"No %s neighbor for tile %s, creating new edge vertex",dir_name[neighbor],tp->t_name);\
-NADVISE(DEFAULT_ERROR_STRING);\
+sprintf(ERROR_STRING,"No %s neighbor for tile %s, creating new edge vertex",dir_name[neighbor],tp->t_name);\
+advise(ERROR_STRING);\
  *
  */
 
@@ -497,7 +501,7 @@ NADVISE(DEFAULT_ERROR_STRING);\
 
 #define CHECK_NEIGHBOR_EDGE( neighbor, n_quadrant, nq_corner, corner1, corner2 )		\
 												\
-	if( tp->t_n[neighbor] != NO_TILE && IS_SUBDIVIDED(tp->t_n[neighbor]) ){			\
+	if( tp->t_n[neighbor] != NULL && IS_SUBDIVIDED(tp->t_n[neighbor]) ){			\
 		/* neighboring tile has already been subdivided, reuse the vertex */		\
 		e_ptp[neighbor] = tp->t_n[neighbor]->t_q[n_quadrant]->t_v[nq_corner];		\
 	} else {										\
@@ -515,7 +519,7 @@ NADVISE(DEFAULT_ERROR_STRING);\
 
 #endif /* TRACK_NEIGHBORS */
 
-void subdivide_tile(Tile *tp)
+void _subdivide_tile(QSP_ARG_DECL  Tile *tp)
 {
 	Vertex *new_ptp;
 	Vertex *e_ptp[4];
@@ -523,29 +527,29 @@ void subdivide_tile(Tile *tp)
 
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"\t %s original vertices:\n\t\t\t%g, %g, %g\n\t\t\t%g, %g, %g\n\t\t\t%g, %g, %g\n\t\t\t%g, %g, %g",tp->t_name,
+sprintf(ERROR_STRING,"\t %s original vertices:\n\t\t\t%g, %g, %g\n\t\t\t%g, %g, %g\n\t\t\t%g, %g, %g\n\t\t\t%g, %g, %g",tp->t_name,
 tp->t_v[NW]->v_x,tp->t_v[NW]->v_y,tp->t_v[NW]->v_z,
 tp->t_v[NE]->v_x,tp->t_v[NE]->v_y,tp->t_v[NE]->v_z,
 tp->t_v[SE]->v_x,tp->t_v[SE]->v_y,tp->t_v[SE]->v_z,
 tp->t_v[SW]->v_x,tp->t_v[SW]->v_y,tp->t_v[SW]->v_z
 );
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 
-sprintf(DEFAULT_ERROR_STRING,"\t %s transformed vertices:\n\t\t\t%g, %g\n\t\t\t%g, %g\n\t\t\t%g, %g\n\t\t\t%g, %g",tp->t_name,
+sprintf(ERROR_STRING,"\t %s transformed vertices:\n\t\t\t%g, %g\n\t\t\t%g, %g\n\t\t\t%g, %g\n\t\t\t%g, %g",tp->t_name,
 tp->t_v[NW]->v_xf.p_x,tp->t_v[NW]->v_xf.p_y,
 tp->t_v[NE]->v_xf.p_x,tp->t_v[NE]->v_xf.p_y,
 tp->t_v[SE]->v_xf.p_x,tp->t_v[SE]->v_xf.p_y,
 tp->t_v[SW]->v_xf.p_x,tp->t_v[SW]->v_xf.p_y
 );
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
 #ifdef CAUTIOUS
 	if( IS_SUBDIVIDED(tp) ){
 		/* should this be a CAUTIOUS warning, or is the user allowed to request this? */
-		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  subdivide_tile:  tile %s has already been subdivided!?",tp->t_name);
-		NERROR1(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"CAUTIOUS:  subdivide_tile:  tile %s has already been subdivided!?",tp->t_name);
+		error1(ERROR_STRING);
 		return;
 	}
 #endif /* CAUTIOUS */
@@ -619,11 +623,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 
 /*
-sprintf(DEFAULT_ERROR_STRING,"tile %s, level = %d, ix = %d, iy = %d",tp->t_name, tp->t_level,tp->t_ix,tp->t_iy);
-NADVISE(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"object %s, size = %ld",
+sprintf(ERROR_STRING,"tile %s, level = %d, ix = %d, iy = %d",tp->t_name, tp->t_level,tp->t_ix,tp->t_iy);
+advise(ERROR_STRING);
+sprintf(ERROR_STRING,"object %s, size = %ld",
 OBJ_NAME(tp->t_mtp->mt_dem_dp[tp->t_level]),OBJ_COLS(tp->t_mtp->mt_dem_dp[tp->t_level]));
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 */
 
 		/* Get the center depth samples for the new subtiles.
@@ -647,9 +651,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 		ptr = (u_short *)multiply_indexed_data(tp->t_mtp->mt_dem_dp[tp->t_level],offsets);
 		d_se = *ptr;
 	} else {
-		sprintf(DEFAULT_ERROR_STRING,"subdivide_tile:  tile %s, level %d, MAX_DEM_LEVELS = %d",
+		sprintf(ERROR_STRING,"subdivide_tile:  tile %s, level %d, MAX_DEM_LEVELS = %d",
 			tp->t_name,tp->t_level,MAX_DEM_LEVELS);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -666,8 +670,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 		offsets[2] --;
 		ptr = multiply_indexed_data(tp->t_mtp->mt_dem_dp[tp->t_level],offsets);
 		e_ptp[NORTH]->v_z = Z_SIGN *ptr;
-sprintf(DEFAULT_ERROR_STRING,"N edge vertex z value = %g, offsets = %ld, %ld",e_ptp[NORTH]->v_z,offsets[2],offsets[1]);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"N edge vertex z value = %g, offsets = %ld, %ld",e_ptp[NORTH]->v_z,offsets[2],offsets[1]);
+advise(ERROR_STRING);
 
 		offsets[2] += 2;
 		ptr = multiply_indexed_data(tp->t_mtp->mt_dem_dp[tp->t_level],offsets);
@@ -761,14 +765,14 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #define DEBUG_COUSIN(subq,dir,cousin_q)							\
 											\
-	sprintf(DEFAULT_ERROR_STRING,"Tile %s:  neighbor[%d] = 0x%lx",tp->t_name,dir,(int_for_addr)tp->t_n[dir]);\
-	NADVISE(DEFAULT_ERROR_STRING);\
-	sprintf(DEFAULT_ERROR_STRING,"\tsubquad[%d] = 0x%lx",subq,(int_for_addr)tp->t_q[subq]);\
-	NADVISE(DEFAULT_ERROR_STRING);\
-	if( tp->t_n[dir]!= NO_TILE ){\
-		sprintf(DEFAULT_ERROR_STRING,"\tneighbor[%d]->quadrant[%d] = 0x%lx",dir,cousin_q,\
+	sprintf(ERROR_STRING,"Tile %s:  neighbor[%d] = 0x%lx",tp->t_name,dir,(int_for_addr)tp->t_n[dir]);\
+	advise(ERROR_STRING);\
+	sprintf(ERROR_STRING,"\tsubquad[%d] = 0x%lx",subq,(int_for_addr)tp->t_q[subq]);\
+	advise(ERROR_STRING);\
+	if( tp->t_n[dir]!= NULL ){\
+		sprintf(ERROR_STRING,"\tneighbor[%d]->quadrant[%d] = 0x%lx",dir,cousin_q,\
 			(int_for_addr)tp->t_n[dir]->t_q[cousin_q]);\
-		NADVISE(DEFAULT_ERROR_STRING);\
+		advise(ERROR_STRING);\
 	}
 
 	/* The solution given here only searches up one level...
@@ -777,7 +781,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #define FIND_COUSIN(subq,dir,cousin_q)							\
 											\
-	if( tp->t_n[dir] != NO_TILE && tp->t_n[dir]->t_q[cousin_q] != NO_TILE ){	\
+	if( tp->t_n[dir] != NULL && tp->t_n[dir]->t_q[cousin_q] != NULL ){	\
 		/* link the new quadrant to its cousin */				\
 		tp->t_q[subq]->t_n[dir] = tp->t_n[dir]->t_q[cousin_q];			\
 		/* link the existing cousin to the new quadrant */			\
@@ -818,8 +822,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 	e_ptp[EAST]->v_z = Z_SIGN (d_ne+d_se)/2;
 	e_ptp[NORTH]->v_z = Z_SIGN (d_nw+d_ne)/2;
 	e_ptp[SOUTH]->v_z = Z_SIGN (d_sw+d_se)/2;
-//sprintf(DEFAULT_ERROR_STRING,"Depth samples:  %g   %g   %g   %g",d_nw,d_ne,d_sw,d_se);
-//NADVISE(DEFAULT_ERROR_STRING);
+//sprintf(ERROR_STRING,"Depth samples:  %g   %g   %g   %g",d_nw,d_ne,d_sw,d_se);
+//advise(ERROR_STRING);
 }
 
 #ifdef FOOBAR
@@ -836,11 +840,11 @@ Tile *add_neighbor(Tile *tp, Cardinal_Direction dir)
 	Tile *new_tp;
 
 #ifdef TRACK_NEIGHBORS
-	if( tp->t_n[dir] != NO_TILE ){
-		sprintf(DEFAULT_ERROR_STRING,"tile already has a neighbor to the %s",
+	if( tp->t_n[dir] != NULL ){
+		sprintf(ERROR_STRING,"tile already has a neighbor to the %s",
 			dir_name[dir]);
-		NWARN(DEFAULT_ERROR_STRING);
-		return(NO_TILE);
+		warn(ERROR_STRING);
+		return(NULL);
 	}
 #endif /* TRACK_NEIGHBORS */
 
@@ -848,22 +852,22 @@ Tile *add_neighbor(Tile *tp, Cardinal_Direction dir)
 		case NORTH:
 			ptp1 = EXTEND_EDGE(NW,SW);
 			ptp2 = EXTEND_EDGE(NE,SE);
-			new_tp = new_tile( NO_TILE, ptp1, ptp2, tp->t_v[NE], tp->t_v[NW] );
+			new_tp = new_tile( NULL, ptp1, ptp2, tp->t_v[NE], tp->t_v[NW] );
 			break;
 		case SOUTH:
 			ptp1 = EXTEND_EDGE(SW,NW);
 			ptp2 = EXTEND_EDGE(SE,NE);
-			new_tp = new_tile( NO_TILE, tp->t_v[SW], tp->t_v[SE], ptp2, ptp1 );
+			new_tp = new_tile( NULL, tp->t_v[SW], tp->t_v[SE], ptp2, ptp1 );
 			break;
 		case WEST:
 			ptp1 = EXTEND_EDGE(NW,NE);
 			ptp2 = EXTEND_EDGE(SW,SE);
-			new_tp = new_tile( NO_TILE, ptp1, tp->t_v[NW], tp->t_v[SW], ptp2 );
+			new_tp = new_tile( NULL, ptp1, tp->t_v[NW], tp->t_v[SW], ptp2 );
 			break;
 		case EAST:
 			ptp1 = EXTEND_EDGE(NE,NW);
 			ptp2 = EXTEND_EDGE(SE,SW);
-			new_tp = new_tile( NO_TILE, tp->t_v[NE], ptp1, ptp2, tp->t_v[SE] );
+			new_tp = new_tile( NULL, tp->t_v[NE], ptp1, ptp2, tp->t_v[SE] );
 			break;
 	}
 	return(new_tp);
@@ -885,8 +889,8 @@ void show_tile(QSP_ARG_DECL  Tile *tp, const char *prefix)
 	int i;
 
 if( verbose ){
-sprintf(DEFAULT_ERROR_STRING,"show_tile 0x%lx",(int_for_addr)tp);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"show_tile 0x%lx",(int_for_addr)tp);
+advise(ERROR_STRING);
 }
 	sprintf(msg_str,"Tile %s:",tp->t_name);
 	prt_msg(msg_str);
@@ -915,7 +919,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		prt_msg(msg_str);
 	}
 
-	if( tp->t_q[NW] != NO_TILE ){
+	if( tp->t_q[NW] != NULL ){
 		for(i=0;i<4;i++){
 			sprintf(msg_str,"%s%s quadrant:",prefix,quad_name[i]);
 			prt_msg(msg_str);
@@ -925,7 +929,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 	}
 #ifdef TRACK_NEIGHBORS
 	for(i=0;i<4;i++){
-		if( tp->t_n[i] != NO_TILE ){
+		if( tp->t_n[i] != NULL ){
 			sprintf(msg_str,"%s%s neighbor",prefix,dir_name[i]);
 			prt_msg(msg_str);
 
@@ -942,17 +946,17 @@ NADVISE(DEFAULT_ERROR_STRING);
  * Here it appears we are using v_x, v_y, v_z, which are the original???
  */
 
-void draw_tile(Tile *tp)
+void _draw_tile(QSP_ARG_DECL  Tile *tp)
 {
 	if( tp->t_level == tp->t_max ){
 		/* this is just a quadrilateral, a fan with two triangles. */
-		if( debug & gl_debug ) NADVISE("glBegin");
+		if( debug & gl_debug ) advise("glBegin");
 #ifdef HAVE_OPENGL
 		glBegin(GL_TRIANGLE_FAN);
 
 		/* opengl appears to use a left-handed coordinate system, so we flip the sign on z... */
 		/* OR DOES IT??? */
-		if( debug & gl_debug ) NADVISE("glVertex3f (4)");
+		if( debug & gl_debug ) advise("glVertex3f (4)");
 		glVertex3f(	tp->t_v[NW]->v_x,
 			tp->t_v[NW]->v_y, tp->t_v[NW]->v_z );
 		glVertex3f(	tp->t_v[NE]->v_x,
@@ -961,7 +965,7 @@ void draw_tile(Tile *tp)
 			tp->t_v[SE]->v_y, tp->t_v[SE]->v_z );
 		glVertex3f(	tp->t_v[SW]->v_x,
 			tp->t_v[SW]->v_y, tp->t_v[SW]->v_z );
-		if( debug & gl_debug ) NADVISE("glEnd");
+		if( debug & gl_debug ) advise("glEnd");
 			glEnd();
 #endif /* HAVE_OPENGL */
 	} else if( tp->t_level == tp->t_max - 1 ){
@@ -969,9 +973,9 @@ void draw_tile(Tile *tp)
 		 * We can therefore do the whole tile as a triangle fan.
 		 */
 #ifdef HAVE_OPENGL
-		if( debug & gl_debug ) NADVISE("glBegin GL_TRIANGLE_FAN");
+		if( debug & gl_debug ) advise("glBegin GL_TRIANGLE_FAN");
 		glBegin(GL_TRIANGLE_FAN);
-		if( debug & gl_debug ) NADVISE("glVertex3f (9)");
+		if( debug & gl_debug ) advise("glVertex3f (9)");
 
 		glVertex3f(	tp->t_q[NW]->t_v[SE]->v_x,
 				tp->t_q[NW]->t_v[SE]->v_y, tp->t_q[NW]->t_v[SE]->v_z );
@@ -993,7 +997,7 @@ void draw_tile(Tile *tp)
 				tp->t_q[SW]->t_v[SW]->v_y, tp->t_q[SW]->t_v[SW]->v_z );
 		glVertex3f(	tp->t_q[SW]->t_v[NW]->v_x,
 				tp->t_q[SW]->t_v[NW]->v_y, tp->t_q[SW]->t_v[NW]->v_z );	/* same as first vertex */
-		if( debug & gl_debug ) NADVISE("glEnd");
+		if( debug & gl_debug ) advise("glEnd");
 		glEnd();
 #endif /* HAVE_OPENGL */
 	} else {
@@ -1030,30 +1034,30 @@ void xdraw_master( QSP_ARG_DECL  Master_Tile *mtp )
 }
 
 #define VERTEX(a,b)	if( debug & gl_debug ){				\
-				sprintf(DEFAULT_ERROR_STRING,"glVertex3f %s %s quadrant %s vertex    %g %g %g",\
+				sprintf(ERROR_STRING,"glVertex3f %s %s quadrant %s vertex    %g %g %g",\
 				tp->t_name,quad_name[a],quad_name[b],	\
 					tp->t_q[a]->t_v[b]->v_xf.p_x,				\
 					tp->t_q[a]->t_v[b]->v_xf.p_y,				\
 					tp->t_q[a]->t_v[b]->v_xf.p_z);	\
-				NADVISE(DEFAULT_ERROR_STRING);			\
-				sprintf(DEFAULT_ERROR_STRING,"Original pt %s %s quadrant %s vertex  at 0x%lx    %g %g %g",\
+				advise(ERROR_STRING);			\
+				sprintf(ERROR_STRING,"Original pt %s %s quadrant %s vertex  at 0x%lx    %g %g %g",\
 				tp->t_name,quad_name[a],quad_name[b],	\
 					(int_for_addr)tp->t_q[a]->t_v[b],\
 					tp->t_q[a]->t_v[b]->v_x,				\
 					tp->t_q[a]->t_v[b]->v_y,				\
 					tp->t_q[a]->t_v[b]->v_z);	\
-				NADVISE(DEFAULT_ERROR_STRING);			\
+				advise(ERROR_STRING);			\
 			}						\
 			glVertex3f(	tp->t_q[a]->t_v[b]->v_xf.p_x,	\
 					tp->t_q[a]->t_v[b]->v_xf.p_y,	\
 					tp->t_q[a]->t_v[b]->v_xf.p_z );
 
 #define QVERTEX(b)	if( debug & gl_debug ){				\
-				sprintf(DEFAULT_ERROR_STRING,"glVertex3f %d    %g %g %g",b,	\
+				sprintf(ERROR_STRING,"glVertex3f %d    %g %g %g",b,	\
 					tp->t_v[b]->v_xf.p_x,				\
 					tp->t_v[b]->v_xf.p_y,				\
 					tp->t_v[b]->v_xf.p_z);	\
-				NADVISE(DEFAULT_ERROR_STRING);			\
+				advise(ERROR_STRING);			\
 			}						\
 			glVertex3f(	tp->t_v[b]->v_xf.p_x,	\
 					tp->t_v[b]->v_xf.p_y,	\
@@ -1062,8 +1066,8 @@ void xdraw_master( QSP_ARG_DECL  Master_Tile *mtp )
 
 #define TEX_COORD(x,y)	if( texturing ){ 					\
 				if( debug & gl_debug ){				\
-					sprintf(DEFAULT_ERROR_STRING,"glTexCoord2f %g %g",x,y);	\
-					NADVISE(DEFAULT_ERROR_STRING);			\
+					sprintf(ERROR_STRING,"glTexCoord2f %g %g",x,y);	\
+					advise(ERROR_STRING);			\
 				}						\
 				glTexCoord2f(x,y);				\
 			}
@@ -1076,7 +1080,7 @@ void xdraw_master( QSP_ARG_DECL  Master_Tile *mtp )
  * The tile needs to refer to the image (images) and the coordinates...
  */
 
-static void xdraw_tile(Tile *tp,Quad_Coords *qcp)
+static void _xdraw_tile(QSP_ARG_DECL  Tile *tp,Quad_Coords *qcp)
 {
 	float x_l,x_c,x_r;
 	float y_u,y_c,y_l;
@@ -1084,16 +1088,16 @@ static void xdraw_tile(Tile *tp,Quad_Coords *qcp)
 	if( NOT_VISIBLE(tp) ){
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"xdraw_tile %s:  NOT_VISIBLE",tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"xdraw_tile %s:  NOT_VISIBLE",tp->t_name);
+advise(ERROR_STRING);
 }
 #endif // QUIP_DEBUG
 		return;
 	}
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"xdraw_tile %s:  TILE_IS_VISIBLE",tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"xdraw_tile %s:  TILE_IS_VISIBLE",tp->t_name);
+advise(ERROR_STRING);
 }
 #endif // QUIP_DEBUG
 
@@ -1116,18 +1120,18 @@ NADVISE(DEFAULT_ERROR_STRING);
 		/* this code draws the outline ... */
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"xdraw_tile %s:  drawing 2-fan",tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"xdraw_tile %s:  drawing 2-fan",tp->t_name);
+advise(ERROR_STRING);
 }
 #endif // QUIP_DEBUG
-		if( debug & gl_debug ) NADVISE("xdraw_tile:  glBegin (2-fan)");
+		if( debug & gl_debug ) advise("xdraw_tile:  glBegin (2-fan)");
 #ifdef HAVE_OPENGL
 		glBegin(GL_TRIANGLE_FAN);
 		TEX_COORD(x_l,y_u); QVERTEX(NW)
 		TEX_COORD(x_r,y_u); QVERTEX(NE)
 		TEX_COORD(x_r,y_l); QVERTEX(SE)
 		TEX_COORD(x_l,y_l); QVERTEX(SW)
-		if( debug & gl_debug ) NADVISE("glEnd");
+		if( debug & gl_debug ) advise("glEnd");
 		glEnd();
 #endif /* HAVE_OPENGL */
 	} else if( tp->t_level == tp->t_max - 1 ){
@@ -1151,31 +1155,31 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"xdraw_tile %s:  drawing 8-fan",tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"xdraw_tile %s:  drawing 8-fan",tp->t_name);
+advise(ERROR_STRING);
 }
 #endif // QUIP_DEBUG
 		dem_dp = tp->t_mtp->mt_dem_dp[0];		/* which index? */
 		tex_dp = tp->t_mtp->mt_tex_dp[3];		/* which index? */
 
 #ifdef CAUTIOUS
-		if( dem_dp == NO_OBJ ){
-			NWARN("null dem object!?");
+		if( dem_dp == NULL ){
+			warn("null dem object!?");
 			return;
 		}
-		if( texturing && tex_dp == NO_OBJ ){
-			NWARN("null texture object!?");
+		if( texturing && tex_dp == NULL ){
+			warn("null texture object!?");
 			return;
 		}
 #endif /* CAUTIOUS */
 
 
-if( debug & gl_debug ) NADVISE("glBegin GL_TRIANGLE_FAN");
+if( debug & gl_debug ) advise("glBegin GL_TRIANGLE_FAN");
 #ifdef HAVE_OPENGL
 		glBegin(GL_TRIANGLE_FAN);
 
 		/* need to specify the texture coords before each vertex... */
-/* NADVISE("texturing tile"); */
+/* advise("texturing tile"); */
 
 		TEX_COORD(x_c,y_c); VERTEX(NW,SE)
 		TEX_COORD(x_l,y_c); VERTEX(NW,SW)
@@ -1188,7 +1192,7 @@ if( debug & gl_debug ) NADVISE("glBegin GL_TRIANGLE_FAN");
 		TEX_COORD(x_l,y_l); VERTEX(SW,SW)		/* seventh triangle */
 		TEX_COORD(x_l,y_c); VERTEX(SW,NW)		/* eigth triangle */
 
-if( debug & gl_debug ) NADVISE("glEnd GL_TRIANGLE_FAN");
+if( debug & gl_debug ) advise("glEnd GL_TRIANGLE_FAN");
 		glEnd();
 #endif /* HAVE_OPENGL */
 
@@ -1231,7 +1235,7 @@ static void elevate_tile(Tile *tp,Master_Tile *mtp,float x1, float y1, float x2,
 	dx=x2-x1;
 	dy=y2-y1;
 	/* NW, NE, SE, SW */
-	if( tp->t_q[NW] != NO_TILE ){
+	if( tp->t_q[NW] != NULL ){
 		elevate_tile(tp->t_q[NW],mtp,x1     ,y1     ,x1+dx/2,y1+dy/2);
 		elevate_tile(tp->t_q[NE],mtp,x1+dx/2,y1     ,x2     ,y1+dy/2);
 		elevate_tile(tp->t_q[SE],mtp,x1+dx/2,y1+dy/2,x2     ,y2     );
@@ -1243,9 +1247,9 @@ static void elevate_tile(Tile *tp,Master_Tile *mtp,float x1, float y1, float x2,
 	else
 		dem_dp = mtp->mt_dem_dp[tp->t_level];
 
-	if( dem_dp == NO_OBJ ){
-		sprintf(DEFAULT_ERROR_STRING,"elevate_tile:  missing object at level %d",tp->t_level);
-		NWARN(DEFAULT_ERROR_STRING);
+	if( dem_dp == NULL ){
+		sprintf(ERROR_STRING,"elevate_tile:  missing object at level %d",tp->t_level);
+		warn(ERROR_STRING);
 	}
 
 #define Z_SCALE_FACTOR	(-0.1)		/* should be 0.1 to convert to meters? */
@@ -1265,12 +1269,12 @@ static void elevate_tile(Tile *tp,Master_Tile *mtp,float x1, float y1, float x2,
 	SET_Z(tp->t_v[SW],x1,y1)
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"elevate_tile %s z values:  %g %g %g %g",tp->t_name,
+sprintf(ERROR_STRING,"elevate_tile %s z values:  %g %g %g %g",tp->t_name,
 tp->t_v[NW]->v_z,
 tp->t_v[NE]->v_z,
 tp->t_v[SE]->v_z,
 tp->t_v[SW]->v_z);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 }
@@ -1285,7 +1289,7 @@ static void texture_tile(Tile *tp,Master_Tile *mtp,float x1, float y1, float x2,
 	dx=x2-x1;
 	dy=y2-y1;
 	/* NW, NE, SE, SW */
-	if( tp->t_q[NW] != NO_TILE ){
+	if( tp->t_q[NW] != NULL ){
 		texture_tile(tp->t_q[NW],mtp,x1     ,y1     ,x1+dx/2,y1+dy/2);
 		texture_tile(tp->t_q[NE],mtp,x1+dx/2,y1     ,x2     ,y1+dy/2);
 		texture_tile(tp->t_q[SE],mtp,x1+dx/2,y1+dy/2,x2     ,y2     );
@@ -1297,9 +1301,9 @@ static void texture_tile(Tile *tp,Master_Tile *mtp,float x1, float y1, float x2,
 	else
 		tex_dp = mtp->mt_tex_dp[tp->t_level];
 
-	if( tex_dp == NO_OBJ ){
-		sprintf(DEFAULT_ERROR_STRING,"texture_tile:  missing object at level %d",tp->t_level);
-		NWARN(DEFAULT_ERROR_STRING);
+	if( tex_dp == NULL ){
+		sprintf(ERROR_STRING,"texture_tile:  missing object at level %d",tp->t_level);
+		warn(ERROR_STRING);
 	}
 }
 #endif // NOT_USED_NOW
@@ -1312,7 +1316,7 @@ void clear_tile_elevations(Tile *tp)
 	for(i=0;i<4;i++){
 		tp->t_v[i]->v_z = 0;
 	}
-	if( tp->t_q[NW] != NO_TILE ){
+	if( tp->t_q[NW] != NULL ){
 		clear_tile_elevations(tp->t_q[NW]);
 		clear_tile_elevations(tp->t_q[NE]);
 		clear_tile_elevations(tp->t_q[SE]);
@@ -1333,10 +1337,10 @@ void master_tile_elevate(QSP_ARG_DECL  Master_Tile *mtp)
 
 /*
 sprintf(ERROR_STRING,"elevating master tile %s",mtp->mt_tp->t_name);
-NADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 */
 	for(i=0;i<MAX_DEM_LEVELS;i++){
-		if( mtp->mt_dem_dp[i] == NO_OBJ ){
+		if( mtp->mt_dem_dp[i] == NULL ){
 			char filename[256];
 			char name[256];
 			Image_File *ifp;
@@ -1361,15 +1365,15 @@ NADVISE(ERROR_STRING);
 			if( dem_directory != NULL ){
 sprintf(ERROR_STRING,"master_tile_elevate:  using DEM dir %s",dem_directory);
 advise(ERROR_STRING);
-				set_iofile_directory(QSP_ARG  dem_directory);
+				set_iofile_directory(dem_directory);
 			}
 
 			sprintf(filename,"%s.%d.tif",mtp->mt_dem_name,i+1);
 sprintf(ERROR_STRING,"DEM filename = %s",filename);
 advise(ERROR_STRING);
-			ifp = read_image_file( QSP_ARG  filename );
-			if( ifp == NO_IMAGE_FILE )
-				ERROR1("error reading elevation data");
+			ifp = read_image_file( filename );
+			if( ifp == NULL )
+				error1("error reading elevation data");
 /*
 sprintf(ERROR_STRING,"\tlevel %d, size is %ld x %ld",i,OBJ_ROWS(ifp->if_dp),OBJ_COLS(ifp->if_dp));
 advise(ERROR_STRING);
@@ -1379,7 +1383,7 @@ advise(ERROR_STRING);
 			sprintf(name,"elevation.%s.%d",mtp->mt_dem_name,i);
 			mtp->mt_dem_dp[i] = dup_obj(QSP_ARG  ifp->if_dp,name);
 
-			read_object_from_file(QSP_ARG  mtp->mt_dem_dp[i],ifp);
+			read_object_from_file(mtp->mt_dem_dp[i],ifp);
 		}
 	}
 
@@ -1408,13 +1412,13 @@ void master_tile_texture(QSP_ARG_DECL  Master_Tile *mtp)
 	if( ! texturing ) return;
 
 /*
-sprintf(DEFAULT_ERROR_STRING,"texturing master tile %s",mtp->mt_tp->t_name);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"texturing master tile %s",mtp->mt_tp->t_name);
+advise(ERROR_STRING);
 */
 
 /* level 0 is 4k x 4k, too big makes the computer thrash... */
 	for(i=3;i<MAX_TEX_LEVELS;i++){
-		if( mtp->mt_tex_dp[i] == NO_OBJ ){
+		if( mtp->mt_tex_dp[i] == NULL ){
 			char filename[256];
 			char name[256];
 			Image_File *ifp;
@@ -1431,14 +1435,14 @@ advise(DEFAULT_ERROR_STRING);
 #endif /* CAUTIOUS */
 
 			if( tex_directory != NULL )
-				set_iofile_directory(QSP_ARG  tex_directory);
+				set_iofile_directory(tex_directory);
 			else
 advise("not resetting texture directory...");
 
 			sprintf(filename,"%s.%d.jpg",mtp->mt_tex_name,i/*+1*/);
-			ifp = read_image_file( QSP_ARG  filename );
-			if( ifp == NO_IMAGE_FILE )
-				NERROR1("unable to read texture file");
+			ifp = read_image_file( filename );
+			if( ifp == NULL )
+				error1("unable to read texture file");
 
 /*
 sprintf(ERROR_STRING,"\tlevel %d, size is %ld x %ld",i,OBJ_ROWS(ifp->if_dp),OBJ_COLS(ifp->if_dp));
@@ -1448,7 +1452,7 @@ advise(ERROR_STRING);
 			sprintf(name,"texture.%s.%d",mtp->mt_tex_name,i);
 			mtp->mt_tex_dp[i] = dup_obj(QSP_ARG  ifp->if_dp,name);
 
-			read_object_from_file(QSP_ARG  mtp->mt_tex_dp[i],ifp);
+			read_object_from_file(mtp->mt_tex_dp[i],ifp);
 		}
 	}
 
@@ -1483,7 +1487,7 @@ advise(ERROR_STRING);
  * takes up more than 2 pixels, we set the threshold to 2/512 = 1/256.
  */
 
-void tile_check_subdiv(Tile *tp,Data_Obj *matp)
+void _tile_check_subdiv(QSP_ARG_DECL  Tile *tp,Data_Obj *matp)
 {
 	/* BUG need to error-check *matp */
 	int i;
@@ -1508,14 +1512,14 @@ void tile_check_subdiv(Tile *tp,Data_Obj *matp)
 
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"tile_check_subdiv %s:  BEGIN\n\n\tmatrix:",tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"\t%g\t%g\t%g\t%g",cp[0],cp[1],cp[2],cp[3]);
-NADVISE(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"\t%g\t%g\t%g\t%g",cp[4],cp[5],cp[6],cp[7]);
-NADVISE(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"\t%g\t%g\t%g\t%g",cp[8],cp[9],cp[10],cp[11]);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"tile_check_subdiv %s:  BEGIN\n\n\tmatrix:",tp->t_name);
+advise(ERROR_STRING);
+sprintf(ERROR_STRING,"\t%g\t%g\t%g\t%g",cp[0],cp[1],cp[2],cp[3]);
+advise(ERROR_STRING);
+sprintf(ERROR_STRING,"\t%g\t%g\t%g\t%g",cp[4],cp[5],cp[6],cp[7]);
+advise(ERROR_STRING);
+sprintf(ERROR_STRING,"\t%g\t%g\t%g\t%g",cp[8],cp[9],cp[10],cp[11]);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -1537,12 +1541,12 @@ NADVISE(DEFAULT_ERROR_STRING);
 					cp[11] ;
 
 /*
-sprintf(DEFAULT_ERROR_STRING,"vertex %d:   %g %g %g",i,tp->t_v[i]->v_x,
+sprintf(ERROR_STRING,"vertex %d:   %g %g %g",i,tp->t_v[i]->v_x,
                                                tp->t_v[i]->v_y,
                                                tp->t_v[i]->v_z);
-NADVISE(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"\txformed:  %g %g %g",x,y,denom);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
+sprintf(ERROR_STRING,"\txformed:  %g %g %g",x,y,denom);
+advise(ERROR_STRING);
 */
 		if( denom <= 0.0 ){
 			/* tile vertex is behind the camera.  We may cull if the tile
@@ -1555,25 +1559,25 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"\tx = %g\t\ty = %g\t\tdenom = %g",x,y,denom);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"\tx = %g\t\ty = %g\t\tdenom = %g",x,y,denom);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		x /= denom;
 		y /= denom;
 /*
-sprintf(DEFAULT_ERROR_STRING,"vertex (%g %g %g) transformed to %g %g",
+sprintf(ERROR_STRING,"vertex (%g %g %g) transformed to %g %g",
 tp->t_v[i]->v_x,tp->t_v[i]->v_y,tp->t_v[i]->v_z,x,y);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 */
 		tp->t_v[i]->v_xf.p_x = x;
 		tp->t_v[i]->v_xf.p_y = y;
 		tp->t_v[i]->v_xf.p_z = 0;
 
 /*
-sprintf(DEFAULT_ERROR_STRING,"\t computed screen pos:  %g %g",	tp->t_v[i]->v_xf.p_x,
+sprintf(ERROR_STRING,"\t computed screen pos:  %g %g",	tp->t_v[i]->v_xf.p_x,
 							tp->t_v[i]->v_xf.p_y);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 */
 	}
 
@@ -1583,8 +1587,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 		tp->t_flags |= TILE_BEHIND_CAMERA;
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"COMPLETELY_BEHIND_CAMERA %s",tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"COMPLETELY_BEHIND_CAMERA %s",tp->t_name);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		return;
@@ -1592,8 +1596,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 		tp->t_flags |= TILE_BEHIND_CAMERA;
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"SMALL_TILE_PARTIALLY_BEHIND_CAMERA %s",tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"SMALL_TILE_PARTIALLY_BEHIND_CAMERA %s",tp->t_name);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		return;
@@ -1621,8 +1625,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 		tp->t_flags |= TILE_OUTSIDE_FOV;
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"OUTSIDE_FOV %s",tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"OUTSIDE_FOV %s",tp->t_name);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		return;
@@ -1641,17 +1645,17 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"CHECKING %s:  d1 = %g, d2 = %g, THRESH = %g)",
+sprintf(ERROR_STRING,"CHECKING %s:  d1 = %g, d2 = %g, THRESH = %g)",
 tp->t_name,d1,d2,d_thresh);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
 	if( n_vertices_behind > 0 ){
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"tile_check_subdiv %s:  subdividing partially visible tile",tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"tile_check_subdiv %s:  subdividing partially visible tile",tp->t_name);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		subdivide_tile(tp);
@@ -1663,8 +1667,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"tile_check_subdiv %s:  subdividing large tile",tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"tile_check_subdiv %s:  subdividing large tile",tp->t_name);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		subdivide_tile(tp);
@@ -1679,15 +1683,15 @@ NADVISE(DEFAULT_ERROR_STRING);
 	} else {
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"tile_check_subdiv %s:  READY_TO_RENDER",tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"tile_check_subdiv %s:  READY_TO_RENDER",tp->t_name);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	}
 #ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
-sprintf(DEFAULT_ERROR_STRING,"tile_check_subdiv %s:  DONE",tp->t_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"tile_check_subdiv %s:  DONE",tp->t_name);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -1698,17 +1702,17 @@ static void free_subtile(Tile *tp)		/* garbage collection */
 	int i;
 
 	for(i=0;i<4;i++){
-		if( tp->t_q[i] != NO_TILE )
+		if( tp->t_q[i] != NULL )
 			free_subtile(tp->t_q[i]);
 	}
 
-//sprintf(DEFAULT_ERROR_STRING,"free_subtile %s",tp->t_name);
-//NADVISE(DEFAULT_ERROR_STRING);
+//sprintf(ERROR_STRING,"free_subtile %s",tp->t_name);
+//advise(ERROR_STRING);
 
 	/* free the vertices */
 	for(i=0;i<4;i++){
-//sprintf(DEFAULT_ERROR_STRING,"\tvertex %d at 0x%lx, n_ref = %d",i,(int_for_addr)tp->t_v[i],tp->t_v[i]->v_nref);
-//NADVISE(DEFAULT_ERROR_STRING);
+//sprintf(ERROR_STRING,"\tvertex %d at 0x%lx, n_ref = %d",i,(int_for_addr)tp->t_v[i],tp->t_v[i]->v_nref);
+//advise(ERROR_STRING);
 		RELEASE_VERTEX( tp->t_v[i] );
 	}
 #ifdef HASH_TILE_NAMES
@@ -1724,9 +1728,9 @@ void undivide_tile(Tile *tp)		/* garbage collection */
 	int i;
 
 	for(i=0;i<4;i++){
-		if( tp->t_q[i] != NO_TILE ){
+		if( tp->t_q[i] != NULL ){
 			free_subtile(tp->t_q[i]);
-			tp->t_q[i] = NO_TILE;
+			tp->t_q[i] = NULL;
 			tp->t_max = tp->t_level;
 		}
 	}

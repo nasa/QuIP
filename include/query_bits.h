@@ -26,18 +26,12 @@ extern "C" {
 #endif /* HAVE_PTHREADS */
 
 #include "typedefs.h"
-#include "strbuf.h"
 
 /* This was 256,
  * things crapped out when I had an input line with 258 chars, there
  * is a bug which should be fixed, but for now it is expedient just
  * to spend a little memory.
  */
-
-#ifndef LLEN
-//#define LLEN	1024
-#define LLEN	512
-#endif /* ! LLEN */
 
 /* query struct flags values */
 #define Q_SOCKET		1
@@ -55,6 +49,7 @@ extern "C" {
 #define Q_SAVING		4096	// 0x1000
 #define Q_FILE_INPUT		8192	// 0x2000
 #define Q_MACRO_INPUT		0x4000
+#define Q_LOOKAHEAD_ADVANCED_LINE	0x8000
 
 #define Q_PRIMARY_INPUT		(Q_SOCKET|Q_INTERACTIVE|Q_MACRO_INPUT|Q_FILE_INPUT)
 #define Q_NON_INPUT_MASK	(~Q_PRIMARY_INPUT)
@@ -68,6 +63,8 @@ extern "C" {
 #define IS_DUPING			( QRY_DUPFILE(CURR_QRY(THIS_QSP)) != NULL )
 #define FIRST_WORD_ON_LINE		( QRY_FLAGS(CURR_QRY(THIS_QSP)) & Q_FIRST_WORD )
 
+#define LOOKAHEAD_ADVANCED_LINE(qp)	(QRY_FLAGS(qp) & Q_LOOKAHEAD_ADVANCED_LINE)
+
 /* size of memory chunks for loop buffer */
 #define LOOPSIZE	256
 
@@ -78,48 +75,6 @@ extern "C" {
 
 
 
-/* query_stack flags - flag bits */
-#define QS_INITED		1	// 0x001
-#define QS_EXPAND_MACS		2	// 0x002
-#define QS_HAD_INTR		4	// 0x004
-#define QS_INTERACTIVE_TTYS	8	// 0x008
-#define QS_FORMAT_PROMPT	16	// 0x010
-#define QS_FORCE_PROMPT		32	// 0x020
-#define QS_LOOKAHEAD_ENABLED	64	// 0x040
-#define QS_STILL_TRYING		128	// 0x080
-#define QS_STRIPPING_QUOTES	256	// 0x100
-#define QS_COMPLETING		512	// 0x200
-#define QS_BUILTINS_INITED	1024	// 0x400
-#define QS_HALTING		2048	// 0x800
-#define QS_HISTORY		4096	// 0x1000
-#define QS_CHEWING		8192	// 0x2000
-#define QS_PROCESSING_CALLBACKS	0x4000
-#define QS_SILENT		0x8000
-#define QS_SILENCE_CHECKED	0x10000
-#define QS_TIME_FMT_UTC		0x20000
-#define QS_HAS_PREV_LOG_MSG	0x40000
-#define QS_SUSPENDED		0x80000
-
-#define HAS_PREV_LOG_MSG(qsp)	(QS_FLAGS(qsp) & QS_HAS_PREV_LOG_MSG)
-
-#define DISPLAYING_UTC(qsp)	(QS_FLAGS(qsp) & QS_TIME_FMT_UTC)
-
-#define IS_SILENT(qsp)		(QS_FLAGS(qsp) & QS_SILENT)
-#define SILENCE_CHECKED(qsp)	(QS_FLAGS(qsp) & QS_SILENCE_CHECKED)
-#define IS_COMPLETING(qsp)	(QS_FLAGS(qsp) & QS_COMPLETING)
-
-#define IS_CHEWING(qsp)		(QS_FLAGS(qsp) & QS_CHEWING)
-#define IS_HALTING(qsp)		(QS_FLAGS(qsp) & QS_HALTING)
-#define IS_PROCESSING_CALLBACKS(qsp)		(QS_FLAGS(qsp) & QS_PROCESSING_CALLBACKS)
-#define IS_TRACKING_HISTORY(qsp)	(QS_FLAGS(qsp) & QS_HISTORY)
-#define IS_EXITING(qsp)		(QS_FLAGS(qsp) & QS_EXITING)
-#define IS_STILL_TRYING(qsp)	(QS_FLAGS(qsp) & QS_STILL_TRYING)
-
-#define HAD_INTERRUPT(qsp)	(QS_FLAGS(qsp) & QS_HAD_INTR)
-
-//#define NEED_TO_SAVE(qp) ((qp) != (&THIS_QSP->qs_query[0]) && ((qp)-1)->q_saving )
-#define NEED_TO_SAVE(qp) ( (qp) != FIRST_QRY(THIS_QSP) && QRY_IS_SAVING(UNDER_QRY(qp)) )
-
 #define VAR_DELIM		'$'
 #define IS_LEGAL_VAR_CHAR(c)	(isalnum(c) || (c)=='_' )
 
@@ -129,6 +84,7 @@ extern "C" {
 
 #define QUERY_PROMPT			QS_PROMPT(THIS_QSP)
 #define QLEVEL				QS_LEVEL(THIS_QSP)
+#define Q_STOP_LEVEL			QS_STOP_LEVEL(THIS_QSP)
 #define INIT_QSP			THIS_QSP=new_query_stream(NULL_QSP_ARG  "default_query_stream");
 
 //#define BUILTINS_INITED			(QUERY_FLAGS & QS_BUILTINS_INITED)
@@ -182,8 +138,6 @@ struct my_pipe {
 	FILE *		p_fp;
 	int		p_flgs;
 } ;
-
-#define NO_PIPE ((Pipe *) NULL)
 
 /* flag values */
 #define READ_PIPE	1

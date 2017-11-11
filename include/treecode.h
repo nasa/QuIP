@@ -1,5 +1,6 @@
 
-#ifndef BINARY_BOOLOP_CASES
+#ifndef _TREECODE_H_
+#define _TREECODE_H_
 
 typedef enum {
 	T_PROTO,				/* 0 */
@@ -48,7 +49,7 @@ typedef enum {
 	T_EXPR_LIST,				/* 39 */
 	T_EXP_PRINT,				/* 40 */
 	/* subroutine stuff */
-	T_SUBRT,				/* 41 */
+	T_SUBRT_DECL,				/* 41 */
 	T_RETURN,				/* 42 */
 	T_EXIT,					/* 43 */
 	T_ARGLIST,				/* 44 */
@@ -243,6 +244,10 @@ typedef enum {
 	T_STRV_FN,
 	T_CHAR_FN,
 	T_CHAR_VFN,
+
+#ifdef SCALARS_NOT_OBJECTS
+	T_SCALAR_VAR,
+#endif // SCALARS_NOT_OBJECTS
 
 	N_TREE_CODES				/* this has to be last */
 } Tree_Code;
@@ -465,6 +470,8 @@ typedef enum {
 		case T_SQUARE_SUBSCR:				\
 		case T_CURLY_SUBSCR:
 
+// Why "scal" ???
+
 #define ALL_SCALINT_BINOP_CASES					\
 								\
 		case T_MODULO:					\
@@ -623,5 +630,5 @@ typedef enum {
 		case T_BOOL_XOR:					\
 
 
-#endif /* undef BINARY_BOOLOP_CASES */
+#endif // undef _TREECODE_H_
 

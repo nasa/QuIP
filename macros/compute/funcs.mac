@@ -101,11 +101,11 @@ compute svector mul $1 $2 $3 quit quit
 .
 
 Define VCSMul 4 target source real imag
-compute csvector mul $1 $2 $3 $4 quit quit
+compute svector mul $1 $2 $3 $4 quit quit
 .
 
 Define VCSDiv 4 target source real imag
-compute csvector div $1 $2 $3 $4 quit quit
+compute svector div $1 $2 $3 $4 quit quit
 .
 
 Define VSMulComplex 4 target source real imag
@@ -123,11 +123,11 @@ compute svector add $1 $2 $3 quit quit
 .
 
 Define VCSAdd 4 target source real imag
-compute csvector add $1 $2 $3 $4 quit quit
+compute svector add $1 $2 $3 $4 quit quit
 .
 
 Define VCSSub 4 target source real imag
-compute csvector sub $1 $2 $3 $4 quit quit
+compute svector sub $1 $2 $3 $4 quit quit
 .
 
 Define VQSAdd 6 target source re ii jj kk
@@ -520,12 +520,15 @@ compute misc sort $1 quit quit
 
 
 Define Fill 5 img x y v tol
-advise "Fill $1 $2 $3 $4 $5"
 compute misc fill $1 $2 $3 $4 $5 quit quit
 .
 
-Define Map 3 float_output byte_input map_vector
-compute misc map $1 $2 $3 quit quit
+Define Map_S 3 float_output short_input map_vector
+compute misc map_s $1 $2 $3 quit quit
+.
+
+Define Map_B 3 float_output byte_input map_vector
+compute misc map_b $1 $2 $3 quit quit
 .
 
 Define Finite 1 image
@@ -594,11 +597,19 @@ compute fft scroll $1 $2 $3 $4 quit quit
 .
 
 Define RInvFFT 2 image xform
-compute fft irfft $1 $2 quit quit
+#compute fft irfft $1 $2 quit quit
+compute fft invfft $1 $2 quit quit
+VSMul $1 $1 2/(ncols('$1')*nrows('$1'))
 .
 
 Define InvFFT 1 image
-compute fft invfft $1 quit quit
+advise "InvFFT $1 BEGIN"
+compute fft invfft $1 $1 quit quit
+advise "InvFFT transform computed"
+# assume complex target
+VSMul $1{0} $1{0} 1/(ncols('$1')*nrows('$1'))
+VSMul $1{1} $1{1} 1/(ncols('$1')*nrows('$1'))
+advise "InvFFT $1 DONE"
 .
 
 Define Wrap 2 target source
@@ -606,11 +617,12 @@ compute fft wrap $1 $2 quit quit
 .
 
 Define RFFT 2 xform image
-compute fft rfft $1 $2 quit quit
+#compute fft rfft $1 $2 quit quit
+compute fft fft $1 $2 quit quit
 .
 
 Define FFT 1 image
-compute fft fft $1 quit quit
+compute fft fft $1 $1 quit quit
 .
 
 Define FFT_Rows 1 image
@@ -718,7 +730,7 @@ Define Find 3 coord_vector input_img threshold
 compute unary find $1 $2 $3 quit quit
 .
 
-Define Get_Pixel_Coords 3 pix_coords Npix binary 
+Define Get_Pixel_Coords 3 pix_coords Npix binary
 Get_Sum $2 $3
 If '$$2 != 0'
 Then	'Image $1 $$2 2 1 float	\
@@ -815,10 +827,10 @@ compute linear xform $1 $2 $3 quit quit
 
 # What is the point of this "gpu" version???
 Define GPU_Find_Max_Pixel 1 input
-#Vector fmp_indices ncols('$1') 1 int32
+#Vector fmp_indices ncols('$1') 1 int
 #data precision $1 prec quit
 #Scalar fmp_extval 1 $prec
-#Scalar fmp_n_times 1 int32
+#Scalar fmp_n_times 1 int
 Insure_FMP_Objects
 Max_Times fmp_indices $1 fmp_extval fmp_n_times
 .
@@ -845,9 +857,9 @@ Assign mxx "($mxi)%(ncols('$1'))"
 Define Init_FMP_Objects 1 source_vector
 #data precision $1 fmp_prec quit
 # how should we decide how many indices we need?
-Vector fmp_indices nelts('$1') 1 int32
-#Vector fmp_indices 3 1 int32
-Scalar fmp_n_times 1 int32
+Vector fmp_indices nelts('$1') 1 int
+#Vector fmp_indices 3 1 int
+Scalar fmp_n_times 1 int
 VSet fmp_n_times -1	# BUG just for testing!
 #Std_Scalar fmp_extval	# BUG match precision to input
 Assign fmp_prec precision('$1')
@@ -898,7 +910,8 @@ compute
 # used to be in ../analysis/procrec.mac
 
 Define Differentiate 2 target source
-Dup_Float _d_scratch $1
+#Dup_Float _d_scratch $1
+Dup_Obj _d_scratch $1
 Scroll _d_scratch $2 1 0
 VSMul _d_scratch _d_scratch -1
 VVAdd $1 $2 _d_scratch

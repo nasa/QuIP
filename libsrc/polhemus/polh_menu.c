@@ -12,6 +12,8 @@
 //#include "ioctl_polhemus.h"
 #include "polh_menu.h"
 
+#define MAX_CMD_STRING_LEN	512	// BUG overkill, but we need to check for overrun!
+
 #ifdef QUIP_DEBUG
 debug_flag_t debug_polhemus;
 #endif /* QUIP_DEBUG */
@@ -21,7 +23,7 @@ typedef enum { CM, INCHES } Units;
 /* set to centimeters intially because the system is in centimeters upon startup */
 static Units unit = CM;		
 
-static Data_Obj *tmp_pt_dp=NO_OBJ;
+static Data_Obj *tmp_pt_dp=NULL;
 
 
 /* This defines the number of numbers in a reading...  The polhemus can report more or fewer
@@ -33,10 +35,10 @@ static Data_Obj *tmp_pt_dp=NO_OBJ;
 /* Make a temporary dp to hold the current point... */
 #define INSURE_TMP_PT										\
 												\
-	if( tmp_pt_dp == NO_OBJ ){								\
+	if( tmp_pt_dp == NULL ){								\
 		/* BUG?  should we get the precision based on the current format? */		\
 		tmp_pt_dp = mk_vec(QSP_ARG  "tmp_polhemus_pt",1,POLHEMUS_READING_COUNT,prec_for_code(PREC_SP));		\
-		if( tmp_pt_dp == NO_OBJ ) NERROR1("error creating temporary polhemus point");	\
+		if( tmp_pt_dp == NULL ) NERROR1("error creating temporary polhemus point");	\
 	}
 
 Output_Datum od_tbl[N_OUTPUT_TYPES]={
@@ -69,7 +71,7 @@ static COMMAND_FUNC( do_reset_align )
 
 static COMMAND_FUNC( do_set_curr_align )
 {
-	char align[LLEN];
+	char align[MAX_CMD_STRING_LEN];
 	//short pdp[2*N_OUTPUT_TYPES];	
 	//Fmt_Pt fdp;
 
@@ -103,7 +105,7 @@ static COMMAND_FUNC( do_set_curr_align )
 
 static COMMAND_FUNC( do_set_align )
 {
-	char align[LLEN];
+	char align[MAX_CMD_STRING_LEN];
 	float Ox, Oy, Oz, Xx, Xy, Xz, Yx, Yy, Yz;
 
 	/* We have to reset the alignment before setting it
@@ -158,7 +160,7 @@ static COMMAND_FUNC( do_set_ref_bore )
 
 static COMMAND_FUNC( do_set_curr_ref_bore )
 {
-	char bore[LLEN];
+	char bore[MAX_CMD_STRING_LEN];
 	//short pdp[2*N_OUTPUT_TYPES];	/* conservative overestimate */
 	//Fmt_Pt fp1;
 	
@@ -235,7 +237,7 @@ static COMMAND_FUNC( do_get_angl )
 
 static COMMAND_FUNC( do_set_post )
 {
-	char post[LLEN];
+	char post[MAX_CMD_STRING_LEN];
 	float max, min;
 	float xmax, ymax, zmax, xmin, ymin, zmin;
 
@@ -281,7 +283,7 @@ static COMMAND_FUNC( do_get_post )
 
 static COMMAND_FUNC( do_set_hemi )
 {
-	char hemi[LLEN];
+	char hemi[MAX_CMD_STRING_LEN];
 	float vecs[N_HEMI_COMPS];
 	char *ask_strs[N_HEMI_COMPS] = { "x-component", "y-component", "z-component" };
 	int i=0;
@@ -308,7 +310,7 @@ static COMMAND_FUNC( do_read_raw_vector )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	if(dp == NULL) return;
 
 	/* BUG? where do we check that the vector is of proper type and shape? */
@@ -320,8 +322,8 @@ static COMMAND_FUNC( do_next_read )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("data object for single polhemus record");
-	if( dp == NO_OBJ ) return;
+	dp = pick_obj("data object for single polhemus record");
+	if( dp == NULL ) return;
 
 	if( read_next_polh_dp(QSP_ARG  dp) < 0 ) {
 		WARN("do_single_read: error reading single polhemus data point");
@@ -333,8 +335,8 @@ static COMMAND_FUNC( do_cont_read )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("data object for continuous polhemus data acquisition");
-	if( dp == NO_OBJ ) return;
+	dp = pick_obj("data object for continuous polhemus data acquisition");
+	if( dp == NULL ) return;
 
 	if( read_cont_polh_dp(dp) < 0 ) {
 		WARN("do_single_read: error reading polhemus continuously");
@@ -346,7 +348,7 @@ static COMMAND_FUNC( do_single_read )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("data object for single polhemus record");
+	dp = pick_obj("data object for single polhemus record");
 
 	if( read_single_polh_dp(QSP_ARG  dp) < 0 ) {
 		WARN("do_single_read: error reading single polhemus data point");
@@ -369,7 +371,7 @@ static COMMAND_FUNC( do_fmt_raw_vector )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("polhemus data vector");
+	dp = pick_obj("polhemus data vector");
 
 	if( ! good_polh_vector(QSP_ARG  dp) ) return;
 
@@ -383,8 +385,8 @@ static COMMAND_FUNC( do_cvt_raw_vector )
 {
 	Data_Obj *fdp, *pdp;
 
-	fdp = PICK_OBJ("float data vector");
-	pdp = PICK_OBJ("polhemus data vector");
+	fdp = pick_obj("float data vector");
+	pdp = pick_obj("polhemus data vector");
 
 	if( ! good_polh_vector(QSP_ARG  pdp) ) return;
 
@@ -458,15 +460,15 @@ static COMMAND_FUNC( do_set_record )
 static COMMAND_FUNC( do_mk_vector )
 {
 	Data_Obj *dp;
-	char name[LLEN];
+	char name[MAX_CMD_STRING_LEN];
 	Dimension_Set ds1;
 	uint32_t n;
 
 	strcpy(name, NAMEOF("name for new polhemus data vector") );
 	n = (uint32_t) HOW_MANY("number of records");
 
-	dp = dobj_of(QSP_ARG  name);
-	if( dp != NO_OBJ ){
+	dp = dobj_of(name);
+	if( dp != NULL ){
 		sprintf(ERROR_STRING,"Can't create new polhemus data vector %s, name is in use already",
 			name);
 		WARN(ERROR_STRING);
@@ -509,10 +511,9 @@ static COMMAND_FUNC( do_mk_vector )
 
 	/* WHY SHORT??? good for binary data, but... */
 	/* BUG need to handle other precisions... */
-	dp = make_dobj(QSP_ARG  name,&ds1,prec_for_code(PREC_IN));
-	//dp = make_dobj(name,&ds1,PREC_SP);
+	dp = make_dobj(name,&ds1,prec_for_code(PREC_IN));
 
-	if( dp == NO_OBJ )
+	if( dp == NULL )
 		WARN("unable to create polhemus data vector");
 }
 
@@ -524,7 +525,7 @@ static COMMAND_FUNC( do_assign_var )
 	Data_Obj *dp;
 
 	varname=NAMEOF("variable name");
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	i_type = get_record_type(SINGLE_QSP_ARG);
 	index = HOW_MANY("index");
 
@@ -666,7 +667,7 @@ static COMMAND_FUNC( do_clr )
 	
 static COMMAND_FUNC( do_set_angl )
 {
-	char angl[LLEN];
+	char angl[MAX_CMD_STRING_LEN];
 	float amax, emax, rmax, amin, emin, rmin;
 
 	if( (ASK_ENV("azimuth angle", "angular operational envelop", &amax, &amin, MAX_AZ, MIN_AZ) < 0) 
@@ -834,7 +835,7 @@ MENU_END(ph_bore)
 
 static COMMAND_FUNC( do_ph_bore )
 {
-	PUSH_MENU(ph_bore);
+	CHECK_AND_PUSH_MENU(ph_bore);
 }
 
 static COMMAND_FUNC( do_set_pos )
@@ -850,10 +851,10 @@ static COMMAND_FUNC( do_get_pos )
 }
 
 static COMMAND_FUNC( ph_pdata_menu )
-{ PUSH_MENU(ph_acq); }
+{ CHECK_AND_PUSH_MENU(ph_acq); }
 
 static COMMAND_FUNC( do_ph_dev )
-{ PUSH_MENU(ph_dev); }
+{ CHECK_AND_PUSH_MENU(ph_dev); }
 
 
 
@@ -869,7 +870,7 @@ ADD_CMD( get_position,	do_get_pos,	get current adaptive filter position controls
 MENU_END(ph_comp)
 
 static COMMAND_FUNC( do_ph_comp )
-{ PUSH_MENU(ph_comp); }
+{ CHECK_AND_PUSH_MENU(ph_comp); }
 
 
 #undef ADD_CMD
@@ -883,7 +884,7 @@ ADD_CMD( get_positional,	do_get_post,		get positional angular limits )
 MENU_END(ph_env)
 
 static COMMAND_FUNC( do_ph_env )
-{ PUSH_MENU(ph_env); }
+{ CHECK_AND_PUSH_MENU(ph_env); }
 
 
 #undef ADD_CMD
@@ -895,7 +896,7 @@ ADD_CMD( get,	do_get_hemi,	get current operational hemisphere )
 MENU_END(ph_hemi)
 
 static COMMAND_FUNC( do_ph_hemi )
-{ PUSH_MENU(ph_hemi); }
+{ CHECK_AND_PUSH_MENU(ph_hemi); }
 
 
 #undef ADD_CMD
@@ -910,7 +911,7 @@ ADD_CMD( response,	do_chk_resp,	check for command response )
 MENU_END(ph_sys)
 
 static COMMAND_FUNC( do_ph_sys )
-{ PUSH_MENU(ph_sys); }
+{ CHECK_AND_PUSH_MENU(ph_sys); }
 
 
 #undef ADD_CMD
@@ -924,7 +925,7 @@ ADD_CMD( reset,		do_reset_align,		reset alignment to factory default )
 MENU_END(ph_align)
 
 static COMMAND_FUNC( do_ph_align )
-{ PUSH_MENU(ph_align); }
+{ CHECK_AND_PUSH_MENU(ph_align); }
 
 /* BUG these commands should be organized better... */
 
@@ -946,7 +947,7 @@ MENU_END(ph_misc)
 
 static COMMAND_FUNC( do_ph_misc )
 {
-	PUSH_MENU(ph_misc);
+	CHECK_AND_PUSH_MENU(ph_misc);
 }
 
 /*                           Main Menu:    Polh                              */
@@ -968,7 +969,7 @@ COMMAND_FUNC( do_polh )
 	if( ! polh_inited ) {
 
 #ifdef QUIP_DEBUG
-		debug_polhemus = add_debug_module(QSP_ARG  "polhemus");
+		debug_polhemus = add_debug_module("polhemus");
 		//debug |= debug_polhemus;	/* turn it on for testing */
 #endif /* QUIP_DEBUG */
 
@@ -979,6 +980,6 @@ COMMAND_FUNC( do_polh )
 		polh_inited = 1;
 	}
 
-	PUSH_MENU(polh);
+	CHECK_AND_PUSH_MENU(polh);
 }
 

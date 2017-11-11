@@ -1,0 +1,45 @@
+
+
+Define Testit 1 prefix
+Image ${1}_y 4 4 1 float
+Info ${1}_y
+Vector ${1}_row 4 1 float
+Column ${1}_col 4 1 float
+Scalar ${1}_scalar 1 float
+
+Ramp2D ${1}_y 1 10 100
+Display ${1}_y
+
+#verbose yes
+VSum ${1}_scalar ${1}_y
+#verbose no
+Display ${1}_scalar
+Pause
+
+VSet ${1}_row 7.2
+advise "VSet ${1}_row 7.2"
+Display ${1}_row
+
+advise "Calling vsum..."
+advise "VSum ${1}_row ${1}_y"
+VSum ${1}_row ${1}_y
+Display ${1}_row
+Pause
+
+VSet ${1}_col 7.4
+advise "VSet ${1}_col 7.4"
+Display ${1}_col
+
+advise "Calling vsum..."
+advise "VSum ${1}_col ${1}_y"
+VSum ${1}_col ${1}_y
+Display ${1}_col
+Pause
+.
+
+Testit h
+platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
+Testit g
+
+exit
+

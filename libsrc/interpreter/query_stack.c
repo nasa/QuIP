@@ -17,15 +17,17 @@ Query_Stack *_defaultQSP=NULL;
 static Item_Type *query_stack_itp=NULL;
 ITEM_INIT_FUNC(Query_Stack,query_stack,0)
 ITEM_LIST_FUNC(Query_Stack,query_stack)
+ITEM_NEW_FUNC(Query_Stack,query_stack)
+ITEM_PICK_FUNC(Query_Stack,query_stack)
 
 #define IS_LEGAL_VARNAME_CHAR(c)	(isalnum(c) || c=='_')
 
-static List *qstack_free_list=NO_LIST;
+//static List *qstack_free_list=NULL;
 
 static void push_prompt(QSP_ARG_DECL  const char *pmpt);
 static void pop_prompt(SINGLE_QSP_ARG_DECL);
 
-void push_menu(QSP_ARG_DECL  Menu *mp)
+void _push_menu(QSP_ARG_DECL  Menu *mp)
 {
 	push_item(QS_MENU_STACK(THIS_QSP),mp);
 
@@ -38,11 +40,11 @@ COMMAND_FUNC( do_exit_prog )
 #ifdef BUILD_FOR_OBJC
 	ios_exit_program();	// doesn't exit right away???
 #else // ! BUILD_FOR_OBJC
-	nice_exit(QSP_ARG  0);
+	nice_exit(0);
 #endif	// ! BUILD_FOR_OBJC
 }
 
-Menu *pop_menu(SINGLE_QSP_ARG_DECL)
+Menu *_pop_menu(SINGLE_QSP_ARG_DECL)
 {
 	Menu *mp;
 
@@ -51,18 +53,19 @@ Menu *pop_menu(SINGLE_QSP_ARG_DECL)
 
 	// If the last menu was popped, then exit the program.
 	if( STACK_IS_EMPTY(QS_MENU_STACK(THIS_QSP)) ){
-#ifdef BUILD_FOR_OBJC
-		WARN("unexpected call to pop_menu!?");
+#ifdef BUILD_FOR_CMD_LINE
+        
+        do_exit_prog(SINGLE_QSP_ARG);
+        
+#else // ! BUILD_FOR_CMD_LINE
+
+	warn("unexpected call to pop_menu!?");
         
 fprintf(stderr,"pop_menu:  menu stack empty, exiting program...\n");
 abort();    // for debugging...
             // need to call do_exit_prog if not debugging!
         
-#else // ! BUILD_FOR_OBJC
-        
-        do_exit_prog(SINGLE_QSP_ARG);
-        
-#endif // ! BUILD_FOR_OBJC
+#endif // ! BUILD_FOR_CMD_LINE
 	}
 
 	return mp;
@@ -77,13 +80,13 @@ void show_menu_stack(SINGLE_QSP_ARG_DECL)
 	int i=0;
 
 	lp = QS_MENU_STACK(THIS_QSP);
-	if( lp == NO_LIST ){
-		WARN("show_menu_stack:  no menu stack!?");
+	if( lp == NULL ){
+		warn("show_menu_stack:  no menu stack!?");
 		return;
 	}
 	np = QLIST_HEAD(lp);
 	prt_msg("Menu stack:");
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		mp = (Menu *) NODE_DATA(np);
 		sprintf(MSG_STR,"\tmenu %d: %s",i++,MENU_PROMPT(mp));
 		prt_msg(MSG_STR);
@@ -94,30 +97,8 @@ void show_menu_stack(SINGLE_QSP_ARG_DECL)
 
 Query_Stack * init_first_query_stack(void)
 {
-	qstack_free_list = new_list();
-
-	default_qsp = new_query_stack(NULL_QSP_ARG  "First_Query_Stack");
+	default_qsp = new_qstk(NULL_QSP_ARG  "First_Query_Stack");
 	return(default_qsp);
-}
-
-Query_Stack *new_qstack(QSP_ARG_DECL  const char *name)
-{
-	Query_Stack *new_qsp;
-	Node *np;
-
-	np = QLIST_HEAD(qstack_free_list);
-	if( np == NO_NODE ){
-		new_qsp=(Query_Stack *)getbuf(sizeof(Query_Stack));
-//fprintf(stderr,"new_qstack calling savestr #1\n");
-		new_qsp->qs_item.item_name = savestr(name);
-	} else {
-		np = remHead(qstack_free_list);
-		new_qsp = (Query_Stack *) NODE_DATA(np);
-//fprintf(stderr,"new_qstack calling savestr #2\n");
-		new_qsp->qs_item.item_name = savestr(name);
-	}
-
-	return(new_qsp);
 }
 
 /* push_prompt - concatenate the new prompt fragment onto the existing prompt
@@ -131,26 +112,17 @@ static void push_prompt(QSP_ARG_DECL  const char *pmpt)
 	long n;
 	String_Buf *sbp;
 
-	sbp = QS_PROMPT_SB(THIS_QSP);
-	if( sbp == NO_STRINGBUF )
-		SET_QS_PROMPT_SB(THIS_QSP,(sbp=new_stringbuf()) );
+	sbp = QS_CMD_PROMPT_SB(THIS_QSP);
+	if( sbp == NULL )
+		SET_QS_CMD_PROMPT_SB(THIS_QSP,(sbp=new_stringbuf()) );
 
-	if( SB_SIZE(sbp) == 0 ){
+	if( sb_size(sbp) == 0 ){
 		enlarge_buffer(sbp,strlen(pmpt)+4);
 		// does this clear the string?
 	}
 
-	n =(strlen(SB_BUF(sbp))+strlen(pmpt)+4) ;
-	if( SB_SIZE(sbp) < n ){
-//#ifdef CAUTIOUS
-//		if( n > LLEN ){
-//			sprintf(ERROR_STRING,
-//		"CAUTIOUS:  push_prompt:  Attempting to append prompt \"%s\" to previous prompt \"%s\"",
-//				pmpt,SB_BUF(sbp));
-//			advise(ERROR_STRING);
-//			ERROR1("prompt overflow!?");
-//		}
-//#endif /* CAUTIOUS */
+	n =(strlen(sb_buffer(sbp))+strlen(pmpt)+4) ;
+	if( sb_size(sbp) < n ){
 
 		// BUG?  Because we are now using string buffers,
 		// we probably don't need this assertion.
@@ -164,21 +136,21 @@ static void push_prompt(QSP_ARG_DECL  const char *pmpt)
 		if( n >= LLEN ){
 			sprintf(ERROR_STRING,
 "push_prompt:  Attempting to append prompt \"%s\" to previous prompt:\n\"%s\"",
-				pmpt,SB_BUF(sbp));
+				pmpt,sb_buffer(sbp));
 			advise(ERROR_STRING);
 			advise("Probable script problem?");
 		}
 		enlarge_buffer(sbp,n);
 	}
 
-	if( (n=strlen(SB_BUF(sbp))) >= 2 ){
+	if( (n=strlen(sb_buffer(sbp))) >= 2 ){
 		n-=2;	/* assume prompt ends in "> " */
-		SB_BUF(sbp)[n]=0;
-		strcat(SB_BUF(sbp),"/");
+		sb_buffer(sbp)[n]=0;
+		strcat(sb_buffer(sbp),"/");
 	}
 
-	strcat(SB_BUF(sbp),pmpt);
-	strcat(SB_BUF(sbp),"> ");
+	strcat(sb_buffer(sbp),pmpt);
+	strcat(sb_buffer(sbp),"> ");
 }
 
 /* fix the prompt when exiting a menu... */
@@ -189,14 +161,14 @@ static void pop_prompt(SINGLE_QSP_ARG_DECL)
 	String_Buf *sbp;
 	long n;
 
-	sbp=QS_PROMPT_SB(THIS_QSP);
-	n=strlen(SB_BUF(sbp));
+	sbp=QS_CMD_PROMPT_SB(THIS_QSP);
+	n=strlen(sb_buffer(sbp));
 	n--;
-	while(n>=0 && QS_PROMPT_STR(THIS_QSP)[n] != '/' )
+	while(n>=0 && QS_CMD_PROMPT_STR(THIS_QSP)[n] != '/' )
 		n--;
-	if( SB_BUF(sbp)[n]=='/' ){
-		SB_BUF(sbp)[n]=0;
-		strcat(SB_BUF(sbp),"> ");
+	if( sb_buffer(sbp)[n]=='/' ){
+		sb_buffer(sbp)[n]=0;
+		strcat(sb_buffer(sbp),"> ");
 	}
 }
 
@@ -210,8 +182,78 @@ char *message_string(SINGLE_QSP_ARG_DECL)
 	return THIS_QSP->qs_msg_str;
 }
 
+#ifdef HAVE_LIBCURL
 Curl_Info *qs_curl_info(SINGLE_QSP_ARG_DECL)
 {
 	return THIS_QSP->qs_curl_info;
+}
+#endif // HAVE_LIBCURL
+
+Vec_Expr_Node * qs_top_node( SINGLE_QSP_ARG_DECL  )
+{
+	assert( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL );
+	//return THIS_QSP->qs_top_enp;
+	return VPD_TOP_ENP( QS_VECTOR_PARSER_DATA(THIS_QSP) );
+}
+
+void set_top_node( QSP_ARG_DECL  Vec_Expr_Node *enp )
+{
+	assert( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL );
+	SET_VPD_TOP_ENP( QS_VECTOR_PARSER_DATA(THIS_QSP), enp );
+}
+
+int qs_serial_func(SINGLE_QSP_ARG_DECL)
+{
+	return _QS_SERIAL(THIS_QSP);
+}
+
+String_Buf *qs_scratch_buffer(SINGLE_QSP_ARG_DECL)
+{
+	return THIS_QSP->qs_scratch;
+}
+
+void set_curr_string(QSP_ARG_DECL  const char *s)
+{
+	assert( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL );
+	SET_VPD_CURR_STRING( QS_VECTOR_PARSER_DATA(THIS_QSP),s);
+}
+
+const char *qs_curr_string(SINGLE_QSP_ARG_DECL)
+{
+	assert( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL );
+	return VPD_CURR_STRING( QS_VECTOR_PARSER_DATA(THIS_QSP) );
+}
+
+String_Buf *qs_expr_string(SINGLE_QSP_ARG_DECL)
+{
+	assert( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL );
+	return VPD_EXPR_STRING( QS_VECTOR_PARSER_DATA(THIS_QSP) );
+}
+
+/*
+Input_Format_Spec *qs_ascii_input_format(SINGLE_QSP_ARG_DECL)
+{
+	return THIS_QSP->qs_dai_p->dai_input_fmt;
+}
+*/
+
+int qs_level(SINGLE_QSP_ARG_DECL)
+{
+	return QS_LEVEL(THIS_QSP);
+}
+
+FILE *qs_msg_file(SINGLE_QSP_ARG_DECL)
+{
+	return QS_MSG_FILE(THIS_QSP);
+}
+
+int _max_vectorizable(SINGLE_QSP_ARG_DECL)
+{
+	return QS_MAX_VECTORIZABLE(THIS_QSP);
+}
+
+void _set_max_vectorizable(QSP_ARG_DECL  int v)
+{
+	SET_QS_MAX_VECTORIZABLE(THIS_QSP,v);
 }
 

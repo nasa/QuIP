@@ -24,38 +24,12 @@
 /* local prototypes */
 
 static COMMAND_FUNC( do_load_xvals );
-static COMMAND_FUNC( make_steps );
-static void linsteps(void);
-
-static float xval_1=1.0, xval_n=0.0;
 
 /* globals */
+// BUG not thread-safe, but probably OK
+static float xval_1=1.0, xval_n=0.0;
 float *xval_array=NULL;
 int _nvals=0;
-
-
-static COMMAND_FUNC( do_load_xvals )
-{
-	rdxvals( QSP_ARG  NAMEOF("x value file") );
-}
-
-static COMMAND_FUNC( do_set_nxvals )
-{
-	_nvals= (int) HOW_MANY("number of x values");
-	if( _nvals<=0 || _nvals >MAX_X_VALUES ){
-		sprintf(ERROR_STRING,
-			"Number of x values must be between 0 and %d",MAX_X_VALUES);
-		WARN(ERROR_STRING);
-	}
-}
-
-static COMMAND_FUNC( do_set_range )
-{
-	xval_1 = (int) HOW_MUCH("zeroeth value");
-	xval_n = (int) HOW_MUCH("last value");
-
-	make_steps(SINGLE_QSP_ARG);
-}
 
 #define LINEAR_STEPS	0
 #define LOG_STEPS	1
@@ -63,19 +37,48 @@ static COMMAND_FUNC( do_set_range )
 static const char *step_types[]={"linear","logarithmic"};
 static int log_steps=0;
 
-static COMMAND_FUNC( do_set_steps )
-{
-	int i;
 
-	i = WHICH_ONE("step type (linear/logarithmic)",2,step_types);
-	if( i < 0 ) WARN("invalid step type");
-	else log_steps=i;
+// This is ramp1D !?
+
+void set_n_xvals(int n)
+{
+	assert( n > 0 && n <= MAX_X_VALUES );
+
+	if( n != _nvals && xval_array != NULL ){
+		givbuf(xval_array);
+		xval_array = getbuf( n * sizeof(float) );
+	}
+	_nvals = n;
 }
 
-static COMMAND_FUNC( make_steps )
+int insure_xval_array(void)
 {
-	if( xval_array == NULL )
+	if( xval_array == NULL ){
+		if( _nvals <= 0 ){
+			set_n_xvals(MAX_X_VALUES);
+		}
 		xval_array = (float *) getbuf( _nvals * sizeof(float) );
+	}
+	return 0;
+}
+
+static void linsteps(void)	/** make linear steps */
+{
+	float inc;
+	int i;
+
+	inc=xval_n - xval_1;
+	inc /= (_nvals-1);
+	xval_array[0] = xval_1;
+	for(i=0;i<_nvals;i++)
+		xval_array[i]=xval_1+i*inc;
+}
+
+#define make_steps() _make_steps(SINGLE_QSP_ARG)
+
+static void _make_steps(SINGLE_QSP_ARG_DECL)
+{
+	if( insure_xval_array() < 0 ) return;
 
 	if( log_steps ){
 		int i;
@@ -88,33 +91,59 @@ static COMMAND_FUNC( make_steps )
 	} else linsteps();
 }
 
+
+static COMMAND_FUNC( do_load_xvals )
+{
+	rdxvals( QSP_ARG  NAMEOF("x value file") );
+}
+
+static COMMAND_FUNC( do_set_nxvals )
+{
+	int n;
+
+	n = (int) HOW_MANY("number of x values");
+	if( n <= 0 || n > MAX_X_VALUES ){
+		sprintf(ERROR_STRING,
+			"Number of x values must be between 0 and %d",MAX_X_VALUES);
+		warn(ERROR_STRING);
+		return;
+	}
+	set_n_xvals(n);
+
+	make_steps();
+}
+
+static COMMAND_FUNC( do_set_range )
+{
+	xval_1 = (int) HOW_MUCH("zeroeth value");
+	xval_n = (int) HOW_MUCH("last value");
+
+	make_steps();
+}
+
+static COMMAND_FUNC( do_set_steps )
+{
+	int i;
+
+	i = which_one("step type (linear/logarithmic)",2,step_types);
+	if( i < 0 ) warn("invalid step type");
+	else log_steps=i;
+
+	make_steps();
+}
+
 static COMMAND_FUNC( do_save_xvals )
 {
 	FILE *fp;
 	int i;
 
-	fp=TRYNICE( NAMEOF("output file"), "w" );
+	fp=try_nice( nameof("output file"), "w" );
 	if( !fp ) return;
 
 	for(i=0;i<_nvals;i++)
 		fprintf(fp,"%f\n",xval_array[i]);
 
 	fclose(fp);
-}
-
-static void linsteps(void)	/** make linear steps */
-{
-	float inc;
-	int i;
-
-	if( xval_array == NULL )
-		xval_array = (float *) getbuf( _nvals * sizeof(float) );
-
-	inc=xval_n - xval_1;
-	inc /= (_nvals-1);
-	xval_array[0] = xval_1;
-	for(i=0;i<_nvals;i++)
-		xval_array[i]=xval_1+i*inc;
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(xvals_menu,s,f,h)
@@ -129,6 +158,6 @@ MENU_END(xvals)
 
 COMMAND_FUNC( xval_menu )	/** play around with an experiment */
 {
-	PUSH_MENU(xvals);
+	CHECK_AND_PUSH_MENU(xvals);
 }
 

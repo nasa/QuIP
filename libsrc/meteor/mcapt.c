@@ -61,19 +61,19 @@ void meteor_status(SINGLE_QSP_ARG_DECL)
 //	INSURE_MM("meteor_status");
 	assert( _mm != NULL );
 
-	sprintf(msg_str,"_mm = 0x%lx",(int_for_addr)_mm);
+	sprintf(msg_str,"_mm = 0x%x",(int_for_addr)_mm);
 	prt_msg(msg_str);
 	sprintf(msg_str,"frame size: %d (0x%x)",_mm->frame_size,_mm->frame_size);
 	prt_msg(msg_str);
 	sprintf(msg_str,"num bufs: %d",_mm->num_bufs);
 	prt_msg(msg_str);
-	sprintf(msg_str,"%d frames captured",_mm->frames_captured);
+	sprintf(msg_str,"%d frames captured",_mm->n_frames_captured);
 	prt_msg(msg_str);
 	sprintf(msg_str,"current frame %d, field %d",_mm->cur_frame,_mm->cur_field);
 	prt_msg(msg_str);
 	sprintf(msg_str,"lowat %d, hiwat %d",_mm->lowat,_mm->hiwat);
 	prt_msg(msg_str);
-	sprintf(msg_str,"active mask 0x%x",_mm->active);
+	sprintf(msg_str,"active mask 0x%lx",_mm->active);
 	prt_msg(msg_str);
 	sprintf(msg_str,"%d active bufs",_mm->num_active_bufs);
 	prt_msg(msg_str);
@@ -88,7 +88,7 @@ static void meteor_get_errors(SINGLE_QSP_ARG_DECL)
 		exit(1);
 	}
 	sprintf(ERROR_STRING, "Frames: %d\nEven:   %d\nOdd:	%d\n", 
-		cnt.frames_captured,
+		cnt.n_frames_captured,
 		cnt.even_fields_captured,
 		cnt.odd_fields_captured);
 	advise(ERROR_STRING);
@@ -109,7 +109,7 @@ void meteor_clear_counts()
 
 	cnt.fifo_errors			= 0;
 	cnt.dma_errors			= 0;
-	cnt.frames_captured		= 0;
+	cnt.n_frames_captured		= 0;
 	cnt.even_fields_captured	= 0;
 	cnt.odd_fields_captured		= 0;
 
@@ -119,50 +119,19 @@ void meteor_clear_counts()
 	}
 }
 
-void gotframe(int signum)
-{
-    struct meteor_mem *mm = (struct meteor_mem *)(mmbuf + meteor_off.mem_off);
-    unsigned char *src;
-    /*
-    static int32_t i=0;
-    unsigned char *dest;
-    */
-    unsigned int count;
-
-/*
-printf("%d\n",mm->cur_frame);
-fflush(stdout);
-*/
-
-    /*
-    if (XEventsQueued(display_, QueuedAfterReading) != 0)
-	doEvent();
-*/
-
-    src = (u_char *)
-    ( (num_meteor_frames>1)	? mmbuf+meteor_off.frame_offset[mm->cur_frame-1]
-    			: mmbuf + meteor_off.frame_offset[0] );
-    /*
-    dest = shmimage->data;
-    */
-    count = my_geo.rows*my_geo.columns*meteor_bytes_per_pixel;
-
-    /*
-    if (usePacked) {
-	for (src++; count--; src+=2)
-	    *dest++ = *src;
-    } else {
-	memcpy(dest, src, count);
-    }
-    */
-
-    /* Draw screen onto display */
-    /*
-    XShmPutImage(display_, wtwin_, gc_, shmimage,
-		 0, 0, 0, 0, window_size_x, window_size_y, False);
-    XSync(display_, 0);
-    */
-}
+#ifdef USE_SIGS
+//void gotframe(int signum)
+//{
+//	struct meteor_mem *mm = (struct meteor_mem *)(mmbuf + meteor_off.mem_off);
+//	unsigned char *src;
+//	unsigned int count;
+//
+//	src = (u_char *)
+//	( (num_meteor_frames>1)	? mmbuf+meteor_off.frame_offset[mm->cur_frame-1]
+//				: mmbuf + meteor_off.frame_offset[0] );
+//	count = my_geo.rows*my_geo.columns*meteor_bytes_per_pixel;
+//}
+#endif // USE_SIGS
 
 static void meteor_check_capture_control(SINGLE_QSP_ARG_DECL)
 {
@@ -317,10 +286,6 @@ static int index_of_mode(QSP_ARG_DECL  int mode )
 
 	for(i=0;i<N_CAPTURE_MODES;i++)
 		if( meteor_mode[i] == mode ) return(i);
-//#ifdef CAUTIOUS
-//	sprintf(ERROR_STRING,"CAUTIOUS:  Mode %d does not appear in meteor capture mode table!?",mode);
-//	WARN(ERROR_STRING);
-//#endif /* CAUTIOUS */
 	assert( ! "mode missing from table" );
 	return(-1);
 }
@@ -373,6 +338,11 @@ static COMMAND_FUNC( do_set_capture_mode )
 	set_capture_mode(mode);
 }
 
+static void point_object_to_frame(Data_Obj *dp, int index)
+{
+	SET_OBJ_DATA_PTR(dp,frame_address(index));
+}
+
 Data_Obj *make_frame_object(QSP_ARG_DECL  const char* name,int index)
 {
 	Dimension_Set dimset;
@@ -380,7 +350,7 @@ Data_Obj *make_frame_object(QSP_ARG_DECL  const char* name,int index)
 
 	if( index<0 || index>= num_meteor_frames ){
 		WARN("frame index out of range");
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	dimset.ds_dimension[0] = meteor_bytes_per_pixel;
@@ -391,8 +361,8 @@ Data_Obj *make_frame_object(QSP_ARG_DECL  const char* name,int index)
 
 	dp = _make_dp(QSP_ARG  name,&dimset,PREC_FOR_CODE(PREC_UBY));
 
-	if( dp != NO_OBJ )
-		SET_OBJ_DATA_PTR(dp, mmbuf+meteor_off.frame_offset[index] );
+	if( dp != NULL )
+		point_object_to_frame(dp,index);
 
 	return(dp);
 }
@@ -531,7 +501,7 @@ static COMMAND_FUNC( do_record )
 
 	ifp = img_file_of(QSP_ARG  name);
 
-	if( ifp != NO_IMAGE_FILE ){
+	if( ifp != NULL ){
 		sprintf(ERROR_STRING,"Clobbering existing image file %s",name);
 		advise(ERROR_STRING);
 		image_file_clobber(1);	/* not necessary !? */
@@ -546,13 +516,13 @@ static COMMAND_FUNC( do_record )
 	 * we could know them, however, because at this point the geometry is set.
 	 */
 
-	if( ifp == NO_IMAGE_FILE ){
+	if( ifp == NULL ){
 		sprintf(ERROR_STRING,"Error creating movie file %s",name);
 		WARN(ERROR_STRING);
 		return;
 	}
 
-	n_blocks = FRAMES_TO_ALLOCATE(n_frames,rv_get_ndisks()) * get_blocks_per_frame();
+	n_blocks = rv_frames_to_allocate(n_frames) * get_blocks_per_frame();
 
 	/* n_blocks is the total number of blocks, not the number per disk(?) */
 
@@ -571,12 +541,7 @@ void finish_recording(QSP_ARG_DECL  Image_File *ifp)
 	RV_Inode *inp;
 
 	inp = get_rv_inode(QSP_ARG  ifp->if_name);
-//#ifdef CAUTIOUS
-//	if( inp == NO_INODE ){
-//		sprintf(ERROR_STRING,"CAUTIOUS: finish_recording:  missing rv inode %s",ifp->if_name);
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif
+	assert(inp!=NULL);
 
 	close_image_file(QSP_ARG  ifp);		/* close write file	*/
 	update_movie_database(QSP_ARG  inp);
@@ -584,7 +549,7 @@ void finish_recording(QSP_ARG_DECL  Image_File *ifp)
 }
 
 int recording_in_process = 0;
-Image_File *record_ifp=NO_IMAGE_FILE;
+Image_File *record_ifp=NULL;
 
 void meteor_record_clip(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 {
@@ -617,8 +582,6 @@ void meteor_record_clip(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
  * we initiate any disk i/o.
  */
 
-#define MAX_MEM_FRAMES	200
-
 static void mem_record(QSP_ARG_DECL  Image_File *ifp,uint32_t n_frames)
 {
 	int32_t n_remaining;
@@ -633,13 +596,16 @@ static void mem_record(QSP_ARG_DECL  Image_File *ifp,uint32_t n_frames)
 	RV_Inode *inp;
 
 //advise("mem_record BEGIN");
-	if( n_frames > MAX_MEM_FRAMES )
-		ERROR1("mem_record:  Fix MAX_MEM_FRAMES");
+	if( n_frames > MAX_NUM_FRAMES )
+		ERROR1("mem_record:  Fix MAX_NUM_FRAMES");
 
 	mem_frm_to_wt=0;
 
-//	INSURE_MM("mem_record");
-	assert( _mm != NULL );
+	if( _mm == NULL ){
+fprintf(stderr,"calling map_mem_data...\n");
+		_mm = map_mem_data(SINGLE_QSP_ARG);
+		assert( _mm != NULL );
+	}
 
 	/* set synchronous mode */
 	capture_code = METEORCAPTUR ;	/* mem_record() */
@@ -650,7 +616,7 @@ static void mem_record(QSP_ARG_DECL  Image_File *ifp,uint32_t n_frames)
 
 	/* start capturing */
 
-	_mm->frames_captured=0;
+	_mm->n_frames_captured=0;
 
 	if( meteor_capture(SINGLE_QSP_ARG) < 0 ){
 		WARN("error starting capture");
@@ -661,21 +627,21 @@ static void mem_record(QSP_ARG_DECL  Image_File *ifp,uint32_t n_frames)
 	n_remaining=n_frames;
 
 #ifndef FAKE_METEOR_HARDWARE
-	while(_mm->frames_captured< n_frames){
+	while(_mm->n_frames_captured< n_frames){
 /*
-sprintf(ERROR_STRING,"%d of %d frames captured",_mm->frames_captured,n_frames);
+sprintf(ERROR_STRING,"%d of %d frames captured",_mm->n_frames_captured,n_frames);
 advise(ERROR_STRING);
 */
 		usleep(16000);
 	}
 #else
 advise("faking hardware");
-	_mm->frames_captured = n_frames;
+	_mm->n_frames_captured = n_frames;
 #endif
 
 	meteor_stop_capture(SINGLE_QSP_ARG);
 
-	if( ifp == NO_IMAGE_FILE ) return;
+	if( ifp == NULL ) return;
 
 	meteor_get_geometry(&gp);
 
@@ -688,7 +654,7 @@ advise("faking hardware");
 	if( !meteor_field_mode )
 		SET_SHP_FLAG_BITS(OBJ_SHAPE(dp),DT_INTERLACED);
 
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		WARN("mem_record:  error creating tmp dp");
 		return;
 	}
@@ -696,23 +662,17 @@ advise("faking hardware");
 	/* Now write the frames to disk */
 
 	/* This does not properly handle timestamps, so call out an error */
-//#ifdef CAUTIOUS
-//	if( FT_CODE(IF_TYPE(ifp)) != IFT_RV ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  mem_record:  output file %s is not a raw volume file!?",ifp->if_name);
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( FT_CODE(IF_TYPE(ifp)) == IFT_RV );
 
 	inp = (RV_Inode *)ifp->if_hdr_p;
-	if( RV_MOVIE_EXTRA(inp) != 0 ){
-		sprintf(ERROR_STRING,"File %s, rvi_extra_bytes = %d!?",ifp->if_name,RV_MOVIE_EXTRA(inp));
+	if( rv_movie_extra(inp) != 0 ){
+		sprintf(ERROR_STRING,"File %s, rvi_extra_bytes = %d!?",ifp->if_name,rv_movie_extra(inp));
 		WARN(ERROR_STRING);
 		ERROR1("Sorry, can't record timestamps in memory recordings at present...");
 	}
 
 	for(i=0;i<n_frames;i++){
-		SET_OBJ_DATA_PTR(dp, mmbuf + meteor_off.frame_offset[i] );
+		point_object_to_frame(dp,i);
 		write_image_to_file(QSP_ARG  ifp,dp);
 	}
 	SET_OBJ_FLAG_BITS(dp, DT_NO_DATA);
@@ -761,7 +721,7 @@ static COMMAND_FUNC( do_playback )
 	Image_File *ifp;
 
 	ifp = PICK_IMG_FILE("");
-	if( ifp == NO_IMAGE_FILE ) return;
+	if( ifp == NULL ) return;
 
 #ifdef HAVE_X11_EXT
 	play_meteor_movie(QSP_ARG  ifp);
@@ -899,7 +859,7 @@ static COMMAND_FUNC( do_get_fifo_errors )
 
 
 	dp = PICK_OBJ("vector for error frame indices");
-	if( dp== NO_OBJ ) return;
+	if( dp== NULL ) return;
 
 	get_err_fields(QSP_ARG  dp,0);	/* see /usr/src/matrox/meteor.c */
 }
@@ -910,7 +870,7 @@ static COMMAND_FUNC( do_get_fifodma_errors )
 
 
 	dp = PICK_OBJ("vector for error frame indices");
-	if( dp== NO_OBJ ) return;
+	if( dp== NULL ) return;
 
 	get_err_fields(QSP_ARG  dp,2);	/* see /usr/src/matrox/meteor.c */
 }
@@ -921,7 +881,7 @@ static COMMAND_FUNC( do_get_dma_errors )
 
 
 	dp = PICK_OBJ("vector for error frame indices");
-	if( dp== NO_OBJ ) return;
+	if( dp== NULL ) return;
 
 	get_err_fields(QSP_ARG  dp,1);	/* see /usr/src/matrox/meteor.c */
 }
@@ -934,7 +894,7 @@ static COMMAND_FUNC( do_get_drops )
 
 	dp = PICK_OBJ("vector for drop frame indices");
 
-	if( dp== NO_OBJ ) return;
+	if( dp== NULL ) return;
 
 	if( OBJ_MACH_PREC(dp) != PREC_UDI ){
 		sprintf(ERROR_STRING,
@@ -1066,7 +1026,7 @@ MENU_END(capture)
 
 COMMAND_FUNC( do_capture )
 {
-	PUSH_MENU(capture);
+	CHECK_AND_PUSH_MENU(capture);
 }
 
 #undef ADD_CMD
@@ -1086,7 +1046,7 @@ MENU_END(cap_tst)
 
 COMMAND_FUNC( do_captst )
 {
-	PUSH_MENU(cap_tst);
+	CHECK_AND_PUSH_MENU(cap_tst);
 }
 
 

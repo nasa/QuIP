@@ -365,13 +365,6 @@ static int n_ready_bufs;
 #ifdef NOT_USED
 static void thread_write_enable(QSP_ARG_DECL  int index, int flag)
 {
-//#ifdef CAUTIOUS
-//	if( index < 0 || index >= MAX_DISKS ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  thread_write_enable:  index %d out of range",index);
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( index >= 0 && index < MAX_DISKS );
 	thread_write_enabled[index]=flag;
 }
@@ -698,13 +691,13 @@ static void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
 	}
 
 	mvip = create_movie(QSP_ARG  inp->rvi_name);
-	if( mvip == NO_MOVIE ){
+	if( mvip == NULL ){
 		sprintf(ERROR_STRING,
 			"error creating movie %s",inp->rvi_name);
 		WARN(ERROR_STRING);
 	} else {
 		ifp = img_file_of(QSP_ARG  inp->rvi_name);
-		if( ifp == NO_IMAGE_FILE ){
+		if( ifp == NULL ){
 			sprintf(ERROR_STRING,
 	"image file struct for rv file %s does not exist!?",inp->rvi_name);
 			WARN(ERROR_STRING);
@@ -746,13 +739,7 @@ static void finish_recording(QSP_ARG_DECL  Image_File *ifp)
 	RV_Inode *inp;
 
 	inp = get_rv_inode(QSP_ARG  ifp->if_name);
-//#ifdef CAUTIOUS
-//	if( inp == NO_INODE ){
-//		sprintf(ERROR_STRING,"CAUTIOUS: finish_recording:  missing rv inode %s",ifp->if_name);
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif
-	assert( inp != NO_INODE );
+	assert( inp != NULL );
 
 	close_image_file(QSP_ARG  ifp);		/* close write file	*/
 
@@ -878,14 +865,7 @@ show_tmrs(SINGLE_QSP_ARG);
 		dp = grab_firewire_frame(QSP_ARG  pgcp);
 n_frames_read++;
 
-//#ifdef CAUTIOUS
-//		if( dp == NO_OBJ ){
-//			sprintf(ERROR_STRING,
-//			"CAUTIOUS:  video_reader:  error grabbing frame!?");
-//			WARN(ERROR_STRING);
-//		}
-//#endif // CAUTIOUS
-		assert( dp != NO_OBJ );
+		assert( dp != NULL );
 
 		/* See if all the disk writers have written another frame */
 
@@ -925,7 +905,10 @@ MSTATUS(MS_CHECKING)
 		// This difference should really be a function
 		// of the number of buffers...  But when the number of
 		// buffers is large (e.g. 500), then 10 frames is not too many.
-#define MAX_DW_ASYNCHRONY	10
+		//
+		// This should probably be a soft var - in any case,
+		// it should never be larger than the number of buffers minus 2!
+#define MAX_DW_ASYNCHRONY	20
 		if( (max_frames_written-min_frames_written) > MAX_DW_ASYNCHRONY ){
 fprintf(stderr,"video_reader %d:  Disk writer %d not keeping up, %d written, max = %d\n",
 n_frames_read,min_i,min_frames_written,max_frames_written);
@@ -1141,13 +1124,7 @@ if( verbose ) advise("main thread stopping capture");
 
 	recording_in_process = 0;
 
-//#ifdef CAUTIOUS
-//	if( stream_ifp == NO_IMAGE_FILE ){
-//		WARN("CAUTIOUS:  video_reader:  stream_ifp is NULL!?");
-//		return(NULL);
-//	}
-//#endif /* CAUTIOUS */
-	assert( stream_ifp != NO_IMAGE_FILE );
+	assert( stream_ifp != NULL );
 
 	finish_recording( QSP_ARG  stream_ifp );
 
@@ -1316,13 +1293,6 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 	n_to_write = blocks_per_frame * BLOCK_SIZE;
 
 	n_to_write /= N_FRAGMENTS;
-//#ifdef CAUTIOUS
-//	if( (n_to_write % BLOCK_SIZE) != 0 ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  N_FRAGMENTS (%d) does not divide blocks_per_frame (%d) evenly",
-//			N_FRAGMENTS,blocks_per_frame);
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( (n_to_write % BLOCK_SIZE) == 0 );
 
 
@@ -1341,21 +1311,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 
 	inp = (RV_Inode *)ifp->if_hdr_p;
 	n_disks = queue_rv_file(QSP_ARG  inp,fd_arr);
-
-//#ifdef CAUTIOUS
-//	if( n_disks < 1 ){
-//		sprintf(ERROR_STRING,
-//			"Bad number (%d) of raw volume disks",n_disks);
-//		WARN(ERROR_STRING);
-//		return;
-//	}
 	assert( n_disks > 1 );
-
-//	if( pgcp->pc_n_buffers <= 0 ){
-//		WARN("CAUTIOUS:  number of buffers is not positive!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( pgcp->pc_n_buffers > 0 );
 
 	if( pgcp->pc_n_buffers < (2*n_disks) ){
@@ -1384,7 +1340,6 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 	SET_SHP_FRAMES(shpp,n_frames_wanted);
 	SET_SHP_SEQS(shpp, 1);
 	SET_SHP_PREC_PTR(shpp,PREC_FOR_CODE(PREC_UBY) );
-	//set_shape_flags(&shape,NO_OBJ);
 	SET_SHP_FLAGS(shpp, DT_IMAGE );
 
 	rv_set_shape(QSP_ARG  ifp->if_name,shpp);
@@ -1472,13 +1427,6 @@ show_tmrs(SINGLE_QSP_ARG);
 	/* BUG make sure this thread is still running! */
 
 #ifdef FOOBAR
-//#ifdef CAUTIOUS
-//	/* Sometimes execution can reach this point before the grab thread
-//	 * has executed... BUG
-//	 */
-//	if( grabber_pid == 0 )
-//		ERROR1("CAUTIOUS:  flycap_wait_record:  no grabber thread");
-//#endif /* CAUTIOUS */
 	assert( grabber_pid != 0 );
 
 	if( unassoc_pids(master_pid,grabber_pid) < 0 )
@@ -1614,7 +1562,7 @@ Image_File * get_file_for_recording(QSP_ARG_DECL  const char *name,
 
 	ifp = img_file_of(QSP_ARG  name);
 
-	if( ifp != NO_IMAGE_FILE ){
+	if( ifp != NULL ){
 		RV_Inode *inp;
 		// is the existing file an RV file?
 		if( IF_TYPE_CODE(ifp) != IFT_RV ){
@@ -1622,7 +1570,7 @@ Image_File * get_file_for_recording(QSP_ARG_DECL  const char *name,
 	"Existing file %s is not a raw volume file, not clobbering.",
 				IF_NAME(ifp));
 			WARN(ERROR_STRING);
-			return NO_IMAGE_FILE;
+			return NULL;
 		}
 
 		inp = (RV_Inode *) ifp->if_hdr_p;
@@ -1632,7 +1580,7 @@ Image_File * get_file_for_recording(QSP_ARG_DECL  const char *name,
 	"No permission to clobber existing raw volume file %s.",
 				IF_NAME(ifp));
 			WARN(ERROR_STRING);
-			return NO_IMAGE_FILE;
+			return NULL;
 		}
 
 		if( verbose ){
@@ -1655,7 +1603,7 @@ Image_File * get_file_for_recording(QSP_ARG_DECL  const char *name,
 	 * we could know them, however, because at this point the geometry is set.
 	 */
 
-	if( ifp == NO_IMAGE_FILE ){
+	if( ifp == NULL ){
 		sprintf(ERROR_STRING,"Error creating movie file %s",name);
 		WARN(ERROR_STRING);
 		return NULL;	// BUG clean up

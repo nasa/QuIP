@@ -2,7 +2,6 @@
 #ifndef _COMMAND_H_
 #define _COMMAND_H_
 
-//struct query_stack;
 #include "quip_fwd.h"
 
 struct command {
@@ -13,9 +12,6 @@ struct command {
 } ;
 
 #define CMD_SELECTOR(cp)	cp->cmd_selector
-
-
-#define NO_COMMAND		((Command *) NULL)
 
 extern void list_command(QSP_ARG_DECL  Command *cp);
 

@@ -1,0 +1,37 @@
+
+Define Test_Thread 0
+echo 'Test_Thread BEGIN'
+Vector w 4 1 float
+data list quit
+os threads tell quit quit
+advise "listing threads from child thread:"
+os threads list quit quit
+sleep 1
+echo 'Test_Thread DONE'
+.
+
+Vector v 4 1 float
+data list quit
+
+os
+  threads
+    new_thread thr1 Test_Thread
+    quit
+  quit
+
+advise "Executing main thread..."
+sleep 3
+
+os
+  threads
+    advise "listing threads from main thread:"
+    list
+    advise "waiting ..."
+    wait thr1
+    advise "DONE waiting ..."
+    quit
+  quit
+data list quit
+
+
+

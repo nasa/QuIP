@@ -14,6 +14,6 @@ libseq_a_SOURCES =				\
 		seqmenu.c
 
 
-noinst_HEADERS = 				\
-		seq.h
+#noinst_HEADERS = 				\
+#		seq.h
 

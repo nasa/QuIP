@@ -17,6 +17,7 @@ foreach macro_file ( $file_list )
 #    echo "advise 'BEGIN reading $subdir/$macro_file.mac...'" >> $outfile
     echo "# FILE $subdir/$macro_file.mac BEGIN" >> $outfile
     cat $p >> $outfile
+    echo "# FILE $subdir/$macro_file.mac END" >> $outfile
 #    echo "advise 'DONE reading $subdir/$macro_file.mac...'" >> $outfile
   endif
 

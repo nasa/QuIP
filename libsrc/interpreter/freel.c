@@ -48,6 +48,8 @@ void freeinit(FreeList *list, count_t n_elts, u_long ntotal)
 
 	list->fl_n_blocks = n_elts;
 
+	// We don't use getbuf here, because our private implementation of getbuf
+	// uses freelists...
 	list->fl_blockp = (FreeBlk *) malloc( n_elts * sizeof(FreeBlk) );
 	if( list->fl_blockp == NULL ){
 		NERROR1("freeinit:  can't malloc FreeBlk list");
@@ -182,22 +184,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 	 * the beginning of the following one
 	 */
 
-//#ifdef CAUTIOUS
-//	/* error #1 */
-//	if(frp != list->fl_blockp && (frp-1)->blkno + (frp-1)->size > a ){
-//showmap(list);
-//		NWARN("CAUTIOUS:  givspace:  freeing unallocated memory!? (error #1)");
-//		abort();
-//	}
 	assert(frp == list->fl_blockp || (frp-1)->blkno + (frp-1)->size <= a );
-
-//	/* error #2 */
-//	if( a+size > frp->blkno ){
-//showmap(list);
-//		NWARN("CAUTIOUS:  givspace:  freeing unallocated memory!? (error #2)");
-//		abort();
-//	}
-//#endif
 	assert( a+size <= frp->blkno );
 
 	/* if not head of list and new area right after frp-1 */
@@ -309,13 +296,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 	 * the beginning of the following one
 	 */
 
-//#ifdef CAUTIOUS
-//	/* error #1 */
-//	if(frp != list->fl_blockp && (frp-1)->blkno + (frp-1)->size > a ){
-//		NWARN("CAUTIOUS:  addspace:  freeing unallocated memory!? (error #1)");
-//		abort();
-//	}
-//#endif
 	assert(frp == list->fl_blockp || (frp-1)->blkno + (frp-1)->size <= a );
 
 	/* if not head of list and new area right after frp-1 */
@@ -430,7 +410,7 @@ int n_map_frags(FreeList *list)
  * an application with a know environment.
  */
 
-int takespace(FreeList *list, u_long a, u_long s)
+int _takespace(QSP_ARG_DECL  FreeList *list, u_long a, u_long s)
 			/* list = list from which to allocate */
 			/* a = address */
 			/* s = size */
@@ -444,7 +424,7 @@ int takespace(FreeList *list, u_long a, u_long s)
 			if( s > (frp->size - offset) ){
 				sprintf(DEFAULT_ERROR_STRING,
 			"takespace:  can't allocate %ld blocks at %ld",s,a);
-				NWARN(DEFAULT_ERROR_STRING);
+				warn(DEFAULT_ERROR_STRING);
 				return(-1);
 			}
 			if( offset == 0 ){

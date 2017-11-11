@@ -8,12 +8,12 @@
 #include "data_obj.h"
 #include "sound.h"
 
-static Data_Obj *warning_dp=NO_OBJ;
+static Data_Obj *warning_dp=NULL;
 
 static void audio_warn(QSP_ARG_DECL  const char *s)
 {
 	tty_warn(QSP_ARG  s);
-	if( warning_dp != NO_OBJ )
+	if( warning_dp != NULL )
 		play_sound(QSP_ARG  warning_dp);
 }
 

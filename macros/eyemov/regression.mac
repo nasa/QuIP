@@ -74,7 +74,7 @@ Assign s_beta sqrt(($sos_resid/($n_pts-2))/$sos_xdev)
 
 # Now we need the t statistic for n-2 degrees of freedom
 T_Dist $n_pts-2
-Assign t_val value(icum[97])	# BUG assumes 100 bins, 95% ci
+Assign t_val value(inv_cum[floor(ncols(inv_cum)*0.975)])	# 95% ci
 #Print t_val
 Assign delta_beta $s_beta*$t_val
 #Print delta_beta

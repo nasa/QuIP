@@ -12,6 +12,8 @@
 #define HAVE_ENCRYPTION	1
 #define HAVE_SECRET_KEY	1
 
+#define HAVE_ASCTIME_R	1	// new for unix - present in iOS???
+
 /* real-time scheduler control enabled */
 /* #undef ALLOW_RT_SCHED */
 
@@ -626,9 +628,6 @@
 /* use internal memory manager */
 /* #undef USE_GETBUF */
 //#define USE_GETBUF 1
-
-/* use of SSE* extensions enabled */
-//#define USE_SSE 1
 
 /* Version number of package */
 #define VERSION "0.4"

@@ -1,5 +1,7 @@
 Start_File norm_coords.mac
 
+If var_exists(norm_coords_loaded) exit_file
+
 # used by fit_conic, etc
 # We have a bunch of x,y pairs, and we want to solve
 # y = p(x) where p is a polynomial
@@ -60,5 +62,7 @@ Assign _b $y_sigma*((-2)*$__a*$x_mean/($x_sigma*$x_sigma)+$__b/$x_sigma)
 Assign _c $y_mean+$y_sigma*($__a*$x_mean*$x_mean/($x_sigma*$x_sigma)-$__b*$x_mean/$x_sigma+$__c)
 data ascii read $1 - $_a $_b $_c quit quit
 .
+
+Set norm_coords_loaded 1
 
 Stop_File norm_coords.mac

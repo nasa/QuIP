@@ -13,6 +13,7 @@
 #include "query_bits.h"	// for some reason that is where my_pipe is layed out...
 #include "pipe_support.h"
 #include "function.h"
+#include "query_stack.h"	// BUG eliminate dependency
 
 #define N_RW_CHOICES	2
 
@@ -46,7 +47,7 @@ static COMMAND_FUNC( do_sendpipe )
 	Pipe *pp;
 	const char *s;
 
-	pp=PICK_PIPE("");
+	pp=pick_pipe("");
 	s=NAMEOF("text to send");
 
 	if( pp == NULL ) return;
@@ -58,11 +59,11 @@ static COMMAND_FUNC( do_readpipe )
 	Pipe *pp;
 	const char *s;
 
-	pp=PICK_PIPE("");
+	pp=pick_pipe("");
 	s=NAMEOF("variable for text storage");
 
 	if( pp == NULL ) {
-		ASSIGN_VAR(s,"error_missing_pipe");
+		assign_var(s,"error_missing_pipe");
 		return;
 	}
 	readfr_pipe(QSP_ARG  pp,s);
@@ -73,14 +74,14 @@ static COMMAND_FUNC( do_pipe_info )
 	Pipe *pp;
 	int i;
 
-	pp = PICK_PIPE("");
+	pp = pick_pipe("");
 	if( pp == NULL ) return;
 
 	if( pp->p_flgs & READ_PIPE ) i=0;
 	else if( pp->p_flgs & READ_PIPE ) i=1;
 #ifdef CAUTIOUS
 	else {
-		WARN("CAUTIOUS:  bad pipe r/w flag");
+		warn("CAUTIOUS:  bad pipe r/w flag");
 		return;
 	}
 #endif /* CAUTIOUS */
@@ -95,13 +96,13 @@ static COMMAND_FUNC( do_closepipe )
 {
 	Pipe *pp;
 
-	pp = PICK_PIPE("");
+	pp = pick_pipe("");
 	if( pp == NULL ) return;
 
 	close_pipe(QSP_ARG  pp);
 }
 
-static COMMAND_FUNC( do_list_pipes ){ list_pipes(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_list_pipes ){ list_pipes(tell_msgfile()); }
 
 /* fp should be null - but where do we specify the pipe handle? */
 
@@ -109,21 +110,19 @@ static COMMAND_FUNC( do_pipe_redir )
 {
 	Pipe *pp;
 
-	pp = PICK_PIPE("");
+	pp = pick_pipe("");
 	if( pp == NULL ) return;
 
 	if( (pp->p_flgs & READ_PIPE) == 0 ) {
 		sprintf(ERROR_STRING,
 	"do_pipe_redir:  pipe %s is not readable!?",pp->p_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	//push_input_file(QSP_ARG  msg_str);
 	sprintf(msg_str,"Pipe \"%s\"",pp->p_cmd);
-	redir(QSP_ARG pp->p_fp, msg_str);
-	SET_QRY_DUPFILE(CURR_QRY(THIS_QSP) , (FILE *) pp );
-	SET_QRY_FLAG_BITS(CURR_QRY(THIS_QSP), Q_PIPE);
+	redir_from_pipe(QSP_ARG pp, msg_str);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(pipes_menu,s,f,h)
@@ -142,7 +141,7 @@ static double pipe_exists(QSP_ARG_DECL  const char *s)
 {
 	Pipe *pp;
 
-	pp=pipe_of(QSP_ARG  s);
+	pp=pipe_of(s);
 	if( pp==NULL ) return(0.0);
 	else return(1.0);
 }
@@ -154,7 +153,7 @@ COMMAND_FUNC( do_pipe_menu )
 		DECLARE_STR1_FUNCTION(	pipe_exists,	pipe_exists )
 		inited=1;
 	}
-	PUSH_MENU(pipes);
+	CHECK_AND_PUSH_MENU(pipes);
 }
 
 

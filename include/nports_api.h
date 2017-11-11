@@ -25,7 +25,6 @@
 #endif
 
 #include "item_type.h"
-#include "query.h"
 #include "data_obj.h"
 
 struct my_port;
@@ -56,18 +55,27 @@ typedef enum {
 
 /* Public prototypes */
 
-extern ssize_t write_port(QSP_ARG_DECL  Port *mpp,const void *buf,u_long n);
-extern int put_port_int32(QSP_ARG_DECL  Port *mpp,int32_t wrd);
-extern ssize_t read_port(QSP_ARG_DECL  Port *mpp,void *buf,u_long n);
-extern int32_t get_port_int32(QSP_ARG_DECL  Port *mpp);
-extern int define_port_data_type(QSP_ARG_DECL  int code,const char *my_typename,const char *prompt,
+extern ssize_t _write_port(QSP_ARG_DECL  Port *mpp,const void *buf,u_long n);
+extern int _put_port_int32(QSP_ARG_DECL  Port *mpp,int32_t wrd);
+extern ssize_t _read_port(QSP_ARG_DECL  Port *mpp,void *buf,u_long n);
+extern int32_t _get_port_int32(QSP_ARG_DECL  Port *mpp);
+extern int _define_port_data_type(QSP_ARG_DECL  int code,const char *my_typename,const char *prompt,
 	//const char *(*recvfunc)(QSP_ARG_DECL  Port *),
 	long (*recvfunc)(QSP_ARG_DECL  Port *, Packet *pkp),
 	const char *(*datafunc)(QSP_ARG_DECL  const char *),
 	void (*xmitfunc)(QSP_ARG_DECL  Port *,const void *,int) );
-extern long recv_obj(QSP_ARG_DECL  Port *mpp, Packet *pkp);
-extern void xmit_obj(QSP_ARG_DECL  Port *mpp,Data_Obj *dp,int dataflag);
-extern void null_proc(QSP_ARG_DECL  const char *);
+extern long _recv_obj(QSP_ARG_DECL  Port *mpp, Packet *pkp);
+extern void _xmit_obj(QSP_ARG_DECL  Port *mpp,Data_Obj *dp,int dataflag);
+extern void _null_proc(QSP_ARG_DECL  const char *);
+
+#define write_port(mpp,buf,n) _write_port(QSP_ARG  mpp,buf,n)
+#define put_port_int32(mpp,wrd) _put_port_int32(QSP_ARG  mpp,wrd)
+#define read_port(mpp,buf,n) _read_port(QSP_ARG  mpp,buf,n)
+#define get_port_int32(mpp) _get_port_int32(QSP_ARG  mpp)
+#define define_port_data_type(code,my_typename,prompt,recvfunc,datafunc,xmitfunc) _define_port_data_type(QSP_ARG  code,my_typename,prompt,recvfunc,datafunc,xmitfunc)
+#define recv_obj(mpp,pkp) _recv_obj(QSP_ARG  mpp,pkp)
+#define xmit_obj(mpp,dp,dataflag) _xmit_obj(QSP_ARG  mpp,dp,dataflag)
+#define null_proc(s) _null_proc(QSP_ARG  s)
 
 /* xmitrecv.c */
 #ifdef FOOBAR

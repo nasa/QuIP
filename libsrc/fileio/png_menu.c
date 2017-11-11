@@ -69,7 +69,7 @@ MENU_END(png)
 
 COMMAND_FUNC( do_png_menu )
 {
-	PUSH_MENU(png);
+	CHECK_AND_PUSH_MENU(png);
 }
 
 

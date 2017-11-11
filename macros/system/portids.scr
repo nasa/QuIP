@@ -59,6 +59,7 @@ Next_Port_Base	lml_base
 Next_Port_Base	soundd_base
 Next_Port_Base	rawvol_server_base
 Next_Port_Base  knoxd_base
+Next_Port_Base	flyd_base
 Next_Port_Base  evid_base
 Next_Port_Base  vmenud_base
 Next_Port_Base  fbdevd_base
@@ -92,6 +93,9 @@ Assign	rawvol_server_port		$rawvol_server_base+$ear_os
 
 Set	knox_host	poisson
 Assign  knoxd_port	$knoxd_base+$ear_os
+
+Set	fly_host	euler
+Assign  flyd_port	$flyd_base+$ear_os
 
 Set	evi_host	poisson
 Assign  evid_port	$evid_base+$ear_os

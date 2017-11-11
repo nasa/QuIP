@@ -82,8 +82,8 @@ void mk_cursor( QSP_ARG_DECL  const char *name, u_short *data, dimension_t dx,di
 	View_Cursor *vcp;
 	Disp_Obj *dop;
 
-	vcp = new_cursor(QSP_ARG  name);
-	if( vcp == NO_CURSOR ) return;
+	vcp = new_cursor(name);
+	if( vcp == NULL ) return;
 
 	fg=1;
 	bg=0;

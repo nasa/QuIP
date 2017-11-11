@@ -14,7 +14,7 @@
 int is_chaining=0;
 static Chain *curr_cp=NULL;
 
-static Item_Type *vec_chain_itp=NO_ITEM_TYPE;
+static Item_Type *vec_chain_itp=NULL;
 static ITEM_INIT_FUNC(Chain,vec_chain,0)
 ITEM_CHECK_FUNC(Chain,vec_chain)
 ITEM_LIST_FUNC(Chain,vec_chain)
@@ -26,13 +26,8 @@ static void _del_chain(QSP_ARG_DECL  Chain *cp)
 {
 	Node *np;
 
-//	/* CAUTIOUS lp should never be null */
-//#ifdef CAUTIOUS
-//	if( CHAIN_LIST(cp)  == NO_LIST ) ERROR1("CAUTIOUS:  _del_chain:  null list!?");
-//#endif /* CAUTIOUS */
-
-	assert( CHAIN_LIST(cp) != NO_LIST );
-	while( (np=remTail(CHAIN_LIST(cp) )) != NO_NODE ){
+	assert( CHAIN_LIST(cp) != NULL );
+	while( (np=remTail(CHAIN_LIST(cp) )) != NULL ){
 		Vec_Chn_Blk *vcb_p;
 		/* BUG could release to pool */
 		vcb_p=NODE_DATA(np);
@@ -47,7 +42,6 @@ static void _del_chain(QSP_ARG_DECL  Chain *cp)
 	rls_list(CHAIN_LIST(cp) );
 
 	del_vec_chain(QSP_ARG  CHAIN_NAME(cp) );
-	rls_str((char *)CHAIN_NAME(cp) );
 }
 #endif /* NOT_USED */
 
@@ -56,25 +50,11 @@ void exec_chain(Chain *cp)
 	Vec_Chn_Blk *vcb_p;
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	if( CHAIN_LIST(cp)  == NO_LIST ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  exec_chain:  chain %s is empty!?",CHAIN_NAME(cp) );
-//		NWARN(DEFAULT_ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-
-	assert( CHAIN_LIST(cp) != NO_LIST );
+	assert( CHAIN_LIST(cp) != NULL );
 
 	np = QLIST_HEAD( CHAIN_LIST(cp) );
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		vcb_p = (Vec_Chn_Blk *)NODE_DATA(np);
-//#ifdef CAUTIOUS
-//		if(  CHAIN_FUNC(vcb_p) == NULL ) {
-//			NERROR1("CAUTIOUS:  exec_chain:  chain block has null function ptr!?");
-//			IOS_RETURN
-//		}
-//#endif /* CAUTIOUS */
 		assert( CHAIN_FUNC(vcb_p) != NULL );
 
 		(* CHAIN_FUNC(vcb_p))( CHAIN_ARGS(vcb_p) );
@@ -93,7 +73,7 @@ void start_chain(QSP_ARG_DECL  const char *name)
 	Chain *cp;
 
 	if( is_chaining ){
-		NWARN("a chain buffer is already open");
+		warn("a chain buffer is already open");
 		return;
 	}
 	cp=new_chain(QSP_ARG  name);
@@ -105,16 +85,6 @@ void add_link(void (*func)(LINK_FUNC_ARG_DECLS), LINK_FUNC_ARG_DECLS)
 {
 	Vec_Chn_Blk *vcb_p;
 	Node *np;
-
-//#ifdef CAUTIOUS
-//	if( ! is_chaining ){
-//		NWARN("CAUTIOUS:  add_link:  need to start a chain before adding links");
-//		return;
-//	}
-//	if( curr_cp == NULL ){
-//		NERROR1("CAUTIOUS:  is_chaining is true, but curr_cp is NULL!?");
-//	}
-//#endif /* CAUTIOUS */
 
 	assert( is_chaining );
 	assert( curr_cp != NULL );
@@ -137,22 +107,22 @@ void add_link(void (*func)(LINK_FUNC_ARG_DECLS), LINK_FUNC_ARG_DECLS)
 	addTail(CHAIN_LIST(curr_cp) ,np);
 }
 
-void end_chain(void)
+void _end_chain(SINGLE_QSP_ARG_DECL)
 {
 	if( !is_chaining ){
-		NWARN("no chain buffer currently open");
+		warn("no chain buffer currently open");
 		return;
 	}
 	is_chaining=0;
 }
 
 
-int chain_breaks(const char *routine_name)
+int _chain_breaks(QSP_ARG_DECL  const char *routine_name)
 {
 	if( is_chaining ){
 		sprintf(DEFAULT_ERROR_STRING,
 	"Routine \"%s\" is not chainable!?",routine_name);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(DEFAULT_ERROR_STRING);
 		return(1);
 	}
 	return(0);
@@ -164,28 +134,28 @@ int chain_breaks(const char *routine_name)
  * be static.
  */
 
-#define SCHECK(dp)				\
-						\
-	if( dp != NO_OBJ ){			\
-		if( ! IS_STATIC(dp) ){		\
+#define CHECK_OBJ_IS_STATIC(dp)				\
+							\
+	if( dp != NULL ){				\
+		if( ! IS_STATIC(dp) ){			\
 			sprintf(DEFAULT_ERROR_STRING,	\
 "Object %s must be static for use in chain %s.",\
 		OBJ_NAME(dp),CHAIN_NAME(curr_cp) );	\
-			NWARN(DEFAULT_ERROR_STRING);	\
-			return(-1);		\
-		}				\
+			warn(DEFAULT_ERROR_STRING);	\
+			return(-1);			\
+		}					\
 	}
 
-int insure_static(const Vec_Obj_Args *oap)
+int _insure_static(QSP_ARG_DECL  const Vec_Obj_Args *oap)
 {
 	int i;
 
-	SCHECK( OA_DEST(oap) )
+	CHECK_OBJ_IS_STATIC( OA_DEST(oap) )
 	for(i=0;i<MAX_N_ARGS;i++){
-		SCHECK( OA_SRC_OBJ(oap,i) )
+		CHECK_OBJ_IS_STATIC( OA_SRC_OBJ(oap,i) )
 	}
 	for(i=0;i<MAX_RETSCAL_ARGS;i++){
-		SCHECK( OA_SCLR_OBJ(oap,i) )
+		CHECK_OBJ_IS_STATIC( OA_SCLR_OBJ(oap,i) )
 	}
 	return(0);
 }

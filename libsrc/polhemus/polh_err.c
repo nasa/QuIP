@@ -5,7 +5,7 @@
 
 #include "quip_prot.h"
 //#include "myerror.h"
-//#include "debug.h"
+#include "debug.h"
 
 #include "polh_dev.h"
 

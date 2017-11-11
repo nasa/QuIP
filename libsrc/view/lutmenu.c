@@ -25,7 +25,7 @@ static Data_Obj *pick_lb(QSP_ARG_DECL  const char *pmpt)
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ(pmpt);
+	dp=pick_obj(pmpt);
 	/* BUG here we ought to check for size, type etc. */
 	return(dp);
 }
@@ -35,7 +35,7 @@ static COMMAND_FUNC( do_newlut )
 	const char *name;
 
 	name = NAMEOF("Name of new colormap");
-	if( new_colormap(QSP_ARG  name) == NO_OBJ )
+	if( new_colormap(name) == NULL )
 		WARN("error making new colormap");
 }
  
@@ -44,7 +44,7 @@ static COMMAND_FUNC( do_setlut )
 	Data_Obj *dp;
 	
 	dp=PICK_LB("");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	set_colormap(dp);
 }
@@ -52,7 +52,7 @@ static COMMAND_FUNC( do_setlut )
 static COMMAND_FUNC( show_current_lb )
 {
 #ifdef HAVE_X11
-	if( DPA_CMAP_OBJ(current_dpyp) == NO_OBJ )
+	if( DPA_CMAP_OBJ(current_dpyp) == NULL )
 		advise("no current colormap");
 	else {
 		sprintf(ERROR_STRING,"current colormap is \"%s\"",
@@ -71,7 +71,7 @@ static COMMAND_FUNC( do_dumplut )
 	Data_Obj *dp;
 
 	dp = PICK_LB("");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* dump_lut(dp); */
 
@@ -96,6 +96,6 @@ MENU_END(lutbufs)
 
 COMMAND_FUNC( do_lutbufs )
 {
-	PUSH_MENU(lutbufs);
+	CHECK_AND_PUSH_MENU(lutbufs);
 }
 
