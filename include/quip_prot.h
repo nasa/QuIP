@@ -417,8 +417,8 @@ extern COMMAND_FUNC( call_event_funcs );
 #ifdef HAVE_OPENGL
 // glmenu module
 extern COMMAND_FUNC( do_gl_menu );
-extern COMMAND_FUNC( do_stereo_menu );
 #endif /* HAVE_OPENGL */
+extern COMMAND_FUNC( do_stereo_menu );
 
 // BUG - should this go somewhere else???
 extern COMMAND_FUNC( do_port_menu );
