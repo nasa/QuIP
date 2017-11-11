@@ -759,7 +759,9 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 //int (*XSetErrorHandler(handler))()
      // int (*handler)(Display *, XErrorEvent *)
 	init_error_names();
+#ifdef THREAD_SAFE_QUERY
 	x_error_qsp = THIS_QSP;
+#endif // THREAD_SAFE_QUERY
      	old_handler = XSetErrorHandler(quip_x_error_handler);
 	if( verbose )
 		fprintf(stderr,"XSetErrorHandler returned 0x%lx\n",(long)old_handler);
