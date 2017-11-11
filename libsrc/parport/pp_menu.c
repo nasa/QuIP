@@ -53,7 +53,7 @@ static COMMAND_FUNC(  do_open_pport )
 {
 	const char *s;
 
-	s=NAMEOF("device name");
+	s=nameof("device name");
 
 	pport_fd = open(s,O_RDWR);
 	if( pport_fd < 0 ){
@@ -106,10 +106,10 @@ static COMMAND_FUNC( do_rd_byte )
 	int val;
 	char val_string[16];
 
-	s=NAMEOF("variable name");
+	s=nameof("variable name");
 	val = rd_byte();
 	sprintf(val_string,"0x%x",val);
-	assign_var(QSP_ARG  s,val_string);
+	assign_var(s,val_string);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(parport_menu,s,f,h)
