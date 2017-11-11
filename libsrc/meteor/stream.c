@@ -455,7 +455,7 @@ static void start_dw_threads(QSP_ARG_DECL  int32_t nf,int ndisks,int* fd_arr)
 if( (ndisks % n_disk_writer_threads) != 0 ){
 	sprintf(ERROR_STRING,"n_disk_writer_threads (%d) must evenly divide ndisks (%d)",
 			n_disk_writer_threads,ndisks);
-	ERROR1(ERROR_STRING);
+	error1(ERROR_STRING);
 }
 
 	disks_per_thread = ndisks / n_disk_writer_threads;
@@ -548,7 +548,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 		sprintf(ERROR_STRING,
 	"stream_record:  can't record file %s until previous record completes",
 			ifp->if_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -559,7 +559,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 	/* set_rt(); */
 
 	if( MAX_RINGBUF_FRAMES < num_meteor_frames ){
-		WARN("Need to recompile mcapt.c with a larger value of MAX_RINGBUF_FRAMES");
+		warn("Need to recompile mcapt.c with a larger value of MAX_RINGBUF_FRAMES");
 		return;
 	}
 
@@ -585,7 +585,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 			ifp->if_name,
 			FT_NAME(IF_TYPE(ifp)),
 			FT_NAME(FILETYPE_FOR_CODE(IFT_RV)) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -599,7 +599,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 		sprintf(ERROR_STRING,
 	"buffer frames (%d) must be >= 2 x number of disks (%d)",
 			num_meteor_frames,ndisks);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -618,7 +618,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 	SET_SHP_ROWS(shpp, _geo.rows);
 	SET_SHP_COLS(shpp,_geo.columns);
 	if( get_ofmt_index(QSP_ARG  _geo.oformat ) < 0 ){
-		WARN("error determining bytes per pixel");
+		warn("error determining bytes per pixel");
 		SET_SHP_COMPS(shpp,DEFAULT_BYTES_PER_PIXEL);
 	} else {
 		SET_SHP_COMPS(shpp,meteor_bytes_per_pixel);
@@ -702,12 +702,12 @@ show_tmrs(SINGLE_QSP_ARG);
 	assert( grabber_pid != 0 );
 
 	if( unassoc_pids(master_pid,grabber_pid) < 0 )
-		ERROR1("error unassociating grabber pid");
+		error1("error unassociating grabber pid");
 #endif /* FOOBAR */
 
 advise("joining w/ grab thread...");
 	if( pthread_join(grab_thr,NULL) != 0 ){
-		WARN("Error joining video reader thread");
+		warn("Error joining video reader thread");
 	}
 advise("joined!");
 
@@ -725,7 +725,7 @@ COMMAND_FUNC( meteor_halt_record )
 		 */
 		if( record_state & (RECORD_HALTING|RECORD_FINISHING) ){
 			sprintf(ERROR_STRING,"meteor_halt_record:  halt already in progress!?");
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		} else {
 			record_state |= RECORD_HALTING;
 		}
@@ -750,7 +750,7 @@ sprintf(ERROR_STRING,"video_reader_thread:  grabber_pid = %d",grabber_pid);
 advise(ERROR_STRING);
 
 	if( assoc_pids(master_pid,grabber_pid) < 0 )
-		ERROR1("video_reader_thread:  error associating pid");
+		error1("video_reader_thread:  error associating pid");
 #endif /* FOOBAR */
 
 	return( video_reader(argp) );
@@ -820,7 +820,7 @@ MSTATUS(MS_INIT)
 	meteor_clear_counts();
 
 	if( meteor_capture(SINGLE_QSP_ARG) < 0 )
-		ERROR1("meteor_capture() failed");
+		error1("meteor_capture() failed");
 
 
 	/* wait for the first frame */
@@ -1033,12 +1033,12 @@ if( verbose ) advise("main thread stopping capture");
 	for(i=0;i<n_disk_writer_threads;i++){
 #ifdef FOOBAR
 		if( unassoc_pids(master_pid,ppi[i].ppi_pid) < 0 )
-			ERROR1("error unassociating disk writer process id");
+			error1("error unassociating disk writer process id");
 #endif /* FOOBAR */
 
 		if( pthread_join(dw_thr[i],NULL) != 0 ){
 			sprintf(ERROR_STRING,"Error joining disk writer thread %d",i);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 	}
 
@@ -1052,7 +1052,7 @@ if( verbose ) advise("main thread stopping capture");
 		sprintf(ERROR_STRING,
 	"Wanted %d frames, captured %d (%d-%d-1)",n_frames,
 			(ending_count-starting_count)-1,ending_count,starting_count);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	} else {
 		advise("Recording done in real time");
 	}
@@ -1082,7 +1082,7 @@ if( verbose ) advise("main thread stopping capture");
 			sprintf(ERROR_STRING,"Movie %s:  %d fifo errors",
 				stream_ifp->if_name,cnt.fifo_errors);
 #endif
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			real_time_ok = 0;
 		}
 		if( cnt.dma_errors > 0 ){
@@ -1093,7 +1093,7 @@ if( verbose ) advise("main thread stopping capture");
 			sprintf(ERROR_STRING,"Movie %s:  %d dma errors",
 				stream_ifp->if_name,cnt.dma_errors);
 #endif
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			real_time_ok = 0;
 		}
 		n_hw_errors = cnt.fifo_errors + cnt.dma_errors;
@@ -1114,7 +1114,7 @@ if( verbose ) advise("main thread stopping capture");
 		sprintf(ERROR_STRING,"Movie %s not NOT recorded in real time (%d frames dropped)",
 			stream_ifp->if_name,di.n_total);
 #endif
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		real_time_ok = 0;
 	}
 
@@ -1123,7 +1123,7 @@ if( verbose ) advise("main thread stopping capture");
 		advise(ERROR_STRING);
 	}
 	if( n_hw_errors > 0 ){
-		WARN("Some frames may have corrupt data!?");
+		warn("Some frames may have corrupt data!?");
 	}
 
 	if( orig_n_frames != n_frames ){
@@ -1200,7 +1200,7 @@ STATUS(DW_INIT)
 	pip->ppi_pid = getpid();
 #ifdef FOOBAR
 	if( assoc_pids(master_pid,pip->ppi_pid) < 0 )
-		ERROR1("disk_writer:  error associating pid");
+		error1("disk_writer:  error associating pid");
 #endif /* FOOBAR */
 
 	/* tell the parent that we're ready, and wait for siblings */
@@ -1230,7 +1230,7 @@ STATUS(DW_TOP)
 		fd = open("/dev/null",O_RDWR);
 		if( fd < 0 ){
 			perror("open");
-			ERROR1("error opening /dev/null");
+			error1("error opening /dev/null");
 		}
 #endif /* SPECIAL_TEST */
 
@@ -1405,7 +1405,7 @@ static void clear_buffers(SINGLE_QSP_ARG_DECL)
 		sprintf(ERROR_STRING,
 			"clear_buffers:  meteor_bytes_per_pixel = %d (expected %d)",
 			meteor_bytes_per_pixel,DEFAULT_BYTES_PER_PIXEL);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 

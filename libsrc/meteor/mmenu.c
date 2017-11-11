@@ -440,7 +440,7 @@ static COMMAND_FUNC( do_setup_blur )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("impulse response");
+	dp = pick_obj("impulse response");
 	if( dp == NULL ) return;
 
 	setup_blur(QSP_ARG  dp);

@@ -211,7 +211,7 @@ static void meteor_set_geometry(QSP_ARG_DECL  struct meteor_geomet *gp)
 #ifndef FAKE_METEOR_HARDWARE
 	if (ioctl(meteor_fd, METEORSETGEO, gp) < 0){
 		perror("ioctl METEORSETGEO failed");
-		ERROR1("meteor_set_geometry:  Unable to allocate meteor memory");
+		error1("meteor_set_geometry:  Unable to allocate meteor memory");
 		return;
 	}
 #endif /* ! FAKE_METEOR_HARDWARE */

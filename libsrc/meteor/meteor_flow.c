@@ -49,7 +49,7 @@ static COMMAND_FUNC( do_start_flow )
 	oldest = newest = 0;
 
 	if( meteor_capture(SINGLE_QSP_ARG) < 0 )
-		ERROR1("meteor_capture() failed");
+		error1("meteor_capture() failed");
 
 	/* wait for the first frame */
 
@@ -105,20 +105,20 @@ advise(ERROR_STRING);
 	oldest = (newest + num_meteor_frames - (_mm->num_active_bufs-1)) % num_meteor_frames;
 
 	sprintf(s,"%d",oldest);
-	ASSIGN_VAR("oldest",s);
+	assign_var("oldest",s);
 
 	sprintf(s,"%d",newest);
-	ASSIGN_VAR("newest",s);
+	assign_var("newest",s);
 
 /*
 sprintf(ERROR_STRING,"update_vars:\toldest = %d\t\tnewest = %d",oldest,newest);
 advise(ERROR_STRING);
 */
 	sprintf(s,"%d",_mm->num_active_bufs);
-	ASSIGN_VAR("n_active",s);
+	assign_var("n_active",s);
 
 	sprintf(s,"0x%lx",(long)_mm->active);
-	ASSIGN_VAR("active_mask",s);
+	assign_var("active_mask",s);
 }
 
 static COMMAND_FUNC( do_wait_next )	/* wait til we have another frame */

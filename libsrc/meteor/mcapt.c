@@ -183,7 +183,7 @@ advise("do_meteor_capture BEGIN");
 int meteor_capture(SINGLE_QSP_ARG_DECL)
 {
 	if( IS_CAPTURING ){
-		WARN("meteor_capture:  already capturing!?");
+		warn("meteor_capture:  already capturing!?");
 		return(-1);
 	}
 
@@ -231,7 +231,7 @@ COMMAND_FUNC( meteor_stop_capture )
 	int c;
 
 	if( !IS_CAPTURING ){
-		WARN("Not capturing, can't stop!?");
+		warn("Not capturing, can't stop!?");
 		return;
 	}
 
@@ -311,7 +311,7 @@ void setup_monitor_capture(SINGLE_QSP_ARG_DECL)
 			i=index_of_mode(QSP_ARG  capture_mode);
 			sprintf(ERROR_STRING,"Meteor is already capturing in %s mode!?",
 					i>=0 ?  mode_names[ i ] : "(unknown)" );
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 		return;
 	}
@@ -349,7 +349,7 @@ Data_Obj *make_frame_object(QSP_ARG_DECL  const char* name,int index)
 	Data_Obj *dp;
 
 	if( index<0 || index>= num_meteor_frames ){
-		WARN("frame index out of range");
+		warn("frame index out of range");
 		return(NULL);
 	}
 
@@ -518,7 +518,7 @@ static COMMAND_FUNC( do_record )
 
 	if( ifp == NULL ){
 		sprintf(ERROR_STRING,"Error creating movie file %s",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -529,7 +529,7 @@ static COMMAND_FUNC( do_record )
 	if( rv_realloc(QSP_ARG  name,n_blocks) < 0 ){
 		sprintf(ERROR_STRING,"error reallocating %d blocks for rv file %s",
 			n_blocks,name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -554,7 +554,7 @@ Image_File *record_ifp=NULL;
 void meteor_record_clip(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 {
 	if( recording_in_process ){
-		WARN("meteor_record_clip:  async recording is already in process, need to wait!?");
+		warn("meteor_record_clip:  async recording is already in process, need to wait!?");
 		meteor_wait_record(SINGLE_QSP_ARG);	/* isn't really used... */
 	}
 
@@ -597,7 +597,7 @@ static void mem_record(QSP_ARG_DECL  Image_File *ifp,uint32_t n_frames)
 
 //advise("mem_record BEGIN");
 	if( n_frames > MAX_NUM_FRAMES )
-		ERROR1("mem_record:  Fix MAX_NUM_FRAMES");
+		error1("mem_record:  Fix MAX_NUM_FRAMES");
 
 	mem_frm_to_wt=0;
 
@@ -619,7 +619,7 @@ fprintf(stderr,"calling map_mem_data...\n");
 	_mm->n_frames_captured=0;
 
 	if( meteor_capture(SINGLE_QSP_ARG) < 0 ){
-		WARN("error starting capture");
+		warn("error starting capture");
 		return;
 	}
 
@@ -655,7 +655,7 @@ advise("faking hardware");
 		SET_SHP_FLAG_BITS(OBJ_SHAPE(dp),DT_INTERLACED);
 
 	if( dp == NULL ){
-		WARN("mem_record:  error creating tmp dp");
+		warn("mem_record:  error creating tmp dp");
 		return;
 	}
 
@@ -667,8 +667,8 @@ advise("faking hardware");
 	inp = (RV_Inode *)ifp->if_hdr_p;
 	if( rv_movie_extra(inp) != 0 ){
 		sprintf(ERROR_STRING,"File %s, rvi_extra_bytes = %d!?",ifp->if_name,rv_movie_extra(inp));
-		WARN(ERROR_STRING);
-		ERROR1("Sorry, can't record timestamps in memory recordings at present...");
+		warn(ERROR_STRING);
+		error1("Sorry, can't record timestamps in memory recordings at present...");
 	}
 
 	for(i=0;i<n_frames;i++){
@@ -720,13 +720,13 @@ static COMMAND_FUNC( do_playback )
 {
 	Image_File *ifp;
 
-	ifp = PICK_IMG_FILE("");
+	ifp = pick_img_file("");
 	if( ifp == NULL ) return;
 
 #ifdef HAVE_X11_EXT
 	play_meteor_movie(QSP_ARG  ifp);
 #else
-	WARN("do_playback:  Program was configured without X11 Extensions.");
+	warn("do_playback:  Program was configured without X11 Extensions.");
 #endif
 }
 
@@ -746,10 +746,10 @@ static void get_error_counts(QSP_ARG_DECL  const char* s,const char* s2,int inde
 #endif
 
 	sprintf(val,"%d",ei1.ei[index].n_total);
-	ASSIGN_VAR(s,val);
+	assign_var(s,val);
 	sprintf(val,"%d",ei1.ei[index].n_saved);
 
-	ASSIGN_VAR(s2,val);
+	assign_var(s2,val);
 }
 
 static COMMAND_FUNC( do_get_n_fifo_errors )
@@ -801,9 +801,9 @@ static COMMAND_FUNC( do_get_ndrops )
 #endif
 
 	sprintf(val,"%d",di.n_total);
-	ASSIGN_VAR(s,val);
+	assign_var(s,val);
 	sprintf(val,"%d",di.n_saved);
-	ASSIGN_VAR(s2,val);
+	assign_var(s2,val);
 }
 
 static void get_err_fields(QSP_ARG_DECL  Data_Obj *dp,int index)
@@ -814,7 +814,7 @@ static void get_err_fields(QSP_ARG_DECL  Data_Obj *dp,int index)
 	if( index < 0 || index > 2 ){
 		sprintf(ERROR_STRING,
 			"error index (%d) must be between 0 and 2",index);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	if( OBJ_MACH_PREC(dp) != PREC_UDI ){
@@ -822,7 +822,7 @@ static void get_err_fields(QSP_ARG_DECL  Data_Obj *dp,int index)
 	"Vector %s has precision %s, should be %s for METEORGERRFRMS",
 			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),
 			PREC_UDI_NAME);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -836,7 +836,7 @@ static void get_err_fields(QSP_ARG_DECL  Data_Obj *dp,int index)
 		sprintf(ERROR_STRING,
 	"Vector %s has %d elements, not big enough to store %d errors",
 			OBJ_NAME(dp),OBJ_N_TYPE_ELTS(dp),nerrs);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -844,7 +844,7 @@ static void get_err_fields(QSP_ARG_DECL  Data_Obj *dp,int index)
 		sprintf(ERROR_STRING,
 	"Vector %s should be contiguous for METEORGERRFRMS",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -858,7 +858,7 @@ static COMMAND_FUNC( do_get_fifo_errors )
 	Data_Obj *dp;
 
 
-	dp = PICK_OBJ("vector for error frame indices");
+	dp = pick_obj("vector for error frame indices");
 	if( dp== NULL ) return;
 
 	get_err_fields(QSP_ARG  dp,0);	/* see /usr/src/matrox/meteor.c */
@@ -869,7 +869,7 @@ static COMMAND_FUNC( do_get_fifodma_errors )
 	Data_Obj *dp;
 
 
-	dp = PICK_OBJ("vector for error frame indices");
+	dp = pick_obj("vector for error frame indices");
 	if( dp== NULL ) return;
 
 	get_err_fields(QSP_ARG  dp,2);	/* see /usr/src/matrox/meteor.c */
@@ -880,7 +880,7 @@ static COMMAND_FUNC( do_get_dma_errors )
 	Data_Obj *dp;
 
 
-	dp = PICK_OBJ("vector for error frame indices");
+	dp = pick_obj("vector for error frame indices");
 	if( dp== NULL ) return;
 
 	get_err_fields(QSP_ARG  dp,1);	/* see /usr/src/matrox/meteor.c */
@@ -892,7 +892,7 @@ static COMMAND_FUNC( do_get_drops )
 	Data_Obj *dp;
 	struct drop_info di;
 
-	dp = PICK_OBJ("vector for drop frame indices");
+	dp = pick_obj("vector for drop frame indices");
 
 	if( dp== NULL ) return;
 
@@ -901,7 +901,7 @@ static COMMAND_FUNC( do_get_drops )
 	"Vector %s has precision %s, should be %s for METEORGDRPFRMS",
 			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),
 			PREC_UDI_NAME);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -918,7 +918,7 @@ static COMMAND_FUNC( do_get_drops )
 		sprintf(ERROR_STRING,
 	"Vector %s has %d elements, not big enough to store %d drops",
 			OBJ_NAME(dp),OBJ_N_TYPE_ELTS(dp),di.n_saved);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -926,7 +926,7 @@ static COMMAND_FUNC( do_get_drops )
 		sprintf(ERROR_STRING,
 	"Vector %s should be contiguous for METEORGDRPFRMS",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -962,7 +962,7 @@ static COMMAND_FUNC( do_dump )
 	const char *s;
 	s=NAMEOF("filename");
 	if( !stamping ) {
-		WARN("not collecting timestamps, can't dump");
+		warn("not collecting timestamps, can't dump");
 		return;
 	}
 	dump_timestamps(s);

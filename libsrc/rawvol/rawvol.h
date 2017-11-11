@@ -298,10 +298,8 @@ extern void rv_chmod(QSP_ARG_DECL  RV_Inode *,int);
 extern void rv_mkfile(QSP_ARG_DECL  const char *s,long total_blocks,long n_per_write);
 
 extern void _rv_set_extra(QSP_ARG_DECL  int n);
-extern int _remember_frame_info(QSP_ARG_DECL  RV_Inode *inp, int index, USHORT_ARG nerr, dimension_t *frames);
 
 #define rv_set_extra(n) _rv_set_extra(QSP_ARG  n)
-#define remember_frame_info(inp,index,nerr,frames) _remember_frame_info(QSP_ARG  inp,index,nerr,frames)
 
 ITEM_INTERFACE_PROTOTYPES(RV_Inode,rv_inode)
 #define pick_rv_inode(p)	_pick_rv_inode(QSP_ARG  p)
@@ -314,9 +312,9 @@ extern void set_use_osync(int flag);
 extern void	rawvol_info(SINGLE_QSP_ARG_DECL);
 extern void     rawvol_get_usage(SINGLE_QSP_ARG_DECL);
 
-extern int	_rv_truncate(QSP_ARG_DECL  RV_Inode *,dimension_t);
-
-#define rv_truncate(inp,d) _rv_truncate(QSP_ARG  inp,d)
+// moved to rv_api.h
+//extern int	_rv_truncate(QSP_ARG_DECL  RV_Inode *,dimension_t);
+//#define rv_truncate(inp,d) _rv_truncate(QSP_ARG  inp,d)
 
 #endif /* undef _RAWVOL_H_ */
 
