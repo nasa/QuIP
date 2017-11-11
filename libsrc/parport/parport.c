@@ -33,6 +33,10 @@
 
 ITEM_INTERFACE_DECLARATIONS(ParPort,parport,DEFAULT_CONTAINER_TYPE)
 
+#define parport_of(s)	_parport_of(QSP_ARG  s)
+#define new_parport(s)	_new_parport(QSP_ARG  s)
+#define del_parport(s)	_del_parport(QSP_ARG  s)
+
 static char *default_parport="/dev/parport0";
 
 ParPort * open_parport(QSP_ARG_DECL  const char *name)
