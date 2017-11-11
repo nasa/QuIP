@@ -839,7 +839,7 @@ void _show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
 
 /* dummy functions to allow linking w/o X11 */
 
-int display_depth(SINGLE_QSP_ARG_DECL)
+int _display_depth(SINGLE_QSP_ARG_DECL)
 {
 	UNIMP_MSG(display_depth)
 	return 0;
