@@ -97,6 +97,10 @@ static ITEM_INIT_FUNC(Sound_Device,snddev,0)
 static ITEM_CHECK_FUNC(Sound_Device,snddev)
 static ITEM_NEW_FUNC(Sound_Device,snddev)
 
+#define init_snddevs()	_init_snddevs(SINGLE_QSP_ARG)
+#define snddev_of(s)	_snddev_of(QSP_ARG  s)
+#define new_snddev(s)	_new_snddev(QSP_ARG  s)
+
 
 
 static Sound_Device * init_sound_device(QSP_ARG_DECL  const char *devname);
