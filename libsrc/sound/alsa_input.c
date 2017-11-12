@@ -259,7 +259,7 @@ void _record_sound(QSP_ARG_DECL  Data_Obj *dp)
 	CHECK_AUDIO(AUDIO_RECORD);
 
 	if( the_sdp == NULL ){
-		the_sdp = init_sound_device(QSP_ARG  DEFAULT_SOUND_DEVICE);
+		the_sdp = init_sound_device(DEFAULT_SOUND_DEVICE);
 		if( the_sdp == NULL ) return;
 	}
 	record_sound_to_obj(dp,the_sdp);
@@ -356,7 +356,7 @@ advise(ERROR_STRING);
 	return read_sound_frames(sdp,ptr,n,OBJ_COMPS(dp)*PREC_SIZE(OBJ_MACH_PREC_PTR(dp)));
 }
 
-static int init_sound_hardware(QSP_ARG_DECL  Sound_Device *sdp)
+static int _init_sound_hardware(QSP_ARG_DECL  Sound_Device *sdp)
 {
 	int err,dir;
 	u_int desired_rate;
@@ -419,7 +419,7 @@ static int init_sound_hardware(QSP_ARG_DECL  Sound_Device *sdp)
 	return(0);
 }
 
-static Sound_Device * init_sound_device(QSP_ARG_DECL  const char *devname)
+static Sound_Device * _init_sound_device(QSP_ARG_DECL  const char *devname)
 {
 	Sound_Device *sdp;
 	int err;
@@ -634,7 +634,7 @@ void record_stream(QSP_ARG_DECL  int sound_fd, int timestamp_fd)
 	timestamp_stream_fd = timestamp_fd;
 
 	if( the_sdp == NULL ){
-		the_sdp = init_sound_device(QSP_ARG  DEFAULT_SOUND_DEVICE);
+		the_sdp = init_sound_device(DEFAULT_SOUND_DEVICE);
 		if( the_sdp == NULL ) return;
 	}
 
