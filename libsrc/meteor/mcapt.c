@@ -61,7 +61,7 @@ void meteor_status(SINGLE_QSP_ARG_DECL)
 //	INSURE_MM("meteor_status");
 	assert( _mm != NULL );
 
-	sprintf(msg_str,"_mm = 0x%x",(int_for_addr)_mm);
+	sprintf(msg_str,"_mm = 0x%"PRIxPTR,(uintptr_t)_mm);
 	prt_msg(msg_str);
 	sprintf(msg_str,"frame size: %d (0x%x)",_mm->frame_size,_mm->frame_size);
 	prt_msg(msg_str);

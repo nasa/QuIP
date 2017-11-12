@@ -133,11 +133,11 @@ static void init_twiddle (dimension_t len)
 #ifdef ONLY_FOR_DEBUG
 static void show_fa(FFT_Args *fap)
 {
-	sprintf(DEFAULT_ERROR_STRING,"dst_addr = 0x%lx, inc = %ld",
-		(int_for_addr)FFT_DST(fap),(long)FFT_DINC(fap));
+	sprintf(DEFAULT_ERROR_STRING,"dst_addr = 0x%"PRIxPTR", inc = %ld",
+		(uintptr_t)FFT_DST(fap),(long)FFT_DINC(fap));
 	NADVISE(DEFAULT_ERROR_STRING);
-	sprintf(DEFAULT_ERROR_STRING,"src_addr = 0x%lx, inc = %ld",
-		(int_for_addr)FFT_SRC(fap),(long)FFT_SINC(fap));
+	sprintf(DEFAULT_ERROR_STRING,"src_addr = 0x%"PRIxPTR", inc = %ld",
+		(uintptr_t)FFT_SRC(fap),(long)FFT_SINC(fap));
 	NADVISE(DEFAULT_ERROR_STRING);
 	sprintf(DEFAULT_ERROR_STRING,"len = %ld, isi = %d",
 		(long)FFT_LEN(fap),FFT_ISI(fap));

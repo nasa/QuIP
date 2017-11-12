@@ -239,7 +239,7 @@ static double get_dbl_scalar_value(Data_Obj *dp)
 #ifdef NOT_USED
 void show_id(QSP_ARG_DECL  Identifier *idp)
 {
-	sprintf(msg_str,"Identifier %s at 0x%lx:  ",ID_NAME(idp), (int_for_addr)idp);
+	sprintf(msg_str,"Identifier %s at 0x%"PRIxPTR":  ",ID_NAME(idp), (uintptr_t)idp);
 	prt_msg_frag(msg_str);
 	switch(ID_TYPE(idp)){
 		case ID_OBJ_REF:  prt_msg("reference"); break;
@@ -3790,8 +3790,8 @@ static void show_ref(Reference *refp)
 	advise("show_ref:");
 	if( REF_TYPE(refp) == OBJ_REFERENCE ){
 		sprintf(ERROR_STRING,
-			"show_ref:  ref at 0x%lx:  object %s",
-			(int_for_addr)refp, OBJ_NAME(REF_OBJ(refp)));
+			"show_ref:  ref at 0x%"PRIxPTR":  object %s",
+			(uintptr_t)refp, OBJ_NAME(REF_OBJ(refp)));
 		advise(ERROR_STRING);
 	} else if( REF_TYPE(refp) == STR_REFERENCE ){
 		sprintf(ERROR_STRING,"show_ref:  string");
@@ -3805,7 +3805,7 @@ static void show_ref(Reference *refp)
 
 static void show_ptr(Pointer *ptrp)
 {
-	sprintf(ERROR_STRING,"Pointer at 0x%lx",(int_for_addr)ptrp);
+	sprintf(ERROR_STRING,"Pointer at 0x%"PRIxPTR,(uintptr_t)ptrp);
 	advise(ERROR_STRING);
 }
 

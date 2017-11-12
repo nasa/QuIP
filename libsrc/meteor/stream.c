@@ -1275,7 +1275,7 @@ STATUS(DW_WAIT)
 		buf = frame_address(next);
 		assert(buf!=NULL);
 
-//sprintf(ERROR_STRING,"disk_writer:  next %d   addr 0x%lx",next,(int_for_addr)buf);
+//sprintf(ERROR_STRING,"disk_writer:  next %d   addr 0x%"PRIxPTR,next,(uintptr_t)buf);
 //advise(ERROR_STRING);
 
 		/* write out the next frame */

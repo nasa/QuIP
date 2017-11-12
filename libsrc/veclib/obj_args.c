@@ -52,8 +52,8 @@ longlist(OA_SRC_OBJ(oap,i) );
 			}
 			else	strcpy(msgbuf,"(invalid precision)");
 				
-			sprintf(buf,"Scalar value at addr 0x%zx = %s",
-				(int_for_addr)OA_SVAL(oap,i),msgbuf);
+			sprintf(buf,"Scalar value at addr 0x%"PRIxPTR" = %s",
+				(uintptr_t)OA_SVAL(oap,i),msgbuf);
 			(*report_func)(QSP_ARG  buf);
 			/* argset precision is not the same as regular precision? */
 		}

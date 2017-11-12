@@ -43,8 +43,6 @@ $(srcdir)/cu2_yuv2rgb.cu:	$(builddir)/cu2_yuv2rgb_expanded.c
 $(srcdir)/cu2_fill.cu:	$(builddir)/cu2_fill_expanded.c
 	touch $(srcdir)/cu2_fill.cu
 
-#$(srcdir)/cu2_utils.cu:	$(builddir)/cu2_utils_expanded.c
-#	touch $(srcdir)/cu2_utils.cu
 $(srcdir)/cu2_utils.c:	$(builddir)/cu2_utils_expanded.c
 	touch $(srcdir)/cu2_utils.c
 
@@ -56,9 +54,6 @@ cu2_yuv2rgb.o:	$(srcdir)/cu2_yuv2rgb.cu
 
 cu2_fill.o:	$(srcdir)/cu2_fill.cu
 	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
-
-#cu2_utils.o:	$(srcdir)/cu2_utils.cu
-#	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
 
 cu2_centroid.o:	$(srcdir)/cu2_centroid.cu
 	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)

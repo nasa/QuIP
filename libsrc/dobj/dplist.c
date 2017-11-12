@@ -135,7 +135,7 @@ void dump_shape(QSP_ARG_DECL  Shape_Info *shpp)
 {
 	int i;
 
-	sprintf(MSG_STR,"shpp = 0x%lx",(int_for_addr)shpp);
+	sprintf(MSG_STR,"shpp = 0x%"PRIxPTR,(uintptr_t)shpp);
 	prt_msg(MSG_STR);
 
 	describe_shape(shpp);
@@ -178,8 +178,8 @@ void _list_dobj(QSP_ARG_DECL  Data_Obj *dp)
 
 	/*
 	if( dp->dt_extra != NULL ){
-		sprintf(MSG_STR,"Decl node has addr 0x%lx\n",
-			(int_for_addr)dp->dt_extra);
+		sprintf(MSG_STR,"Decl node has addr 0x%"PRIxPTR"\n",
+			(uintptr_t)dp->dt_extra);
 		prt_msg(MSG_STR);
 	}
 	*/
@@ -445,7 +445,7 @@ static void list_data(QSP_ARG_DECL  Data_Obj *dp)
 #endif // ! BITNUM_64
 	prt_msg(MSG_STR);
 
-	sprintf(MSG_STR,"\tdata at   0x%lx",(int_for_addr)OBJ_DATA_PTR(dp));
+	sprintf(MSG_STR,"\tdata at   0x%"PRIxPTR,(uintptr_t)OBJ_DATA_PTR(dp));
 	prt_msg(MSG_STR);
 	if( IS_BITMAP(dp) ){
 #ifdef BITNUM_64
@@ -520,7 +520,7 @@ void info_all_dps(SINGLE_QSP_ARG_DECL)
 
 void show_space_used(QSP_ARG_DECL  Data_Obj *dp)
 {
-	sprintf(MSG_STR,"%s:\t\t0x%lx",OBJ_NAME(dp),(int_for_addr)OBJ_DATA_PTR(dp));
+	sprintf(MSG_STR,"%s:\t\t0x%"PRIxPTR,OBJ_NAME(dp),(uintptr_t)OBJ_DATA_PTR(dp));
 	prt_msg(MSG_STR);
 }
 

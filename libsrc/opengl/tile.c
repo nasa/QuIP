@@ -107,7 +107,7 @@ static void release_vertex(Vertex *vp)
 {
 	Node *np;
 
-//sprintf(ERROR_STRING,"\t\tFreeing vertex at 0x%lx",(int_for_addr)vp);
+//sprintf(ERROR_STRING,"\t\tFreeing vertex at 0x%"PRIxPTR,(uintptr_t)vp);
 //advise(ERROR_STRING);
 	np = mk_node(vp);
 	if( free_pts_lp == NULL )
@@ -155,7 +155,7 @@ static Vertex *_find_free_vertex(SINGLE_QSP_ARG_DECL)
 	rls_node(np);
 #ifdef CAUTIOUS
 if( vp->v_x != WACKY_NUM || vp->v_y != WACKY_NUM || vp->v_z != WACKY_NUM ){
-sprintf(ERROR_STRING,"CAUTIOUS:  find_free_vertex:  supposedly free vertex at 0x%lx does not have expected wacky coord vals",(int_for_addr)vp);
+sprintf(ERROR_STRING,"CAUTIOUS:  find_free_vertex:  supposedly free vertex at 0x%"PRIxPTR" does not have expected wacky coord vals",(uintptr_t)vp);
 error1(ERROR_STRING);
 }
 #endif /* CAUTIOUS */
@@ -243,8 +243,8 @@ sprintf(ERROR_STRING,"%s corner of tile %s (%g,%g) matches %s corner of tile %s 
 quad_name[new_corner1],new_tp->t_name,new_tp->t_v[new_corner1]->v_x,new_tp->t_v[new_corner1]->v_y,\
 quad_name[old_corner1],old_tp->t_name,old_tp->t_v[old_corner1]->v_x,old_tp->t_v[old_corner1]->v_y);\
 advise(ERROR_STRING);\
-sprintf(ERROR_STRING,"releasing %s and %s vertices at 0x%lx and 0x%lx",\
-quad_name[new_corner1],quad_name[new_corner2],(int_for_addr)new_tp->t_v[new_corner1],(int_for_addr)new_tp->t_v[new_corner2]);\
+sprintf(ERROR_STRING,"releasing %s and %s vertices at 0x%"PRIxPTR" and 0x%"PRIxPTR,\
+quad_name[new_corner1],quad_name[new_corner2],(uintptr_t)new_tp->t_v[new_corner1],(uintptr_t)new_tp->t_v[new_corner2]);\
 advise(ERROR_STRING);\
 		if( new_tp->t_v[new_corner1] != old_tp->t_v[old_corner1] ){				\
 			FREE_VERTEX(new_tp->t_v[new_corner1]);						\
@@ -765,13 +765,13 @@ advise(ERROR_STRING);
 
 #define DEBUG_COUSIN(subq,dir,cousin_q)							\
 											\
-	sprintf(ERROR_STRING,"Tile %s:  neighbor[%d] = 0x%lx",tp->t_name,dir,(int_for_addr)tp->t_n[dir]);\
+	sprintf(ERROR_STRING,"Tile %s:  neighbor[%d] = 0x%"PRIxPTR,tp->t_name,dir,(uintptr_t)tp->t_n[dir]);\
 	advise(ERROR_STRING);\
-	sprintf(ERROR_STRING,"\tsubquad[%d] = 0x%lx",subq,(int_for_addr)tp->t_q[subq]);\
+	sprintf(ERROR_STRING,"\tsubquad[%d] = 0x%"PRIxPTR,subq,(uintptr_t)tp->t_q[subq]);\
 	advise(ERROR_STRING);\
 	if( tp->t_n[dir]!= NULL ){\
-		sprintf(ERROR_STRING,"\tneighbor[%d]->quadrant[%d] = 0x%lx",dir,cousin_q,\
-			(int_for_addr)tp->t_n[dir]->t_q[cousin_q]);\
+		sprintf(ERROR_STRING,"\tneighbor[%d]->quadrant[%d] = 0x%"PRIxPTR,dir,cousin_q,\
+			(uintptr_t)tp->t_n[dir]->t_q[cousin_q]);\
 		advise(ERROR_STRING);\
 	}
 
@@ -889,7 +889,7 @@ void show_tile(QSP_ARG_DECL  Tile *tp, const char *prefix)
 	int i;
 
 if( verbose ){
-sprintf(ERROR_STRING,"show_tile 0x%lx",(int_for_addr)tp);
+sprintf(ERROR_STRING,"show_tile 0x%"PRIxPTR,(uintptr_t)tp);
 advise(ERROR_STRING);
 }
 	sprintf(msg_str,"Tile %s:",tp->t_name);
@@ -911,8 +911,8 @@ advise(ERROR_STRING);
 	*/
 
 	for(i=0;i<4;i++){
-		sprintf(msg_str,"\t\t%s vertex (addr 0x%lx):  %g, %g, %g",quad_name[i],
-			(int_for_addr)tp->t_v[i],
+		sprintf(msg_str,"\t\t%s vertex (addr 0x%"PRIxPTR"):  %g, %g, %g",quad_name[i],
+			(uintptr_t)tp->t_v[i],
 			tp->t_v[i]->v_x,
 			tp->t_v[i]->v_y,
 			tp->t_v[i]->v_z);
@@ -1040,9 +1040,9 @@ void xdraw_master( QSP_ARG_DECL  Master_Tile *mtp )
 					tp->t_q[a]->t_v[b]->v_xf.p_y,				\
 					tp->t_q[a]->t_v[b]->v_xf.p_z);	\
 				advise(ERROR_STRING);			\
-				sprintf(ERROR_STRING,"Original pt %s %s quadrant %s vertex  at 0x%lx    %g %g %g",\
+				sprintf(ERROR_STRING,"Original pt %s %s quadrant %s vertex  at 0x%"PRIxPTR"    %g %g %g",\
 				tp->t_name,quad_name[a],quad_name[b],	\
-					(int_for_addr)tp->t_q[a]->t_v[b],\
+					(uintptr_t)tp->t_q[a]->t_v[b],\
 					tp->t_q[a]->t_v[b]->v_x,				\
 					tp->t_q[a]->t_v[b]->v_y,				\
 					tp->t_q[a]->t_v[b]->v_z);	\
@@ -1349,13 +1349,13 @@ advise(ERROR_STRING);
 
 			/*
 			sprintf(ERROR_STRING,
-				"master tile at 0x%lx has no level %d elevation data object!?",(int_for_addr)mtp,i);
+				"master tile at 0x%"PRIxPTR" has no level %d elevation data object!?",(uintptr_t)mtp,i);
 			WARN(ERROR_STRING);
 			*/
 #ifdef CAUTIOUS
 			if( mtp->mt_dem_name == NULL || *mtp->mt_dem_name==0 ){
-				sprintf(ERROR_STRING,"CAUTIOUS:  master_tile_elevate:  Null DEM name string, master tile at 0x%lx",
-					(int_for_addr)mtp);
+				sprintf(ERROR_STRING,"CAUTIOUS:  master_tile_elevate:  Null DEM name string, master tile at 0x%"PRIxPTR,
+					(uintptr_t)mtp);
 				WARN(ERROR_STRING);
 				return;
 			}
@@ -1427,8 +1427,8 @@ advise(ERROR_STRING);
 
 #ifdef CAUTIOUS
 			if( mtp->mt_tex_name == NULL || *mtp->mt_tex_name==0 ){
-				sprintf(ERROR_STRING,"CAUTIOUS:  master_tile_texture:  Null TEX name string, master tile at 0x%lx",
-					(int_for_addr)mtp);
+				sprintf(ERROR_STRING,"CAUTIOUS:  master_tile_texture:  Null TEX name string, master tile at 0x%"PRIxPTR,
+					(uintptr_t)mtp);
 				WARN(ERROR_STRING);
 				return;
 			}
@@ -1711,7 +1711,7 @@ static void free_subtile(Tile *tp)		/* garbage collection */
 
 	/* free the vertices */
 	for(i=0;i<4;i++){
-//sprintf(ERROR_STRING,"\tvertex %d at 0x%lx, n_ref = %d",i,(int_for_addr)tp->t_v[i],tp->t_v[i]->v_nref);
+//sprintf(ERROR_STRING,"\tvertex %d at 0x%"PRIxPTR", n_ref = %d",i,(uintptr_t)tp->t_v[i],tp->t_v[i]->v_nref);
 //advise(ERROR_STRING);
 		RELEASE_VERTEX( tp->t_v[i] );
 	}
@@ -1741,7 +1741,7 @@ void tile_info(QSP_ARG_DECL  Tile *tp)
 {
 	int i;
 
-	sprintf(msg_str,"Tile at 0x%lx",(int_for_addr)tp);
+	sprintf(msg_str,"Tile at 0x%"PRIxPTR,(uintptr_t)tp);
 	prt_msg(msg_str);
 
 	for(i=0;i<4;i++){
