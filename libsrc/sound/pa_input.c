@@ -86,7 +86,7 @@ static ITEM_NEW_FUNC(Sound_Device,snddev)
 
 static Sound_Device * init_sound_device(QSP_ARG_DECL  const char *devname);
 
-static int _record_sound(QSP_ARG_DECL  Data_Obj *dp, Sound_Device *sdp);
+static int _record_sound_to_obj(QSP_ARG_DECL  Data_Obj *dp, Sound_Device *sdp);
 static int init_sound_hardware(QSP_ARG_DECL  Sound_Device *sdp);
 
 void set_sound_gain(QSP_ARG_DECL  int g)
@@ -131,7 +131,7 @@ double get_sound_seconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 
 	dp = (Data_Obj *)ip;
 
-	if( ! object_is_sound(QSP_ARG  dp) ) return(-1.0);
+	if( ! object_is_sound(dp) ) return(-1.0);
 
 	/* convert time stamp to broken-down time */
 
@@ -157,7 +157,7 @@ double get_sound_microseconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 
 	dp = (Data_Obj *)ip;
 
-	if( ! object_is_sound(QSP_ARG  dp) ) return(-1.0);
+	if( ! object_is_sound(dp) ) return(-1.0);
 
 	tm_p = (Timestamp_Data *)OBJ_DATA_PTR(dp);
 
@@ -172,7 +172,7 @@ double get_sound_microseconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 
 double get_sound_milliseconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 {
-	if( ! object_is_sound(QSP_ARG  (Data_Obj *)ip) ) return(-1.0);
+	if( ! object_is_sound((Data_Obj *)ip) ) return(-1.0);
 	return( get_sound_microseconds(QSP_ARG  ip,frame) / 1000.0 );
 }
 
@@ -206,7 +206,7 @@ void halt_rec_stream(SINGLE_QSP_ARG_DECL)
 
 void set_stereo_input(QSP_ARG_DECL  int is_stereo) { warn("unimplemented for portaudio:  set_stereo_input"); }
 
-void record_sound(QSP_ARG_DECL  Data_Obj *dp)
+void _record_sound(QSP_ARG_DECL  Data_Obj *dp)
 {
 	CHECK_AUDIO(AUDIO_RECORD);
 
@@ -214,7 +214,7 @@ void record_sound(QSP_ARG_DECL  Data_Obj *dp)
 		the_sdp = init_sound_device(QSP_ARG  DEFAULT_SOUND_DEVICE);
 		if( the_sdp == NULL ) return;
 	}
-	_record_sound(QSP_ARG  dp,the_sdp);
+	record_sound_to_obj(dp,the_sdp);
 }
 
 #define FRAMES_PER_CHUNK	128		/* how should we set this?? */
@@ -239,7 +239,7 @@ static int setup_record(QSP_ARG_DECL  Sound_Device *sdp)
 	}
 
 	if((err = snd_pcm_prepare(sdp->sd_capture_handle)) < 0) {
-		sprintf(ERROR_STRING,"record_sound:  cannot prepare audio interface %s for use (%s)\n",
+		sprintf(ERROR_STRING,"setup_record:  cannot prepare audio interface %s for use (%s)\n",
 			sdp->sd_name,snd_strerror(err));
 		warn(ERROR_STRING);
 		return(-1);
@@ -252,7 +252,9 @@ static int setup_record(QSP_ARG_DECL  Sound_Device *sdp)
 
 }
 
-static int _record_sound(QSP_ARG_DECL  Data_Obj *dp, Sound_Device *sdp)
+#define record_sound_to_obj(dp,sdp) _record_sound_to_obj(QSP_ARG  dp,sdp)
+
+static int _record_sound_to_obj(QSP_ARG_DECL  Data_Obj *dp, Sound_Device *sdp)
 {
 #ifdef FOOBAR
 	snd_pcm_uframes_t n;
@@ -261,14 +263,14 @@ static int _record_sound(QSP_ARG_DECL  Data_Obj *dp, Sound_Device *sdp)
 	if( setup_record(QSP_ARG  sdp) < 0 ) return(-1);
 
 	n = OBJ_N_TYPE_ELTS(dp)/OBJ_COMPS(dp);		/* assume tdim =2 if stereo... */
-sprintf(ERROR_STRING,"_record_sound:  n_frames = %ld, tdim = %ld, size = %d",
+sprintf(ERROR_STRING,"_record_sound_to_obj:  n_frames = %ld, tdim = %ld, size = %d",
 n, (long)OBJ_COMPS(dp), PREC_SIZE(OBJ_MACH_PREC_PTR(dp)));
 advise(ERROR_STRING);
 
 	ptr = (char *)OBJ_DATA_PTR(dp);
 	return read_sound_frames(QSP_ARG  sdp,ptr,n,OBJ_COMPS(dp)*PREC_SIZE(OBJ_MACH_PREC_PTR(dp)));
 #else // ! FOOBAR
-	warn("_record_sound not implemented for portaudio!?");
+	warn("_record_sound_to_obj not implemented for portaudio!?");
 	return -1;
 #endif // ! FOOBAR
 }

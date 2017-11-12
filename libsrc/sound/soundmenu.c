@@ -52,7 +52,7 @@ typedef struct {
 debug_flag_t sound_debug=0;
 
 
-int object_is_sound(QSP_ARG_DECL  Data_Obj *dp)
+int _object_is_sound(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( OBJ_MACH_PREC(dp) != PREC_IN ){
 		sprintf(ERROR_STRING,"Object %s has %s precision, should be %s for sound",

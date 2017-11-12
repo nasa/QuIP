@@ -47,7 +47,8 @@ extern "C" {
 #endif // __cplusplus
 
 /* soundmenu.c */
-extern int object_is_sound(QSP_ARG_DECL  Data_Obj *dp);
+extern int _object_is_sound(QSP_ARG_DECL  Data_Obj *dp);
+#define object_is_sound(dp) _object_is_sound(QSP_ARG  dp)
 
 /* sound.c */
 
@@ -59,7 +60,9 @@ extern int set_playback_nchan(QSP_ARG_DECL  int);
 extern void audio_init(QSP_ARG_DECL  int);
 extern void set_stereo_output(QSP_ARG_DECL  int);
 extern void set_stereo_input(QSP_ARG_DECL  int);
-extern void record_sound(QSP_ARG_DECL  Data_Obj *);
+extern void _record_sound(QSP_ARG_DECL  Data_Obj *);
+#define record_sound(dp) _record_sound(QSP_ARG  dp)
+
 extern void play_sound(QSP_ARG_DECL  Data_Obj *);
 extern void set_sound_gain(QSP_ARG_DECL  int);
 extern void set_sound_volume(QSP_ARG_DECL  int);

@@ -898,7 +898,7 @@ static int good_for_sound(QSP_ARG_DECL  Data_Obj *dp)
 // For the sake of efficiency, we should only run it when we want
 // to record.  So we need to have a more complex sense of state?
 
-void record_sound(QSP_ARG_DECL  Data_Obj *dp)
+void _record_sound(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if(audio_state!=AUDIO_RECORD)
 		audio_init(QSP_ARG  AUDIO_RECORD);

@@ -103,10 +103,14 @@ static ITEM_NEW_FUNC(Sound_Device,snddev)
 
 
 
-static Sound_Device * init_sound_device(QSP_ARG_DECL  const char *devname);
+static Sound_Device * _init_sound_device(QSP_ARG_DECL  const char *devname);
+#define init_sound_device(devname) _init_sound_device(QSP_ARG  devname)
 
-static int _record_sound(QSP_ARG_DECL  Data_Obj *dp, Sound_Device *sdp);
-static int init_sound_hardware(QSP_ARG_DECL  Sound_Device *sdp);
+static int _record_sound_to_obj(QSP_ARG_DECL  Data_Obj *dp, Sound_Device *sdp);
+#define record_sound_to_obj(dp,sdp) _record_sound_to_obj(QSP_ARG  dp,sdp)
+
+static int _init_sound_hardware(QSP_ARG_DECL  Sound_Device *sdp);
+#define init_sound_hardware(sdp) _init_sound_hardware(QSP_ARG  sdp)
 
 void set_sound_gain(QSP_ARG_DECL  int g)
 {
@@ -129,7 +133,9 @@ advise("sound recording souce is the microphone...");
 #endif /* FOOBAR */
 }
 
-static void select_input(QSP_ARG_DECL  int mask )
+#define select_input(mask ) _select_input(QSP_ARG  mask )
+
+static void _select_input(QSP_ARG_DECL  int mask )
 {
 	int recsrc;
 	recsrc = 0;
@@ -155,12 +161,12 @@ static void select_input(QSP_ARG_DECL  int mask )
 
 void select_mic_input(SINGLE_QSP_ARG_DECL)
 {
-	select_input(QSP_ARG  SOUND_MASK_MIC);
+	select_input(SOUND_MASK_MIC);
 }
 
 void select_line_input(SINGLE_QSP_ARG_DECL)
 {
-	select_input(QSP_ARG  SOUND_MASK_LINE);
+	select_input(SOUND_MASK_LINE);
 }
 
 
@@ -173,7 +179,7 @@ double get_sound_seconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 
 	dp = (Data_Obj *)ip;
 
-	if( ! object_is_sound(QSP_ARG  dp) ) return(-1.0);
+	if( ! object_is_sound(dp) ) return(-1.0);
 
 	/* convert time stamp to broken-down time */
 
@@ -199,7 +205,7 @@ double get_sound_microseconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 
 	dp = (Data_Obj *)ip;
 
-	if( ! object_is_sound(QSP_ARG  dp) ) return(-1.0);
+	if( ! object_is_sound(dp) ) return(-1.0);
 
 	tm_p = (Timestamp_Data *)OBJ_DATA_PTR(dp);
 
@@ -214,7 +220,7 @@ double get_sound_microseconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 
 double get_sound_milliseconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 {
-	if( ! object_is_sound(QSP_ARG  (Data_Obj *)ip) ) return(-1.0);
+	if( ! object_is_sound((Data_Obj *)ip) ) return(-1.0);
 	return( get_sound_microseconds(QSP_ARG  ip,frame) / 1000.0 );
 }
 
@@ -248,7 +254,7 @@ void halt_rec_stream(SINGLE_QSP_ARG_DECL)
 
 void set_stereo_input(QSP_ARG_DECL  int is_stereo) { warn("unimplemented for ALSA:  set_stereo_input"); }
 
-void record_sound(QSP_ARG_DECL  Data_Obj *dp)
+void _record_sound(QSP_ARG_DECL  Data_Obj *dp)
 {
 	CHECK_AUDIO(AUDIO_RECORD);
 
@@ -256,12 +262,14 @@ void record_sound(QSP_ARG_DECL  Data_Obj *dp)
 		the_sdp = init_sound_device(QSP_ARG  DEFAULT_SOUND_DEVICE);
 		if( the_sdp == NULL ) return;
 	}
-	_record_sound(QSP_ARG  dp,the_sdp);
+	record_sound_to_obj(dp,the_sdp);
 }
 
 #define FRAMES_PER_CHUNK	128		/* how should we set this?? */
 
-static int setup_record(QSP_ARG_DECL  Sound_Device *sdp)
+#define setup_record(sdp) _setup_record(QSP_ARG  sdp)
+
+static int _setup_record(QSP_ARG_DECL  Sound_Device *sdp)
 {
 	snd_pcm_uframes_t n_frames;
 	int dir=0;
@@ -280,7 +288,7 @@ static int setup_record(QSP_ARG_DECL  Sound_Device *sdp)
 	}
 
 	if((err = snd_pcm_prepare(sdp->sd_capture_handle)) < 0) {
-		sprintf(ERROR_STRING,"record_sound:  cannot prepare audio interface %s for use (%s)\n",
+		sprintf(ERROR_STRING,"setup_record:  cannot prepare audio interface %s for use (%s)\n",
 			sdp->sd_name,snd_strerror(err));
 		warn(ERROR_STRING);
 		return(-1);
@@ -288,7 +296,9 @@ static int setup_record(QSP_ARG_DECL  Sound_Device *sdp)
 	return(0);
 }
 
-static int read_sound_frames(QSP_ARG_DECL  Sound_Device *sdp, char *ptr, snd_pcm_uframes_t frames_remaining, int frame_size )
+#define read_sound_frames(sdp,ptr,frames_remaining,frame_size) _read_sound_frames(QSP_ARG  sdp,ptr,frames_remaining,frame_size)
+
+static int _read_sound_frames(QSP_ARG_DECL  Sound_Device *sdp, char *ptr, snd_pcm_uframes_t frames_remaining, int frame_size )
 {
 	snd_pcm_uframes_t frames_requested;
 	int err;
@@ -330,20 +340,20 @@ static int read_sound_frames(QSP_ARG_DECL  Sound_Device *sdp, char *ptr, snd_pcm
 	return(0);
 }
 
-static int _record_sound(QSP_ARG_DECL  Data_Obj *dp, Sound_Device *sdp)
+static int _record_sound_to_obj(QSP_ARG_DECL  Data_Obj *dp, Sound_Device *sdp)
 {
 	snd_pcm_uframes_t n;
 	char *ptr;
 	
-	if( setup_record(QSP_ARG  sdp) < 0 ) return(-1);
+	if( setup_record(sdp) < 0 ) return(-1);
 
 	n = OBJ_N_TYPE_ELTS(dp)/OBJ_COMPS(dp);		/* assume tdim =2 if stereo... */
-sprintf(ERROR_STRING,"_record_sound:  n_frames = %ld, tdim = %ld, size = %d",
+sprintf(ERROR_STRING,"_record_sound_to_obj:  n_frames = %ld, tdim = %ld, size = %d",
 n, (long)OBJ_COMPS(dp), PREC_SIZE(OBJ_MACH_PREC_PTR(dp)));
 advise(ERROR_STRING);
 
 	ptr = (char *)OBJ_DATA_PTR(dp);
-	return read_sound_frames(QSP_ARG  sdp,ptr,n,OBJ_COMPS(dp)*PREC_SIZE(OBJ_MACH_PREC_PTR(dp)));
+	return read_sound_frames(sdp,ptr,n,OBJ_COMPS(dp)*PREC_SIZE(OBJ_MACH_PREC_PTR(dp)));
 }
 
 static int init_sound_hardware(QSP_ARG_DECL  Sound_Device *sdp)
@@ -414,14 +424,14 @@ static Sound_Device * init_sound_device(QSP_ARG_DECL  const char *devname)
 	Sound_Device *sdp;
 	int err;
 
-	sdp = snddev_of(QSP_ARG  devname);
+	sdp = snddev_of(devname);
 	if( sdp != NULL ){
 		sprintf(ERROR_STRING,"init_sound_device:  device %s is already initialized",devname);
 		warn(ERROR_STRING);
 		return(sdp);
 	}
 
-	sdp = new_snddev(QSP_ARG  devname);
+	sdp = new_snddev(devname);
 	if( sdp == NULL ){
 		sprintf(ERROR_STRING,"init_sound_device:  unable to create struct for device %s",devname);
 		warn(ERROR_STRING);
@@ -436,7 +446,7 @@ static Sound_Device * init_sound_device(QSP_ARG_DECL  const char *devname)
 		return(NULL);
 	}
 
-	if( init_sound_hardware(QSP_ARG  sdp) < 0 ){
+	if( init_sound_hardware(sdp) < 0 ){
 		sprintf(ERROR_STRING,"init_sound_device:  Unable to initialize sound hardware for device %s",sdp->sd_name);
 		warn(ERROR_STRING);
 		/* BUG cleanup here */
@@ -462,7 +472,7 @@ static Data_Obj * init_stream_obj(SINGLE_QSP_ARG_DECL)
 	ds1.ds_dimension[3] = 1;
 	ds1.ds_dimension[4] = 1;
 
-	audio_stream_dp = make_dobj(QSP_ARG  "_audio_stream_obj",&ds1,PREC_FOR_CODE(PREC_IN));
+	audio_stream_dp = make_dobj("_audio_stream_obj",&ds1,PREC_FOR_CODE(PREC_IN));
 	return( audio_stream_dp );
 }
 
@@ -520,7 +530,7 @@ static  void *disk_writer(void *arg)
 writer_done:
 
 	close(audio_stream_fd);
-	delvec(QSP_ARG  audio_stream_dp);
+	delvec(audio_stream_dp);
 	audio_stream_fd=(-1);
 
 	close(timestamp_stream_fd);
@@ -555,7 +565,7 @@ static void *audio_reader(void *arg)
 		ptr += active_buf * OBJ_ROW_INC(audio_stream_dp);
 
 		/* now fill this buffer with data */
-		if( read_sound_frames(QSP_ARG  the_sdp,(char *)ptr,frames_requested,framesize) < 0 ){
+		if( read_sound_frames(the_sdp,(char *)ptr,frames_requested,framesize) < 0 ){
 			warn("error reading audio data");
 			halting=1;
 		}
@@ -628,7 +638,7 @@ void record_stream(QSP_ARG_DECL  int sound_fd, int timestamp_fd)
 		if( the_sdp == NULL ) return;
 	}
 
-	if( setup_record(QSP_ARG  the_sdp) < 0 ) return;
+	if( setup_record(the_sdp) < 0 ) return;
 
 	if( stream_record_init(SINGLE_QSP_ARG) < 0 ){
 		warn("error initializing stream recorder");
