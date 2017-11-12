@@ -2711,7 +2711,7 @@ int _pop_stop_level(SINGLE_QSP_ARG_DECL)
 	assert( stack_size(QS_STOP_LEVEL_STACK(THIS_QSP)) > 0 );
 
 	vp = pop_item(QS_STOP_LEVEL_STACK(THIS_QSP));
-	return (int) vp;
+	return (int) ((long)vp);
 }
 
 
