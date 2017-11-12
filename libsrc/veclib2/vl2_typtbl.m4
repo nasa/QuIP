@@ -59,7 +59,7 @@ void check_vl2_vfa_tbl(SINGLE_QSP_ARG_DECL)
 {
 	if( N_VL2_ARRAYED_VEC_FUNCS != N_VEC_FUNCS ){
 		sprintf(ERROR_STRING,
-	"vl2_vfa_tbl has %ld entries, expected %d!?",
+	"vl2_vfa_tbl has %zd entries, expected %d!?",
 			N_VL2_ARRAYED_VEC_FUNCS, N_VEC_FUNCS );
 		WARN(ERROR_STRING);
 //		return -1;
