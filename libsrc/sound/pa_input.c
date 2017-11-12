@@ -87,6 +87,8 @@ static ITEM_NEW_FUNC(Sound_Device,snddev)
 static Sound_Device * init_sound_device(QSP_ARG_DECL  const char *devname);
 
 static int _record_sound_to_obj(QSP_ARG_DECL  Data_Obj *dp, Sound_Device *sdp);
+#define record_sound_to_obj(dp,sdp) _record_sound_to_obj(QSP_ARG  dp,sdp)
+
 static int init_sound_hardware(QSP_ARG_DECL  Sound_Device *sdp);
 
 void set_sound_gain(QSP_ARG_DECL  int g)
@@ -251,8 +253,6 @@ static int setup_record(QSP_ARG_DECL  Sound_Device *sdp)
 #endif // ! FOOBAR
 
 }
-
-#define record_sound_to_obj(dp,sdp) _record_sound_to_obj(QSP_ARG  dp,sdp)
 
 static int _record_sound_to_obj(QSP_ARG_DECL  Data_Obj *dp, Sound_Device *sdp)
 {

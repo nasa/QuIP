@@ -124,7 +124,7 @@ static void *sound_recorder(void *argp)
 	sprintf(ERROR_STRING,"sound_recorder:  sound is %s",OBJ_NAME(dp));
 	advise(ERROR_STRING);
 	recording_in_progress=1;
-	record_sound(QSP_ARG  dp);
+	record_sound(dp);
 	recording_in_progress=0;
 	return(NULL);
 }
@@ -155,9 +155,8 @@ static COMMAND_FUNC( do_recsound )
 	} else {
 		/* synchronous record */
 advise("beginning synchronous record");
-		record_sound(QSP_ARG  dp);
+		record_sound(dp);
 	}
-	//record_sound(QSP_ARG  dp);
 }
 
 static COMMAND_FUNC( do_waitrec )
