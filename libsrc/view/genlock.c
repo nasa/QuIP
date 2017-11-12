@@ -529,7 +529,7 @@ static void test_parport(void)
 	lp ++;
 
 	if( the_ppp == NULL ){
-		the_ppp=open_parport(QSP_ARG  NULL);	/* use default */
+		the_ppp=open_parport(NULL);	/* use default */
 		if( the_ppp == NULL ) return;
 	}
 
@@ -589,7 +589,7 @@ int init_genlock(SINGLE_QSP_ARG_DECL)
 		if( gli1.gli_fbip[i] == NULL ) return -1;
 
 	if( the_ppp == NULL ){
-		the_ppp=open_parport(QSP_ARG  NULL);	/* use default */
+		the_ppp=open_parport(NULL);	/* use default */
 		if( the_ppp == NULL ) return -1;
 	}
 
