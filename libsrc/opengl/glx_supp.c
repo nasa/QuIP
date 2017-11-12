@@ -294,7 +294,7 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 		} else {
 			if( verbose ){
 				sprintf(DEFAULT_ERROR_STRING,
-		"init_glx_context( %s ):  created GL context 0x%lx",
+		"init_glx_context( %s ):  created GL context 0x%"PRIxPTR,
 			vp->vw_name,(uintptr_t)VW_OGL_CTX(vp));
 				advise(DEFAULT_ERROR_STRING);
 			}

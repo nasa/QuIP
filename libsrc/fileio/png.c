@@ -283,6 +283,7 @@ static int init_png(QSP_ARG_DECL  Image_File *ifp /* , png_infop info_ptr */ )
 	//printf("init_png: OUT\n");
 
 	if( HDR_P->n_frames == 0 ){	// first time
+		frame_size=0;	// silence compiler warning
 		HDR_P->n_frames = count_png_frames(ifp->if_fp,&frame_size);
 		HDR_P->frame_size = frame_size;
 	}
