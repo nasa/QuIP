@@ -2328,7 +2328,7 @@ static void descend_directory( QSP_ARG_DECL  RV_Inode *inp, void (*func)(QSP_ARG
 	(*func)(QSP_ARG  inp);
 }
 
-void traverse_rv_inodes( QSP_ARG_DECL  void (*func)(QSP_ARG_DECL RV_Inode *) )
+void _traverse_rv_inodes( QSP_ARG_DECL  void (*func)(QSP_ARG_DECL RV_Inode *) )
 {
 	RV_Inode *inp;
 
@@ -2347,7 +2347,7 @@ void rv_ls_all(SINGLE_QSP_ARG_DECL)
 {
 	CHECK_VOLUME("rv_ls_all")
 
-	traverse_rv_inodes( QSP_ARG  rv_ls_inode );
+	traverse_rv_inodes( rv_ls_inode );
 }
 
 static void traverse_list( QSP_ARG_DECL  List *lp, void (*func)(QSP_ARG_DECL  RV_Inode *) )
@@ -2435,7 +2435,7 @@ void rv_sync(SINGLE_QSP_ARG_DECL)
 	 * flushes directory data to disk.
 	 */
 
-	traverse_rv_inodes(QSP_ARG  sync_inode);
+	traverse_rv_inodes(sync_inode);
 
 	sync_super();
 }
