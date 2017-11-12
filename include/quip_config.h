@@ -95,6 +95,8 @@
 #endif // ! HAVE_CUDA
 #endif // ! HAVE_OPENCL
 
+// this is necessary for PRIxPTR to be recognized for C++
+#define __STDC_FORMAT_MACROS
 
 #endif /* ! _QUIP_CONFIG_H_ */
 
