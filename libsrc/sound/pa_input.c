@@ -131,7 +131,7 @@ double get_sound_seconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 
 	dp = (Data_Obj *)ip;
 
-	if( ! object_is_sound(QSP_ARG  dp) ) return(-1.0);
+	if( ! object_is_sound(dp) ) return(-1.0);
 
 	/* convert time stamp to broken-down time */
 
@@ -157,7 +157,7 @@ double get_sound_microseconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 
 	dp = (Data_Obj *)ip;
 
-	if( ! object_is_sound(QSP_ARG  dp) ) return(-1.0);
+	if( ! object_is_sound(dp) ) return(-1.0);
 
 	tm_p = (Timestamp_Data *)OBJ_DATA_PTR(dp);
 
@@ -172,7 +172,7 @@ double get_sound_microseconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 
 double get_sound_milliseconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 {
-	if( ! object_is_sound(QSP_ARG  (Data_Obj *)ip) ) return(-1.0);
+	if( ! object_is_sound((Data_Obj *)ip) ) return(-1.0);
 	return( get_sound_microseconds(QSP_ARG  ip,frame) / 1000.0 );
 }
 

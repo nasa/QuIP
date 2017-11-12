@@ -47,7 +47,8 @@ extern "C" {
 #endif // __cplusplus
 
 /* soundmenu.c */
-extern int object_is_sound(QSP_ARG_DECL  Data_Obj *dp);
+extern int _object_is_sound(QSP_ARG_DECL  Data_Obj *dp);
+#define object_is_sound(dp) _object_is_sound(QSP_ARG  dp)
 
 /* sound.c */
 
