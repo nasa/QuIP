@@ -83,10 +83,6 @@
 
 #define HAVE_MORPH		/* flood fill? */
 
-// use uintptr_t instead?
-//#define int_for_addr	long
-#define int_for_addr	uintptr_t
-
 // define HAVE_ANY_GPU if we have CUDA -or- OpenCL
 
 #ifdef HAVE_OPENCL

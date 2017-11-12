@@ -423,8 +423,8 @@ void insure_cuda_device( Data_Obj *dp )
 	assert( cdp != NULL );
 
 	if( curr_cdp != cdp ){
-sprintf(DEFAULT_ERROR_STRING,"insure_cuda_device:  curr_cdp = 0x%lx  cdp = 0x%lx",
-(int_for_addr)curr_cdp,(int_for_addr)cdp);
+sprintf(DEFAULT_ERROR_STRING,"insure_cuda_device:  curr_cdp = 0x%"PRIxPTR"  cdp = 0x%"PRIxPTR,
+(uintptr_t)curr_cdp,(uintptr_t)cdp);
 NADVISE(DEFAULT_ERROR_STRING);
 
 sprintf(DEFAULT_ERROR_STRING,"insure_cuda_device:  current device is %s, want %s",
@@ -448,10 +448,10 @@ void *tmpvec(int size,int len,const char *whence)
 		NERROR1("CUDA memory allocation error");
 	}
 
-//sprintf(ERROR_STRING,"tmpvec:  %d bytes allocated at 0x%lx",len,(int_for_addr)cuda_mem);
+//sprintf(ERROR_STRING,"tmpvec:  %d bytes allocated at 0x%"PRIxPTR,len,(uintptr_t)cuda_mem);
 //advise(ERROR_STRING);
 
-//sprintf(ERROR_STRING,"tmpvec %s:  0x%lx",whence,(int_for_addr)cuda_mem);
+//sprintf(ERROR_STRING,"tmpvec %s:  0x%"PRIxPTR,whence,(uintptr_t)cuda_mem);
 //advise(ERROR_STRING);
 	return(cuda_mem);
 #else // ! HAVE_CUDA
@@ -464,7 +464,7 @@ void freetmp(void *ptr,const char *whence)
 #ifdef HAVE_CUDA
 	cudaError_t drv_err;
 
-//sprintf(ERROR_STRING,"freetmp %s:  0x%lx",whence,(int_for_addr)ptr);
+//sprintf(ERROR_STRING,"freetmp %s:  0x%"PRIxPTR,whence,(uintptr_t)ptr);
 //advise(ERROR_STRING);
 	drv_err=cudaFree(ptr);
 	if( drv_err != cudaSuccess ){
