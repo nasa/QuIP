@@ -51,7 +51,7 @@ void meteor_record(QSP_ARG_DECL  uint32_t n_fields,Movie *mvip)
 		n_frames_to_request = n_fields / 2;
 	}
 
-	meteor_record_clip(QSP_ARG  ifp,n_frames_to_request);
+	meteor_record_clip(ifp,n_frames_to_request);
 
 	/* meteor_record_clip closes the ifp, so we need to eradicate the
 	 * reference to it now.
@@ -73,7 +73,7 @@ void meteor_play_movie(QSP_ARG_DECL  Movie *mvip)
 
 	ifp= (Image_File *) mvip->mvi_data;
 #ifdef HAVE_X11_EXT
-	play_meteor_movie(QSP_ARG  ifp);
+	play_meteor_movie(ifp);
 #else
 	WARN("meteor_play_movie:  Program was configured without X11 Extensions.");
 #endif
@@ -97,7 +97,7 @@ advise(ERROR_STRING);
 	ifp= (Image_File *) mvip->mvi_data;
 
 #ifdef HAVE_X11_EXT
-	play_meteor_frame(QSP_ARG  ifp, frame);
+	play_meteor_frame(ifp, frame);
 #else
 	WARN("meteor_shuttle_movie:  Program was configured without X11 Extensions.");
 #endif
@@ -118,11 +118,11 @@ void meteor_monitor(SINGLE_QSP_ARG_DECL)
 {
 	Data_Obj *dp;
 
-	dp = make_frame_object(QSP_ARG  "tmpfrm",0);
+	dp = make_frame_object("tmpfrm",0);
 
 #ifdef HAVE_X11_EXT
 	setup_monitor_capture(SINGLE_QSP_ARG);
-	monitor_meteor_video(QSP_ARG  dp);
+	monitor_meteor_video(dp);
 #else
 	WARN("meteor_monitor:  Program was configured without X11 Extensions.");
 #endif
@@ -137,7 +137,7 @@ void meteor_movie_info(QSP_ARG_DECL  Movie *mvip)
 	Image_File *ifp;
 
 	ifp= (Image_File *) mvip->mvi_data;
-	if_info(QSP_ARG  ifp);
+	if_info(ifp);
 }
 
 
@@ -187,10 +187,10 @@ advise("meteor_setup_movie");
 				FT_NAME(new_ftp) );
 			advise(ERROR_STRING);
 		}
-		set_filetype(QSP_ARG  new_ftp);
+		set_filetype(new_ftp);
 	}
 
-	ifp = write_image_file(QSP_ARG  MOVIE_NAME(mvip),n_frames);
+	ifp = write_image_file(MOVIE_NAME(mvip),n_frames);
 
 	if( ifp == NULL ) return(-1);
 
@@ -213,7 +213,7 @@ advise("meteor_setup_movie");
 
 	n_allocframes = rv_frames_to_allocate( n_frames );
 
-	if( rv_realloc(QSP_ARG  MOVIE_NAME(mvip),n_allocframes*blocks_per_frame) < 0 ){
+	if( rv_realloc(MOVIE_NAME(mvip),n_allocframes*blocks_per_frame) < 0 ){
 		sprintf(ERROR_STRING,"meteor_setup_movie:  failed to allocate rawvol storage for %s",
 			MOVIE_NAME(mvip));
 		WARN(ERROR_STRING);
@@ -232,7 +232,7 @@ advise("meteor_add_frame");
 #endif /* QUIP_DEBUG */
 
 	/* BUG make sure dp & mvip have same dimensions if not 1st frame */
-	write_image_to_file(QSP_ARG  (Image_File *) mvip->mvi_data,dp);
+	write_image_to_file((Image_File *) mvip->mvi_data,dp);
 }
 
 void meteor_end_assemble(QSP_ARG_DECL  Movie *mvip)
@@ -244,7 +244,7 @@ if( debug & meteor_debug )
 advise("meteor_end_assemble");
 #endif /* QUIP_DEBUG */
 
-	inp = rv_inode_of(QSP_ARG  MOVIE_NAME(mvip));	/* save this for later */
+	inp = rv_inode_of(MOVIE_NAME(mvip));	/* save this for later */
 
 	/* don't do this stuff until async record is finished */
 
@@ -261,17 +261,17 @@ advise("meteor_end_assemble");
 sprintf(ERROR_STRING,"meteor_end_assemble calling close_image_file, movie is %s, if is %s",
 MOVIE_NAME(mvip),((Image_File *)mvip->mvi_data)->if_name);
 advise(ERROR_STRING);
-		close_image_file(QSP_ARG  (Image_File *) mvip->mvi_data);
+		close_image_file((Image_File *) mvip->mvi_data);
 	}
 
 	/* We delete the movie because it was open for recording,
 	 * and we're too lazy to change the flags...
 	 */
 
-	delete_movie(QSP_ARG  mvip);
+	delete_movie(mvip);
 	assert( inp != NULL );
 
-	update_movie_database(QSP_ARG  inp);
+	update_movie_database(inp);
 }
 
 void meteor_get_frame(QSP_ARG_DECL  Movie *mvip, uint32_t n, Data_Obj *dp)
@@ -280,10 +280,10 @@ void meteor_get_frame(QSP_ARG_DECL  Movie *mvip, uint32_t n, Data_Obj *dp)
 
 	ifp = (Image_File *) mvip->mvi_data;
 
-	if( image_file_seek(QSP_ARG  ifp,n) < 0 )
+	if( image_file_seek(ifp,n) < 0 )
 		return;
 
-	read_object_from_file(QSP_ARG  dp,ifp);
+	read_object_from_file(dp,ifp);
 }
 
 void meteor_get_framec(QSP_ARG_DECL  Movie *mvip, uint32_t n, Data_Obj *dp, int comp)

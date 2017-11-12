@@ -380,7 +380,7 @@ static int oldest, newest;	/* indices into ringbuf
 				 */
 static int n_ready_bufs;
 
-void thread_write_enable(QSP_ARG_DECL  int index, int flag)
+void _thread_write_enable(QSP_ARG_DECL  int index, int flag)
 {
 	assert( index >= 0 && index < MAX_DISKS );
 	
@@ -533,7 +533,7 @@ show_tmrs(SGL_DEFAULT_QSP_ARG);
  * This complicates the "exceeds"...
  */
 
-void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
+void _stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 {
 	int32_t npix;
 	int fd_arr[MAX_DISKS];
@@ -591,7 +591,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 
 
 	inp = (RV_Inode *)ifp->if_hdr_p;
-	ndisks = queue_rv_file(QSP_ARG  inp,fd_arr);
+	ndisks = queue_rv_file(inp,fd_arr);
 
 	assert( ndisks > 0 );
 
@@ -630,7 +630,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 	if( !meteor_field_mode )
 		SET_SHP_FLAG_BITS(shpp,DT_INTERLACED);
 
-	rv_set_shape(QSP_ARG  ifp->if_name,shpp);
+	rv_set_shape(ifp->if_name,shpp);
 
 	/* We write an entire frame to each disk in turn... */
 

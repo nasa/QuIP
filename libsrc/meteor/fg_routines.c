@@ -63,7 +63,7 @@ static int meteor_is_mapped=0, fbdev_is_mapped=0;
  *	ram_location: DISPLAY_RAM, BIGPHYS_RAM, KERNEL_RAM
  */
 
-int fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location)
+int _fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location)
 {
 	const char *		MeteorDev = DEF_METEOR_DEVICE;
 	u_char *		framebuf;
@@ -670,7 +670,7 @@ u_char *fg_buf_addr()
 int meteor_fd=(-1);
 int fbfd=(-1);
 
-int fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location)
+int _fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location)
 {
 	return(0);
 }

@@ -18,7 +18,9 @@ ITEM_INTERFACE_PROTOTYPES(RV_Inode,rv_inode)
 extern int	_rv_truncate(QSP_ARG_DECL  RV_Inode *,dimension_t);
 #define rv_truncate(inp,d) _rv_truncate(QSP_ARG  inp,d)
 extern int	legal_rv_filename(const char *);
-extern void	traverse_rv_inodes( QSP_ARG_DECL  void (*f)(QSP_ARG_DECL  RV_Inode *) );
+extern void	_traverse_rv_inodes( QSP_ARG_DECL  void (*f)(QSP_ARG_DECL  RV_Inode *) );
+#define traverse_rv_inodes(f) _traverse_rv_inodes( QSP_ARG  f)
+
 extern int	insure_default_rv(SINGLE_QSP_ARG_DECL);
 extern int	rv_get_ndisks(void);
 extern void	rv_sync(SINGLE_QSP_ARG_DECL);
@@ -26,7 +28,9 @@ extern void	rv_sync(SINGLE_QSP_ARG_DECL);
 extern int _remember_frame_info(QSP_ARG_DECL  RV_Inode *inp, int index, USHORT_ARG nerr, dimension_t *frames);
 #define remember_frame_info(inp,index,nerr,frames) _remember_frame_info(QSP_ARG  inp,index,nerr,frames)
 
-extern void	setup_rv_iofile(QSP_ARG_DECL  RV_Inode *inp);
+extern void	_setup_rv_iofile(QSP_ARG_DECL  RV_Inode *inp);
+#define setup_rv_iofile(inp) _setup_rv_iofile(QSP_ARG  inp)
+
 extern int32_t	n_rv_disks(void);
 extern int	rv_access_allowed(QSP_ARG_DECL  RV_Inode *inp);
 

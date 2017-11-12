@@ -158,6 +158,9 @@ typedef struct per_proc_info {
 	int	ppi_newest;
 	int	ppi_ccount[MAXCAPT];	/* capture count after each write */
 	RV_Inode *	ppi_inp;
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *	ppi_qsp;
+#endif // THREAD_SAFE_QUERY
 #ifdef TRACE_FLOW
 	int	ppi_status;		/* holds disk_writer state */
 #endif /* TRACE_FLOW */
@@ -183,7 +186,7 @@ static char *rdfrmptr[N_READ_BUFFERS];
 int displaying_color=0;
 
 
-void play_meteor_movie(QSP_ARG_DECL  Image_File *ifp)
+void _play_meteor_movie(QSP_ARG_DECL  Image_File *ifp)
 {
 	dimension_t frame_index;
 	int j;
@@ -197,7 +200,7 @@ void play_meteor_movie(QSP_ARG_DECL  Image_File *ifp)
 		return;
 	}
 	inp = (RV_Inode *)ifp->if_hdr_p;
-	ndisks = queue_rv_file(QSP_ARG  inp,fd_arr);
+	ndisks = queue_rv_file(inp,fd_arr);
 
 	/* get real size */
 	width = OBJ_COLS(ifp->if_dp);
@@ -263,7 +266,7 @@ RMSTATUS(RM_EXIT);
 	ifp->if_nfrms = OBJ_FRAMES(ifp->if_dp);
 } /* end play_meteor_movie */
 
-void play_meteor_frame(QSP_ARG_DECL  Image_File *ifp, uint32_t frame)
+void _play_meteor_frame(QSP_ARG_DECL  Image_File *ifp, uint32_t frame)
 {
 	int j;
 	RV_Inode *inp;
@@ -285,7 +288,7 @@ advise("play_meteor_frame");
 		return;
 	}
 	inp = (RV_Inode *) ifp->if_hdr_p;
-	ndisks = queue_rv_file(QSP_ARG  inp,fd_arr);
+	ndisks = queue_rv_file(inp,fd_arr);
 
 	/* make sure that the meteor window is available */
 
@@ -294,10 +297,10 @@ advise("play_meteor_frame");
 	/* seek to the correct frame */
 
 	/*
-	rv_frame_seek(QSP_ARG  inp, frame);
+	rv_frame_seek(inp, frame);
 	*/
 advise("calling image_file_seek...");
-	image_file_seek(QSP_ARG  ifp,frame);
+	image_file_seek(ifp,frame);
 
 	/* allocate the frame buffer */
 
@@ -378,6 +381,9 @@ static void start_dr_threads(QSP_ARG_DECL  int32_t nf, RV_Inode *inp, int ndisks
 		ppi[i].ppi_fd = fd_arr[i];
 		ppi[i].ppi_newest= -1;
 		ppi[i].ppi_ndisks= ndisks;
+#ifdef THREAD_SAFE_QUERY
+		ppi[i].ppi_qsp= THIS_QSP;
+#endif // THREAD_SAFE_QUERY
 #ifdef TRACE_FLOW
 		ppi[i].ppi_status = DR_INIT;
 #endif
@@ -395,6 +401,9 @@ static void * disk_reader(void* argp)
 	 * because each thread needs its own.
 	 */
 	char tmpstr[LLEN];
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+#endif // THREAD_SAFE_QUERY
 
 #ifdef ALLOW_RT_SCHED
 	pid_t pid;
@@ -412,6 +421,9 @@ static void * disk_reader(void* argp)
 
 
 	pip = (Proc_Info*) argp;
+#ifdef THREAD_SAFE_QUERY
+	qsp = pip->ppi_qsp;
+#endif // THREAD_SAFE_QUERY
 
 	fd = pip->ppi_fd;
 
@@ -439,7 +451,7 @@ RSTATUS(DR_READ);
 
 		/* read in the next frame */
 		/* We put this seek here in case there is timestamp info at the end of the last frame */
-		rv_frame_seek(DEFAULT_QSP_ARG  pip->ppi_inp,j);
+		rv_frame_seek(pip->ppi_inp,j);
 
 		if( (n_read = read(fd,buf,n_to_read)) != n_to_read ){
 			sprintf(tmpstr,
@@ -474,15 +486,15 @@ RSTATUS(DR_EXIT);
 	}								\
 									\
 	sprintf(name,"meteor_viewer%d",index);				\
-	meteor_vp[index] = viewer_init(QSP_ARG  name,width,height,0);	\
+	meteor_vp[index] = viewer_init(name,width,height,0);	\
 	if( meteor_vp[index] == NULL ) return;			\
 	posn_viewer(meteor_vp[index],sx[index]*width,sy[index]*height);	\
 	/* set_n_protect(0); */						\
 	/* BUG: replace with make_grayscale(0, pow(depth, 2)) ?? */	\
 	/* if( ! displaying_color ) */					\
-		make_grayscale(QSP_ARG  0,256);				\
+		make_grayscale(0,256);				\
 									\
-	show_viewer(QSP_ARG  meteor_vp[index]);				\
+	show_viewer(meteor_vp[index]);				\
 	shm_setup(meteor_vp[index]);
 
 
@@ -508,7 +520,7 @@ void init_meteor_viewer(QSP_ARG_DECL  int width, int height, int depth)
 
 }
 
-void monitor_meteor_video(QSP_ARG_DECL  Data_Obj *dp)
+void _monitor_meteor_video(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Viewer *vp;
 

@@ -47,7 +47,8 @@ int _hiwat=0, _lowat=0;
 int64_t capture_code = METEORCAPTUR ;
 
 /* local prototypes */
-static void mem_record(QSP_ARG_DECL  Image_File *ifp,uint32_t n_frames);
+static void _mem_record(QSP_ARG_DECL  Image_File *ifp,uint32_t n_frames);
+#define mem_record(ifp,n_frames) _mem_record(QSP_ARG  ifp,n_frames)
 
 
 static COMMAND_FUNC( do_meteor_status )
@@ -343,7 +344,7 @@ static void point_object_to_frame(Data_Obj *dp, int index)
 	SET_OBJ_DATA_PTR(dp,frame_address(index));
 }
 
-Data_Obj *make_frame_object(QSP_ARG_DECL  const char* name,int index)
+Data_Obj *_make_frame_object(QSP_ARG_DECL  const char* name,int index)
 {
 	Dimension_Set dimset;
 	Data_Obj *dp;
@@ -359,7 +360,7 @@ Data_Obj *make_frame_object(QSP_ARG_DECL  const char* name,int index)
 	dimset.ds_dimension[3] = 1;
 	dimset.ds_dimension[4] = 1;
 
-	dp = _make_dp(QSP_ARG  name,&dimset,PREC_FOR_CODE(PREC_UBY));
+	dp = make_dp(name,&dimset,PREC_FOR_CODE(PREC_UBY));
 
 	if( dp != NULL )
 		point_object_to_frame(dp,index);
@@ -376,7 +377,7 @@ static COMMAND_FUNC( do_make_object )
 	s=NAMEOF("name for object");
 	n=HOW_MANY("index of frame");
 
-	dp = make_frame_object(QSP_ARG  s,n);
+	dp = make_frame_object(s,n);
 }
 
 static COMMAND_FUNC( do_lowat )
@@ -413,7 +414,9 @@ static int32_t error_code_tbl[3]={
 };
 
 
-static void note_error_frames(RV_Inode *inp)
+#define note_error_frames(inp) _note_error_frames(QSP_ARG  inp)
+
+static void _note_error_frames(QSP_ARG_DECL  RV_Inode *inp)
 {
 	struct error_info ei1;
 	struct drop_info di;
@@ -499,17 +502,17 @@ static COMMAND_FUNC( do_record )
 	name = NAMEOF("image file name");
 	n_frames=HOW_MANY("number of frames (or fields if field mode)");
 
-	ifp = img_file_of(QSP_ARG  name);
+	ifp = img_file_of(name);
 
 	if( ifp != NULL ){
 		sprintf(ERROR_STRING,"Clobbering existing image file %s",name);
 		advise(ERROR_STRING);
 		image_file_clobber(1);	/* not necessary !? */
-		delete_image_file(QSP_ARG  ifp);
+		delete_image_file(ifp);
 	}
 
-	set_filetype(QSP_ARG  FILETYPE_FOR_CODE(IFT_RV));
-	ifp = write_image_file(QSP_ARG  name,n_frames);	/* nf stored in if_frms_to_write */
+	set_filetype(FILETYPE_FOR_CODE(IFT_RV));
+	ifp = write_image_file(name,n_frames);	/* nf stored in if_frms_to_write */
 
 	/* sets nframes in ifp, but doesn't allocate rv blocks properly...
 	 * (WHY NOT??? maybe because the image dimensions are not known???)
@@ -526,32 +529,32 @@ static COMMAND_FUNC( do_record )
 
 	/* n_blocks is the total number of blocks, not the number per disk(?) */
 
-	if( rv_realloc(QSP_ARG  name,n_blocks) < 0 ){
+	if( rv_realloc(name,n_blocks) < 0 ){
 		sprintf(ERROR_STRING,"error reallocating %d blocks for rv file %s",
 			n_blocks,name);
 		warn(ERROR_STRING);
 		return;
 	}
 
-	meteor_record_clip(QSP_ARG  ifp,n_frames);
+	meteor_record_clip(ifp,n_frames);
 } /* end do_record() */
 
 void finish_recording(QSP_ARG_DECL  Image_File *ifp)
 {
 	RV_Inode *inp;
 
-	inp = get_rv_inode(QSP_ARG  ifp->if_name);
+	inp = get_rv_inode(ifp->if_name);
 	assert(inp!=NULL);
 
-	close_image_file(QSP_ARG  ifp);		/* close write file	*/
-	update_movie_database(QSP_ARG  inp);
+	close_image_file(ifp);		/* close write file	*/
+	update_movie_database(inp);
 	note_error_frames(inp);
 }
 
 int recording_in_process = 0;
 Image_File *record_ifp=NULL;
 
-void meteor_record_clip(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
+void _meteor_record_clip(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 {
 	if( recording_in_process ){
 		warn("meteor_record_clip:  async recording is already in process, need to wait!?");
@@ -565,10 +568,10 @@ void meteor_record_clip(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 	 * even if number of frames is small.
 	 */
 	if( n_frames > num_meteor_frames || get_async_record() ){
-		stream_record(QSP_ARG  ifp,n_frames);
+		stream_record(ifp,n_frames);
 	} else {
 		/* all frames can fit in mem */
-		mem_record(QSP_ARG  ifp,n_frames);
+		mem_record(ifp,n_frames);
 	}
 
 	/* We used to check for async record here, and call finish_recording()
@@ -582,7 +585,7 @@ void meteor_record_clip(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
  * we initiate any disk i/o.
  */
 
-static void mem_record(QSP_ARG_DECL  Image_File *ifp,uint32_t n_frames)
+static void _mem_record(QSP_ARG_DECL  Image_File *ifp,uint32_t n_frames)
 {
 	int32_t n_remaining;
 	int32_t frames_requested;
@@ -650,7 +653,7 @@ advise("faking hardware");
 	dimset.ds_dimension[2]=gp.rows;	
 	dimset.ds_dimension[3]=1;
 	dimset.ds_dimension[4]=1;
-	dp = _make_dp(QSP_ARG  "tmp_dp",&dimset,PREC_FOR_CODE(PREC_UBY));
+	dp = make_dp("tmp_dp",&dimset,PREC_FOR_CODE(PREC_UBY));
 	if( !meteor_field_mode )
 		SET_SHP_FLAG_BITS(OBJ_SHAPE(dp),DT_INTERLACED);
 
@@ -673,10 +676,10 @@ advise("faking hardware");
 
 	for(i=0;i<n_frames;i++){
 		point_object_to_frame(dp,i);
-		write_image_to_file(QSP_ARG  ifp,dp);
+		write_image_to_file(ifp,dp);
 	}
 	SET_OBJ_FLAG_BITS(dp, DT_NO_DATA);
-	delvec(QSP_ARG  dp);
+	delvec(dp);
 
 	/* the image file should have been close automatically by
 	 * write_image_to_file().  At this point, we might like to
@@ -724,13 +727,15 @@ static COMMAND_FUNC( do_playback )
 	if( ifp == NULL ) return;
 
 #ifdef HAVE_X11_EXT
-	play_meteor_movie(QSP_ARG  ifp);
+	play_meteor_movie(ifp);
 #else
 	warn("do_playback:  Program was configured without X11 Extensions.");
 #endif
 }
 
-static void get_error_counts(QSP_ARG_DECL  const char* s,const char* s2,int index)
+#define get_error_counts(s,s2,index) _get_error_counts(QSP_ARG  s,s2,index)
+
+static void _get_error_counts(QSP_ARG_DECL  const char* s,const char* s2,int index)
 {
 	struct error_info ei1;
 	char val[32];
@@ -759,7 +764,7 @@ static COMMAND_FUNC( do_get_n_fifo_errors )
 	s = NAMEOF("variable name for total errors");
 	s2 = NAMEOF("variable name for saved errors");
 
-	get_error_counts(QSP_ARG  s,s2,0);
+	get_error_counts(s,s2,0);
 }
 
 static COMMAND_FUNC( do_get_n_dma_errors )
@@ -769,7 +774,7 @@ static COMMAND_FUNC( do_get_n_dma_errors )
 	s = NAMEOF("variable name for total errors");
 	s2 = NAMEOF("variable name for saved errors");
 
-	get_error_counts(QSP_ARG  s,s2,1);
+	get_error_counts(s,s2,1);
 }
 
 static COMMAND_FUNC( do_get_n_fifodma_errors )
@@ -779,7 +784,7 @@ static COMMAND_FUNC( do_get_n_fifodma_errors )
 	s = NAMEOF("variable name for total errors");
 	s2 = NAMEOF("variable name for saved errors");
 
-	get_error_counts(QSP_ARG  s,s2,2);
+	get_error_counts(s,s2,2);
 }
 
 static COMMAND_FUNC( do_get_ndrops )
@@ -806,7 +811,9 @@ static COMMAND_FUNC( do_get_ndrops )
 	assign_var(s2,val);
 }
 
-static void get_err_fields(QSP_ARG_DECL  Data_Obj *dp,int index)
+#define get_err_fields(dp,index) _get_err_fields(QSP_ARG  dp,index)
+
+static void _get_err_fields(QSP_ARG_DECL  Data_Obj *dp,int index)
 {
 	struct error_info ei;
 	unsigned int nerrs;
@@ -861,7 +868,7 @@ static COMMAND_FUNC( do_get_fifo_errors )
 	dp = pick_obj("vector for error frame indices");
 	if( dp== NULL ) return;
 
-	get_err_fields(QSP_ARG  dp,0);	/* see /usr/src/matrox/meteor.c */
+	get_err_fields(dp,0);	/* see /usr/src/matrox/meteor.c */
 }
 
 static COMMAND_FUNC( do_get_fifodma_errors )
@@ -872,7 +879,7 @@ static COMMAND_FUNC( do_get_fifodma_errors )
 	dp = pick_obj("vector for error frame indices");
 	if( dp== NULL ) return;
 
-	get_err_fields(QSP_ARG  dp,2);	/* see /usr/src/matrox/meteor.c */
+	get_err_fields(dp,2);	/* see /usr/src/matrox/meteor.c */
 }
 
 static COMMAND_FUNC( do_get_dma_errors )
@@ -883,7 +890,7 @@ static COMMAND_FUNC( do_get_dma_errors )
 	dp = pick_obj("vector for error frame indices");
 	if( dp== NULL ) return;
 
-	get_err_fields(QSP_ARG  dp,1);	/* see /usr/src/matrox/meteor.c */
+	get_err_fields(dp,1);	/* see /usr/src/matrox/meteor.c */
 }
 
 
@@ -948,7 +955,7 @@ static COMMAND_FUNC(  do_ts_enable )
 {
 	stamping=ASKIF("record timestamp data during recording");
 
-	enable_meteor_timestamps(QSP_ARG  stamping);	/* set driver flag */
+	enable_meteor_timestamps(stamping);	/* set driver flag */
 
 	if( stamping ){
 		rv_set_extra(sizeof(struct timeval));
@@ -991,7 +998,7 @@ static COMMAND_FUNC( do_write_enable )
 	sprintf(pmpt,"Write data to disk-writer thread %d",index);
 	flag = ASKIF(pmpt);
 
-	thread_write_enable(QSP_ARG  index,flag);
+	thread_write_enable(index,flag);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(capture_menu,s,f,h)
