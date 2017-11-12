@@ -83,7 +83,7 @@ extern List *new_list(void);
 extern void rls_list_nodes(List *lp);
 extern void _zap_list(QSP_ARG_DECL List *lp);
 extern Node *mk_node(void * ip );
-#define zap_list(lp) QSP_ARG _zap_list(QSP_ARG lp)
+#define zap_list(lp) _zap_list(QSP_ARG lp)
 extern Node *remHead(List *lp);
 extern Node *remTail(List *lp);
 extern Node * remNode(List *lp, Node *np);
