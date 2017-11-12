@@ -49,10 +49,4 @@ void _rls_query(QSP_ARG_DECL  Query *qp)
 	addHead(query_free_list,np);
 }
 
-/* not used? */
-
-static inline int last_query_line_read(Query *qp)
-{
-	return QRY_LINES_READ(qp);
-}
 
