@@ -104,7 +104,7 @@ static ITEM_NEW_FUNC(Sound_Device,snddev)
 
 
 static Sound_Device * _init_sound_device(QSP_ARG_DECL  const char *devname);
-#define init_sound_device(*devname) _init_sound_device(QSP_ARG  *devname)
+#define init_sound_device(devname) _init_sound_device(QSP_ARG  devname)
 
 static int _record_sound_to_obj(QSP_ARG_DECL  Data_Obj *dp, Sound_Device *sdp);
 #define record_sound_to_obj(dp,sdp) _record_sound_to_obj(QSP_ARG  dp,sdp)
