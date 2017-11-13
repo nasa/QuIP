@@ -25,8 +25,14 @@ Set symbol_size	1
 Set plotwin 'Plot_Preview'
 
 Set main_panel "Plot Generator"
+Set plot_name_widget_name 'Plot name'
 Set gen_panel "General Plot Parameters"
 Set x_axis_panel "X Axis"
+Set axis_legend_widget_name "Legend"
+Set axis_max_widget_name "Max"
+Set axis_min_widget_name "Min"
+Set axis_tick_widget_name "Tick Spacing"
+Set axis_log_widget_name "Logarithmic Axis"
 Set y_axis_panel "Y Axis"
 Set data_panel "Data"
 Set grid_panel "Grid"
@@ -81,12 +87,14 @@ Set max_plot_height	1200
 Set min_plot_width	200
 Set max_plot_width	1200
 
-Set xmin 1
-Set xmax 5
-Set x_tick_spacing 1
-Set ymin 0
-Set ymax 1
-Set y_tick_spacing 0.2
+Set x_axis_min 1
+Set x_axis_max 5
+Set x_axis_tick 1
+Set x_axis_log 0
+Set y_axis_min 0
+Set y_axis_max 1
+Set y_axis_tick 0.2
+Set y_axis_log 0
 Set x_legend 'text abcissa'
 Set y_legend 'text ordinate'
 
@@ -122,11 +130,13 @@ repeat $n_grids
 
 Define Get_Series_Points 0
 If obj_exists(series_pts) "Delete_Image series_pts"
+If obj_exists(series_raw_pts) "Delete_Image series_raw_pts"
 Count_Lines nl $series_filename
 Count_Columns nc $series_filename
 If $nc!=2 "warn 'Refresh_Series:  expected file $series_filename to have 2 columns!?' exit_macro"
+Vector series_raw_pts $nl 2 float
+Get_Ascii series_raw_pts $series_filename
 Vector series_pts $nl 2 float
-Get_Ascii series_pts $series_filename
 .
 
 Define Get_Grid_Points 0
@@ -141,10 +151,22 @@ Get_Ascii grid_pts $grid_filename
 Transpose grid_tpts grid_pts
 .
 
+Define Transform_Series 0
+If $x_axis_log
+  Then "VLog series_pts{0} series_raw_pts{0} VSMul series_pts{0} series_pts{0} 1/log(10)"
+  Else "VMov series_pts{0} series_raw_pts{0}"
+If $y_axis_log
+  Then "VLog series_pts{1} series_raw_pts{1} VSMul series_pts{1} series_pts{1} 1/log(10)"
+  Else "VMov series_pts{1} series_raw_pts{1}"
+Display series_raw_pts
+Display series_pts
+.
+
 Define Refresh_Series 1 index
 Load_Series_Vars series_$1
 If !file_exists('$series_filename') "warn 'File $series_filename does not exist!?' exit_macro"
 Get_Series_Points
+Transform_Series
 Select_Pen $series_color_index
 If $series_line_thickness==1 "XYPlot series_pts"
 If $series_line_thickness>1 "Thick_Plot $series_line_thickness series_pts"
@@ -252,13 +274,54 @@ New_Plotter $plotwin $plot_w $plot_h
 Posn_Window $plotwin $plotwin_x0 $plotwin_y0
 .
 
+# plotsupp.mac uses xmin,ymax,x_tick_spacing, etc.
+# We have our own copies so that we can do log transform if necessary...
+
+Define Install_Linear_X_Axis_Vars 0
+Set xmin $x_axis_min
+Set xmax $x_axis_max
+Set x_tick_spacing $x_axis_tick
+.
+
+Define Install_Linear_Y_Axis_Vars 0
+Set ymin $y_axis_min
+Set ymax $y_axis_max
+Set y_tick_spacing $y_axis_tick
+.
+
+Define Install_Log_X_Axis_Vars 0
+Assign xmin floor(log($x_axis_min)/log(10))
+Assign xmax ceil(log($x_axis_max)/log(10))
+Assign x_tick_spacing 1		# for now...
+.
+
+Define Install_Log_Y_Axis_Vars 0
+Assign ymin floor(log($y_axis_min)/log(10))
+Assign ymax ceil(log($y_axis_max)/log(10))
+Assign y_tick_spacing 1		# for now...
+.
+
+Define Install_Axis_Vars 0
+If $x_axis_log
+  Then Install_Log_X_Axis_Vars
+  Else Install_Linear_X_Axis_Vars
+If $y_axis_log
+  Then Install_Log_Y_Axis_Vars
+  Else Install_Linear_Y_Axis_Vars
+advise "Install_Axis_Vars:"
+advise "\tX $x_axis_min - $x_axis_max   ->   $xmin - $xmax"
+advise "\tY $y_axis_min - $y_axis_max   ->   $ymin - $ymax"
+.
+
 Set plot_ready 0
+
 Define Refresh_Plot 0
 If !$plot_ready exit_macro
 advise "Refresh_Plot BEGIN"
 Erase_Plot
 Select_Pen $black
 If $show_frame Draw_Frame
+Install_Axis_Vars
 Setup_Axes
 advise "Refresh_Plot:  refreshing data..."
 Refresh_Data
@@ -300,12 +363,22 @@ Panel_Off $main_panel
 Panel_On $grid_panel
 .
 
+Define TogLogY 0
+Set y_axis_log $toggle_state
+Refresh_Plot
+.
+
+Define TogLogX 0
+Set x_axis_log $toggle_state
+Refresh_Plot
+.
+
 Define SetXMin 0
-Get_Text_Var $x_axis_panel Min xmin
+Get_Text_Var $x_axis_panel $axis_min_widget_name x_axis_min
 .
 
 Define SetYMin 0
-Get_Text_Var $y_axis_panel Min ymin
+Get_Text_Var $y_axis_panel $axis_min_widget_name y_axis_min
 .
 
 Define Get_Text_Var 3 panel_name widget_name var_name
@@ -318,27 +391,27 @@ If strlen('$t')>0 "Set $3 '$t'"
 .
 
 Define SetXMax 0
-Get_Text_Var $x_axis_panel Max xmax
+Get_Text_Var $x_axis_panel $axis_max_widget_name x_axis_max
 .
 
 Define SetYMax 0
-Get_Text_Var $y_axis_panel Max ymax
+Get_Text_Var $y_axis_panel $axis_max_widget_name y_axis_max
 .
 
 Define SetXTick 0
-Get_Text_Var $x_axis_panel 'Tick Spacing' x_tick_spacing
+Get_Text_Var $x_axis_panel $axis_tick_widget_name x_axis_tick
 .
 
 Define SetYTick 0
-Get_Text_Var $y_axis_panel 'Tick Spacing' y_tick_spacing
+Get_Text_Var $y_axis_panel $axis_tick_widget_name y_axis_tick
 .
 
 Define SetXLegend 0
-Get_Text_Var $x_axis_panel Legend x_legend
+Get_Text_Var $x_axis_panel $axis_legend_widget_name x_legend
 .
 
 Define SetYLegend 0
-Get_Text_Var $y_axis_panel Legend y_legend
+Get_Text_Var $y_axis_panel $axis_legend_widget_name y_legend
 .
 
 Define SelectSeries 0
@@ -883,6 +956,9 @@ echo "Loading plot parameters from file $1..."
 Print n_data_series
 Update_Series_Choices
 Update_Grid_Choices
+Update_Main_Panel
+Update_X_Axis_Panel
+Update_Y_Axis_Panel
 If $old_plot_w!=$plot_w||$old_plot_h!=$plot_h Redo_Window
 Set plot_ready 1
 Set plot_loaded 1
@@ -892,20 +968,22 @@ Update_Plot_Size_Sliders
 .
 
 Define Save_XAxis_Params 0
-Save_Param xmin
-Save_Param xmax
-Save_Param x_tick_spacing
+Save_Param x_axis_min
+Save_Param x_axis_max
+Save_Param x_axis_tick
+Save_Param x_axis_log
 Save_Text_Param x_legend
 .
 
 Define Save_YAxis_Params 0
-Save_Param ymin
-Save_Param ymax
-Save_Param y_tick_spacing
+Save_Param y_axis_min
+Save_Param y_axis_max
+Save_Param y_axis_tick
 Save_Text_Param y_legend
 .
 
 Define Save_Gen_Params 0
+Save_Param plot_name
 Save_Param plot_w
 Save_Param plot_h
 Save_Param show_plot_frame
@@ -1296,7 +1374,40 @@ If !strcmp('$3','$2') "Set ps_symbol_type $1"
 .
 
 Define SetPlotName 0
-Get_Text_Var $main_panel 'Plot name' plot_name
+Get_Text_Var $main_panel $plot_name_widget_name plot_name
+.
+
+Define Update_Main_Panel 0
+interface
+  decorate $main_panel
+    set_edit_text $plot_name_widget_name $plot_name
+    quit
+  quit
+.
+
+Define Update_X_Axis_Panel 0
+interface
+  decorate $x_axis_panel
+    set_edit_text $axis_legend_widget_name $x_legend
+    set_edit_text $axis_min_widget_name $x_axis_min
+    set_edit_text $axis_max_widget_name $x_axis_max
+    set_edit_text $axis_tick_widget_name $x_axis_tick
+    If $x_axis_log
+      Then "set_toggle '$axis_log_widget_name' yes"
+      Else "set_toggle '$axis_log_widget_name' no"
+    quit
+  quit
+.
+
+Define Update_Y_Axis_Panel 0
+interface
+  decorate $y_axis_panel
+    set_edit_text $axis_legend_widget_name $y_legend
+    set_edit_text $axis_min_widget_name $y_axis_min
+    set_edit_text $axis_max_widget_name $y_axis_max
+    set_edit_text $axis_tick_widget_name $y_axis_tick
+    quit
+  quit
 .
 
 Define Declare_Plot_GUI 0
@@ -1304,10 +1415,11 @@ Define Declare_Plot_GUI 0
 interface
   panel $x_axis_panel $panel_w $panel_h
   decorate $x_axis_panel
-    text Min SetXMin $xmin
-    text Max SetXMax $xmax
-    text 'Tick Spacing' SetXTick $x_tick_spacing
-    text Legend SetXLegend $x_legend
+    text $axis_min_widget_name SetXMin $x_axis_min
+    text $axis_max_widget_name SetXMax $x_axis_max
+    toggle $axis_log_widget_name TogLogX
+    text $axis_tick_widget_name SetXTick $x_axis_tick
+    text $axis_legend_widget_name SetXLegend $x_legend
     button Apply Refresh_Plot
     button Done 'Panel_Off $x_axis_panel Panel_On $main_panel'
     quit
@@ -1320,10 +1432,11 @@ interface
     quit
   panel $y_axis_panel $panel_w $panel_h
   decorate $y_axis_panel
-    text Min SetYMin $ymin
-    text Max SetYMax $ymax
-    text 'Tick Spacing' SetYTick $y_tick_spacing
-    text Legend SetYLegend $y_legend
+    text $axis_min_widget_name SetYMin $y_axis_min
+    text $axis_max_widget_name SetYMax $y_axis_max
+    toggle $axis_log_widget_name TogLogY
+    text $axis_tick_widget_name SetYTick $y_axis_tick
+    text $axis_legend_widget_name SetYLegend $y_legend
     button Apply Refresh_Plot
     button Done 'Panel_Off $y_axis_panel Panel_On $main_panel'
     quit
@@ -1393,7 +1506,7 @@ interface
     quit
   panel $main_panel $panel_w $panel_h
   decorate $main_panel
-    text 'Plot name' SetPlotName $plot_name
+    text $plot_name_widget_name SetPlotName $plot_name
     button 'General' GenPanel
     button 'X axis' XAxisPanel
     button 'Y axis' YAxisPanel
