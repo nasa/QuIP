@@ -41,9 +41,14 @@ extern size_t _encrypt_char_buf(QSP_ARG_DECL  const char *in_buf,size_t in_len, 
 extern size_t _decrypt_char_buf(QSP_ARG_DECL  const uint8_t *in_buf,size_t in_len, char *out_buf, size_t out_len);
 #define decrypt_char_buf(in_buf,in_len,out_buf,out_len) _decrypt_char_buf(QSP_ARG  in_buf,in_len,out_buf,out_len)
 
-extern size_t encryption_block_size(void);
-extern size_t encryption_key_size(void);
-extern int encryption_hash_size(void);
+extern size_t _encryption_block_size(SINGLE_QSP_ARG_DECL);
+#define encryption_block_size() _encryption_block_size(SINGLE_QSP_ARG)
+
+extern size_t _encryption_key_size(SINGLE_QSP_ARG_DECL);
+#define encryption_key_size() _encryption_key_size(SINGLE_QSP_ARG)
+
+extern int _encryption_hash_size(SINGLE_QSP_ARG_DECL);
+#define encryption_hash_size() _encryption_hash_size(SINGLE_QSP_ARG)
 
 extern int _hash_my_key(QSP_ARG_DECL  void **vpp,const char *key,int key_len);
 #define hash_my_key(vpp,key,key_len) _hash_my_key(QSP_ARG  vpp,key,key_len)

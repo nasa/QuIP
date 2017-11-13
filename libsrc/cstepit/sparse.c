@@ -24,7 +24,9 @@
 #endif // HAVE_SPARSELM
 
 typedef struct splm_info {
+#ifdef THREAD_SAFE_QUERY
 	Query_Stack *	_qsp;
+#endif // THREAD_SAFE_QUERY
 	Data_Obj *	_trial_dp;
 	Data_Obj *	_param_dp;
 	Data_Obj *	_jac_dp;
@@ -36,21 +38,14 @@ typedef struct splm_info {
 // function to calculate the prediction (hat_x) from the current guess
 // of the parameters
 
-#ifdef THREAD_SAFE_QUERY
-static Query_Stack *sparse_qsp=NULL;
-#endif // THREAD_SAFE_QUERY
 
 static void predictor_func( double *parameters, double *hat_x, int nvars,
 				int nobs, void *adata )
 {
 	SpLM_Info *splmi_p;
-	Query_Stack *qsp;
 	double *p,*q;
 #ifdef THREAD_SAFE_QUERY
 	Query_Stack *qsp;
-
-	assert(sparse_qsp!=NULL);
-	qsp = sparse_qsp;
 #endif // THREAD_SAFE_QUERY
 
 	// pass these things to a script function???
@@ -63,7 +58,9 @@ static void predictor_func( double *parameters, double *hat_x, int nvars,
 		*q++ = *p++;
 
 //fprintf(stderr,"Pushing command \"%s\"\n",splmi_p->_cmd);
+#ifdef THREAD_SAFE_QUERY
 	qsp = splmi_p->_qsp;
+#endif // THREAD_SAFE_QUERY
 
 	chew_text( splmi_p->_cmd, "Sparse LM optimization" );
 	// now need to execute...
@@ -100,9 +97,15 @@ static void jac_func_crs( double *parameters, struct splm_crsm *jac, int nvars,
 	float *data_p;
 	SpLM_Info *splmi_p;
 	struct splm_stm jac_st;
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+#endif // THREAD_SAFE_QUERY
 
 	splmi_p = (SpLM_Info *) adata;
 	mat_dp = splmi_p->_jac_dp;
+#ifdef THREAD_SAFE_QUERY
+	qsp = splmi_p->_qsp;
+#endif // THREAD_SAFE_QUERY
 
 	if( OBJ_PREC(mat_dp) != PREC_SP ){
 		sprintf(ERROR_STRING,
@@ -254,7 +257,9 @@ fprintf(stderr,"%d observations, %d parameters\n",nobs,nvars);
 fprintf(stderr,"%d non-zero Jacobian entries\n",Jnnz);
 
 	splm_i1._jac_dp = jac_dp;
+#ifdef THREAD_SAFE_QUERY
 	splm_i1._qsp = THIS_QSP;
+#endif // THREAD_SAFE_QUERY
 	splm_i1._trial_dp = trial_dp;
 	splm_i1._param_dp = param_dp;
 	splm_i1._nnz = Jnnz;

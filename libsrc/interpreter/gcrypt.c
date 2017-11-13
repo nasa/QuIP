@@ -253,7 +253,7 @@ size_t _encrypt_char_buf(QSP_ARG_DECL  const char *in_buf, size_t in_len, uint8_
 	return padded_len;
 }
 
-size_t encryption_block_size(void)
+size_t _encryption_block_size(SINGLE_QSP_ARG_DECL)
 {
 	size_t s;
 
@@ -263,13 +263,13 @@ size_t encryption_block_size(void)
 }
 
 
-size_t encryption_key_size(void)
+size_t _encryption_key_size(SINGLE_QSP_ARG_DECL)
 {
 	/* Retrieve the key length in bytes used with algorithm A. */
 	return gcry_cipher_get_algo_keylen (the_crypt_algo);
 }
 
-int encryption_hash_size(void)
+int _encryption_hash_size(SINGLE_QSP_ARG_DECL)
 {
 	return gcry_md_get_algo_dlen(the_hash_algo);
 }
@@ -329,32 +329,32 @@ int _hash_my_key(QSP_ARG_DECL  void **vpp,const char *key,int key_len)
 
 /* Linkage to libgcrypt */
 
-size_t decrypt_char_buf(const uint8_t *in_buf, size_t in_len, char *out_buf, size_t out_len )
+size_t _decrypt_char_buf(QSP_ARG_DECL  const uint8_t *in_buf, size_t in_len, char *out_buf, size_t out_len )
 {
 	warn("decrypt_char_buf:  libgcrypt not present!?");
 	return 0;
 }
 
-size_t encrypt_char_buf(const char *in_buf, size_t in_len, uint8_t *out_buf, size_t out_len)
+size_t _encrypt_char_buf(QSP_ARG_DECL  const char *in_buf, size_t in_len, uint8_t *out_buf, size_t out_len)
 {
 	warn("encrypt_char_buf:  libgcrypt not present!?");
 	return 0;
 }
 
-size_t encryption_block_size(void)
+size_t _encryption_block_size(SINGLE_QSP_ARG_DECL)
 {
 	warn("encryption_block_size:  libgcrypt not present!?");
 	return 0;
 }
 
 
-size_t encryption_key_size(void)
+size_t _encryption_key_size(SINGLE_QSP_ARG_DECL)
 {
 	warn("encryption_key_size:  libgcrypt not present!?");
 	return 0;
 }
 
-int encryption_hash_size(void)
+int _encryption_hash_size(SINGLE_QSP_ARG_DECL)
 {
 	warn("encryption_hash_size:  libgcrypt not present!?");
 	return 0;
@@ -362,7 +362,7 @@ int encryption_hash_size(void)
 
 // this needs to hash the key and allocate the space for the hash
 
-int hash_my_key(void **vpp,const char *key,int key_len)
+int _hash_my_key(QSP_ARG_DECL  void **vpp,const char *key,int key_len)
 {
 	warn("hash_my_key:  libgcrypt not present!?");
 	return 0;
