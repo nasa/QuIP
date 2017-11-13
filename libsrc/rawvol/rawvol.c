@@ -664,7 +664,7 @@ static void scan_inode(QSP_ARG_DECL  RV_Inode *dk_inp)
 			close_image_file(ifp);
 		}
 
-		setup_rv_iofile(QSP_ARG  inp);
+		setup_rv_iofile(inp);
 	}
 } /* end scan_inode */
 
@@ -1289,7 +1289,7 @@ void rv_close(SINGLE_QSP_ARG_DECL)
 
 /* enter a readable file into the fileio database */
 
-void setup_rv_iofile(QSP_ARG_DECL  RV_Inode *inp)
+void _setup_rv_iofile(QSP_ARG_DECL  RV_Inode *inp)
 {
 	set_filetype(FILETYPE_FOR_CODE(IFT_RV));
 

@@ -23,8 +23,9 @@ extern int addspace(FreeList *list,u_long size,u_long addr);
 extern void showmap(FreeList *list);
 extern int n_map_frags(FreeList *list);
 
-extern int _takespace(QSP_ARG_DECL  FreeList *,u_long,u_long);
-#define takespace(flp,l,m) _takespace(QSP_ARG  flp,l,m)
+extern int takespace(FreeList *,u_long,u_long);
+//extern int _takespace(QSP_ARG_DECL  FreeList *,u_long,u_long);
+//#define takespace(flp,l,m) _takespace(QSP_ARG  flp,l,m)
 
 #endif /* NO_FREEL */
 
