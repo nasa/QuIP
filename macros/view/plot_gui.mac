@@ -95,8 +95,8 @@ Set y_axis_min 0
 Set y_axis_max 1
 Set y_axis_tick 0.2
 Set y_axis_log 0
-Set x_legend 'text abcissa'
-Set y_legend 'text ordinate'
+Set x_axis_legend 'text abcissa'
+Set y_axis_legend 'text ordinate'
 
 Set curr_series_name no_series
 
@@ -151,12 +151,23 @@ Get_Ascii grid_pts $grid_filename
 Transpose grid_tpts grid_pts
 .
 
+Define Logify 1 index
+Get_Min m series_raw_pts{$1}
+If $m<=0
+  # BUG - should have MIN_FLOAT or something...
+  Then "warn 'Data must be positive for log axis (clipping component $1)'\
+	VSMax series_pts{$1} series_raw_pts{$1} 0.00001 "
+  Else "VMov series_pts{$1} series_raw_pts{$1}"
+VLog series_pts{$1} series_pts{$1}
+VSMul series_pts{$1} series_pts{$1} 1/log(10)
+.
+
 Define Transform_Series 0
 If $x_axis_log
-  Then "VLog series_pts{0} series_raw_pts{0} VSMul series_pts{0} series_pts{0} 1/log(10)"
+  Then "Logify 0"
   Else "VMov series_pts{0} series_raw_pts{0}"
 If $y_axis_log
-  Then "VLog series_pts{1} series_raw_pts{1} VSMul series_pts{1} series_pts{1} 1/log(10)"
+  Then "Logify 1"
   Else "VMov series_pts{1} series_raw_pts{1}"
 Display series_raw_pts
 Display series_pts
@@ -281,24 +292,30 @@ Define Install_Linear_X_Axis_Vars 0
 Set xmin $x_axis_min
 Set xmax $x_axis_max
 Set x_tick_spacing $x_axis_tick
+Set x_legend $x_axis_legend
 .
 
 Define Install_Linear_Y_Axis_Vars 0
 Set ymin $y_axis_min
 Set ymax $y_axis_max
 Set y_tick_spacing $y_axis_tick
+Set y_legend $y_axis_legend
 .
 
 Define Install_Log_X_Axis_Vars 0
 Assign xmin floor(log($x_axis_min)/log(10))
 Assign xmax ceil(log($x_axis_max)/log(10))
 Assign x_tick_spacing 1		# for now...
+Set x_legend "log $x_axis_legend"
 .
 
 Define Install_Log_Y_Axis_Vars 0
+If $y_axis_min<=0
+  "warn 'y-axis min must be positive for log axis' Set y_axis_min 0.000001"
 Assign ymin floor(log($y_axis_min)/log(10))
 Assign ymax ceil(log($y_axis_max)/log(10))
 Assign y_tick_spacing 1		# for now...
+Set y_legend "log $y_axis_legend"
 .
 
 Define Install_Axis_Vars 0
@@ -407,11 +424,11 @@ Get_Text_Var $y_axis_panel $axis_tick_widget_name y_axis_tick
 .
 
 Define SetXLegend 0
-Get_Text_Var $x_axis_panel $axis_legend_widget_name x_legend
+Get_Text_Var $x_axis_panel $axis_legend_widget_name x_axis_legend
 .
 
 Define SetYLegend 0
-Get_Text_Var $y_axis_panel $axis_legend_widget_name y_legend
+Get_Text_Var $y_axis_panel $axis_legend_widget_name y_axis_legend
 .
 
 Define SelectSeries 0
@@ -972,14 +989,15 @@ Save_Param x_axis_min
 Save_Param x_axis_max
 Save_Param x_axis_tick
 Save_Param x_axis_log
-Save_Text_Param x_legend
+Save_Text_Param x_axis_legend
 .
 
 Define Save_YAxis_Params 0
 Save_Param y_axis_min
 Save_Param y_axis_max
 Save_Param y_axis_tick
-Save_Text_Param y_legend
+Save_Param y_axis_log
+Save_Text_Param y_axis_legend
 .
 
 Define Save_Gen_Params 0
@@ -1388,7 +1406,7 @@ interface
 Define Update_X_Axis_Panel 0
 interface
   decorate $x_axis_panel
-    set_edit_text $axis_legend_widget_name $x_legend
+    set_edit_text $axis_legend_widget_name $x_axis_legend
     set_edit_text $axis_min_widget_name $x_axis_min
     set_edit_text $axis_max_widget_name $x_axis_max
     set_edit_text $axis_tick_widget_name $x_axis_tick
@@ -1402,10 +1420,13 @@ interface
 Define Update_Y_Axis_Panel 0
 interface
   decorate $y_axis_panel
-    set_edit_text $axis_legend_widget_name $y_legend
+    set_edit_text $axis_legend_widget_name $y_axis_legend
     set_edit_text $axis_min_widget_name $y_axis_min
     set_edit_text $axis_max_widget_name $y_axis_max
     set_edit_text $axis_tick_widget_name $y_axis_tick
+    If $y_axis_log
+      Then "set_toggle '$axis_log_widget_name' yes"
+      Else "set_toggle '$axis_log_widget_name' no"
     quit
   quit
 .
@@ -1419,7 +1440,7 @@ interface
     text $axis_max_widget_name SetXMax $x_axis_max
     toggle $axis_log_widget_name TogLogX
     text $axis_tick_widget_name SetXTick $x_axis_tick
-    text $axis_legend_widget_name SetXLegend $x_legend
+    text $axis_legend_widget_name SetXLegend $x_axis_legend
     button Apply Refresh_Plot
     button Done 'Panel_Off $x_axis_panel Panel_On $main_panel'
     quit
@@ -1436,7 +1457,7 @@ interface
     text $axis_max_widget_name SetYMax $y_axis_max
     toggle $axis_log_widget_name TogLogY
     text $axis_tick_widget_name SetYTick $y_axis_tick
-    text $axis_legend_widget_name SetYLegend $y_legend
+    text $axis_legend_widget_name SetYLegend $y_axis_legend
     button Apply Refresh_Plot
     button Done 'Panel_Off $y_axis_panel Panel_On $main_panel'
     quit
