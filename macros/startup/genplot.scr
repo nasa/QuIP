@@ -44,8 +44,10 @@ If $argc==3 'advise "Reading commands from file $3" < $3'
 
 #Pause
 #advise "Positioning Plot_Preview at 3000 100 because of XQuartz bug..."
-#Posn_Window Plot_Preview 3000 100
 Posn_Window Plot_Preview 530 100
+If !var_exists(MYSELF) "Set MYSELF foo"
+If !strcmp('$MYSELF','mach')
+  "Posn_Window Plot_Preview 3000 100"
 
 do
   os events quit

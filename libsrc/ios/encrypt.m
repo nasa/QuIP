@@ -104,12 +104,12 @@ static void *my_symm_key=NULL;
 static CCCryptorRef my_encryptor=NULL;
 static CCCryptorRef my_decryptor=NULL;
 
-size_t encryption_block_size(void)
+size_t _encryption_block_size(SINGLE_QSP_ARG_DECL)
 {
 	return kCCBlockSizeAES128 ;
 }
 
-size_t encryption_key_size(void)
+size_t _encryption_key_size(SINGLE_QSP_ARG_DECL)
 {
 	return kCCKeySizeAES128;
 }
