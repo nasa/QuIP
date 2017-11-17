@@ -119,7 +119,7 @@ static void dump_tbl_row(Vec_Func_Array *row)
 
 	fprintf(stderr,"code = %d\n",row->vfa_code);
 	for(i=0;i<N_FUNCTION_TYPES;i++){
-		fprintf(stderr,"%d:\t0x%lx\n",i,(u_long)row->vfa_func[i]);
+		fprintf(stderr,"%d:\t0x%"PRIxPTR"\n",i,(u_long)row->vfa_func[i]);
 	}
 }
 #endif // MAX_DEBUG
@@ -167,8 +167,8 @@ static void *data_processor(void *argp)
 			 */
 			YIELD_PROC
 		}
-//sprintf(mystring,"dataproc READY  pip = 0x%lx, pip->pi_oap = 0x%lx",
-//(int_for_addr)pip,(int_for_addr)pip->pi_oap);
+//sprintf(mystring,"dataproc READY  pip = 0x%"PRIxPTR", pip->pi_oap = 0x%"PRIxPTR,
+//(uintptr_t)pip,(uintptr_t)pip->pi_oap);
 //mpnadvise(myindex,mystring);
 
 		if( pip->pi_func == NULL )
@@ -179,7 +179,7 @@ static void *data_processor(void *argp)
 		else {
 #ifdef QUIP_DEBUG
 if( debug & veclib_debug ){
-sprintf(mystring,"thread[%d]:  func = 0x%lx",pip->pi_index,(int_for_addr)pip->pi_func);
+sprintf(mystring,"thread[%d]:  func = 0x%"PRIxPTR,pip->pi_index,(uintptr_t)pip->pi_func);
 mpnadvise(myindex,mystring);
 /* show_obj_args is not thread safe */
 private_show_obj_args(QSP_ARG  mystring,pip->pi_oap,_advise);
@@ -189,8 +189,8 @@ private_show_obj_args(QSP_ARG  mystring,pip->pi_oap,_advise);
 //mpnadvise(myindex,"BACK from function call");
 		}
 
-//sprintf(mystring,"dataproc FINISHED working  pip = 0x%lx, pip->pi_oap = 0x%lx",
-//(int_for_addr)pip,(int_for_addr)pip->pi_oap);
+//sprintf(mystring,"dataproc FINISHED working  pip = 0x%"PRIxPTR", pip->pi_oap = 0x%"PRIxPTR,
+//(uintptr_t)pip,(uintptr_t)pip->pi_oap);
 //mpnadvise(myindex,mystring);
 		/* indicate work finished */
 		pip->pi_oap = NULL;
@@ -243,14 +243,14 @@ advise("waiting for data processing thread");
 */
 			if( pi[i].pi_oap != NULL ){
 //if( v_oap[i] != pi[i].pi_oap ){
-//sprintf(DEFAULT_ERROR_STRING,"waiting for thread %d, oap = 0x%lx",i,(int_for_addr)pi[i].pi_oap);
+//sprintf(DEFAULT_ERROR_STRING,"waiting for thread %d, oap = 0x%"PRIxPTR,i,(uintptr_t)pi[i].pi_oap);
 //advise(DEFAULT_ERROR_STRING);
 //v_oap[i] = pi[i].pi_oap;
 //}
 				busy=1;
 			}
 //else {
-//sprintf(DEFAULT_ERROR_STRING,"wait_for_threads: %d, oap = 0x%lx",i,(int_for_addr)pi[i].pi_oap);
+//sprintf(DEFAULT_ERROR_STRING,"wait_for_threads: %d, oap = 0x%"PRIxPTR,i,(uintptr_t)pi[i].pi_oap);
 //advise(DEFAULT_ERROR_STRING);
 //}
 	}
@@ -311,10 +311,10 @@ void launch_threads(QSP_ARG_DECL
 		pi[i].pi_vf_code = vf_code;
 #ifdef QUIP_DEBUG
 if( debug & veclib_debug ){
-sprintf(DEFAULT_ERROR_STRING,"launch_threads: enabling data processing thread %d, pi_oap = 0x%lx",
-i,(int_for_addr)pi[i].pi_oap);
-NADVISE(DEFAULT_ERROR_STRING);
-//show_obj_args(QSP_ARG  &oa[i]);
+sprintf(ERROR_STRING,"launch_threads: enabling data processing thread %d, pi_oap = 0x%"PRIxPTR,
+i,(uintptr_t)pi[i].pi_oap);
+advise(ERROR_STRING);
+//show_obj_args(&oa[i]);
 }
 #endif /* QUIP_DEBUG */
 	}
@@ -464,10 +464,8 @@ warn("Arghh - probably botching vramp scalar args for multiple processors...");
 			warn("sorry, can only fix vramp multiprocessor args for float precision");
 			return -1;
 		}
-		//extract_scalar_value( &private_scalar[0], OA_SVAL1(oap) );
-		//extract_scalar_value( (Scalar_Value *)(&inc), OA_SVAL2(oap) );
-		extract_scalar_value(QSP_ARG  &private_scalar[0], OA_SCLR1(oap) );
-		extract_scalar_value(QSP_ARG  (Scalar_Value *)(&inc), OA_SCLR2(oap) );
+		extract_scalar_value(&private_scalar[0], OA_SCLR1(oap) );
+		extract_scalar_value((Scalar_Value *)(&inc), OA_SCLR2(oap) );
 		for(i=1;i<n_processors;i++){
 			/*
 			private_scalar[i].u_f = private_scalar[i-1].u_f
@@ -505,8 +503,8 @@ warn("Arghh - probably botching vramp scalar args for multiple processors...");
 	 * The last thread is the control one?
 	 * i.e. this one?
 	 */
-//sprintf(DEFAULT_ERROR_STRING,"calling launch_threads, vf_code = %d, functype = %d, func = 0x%lx",
-//VF_CODE(vfp),OA_FUNCTYPE(oap),(int_for_addr)vl2_vfa_tbl[VF_CODE(vfp)].vfa_func[OA_FUNCTYPE(oap)]);
+//sprintf(DEFAULT_ERROR_STRING,"calling launch_threads, vf_code = %d, functype = %d, func = 0x%"PRIxPTR,
+//VF_CODE(vfp),OA_FUNCTYPE(oap),(uintptr_t)vl2_vfa_tbl[VF_CODE(vfp)].vfa_func[OA_FUNCTYPE(oap)]);
 //NADVISE(DEFAULT_ERROR_STRING);
 	// We can use vl2_vfa_tbl here because we know we are on
 	// the cpu platform...
@@ -537,11 +535,11 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 
 #ifdef QUIP_DEBUG
 	if( debug & veclib_debug ) {
-		sprintf(DEFAULT_ERROR_STRING,"\nvec_dispatch:  Function %s",
+		sprintf(ERROR_STRING,"\nvec_dispatch:  Function %s",
 			VF_NAME(vfp));
-		NADVISE(DEFAULT_ERROR_STRING);
+		advise(ERROR_STRING);
 
-		show_obj_args(QSP_ARG  oap);
+		show_obj_args(oap);
 	}
 #endif /* QUIP_DEBUG */
 
@@ -583,14 +581,14 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 if( debug & veclib_debug ){
 sprintf(ERROR_STRING,"vec_dispatch:  calling tabled function, code = %d, functype = %d",
 VF_CODE(vfp),OA_FUNCTYPE(oap));
-NADVISE(ERROR_STRING);
-show_obj_args(QSP_ARG  oap);
+advise(ERROR_STRING);
+show_obj_args(oap);
 }
 #endif /* QUIP_DEBUG */
 
 #ifdef MAX_DEBUG
 dump_tbl_row(&(PF_FUNC_TBL(cpp)[VF_CODE(vfp)]));
-fprintf(stderr,"Calling function at 0x%lx\n",
+fprintf(stderr,"Calling function at 0x%"PRIxPTR"\n",
 (u_long)PF_FUNC_TBL(cpp)[VF_CODE(vfp)].vfa_func[OA_FUNCTYPE(oap)]);
 #endif // MAX_DEBUG
 

@@ -106,12 +106,9 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case ND_INT:
 			SET_VN_INTVAL(enp, 0);
 			break;
-		case ND_SUBRT:
-			SET_VN_SUBRT(enp, NULL);
-			break;
 		case ND_CALLF:
 			SET_VN_UK_ARGS(enp, NULL);
-			SET_VN_SUBRT_CALL(enp, NULL);
+			SET_VN_SUBRT(enp, NULL);
 			break;
 		case ND_STRING:
 			SET_VN_STRING(enp, NULL);
@@ -159,7 +156,6 @@ const char *node_data_type_desc(Node_Data_Type t)
 		data_type_names[ ND_LIST ] = "list";
 		data_type_names[ ND_DBL ] = "dbl";
 		data_type_names[ ND_INT ] = "int";
-		data_type_names[ ND_SUBRT ] = "subrt";
 		data_type_names[ ND_CALLF ] = "callf";
 		data_type_names[ ND_STRING ] = "string";
 		data_type_names[ ND_CAST ] = "cast";
@@ -377,7 +373,7 @@ Vec_Expr_Node *_dup_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	return(new_enp);
 }
 
-void check_release(Vec_Expr_Node *enp)
+void _check_release(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	if( enp == NULL ) return;
 	if( NODE_IS_FINISHED(enp) ){
@@ -403,7 +399,7 @@ void check_release(Vec_Expr_Node *enp)
  * Another way to deal with that problem might be to have a reference count...
  */
 
-void rls_vectree(Vec_Expr_Node *enp)
+void _rls_vectree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
 
@@ -417,6 +413,7 @@ void rls_vectree(Vec_Expr_Node *enp)
 			rls_vectree(VN_CHILD(enp,i));
 		}
 
+//fprintf(stderr,"releasing %s\n",node_desc(enp));
 
 	/* now release this node */
 	if( VN_INFILE(enp) != NULL ){
@@ -441,7 +438,6 @@ void rls_vectree(Vec_Expr_Node *enp)
 		case ND_LIST:
 		case ND_DBL:
 		case ND_INT:
-		case ND_SUBRT:
 		case ND_CALLF:
 		case ND_STRING:
 		case ND_CAST:
@@ -462,14 +458,12 @@ void rls_vectree(Vec_Expr_Node *enp)
 			/* just here to suppress a compiler warning */
 			assert( AERROR("init_expr_node:  bad data type code!?") );
 			break;
-		/*
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 "rls_vectree:  missing case for tree node data type %s",
 tnt_tbl[VN_CODE(enp)].tnt_name);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
-			*/
 	}
 
 	/* BUG we should check whether or not the node owns any lists,

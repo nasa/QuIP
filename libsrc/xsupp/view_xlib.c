@@ -37,8 +37,6 @@
 
 #include "quip_prot.h"
 #include "data_obj.h"
-#include "handle.h"
-//#include "callback_api.h"
 #include "xsupp_prot.h"
 #include "cmaps.h"
 #include "viewer.h"
@@ -184,7 +182,9 @@ static int currx=0,curry=0;
 
 #define DEFAULT_EVENT_MASK	( ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask )
 
-static Window CreateWindow(const char *name,const char *geom,u_int  w,u_int  h)
+#define CreateWindow(name,geom,w,h) _CreateWindow(QSP_ARG  name,geom,w,h)
+
+static Window _CreateWindow(QSP_ARG_DECL  const char *name,const char *geom,u_int  w,u_int  h)
 {
 	Window			win;
 	XSetWindowAttributes	attributes;
@@ -202,7 +202,7 @@ static Window CreateWindow(const char *name,const char *geom,u_int  w,u_int  h)
 	// dop can be null if user does not own display!?
 	//assert( dop != NULL );
 	if( dop == NULL ){
-		NWARN("CreateWindow:  no current display!?");
+		warn("CreateWindow:  no current display!?");
 		return (Window) 0;
 	}
 
@@ -227,7 +227,7 @@ static Window CreateWindow(const char *name,const char *geom,u_int  w,u_int  h)
 
 	if( XGetGCValues( DO_DISPLAY(dop),DO_GC(dop),
 		GCBackground,&gcvals) == 0 )
-		NWARN("error getting GC value for bg");
+		warn("error getting GC value for bg");
 
 	attributes.background_pixel = gcvals.background;
 	attributes.border_pixel	= gcvals.background;
@@ -276,18 +276,18 @@ fprintf(stderr,"%s = 0x%lx\n",#k,k);
 #ifdef QUIP_DEBUG
 if( debug & xdebug ){
 NADVISE("XCreateWindow");
-sprintf(DEFAULT_ERROR_STRING,"dpy = %s,  dispDEEP = %d",
+sprintf(ERROR_STRING,"dpy = %s,  dispDEEP = %d",
 DO_NAME(dop),DO_DEPTH(dop));
-NADVISE(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"calling XCreateWindow, depth = %d",DO_DEPTH(dop));
-NADVISE(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"\tx = %d, y = %d, w = %d, h = %d, border = %d, vis = %ld (0x%lx)",
+NADVISE(ERROR_STRING);
+sprintf(ERROR_STRING,"calling XCreateWindow, depth = %d",DO_DEPTH(dop));
+NADVISE(ERROR_STRING);
+sprintf(ERROR_STRING,"\tx = %d, y = %d, w = %d, h = %d, border = %d, vis = %ld (0x%lx)",
 x,y,w,h,WINDOW_BORDER_WIDTH,(u_long)DO_VISUAL(dop),(u_long)DO_VISUAL(dop));
-NADVISE(DEFAULT_ERROR_STRING);
+NADVISE(ERROR_STRING);
 }
 #endif
 	if( w <=0 || h <= 0 ){
-		NWARN("bad window dimensions will wedge window manager");
+		warn("bad window dimensions will wedge window manager");
 		abort();
 	}
 
@@ -305,7 +305,7 @@ DO_DEPTH(dop),valuemask);*/
 		DO_VISUAL(dop), valuemask, &attributes);
 
 	if (!win){
-		NWARN("error creating window");
+		warn("error creating window");
 		return(win);   /* leave immediately if couldn't create */
 	}
 
@@ -382,7 +382,7 @@ static Window CreateGLWindow(char *name,char *geom,u_int w,u_int h)
 
 	if( XGetGCValues(DO_DISPLAY(dop),DO_GC(dop),
 		GCBackground,&gcvals) == 0 )
-		NWARN("error getting GC value for bg");
+		warn("error getting GC value for bg");
 
 	attributes.background_pixel = gcvals.background;
 	attributes.border_pixel	= gcvals.background;
@@ -395,7 +395,7 @@ static Window CreateGLWindow(char *name,char *geom,u_int w,u_int h)
 		WINDOW_BORDER_WIDTH, valuemask, &attributes, GLXrgbSingleBuffer);
 
 	if (!win){
-		NWARN("error creating window");
+		warn("error creating window");
 		return(win);   /* leave immediately if couldn't create */
 	}
 
@@ -459,7 +459,9 @@ Window creat_gl_window(const char *name,int w,int h,long event_mask)
 } /* end create_gl_window() */
 #endif
 
-static Window creat_window(const char *name,int w,int h,long event_mask)
+#define creat_window(name,w,h,event_mask) _creat_window(QSP_ARG  name,w,h,event_mask)
+
+static Window _creat_window(QSP_ARG_DECL  const char *name,int w,int h,long event_mask)
 {
 	Window scrW;
 	XClassHint classh;
@@ -645,7 +647,9 @@ void _unshow_viewer(QSP_ARG_DECL  Viewer *vp)
 
 /* create a suitable image to be use with XPutImage */
 
-static int x_image_for(Viewer *vp,Data_Obj *dp)
+#define x_image_for(vp,dp) _x_image_for(QSP_ARG  vp,dp)
+
+static int _x_image_for(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp)
 {
 	/* We used to do a complicated depth calculation based on tdim
 	 * and prec of dp...   Now we just use the viewer depth.
@@ -668,8 +672,8 @@ static int x_image_for(Viewer *vp,Data_Obj *dp)
 #ifdef QUIP_DEBUG
 if( debug & xdebug )
 {
-sprintf(DEFAULT_ERROR_STRING,"Destroying old X image, viewer %s",vp->vw_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"Destroying old X image, viewer %s",vp->vw_name);
+NADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		XDestroyImage(vp->vw_ip);
@@ -678,8 +682,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 if( debug & xdebug ){
-sprintf(DEFAULT_ERROR_STRING,"x_image_for %s:  viewer %s has no old X image",OBJ_NAME(dp),vp->vw_name);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"x_image_for %s:  viewer %s has no old X image",OBJ_NAME(dp),vp->vw_name);
+NADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	}
@@ -687,8 +691,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 if( debug & xdebug ){
-sprintf(DEFAULT_ERROR_STRING,"x_image_for %s:  calling XCreateImage",OBJ_NAME(dp));
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"x_image_for %s:  calling XCreateImage",OBJ_NAME(dp));
+NADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -697,7 +701,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		OBJ_COLS(dp),OBJ_ROWS(dp),8,0);
 
 	if( vp->vw_ip == NULL ){
-		NWARN("XCreateImage failed");
+		warn("XCreateImage failed");
 		return(-1);
 	}
 
@@ -780,7 +784,7 @@ void _embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 	"embed_image:  Can't embed image %s (%d x %d) at %d %d in viewer %s (%d x %d)",
 			OBJ_NAME(dp),OBJ_ROWS(dp),OBJ_COLS(dp),
 			x,y,vp->vw_name,vp->vw_height,vp->vw_width);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -789,21 +793,21 @@ void _embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 			sprintf(ERROR_STRING,
 				"embed_image:  image \"%s\" is type %s, should be short",
 				OBJ_NAME(dp),OBJ_PREC_NAME(dp));
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 	}
 	else{
 		if( OBJ_MACH_PREC(dp) != PREC_BY && OBJ_MACH_PREC(dp) != PREC_UBY ){
 			if( OBJ_NAME(dp) == NULL ){
-				NWARN("non-byte image (with null name) passed to embed_image!?");
+				warn("non-byte image (with null name) passed to embed_image!?");
 				abort();
 			}
 			sprintf(ERROR_STRING,
 				"embed_image:  image \"%s\" is type %s, should be %s or %s",
 				OBJ_NAME(dp),OBJ_PREC_NAME(dp),
 				PREC_NAME(PREC_FOR_CODE(PREC_BY)), PREC_NAME(PREC_FOR_CODE(PREC_UBY)));
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 	}
@@ -811,7 +815,7 @@ void _embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 	if( vp->vw_depth < 8 ){
 		static int warned=0;
 		if( !warned ){
-			NWARN("Sorry, can't embed images for display depth < 8");
+			warn("Sorry, can't embed images for display depth < 8");
 			warned++;
 		}
 		return;
@@ -825,7 +829,7 @@ void _embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 		sprintf(ERROR_STRING,
 			"embed_image:  can't find x_image for viewer %s, object %s",
 			vp->vw_name,OBJ_NAME(dp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -837,7 +841,7 @@ void _embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 			sprintf(ERROR_STRING,
 	"embed_image:  expected byte precision for object %s (%d %s components)!?",
 				OBJ_NAME(dp),OBJ_COMPS(dp),OBJ_PREC_NAME(dp));
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 		disp_dp = comp_replicate(dp,display_bpp,ALLOC_DATA);
@@ -945,16 +949,18 @@ static void dop_info( QSP_ARG_DECL  Draw_Op *dop)
 			break;
 
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 			"dop_info:  unrecognized drawing op %d (0x%x)",
 					dop->do_op,dop->do_op);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 	prt_msg(msg_str);
 }
 
-static void refresh_drawing(Viewer *vp)
+#define refresh_drawing(vp) _refresh_drawing(QSP_ARG  vp)
+
+static void _refresh_drawing(QSP_ARG_DECL  Viewer *vp)
 {
 	Node *np;
 	int cx=0,cy=0;
@@ -980,17 +986,17 @@ dop_info(DEFAULT_QSP_ARG  dop);
 #endif
 		switch(dop->do_op){
 			case DRAW_OP_FOREGROUND:
-				_xp_select(vp,dop->do_color);
+				xp_select(vp,dop->do_color);
 				break;
 			case DRAW_OP_BACKGROUND:
-				_xp_bgselect(vp,dop->do_color);
+				xp_bgselect(vp,dop->do_color);
 				break;
 			case DRAW_OP_MOVE:
 				cx = dop->do_x;
 				cy = dop->do_y;
 				break;
 			case DRAW_OP_CONT:
-				_xp_line(vp,cx,cy,dop->do_x,dop->do_y);
+				xp_line(vp,cx,cy,dop->do_x,dop->do_y);
 				cx = dop->do_x;
 				cy = dop->do_y;
 				break;
@@ -1001,7 +1007,7 @@ dop_info(DEFAULT_QSP_ARG  dop);
 				if( dop->do_xfp != NULL ){
 					set_font(vp,dop->do_xfp);
 				}
-				_xp_text(vp,cx,cy,dop->do_str);
+				xp_text(vp,cx,cy,dop->do_str);
 				break;
 			case DRAW_OP_TEXT_MODE:
 				switch(dop->do_text_mode){
@@ -1029,10 +1035,10 @@ dop_info(DEFAULT_QSP_ARG  dop);
 				break;
 
 			default:
-				sprintf(DEFAULT_ERROR_STRING,
+				sprintf(ERROR_STRING,
 			"refresh_drawing:  unrecognized drawing op %d (0x%x)",
 					dop->do_op,dop->do_op);
-				NWARN(DEFAULT_ERROR_STRING);
+				warn(ERROR_STRING);
 				break;
 		}
 		np=np->n_next;
@@ -1066,7 +1072,7 @@ void _unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 	"Can't extract image %s (%d x %d) from %d %d in viewer %s (%d x %d)",
 			OBJ_NAME(dp),OBJ_ROWS(dp),OBJ_COLS(dp),
 			x,y,vp->vw_name,vp->vw_height,vp->vw_width);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1117,7 +1123,7 @@ void _unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 		x, y, OBJ_COLS(dp), OBJ_ROWS(dp), plane_mask, ZPixmap );
 
 	if( vp->vw_ip2 == NULL ){
-		NWARN("error getting X image");
+		warn("error getting X image");
 		return;
 	}
 
@@ -1136,7 +1142,7 @@ void _unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 	"unembed_image:  display has %d bpp, image %s (%s) has depth %d",
 				display_bpp,OBJ_NAME(dp),OBJ_PREC_NAME(dp),
 				OBJ_COMPS(dp));
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 		/* do we need to do something with the 3/4 depth mismatch? */
@@ -1193,7 +1199,7 @@ void _redraw_viewer(QSP_ARG_DECL  Viewer *vp)
 
 #ifdef FOOBAR
 	if( (now_time=time((time_t *)NULL)) == (time_t) -1 ){
-		NWARN("redraw_viewer:  error getting time");
+		warn("redraw_viewer:  error getting time");
 		return;
 	}
 	if( (now_time - vp->vw_time) <= 1 ){
@@ -1220,7 +1226,7 @@ advise(ERROR_STRING);
 #ifdef FOOBAR
 	/* We do this again now, because refreshing the drawing can take a long time */
 	if( (now_time=time((time_t *)NULL)) == (time_t) -1 ){
-		NWARN("redraw_viewer:  error getting time");
+		warn("redraw_viewer:  error getting time");
 		return;
 	}
 
@@ -1284,27 +1290,27 @@ void set_font(Viewer *vp,XFont *xfp)
 	XSetFont(VW_DPY(vp),vp->vw_gc,xfp->xf_id);
 }
 
-int get_string_width(Viewer *vp, const char *s)
+int _get_string_width(QSP_ARG_DECL  Viewer *vp, const char *s)
 {
 	int n;
 
 	/* We use current_xfp for now, but really we should query the font from the viewer... */
 	if( current_xfp == NULL ){
-		NWARN("get_string_width:  need to specify a font before calling this function...");
+		warn("get_string_width:  need to specify a font before calling this function...");
 		return(-1);
 	}
 	n = XTextWidth(current_xfp->xf_fsp,s,strlen(s));
 	return(n);
 }
 
-void set_font_size(Viewer *vp, int s)
+void _set_font_size(QSP_ARG_DECL  Viewer *vp, int s)
 {
-	NWARN("set_font_size:  not implemented");
+	warn("set_font_size:  not implemented");
 }
 
-void set_text_angle(Viewer *vp, float a)
+void _set_text_angle(QSP_ARG_DECL  Viewer *vp, float a)
 {
-	NWARN("set_text_angle:  not implemented");
+	warn("set_text_angle:  not implemented");
 }
 
 // BUG text_mode should be a viewer property...
@@ -1479,7 +1485,7 @@ void set_remember_gfx(int flag)
 	remember_gfx=flag;
 }
 
-void dump_drawlist(QSP_ARG_DECL  Viewer *vp)
+void _dump_drawlist(QSP_ARG_DECL  Viewer *vp)
 {
 	Node *np;
 
@@ -1526,9 +1532,9 @@ void dump_drawlist(QSP_ARG_DECL  Viewer *vp)
 					dop->do_h,dop->do_a1,dop->do_a2);
 				break;
 			default:
-				sprintf(DEFAULT_ERROR_STRING,
+				sprintf(ERROR_STRING,
 					"bad draw op %d\n",dop->do_op);
-				NWARN(DEFAULT_ERROR_STRING);
+				warn(ERROR_STRING);
 				msg_str[0]=0;
 				break;
 		}
@@ -1539,25 +1545,25 @@ void dump_drawlist(QSP_ARG_DECL  Viewer *vp)
 	}
 }
 
-void center_text(Viewer *vp)
+void _center_text(QSP_ARG_DECL  Viewer *vp)
 {
 	text_mode = CENTER_TEXT;
 	if( REMEMBER_GFX ) remember_text_mode(vp,text_mode);
 }
 
-void right_justify(Viewer *vp)
+void _right_justify(QSP_ARG_DECL  Viewer *vp)
 {
 	text_mode = RIGHT_JUSTIFY;
 	if( REMEMBER_GFX ) remember_text_mode(vp,text_mode);
 }
 
-void left_justify(Viewer *vp)
+void _left_justify(QSP_ARG_DECL  Viewer *vp)
 {
 	text_mode = LEFT_JUSTIFY;
 	if( REMEMBER_GFX ) remember_text_mode(vp,text_mode);
 }
 
-void _xp_text(Viewer *vp,int x,int y,const char *s)
+void _xp_text(QSP_ARG_DECL  Viewer *vp,int x,int y,const char *s)
 {
 	int dir, ascent, descent;
 	XCharStruct overall;
@@ -1567,7 +1573,7 @@ void _xp_text(Viewer *vp,int x,int y,const char *s)
 	orig_x = x;
 	if( text_mode != LEFT_JUSTIFY ){
 		if( current_xfp == NULL ){
-			NWARN("_xp_text:  no font specified, can't center text");
+			warn("_xp_text:  no font specified, can't center text");
 		} else {
 			XTextExtents(current_xfp->xf_fsp,s,strlen(s),
 				&dir,&ascent,&descent,&overall);
@@ -1581,9 +1587,9 @@ void _xp_text(Viewer *vp,int x,int y,const char *s)
 
 	x -= h_offset;
 	if( x < 0 ){
-		sprintf(DEFAULT_ERROR_STRING,"_xp_text:  negative x offset (%d) requested",
+		sprintf(ERROR_STRING,"_xp_text:  negative x offset (%d) requested",
 			x);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		x=0;
 	}
 
@@ -1598,12 +1604,12 @@ void _xp_text(Viewer *vp,int x,int y,const char *s)
 	}
 }
 
-void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2)
+void _xp_line(QSP_ARG_DECL  Viewer *vp,int x1,int y1,int x2,int y2)
 {
 #ifdef QUIP_DEBUG
 if( debug & xdebug ){
-sprintf(DEFAULT_ERROR_STRING,"XDrawLine %s, %d %d %d %d",vp->vw_name,x1,y1,x2,y2);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"XDrawLine %s, %d %d %d %d",vp->vw_name,x1,y1,x2,y2);
+NADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -1683,7 +1689,7 @@ void _xp_fill_polygon(Viewer* vp, int num_points, int* px_vals, int* py_vals)
 	givbuf(pxp);
 }
 
-void _xp_erase(Viewer *vp)
+void _xp_erase(QSP_ARG_DECL  Viewer *vp)
 {
 	XClearWindow(VW_DPY(vp),vp->vw_xwin);
 	forget_drawing(vp);
@@ -1696,7 +1702,7 @@ void _xp_update(Viewer *vp)
 	/* a no-op */
 }
 
-void _xp_select(Viewer *vp,u_long color)
+void _xp_select(QSP_ARG_DECL  Viewer *vp,u_long color)
 {
 	if( REMEMBER_GFX )
 		remember_fg(vp,color);
@@ -1707,7 +1713,7 @@ void _xp_select(Viewer *vp,u_long color)
 	XSetForeground(VW_DPY(vp),vp->vw_gc,color);
 }
 
-void _xp_bgselect(Viewer *vp,u_long color)
+void _xp_bgselect(QSP_ARG_DECL  Viewer *vp,u_long color)
 {
 	if( REMEMBER_GFX )
 		remember_bg(vp,color);
@@ -1730,7 +1736,7 @@ static void get_geom(Viewer* vp, u_int* width, u_int* height, u_int* depth)
 	u_int border_width;
 	if( XGetGeometry(VW_DPY(vp),vp->vw_top.c_xwin,&root,&x,&y,width,height,
 			 &border_width,depth) == False ){
-		NWARN("can't get geometry");
+		warn("can't get geometry");
 		return;
 	}
 
@@ -1745,7 +1751,7 @@ void _show_geom(QSP_ARG_DECL  Viewer *vp)
 
 	if( XGetGeometry(VW_DPY(vp),VW_XWIN(vp),&root,&x,&y,&width,&height,
 		&border_width,&depth) == False ){
-		NWARN("can't get geometry");
+		warn("can't get geometry");
 		return;
 	}
 
@@ -1841,7 +1847,7 @@ void update_image(Viewer *vp)
 	/*
 		sprintf(ERROR_STRING,
 	"update_image:  no associated data object for viewer %s",vp->vw_name);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	*/
 		return;
 	}

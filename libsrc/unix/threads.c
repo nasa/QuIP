@@ -108,13 +108,13 @@ static COMMAND_FUNC( do_wait_thread )
 	if( thread_qsp == NULL ) return;
 
 	if( _QS_SERIAL(thread_qsp) == 0 ){
-		WARN("do_wait_thread:  can't wait for main thread!?");
+		warn("do_wait_thread:  can't wait for main thread!?");
 		return;
 	}
 
 	status = pthread_join( thread_qsp->qs_thr, val_ptr );
 	if( status != 0 )
-		WARN("pthread_join returned an error status!?");
+		warn("pthread_join returned an error status!?");
 }
 
 #define ADD_CMD(s,f,h)		ADD_COMMAND(threads_menu,s,f,h)

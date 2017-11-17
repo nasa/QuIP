@@ -12,7 +12,7 @@ char *end_text(QSP_ARG_DECL  void *buf,int size,void *stream);
 
 static List *query_free_list=NULL;
 
-Query *new_query(void)
+Query *_new_query(SINGLE_QSP_ARG_DECL)
 {
 	Query *qp;
 
@@ -40,7 +40,7 @@ Query *new_query(void)
 	return(qp);
 }
 
-void rls_query(Query *qp)
+void _rls_query(QSP_ARG_DECL  Query *qp)
 {
 	// release any resources held by the query?
 	Node *np;
@@ -49,8 +49,4 @@ void rls_query(Query *qp)
 	addHead(query_free_list,np);
 }
 
-inline int last_query_line_read(Query *qp)
-{
-	return QRY_LINES_READ(qp);
-}
 

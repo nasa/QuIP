@@ -90,6 +90,8 @@ struct precision {
 					(Scalar_Value *,double val);
 	void			(*cast_indexed_type_from_double_func)
 					(Scalar_Value *,int idx,double val);
+	void			(*copy_value_func)
+					(Scalar_Value *,Scalar_Value *);
 } ;
 
 #define prec_name	prec_item.item_name
@@ -140,6 +142,9 @@ struct precision {
 
 #define PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p)	(prec_p)->cast_indexed_type_from_double_func
 #define SET_PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p,v)	(prec_p)->cast_indexed_type_from_double_func = v
+
+#define PREC_COPY_VALUE_FUNC(prec_p)	(prec_p)->copy_value_func
+#define SET_PREC_COPY_VALUE_FUNC(prec_p,v)	(prec_p)->copy_value_func = v
 
 
 //#ifdef HAVE_ANY_GPU

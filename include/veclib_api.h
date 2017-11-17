@@ -8,16 +8,7 @@ extern "C" {
 
 #include "veclib/vec_func.h"
 #include "veclib/obj_args.h"
-//#include "veclib/vl2_veclib_prot.h"
-
-extern int setup_slow_len(	/* DIM3 *len_p, */ /* use vap */
-				/* Size_Info *szi_p, */
-				Vector_Args *vap,
-				dimension_t start_dim,
-				/* int *dim_indices, */	/* now in vap */
-				int i_first,
-				int n_vec,
-				Platform_Device *pdp);
+#include "veclib/slow_len.h"
 
 extern COMMAND_FUNC(do_comp_menu);
 extern COMMAND_FUNC( do_vl_menu );
@@ -58,9 +49,10 @@ extern COMMAND_FUNC( do_yuv2rgb );
 
 /* obj_args.c */
 extern void clear_obj_args(Vec_Obj_Args *);
-extern void show_obj_args(QSP_ARG_DECL  const Vec_Obj_Args *);
+extern void _show_obj_args(QSP_ARG_DECL  const Vec_Obj_Args *);
 extern void set_obj_arg_flags(Vec_Obj_Args *);
 
+#define show_obj_args(oap) _show_obj_args(QSP_ARG  oap)
 
 /* cksiz.c */
 extern int old_cksiz(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *);

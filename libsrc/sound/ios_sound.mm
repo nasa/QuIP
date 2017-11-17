@@ -73,7 +73,7 @@ typedef struct {
 #define CHECK_ERROR(msg)				\
 							\
 	if( stat != 0 ){				\
-		WARN(msg);				\
+		warn(msg);				\
 		return;					\
 	}
 
@@ -83,7 +83,7 @@ int set_playback_nchan(QSP_ARG_DECL  int channels)
 #ifdef FOOBAR
 	return(0);
 #else // ! FOOBAR
-	WARN("set output n_channels not implemented yet for iOS!?");
+	warn("set output n_channels not implemented yet for iOS!?");
 	return -1;
 #endif // ! FOOBAR
 }
@@ -97,7 +97,7 @@ static void init_timebase_info(SINGLE_QSP_ARG_DECL)
 	static struct mach_timebase_info mtbi;
 	kerror = mach_timebase_info(&mtbi);
 	if( kerror != KERN_SUCCESS ){
-		WARN("init_mach_time:  failed to fetch timebase info!?");
+		warn("init_mach_time:  failed to fetch timebase info!?");
 	} else {
 		mtbi_p = (&mtbi);
 		hTime2nsFactor = ((double)mtbi.numer)/mtbi.denom;
@@ -132,16 +132,16 @@ fprintf(stderr,"hTime2nsFactor = %g\n",hTime2nsFactor);
 	}							\
 }
 
-static void copy_sound_data(void *dest, Sound_Data *sdp, int frames_to_copy, int frames_to_zero )
+static void _copy_sound_data(QSP_ARG_DECL  void *dest, Sound_Data *sdp, int frames_to_copy, int frames_to_zero )
 {
 	switch( PREC_CODE( sdp->src_prec_p ) ){
 		case PREC_BY:  COPY_SOUND(char,0) break;
 		case PREC_IN:  COPY_SOUND(short,0) break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 				"copy_sound_data:  unsupported sound precision %s!?",
 					PREC_NAME(sdp->src_prec_p));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 }
@@ -187,7 +187,7 @@ static void process_smpte_time()
 		case kSMPTETimeType2398:
 			break;
 		default:
-			WARN("Unexpected SMPTE time code type!?");
+			warn("Unexpected SMPTE time code type!?");
 			break;
 	}
 }
@@ -197,49 +197,49 @@ static void report_audio_error(QSP_ARG_DECL  OSStatus code)
 {
 	switch(code){
 		case kAudioQueueErr_InvalidBuffer:
-			WARN("invalid audio buffer"); break;
+			warn("invalid audio buffer"); break;
 		case kAudioQueueErr_BufferEmpty:
-			WARN("audio buffer empty"); break;
+			warn("audio buffer empty"); break;
 		case kAudioQueueErr_DisposalPending:
-			WARN("audio disposal pending"); break;
+			warn("audio disposal pending"); break;
 		case kAudioQueueErr_InvalidProperty:
-			WARN("invalid audio property"); break;
+			warn("invalid audio property"); break;
 		case kAudioQueueErr_InvalidPropertySize:
-			WARN("invalid audio property size"); break;
+			warn("invalid audio property size"); break;
 		case kAudioQueueErr_InvalidParameter:
-			WARN("invalid audio parameter"); break;
+			warn("invalid audio parameter"); break;
 		case kAudioQueueErr_CannotStart:
-			WARN("audio cannot start"); break;
+			warn("audio cannot start"); break;
 		case kAudioQueueErr_InvalidDevice:
-			WARN("invalid audio device"); break;
+			warn("invalid audio device"); break;
 		case kAudioQueueErr_BufferInQueue:
-			WARN("audio buffer in queue"); break;
+			warn("audio buffer in queue"); break;
 		case kAudioQueueErr_InvalidRunState:
-			WARN("invalid audio run state"); break;
+			warn("invalid audio run state"); break;
 		case kAudioQueueErr_InvalidQueueType:
-			WARN("invalid audio queue type"); break;
+			warn("invalid audio queue type"); break;
 		case kAudioQueueErr_Permissions:
-			WARN("audio permission error"); break;
+			warn("audio permission error"); break;
 		case kAudioQueueErr_InvalidPropertyValue:
-			WARN("invalid audio property value"); break;
+			warn("invalid audio property value"); break;
 		case kAudioQueueErr_PrimeTimedOut:
-			WARN("audio prime timeout"); break;
+			warn("audio prime timeout"); break;
 		case kAudioQueueErr_CodecNotFound:
-			WARN("audio codec not found"); break;
+			warn("audio codec not found"); break;
 		case kAudioQueueErr_InvalidCodecAccess:
-			WARN("invalid audio codec access"); break;
+			warn("invalid audio codec access"); break;
 		case kAudioQueueErr_QueueInvalidated:
-			WARN("audio queue invalidated"); break;
+			warn("audio queue invalidated"); break;
 		case kAudioQueueErr_RecordUnderrun:
-			WARN("audio record underrun"); break;
+			warn("audio record underrun"); break;
 		case kAudioQueueErr_EnqueueDuringReset:
-			WARN("audio enqueue during reset"); break;
+			warn("audio enqueue during reset"); break;
 		case kAudioQueueErr_InvalidOfflineMode:
-			WARN("invalid audio offline mode"); break;
+			warn("invalid audio offline mode"); break;
 		case kAudioFormatUnsupportedDataFormatError:
-			WARN("unsupported audio data format"); break;
+			warn("unsupported audio data format"); break;
 		case -50:
-			WARN("error in user parameter list"); break;
+			warn("error in user parameter list"); break;
 		default:
 			advise("audio error not handled in switch");
 			NSError *error = [NSError errorWithDomain:NSOSStatusErrorDomain code:code userInfo:nil];
@@ -391,7 +391,7 @@ extern "C" {
 
 void set_sound_volume(QSP_ARG_DECL  int g)
 {
-	WARN("set_sound_volume not implemented yet for iOS!?");
+	warn("set_sound_volume not implemented yet for iOS!?");
 }
 
 void set_samp_freq(QSP_ARG_DECL  unsigned int req_rate)
@@ -420,7 +420,7 @@ fprintf(stderr,"init_ios_audio_session:  already initialized!?\n");
 
 	if( error ){
 		sprintf(ERROR_STRING,"Error setting session category");
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 
@@ -429,13 +429,13 @@ fprintf(stderr,"init_ios_audio_session:  already initialized!?\n");
 	[my_session setPreferredIOBufferDuration:bufferDuration error:&error];
 	if( error ){
 		sprintf(ERROR_STRING,"Error setting buffer duration");
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 	[my_session setPreferredSampleRate:44100 error:&error];
 	if( error ){
 		sprintf(ERROR_STRING,"Error setting sample rate");
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 /*
@@ -462,7 +462,7 @@ fprintf(stderr,"init_ios_audio_session:  already initialized!?\n");
 	[[AVAudioSession sharedInstance] setActive:YES error:&error];
 	if( error ){
 		sprintf(ERROR_STRING,"Error activating audio session");
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 
@@ -476,7 +476,7 @@ static void stop_audio_input(SINGLE_QSP_ARG_DECL)
 	OSStatus status;
 
 	if( audio_input_queue == NULL ){
-		WARN("stop_audio_input:  audio system not initialized!?");
+		warn("stop_audio_input:  audio system not initialized!?");
 		return;
 	}
 
@@ -494,7 +494,7 @@ static void stop_audio_output(SINGLE_QSP_ARG_DECL)
 	OSStatus status;
 
 	if( audio_output_queue == NULL ){
-		WARN("stop_audio_output:  audio system not initialized!?");
+		warn("stop_audio_output:  audio system not initialized!?");
 		return;
 	}
 
@@ -725,7 +725,7 @@ static void init_ios_audio(QSP_ARG_DECL  int mode)
 	else if( mode == AUDIO_PLAY )
 		init_ios_audio_output(SINGLE_QSP_ARG);
 	else
-		WARN("init_ios_audio:  undexpected mode!?");
+		warn("init_ios_audio:  undexpected mode!?");
 }
 
 
@@ -734,7 +734,7 @@ static void start_audio_input(SINGLE_QSP_ARG_DECL)
 	OSStatus status;
 
 	if( audio_input_queue == NULL ){
-		WARN("start_audio_input:  audio system not initialized!?");
+		warn("start_audio_input:  audio system not initialized!?");
 		init_ios_audio_input(SINGLE_QSP_ARG);
 	}
 
@@ -760,7 +760,7 @@ static void start_audio_output(SINGLE_QSP_ARG_DECL)
 	OSStatus status;
 
 	if( audio_output_queue == NULL ){
-		WARN("start_audio_output:  audio system not initialized!?");
+		warn("start_audio_output:  audio system not initialized!?");
 		return;
 	}
 
@@ -787,7 +787,7 @@ advise("audio_init BEGIN");
 	init_ios_audio(QSP_ARG  mode);
 
 	if( ! ts_class_inited ){
-		add_tsable(QSP_ARG  dobj_itp,&dobj_tsf,(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
+		add_tsable(dobj_itp,&dobj_tsf,(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
 		ts_class_inited++;
 	}
 
@@ -807,7 +807,7 @@ advise("audio_init BEGIN");
 	if(mode == AUDIO_RECORD)
 	{
 		/* what do we need to do here??? */
-		//WARN("audio_init:  don't know how to record!?");
+		//warn("audio_init:  don't know how to record!?");
 
 	} else if( mode == AUDIO_PLAY ) {
 		/* open the device for playback */
@@ -818,7 +818,7 @@ advise("audio_init BEGIN");
 	}
 #ifdef CAUTIOUS
 	else {
-		WARN("unexpected audio mode requested!?");
+		warn("unexpected audio mode requested!?");
 	}
 #endif	/* CAUTIOUS */
 
@@ -844,9 +844,9 @@ advise("audio_init BEGIN");
 void halt_play_stream(SINGLE_QSP_ARG_DECL)
 {
 	if( halting )
-		WARN("halt_play_stream:  already halting!?");
+		warn("halt_play_stream:  already halting!?");
 	if( !streaming )
-		WARN("halt_play_stream:  not streaming!?");
+		warn("halt_play_stream:  not streaming!?");
 	halting=1;
 
 	/* wait for disk_reader & audio_writer to finish - should call pthread_join (BUG)! */
@@ -857,17 +857,17 @@ void halt_play_stream(SINGLE_QSP_ARG_DECL)
 
 void play_stream(QSP_ARG_DECL  int fd)
 {
-	WARN("unimplemented for iOS:  play_stream");
+	warn("unimplemented for iOS:  play_stream");
 }
 
 void set_stereo_output(QSP_ARG_DECL  int is_stereo)
 {
-	WARN("unimplemented for iOS:  set_stereo_output");
+	warn("unimplemented for iOS:  set_stereo_output");
 }
 
 void pause_sound(SINGLE_QSP_ARG_DECL)
 {
-	WARN("unimplemented for iOS:  pause_sound");
+	warn("unimplemented for iOS:  pause_sound");
 }
 
 static int good_for_sound(QSP_ARG_DECL  Data_Obj *dp)
@@ -875,19 +875,19 @@ static int good_for_sound(QSP_ARG_DECL  Data_Obj *dp)
 	if( OBJ_PREC(dp) != EXPECTED_SOUND_PREC ){
 		sprintf(ERROR_STRING,"good_for_sound:  object %s should have %s precision!?",
 			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return 0;
 	}
 	if( OBJ_COMPS(dp) != 1 ){
 		sprintf(ERROR_STRING,"good_for_sound:  object %s should have 1 components!?",
 			OBJ_NAME(dp) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return 0;
 	}
 	if( !IS_CONTIGUOUS(dp) ){
 		sprintf(ERROR_STRING,"good_for_sound:  object %s should be contiguous!?",
 			OBJ_NAME(dp) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return 0;
 	}
 	return 1;
@@ -898,7 +898,7 @@ static int good_for_sound(QSP_ARG_DECL  Data_Obj *dp)
 // For the sake of efficiency, we should only run it when we want
 // to record.  So we need to have a more complex sense of state?
 
-void record_sound(QSP_ARG_DECL  Data_Obj *dp)
+void _record_sound(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if(audio_state!=AUDIO_RECORD)
 		audio_init(QSP_ARG  AUDIO_RECORD);

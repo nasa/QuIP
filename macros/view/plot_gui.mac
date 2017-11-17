@@ -1,6 +1,14 @@
+# How to use:
+#
+# < $macro_dir/view/plot_gui.mac
+# Init_Plot_GUI_Defaults
+# Declare_Plot_GUI
+
 Set fig_dir ./figures
 
 Define Init_Plot_GUI_Defaults 0
+
+Set plot_name default_plot	# should get plot name from cmd line?
 
 Set n_data_series 0
 Set n_grids 0
@@ -17,14 +25,27 @@ Set symbol_size	1
 Set plotwin 'Plot_Preview'
 
 Set main_panel "Plot Generator"
+Set plot_name_widget_name 'Plot name'
 Set gen_panel "General Plot Parameters"
+Set axis_panel_name "Axis Settings"
+Set tick_panel_name "Tick Settings"
 Set x_axis_panel "X Axis"
-Set y_axis_panel "Y Axis"
+Set axis_legend_widget_name "Legend"
+Set axis_max_widget_name "Max"
+Set axis_min_widget_name "Min"
+Set tick_spacing_widget_name "Tick Spacing"
+Set tick_first_widget_name "First Tick"
+Set tick_auto_widget_name "Standard Ticks"
+Set axis_logv_widget_name "Logarithmic Axis"
+Set axis_log_widget_name "Logarithmic Axis"	# obsolete
 Set data_panel "Data"
 Set grid_panel "Grid"
 Set data_edit_panel "Edit Data Series"
 Set grid_edit_panel "Edit Data Grid"
 Set save_panel "Save Plot Image"
+
+Set series_nickname_widget_name	"Nickname"
+Set grid_nickname_widget_name	"Nickname"
 
 Set plot_frame_toggle_widget_name 'Frame'
 Set plot_legend_toggle_widget_name 'Plot legend'
@@ -73,14 +94,34 @@ Set max_plot_height	1200
 Set min_plot_width	200
 Set max_plot_width	1200
 
-Set xmin 1
-Set xmax 5
-Set x_tick_spacing 1
-Set ymin 0
-Set ymax 1
-Set y_tick_spacing 0.2
-Set x_legend 'text abcissa'
-Set y_legend 'text ordinate'
+Set x_axis_min 1
+Set x_axis_max 5
+Set x_axis_logv 0	# obsolete
+
+Set y_axis_min 0
+Set y_axis_max 1
+Set y_axis_logv 0
+
+Set x_tick__spacing 1
+Set x_tick_first 0
+Set x_tick_auto 1
+
+Set y_tick__spacing 0.2
+Set y_tick_first 0
+Set y_tick_auto 1
+
+Set x_axis_legend 'text abcissa'
+Set y_axis_legend 'text ordinate'
+
+# defaults
+Set which_axis x
+Set axis_legend_name x_axis_legend
+Set axis_min_name x_axis_min
+Set axis_max_name x_axis_max
+Set axis_logv_name x_axis_logv
+
+Set tick_spacing_name x_tick__spacing
+Set tick_first_name x_tick_first
 
 Set curr_series_name no_series
 
@@ -94,7 +135,7 @@ Set show_frame 0
 .
 
 Define Refresh_Data 0
-Print n_data_series
+#Print n_data_series
 If $n_data_series<1 exit_macro
 Set data_series_idx 1
 repeat $n_data_series
@@ -114,11 +155,13 @@ repeat $n_grids
 
 Define Get_Series_Points 0
 If obj_exists(series_pts) "Delete_Image series_pts"
+If obj_exists(series_raw_pts) "Delete_Image series_raw_pts"
 Count_Lines nl $series_filename
 Count_Columns nc $series_filename
 If $nc!=2 "warn 'Refresh_Series:  expected file $series_filename to have 2 columns!?' exit_macro"
+Vector series_raw_pts $nl 2 float
+Get_Ascii series_raw_pts $series_filename
 Vector series_pts $nl 2 float
-Get_Ascii series_pts $series_filename
 .
 
 Define Get_Grid_Points 0
@@ -133,16 +176,39 @@ Get_Ascii grid_pts $grid_filename
 Transpose grid_tpts grid_pts
 .
 
+Define Logify 1 index
+Get_Min m series_raw_pts{$1}
+If $m<=0
+  # BUG - should have MIN_FLOAT or something...
+  Then "warn 'Data must be positive for log axis (clipping component $1)'\
+	VSMax series_pts{$1} series_raw_pts{$1} 0.00001 "
+  Else "VMov series_pts{$1} series_raw_pts{$1}"
+VLog series_pts{$1} series_pts{$1}
+VSMul series_pts{$1} series_pts{$1} 1/log(10)
+.
+
+Define Transform_Series 0
+If $x_axis_logv
+  Then "Logify 0"
+  Else "VMov series_pts{0} series_raw_pts{0}"
+If $y_axis_logv
+  Then "Logify 1"
+  Else "VMov series_pts{1} series_raw_pts{1}"
+#Display series_raw_pts
+#Display series_pts
+.
+
 Define Refresh_Series 1 index
 Load_Series_Vars series_$1
 If !file_exists('$series_filename') "warn 'File $series_filename does not exist!?' exit_macro"
 Get_Series_Points
+Transform_Series
 Select_Pen $series_color_index
 If $series_line_thickness==1 "XYPlot series_pts"
 If $series_line_thickness>1 "Thick_Plot $series_line_thickness series_pts"
 #Print series_symbol
 If strcmp('$series_symbol','none') "Symbol $series_symbol $series_symbol_size Symbol_Plot series_pts"
-Print series_show_legend
+#Print series_show_legend
 If $series_show_legend Refresh_Series_Legend
 .
 
@@ -171,7 +237,7 @@ data
 Set legend_line_delta 12
 
 Define Refresh_Series_Legend 0
-advise "Refresh_Series_Legend BEGIN"
+#advise "Refresh_Series_Legend BEGIN"
 Unit_Font
 Left_Justify
 S_At $series_legend_text $series_legend_x $series_legend_y
@@ -182,7 +248,7 @@ Get_Series_Legend_Coords
 If strcmp('$series_symbol','none')
   "$series_symbol $series_legend_symbol_x $series_legend_symbol_y $symbol_size"
 Plot_Legend_Line
-advise "Refresh_Series_Legend DONE"
+#advise "Refresh_Series_Legend DONE"
 .
 
 Define Plot_Legend_Line 0
@@ -244,20 +310,57 @@ New_Plotter $plotwin $plot_w $plot_h
 Posn_Window $plotwin $plotwin_x0 $plotwin_y0
 .
 
+# plotsupp.mac uses xmin,ymax,x_tick_spacing, etc.
+# We have our own copies so that we can do log transform if necessary...
+
+Define Install_Linear_Axis_Vars 0
+Set $api_axis_min_name $$axis_min_name
+Set $api_axis_max_name $$axis_max_name
+Set $api_axis_legend_name $$axis_legend_name
+
+Set $api_tick_spacing_name $$tick_spacing_name
+Assign $api_tick_first_name $$tick_first_name-$$axis_min_name	# api uses offset, not first posn
+.
+
+Define Install_Log_Axis_Vars 0
+If $$axis_min_name<=0
+  "warn '$which_axis-axis min must be positive for log axis' Set $axis_min_name 0.000001"
+Assign $api_axis_min_name floor(log($$axis_min_name)/log(10))
+Assign $api_axis_max_name ceil(log($$axis_max_name)/log(10))
+Assign $api_tick_spacing_name $$tick_spacing_name
+Assign $api_tick_first_name $$tick_first_name-$$api_axis_min_name
+Set $api_axis_legend_name "log $$axis_legend_name"
+.
+
+Define Install_Both_Axis_Vars 0
+Install_Axis_Vars x
+Install_Axis_Vars y
+.
+
+Define Install_Axis_Vars 1 which_axis
+Push_Axis_Varnames $1
+If $$axis_logv_name
+  Then Install_Log_Axis_Vars
+  Else Install_Linear_Axis_Vars
+Pop_Axis_Varnames
+.
+
 Set plot_ready 0
+
 Define Refresh_Plot 0
 If !$plot_ready exit_macro
-advise "Refresh_Plot BEGIN"
+#advise "Refresh_Plot BEGIN"
 Erase_Plot
 Select_Pen $black
 If $show_frame Draw_Frame
+Install_Both_Axis_Vars
 Setup_Axes
-advise "Refresh_Plot:  refreshing data..."
+#advise "Refresh_Plot:  refreshing data..."
 Refresh_Data
-advise "Refresh_Plot:  refreshing grids..."
+#advise "Refresh_Plot:  refreshing grids..."
 Refresh_Grids
 Draw_Plot_Legend
-advise "Refresh_Plot DONE"
+#advise "Refresh_Plot DONE"
 .
 
 Define Draw_Frame 0
@@ -272,14 +375,21 @@ data ascii read frame_coords -
 XYPlot frame_coords
 .
 
+Define TicksPanel 0
+Panel_Off $axis_panel_name
+Panel_On $tick_panel_name
+.
+
 Define XAxisPanel 0
 Panel_Off $main_panel
-Panel_On $x_axis_panel
+Update_Axis_Panel x
+Panel_On $axis_panel_name
 .
 
 Define YAxisPanel 0
 Panel_Off $main_panel
-Panel_On $y_axis_panel
+Update_Axis_Panel y
+Panel_On $axis_panel_name
 .
 
 Define DataPanel 0
@@ -292,12 +402,39 @@ Panel_Off $main_panel
 Panel_On $grid_panel
 .
 
-Define SetXMin 0
-Get_Text_Var $x_axis_panel Min xmin
+# Axis panel actions
+
+Define TogAxisLogValues 0
+advise TogAxisLogValues
+Print axis_logv_name
+Set $axis_logv_name $toggle_state
+Refresh_Plot
 .
 
-Define SetYMin 0
-Get_Text_Var $y_axis_panel Min ymin
+Define SetAxisMin 0
+Get_Text_Var $axis_panel_name $axis_min_widget_name $axis_min_name
+.
+
+Define SetAxisMax 0
+Get_Text_Var $axis_panel_name $axis_max_widget_name $axis_max_name
+.
+
+Define SetAxisLegend 0
+Get_Text_Var $axis_panel_name $axis_legend_widget_name $axis_legend_name
+.
+
+# Tick panel actions
+
+Define TogTickAuto 0
+Set $tick_auto_name $toggle_state
+.
+
+Define SetTickSpacing 0
+Get_Text_Var $tick_panel_name $tick_spacing_widget_name $tick_spacing_name
+.
+
+Define SetTickFirst 0
+Get_Text_Var $tick_panel_name $tick_first_widget_name $tick_first_name
 .
 
 Define Get_Text_Var 3 panel_name widget_name var_name
@@ -307,30 +444,6 @@ interface
     quit
   quit
 If strlen('$t')>0 "Set $3 '$t'"
-.
-
-Define SetXMax 0
-Get_Text_Var $x_axis_panel Max xmax
-.
-
-Define SetYMax 0
-Get_Text_Var $y_axis_panel Max ymax
-.
-
-Define SetXTick 0
-Get_Text_Var $x_axis_panel 'Tick Spacing' x_tick_spacing
-.
-
-Define SetYTick 0
-Get_Text_Var $y_axis_panel 'Tick Spacing' y_tick_spacing
-.
-
-Define SetXLegend 0
-Get_Text_Var $x_axis_panel Legend x_legend
-.
-
-Define SetYLegend 0
-Get_Text_Var $y_axis_panel Legend y_legend
 .
 
 Define SelectSeries 0
@@ -353,27 +466,36 @@ Set series_color black
 Set series_symbol none
 Set_Color_Index_From_Name $series_color
 # should this really be editable?
-interface
-  decorate $data_edit_panel
-    set_edit_text Nickname $series_nickname
-    set_edit_text $data_source_file_widget_name '(no file specified)'
-    set_choice Color $series_color
-    set_choice Symbol $series_symbol
+#interface
+#  decorate $data_edit_panel
+#    set_edit_text $series_nickname_widget_name $series_nickname
+#    set_edit_text $data_source_file_widget_name '(no file specified)'
+#    set_choice Color $series_color
+#    set_choice Symbol $series_symbol
+#
+#    set_toggle $data_legend_toggle_widget_name no
+#    set_edit_text $data_legend_text_widget_name no_legend
+#    set_edit_text $data_legend_x_widget_name 0
+#    set_edit_text $data_legend_y_widget_name 0
+#
+##    If $series_show_legend
+##      Then "set_toggle $data_legend_toggle_widget_name yes"
+##      Else "set_toggle $data_legend_toggle_widget_name no"
+##    set_edit_text $data_legend_text_widget_name $series_legend_text
+##    set_edit_text $data_legend_x_widget_name $series_legend_x
+##    set_edit_text $data_legend_y_widget_name $series_legend_y
+#
+#    quit
+#  quit
+Update_Edit_Text $series_nickname_widget_name $series_nickname $data_edit_panel
+Update_Edit_Text $data_source_file_widget_name '(no file specified)' $data_edit_panel
+Update_Chooser Color $series_color $data_edit_panel
+Update_Chooser Symbol $series_symbol $data_edit_panel
+Update_Toggle $data_legend_toggle_widget_name 0 $data_edit_panel
+Update_Edit_Text $data_legend_text_widget_name no_legend $data_edit_panel
+Update_Edit_Text $data_legend_x_widget_name 0 $data_edit_panel
+Update_Edit_Text $data_legend_y_widget_name 0 $data_edit_panel
 
-    set_toggle $data_legend_toggle_widget_name no
-    set_edit_text $data_legend_text_widget_name no_legend
-    set_edit_text $data_legend_x_widget_name 0
-    set_edit_text $data_legend_y_widget_name 0
-
-#    If $series_show_legend
-#      Then "set_toggle $data_legend_toggle_widget_name yes"
-#      Else "set_toggle $data_legend_toggle_widget_name no"
-#    set_edit_text $data_legend_text_widget_name $series_legend_text
-#    set_edit_text $data_legend_x_widget_name $series_legend_x
-#    set_edit_text $data_legend_y_widget_name $series_legend_y
-
-    quit
-  quit
 Panel_Off $data_panel
 Panel_On $data_edit_panel
 .
@@ -388,7 +510,7 @@ Set_Color_Index_From_Name $grid_color
 # should this really be editable?
 interface
   decorate $grid_edit_panel
-    set_edit_text Nickname $grid_nickname
+    set_edit_text $grid_nickname_widget_name $grid_nickname
     set_edit_text $grid_source_file_widget_name '(no file specified)'
     set_edit_text 'Columns' $grid_columns
     set_edit_text 'Rows' $grid_rows
@@ -410,16 +532,12 @@ interface
     set_edit_text $plot_legend_text_widget_name "$plot_legend_text"
     set_edit_text $plot_legend_x_widget_name "$plot_legend_x"
     set_edit_text $plot_legend_y_widget_name "$plot_legend_y"
-    If $show_frame
-      Then "set_toggle '$plot_frame_toggle_widget_name' yes"
-      Else "set_toggle '$plot_frame_toggle_widget_name' no"
-    If $show_plot_legend
-      Then "set_toggle '$plot_legend_toggle_widget_name' yes"
-      Else "set_toggle '$plot_legend_toggle_widget_name' no"
     # chooser
-    chooser 'Plot type' SetPlotType 2 'points' 'bar' jpg
+    chooser 'Plot type' SetPlotType 2 'points' 'bar'
     quit
   quit
+Update_Toggle $plot_frame_toggle_widget_name $show_frame $gen_panel
+Update_Toggle $plot_legend_toggle_widget_name $show_plot_legend $gen_panel
 Panel_Off $main_panel
 Panel_On $gen_panel
 .
@@ -478,7 +596,7 @@ Load_Series_Var $1 legend_y
 # Store_Series_Vars - transfer the general global vars into  the variables for a particular series
 
 Define Store_Series_Vars 1 series_name
-advise "Store_Series_Vars $1 BEGIN"
+#advise "Store_Series_Vars $1 BEGIN"
 Store_Series_Var $1 filename
 Store_Series_Var $1 nickname
 Store_Series_Var $1 color
@@ -573,26 +691,24 @@ Define EditData 0
 If !strcmp('$selected_series_nickname','no_series') "No_Series_Msg exit_macro"
 Find_Series_From_Nickname $selected_series_nickname
 If !strcmp('$curr_series_name','no_series') "advise 'Could not find series with nickname $selected_series_nickname!?' exit_macro"
-advise "EditData BEGIN  curr_series_name = $curr_series_name"
+#advise "EditData BEGIN  curr_series_name = $curr_series_name"
 Load_Series_Vars $curr_series_name
 interface
   decorate $data_edit_panel
-    set_edit_text Nickname $series_nickname
+    set_edit_text $series_nickname_widget_name $series_nickname
     set_edit_text $data_source_file_widget_name $series_filename
     set_choice Color $series_color
     set_choice Symbol $series_symbol
     set_choice 'Symbol Size' $series_symbol_size
     set_choice 'Line Thickness' $series_line_thickness
 
-    If $series_show_legend
-      Then "set_toggle $data_legend_toggle_widget_name yes"
-      Else "set_toggle $data_legend_toggle_widget_name no"
     set_edit_text $data_legend_text_widget_name $series_legend_text
     set_edit_text $data_legend_x_widget_name $series_legend_x
     set_edit_text $data_legend_y_widget_name $series_legend_y
 
     quit
   quit
+Update_Toggle $data_legend_toggle_widget_name $series_show_legend $data_edit_panel
 Panel_Off $data_panel
 Panel_On $data_edit_panel
 .
@@ -605,7 +721,7 @@ If !strcmp('$curr_grid_name','no_grid') "advise 'Could not find grid with nickna
 Load_Grid_Vars $curr_grid_name
 interface
   decorate $grid_edit_panel
-    set_edit_text Nickname $grid_nickname
+    set_edit_text $grid_nickname_widget_name $grid_nickname
     set_edit_text $grid_source_file_widget_name $grid_filename
     set_edit_text 'Columns' $grid_columns
     set_edit_text 'Rows' $grid_rows
@@ -621,11 +737,11 @@ Panel_On $grid_edit_panel
 
 
 Define SetSeriesNickname 0
-Get_Text_Var $data_edit_panel Nickname series_nickname
+Get_Text_Var $data_edit_panel $series_nickname_widget_name series_nickname
 .
 
 Define SetGridNickname 0
-Get_Text_Var $grid_edit_panel Nickname grid_nickname
+Get_Text_Var $grid_edit_panel $grid_nickname_widget_name grid_nickname
 .
 
 Define SetSeriesSourceFile 0
@@ -785,8 +901,8 @@ interface
 .
 
 Define SeriesEditDone 0
-advise SeriesEditDone
-Print curr_series_name
+#advise SeriesEditDone
+#Print curr_series_name
 Store_Series_Vars $curr_series_name
 Update_Series_Choices
 Panel_Off $data_edit_panel
@@ -795,7 +911,7 @@ Refresh_Data
 .
 
 Define GridEditDone 0
-Print curr_grid_name
+#Print curr_grid_name
 Store_Grid_Vars $curr_grid_name
 Update_Grid_Choices
 Panel_Off $grid_edit_panel
@@ -872,9 +988,10 @@ Set old_plot_w $plot_w
 Set old_plot_h $plot_h
 echo "Loading plot parameters from file $1..."
 < $1
-Print n_data_series
+#Print n_data_series
 Update_Series_Choices
 Update_Grid_Choices
+Update_Main_Panel
 If $old_plot_w!=$plot_w||$old_plot_h!=$plot_h Redo_Window
 Set plot_ready 1
 Set plot_loaded 1
@@ -884,20 +1001,30 @@ Update_Plot_Size_Sliders
 .
 
 Define Save_XAxis_Params 0
-Save_Param xmin
-Save_Param xmax
-Save_Param x_tick_spacing
-Save_Text_Param x_legend
+Save_Axis_Params x
+.
+
+Define Save_Axis_Params 1 which_axis
+Set_Axis_Varnames $1
+Save_Param $axis_min_name
+Save_Param $axis_max_name
+Save_Param $axis_logv_name
+Save_Text_Param $axis_legend_name
+Save_Tick_Params
+.
+
+Define Save_Tick_Params 0
+Save_Param $tick_spacing_name
+Save_Param $tick_first_name
+Save_Param $tick_auto_name
 .
 
 Define Save_YAxis_Params 0
-Save_Param ymin
-Save_Param ymax
-Save_Param y_tick_spacing
-Save_Text_Param y_legend
+Save_Axis_Params y
 .
 
 Define Save_Gen_Params 0
+Save_Param plot_name
 Save_Param plot_w
 Save_Param plot_h
 Save_Param show_plot_frame
@@ -991,7 +1118,7 @@ Panel_On $main_panel
 
 Define Save_Plot_Image 0
 Set save_filename $save_filename_stem.$save_filetype
-Print save_filename
+#Print save_filename
 Save_Plot $save_filename $plotwin
 .
 
@@ -1036,6 +1163,7 @@ echo "$xmax gxu $ymin gyu l"
 echo "$xmin gxu $ymin gyu moveto"
 echo "$xmin gxu $ymax gyu l"
 
+# BUG - use first tick parameter here!
 Set y $ymin
 do
   echo "($y) $y	ylabeltick"
@@ -1288,36 +1416,103 @@ If !strcmp('$3','$2') "Set ps_symbol_type $1"
 .
 
 Define SetPlotName 0
-Get_Text_Var $main_panel 'Plot name' plot_name
+Get_Text_Var $main_panel $plot_name_widget_name plot_name
+.
+
+Define Update_Main_Panel 0
+interface
+  decorate $main_panel
+    set_edit_text $plot_name_widget_name $plot_name
+    quit
+  quit
+.
+
+Set saved_axis none
+
+Define Push_Axis_Varnames 1 which_axis
+If strcmp('$saved_axis','none')
+  "warn 'Push_Axis_Varnames:  an axis has already been pushed!?' exit_macro"
+Set saved_axis $which_axis
+Set_Axis_Varnames $1
+.
+
+Define Pop_Axis_Varnames 0
+If !strcmp('$saved_axis','none')
+  "warn 'Pop_Axis_Varnames:  no axis pushed!?' exit_macro"
+Set_Axis_Varnames $saved_axis
+Set saved_axis none
+.
+
+Define Set_Axis_Varnames 1 which_axis
+Set which_axis $1
+
+Set axis_legend_name ${1}_axis_legend
+Set axis_min_name ${1}_axis_min
+Set axis_max_name ${1}_axis_max
+Set axis_logv_name ${1}_axis_logv
+
+Set tick_spacing_name ${1}_tick__spacing	# extra underscore to differentiate from plotsupp (ugly!)
+Set tick_first_name ${1}_tick_first
+Set tick_auto_name ${1}_tick_auto
+
+Set api_axis_min_name ${1}min
+Set api_axis_max_name ${1}max
+Set api_axis_legend_name ${1}_legend
+Set api_tick_spacing_name ${1}_tick_spacing
+Set api_tick_first_name ${1}_tick_offset
+.
+
+Define Update_Axis_Panel 1 which_axis
+Set_Axis_Varnames $1
+#interface
+#  decorate $axis_panel_name
+#    set_edit_text $axis_legend_widget_name $$axis_legend_name
+#    set_edit_text $axis_min_widget_name $$axis_min_name
+#    set_edit_text $axis_max_widget_name $$axis_max_name
+#    quit
+#  decorate $tick_panel_name
+#    set_edit_text $tick_spacing_widget_name $$tick_spacing_name
+#    quit
+#  quit
+Update_Toggle $axis_logv_widget_name $$axis_logv_name $axis_panel_name
+Update_Edit_Text $axis_legend_widget_name $$axis_legend_name $axis_panel_name
+Update_Edit_Text $axis_min_widget_name $$axis_min_name $axis_panel_name
+Update_Edit_Text $axis_max_widget_name $$axis_max_name $axis_panel_name
+
+Update_Edit_Text $tick_spacing_widget_name $$tick_spacing_name $tick_panel_name
+Update_Edit_Text $tick_first_widget_name $$tick_first_name $tick_panel_name
+Update_Toggle $tick_auto_widget_name $$tick_auto_name $tick_panel_name
 .
 
 Define Declare_Plot_GUI 0
 
 interface
-  panel $x_axis_panel $panel_w $panel_h
-  decorate $x_axis_panel
-    text Min SetXMin $xmin
-    text Max SetXMax $xmax
-    text 'Tick Spacing' SetXTick $x_tick_spacing
-    text Legend SetXLegend $x_legend
+  panel $axis_panel_name $panel_w $panel_h
+  decorate $axis_panel_name
+    text $axis_min_widget_name SetAxisMin 0
+    text $axis_max_widget_name SetAxisMax 0
+    toggle $axis_logv_widget_name TogAxisLogValues
+    text $axis_legend_widget_name SetAxisLegend 'xyzzy                  xyzzy'
+    button Ticks TicksPanel
     button Apply Refresh_Plot
-    button Done 'Panel_Off $x_axis_panel Panel_On $main_panel'
+    button Done 'Panel_Off $axis_panel_name Panel_On $main_panel'
     quit
+
+  panel $tick_panel_name $panel_w $panel_h
+  decorate $tick_panel_name
+    toggle $tick_auto_widget_name TogTickAuto
+    text $tick_spacing_widget_name SetTickSpacing 0
+    text $tick_first_widget_name SetTickFirst 0
+    button Apply Refresh_Plot
+    button Done 'Panel_Off $tick_panel_name Panel_On $axis_panel_name'
+    quit
+
   panel $save_panel $panel_w $panel_h
   decorate $save_panel
     text Filename SetSaveFilename $save_filename_stem
     chooser Filetype SetSaveFiletype 2 png jpg
     button Save Save_Image_Interactive
     button Cancel CancelSave
-    quit
-  panel $y_axis_panel $panel_w $panel_h
-  decorate $y_axis_panel
-    text Min SetYMin $ymin
-    text Max SetYMax $ymax
-    text 'Tick Spacing' SetYTick $y_tick_spacing
-    text Legend SetYLegend $y_legend
-    button Apply Refresh_Plot
-    button Done 'Panel_Off $y_axis_panel Panel_On $main_panel'
     quit
 
   panel $data_panel $panel_w $panel_h
@@ -1340,7 +1535,7 @@ interface
 
   panel $data_edit_panel $panel_w $panel_h
   decorate $data_edit_panel
-    text Nickname SetSeriesNickname seriesNNN
+    text $series_nickname_widget_name SetSeriesNickname seriesNNN
     text $data_source_file_widget_name SetSeriesSourceFile /dev/null	# Use file chooser?
     toggle $data_legend_toggle_widget_name TogDataLegend
     text $data_legend_text_widget_name SetDataLegendText no_legend
@@ -1358,7 +1553,7 @@ interface
 
   panel $grid_edit_panel $panel_w $panel_h
   decorate $grid_edit_panel
-    text Nickname SetGridNickname gridNNN
+    text $grid_nickname_widget_name SetGridNickname gridNNN
     text $grid_source_file_widget_name SetGridSourceFile /dev/null	# Use file chooser?
     text 'Columns' SetGridColumns $grid_columns
     text 'Rows' SetGridRows $grid_rows
@@ -1385,7 +1580,7 @@ interface
     quit
   panel $main_panel $panel_w $panel_h
   decorate $main_panel
-    text 'Plot name' SetPlotName $plot_name
+    text $plot_name_widget_name SetPlotName $plot_name
     button 'General' GenPanel
     button 'X axis' XAxisPanel
     button 'Y axis' YAxisPanel

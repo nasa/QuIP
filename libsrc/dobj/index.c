@@ -22,7 +22,7 @@
  * (e.g., x[3:6]) as a way of doing subimages.
  */
 
-Data_Obj * index_data( QSP_ARG_DECL  Data_Obj *dp, const char *index_str )
+Data_Obj * _index_data( QSP_ARG_DECL  Data_Obj *dp, const char *index_str )
 {
 	const char *cp;
 	int i;
@@ -106,7 +106,7 @@ next_index:
 			newdp=gen_subscript(dp,mind,index,CURLY);
 	}
 
-	if( *cp ) return(index_data(QSP_ARG  newdp,cp));
+	if( *cp ) return(index_data(newdp,cp));
 	else return(newdp);
 } // index_data
 

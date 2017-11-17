@@ -61,7 +61,7 @@ void set_alarm_time(QSP_ARG_DECL  float f)
 		tell_sys_error("setitimer");
 	}
 #else /* !HAVE_SETITIMER */
-	WARN("set_alarm_time:  no support for setitimer!?");
+	warn("set_alarm_time:  no support for setitimer!?");
 #endif /* !HAVE_SETITIMER */
 }
 

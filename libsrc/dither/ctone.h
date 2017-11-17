@@ -21,7 +21,8 @@ extern void ctoneit(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
 
 /* getbest.c */
 extern int getbest(QSP_ARG_DECL  int);
-extern void showvec(float *);
+#define showvec(p) _showvec(QSP_ARG  p)
+extern void _showvec(QSP_ARG_DECL  float *);
 
 /* ctone.c */
 extern COMMAND_FUNC( do_ctone_menu );

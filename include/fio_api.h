@@ -22,7 +22,7 @@ int FIO_WT_FUNC_NAME(stem)(QSP_ARG_DECL  Data_Obj *dp, Image_File *ifp )
 #define FIO_RD_FUNC( stem )					\
 void FIO_RD_FUNC_NAME(stem)(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,index_t t_offset)
 
-#define FIO_SETHDR_FUNC_NAME( stem )	set_##stem##_hdr
+#define FIO_SETHDR_FUNC_NAME( stem )	_set_##stem##_hdr
 #define FIO_SETHDR_FUNC( stem )				\
 int FIO_SETHDR_FUNC_NAME(stem)(QSP_ARG_DECL  Image_File *ifp)
 
@@ -34,21 +34,21 @@ int FIO_SEEK_FUNC_NAME(stem)( QSP_ARG_DECL  Image_File *ifp, dimension_t n )
 #define FIO_INFO_FUNC( stem )			\
 void FIO_INFO_FUNC_NAME(stem)( QSP_ARG_DECL  Image_File *ifp )
 
-#define FIO_FT_TO_DP_FUNC_NAME(stem)		stem##_to_dp
+#define FIO_FT_TO_DP_FUNC_NAME(stem)		_##stem##_to_dp
 #define FIO_FT_TO_DP_FUNC(stem,header_type)					\
-int FIO_FT_TO_DP_FUNC_NAME(stem)(Data_Obj *dp,header_type *hd_p)
+int FIO_FT_TO_DP_FUNC_NAME(stem)(QSP_ARG_DECL  Data_Obj *dp,header_type *hd_p)
 
-#define FIO_DP_TO_FT_FUNC_NAME(stem)		do_to_##stem
+#define FIO_DP_TO_FT_FUNC_NAME(stem)		_dp_to_##stem
 #define FIO_DP_TO_FT_FUNC(stem,header_type)					\
-int FIO_DP_TO_FT_FUNC_NAME(stem)(header_type *hd_p,Data_Obj *dp)
+int FIO_DP_TO_FT_FUNC_NAME(stem)(QSP_ARG_DECL  header_type *hd_p,Data_Obj *dp)
 
-#define FIO_UNCONV_FUNC_NAME(stem)		stem##_unconv
+#define FIO_UNCONV_FUNC_NAME(stem)		_##stem##_unconv
 #define FIO_UNCONV_FUNC(stem)						\
-int FIO_UNCONV_FUNC_NAME(stem)(void *hd_pp ,Data_Obj *dp)
+int FIO_UNCONV_FUNC_NAME(stem)(QSP_ARG_DECL  void *hd_pp ,Data_Obj *dp)
 
-#define FIO_CONV_FUNC_NAME(stem)		stem##_conv
+#define FIO_CONV_FUNC_NAME(stem)		_##stem##_conv
 #define FIO_CONV_FUNC(stem)						\
-int FIO_CONV_FUNC_NAME(stem)(Data_Obj *dp, void *hd_pp)
+int FIO_CONV_FUNC_NAME(stem)(QSP_ARG_DECL  Data_Obj *dp, void *hd_pp)
 
 #define FIO_INTERFACE_PROTOTYPES( stem , header_type )			\
 									\
@@ -68,23 +68,37 @@ extern FIO_CONV_FUNC(stem);
 
 /* img_file.c */
 extern Filetype *	current_filetype(void);
-extern void close_image_file(QSP_ARG_DECL  Image_File *ifp);
-extern void generic_imgfile_close(QSP_ARG_DECL  Image_File *ifp);
-#define GENERIC_IMGFILE_CLOSE(ifp)	generic_imgfile_close(QSP_ARG  ifp)
-extern void if_info(QSP_ARG_DECL  Image_File *ifp);
-extern Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n);
-extern void write_image_to_file(QSP_ARG_DECL  Image_File *ifp,Data_Obj *dp);
-extern int image_file_seek(QSP_ARG_DECL  Image_File *ifp,dimension_t n);
+extern void _close_image_file(QSP_ARG_DECL  Image_File *ifp);
+extern void _generic_imgfile_close(QSP_ARG_DECL  Image_File *ifp);
+
+#define close_image_file(ifp)	_close_image_file(QSP_ARG  ifp)
+#define generic_imgfile_close(ifp)	_generic_imgfile_close(QSP_ARG  ifp)
+
 extern void image_file_clobber(int);
-extern void	delete_image_file(QSP_ARG_DECL  Image_File *);
-extern Image_File * open_image_file(QSP_ARG_DECL  const char *filename, const char *rw);
 
-/* img_file.c */
-extern void		set_iofile_directory(QSP_ARG_DECL  const char *);
-extern	Image_File *	read_image_file(QSP_ARG_DECL  const char *name);
-extern void		read_object_from_file(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
-extern void		set_filetype(QSP_ARG_DECL  Filetype *ftp);
+extern void _if_info(QSP_ARG_DECL  Image_File *ifp);
+extern Image_File *_write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n);
+extern void _write_image_to_file(QSP_ARG_DECL  Image_File *ifp,Data_Obj *dp);
+extern int _image_file_seek(QSP_ARG_DECL  Image_File *ifp,dimension_t n);
+extern void	_delete_image_file(QSP_ARG_DECL  Image_File *);
+extern Image_File * _open_image_file(QSP_ARG_DECL  const char *filename, const char *rw);
 
+extern void		_set_iofile_directory(QSP_ARG_DECL  const char *);
+extern	Image_File *	_read_image_file(QSP_ARG_DECL  const char *name);
+extern void		_read_object_from_file(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
+extern void		_set_filetype(QSP_ARG_DECL  Filetype *ftp);
+
+#define if_info(ifp) _if_info(QSP_ARG  ifp)
+#define write_image_file(filename,n) _write_image_file(QSP_ARG  filename,n)
+#define write_image_to_file(ifp,dp) _write_image_to_file(QSP_ARG  ifp,dp)
+#define image_file_seek(ifp,n) _image_file_seek(QSP_ARG  ifp,n)
+#define delete_image_file(ifp) _delete_image_file(QSP_ARG  ifp)
+#define open_image_file(filename,rw) _open_image_file(QSP_ARG  filename,rw)
+
+#define set_iofile_directory(s) _set_iofile_directory(QSP_ARG  s)
+#define read_image_file(name) _read_image_file(QSP_ARG  name)
+#define read_object_from_file(dp,ifp) _read_object_from_file(QSP_ARG  dp,ifp)
+#define set_filetype(ftp) _set_filetype(QSP_ARG  ftp)
 
 ITEM_INTERFACE_PROTOTYPES(Image_File,img_file)
 

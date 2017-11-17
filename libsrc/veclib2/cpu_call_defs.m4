@@ -18,7 +18,7 @@ dnl #undef BUILD_FOR_HOST
  */
 
 dnl	L_ALIGNMENT(a)
-define(`L_ALIGNMENT',`(((int_for_addr)$1) & 7)')
+define(`L_ALIGNMENT',`(((uintptr_t)$1) & 7)')
 
 define(`XFER_EQSP_DBM_GPU_INFO',`')	dnl	/* nop on cpu */
 define(`XFER_SLOW_DBM_GPU_INFO',`')	dnl	/* nop on cpu */
@@ -176,6 +176,7 @@ define(`db_func_name',`NULL')
 ') dnl endif /* ! MAX_DEBUG */
 
 
+dnl CHECK_MATCH doesn't seem to be used!?
 
 dnl	CHECK_MATCH(dp1,dp2)
 define(`CHECK_MATCH',`
@@ -188,9 +189,9 @@ define(`CHECK_MATCH',`
 				! UNKNOWN_SHAPE($1) ){
 			install_shape($2,$1);
 		} else {
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 "Shape mismatch between objects %s and %s",OBJ_NAME($1),OBJ_NAME($2));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 	}
@@ -201,7 +202,7 @@ define(`OBJ_ARG_CHK_DBM',`
 
 	ANNOUNCE_FUNCTION
 	if( bitmap_dst_dp == NULL ){
-NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");
+warn("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");
 		return;
 	}
 ')
@@ -211,7 +212,7 @@ define(`OBJ_ARG_CHK_DBM_',`OBJ_ARG_CHK_DBM')
 define(`OBJ_ARG_CHK_SBM',`
 
 	if( bitmap_src_dp == NULL ){
-		NWARN("Null bitmap source object!?");
+		warn("Null bitmap source object!?");
 		return;
 	}
 ')
@@ -780,14 +781,14 @@ define(`SET_DBM_BIT',`
 ')
 
 define(`DEBUG_SBM_',`
-sprintf(DEFAULT_ERROR_STRING,"sbm_ptr = 0x%lx   sbm_bit_idx = %d",
-(int_for_addr)sbm_ptr,sbm_bit_idx);
+sprintf(DEFAULT_ERROR_STRING,"sbm_ptr = 0x%"PRIxPTR"   sbm_bit_idx = %d",
+(uintptr_t)sbm_ptr,sbm_bit_idx);
 NADVISE(DEFAULT_ERROR_STRING);
 ')
 
 define(`DEBUG_DBM_',`
-sprintf(DEFAULT_ERROR_STRING,"dbm_ptr = 0x%lx   dbm_bit_idx = %d",
-(int_for_addr)dbm_ptr,dbm_bit_idx);
+sprintf(DEFAULT_ERROR_STRING,"dbm_ptr = 0x%"PRIxPTR"   dbm_bit_idx = %d",
+(uintptr_t)dbm_ptr,dbm_bit_idx);
 NADVISE(DEFAULT_ERROR_STRING);
 ')
 
@@ -1338,11 +1339,11 @@ define(`ADJ_COUNTS',`
 ')
 
 define(`SHOW_BASES',`
-sprintf(DEFAULT_ERROR_STRING,"s1_ptr:  0x%lx",(int_for_addr)s1_ptr);
+sprintf(DEFAULT_ERROR_STRING,"s1_ptr:  0x%"PRIxPTR,(uintptr_t)s1_ptr);
 NADVISE(DEFAULT_ERROR_STRING);
-/*sprintf(DEFAULT_ERROR_STRING,"bm_ptr:  0x%lx, which_bit = %d",(int_for_addr)bm_ptr,which_bit);
+/*sprintf(DEFAULT_ERROR_STRING,"bm_ptr:  0x%"PRIxPTR", which_bit = %d",(uintptr_t)bm_ptr,which_bit);
 NADVISE(DEFAULT_ERROR_STRING);*/
-sprintf(DEFAULT_ERROR_STRING,"s1_base:  0x%lx  0x%lx  0x%lx  0x%lx",(int_for_addr)s1_base[0],(int_for_addr)s1_base[1],(int_for_addr)s1_base[2],(int_for_addr)s1_base[3]);
+sprintf(DEFAULT_ERROR_STRING,"s1_base:  0x%"PRIxPTR"  0x%"PRIxPTR"  0x%"PRIxPTR"  0x%"PRIxPTR,(uintptr_t)s1_base[0],(uintptr_t)s1_base[1],(uintptr_t)s1_base[2],(uintptr_t)s1_base[3]);
 NADVISE(DEFAULT_ERROR_STRING);
 ')
 
@@ -1474,17 +1475,17 @@ define(`DEBUG_2',`DEBUG_DST DEBUG_SRC1')
 define(`DEBUG_2SRCS',`DEBUG_SRC1 DEBUG_SRC2')
 
 define(`DEBUG_DST',`
-	sprintf(DEFAULT_ERROR_STRING,"tdst = 0x%lx",(int_for_addr)dst_ptr);
+	sprintf(DEFAULT_ERROR_STRING,"tdst = 0x%"PRIxPTR,(uintptr_t)dst_ptr);
 	NADVISE(DEFAULT_ERROR_STRING);
 ')
 
 define(`DEBUG_SRC1',`
-	sprintf(DEFAULT_ERROR_STRING,"tsrc1 = 0x%lx",(int_for_addr)s1_ptr);
+	sprintf(DEFAULT_ERROR_STRING,"tsrc1 = 0x%"PRIxPTR,(uintptr_t)s1_ptr);
 	NADVISE(DEFAULT_ERROR_STRING);
 ')
 
 define(`DEBUG_SRC2',`
-	sprintf(DEFAULT_ERROR_STRING,"tsrc2 = 0x%lx",(int_for_addr)s2_ptr);
+	sprintf(DEFAULT_ERROR_STRING,"tsrc2 = 0x%"PRIxPTR,(uintptr_t)s2_ptr);
 	NADVISE(DEFAULT_ERROR_STRING);
 ')
 
@@ -1554,10 +1555,10 @@ define(`SIMPLE_EQSP_BODY',`
 ')
 
 define(`DEBUG_CPX_3',`
-sprintf(DEFAULT_ERROR_STRING,"executing dst = 0x%lx   src1 = 0x%lx  src2 = 0x%lx",
-(int_for_addr)cdst_ptr,
-(int_for_addr)cs1_ptr,
-(int_for_addr)cs2_ptr);
+sprintf(DEFAULT_ERROR_STRING,"executing dst = 0x%"PRIxPTR"   src1 = 0x%"PRIxPTR"  src2 = 0x%"PRIxPTR,
+(uintptr_t)cdst_ptr,
+(uintptr_t)cs1_ptr,
+(uintptr_t)cs2_ptr);
 NADVISE(DEFAULT_ERROR_STRING);
 ')
 
@@ -2124,8 +2125,8 @@ define(`IDXRES_FAST_FUNC',`
 
 FF_DECL($1)(IDX_PTR_ARG,PTR_ARGS_SRC1,COUNT_ARG)
 {
-	sprintf(DEFAULT_ERROR_STRING,"Sorry, Function %s is not implemented.","$1");
-	NWARN(DEFAULT_ERROR_STRING);
+	sprintf(ERROR_STRING,"Sorry, Function %s is not implemented.","$1");
+	warn(ERROR_STRING);
 }
 ')
 
@@ -2651,11 +2652,11 @@ define(`FAST_BODY_RQ_2',`SIMPLE_FAST_BODY($1,$2,RQ_,2,`',`')')
 
 dnl	SHOW_VEC_ARGS(speed)
 define(`SHOW_VEC_ARGS',`
-	sprintf(DEFAULT_ERROR_STRING,"%s:  vap.va_dst_vp = 0x%lx","$1",(int_for_addr)VA_DEST_PTR(vap);
+	sprintf(DEFAULT_ERROR_STRING,"%s:  vap.va_dst_vp = 0x%"PRIxPTR,"$1",(uintptr_t)VA_DEST_PTR(vap);
 	NADVISE(DEFAULT_ERROR_STRING);
-	sprintf(DEFAULT_ERROR_STRING,"%s:  vap.va_src_vp[0] = 0x%lx","$1",(int_for_addr)VA_SRC_PTR(vap,0) );
+	sprintf(DEFAULT_ERROR_STRING,"%s:  vap.va_src_vp[0] = 0x%"PRIxPTR,"$1",(uintptr_t)VA_SRC_PTR(vap,0) );
 	NADVISE(DEFAULT_ERROR_STRING);
-	sprintf(DEFAULT_ERROR_STRING,"%s:  vap.va_src_vp[1] = 0x%lx","$1",(int_for_addr)VA_SRC_PTR(vap,1) );
+	sprintf(DEFAULT_ERROR_STRING,"%s:  vap.va_src_vp[1] = 0x%"PRIxPTR,"$1",(uintptr_t)VA_SRC_PTR(vap,1) );
 	NADVISE(DEFAULT_ERROR_STRING);
 ')
 

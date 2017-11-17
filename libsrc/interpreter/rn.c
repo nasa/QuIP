@@ -37,10 +37,6 @@ u_long rn( u_long max ) /** returns a number between 0 and max (inclusive) */
 #endif
 
 	rninit(SGL_DEFAULT_QSP_ARG);
-	//if( max <= 0 ){
-	//	if( max < 0 ) NWARN("rn:  no negative random integers");
-	//	return(0);
-	//}
 
 #ifdef HAVE_DRAND48
 

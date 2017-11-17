@@ -35,7 +35,7 @@ ITEM_INTERFACE_DECLARATIONS(ParPort,parport,DEFAULT_CONTAINER_TYPE)
 
 static char *default_parport="/dev/parport0";
 
-ParPort * open_parport(QSP_ARG_DECL  const char *name)
+ParPort * _open_parport(QSP_ARG_DECL  const char *name)
 {
 	ParPort *ppp;
 
@@ -46,43 +46,43 @@ ParPort * open_parport(QSP_ARG_DECL  const char *name)
 			advise(ERROR_STRING);
 		}
 	}
-	ppp = parport_of(QSP_ARG  name);
+	ppp = parport_of(name);
 	if( ppp != NULL ){
 		sprintf(ERROR_STRING,"ParPort %s is already open",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return NULL;
 	}
 
-	ppp = new_parport(QSP_ARG  name);
+	ppp = new_parport(name);
 	if( ppp == NULL ) {
 		sprintf(ERROR_STRING,"Unable to create new parallel port structure %s",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return NULL;
 	}
 
 	ppp->pp_fd = open(ppp->pp_name,O_RDWR);
 	if( ppp->pp_fd < 0 ){
 		perror("open");
-		WARN("error opening parallel port device");
+		warn("error opening parallel port device");
 		return NULL;
 	}
 	if( ioctl(ppp->pp_fd,PPCLAIM,NULL) < 0 ){
 		perror("ioctl");
-		WARN("error claiming parallel port device");
+		warn("error claiming parallel port device");
 		close(ppp->pp_fd);
-		del_parport(QSP_ARG  ppp);
+		del_parport(ppp);
 		return NULL;
 	}
 	return ppp;
 }
 
-int read_parport_status(ParPort *ppp)
+int _read_parport_status(QSP_ARG_DECL  ParPort *ppp)
 {
 	unsigned char b;
 
 	if( ioctl(ppp->pp_fd,PPRSTATUS,&b) < 0 ){
 		perror("ioctl");
-		NWARN("error reading parport status");
+		warn("error reading parport status");
 		return -1;
 	}
 	return (int) b;
@@ -92,7 +92,7 @@ int read_parport_status(ParPort *ppp)
  * such as a TTL video sync signal.
  */
 
-int read_til_transition(ParPort *ppp, int mask)
+int _read_til_transition(QSP_ARG_DECL  ParPort *ppp, int mask)
 {
 	int original_value, current_value;
 

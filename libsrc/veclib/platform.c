@@ -9,6 +9,19 @@
 ITEM_INTERFACE_DECLARATIONS( Platform_Device, pfdev, 0 )
 ITEM_INTERFACE_DECLARATIONS( Compute_Platform, platform, 0 )
 
+static Platform_Device *_dfl_pfdev=NULL;
+
+Platform_Device *default_pfdev(void)
+{
+	return _dfl_pfdev;
+}
+
+void set_default_pfdev(Platform_Device *pdp)
+{
+	_dfl_pfdev = pdp;
+}
+
+
 Item_Context *create_pfdev_context(QSP_ARG_DECL  const char *name)
 {
 	if( pfdev_itp == NULL )

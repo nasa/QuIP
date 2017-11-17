@@ -122,7 +122,9 @@ static Vec_Expr_Node *get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *p
 
 #ifdef HAVE_ANY_GPU
 
-static Platform_Device *pfdev_for_node(Vec_Expr_Node *enp)
+#define pfdev_for_node(enp) _pfdev_for_node(QSP_ARG  enp)
+
+static Platform_Device *_pfdev_for_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Platform_Device *pdp=NULL;
 
@@ -138,9 +140,9 @@ static Platform_Device *pfdev_for_node(Vec_Expr_Node *enp)
 		case T_REFERENCE:
 			break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,"Missing case for %s in pfdev_for_node!?",
+			sprintf(ERROR_STRING,"Missing case for %s in pfdev_for_node!?",
 				node_desc(enp));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 	return pdp;
@@ -233,8 +235,8 @@ static Vec_Expr_Node * get_subrt_args(QSP_ARG_DECL  Subrt *srp)
 COMMAND_FUNC( do_run_subrt )
 {
 	Subrt *srp;
-	Subrt_Call sc;
-	Vec_Expr_Node *enp;
+	Vec_Expr_Node *args_enp;
+	Vec_Expr_Node *call_enp;
 
 	srp=pick_subrt("");
 
@@ -243,15 +245,10 @@ COMMAND_FUNC( do_run_subrt )
 	// What do we do if there is a fused kernel for this subrt???
 
 	push_vector_parser_data(SINGLE_QSP_ARG);
-	enp = get_subrt_args(QSP_ARG  srp);
+	args_enp = get_subrt_args(QSP_ARG  srp);
+	call_enp = node1(T_CALLFUNC,args_enp);
 
-	SET_SC_SUBRT(&sc,srp);
-	SET_SC_ARG_VALS(&sc,enp);
-	SET_SC_DEST_SHAPE(&sc,NULL);
-	SET_SC_SHAPE(&sc,NULL);
-	SET_SC_CALL_VN(&sc,NULL);
-
-	run_subrt_immed(&sc,NULL);
+	run_subrt_immed(srp,NULL,call_enp);
 	pop_vector_parser_data(SINGLE_QSP_ARG);
 }
 
@@ -344,7 +341,7 @@ COMMAND_FUNC( do_subrt_info )
 	enp = SR_BODY(srp);
 
 	if( VN_SHAPE(enp) != NULL ){
-		DESCRIBE_SHAPE(VN_SHAPE(enp));
+		describe_shape(VN_SHAPE(enp));
 	} else prt_msg("shape not determinable");
 
 	sprintf(msg_str,"\t%d arguments",SR_N_ARGS(srp));
@@ -518,9 +515,11 @@ void delete_id(QSP_ARG_DECL  Item *ip)
 		case ID_STRING:
 			rls_reference(ID_REF(idp));
 			break;
-		case ID_SCALAR:
-			givbuf(ID_SVAL_PTR(idp));
-			break;
+#ifdef SCALARS_NOT_OBJECTS
+//		case ID_SCALAR:
+//			givbuf(ID_SVAL_PTR(idp));
+//			break;
+#endif // SCALARS_NOT_OBJECTS
 		case ID_POINTER:
 			givbuf(ID_PTR(idp));
 			break;
@@ -709,19 +708,5 @@ Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int n)
 		np=NODE_NEXT(np);
 	}
 	return(NULL);
-}
-
-Subrt_Call *make_call_instance(Subrt *srp)
-{
-	Subrt_Call *scp;
-
-	scp = getbuf(sizeof(*scp));
-
-	SET_SC_SUBRT(scp,srp);
-	SET_SC_ARG_VALS(scp,NULL);
-	SET_SC_CALL_VN(scp,NULL);
-	SET_SC_SHAPE(scp,NULL);
-	SET_SC_DEST_SHAPE(scp,NULL);
-	return scp;
 }
 

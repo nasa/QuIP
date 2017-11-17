@@ -117,7 +117,9 @@ void _set_del_method(QSP_ARG_DECL  Item_Type *itp,void (*func)(QSP_ARG_DECL  Ite
 	SET_IT_DEL_METHOD(itp, func);
 }
 
-static void init_itci(Item_Type *itp,int idx)
+#define init_itci(itp,idx) _init_itci(QSP_ARG  itp,idx)
+
+static void _init_itci(QSP_ARG_DECL  Item_Type *itp,int idx)
 {
 	Item_Type_Context_Info *itci_p;
 
@@ -404,7 +406,9 @@ static inline int get_n_per_page(size_t size)
 	return n_per_page;
 }
 
-static void alloc_more_items(Item_Type *itp, size_t size)
+#define alloc_more_items(itp,size) _alloc_more_items(QSP_ARG  itp,size)
+
+static void _alloc_more_items(QSP_ARG_DECL  Item_Type *itp, size_t size)
 {
 	int n_per_page;
 	char *nip;
@@ -730,7 +734,7 @@ void _delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (
 	}
 
 	//delete_container(CTX_CONTAINER(icp));
-	(*(CTX_CONTAINER(icp)->cnt_typ_p->delete))(CTX_CONTAINER(icp));
+	(*(CTX_CONTAINER(icp)->cnt_typ_p->delete))(QSP_ARG  CTX_CONTAINER(icp));
 
 	del_ctx(icp);
 
@@ -1216,7 +1220,7 @@ void item_stats(QSP_ARG_DECL  Item_Type * itp)
 
 // used to be called add_to_item_freelist
 
-void recycle_item(Item_Type *itp, void *ip)
+void _recycle_item(QSP_ARG_DECL  Item_Type *itp, void *ip)
 {
 	Node *np;
 

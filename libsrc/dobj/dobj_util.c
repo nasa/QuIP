@@ -95,6 +95,8 @@ void _disown_child( QSP_ARG_DECL  Data_Obj *dp )
 {
 	Node *np;
 
+	if( OBJ_PARENT(dp) == NULL ) return;
+	
 	np=remData(OBJ_CHILDREN( OBJ_PARENT(dp) ),dp);
 	assert( np != NULL );
 
@@ -771,11 +773,9 @@ void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 
 	/* set up additional port data type */
 
-	define_port_data_type(QSP_ARG  P_DATA,"data","name of data object",
-		recv_obj,
-		/* null_proc, */
+	define_port_data_type(P_DATA,"data","name of data object", _recv_obj,
 		(const char *(*)(QSP_ARG_DECL  const char *))_pick_obj,
-		(void (*)(QSP_ARG_DECL Port *,const void *,int)) xmit_obj
+		(void (*)(QSP_ARG_DECL Port *,const void *,int)) _xmit_obj
 		);
 
 	/* Version control */

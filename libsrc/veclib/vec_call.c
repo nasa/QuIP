@@ -1017,7 +1017,7 @@ static int (*gpu_dispatch_func)(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args
 
 void set_gpu_dispatch_func( int (*func)(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap) )
 {
-//sprintf(ERROR_STRING,"Setting gpu dispatch func (0x%lx)",(int_for_addr)func);
+//sprintf(ERROR_STRING,"Setting gpu dispatch func (0x%"PRIxPTR")",(uintptr_t)func);
 //advise(ERROR_STRING);
 	gpu_dispatch_func = func;
 }

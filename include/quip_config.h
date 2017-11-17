@@ -83,10 +83,6 @@
 
 #define HAVE_MORPH		/* flood fill? */
 
-// use uintptr_t instead?
-//#define int_for_addr	long
-#define int_for_addr	uintptr_t
-
 // define HAVE_ANY_GPU if we have CUDA -or- OpenCL
 
 #ifdef HAVE_OPENCL
@@ -99,6 +95,8 @@
 #endif // ! HAVE_CUDA
 #endif // ! HAVE_OPENCL
 
+// this is necessary for PRIxPTR to be recognized for C++
+#define __STDC_FORMAT_MACROS
 
 #endif /* ! _QUIP_CONFIG_H_ */
 

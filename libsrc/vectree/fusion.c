@@ -287,8 +287,10 @@ static void emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *en
 			emit_kern_arg_decl(QSP_ARG  sbp, VN_CHILD(enp,0) );
 			cat_string(sbp,";\n");
 			break;
-		case T_DYN_OBJ: // assume this is a var holding a scalar!?
+#ifdef SCALARS_NOT_OBJECTS
 		case T_SCALAR_VAR:
+#endif // SCALARS_NOT_OBJECTS
+		case T_DYN_OBJ: // assume this is a var holding a scalar!?
 			cat_string(sbp,VN_STRING(enp));
 			break;
 
@@ -389,13 +391,15 @@ void * find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp )
 {
 	Kernel_Info_Ptr kip;
 
+	if( pdp==NULL ) return NULL;	// if no gpu...
+
 	kip = SR_KERNEL_INFO_PTR(srp,PF_TYPE(PFDEV_PLATFORM(pdp)));
 	return (*(PF_FETCH_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kip, pdp );
 }
 
-void run_fused_kernel(QSP_ARG_DECL  Subrt_Call *scp, void * kp, Platform_Device *pdp)
+void _run_fused_kernel(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *args_enp, void * kp, Platform_Device *pdp)
 {
-	(*(PF_RUN_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kp, SC_ARG_VALS(scp), pdp);
+	(*(PF_RUN_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kp, args_enp, pdp);
 	//fprintf(stderr,"Sorry, run_fused_kernel not implemented yet...\n");
 }
 
@@ -465,7 +469,7 @@ void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	Subrt *srp;
 
 	switch(VN_CODE(enp)){
-		case T_SUBRT:
+		case T_SUBRT_DECL:
 			srp = VN_SUBRT(enp);
 			if( IS_SCRIPT(srp) ){
 				warn("Sorry, can't fuse script subroutines");

@@ -21,8 +21,14 @@ void *pop_item( Stack *stkp )
 	void *ip;
 
 	np = remHead(stkp);
+	assert(np!=NULL);
 	ip = NODE_DATA(np);
 	rls_node(np);
 	return ip;
+}
+
+int stack_size( Stack *stkp )
+{
+	return eltcount(stkp);
 }
 

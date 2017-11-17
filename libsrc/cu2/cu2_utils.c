@@ -276,8 +276,8 @@ void insure_cu2_device( QSP_ARG_DECL  Data_Obj *dp )
 	assert( pdp != NULL );
 
 	if( curr_pdp != pdp ){
-sprintf(DEFAULT_ERROR_STRING,"insure_cu2_device:  curr_pdp = 0x%lx  pdp = 0x%lx",
-(int_for_addr)curr_pdp,(int_for_addr)pdp);
+sprintf(DEFAULT_ERROR_STRING,"insure_cu2_device:  curr_pdp = 0x%"PRIxPTR"  pdp = 0x%"PRIxPTR,
+(uintptr_t)curr_pdp,(uintptr_t)pdp);
 NADVISE(DEFAULT_ERROR_STRING);
 
 sprintf(DEFAULT_ERROR_STRING,"insure_cu2_device:  current device is %s, want %s",
@@ -302,10 +302,10 @@ void *cu2_tmp_vec (Platform_Device *pdp, size_t size,size_t len,const char *when
 		NERROR1("CUDA memory allocation error");
 	}
 
-//sprintf(ERROR_STRING,"tmpvec:  %d bytes allocated at 0x%lx",len,(int_for_addr)cuda_mem);
+//sprintf(ERROR_STRING,"tmpvec:  %d bytes allocated at 0x%"PRIxPTR,len,(uintptr_t)cuda_mem);
 //advise(ERROR_STRING);
 
-//sprintf(ERROR_STRING,"tmpvec %s:  0x%lx",whence,(int_for_addr)cuda_mem);
+//sprintf(ERROR_STRING,"tmpvec %s:  0x%"PRIxPTR,whence,(uintptr_t)cuda_mem);
 //advise(ERROR_STRING);
 	return(cuda_mem);
 	*/
@@ -317,7 +317,7 @@ void cu2_free_tmp (void *ptr,const char *whence)
 	/*
 	cudaError_t drv_err;
 
-//sprintf(ERROR_STRING,"freetmp %s:  0x%lx",whence,(int_for_addr)ptr);
+//sprintf(ERROR_STRING,"freetmp %s:  0x%"PRIxPTR,whence,(uintptr_t)ptr);
 //advise(ERROR_STRING);
 	drv_err=cudaFree(ptr);
 	if( drv_err != cudaSuccess ){

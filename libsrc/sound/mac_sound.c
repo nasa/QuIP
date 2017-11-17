@@ -60,7 +60,7 @@ void halt_rec_stream(SINGLE_QSP_ARG_DECL)
 
 void set_stereo_input(QSP_ARG_DECL  int is_stereo) {}
 
-void record_sound(QSP_ARG_DECL  Data_Obj *dp)
+void _record_sound(QSP_ARG_DECL  Data_Obj *dp)
 {}
 
 void record_stream(QSP_ARG_DECL  int sound_fd, int timestamp_fd)

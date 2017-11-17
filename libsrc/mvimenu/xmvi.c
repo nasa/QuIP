@@ -18,7 +18,7 @@ static int x_setup_movie(QSP_ARG_DECL  Movie *mvip,uint32_t n_fields)
 	pathname = movie_pathname(MOVIE_NAME(mvip));
 	if( pathname == NULL ) return(-1);
 
-	ifp = open_image_file(QSP_ARG  pathname,"w");
+	ifp = open_image_file(pathname,"w");
 	if( ifp == NULL )
 		return(-1);
 
@@ -29,13 +29,13 @@ static int x_setup_movie(QSP_ARG_DECL  Movie *mvip,uint32_t n_fields)
 static void x_add_frame(QSP_ARG_DECL  Movie *mvip,Data_Obj *dp)
 {
 	/* make sure dp & mvip have same dimensions if not 1st frame */
-	write_image_to_file(QSP_ARG  (Image_File *)mvip->mvi_data,dp);
+	write_image_to_file((Image_File *)mvip->mvi_data,dp);
 }
 
 static void x_end_assemble(QSP_ARG_DECL  Movie *mvip)
 {
-	close_image_file(QSP_ARG  (Image_File *)mvip->mvi_data);
-	delete_movie(QSP_ARG  mvip);
+	close_image_file((Image_File *)mvip->mvi_data);
+	delete_movie(mvip);
 }
 
 static void x_monitor(SINGLE_QSP_ARG_DECL)
@@ -75,7 +75,7 @@ static void x_open_movie(QSP_ARG_DECL  const char *filename)
 	const char *pathname;
 
 	pathname = movie_pathname(filename);
-	ifp=open_image_file(QSP_ARG  pathname,"r");
+	ifp=open_image_file(pathname,"r");
 	if( ifp == NULL ) return;
 
 	if( ram_area_p == NULL ) dataobj_init(SINGLE_QSP_ARG);
@@ -85,13 +85,13 @@ static void x_open_movie(QSP_ARG_DECL  const char *filename)
 
 	if( dp == NULL ) return;
 
-	read_object_from_file(QSP_ARG  dp,ifp);
+	read_object_from_file(dp,ifp);
 	/* should close file automatically!? */
 
 
 	/* make the movie object */
 
-	mvip = create_movie(QSP_ARG  filename);
+	mvip = create_movie(filename);
 	if( mvip == NULL ){
 		/* BUG free dobj here */
 		return;
@@ -137,7 +137,7 @@ mk_win:
 	}
 
 	/* load_viewer got rewritten, no longer show all frames!? */
-	old_load_viewer(QSP_ARG  vp,dp);
+	old_load_viewer(vp,dp);
 }
 
 static void x_reverse_movie(Movie *mvip)
@@ -166,7 +166,7 @@ static void x_get_frame(QSP_ARG_DECL  Movie *mvip,uint32_t n,Data_Obj *dp)
 		/* BUG won't work right if nseqs > 1 ... */
 		char index[16];
 		sprintf(index,"[%d]",n);
-		src_dp = index_data(QSP_ARG  src_dp,index);
+		src_dp = index_data(src_dp,index);
 	}
 
 	if( dp_same(src_dp,dp,"x_get_frame") ) return;
@@ -220,7 +220,7 @@ static int x_loaded=0;
 void xmvi_init(SINGLE_QSP_ARG_DECL)
 {
 	if( !x_loaded ){
-		load_movie_module(QSP_ARG  &x_movie_module);
+		load_movie_module(&x_movie_module);
 		x_loaded++;
 	}
 	else WARN("x movie menu already loaded!?");

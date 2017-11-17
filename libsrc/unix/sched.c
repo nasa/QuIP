@@ -46,7 +46,7 @@ void rt_sched(QSP_ARG_DECL  int flag)
 		p.sched_priority = 1;
 		if( sched_setscheduler(pid,SCHED_FIFO,&p) < 0 ){
 			perror("sched_setscheduler");
-			WARN("Unable to set real-time priority (run as root!)");
+			warn("Unable to set real-time priority (run as root!)");
 
 			rt_is_on = 0;
 		} else {
@@ -59,16 +59,16 @@ void rt_sched(QSP_ARG_DECL  int flag)
 			if( sched_setscheduler(pid,SCHED_OTHER,&p) < 0 ){
 				perror("sched_setscheduler");
 			
-				WARN("Unable to reset real-time priority???");
+				warn("Unable to reset real-time priority???");
 			}
 			rt_is_on = 0;
 			curr_policy=SCHED_OTHER;
 		}
 	}
 #endif /* ALLOW_RT_SCHED */
-#else
-	NWARN("rt_sched:  no scheduler support on this system.");
-#endif
+#else // ! HAVE_SCHED_SETSCHEDULER
+	warn("rt_sched:  no scheduler support on this system.");
+#endif // ! HAVE_SCHED_SETSCHEDULER
 }
 
 static COMMAND_FUNC( do_rt_sched )
@@ -88,7 +88,7 @@ static COMMAND_FUNC( do_get_pri )
 
 	if( sched_getparam(getpid(),&p) < 0 ){
 		perror("sched_getparam");
-		WARN("unable to get scheduler params");
+		warn("unable to get scheduler params");
 	}
 
 	min = sched_get_priority_min(curr_policy);
@@ -97,7 +97,7 @@ static COMMAND_FUNC( do_get_pri )
 	prt_msg(msg_str);
 #endif /* ALLOW_RT_SCHED */
 #else // ! HAVE_SCHED_GETPARAM
-	WARN("do_get_pri:  no scheduler support on this system.");
+	warn("do_get_pri:  no scheduler support on this system.");
 #endif // ! HAVE_SCHED_GETPARAM
 }
 
@@ -118,7 +118,7 @@ static COMMAND_FUNC( do_set_pri )
 		sprintf(ERROR_STRING,
                 "do_set_pri:  priority (%d) must be in the range %d-%d!?",
                 pri,min,max);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -126,21 +126,21 @@ static COMMAND_FUNC( do_set_pri )
 	pid = getpid();
 	if( sched_getparam(pid,&p) < 0 ){
 		perror("sched_getparam");
-		WARN("unable to get scheduler parameters!?");
+		warn("unable to get scheduler parameters!?");
 	}
 	p.sched_priority = pri;
 	if( sched_setparam(pid, &p) < 0 ){
 		perror("sched_setparam");
-		WARN("unable to set priority!?");
+		warn("unable to set priority!?");
 	}
 
 #else /* ! ALLOW_RT_SCHED */
-	WARN("do_set_pri:  scheduler control not allowed in this build!?");
+	warn("do_set_pri:  scheduler control not allowed in this build!?");
 #endif /* ! ALLOW_RT_SCHED */
 
 #else // ! HAVE_SCHED_SETPARAM
 	/*pri = (int)*/ HOW_MANY("priority (ineffective)");
-	WARN("do_set_pri:  no scheduler support on this system.");
+	warn("do_set_pri:  no scheduler support on this system.");
 #endif // ! HAVE_SCHED_SETPARAM
 }
 

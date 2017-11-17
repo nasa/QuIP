@@ -189,7 +189,7 @@ static long read_expected_bytes(QSP_ARG_DECL  Port *mpp,void *buf,ssize_t n_want
 
 	/* BUG questionable pc cast */
 //fprintf(stderr,"read_expected_bytes calling read_port\n");
-	while( (n=read_port(QSP_ARG  mpp,&(((char *)buf)[have]),n_want_bytes)) != n_want_bytes ){
+	while( (n=read_port(mpp,&(((char *)buf)[have]),n_want_bytes)) != n_want_bytes ){
 		if( n==(-1) ){		/* why would this happen? */
 			/* BUG - Is it possible that an error inside
 			 * of read_port would cause the port to be
@@ -221,7 +221,7 @@ static long read_expected_bytes(QSP_ARG_DECL  Port *mpp,void *buf,ssize_t n_want
  * This seems like a BUG, what if -1 is the value to be transmitted!?
  */
 
-int32_t get_port_int32(QSP_ARG_DECL  Port *mpp)
+int32_t _get_port_int32(QSP_ARG_DECL  Port *mpp)
 {
 	int32_t word;
 	int32_t net_data;
@@ -264,7 +264,7 @@ long recv_text(QSP_ARG_DECL  Port *mpp, Packet *pkp)
 	long len;		/* number requested */
 	long nread;		/* number read on last gulp */
 
-	len=get_port_int32(QSP_ARG  mpp);
+	len=get_port_int32(mpp);
 	if( len<=0 ) return(-1);
 
 	// BUG? - should we check the len against a limit?
@@ -342,7 +342,7 @@ long recv_enc_text(QSP_ARG_DECL  Port *mpp, Packet *pkp)
 	long nread;		/* number read on last gulp */
 	long n_decrypted;
 
-	len=get_port_int32(QSP_ARG  mpp);
+	len=get_port_int32(mpp);
 	if( len<=0 ){
 		warn("recv_enc_text:  bad length");
 		return(-1);
@@ -391,7 +391,7 @@ cleanup:
  * Transmit a word.  Companion routine to get_port_word().
  */
 
-int put_port_int32(QSP_ARG_DECL  Port *mpp,int32_t  wrd)
+int _put_port_int32(QSP_ARG_DECL  Port *mpp,int32_t  wrd)
 {
 	int32_t net_data;
 
@@ -404,7 +404,7 @@ int put_port_int32(QSP_ARG_DECL  Port *mpp,int32_t  wrd)
 	//return -1;
 //#endif // ! HAVE_HTONL
 
-	if( write_port(QSP_ARG  mpp,&net_data,sizeof(net_data)) != sizeof(net_data) ){
+	if( write_port(mpp,&net_data,sizeof(net_data)) != sizeof(net_data) ){
 		/* BUG
 		 * One reason that this fails is that the listening
 		 * program has been killed (^C).  (on pc anyway...)
@@ -424,22 +424,22 @@ int put_port_int32(QSP_ARG_DECL  Port *mpp,int32_t  wrd)
 
 static void xmit_buffer(QSP_ARG_DECL  Port *mpp,const void *buf, int32_t len, int pkt_code)
 {
-	if( put_port_int32(QSP_ARG  mpp,PORT_MAGIC_NUMBER) == (-1) ){
+	if( put_port_int32(mpp,PORT_MAGIC_NUMBER) == (-1) ){
 		warn("xmit_buffer:  error sending magic number");
 		return;
 	}
 
-	if( put_port_int32(QSP_ARG  mpp,pkt_code) == (-1) ){
+	if( put_port_int32(mpp,pkt_code) == (-1) ){
 		warn("xmit_buffer:  error sending packet code");
 		return;
 	}
 
-	if( put_port_int32(QSP_ARG  mpp,len) == (-1) ){
+	if( put_port_int32(mpp,len) == (-1) ){
 		warn("xmit_buffer:  error sending buffer length");
 		return;
 	}
 
-	if( write_port(QSP_ARG  mpp,buf,len) != len )
+	if( write_port(mpp,buf,len) != len )
 		warn("xmit_buffer:  error sending byte buffer");
 }
 
@@ -658,7 +658,7 @@ void xmit_enc_file_as_text(QSP_ARG_DECL  Port *mpp,const void *_filename,
 
 #endif /* HAVE_ENCRYPTION */
 
-ssize_t write_port(QSP_ARG_DECL  Port *mpp,const void *buf,u_long  n)
+ssize_t _write_port(QSP_ARG_DECL  Port *mpp,const void *buf,u_long  n)
 {
 	ssize_t n2;
 
@@ -704,7 +704,7 @@ ssize_t write_port(QSP_ARG_DECL  Port *mpp,const void *buf,u_long  n)
  */
 
 
-ssize_t read_port(QSP_ARG_DECL  Port *mpp,void *buf,u_long  n)
+ssize_t _read_port(QSP_ARG_DECL  Port *mpp,void *buf,u_long  n)
 {
 	ssize_t n2;
 

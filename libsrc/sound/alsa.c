@@ -33,6 +33,8 @@
 #endif
 
 #include "quip_prot.h"
+#include "function.h"
+#include "debug.h"
 #include "sound.h"
 
 static snd_pcm_t *playback_handle=NULL;
@@ -79,7 +81,7 @@ void show_playback_state(SINGLE_QSP_ARG_DECL)
 	snd_pcm_state_t state;
 
 	if( playback_handle == NULL ){
-		WARN("show_playback_state:  playback_handle not initialized");
+		warn("show_playback_state:  playback_handle not initialized");
 		return;
 	}
 	state = snd_pcm_state(playback_handle);
@@ -95,7 +97,7 @@ void show_playback_state(SINGLE_QSP_ARG_DECL)
 		case SND_PCM_STATE_PAUSED:  advise("playback device state is PAUSED"); break;
 		case SND_PCM_STATE_SUSPENDED: advise("playback device state is SUSPENDED"); break;
 		case SND_PCM_STATE_DISCONNECTED: advise("playback device state is DISCONNECTED"); break;
-		default: NWARN("unexpected state code"); break;
+		default: warn("unexpected state code"); break;
 	}
 } /* end show_playback_state */
 #endif /* NOT_USED */
@@ -105,13 +107,13 @@ int set_playback_nchan(QSP_ARG_DECL  int channels)
 	int err;
 
 	if( audio_state != AUDIO_PLAY ){
-		NWARN("set_playback_nchan:  playback mode must be initialized before setting n_channels");
+		warn("set_playback_nchan:  playback mode must be initialized before setting n_channels");
 		return(-1);
 	}
 	if( channels < 1 || channels > 2 ){
 		/* Does card support quad sound??? */
 		if( channels != 4 ){
-			NWARN("Sorry, number of channels must be 1,2, or 4");
+			warn("Sorry, number of channels must be 1,2, or 4");
 			return(-1);
 		} else {
 			advise("Assuming audio card is quad-capable!");
@@ -121,13 +123,13 @@ int set_playback_nchan(QSP_ARG_DECL  int channels)
 
 	if ((err = snd_pcm_hw_params_set_channels (playback_handle, hw_params, nchannels)) < 0) {
 		sprintf(ERROR_STRING,"Cannot set channel count (%s)\n", snd_strerror (err));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	if ((err = snd_pcm_hw_params (playback_handle, hw_params)) < 0) {
 		sprintf(ERROR_STRING,"Cannot set hw parameters (%s)\n", snd_strerror (err));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(0);
@@ -170,7 +172,7 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 	if( OBJ_MACH_PREC(dp) != PREC_IN ){
 		sprintf(ERROR_STRING,"Object %s has precision %s, should be %s for sounds",OBJ_NAME(dp),
 			PREC_NAME(OBJ_MACH_PREC_PTR(dp)),NAME_FOR_PREC_CODE(PREC_IN));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -184,7 +186,7 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 			sprintf(ERROR_STRING,
 	"Sound %s has illegal number of channels (%ld)",
 				OBJ_NAME(dp),(long)OBJ_COMPS(dp));
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 	}
@@ -202,13 +204,13 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 		err = snd_pcm_prepare(playback_handle);
 		if (err < 0){
 			sprintf(ERROR_STRING,"play_sound:  couldn't restore prepared state after underrun");
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 	}
 	/*
 	if( (err=snd_pcm_start(playback_handle)) < 0 ){
-		NWARN("some error with snd_pcm_start() !? ");
+		warn("some error with snd_pcm_start() !? ");
 	}
 	*/
 
@@ -226,7 +228,7 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 				if( xrun_recovery(playback_handle,err) < 0 ){
 					sprintf (ERROR_STRING,
 						"write to audio interface failed (%s)\n", snd_strerror (err));
-					NWARN(ERROR_STRING);
+					warn(ERROR_STRING);
 					return;
 				}
 				err = 0;	/* signal that no bytes were written */
@@ -256,7 +258,7 @@ void set_sound_volume(QSP_ARG_DECL  int g)
 	ioctl(mfd, SOUND_MIXER_WRITE_VOLUME, &g);
 	ioctl(mfd, SOUND_MIXER_WRITE_PCM, &pcm_gain); 
 #else
-	WARN("set_sound_volume:  don't know how to do this!?");
+	warn("set_sound_volume:  don't know how to do this!?");
 #endif
 }
 
@@ -272,7 +274,7 @@ void set_samp_freq(QSP_ARG_DECL  unsigned int req_rate)
 
 	if ((err = snd_pcm_hw_params_set_rate_near (playback_handle, hw_params, &req_rate, 0)) < 0) {
 		sprintf (ERROR_STRING, "cannot set sample rate near %d (%s)\n", req_rate,snd_strerror (err));
- 		WARN (ERROR_STRING);
+ 		warn (ERROR_STRING);
 	}
 }
 
@@ -325,11 +327,11 @@ static int set_sw_params(SINGLE_QSP_ARG_DECL)
 
 #ifdef CAUTIOUS
 	if( playback_handle == NULL ){
-		WARN("CAUTIOUS:  set_sw_params:  playback handle has not been set!?");
+		warn("CAUTIOUS:  set_sw_params:  playback handle has not been set!?");
 		return(-1);
 	}
 	if( sw_params == NULL ){
-		WARN("CAUTIOUS:  set_sw_params:  sw_params pointer has not been set!?");
+		warn("CAUTIOUS:  set_sw_params:  sw_params pointer has not been set!?");
 		return(-1);
 	}
 #endif /* CAUTIOUS */
@@ -409,7 +411,7 @@ void audio_init(QSP_ARG_DECL  int mode)
 
 
 	if( ! ts_class_inited ){
-		add_tsable(QSP_ARG  dobj_itp,&dobj_tsf,(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
+		add_tsable(dobj_itp,&dobj_tsf,(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
 		ts_class_inited++;
 	}
 
@@ -428,7 +430,7 @@ void audio_init(QSP_ARG_DECL  int mode)
 			perror(ERROR_STRING);
 			sprintf(ERROR_STRING,"error opening mixer device %s",
 				MIXER_NAME);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 else {
 if( debug & sound_debug ){
@@ -454,7 +456,7 @@ advise("mixer opened");
 	}
 #ifdef CAUTIOUS
 	else {
-		WARN("unexpected audio mode requested!?");
+		warn("unexpected audio mode requested!?");
 	}
 #endif	/* CAUTIOUS */
 
@@ -480,9 +482,9 @@ advise("mixer opened");
 void halt_play_stream(SINGLE_QSP_ARG_DECL)
 {
 	if( halting )
-		WARN("halt_play_stream:  already halting!?");
+		warn("halt_play_stream:  already halting!?");
 	if( !streaming )
-		WARN("halt_play_stream:  not streaming!?");
+		warn("halt_play_stream:  not streaming!?");
 	halting=1;
 
 	/* wait for disk_reader & audio_writer to finish - should call pthread_join (BUG)! */
@@ -492,9 +494,9 @@ void halt_play_stream(SINGLE_QSP_ARG_DECL)
 }
 
 
-void play_stream(QSP_ARG_DECL  int fd) { WARN("unimplemented for ALSA:  play_stream"); }
-void set_stereo_output(QSP_ARG_DECL  int is_stereo) { WARN("unimplemented for ALSA:  set_stereo_output"); }
-void pause_sound(SINGLE_QSP_ARG_DECL) { WARN("unimplemented for ALSA:  pause_sound"); }
+void play_stream(QSP_ARG_DECL  int fd) { warn("unimplemented for ALSA:  play_stream"); }
+void set_stereo_output(QSP_ARG_DECL  int is_stereo) { warn("unimplemented for ALSA:  set_stereo_output"); }
+void pause_sound(SINGLE_QSP_ARG_DECL) { warn("unimplemented for ALSA:  pause_sound"); }
 
 #endif /* ! USE_OSS_SOUND */
 

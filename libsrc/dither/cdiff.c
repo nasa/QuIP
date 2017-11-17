@@ -187,12 +187,14 @@ static void sprd_e3(float * cvec,int col)
 	}
 }
 
-static int not_float(Data_Obj *dp)
+#define not_float(dp) _not_float(QSP_ARG  dp)
+
+static int _not_float(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( OBJ_PREC(dp) != PREC_SP ){
-		sprintf(DEFAULT_ERROR_STRING,"object %s (%s) must have float precision",
+		sprintf(ERROR_STRING,"object %s (%s) must have float precision",
 			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(1);
 	}
 	return(0);
@@ -208,14 +210,14 @@ sprintf(ERROR_STRING,"BEGIN ctoneit, dst = %s",OBJ_NAME(dst_dp));
 advise(ERROR_STRING);
 
 	if( dst_dp == NULL || src_dp == NULL ){
-		NWARN("ctoneit:  missing object");
+		warn("ctoneit:  missing object");
 		return;
 	}
 	if( not_float(dst_dp) ) return;
 	if( not_float(src_dp) ) return;
 
 	if( nlevels <= 0 ){
-		NWARN("ctoneit:  need to specify number of quantization levels first");
+		warn("ctoneit:  need to specify number of quantization levels first");
 		return;
 	}
 

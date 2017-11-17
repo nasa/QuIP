@@ -48,6 +48,32 @@ void report_node_data(SINGLE_QSP_ARG_DECL)
         }
 }
 
+static void remove_found_node(Node *np, List *lp)
+{
+	if( NODE_PREV(np) != NULL )
+		SET_NODE_NEXT(NODE_PREV(np),NODE_NEXT(np));
+	else SET_LIST_HEAD(lp, NODE_NEXT(np));
+	if( NODE_NEXT(np) != NULL )
+		SET_NODE_PREV(NODE_NEXT(np),NODE_PREV(np));
+	else SET_LIST_TAIL(lp, NODE_PREV(np));
+	SET_NODE_NEXT(np,NULL);
+	SET_NODE_PREV(np,NULL);
+}
+
+static void fix_ring_ptrs(Node *np, List *lp)
+{
+	if( _LIST_HEAD(lp) == np ){
+		if( _LIST_TAIL(lp) == np ){
+			SET_LIST_HEAD(lp,NULL);
+			SET_LIST_TAIL(lp,NULL);
+		} else SET_LIST_HEAD(lp,NODE_NEXT(np));
+	} else if( _LIST_TAIL(lp) == np ){
+		SET_LIST_TAIL(lp, NODE_PREV(np));
+	}
+	// Why?
+	SET_NODE_NEXT(np,np);
+	SET_NODE_PREV(np,np);
+}
 
 /*
  * remove a node from a list
@@ -69,31 +95,9 @@ Node *remNode( List * lp, Node* node )
 	if( NODE_PREV(np) != NULL ) is_ring=1;
 	while( np != NULL ){
 		if( np==node ){
-			if( NODE_PREV(np) != NULL )
-				SET_NODE_NEXT(NODE_PREV(np),NODE_NEXT(np));
-			else SET_LIST_HEAD(lp, NODE_NEXT(np));
-			if( NODE_NEXT(np) != NULL )
-				SET_NODE_PREV(NODE_NEXT(np),NODE_PREV(np));
-			else SET_LIST_TAIL(lp, NODE_PREV(np));
-
-			/* the above doesn't work for rings!! */
-
-			if( is_ring ){
-				if( _LIST_HEAD(lp) == np ){
-					if( _LIST_TAIL(lp) == np ){
-						SET_LIST_HEAD(lp,NULL);
-						SET_LIST_TAIL(lp,NULL);
-					} else SET_LIST_HEAD(lp,NODE_NEXT(np));
-				} else if( _LIST_TAIL(lp) == np ){
-					SET_LIST_TAIL(lp, NODE_PREV(np));
-				}
-				SET_NODE_NEXT(np,np);
-				SET_NODE_PREV(np,np);
-			} else {
-				SET_NODE_NEXT(np,NULL);
-				SET_NODE_PREV(np,NULL);
-			}
-
+			remove_found_node(np,lp);
+			if( is_ring )
+				fix_ring_ptrs(np,lp);
 			UNLOCK_LIST(lp,remNode)
 			return(np);
 		}
@@ -101,10 +105,11 @@ Node *remNode( List * lp, Node* node )
 		if( np == _LIST_HEAD(lp) ) np=NULL;
 	}
 
-	NWARN("remNode:  node not found!?");	// can this ever happen?
+	// can this ever happen?
+	// assertion?
+	_warn(DEFAULT_QSP_ARG  "remNode:  node not found!?");
 	UNLOCK_LIST(lp,remNode)
-
-	return(np);
+	return(NULL);
 } // remNode
 
 /*
@@ -214,7 +219,7 @@ void rls_node(Node *np)
  * allocate memory for a new one.
  */
 
-static Node *newnode()			/**/
+static Node *newnode(void)			/**/
 {
 	Node *np;
 
@@ -278,7 +283,7 @@ static Node *newnode()			/**/
  * and then release the list pointer.
  */
 
-void dellist( List *lp )
+void _dellist(QSP_ARG_DECL  List *lp )
 {
 	rls_nodes_from_list(lp);
 	rls_list(lp);
@@ -317,11 +322,12 @@ static void init_list(List *lp)
 	int status;
 	pthread_mutexattr_t attr;
 
-	if( pthread_mutexattr_init(&attr) != 0 )
-		NWARN("error initializing mutex attributes!?");
-	if( pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK) != 0 )
-		NWARN("error setting mutex type!?");
+	status = pthread_mutexattr_init(&attr);
+	assert(status ==0);
+	status = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+	assert(status ==0);
 	status = pthread_mutex_init(&lp->l_mutex,/*NULL*/&attr);
+	assert(status ==0);
 	if( status != 0 ){
 		NERROR1("error initializing mutex!?");
 		IOS_RETURN
@@ -340,7 +346,7 @@ static void init_list(List *lp)
  * Return a pointer to a new list structure
  */
 
-List *new_list()
+List *new_list(void)
 {
 	List *lp;
 
@@ -655,7 +661,7 @@ Node *list_find_named_item(List *lp, const char *name)
 	return NULL;
 }
 
-List_Enumerator *new_list_enumerator(List *lp)
+List_Enumerator *_new_list_enumerator(QSP_ARG_DECL  List *lp)
 {
 	List_Enumerator *lep;
 
@@ -682,7 +688,7 @@ void rls_list_nodes(List *lp)
 
 // release all the nodes in a list and the list too
 
-void zap_list(List *lp)
+void _zap_list(QSP_ARG_DECL  List *lp)
 {
 	rls_list_nodes(lp);
 	rls_list(lp);

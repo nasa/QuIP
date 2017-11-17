@@ -54,12 +54,12 @@ void show_camera_features(PGR_Cam *pgcp)
 		/* dc1394_get_camera_feature_set */
 		dc1394_feature_get_all
 		(pgcp->pc_cam_p, &features) != DC1394_SUCCESS ){
-		NWARN("error getting camera feature set");
+		warn("error getting camera feature set");
 		return;
 	}
 	if( /* dc1394_print_feature_set(&features) */
 		dc1394_feature_print_all(&features,stdout) != DC1394_SUCCESS ){
-		NWARN("error printing feature set");
+		warn("error printing feature set");
 	}
 }
 #endif /* NOT_USED */
@@ -230,14 +230,17 @@ void get_camera_features( PGR_Cam *pgcp )
 
 /* report_camera_features:  this used the library's print routine (for comparison) */
 
-static int report_camera_features( PGR_Cam *pgcp )
+#define report_camera_features( pgcp ) _report_camera_features( QSP_ARG  pgcp )
+
+
+static int _report_camera_features( QSP_ARG_DECL  PGR_Cam *pgcp )
 {
 	// report camera's features
 	dc1394featureset_t	features;
 
 	if ( /*dc1394_get_camera_feature_set*/
 		dc1394_feature_get_all( pgcp->pc_cam_p, &features ) != DC1394_SUCCESS ) {
-		NWARN("report_camera_features:  unable to get camera feature set");
+		warn("report_camera_features:  unable to get camera feature set");
 		return -1;
 	}
 	/*dc1394_print_feature_set( &features ); */
@@ -438,7 +441,7 @@ void report_feature_info(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394feature_t id )
 		case DC1394_FEATURE_WHITE_BALANCE: 
 		case DC1394_FEATURE_TEMPERATURE:
 		case DC1394_FEATURE_WHITE_SHADING: 
-			NWARN("unhandled case in feature type switch");
+			warn("unhandled case in feature type switch");
 			break;
 		default:
 			sprintf(msg_str,"value: %-8d  range: %d-%d",f->value,f->min,f->max);
@@ -771,7 +774,7 @@ static int set_default_framerate(QSP_ARG_DECL  PGR_Cam *pgcp)
 
 	// format7 doesn't have a framerate!?
 	if( mode_is_format7(pgcp) ){
-		//NWARN("set_default_framerate:  No framerate associated with format7 video mode!?");
+		//warn("set_default_framerate:  No framerate associated with format7 video mode!?");
 		pgcp->pc_framerate = -1;
 		set_script_var_from_int(QSP_ARG "n_framerates",0);
 		return 0;
@@ -779,7 +782,7 @@ static int set_default_framerate(QSP_ARG_DECL  PGR_Cam *pgcp)
 
 	if ( dc1394_video_get_supported_framerates( pgcp->pc_cam_p, pgcp->pc_video_mode, &(pgcp->pc_framerates) )
 			!= DC1394_SUCCESS ) {
-		NWARN("Can't get framerates");
+		warn("Can't get framerates");
 		return -1;
 	}
 
@@ -828,7 +831,7 @@ int set_video_mode(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394video_mode_t mode)
 	return 0;
 }
 
-int set_framerate(PGR_Cam *pgcp, int framerate_index)
+int _set_framerate(QSP_ARG_DECL  PGR_Cam *pgcp, int framerate_index)
 {
 	dc1394framerate_t rate;
 
@@ -836,7 +839,7 @@ int set_framerate(PGR_Cam *pgcp, int framerate_index)
 
 	rate = all_framerates[framerate_index].nfr_framerate;
 	if( dc1394_video_set_framerate( pgcp->pc_cam_p, rate) != DC1394_SUCCESS ){
-		NWARN("unable to set framerate");
+		warn("unable to set framerate");
 		return -1;
 	}
 	pgcp->pc_framerate = rate;
@@ -871,12 +874,12 @@ int list_framerates(QSP_ARG_DECL  PGR_Cam *pgcp)
 
 	if ( dc1394_video_get_supported_framerates( pgcp->pc_cam_p, pgcp->pc_video_mode, &framerates )
 			!= DC1394_SUCCESS ){
-		NWARN("error fetching framerates");
+		warn("error fetching framerates");
 		return -1;
 	}
 
 	if( framerates.num <= 0 ){
-		NWARN("no framerates for this video mode!?");
+		warn("no framerates for this video mode!?");
 		return -1;
 	}
 
@@ -954,7 +957,7 @@ static int set_default_video_mode(PGR_Cam *pgcp)
 	if ( ( dc1394_is_video_mode_scalable( video_mode ) ) ||
 			( coding != DC1394_COLOR_CODING_MONO8 &&
 			  coding != DC1394_COLOR_CODING_RAW8 ) ) {
-		NWARN("Could not get a valid MONO8 mode" );
+		warn("Could not get a valid MONO8 mode" );
 		return -1;
 	}
 #endif // FOOBAR
@@ -1028,7 +1031,7 @@ static PGR_Cam *setup_my_camera( QSP_ARG_DECL  dc1394camera_t * cam_p )
 
 	if( set_default_framerate(QSP_ARG  pgcp) < 0 ){
 		// This happens for format7...
-		//NWARN("error setting default framerate");
+		//warn("error setting default framerate");
 		//cleanup_cam( pgcp );
 		//return(NULL);
 	}
@@ -1095,7 +1098,7 @@ int init_firewire_system(SINGLE_QSP_ARG_DECL)
 
 	//  get the camera nodes and describe them as we find them
 	if( camera_list_p == NULL ){
-		NWARN("dc1394_camera_enumerate returned a null list pointer...");
+		warn("dc1394_camera_enumerate returned a null list pointer...");
 		return -1;
 	}
 	if ( camera_list_p->num < 1 ) {
@@ -1162,7 +1165,7 @@ fprintf(stderr,"Object %s, data ptr set to 0x%lx\n",OBJ_NAME(dp),(long)OBJ_DATA_
 
 	if( framep->total_bytes != framep->image_bytes ){
 		sprintf(DEFAULT_ERROR_STRING,"image may be padded...");
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(DEFAULT_ERROR_STRING);
 	}
 
 	return(dp);
@@ -1417,7 +1420,7 @@ Data_Obj * grab_firewire_frame(QSP_ARG_DECL  PGR_Cam * pgcp )
 	snprintf(fname,TMPSIZE,"_frame%d",framep->id);
 	dp = get_obj(QSP_ARG  fname);
 	if( dp == NULL ){
-		NWARN("grab_firewire_frame:  unable to create frame object");
+		warn("grab_firewire_frame:  unable to create frame object");
 		return(NULL);
 	}
 
@@ -1432,24 +1435,24 @@ Data_Obj * grab_firewire_frame(QSP_ARG_DECL  PGR_Cam * pgcp )
 	return(dp);
 } // end grab_firewire_frame
 
-void release_oldest_frame(PGR_Cam *pgcp)
+void _release_oldest_frame(QSP_ARG_DECL  PGR_Cam *pgcp)
 {
 	Node *np;
 	dc1394video_frame_t *framep;
 
 	// Only can do this if the camera is running...
 	if( (pgcp->pc_flags & PGR_CAM_IS_RUNNING) == 0 ){
-		NWARN("release_oldest_frame:  camera is not running!?");
+		warn("release_oldest_frame:  camera is not running!?");
 		return;
 	}
 
 	if( pgcp->pc_n_avail == pgcp->pc_ring_buffer_size ){
-		NWARN("release_oldest_frame:  no frames are currently dequeued");
+		warn("release_oldest_frame:  no frames are currently dequeued");
 		return;
 	}
 
 	if( pgcp->pc_in_use_lp == NULL ){
-		NWARN("release_oldest_frame:  no frames have been grabbed");
+		warn("release_oldest_frame:  no frames have been grabbed");
 		return;
 	}
 
@@ -1462,12 +1465,12 @@ void release_oldest_frame(PGR_Cam *pgcp)
 
 	if( dc1394_capture_enqueue(pgcp->pc_cam_p,framep)
 		!= DC1394_SUCCESS ){
-		NWARN("error enqueueing frame");
+		warn("error enqueueing frame");
 	}
 	pgcp->pc_n_avail++;
 }
 
-int stop_firewire_capture( PGR_Cam * pgcp )
+int _stop_firewire_capture(QSP_ARG_DECL  PGR_Cam * pgcp )
 {
 	/* Transmission has to be stopped before capture is stopped,
 	 * or the iso bandwidth will not be freed - jbm.
@@ -1475,19 +1478,19 @@ int stop_firewire_capture( PGR_Cam * pgcp )
 
 	if( ! IS_TRANSMITTING(pgcp) ){
 		/* CAUTIOUS? */
-		NWARN("stop_firewire_capture:  not transmitting!?");
+		warn("stop_firewire_capture:  not transmitting!?");
 		return(-1);
 	} else {
 		//  Stop data transmission
 		if( dc1394_video_set_transmission( pgcp->pc_cam_p, DC1394_OFF ) != DC1394_SUCCESS ){
-			NWARN("stop_firewire_capture:  Couldn't stop transmission!?");
+			warn("stop_firewire_capture:  Couldn't stop transmission!?");
 			return(-1);
 		}
 		pgcp->pc_flags &= ~PGR_CAM_IS_TRANSMITTING;
 	}
 
 	if( ! IS_CAPTURING(pgcp) ){
-		NWARN("stop_firewire_capture:  not capturing!?");
+		warn("stop_firewire_capture:  not capturing!?");
 		return(-1);
 	} else {
 		dc1394_capture_stop( pgcp->pc_cam_p );
@@ -1505,11 +1508,11 @@ int stop_firewire_capture( PGR_Cam * pgcp )
 	return(0);
 }
 
-int reset_camera(PGR_Cam *pgcp)
+int _reset_camera(QSP_ARG_DECL  PGR_Cam *pgcp)
 {
 	if( /* dc1394_reset_camera */
 		dc1394_camera_reset(pgcp->pc_cam_p) != DC1394_SUCCESS ){
-		NWARN("Could not initilize camera");
+		warn("Could not initilize camera");
 		return -1;
 	}
 	return 0;
@@ -1523,7 +1526,7 @@ void list_trig(QSP_ARG_DECL  PGR_Cam *pgcp)
 
 	if( dc1394_external_trigger_has_polarity(pgcp->pc_cam_p,&has_p) !=
 		DC1394_SUCCESS ){
-		NWARN("error querying for trigger polarity capability");
+		warn("error querying for trigger polarity capability");
 		return;
 	}
 	if( has_p ){
@@ -1534,7 +1537,7 @@ void list_trig(QSP_ARG_DECL  PGR_Cam *pgcp)
 
 	if( dc1394_external_trigger_get_mode(pgcp->pc_cam_p,&tm) !=
 		DC1394_SUCCESS ){
-		NWARN("error querying trigger mode");
+		warn("error querying trigger mode");
 		return;
 	}
 	switch(tm){
@@ -1555,7 +1558,7 @@ void list_trig(QSP_ARG_DECL  PGR_Cam *pgcp)
 		case DC1394_TRIGGER_MODE_15:
 			prt_msg("Mode 15:  vendor-specific"); break;
 		default:
-			NWARN("unrecognized trigger mode");
+			warn("unrecognized trigger mode");
 			break;
 	}
 }
@@ -1566,7 +1569,7 @@ void report_bandwidth(QSP_ARG_DECL  PGR_Cam *pgcp )
 
 	if( dc1394_video_get_bandwidth_usage(pgcp->pc_cam_p,&bw) !=
 		DC1394_SUCCESS ){
-		NWARN("error querying bandwidth usage");
+		warn("error querying bandwidth usage");
 		return;
 	}
 	/* What are the units of bandwidth??? */

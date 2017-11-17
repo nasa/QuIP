@@ -202,7 +202,7 @@ static int HandleEvent( QSP_ARG_DECL  XEvent *event, int *donep )
 			win = event->xexpose.window;
 
 			if( (vp=find_viewer(win)) == NULL ){
-				NWARN("can't find viewing window for expose event");
+				warn("can't find viewing window for expose event");
 				return 0;
 			}
 			vp->vw_flags |= VIEW_EXPOSED;
@@ -246,7 +246,7 @@ advise(ERROR_STRING);
 		case ButtonPress:
 			win = event->xbutton.window;
 			if( (vp=find_viewer(win)) == NULL ){
-		NWARN("can't find viewing window for button event");
+		warn("can't find viewing window for button event");
 				return 0;
 			}
 			/*
@@ -343,7 +343,7 @@ advise(ERROR_STRING);
 
 			win = event->xbutton.window;
 			if( (vp=find_viewer(win)) == NULL ){
-				NWARN("can't find viewing window for button event");
+				warn("can't find viewing window for button event");
 				return 0;
 			}
 
@@ -381,7 +381,7 @@ advise(ERROR_STRING);
 					} else {
 						sprintf(ERROR_STRING,
 						"wacky button number %d",button_number);
-						NWARN(ERROR_STRING);
+						warn(ERROR_STRING);
 					}
 				}
 			} else if( IS_ADJUSTER(vp) ) goto adjust_event;
@@ -413,7 +413,7 @@ advise(ERROR_STRING);
 		case MapNotify:
 			win = event->xmapping.window;
 			if( (vp=find_viewer(win)) == NULL ){
-				NWARN("can't find viewing window for map event");
+				warn("can't find viewing window for map event");
 				return 0;
 			}
 			vp->vw_flags |= VIEW_MAPPED;
@@ -430,7 +430,7 @@ advise(ERROR_STRING);
 		case MotionNotify:
 			win = event->xmotion.window;
 			if( (vp=find_viewer(win)) == NULL ){
-		NWARN("can't find viewing window for motion event");
+		warn("can't find viewing window for motion event");
 				return 0;
 			}
 			if( !IS_TRACKING(vp) ){
@@ -510,7 +510,7 @@ advise(ERROR_STRING);
 
 			if( (vp=find_viewer(win)) == NULL ){
 				// Apparently we receive this event after we delete a window
-		//NWARN("can't find viewer for configure event");
+		//warn("can't find viewer for configure event");
 				return 0;
 			}
 //show_configure_notify(event);
@@ -567,7 +567,7 @@ VW_X(vp),VW_Y(vp),VW_X_REQUESTED(vp),VW_Y_REQUESTED(vp));
 #ifdef QUIP_DEBUG
 if( debug & xdebug ){
 sprintf(ERROR_STRING,"do-nothing event type %d",event->type);
-NWARN(ERROR_STRING);
+warn(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 #endif // FOOBAR
@@ -581,7 +581,7 @@ fprintf(stderr,"enter/leave event type %d\n",event->type);
 #ifdef QUIP_DEBUG
 if( debug ){
 sprintf(ERROR_STRING,"enter/leave event type %d",event->type);
-NWARN(ERROR_STRING);
+warn(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 			do_enter_leave(event);
@@ -590,7 +590,7 @@ NWARN(ERROR_STRING);
 #ifdef QUIP_DEBUG
 if( debug ){
 sprintf(ERROR_STRING,"mysterious event14 type %d",event->type);
-NWARN(ERROR_STRING);
+warn(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 			break;		/* what is this??? */
@@ -603,7 +603,7 @@ NWARN(ERROR_STRING);
 			if( ks_len > 1 ){
 				sprintf(ERROR_STRING,"keystring has length %d",
 					ks_len);
-				NWARN(ERROR_STRING);
+				warn(ERROR_STRING);
 			} else if( ks_len == 0 ){
 				/* usually because shift or control was depressed */
 			} else {
@@ -633,11 +633,11 @@ NWARN(ERROR_STRING);
 #ifdef QUIP_DEBUG
 if( debug ){
 sprintf(ERROR_STRING,"uncaught event type %d",event->type);
-NWARN(ERROR_STRING);
+warn(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 sprintf(ERROR_STRING,"uncaught event type %d",event->type);
-NWARN(ERROR_STRING);
+warn(ERROR_STRING);
 			break;		/* ignore unexpected events */
 	}
 	*donep = done;

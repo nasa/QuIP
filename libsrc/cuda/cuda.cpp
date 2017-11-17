@@ -189,6 +189,7 @@ COMMAND_FUNC( do_gpu_fwdfft )
 	FINISH_CUDA_MENU_FUNC
 }
 
+#ifdef NOT_USED
 
 // moved to veclib2
 
@@ -215,7 +216,7 @@ COMMAND_FUNC( do_gpu_fwdfft )
  * hold this value.
  */
 
-int setup_slow_len(dim3 *len_p,Size_Info *szi_p,dimension_t start_dim,int *dim_indices,int i_first,int n_vec)
+int _setup_slow_len(QSP_ARG_DECL  dim3 *len_p,Size_Info *szi_p,dimension_t start_dim,int *dim_indices,int i_first,int n_vec)
 {
 	int i_dim;
 	dimension_t max_d;
@@ -247,11 +248,11 @@ int setup_slow_len(dim3 *len_p,Size_Info *szi_p,dimension_t start_dim,int *dim_i
 				dim_indices[n_set] = i_dim;
 				n_set ++;
 #else /* CUDA_COMP_CAP < 20 */
-				NWARN("Sorry, CUDA compute capability >= 2.0 required for 3-D array operations");
+				warn("Sorry, CUDA compute capability >= 2.0 required for 3-D array operations");
 				return(-1);
 #endif /* CUDA_COMP_CAP < 20 */
 			} else {
-				NWARN("Too many CUDA dimensions requested.");
+				warn("Too many CUDA dimensions requested.");
 				return(-1);
 			}
 		}
@@ -268,6 +269,7 @@ int setup_slow_len(dim3 *len_p,Size_Info *szi_p,dimension_t start_dim,int *dim_i
 	}
 	return(n_set);
 }
+#endif // NOT_USED
 
 
 #include "enum_menu_calls.h"	// will lay out all the functions...
@@ -389,14 +391,14 @@ COMMAND_FUNC( do_cudev_info )
 #endif
 }
 
-void set_cuda_device( Cuda_Device *cdp )
+void _set_cuda_device(QSP_ARG_DECL   Cuda_Device *cdp )
 {
 #ifdef HAVE_CUDA
 	cudaError_t e;
 
 	if( curr_cdp == cdp ){
-		sprintf(DEFAULT_ERROR_STRING,"set_cuda_device:  current device is already %s!?",cdp->cudev_name);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"set_cuda_device:  current device is already %s!?",cdp->cudev_name);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -408,14 +410,14 @@ void set_cuda_device( Cuda_Device *cdp )
 #endif //  HAVE_CUDA
 }
 
-void insure_cuda_device( Data_Obj *dp )
+void _insure_cuda_device(QSP_ARG_DECL  Data_Obj *dp )
 {
 	Cuda_Device *cdp;
 
 	if( AREA_FLAGS(OBJ_AREA(dp)) & DA_RAM ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"insure_cuda_device:  Object %s is a host RAM object!?",OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -423,19 +425,19 @@ void insure_cuda_device( Data_Obj *dp )
 	assert( cdp != NULL );
 
 	if( curr_cdp != cdp ){
-sprintf(DEFAULT_ERROR_STRING,"insure_cuda_device:  curr_cdp = 0x%lx  cdp = 0x%lx",
-(int_for_addr)curr_cdp,(int_for_addr)cdp);
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"insure_cuda_device:  curr_cdp = 0x%"PRIxPTR"  cdp = 0x%"PRIxPTR,
+(uintptr_t)curr_cdp,(uintptr_t)cdp);
+advise(ERROR_STRING);
 
-sprintf(DEFAULT_ERROR_STRING,"insure_cuda_device:  current device is %s, want %s",
+sprintf(ERROR_STRING,"insure_cuda_device:  current device is %s, want %s",
 curr_cdp->cudev_name,cdp->cudev_name);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 		set_cuda_device(cdp);
 	}
 
 }
 
-void *tmpvec(int size,int len,const char *whence)
+void *_tmpvec(QSP_ARG_DECL  int size,int len,const char *whence)
 {
 #ifdef HAVE_CUDA
 	void *cuda_mem;
@@ -443,15 +445,15 @@ void *tmpvec(int size,int len,const char *whence)
 
 	drv_err = cudaMalloc(&cuda_mem, size * len );
 	if( drv_err != cudaSuccess ){
-		sprintf(DEFAULT_MSG_STR,"tmpvec (%s)",whence);
-		describe_cuda_driver_error2(DEFAULT_MSG_STR,"cudaMalloc",drv_err);
-		NERROR1("CUDA memory allocation error");
+		sprintf(MSG_STR,"tmpvec (%s)",whence);
+		describe_cuda_driver_error2(MSG_STR,"cudaMalloc",drv_err);
+		error1("CUDA memory allocation error");
 	}
 
-//sprintf(ERROR_STRING,"tmpvec:  %d bytes allocated at 0x%lx",len,(int_for_addr)cuda_mem);
+//sprintf(ERROR_STRING,"tmpvec:  %d bytes allocated at 0x%"PRIxPTR,len,(uintptr_t)cuda_mem);
 //advise(ERROR_STRING);
 
-//sprintf(ERROR_STRING,"tmpvec %s:  0x%lx",whence,(int_for_addr)cuda_mem);
+//sprintf(ERROR_STRING,"tmpvec %s:  0x%"PRIxPTR,whence,(uintptr_t)cuda_mem);
 //advise(ERROR_STRING);
 	return(cuda_mem);
 #else // ! HAVE_CUDA
@@ -464,7 +466,7 @@ void freetmp(void *ptr,const char *whence)
 #ifdef HAVE_CUDA
 	cudaError_t drv_err;
 
-//sprintf(ERROR_STRING,"freetmp %s:  0x%lx",whence,(int_for_addr)ptr);
+//sprintf(ERROR_STRING,"freetmp %s:  0x%"PRIxPTR,whence,(uintptr_t)ptr);
 //advise(ERROR_STRING);
 	drv_err=cudaFree(ptr);
 	if( drv_err != cudaSuccess ){
@@ -477,7 +479,7 @@ void freetmp(void *ptr,const char *whence)
 #ifdef HAVE_CUDA
 //CUFFT
 //static const char* getCUFFTError(cufftResult_t status)
-const char* getCUFFTError(cufftResult status)
+const char* _getCUFFTError(QSP_ARG_DECL  cufftResult status)
 {
 	switch (status) {
 		case CUFFT_SUCCESS:
@@ -521,8 +523,8 @@ const char* getCUFFTError(cufftResult status)
 			return "License error";
 #endif
 	}
-	sprintf(DEFAULT_ERROR_STRING,"Unexpected CUFFT return value:  %d",status);
-	return(DEFAULT_ERROR_STRING);
+	sprintf(ERROR_STRING,"Unexpected CUFFT return value:  %d",status);
+	return(ERROR_STRING);
 }
 #endif // HAVE_CUDA
 
@@ -562,7 +564,7 @@ void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 	status = cufftPlan1d(&plan, NX, CUFFT_C2C, BATCH);
 	if (status != CUFFT_SUCCESS) {
 		sprintf(ERROR_STRING, "Error in cufftPlan1d: %s\n", getCUFFTError(status));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	//Run forward fft on data
@@ -570,7 +572,7 @@ void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 			(cufftComplex *)result, CUFFT_FORWARD);
 	if (status != CUFFT_SUCCESS) {
 		sprintf(ERROR_STRING, "Error in cufftExecC2C: %s\n", getCUFFTError(status));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	//Run inverse fft on data
@@ -578,7 +580,7 @@ void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 	if (status != CUFFT_SUCCESS)
 	{
 		sprintf(ERROR_STRING, "Error in cufftExecC2C: %s\n", getCUFFTError(status));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}*/
 
 	//Free resources
@@ -604,21 +606,23 @@ static int n_cuda_checkpoints=0;	// number of placements
 
 static int max_cuda_checkpoints=0;	// size of checkpoit table
 
-static void init_cuda_checkpoints(int n)
+#define init_cuda_checkpoints(n) _init_cuda_checkpoints(QSP_ARG  n)
+
+static void _init_cuda_checkpoints(QSP_ARG_DECL  int n)
 {
 	//CUresult e;
 	cudaError_t drv_err;
 	int i;
 
 	if( max_cuda_checkpoints > 0 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "init_cuda_checkpoints(%d):  already initialized with %d checpoints",
 			n,max_cuda_checkpoints);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	ckpt_tbl = (Cuda_Checkpoint *) getbuf( n * sizeof(*ckpt_tbl) );
-	if( ckpt_tbl == NULL ) NERROR1("failed to allocate checkpoint table");
+	if( ckpt_tbl == NULL ) error1("failed to allocate checkpoint table");
 
 	max_cuda_checkpoints = n;
 
@@ -627,7 +631,7 @@ static void init_cuda_checkpoints(int n)
 		if( drv_err != cudaSuccess ){
 			describe_cuda_driver_error2("init_cuda_checkpoints",
 				"cudaEventCreate",drv_err);
-			NERROR1("failed to initialize checkpoint table");
+			error1("failed to initialize checkpoint table");
 		}
 		ckpt_tbl[i].ckpt_tag=NULL;
 	}
@@ -680,7 +684,7 @@ COMMAND_FUNC( do_set_checkpoint )
 	s = NAMEOF("tag for this checkpoint");
 
 	if( max_cuda_checkpoints == 0 ){
-		NWARN("do_place_ckpt:  checkpoint table not initialized, setting to default size");
+		warn("do_place_ckpt:  checkpoint table not initialized, setting to default size");
 		init_cuda_checkpoints(256);
 	}
 
@@ -712,7 +716,7 @@ COMMAND_FUNC( do_show_checkpoints )
 	int i;
 
 	if( n_cuda_checkpoints <= 0 ){
-		NWARN("do_show_checkpoints:  no checkpoints placed!?");
+		warn("do_show_checkpoints:  no checkpoints placed!?");
 		return;
 	}
 

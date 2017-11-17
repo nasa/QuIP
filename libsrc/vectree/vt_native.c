@@ -34,19 +34,19 @@ Keyword vt_native_func_tbl[N_VT_NATIVE_FUNCS+1]={
 {	"foobar",	-1		}		/* must be last */
 };
 
-const char *eval_vt_native_string(Vec_Expr_Node *enp)
+const char *_eval_vt_native_string(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
-	NWARN("eval_vt_native_string:  not implemented for vt!?");
+	warn("eval_vt_native_string:  not implemented for vt!?");
 	return("");
 }
 
-float eval_vt_native_flt(Vec_Expr_Node *enp)
+float _eval_vt_native_flt(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
-	NWARN("eval_vt_native_flt:  not implemented for vt!?");
+	warn("eval_vt_native_flt:  not implemented for vt!?");
 	return(0.0);
 }
 
-void eval_vt_native_assignment(Data_Obj *dp, Vec_Expr_Node *enp )
+void _eval_vt_native_assignment(QSP_ARG_DECL  Data_Obj *dp, Vec_Expr_Node *enp )
 {
 	switch(VN_INTVAL(enp)){
 		default:
@@ -69,7 +69,7 @@ void eval_vt_native_assignment(Data_Obj *dp, Vec_Expr_Node *enp )
 		return;								\
 	}
 
-void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
+void _eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 {
 	Vec_Expr_Node *arg_enp;
 	int vf_code=(-1);
@@ -397,7 +397,7 @@ advise("evaluating choldc...");
 	}
 }
 
-void update_vt_native_shape(Vec_Expr_Node *enp)
+void _update_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	switch(VN_INTVAL(enp)){
 		default:
@@ -406,7 +406,7 @@ void update_vt_native_shape(Vec_Expr_Node *enp)
 	}
 }
 
-void prelim_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _prelim_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 
 	// All of these have no shape, so there's not

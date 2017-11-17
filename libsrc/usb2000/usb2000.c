@@ -74,15 +74,15 @@ USB2000_Cmd_Def usb2000_cmd_tbl[]={
 static void dump_buf(char *buf)
 {
 	while( *buf != '\0') {
-		sprintf(DEFAULT_ERROR_STRING, "0x%x	%c", *buf, *buf );
-		NADVISE(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING, "0x%x	%c", *buf, *buf );
+		advise(ERROR_STRING);
 		buf++;
 	}
 
 }
 #endif // DEBUG
 
-void make_pkt( char *pkt, const char *cmd, u_int arg )
+void _make_pkt(QSP_ARG_DECL  char *pkt, const char *cmd, u_int arg )
 {
 	if( ascii_mode ) {
 			sprintf((char *)pkt,"%s%d\n", cmd, arg);
@@ -97,12 +97,12 @@ void make_pkt( char *pkt, const char *cmd, u_int arg )
 		else if( cmd_len == 2 )
 			sprintf(pkt,"%.2x%.2x%.4x", *cmd, *(cmd+1), arg);
 
-		#ifdef CAUTIOUS
+#ifdef CAUTIOUS
 		else {
-			sprintf(DEFAULT_ERROR_STRING,"ERROR: cmd_len: %d not possible", cmd_len);
-			NWARN(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"ERROR: cmd_len: %d not possible", cmd_len);
+			warn(ERROR_STRING);
 		}
-		#endif /* CAUTIOUS */
+#endif /* CAUTIOUS */
 	}
 }
 
@@ -1067,7 +1067,9 @@ int set_calib_const(QSP_ARG_DECL  Cmd_Index cmd_index, int calib_index, const ch
 
 }
 
-static u_short wavlen_to_pxl(float wavlen)
+#define wavlen_to_pxl(wavlen) _wavlen_to_pxl(QSP_ARG  wavlen)
+
+static u_short _wavlen_to_pxl(QSP_ARG_DECL  float wavlen)
 {
 	u_short i;
 	float diff;
@@ -1087,9 +1089,9 @@ static u_short wavlen_to_pxl(float wavlen)
 		}
 	}
 
-	sprintf(DEFAULT_ERROR_STRING,"approximating %fnm to %fnm",
+	sprintf(ERROR_STRING,"approximating %fnm to %fnm",
 		wavlen, best_wav);
-	NADVISE(DEFAULT_ERROR_STRING);
+	advise(ERROR_STRING);
 
 	return pixel;
 }

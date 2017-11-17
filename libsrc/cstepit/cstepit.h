@@ -27,7 +27,8 @@ extern void setminmax(QSP_ARG_DECL  double *,double *,int);
 extern void setdelta(QSP_ARG_DECL  double *,double *,int);
 extern void settrace(int);
 extern void setmaxcalls(int);
-extern int reset_n_params(int);
+extern int _reset_n_params(QSP_ARG_DECL  int);
+#define reset_n_params(n) _reset_n_params(QSP_ARG  n)
 
 /* quick.c */
 

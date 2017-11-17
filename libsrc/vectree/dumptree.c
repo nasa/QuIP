@@ -184,9 +184,11 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	} else if( code == T_STATIC_OBJ ){
 		sprintf(msg_str,"\t%s",OBJ_NAME(VN_OBJ(enp)));
 		prt_msg_frag(msg_str);
+#ifdef SCALARS_NOT_OBJECTS
 	} else if( code == T_SCALAR_VAR ){
 		sprintf(msg_str,"\t%s",VN_STRING(enp));
 		prt_msg_frag(msg_str);
+#endif // SCALARS_NOT_OBJECTS
 	} else if ( code == T_FUNCREF ){
 		Subrt *srp;
 		srp=VN_SUBRT(enp);
@@ -209,7 +211,7 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		//sprintf(msg_str,"  %s",NAME_FOR_PREC_CODE(VN_INTVAL(enp)));
 		sprintf(msg_str,"  %s",PREC_NAME(VN_PREC_PTR(enp)));
 		prt_msg_frag(msg_str);
-	} else if( code == T_SUBRT || code == T_SCRIPT ){
+	} else if( code == T_SUBRT_DECL || code == T_SCRIPT ){
 		Subrt *srp;
 		srp=VN_SUBRT(enp);
 		sprintf(msg_str,"\t%s",SR_NAME(srp));
@@ -302,7 +304,7 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			prt_msg_frag(msg_str);
 		}
 		prt_msg_frag("\t");
-		DESCRIBE_SHAPE(VN_SHAPE(enp));
+		describe_shape(VN_SHAPE(enp));
 	}
 
 	if( SHOWING_RESOLVERS && VN_RESOLVERS(enp)!=NULL ){

@@ -92,18 +92,18 @@ static COMMAND_FUNC( do_rbt_add )
 	rb_insert_item( the_tree_p, ip );
 }
 
-static void rb_item_print( qrb_node *np, qrb_tree *tree_p )
+static void _rb_item_print(QSP_ARG_DECL  qrb_node *np, qrb_tree *tree_p )
 {
 	const Item *ip;
 
 	ip = np->data;
-	printf("\t%s\n",ip->item_name);
-	fflush(stdout);
+	sprintf(MSG_STR,"\t%s\n",ip->item_name);
+	prt_msg(MSG_STR);
 }
 
 static COMMAND_FUNC( do_rbt_print )
 {
-	rb_traverse( the_tree_p->root, rb_item_print, the_tree_p );
+	rb_traverse( the_tree_p->root, _rb_item_print, the_tree_p );
 }
 
 static COMMAND_FUNC( do_rbt_del )
@@ -877,10 +877,10 @@ static COMMAND_FUNC( do_repeat )
 	int n;
 	n=(int)how_many("number of iterations");
 	if( n <= 0 ){
-		warn("do_repeat:  number of repetitions must be positive!?");
+		sprintf(ERROR_STRING,"do_repeat:  number of repetitions (%d) must be positive!?",n);
+		warn(ERROR_STRING);
 		return;
 	}
-
 	open_loop(n);
 }
 
@@ -1678,13 +1678,13 @@ ADD_CMD( ?,	do_list_current_menu,	list commands in current menu	)
 ADD_CMD( ??,	do_list_builtin_menu,	list commands in builtin menu	)
 MENU_SIMPLE_END(help)
 
-void init_builtins(void)
+void _init_builtins(SINGLE_QSP_ARG_DECL)
 {
 	// Normally we do not have to call the init functions,
 	// as it is done automatically by the macro CHECK_AND_PUSH_MENU,
 	// but these menus are never pushed, so we do it here.
-	init_help_menu();
-	init_builtin_menu();
+	init_help_menu(SINGLE_QSP_ARG);
+	init_builtin_menu(SINGLE_QSP_ARG);
 
 	SET_QS_BUILTIN_MENU(DEFAULT_QSP,builtin_menu);
 	SET_QS_HELP_MENU(DEFAULT_QSP,help_menu);

@@ -12,7 +12,7 @@ libpsych_a_SOURCES = 				\
 		stair.c		rxvals.c	\
 		asc_data.c	lookmenu.c	\
 		mlfit.c		lump.c		\
-		weibull.c	\
+		weibull.c			\
 		errbars.c	stc_edit.c	\
 		clrdat.c
 

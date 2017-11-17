@@ -690,14 +690,14 @@ static inline int expand_macro_if(QSP_ARG_DECL  const char *buf)
 
 // was qword
 
-/*static*/ const char * _next_query_word(QSP_ARG_DECL const char *pline)
+const char * _next_query_word(QSP_ARG_DECL const char *pline)
 		/* prompt */
 {
 	const char *buf;
 
 	do {
 		do {
-			if( QLEVEL < 0 ){
+			if( QLEVEL < Q_STOP_LEVEL ){
 				return NULL;
 			}
 
@@ -744,7 +744,7 @@ advise(ERROR_STRING);
 
 	// This can happen if we run out of input while trying to
 	// read the macro args...
-	if( QLEVEL < 0 ) return NULL;
+	if( QLEVEL < Q_STOP_LEVEL ) return NULL;
 
 	return(buf);
 } /* end next_query_word() */
@@ -2515,7 +2515,9 @@ static void init_vector_parser_data_stack(Query_Stack *qsp)
 	SET_QS_VECTOR_PARSER_DATA(qsp,NULL);
 }
 
-static void init_vector_parser_data(Vector_Parser_Data *vpd_p)
+#define init_vector_parser_data(vpd_p) _init_vector_parser_data(QSP_ARG  vpd_p)
+
+static void _init_vector_parser_data(QSP_ARG_DECL  Vector_Parser_Data *vpd_p)
 {
 	bzero(vpd_p,sizeof(*vpd_p));
 
@@ -2529,7 +2531,9 @@ static void init_vector_parser_data(Vector_Parser_Data *vpd_p)
 	SET_VPD_SUBRT_CTX_STACK(vpd_p,new_list());
 }
 
-static void rls_vector_parser_data(Vector_Parser_Data *vpd_p)
+#define rls_vector_parser_data(vpd_p) _rls_vector_parser_data(QSP_ARG  vpd_p)
+
+static void _rls_vector_parser_data(QSP_ARG_DECL  Vector_Parser_Data *vpd_p)
 {
 	rls_stringbuf(VPD_YY_INPUT_LINE(vpd_p));
 	rls_stringbuf(VPD_YY_LAST_LINE(vpd_p));
@@ -2640,6 +2644,8 @@ void init_query_stack(Query_Stack *qsp)
 	SET_QS_QRY_STACK(qsp,new_stack());
 	SET_QS_MENU_STACK(qsp,new_stack());
 	SET_QS_LEVEL(qsp,(-1));
+	SET_QS_STOP_LEVEL(qsp,0);
+	SET_QS_STOP_LEVEL_STACK(qsp,NULL);
 
 	for(i=0;i<MAX_VAR_BUFS;i++){
 		SET_QS_VAR_BUF(qsp,i,new_stringbuf());
@@ -2686,6 +2692,28 @@ void init_query_stack(Query_Stack *qsp)
 	}
 #endif /* USE_QS_QUEUE */
 }
+
+void _push_stop_level(QSP_ARG_DECL  int l)
+{
+	if( QS_STOP_LEVEL_STACK(THIS_QSP) == NULL )
+		SET_QS_STOP_LEVEL_STACK(THIS_QSP,new_stack());
+
+	push_item( QS_STOP_LEVEL_STACK(THIS_QSP), (void *) ((long)Q_STOP_LEVEL) );
+
+	SET_QS_STOP_LEVEL(THIS_QSP,l);
+}
+
+int _pop_stop_level(SINGLE_QSP_ARG_DECL)
+{
+	void *vp;
+
+	assert( QS_STOP_LEVEL_STACK(THIS_QSP) != NULL );
+	assert( stack_size(QS_STOP_LEVEL_STACK(THIS_QSP)) > 0 );
+
+	vp = pop_item(QS_STOP_LEVEL_STACK(THIS_QSP));
+	return (int) ((long)vp);
+}
+
 
 // The filename is now part of the query struct, so we don't have a separate stack...
 
@@ -2924,7 +2952,7 @@ void _foreach_loop(QSP_ARG_DECL Foreach_Loop *frp)
 	SET_QRY_FLAG_BITS(qp,Q_SAVING);
 }
 
-void zap_fore(Foreach_Loop *frp)
+void _zap_fore(QSP_ARG_DECL  Foreach_Loop *frp)
 {
 	Node *np;
 
@@ -3601,7 +3629,7 @@ static void add_func_to_list(List *lp,void (*func)(SINGLE_QSP_ARG_DECL) )
 #ifdef CAUTIOUS
 	np = QLIST_HEAD(lp);
 	while(np!=NULL){
-		assert( func != ((void (*)())NODE_DATA(np)) );
+		assert( func != ((void (*)(SINGLE_QSP_ARG_DECL))NODE_DATA(np)) );
 		np = NODE_NEXT(np);
 	}
 #endif // CAUTIOUS

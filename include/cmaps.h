@@ -103,14 +103,17 @@ extern long cm_flags,cm_state;
 /* prototypes */
 
 /* cmfuncs.c */
-extern void		push_cm_state(void);
-extern void		pop_cm_state(void);
+extern void		_push_cm_state(SINGLE_QSP_ARG_DECL);
+extern void		_pop_cm_state(SINGLE_QSP_ARG_DECL);
+#define push_cm_state() _push_cm_state(SINGLE_QSP_ARG)
+#define pop_cm_state() _pop_cm_state(SINGLE_QSP_ARG)
+
 extern void		cm_immediate(long immediate);
 extern void		update_all(void);
-extern void		getmap(Data_Obj *);
 extern void		set_colormap(Data_Obj *);
 extern void		update_if(void);
 
+extern void		_getmap(QSP_ARG_DECL  Data_Obj *);
 extern void		_setcolor(QSP_ARG_DECL  int c, int r, int g, int b);
 extern void		_const_cmap(QSP_ARG_DECL  int base,int n,int r,int g,int b);
 extern void		_make_grayscale(QSP_ARG_DECL  int base,int n_colors);
@@ -120,6 +123,7 @@ extern void		_setmap(QSP_ARG_DECL  Data_Obj *);
 extern Data_Obj *	_new_colormap(QSP_ARG_DECL  const char *);
 extern int		_color_index_out_of_range(QSP_ARG_DECL  u_int index);
 
+#define getmap(dp)			_getmap(QSP_ARG  dp)
 #define setcolor(c,r,g,b)		_setcolor(QSP_ARG  c,r,g,b)
 #define const_cmap(base,n,r,g,b)	_const_cmap(QSP_ARG  base,n,r,g,b)
 #define make_grayscale(base,n_colors)	_make_grayscale(QSP_ARG  base,n_colors)
@@ -130,8 +134,9 @@ extern int		_color_index_out_of_range(QSP_ARG_DECL  u_int index);
 #define color_index_out_of_range(index)	_color_index_out_of_range(QSP_ARG  index)
 
 #ifdef HAVE_X11
-extern void		select_cmap_display(Dpyable *);
+extern void		_select_cmap_display(QSP_ARG_DECL  Dpyable *);
 extern void		_default_cmap(QSP_ARG_DECL  Dpyable *);
+#define select_cmap_display(d) _select_cmap_display(QSP_ARG  d)
 #define default_cmap(p) _default_cmap(QSP_ARG  p)
 #endif /* HAVE_X11 */
 
@@ -144,27 +149,40 @@ extern void	lin_setup(QSP_ARG_DECL  Data_Obj *,double gam,double vz);
 
 /* bplanes.c */
 
-extern void	set_lvls_per_comp(int n);
-extern void	set_c_amps(QSP_ARG_DECL  int index);
-extern void	count(QSP_ARG_DECL  int digit,int offset);
-extern void	set_ncomps(int n);
 extern int	get_ncomps(void);
-extern void	set_comp_amps(QSP_ARG_DECL  float *amps);
-extern void	sine_mod_amp(QSP_ARG_DECL  int nframes, float *phases,
-			int period, float*envelope, const char *lutstem);
-extern void	set_base_index(int i);
 extern int	get_base_index(void);
 extern void	setwhite(float *white);
-extern void	set_bit_vecs(float veclist[][3]);
-extern void	set_bitplanes(QSP_ARG_DECL  int nplanes, float *amps);
-extern void	set_bits_per_comp(int n);
+
+extern void	_set_bits_per_comp(QSP_ARG_DECL  int n);
+extern void	_set_bit_vecs(QSP_ARG_DECL  float veclist[][3]);
+extern void	_set_base_index(QSP_ARG_DECL  int i);
+extern void	_set_ncomps(QSP_ARG_DECL  int n);
+extern void	_set_c_amps(QSP_ARG_DECL  int index);
+extern void	_count(QSP_ARG_DECL  int digit,int offset);
+extern void	_set_comp_amps(QSP_ARG_DECL  float *amps);
+extern void	_sine_mod_amp(QSP_ARG_DECL  int nframes, float *phases, int period, float*envelope, const char *lutstem);
+extern void	_set_bitplanes(QSP_ARG_DECL  int nplanes, float *amps);
+extern void	_set_lvls_per_comp(QSP_ARG_DECL  int n);
+
+#define set_bits_per_comp(n) _set_bits_per_comp(QSP_ARG  n)
+#define set_bit_vecs(veclist) _set_bit_vecs(QSP_ARG  veclist)
+#define set_base_index(i) _set_base_index(QSP_ARG  i)
+#define set_ncomps(n) _set_ncomps(QSP_ARG  n)
+#define set_c_amps(index) _set_c_amps(QSP_ARG  index)
+#define count(digit,offset) _count(QSP_ARG  digit,offset)
+#define set_comp_amps(amps) _set_comp_amps(QSP_ARG  amps)
+#define sine_mod_amp(nframes,phases,period,envelope,lutstem) _sine_mod_amp(QSP_ARG  nframes,phases,period,envelope,lutstem)
+#define set_bitplanes(nplanes,amps) _set_bitplanes(QSP_ARG  nplanes,amps)
+#define set_lvls_per_comp(n) _set_lvls_per_comp(QSP_ARG  n)
 
 /* alpha.c */
 
-extern void	set_alpha(int index,int alpha);
-extern void	index_alpha(int index,int lv,int hv);
+extern void	_set_alpha(QSP_ARG_DECL  int index,int alpha);
+extern void	_index_alpha(QSP_ARG_DECL  int index,int lv,int hv);
 extern void	_const_alpha(QSP_ARG_DECL  int value);
 
+#define set_alpha(index,alpha) _set_alpha(QSP_ARG  index,alpha)
+#define index_alpha(index,lv,hv) _index_alpha(QSP_ARG  index,lv,hv)
 #define const_alpha(value) _const_alpha(QSP_ARG  value)
 
 /* verluts.c */

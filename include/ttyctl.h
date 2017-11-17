@@ -20,9 +20,13 @@ typedef struct termio_option {
 
 /* prototypes from termio.c */
 
-extern void set_ndata(int fd,int n);
+extern void _set_n_data_bits(QSP_ARG_DECL  int fd,int n);
+#define set_n_data_bits(fd,n) _set_n_data_bits(QSP_ARG  fd,n)
+
 extern void set_parity(int fd,int flag,int odd);
-extern void set_baud(int fd,int rate);
+extern void _set_baud(QSP_ARG_DECL  int fd,int rate);
+#define set_baud(fd,rate) _set_baud(QSP_ARG  fd,rate)
+
 extern void tty_nonl(int fd);
 extern void ttyraw(int fd);
 extern void ttycbrk(int fd);
@@ -41,7 +45,8 @@ extern void _dump_term_flags(QSP_ARG_DECL  u_long flag,Termio_Option *tbl);
 #define dump_term_flags(flag,tbl) _dump_term_flags(QSP_ARG  flag,tbl)
 
 // my_stty.c
-extern void set_tty_flag(const char *flagname,int fd,int value);
+extern void _set_tty_flag(QSP_ARG_DECL  const char *flagname,int fd,int value);
+#define set_tty_flag(flagname,fd,value) _set_tty_flag(QSP_ARG  flagname,fd,value)
 
 #endif /* TTY_CTL */
 

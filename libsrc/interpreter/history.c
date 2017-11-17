@@ -110,7 +110,7 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 
 	//lp = dictionary_list(CTX_DICT(icp));
 	//np=QLIST_HEAD(lp);
-	ep = (CTX_CONTAINER(icp)->cnt_typ_p->new_enumerator)(CTX_CONTAINER(icp));
+	ep = (CTX_CONTAINER(icp)->cnt_typ_p->new_enumerator)(QSP_ARG  CTX_CONTAINER(icp));
 	if( ep == NULL ) return;
 
 	while(ep!=NULL){
@@ -304,7 +304,7 @@ static inline void insure_prompt_buf(QSP_ARG_DECL  const char *fmt, const char *
  * - what does that mean?  should we reset the flag here???
  */
 
-const char *format_prompt(QSP_ARG_DECL  const char *fmt, const char *prompt)
+const char *_format_prompt(QSP_ARG_DECL  const char *fmt, const char *prompt)
 {
 	char *pline;
 
@@ -329,7 +329,7 @@ void _rem_phist(QSP_ARG_DECL  const char *prompt,const char* word)
 {
 	const char *formatted_prompt;
 
-	formatted_prompt = format_prompt(QSP_ARG  prompt);
+	formatted_prompt = format_prompt(prompt);
 	char s[LLEN];
 
 	sprintf(s,PROMPT_FORMAT,prompt);
@@ -477,12 +477,14 @@ static const char *cyc_item_list( Frag_Match_Info *fmi_p, int direction )
 }
 #endif // NOT_USED_YET
 
-static const char * advance_frag_match( Frag_Match_Info * fmi_p, int direction )
+#define advance_frag_match(fmi_p,direction) _advance_frag_match(QSP_ARG  fmi_p,direction)
+
+static const char *_advance_frag_match(QSP_ARG_DECL  Frag_Match_Info * fmi_p, int direction )
 {
 	Container *cnt_p;
 
 	cnt_p = CTX_CONTAINER(FMI_CTX(fmi_p));
-	return (*(cnt_p->cnt_typ_p->advance_frag_match))(fmi_p,direction);
+	return (*(cnt_p->cnt_typ_p->advance_frag_match))(QSP_ARG  fmi_p,direction);
 }
 
 static const char * current_frag_match( Frag_Match_Info * fmi_p )
@@ -495,12 +497,14 @@ static const char * current_frag_match( Frag_Match_Info * fmi_p )
 	return ip->item_name;
 }
 
-static void reset_frag_match( Frag_Match_Info *fmi_p, int direction )
+#define reset_frag_match(fmi_p,direction) _reset_frag_match(QSP_ARG  fmi_p,direction)
+
+static void _reset_frag_match(QSP_ARG_DECL  Frag_Match_Info *fmi_p, int direction )
 {
 	Container *cnt_p;
 
 	cnt_p = FMI_CONTAINER(fmi_p);
-	(*(cnt_p->cnt_typ_p->reset_frag_match))(fmi_p,direction);
+	(*(cnt_p->cnt_typ_p->reset_frag_match))(QSP_ARG  fmi_p,direction);
 }
 
 // We can have matches in different contexts on the context stack.  We keep a list that has matches

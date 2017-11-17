@@ -29,7 +29,9 @@
 
 static int vgat_fd=(-1);
 
-void vgat_init()
+#define vgat_init() _vgat_init(SINGLE_QSP_ARG)
+
+static void _vgat_init(SINGLE_QSP_ARG_DECL)
 {
 	static int warned=0;
 
@@ -39,7 +41,7 @@ void vgat_init()
 	if( vgat_fd < 0 ){
 		if( !warned ){
 			perror("open /dev/vgat");
-			NWARN("unable to open /dev/vgat");
+			warn("unable to open /dev/vgat");
 			warned=1;
 		}
 	}

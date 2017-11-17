@@ -15,6 +15,7 @@
 #include "list.h"
 #include "variable.h"
 
+// We assume that only one thread will use this at a time...
 static Query_Stack *am_qsp=NULL;
 
 /* local prototypes */
@@ -22,7 +23,7 @@ static Query_Stack *am_qsp=NULL;
 static float amoeba_scr_funk(float *p);
 static void run_amoeba(float (*func)(float *));
 static void show_simplex_verts(void);
-static void init_simplex(void);
+static void init_simplex(SINGLE_QSP_ARG_DECL);
 static float (*user_c_func)(SINGLE_QSP_ARG_DECL);
 
 
@@ -30,7 +31,13 @@ static float simplex_vertices[MAX_OPT_PARAMS+1][MAX_OPT_PARAMS];
 
 void halt_amoeba(void)
 {
-	NWARN("Sorry, don't know how to halt amoeba!?");
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+    
+	qsp = am_qsp;
+#endif // THREAD_SAFE_QUERY
+
+	warn("Sorry, don't know how to halt amoeba!?");
 }
 
 static void show_simplex_verts()
@@ -47,7 +54,7 @@ static void show_simplex_verts()
 	}
 }
 
-static void init_simplex()
+static void init_simplex(SINGLE_QSP_ARG_DECL)
 {
 	List *lp;
 	Node *np;
@@ -56,7 +63,7 @@ static void init_simplex()
 
 	lp=_opt_param_list(SGL_DEFAULT_QSP_ARG);
 	if( lp == NULL ){
-		NWARN("init_simplex:  no params!?");
+		warn("init_simplex:  no params!?");
 		return;
 	}
 	n = eltcount(lp);
@@ -97,7 +104,7 @@ static float amoeba_scr_funk(float *p)
 
 	lp=_opt_param_list(SGL_DEFAULT_QSP_ARG);
 	if( lp==NULL ) {
-		NWARN("no parameters!?");
+		warn("no parameters!?");
 		return(0.0);
 	}
 
@@ -170,8 +177,14 @@ static void run_amoeba( float (*func)(float *) )
 	int nfunk;
 	int i;
 	int n;
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+    
+	qsp = am_qsp;
+#endif // THREAD_SAFE_QUERY
 
-	init_simplex();
+
+	init_simplex(SINGLE_QSP_ARG);
 
 	/* make a matrix p[][] of simplex vertices */
 

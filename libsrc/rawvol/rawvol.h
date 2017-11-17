@@ -273,16 +273,12 @@ extern int rawvol_debug;
 extern int rv_is_open(void);
 extern void perform_write_test(QSP_ARG_DECL  int i_block, int n_blocks, int n_reps );
 extern int legal_rv_filename(const char *);
-extern void rv_set_extra(int);
 extern void rv_mkdir(QSP_ARG_DECL  const char *dirname);
 extern int rv_cd(QSP_ARG_DECL  const char *dirname);
 extern void rv_pwd(SINGLE_QSP_ARG_DECL);
 extern int grant_root_access(QSP_ARG_DECL  const char *user_name);
-extern int remember_frame_info(RV_Inode *inp, int index, USHORT_ARG nerr, dimension_t *frames);
 extern void xfer_frame_info(dimension_t *lp,int index,RV_Inode *inp);
 extern void dump_block(QSP_ARG_DECL  int i,dimension_t block);
-
-extern int	rv_frame_seek(QSP_ARG_DECL  RV_Inode *,dimension_t);
 
 extern void read_rv_super(QSP_ARG_DECL  const char *vol_name);
 extern RV_Inode * rv_newfile(QSP_ARG_DECL  const char *name,dimension_t size);
@@ -301,6 +297,9 @@ extern List *rv_inode_list(SINGLE_QSP_ARG_DECL);
 extern void rv_chmod(QSP_ARG_DECL  RV_Inode *,int);
 extern void rv_mkfile(QSP_ARG_DECL  const char *s,long total_blocks,long n_per_write);
 
+extern void _rv_set_extra(QSP_ARG_DECL  int n);
+
+#define rv_set_extra(n) _rv_set_extra(QSP_ARG  n)
 
 ITEM_INTERFACE_PROTOTYPES(RV_Inode,rv_inode)
 #define pick_rv_inode(p)	_pick_rv_inode(QSP_ARG  p)
@@ -312,7 +311,10 @@ extern void set_use_osync(int flag);
 
 extern void	rawvol_info(SINGLE_QSP_ARG_DECL);
 extern void     rawvol_get_usage(SINGLE_QSP_ARG_DECL);
-extern int	rv_truncate(RV_Inode *,dimension_t);
+
+// moved to rv_api.h
+//extern int	_rv_truncate(QSP_ARG_DECL  RV_Inode *,dimension_t);
+//#define rv_truncate(inp,d) _rv_truncate(QSP_ARG  inp,d)
 
 #endif /* undef _RAWVOL_H_ */
 

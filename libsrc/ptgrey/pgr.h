@@ -112,37 +112,57 @@ extern int init_firewire_system(SINGLE_QSP_ARG_DECL);
 extern int start_firewire_transmission(QSP_ARG_DECL  PGR_Cam * pgcp, int buf_size );
 extern Data_Obj * grab_firewire_frame(QSP_ARG_DECL  PGR_Cam * pgcp );
 extern Data_Obj * grab_newest_firewire_frame(QSP_ARG_DECL  PGR_Cam * pgcp );
-extern int stop_firewire_capture( PGR_Cam * pgcp );
-extern int reset_camera( PGR_Cam * pgcp );
 extern void list_trig( QSP_ARG_DECL  PGR_Cam * pgcp );
-extern void release_oldest_frame(PGR_Cam *pgcp);
 extern void report_bandwidth(QSP_ARG_DECL  PGR_Cam *pgcp);
 extern int list_framerates(QSP_ARG_DECL  PGR_Cam *pgcp);
 extern int list_video_modes(QSP_ARG_DECL  PGR_Cam *pgcp);
 extern void show_framerate(QSP_ARG_DECL  PGR_Cam *pgcp);
 extern void show_video_mode(QSP_ARG_DECL  PGR_Cam *pgcp);
 extern int pick_framerate(QSP_ARG_DECL  PGR_Cam *pgcp, const char *pmpt);
-extern int set_framerate(PGR_Cam *pgcp, int mode_index);
 extern void print_camera_info(QSP_ARG_DECL  PGR_Cam *pgcp);
 extern int list_camera_features(QSP_ARG_DECL  PGR_Cam *pgcp);
 extern int get_feature_choices(PGR_Cam *pgcp, const char ***chp);
 extern void get_camera_features(PGR_Cam *pgcp);
 
+extern int _reset_camera(QSP_ARG_DECL  PGR_Cam * pgcp );
+extern int _stop_firewire_capture(QSP_ARG_DECL  PGR_Cam * pgcp );
+extern void _release_oldest_frame(QSP_ARG_DECL  PGR_Cam *pgcp);
+extern int _set_framerate(QSP_ARG_DECL  PGR_Cam *pgcp, int mode_index);
+#define reset_camera(pgcp) _reset_camera(QSP_ARG  pgcp )
+#define stop_firewire_capture(pgcp ) _stop_firewire_capture(QSP_ARG  pgcp )
+#define release_oldest_frame(pgcp) _release_oldest_frame(QSP_ARG  pgcp)
+#define set_framerate(pgcp, mode_index) _set_framerate(QSP_ARG  pgcp, mode_index)
+
 /* cam_ctl.c */
 #ifdef HAVE_LIBDC1394
 extern void describe_dc1394_error( QSP_ARG_DECL  dc1394error_t e );
 extern int is_auto_capable( dc1394feature_info_t *feat_p );
-extern int set_camera_framerate(PGR_Cam *pgcp, dc1394framerate_t framerate );
-extern int set_camera_trigger_polarity(PGR_Cam *pgcp,
+
+extern int _set_camera_trigger_polarity(QSP_ARG_DECL  PGR_Cam *pgcp,
 	dc1394trigger_polarity_t polarity);
-extern int set_camera_trigger_mode(PGR_Cam *pgcp, dc1394trigger_mode_t mode);
-extern int set_camera_trigger_source(PGR_Cam *pgcp, dc1394trigger_source_t source);
-extern int set_iso_speed(PGR_Cam *pgcp, dc1394speed_t speed);
+extern int _set_camera_framerate(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394framerate_t framerate );
+extern int _set_camera_trigger_mode(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394trigger_mode_t mode);
+extern int _set_camera_trigger_source(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394trigger_source_t source);
+extern int _set_iso_speed(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394speed_t speed);
+
+#define set_camera_trigger_polarity(pgcp, polarity) _set_camera_trigger_polarity(QSP_ARG  pgcp, polarity)
+#define set_camera_framerate(pgcp,framerate) _set_camera_framerate(QSP_ARG  pgcp,framerate)
+#define set_camera_trigger_mode(pgcp, mode) _set_camera_trigger_mode(QSP_ARG  pgcp, mode)
+#define set_camera_trigger_source(pgcp,source) _set_camera_trigger_source(QSP_ARG  pgcp,source)
+#define set_iso_speed(pgcp,speed) _set_iso_speed(QSP_ARG  pgcp,speed)
+
 #endif /* HAVE_LIBDC1394 */
-extern int set_camera_bmode(PGR_Cam *, int);
-extern int power_on_camera(PGR_Cam *pgcp);
-extern int power_off_camera(PGR_Cam *pgcp);
-extern int set_camera_temperature(PGR_Cam *pgcp, int temp);
-extern int set_camera_white_balance(PGR_Cam *pgcp, int wb);
-extern int set_camera_white_shading(PGR_Cam *pgcp, int val);
+extern int _power_on_camera(QSP_ARG_DECL  PGR_Cam *pgcp);
+extern int _power_off_camera(QSP_ARG_DECL  PGR_Cam *pgcp);
+extern int _set_camera_temperature(QSP_ARG_DECL  PGR_Cam *pgcp, int temp);
+extern int _set_camera_white_shading(QSP_ARG_DECL  PGR_Cam *pgcp, int val);
+extern int _set_camera_white_balance(QSP_ARG_DECL  PGR_Cam *pgcp, int wb);
+extern int _set_camera_bmode(QSP_ARG_DECL  PGR_Cam *, int);
+
+#define power_on_camera(pgcp) _power_on_camera(QSP_ARG  pgcp)
+#define power_off_camera(pgcp) _power_off_camera(QSP_ARG  pgcp)
+#define set_camera_temperature(pgcp,temp) _set_camera_temperature(QSP_ARG  pgcp,temp)
+#define set_camera_white_shading(pgcp,val) _set_camera_white_shading(QSP_ARG  pgcp,val)
+#define set_camera_white_balance(pgcp,wb) _set_camera_white_balance(QSP_ARG  pgcp,wb)
+#define set_camera_bmode(pgcp, n) _set_camera_bmode(QSP_ARG  pgcp, n)
 

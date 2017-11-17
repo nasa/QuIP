@@ -95,7 +95,7 @@ static COMMAND_FUNC( do_set_quality )
 }
 
 
-void install_cjpeg_params(j_compress_ptr cinfo)
+void _install_cjpeg_params(QSP_ARG_DECL  j_compress_ptr cinfo)
 {
 	int ci;
 	int q_scale_factor;
@@ -114,7 +114,7 @@ void install_cjpeg_params(j_compress_ptr cinfo)
 	// check the return value just to suppress a compiler warning...
 	// The return value should be an integer representing the percentage...
 	if( q_scale_factor < 0 )
-		NWARN("install_cjpeg_params:  bad quality index!?");
+		warn("install_cjpeg_params:  bad quality index!?");
 
 	/* more stuff done by cjpeg after scanning options */
 

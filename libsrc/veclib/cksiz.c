@@ -51,7 +51,6 @@ int cksiz(QSP_ARG_DECL  int argtyp,Data_Obj *src_dp,Data_Obj *dst_dp)
 			/* if we get to here, the dimensions don't match... */
 			/* if the source dimension is 1, it may be an outer op */
 			/* if the destination dimension is 1, it may be a projection op */
-fprintf(stderr,"checking dimension of source object %s\n",OBJ_NAME(src_dp));
 			if( OBJ_TYPE_DIM(src_dp,i) == 1 /* && (argtyp&VV_SOURCES) == VV_SOURCES */ ){
 				/* vmul, vadd, vsub, vatan2 */
 				/* vvm_gt etc also */

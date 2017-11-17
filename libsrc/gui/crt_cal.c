@@ -926,7 +926,7 @@ static COMMAND_FUNC( save_matches )
 	FILE *fp;
 	int t,i;
 
-	fp=TRYNICE( nameof("filename"), "w" );
+	fp=try_nice( nameof("filename"), "w" );
 
 	if( !fp ) return;
 

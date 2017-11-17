@@ -174,33 +174,33 @@ sprintf(ERROR_STRING,"BEGIN act_init, matrix = %s",OBJ_NAME(rgb2opp_mat));
 advise(ERROR_STRING);
 */
 	if( rgb2opp_mat == NULL ){
-		NWARN("transformation matrix not defined");
+		warn("transformation matrix not defined");
 		return;
 	}
 	if( ! IS_CONTIGUOUS(rgb2opp_mat) ){
-		sprintf(DEFAULT_ERROR_STRING,"Matrix %s must be contiguous",OBJ_NAME(rgb2opp_mat));
-		NERROR1(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"Matrix %s must be contiguous",OBJ_NAME(rgb2opp_mat));
+		error1(ERROR_STRING);
 	}
 	if( OBJ_PREC(rgb2opp_mat) != PREC_SP ){
-		sprintf(DEFAULT_ERROR_STRING,"Matrix %s (%s) must have %s precision",
+		sprintf(ERROR_STRING,"Matrix %s (%s) must have %s precision",
 			OBJ_NAME(rgb2opp_mat),PREC_NAME(OBJ_PREC_PTR(rgb2opp_mat)),
 			PREC_NAME(PREC_FOR_CODE(PREC_SP)));
-		NERROR1(DEFAULT_ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	if( OBJ_COMPS(rgb2opp_mat) != 1 ){
-		sprintf(DEFAULT_ERROR_STRING,"Matrix %s (%d) must have component dimension = 1",
+		sprintf(ERROR_STRING,"Matrix %s (%d) must have component dimension = 1",
 			OBJ_NAME(rgb2opp_mat),OBJ_COMPS(rgb2opp_mat));
-		NERROR1(DEFAULT_ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	if( OBJ_PXL_INC(rgb2opp_mat) != 1 ){
-		sprintf(DEFAULT_ERROR_STRING,"Matrix %s (%d) must have pixel increment = 1",
+		sprintf(ERROR_STRING,"Matrix %s (%d) must have pixel increment = 1",
 			OBJ_NAME(rgb2opp_mat),OBJ_PXL_INC(rgb2opp_mat));
-		NERROR1(DEFAULT_ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	if( OBJ_COLS(rgb2opp_mat) != 3 || OBJ_ROWS(rgb2opp_mat) != 3 ){
-		sprintf(DEFAULT_ERROR_STRING,"Matrix %s (%d x %d) must be 3x3",
+		sprintf(ERROR_STRING,"Matrix %s (%d x %d) must be 3x3",
 			OBJ_NAME(rgb2opp_mat),OBJ_ROWS(rgb2opp_mat),OBJ_COLS(rgb2opp_mat));
-		NERROR1(DEFAULT_ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	fptr = (float *) OBJ_DATA_PTR(rgb2opp_mat);
 	for(mask=0;mask<8;mask++){
@@ -222,8 +222,8 @@ advise(ERROR_STRING);
 		act_by[mask]  += *(fptr+8) * b;
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"act_init:\t%d \t\t%g %g %g",mask,act_lum[mask],act_rg[mask],act_by[mask]);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"act_init:\t%d \t\t%g %g %g",mask,act_lum[mask],act_rg[mask],act_by[mask]);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -319,29 +319,29 @@ static int _setup_clr_requantize(SINGLE_QSP_ARG_DECL)
 	Precision *prec_p;
 
 	if( halftone_dp == NULL ){
-		NWARN("output image not specified");
+		warn("output image not specified");
 		return(ERROR_RETURN);
 	}
 	if( deslum_dp == NULL || desrg_dp == NULL || desby_dp == NULL ){
-		NWARN("input images not specified");
+		warn("input images not specified");
 		return(ERROR_RETURN);
 	}
 
 	if( lum_filt_dp == NULL ){
-		NWARN("filters not specified");
+		warn("filters not specified");
 		return(ERROR_RETURN);
 	}
 
 	if( OBJ_ROWS(halftone_dp) != OBJ_ROWS(deslum_dp) ||
 		OBJ_COLS(halftone_dp) != OBJ_COLS(deslum_dp) ){
-		NWARN("input/output size mismatch");
+		warn("input/output size mismatch");
 		return(ERROR_RETURN);
 	}
 
 	if( (OBJ_ROWS(deslum_dp) != OBJ_COLS(deslum_dp)) &&
-		( scan_func == get_xy_scattered_point) ){
+		( scan_func == _get_xy_scattered_point) ){
 
-		NWARN("input image must be square for scattered scanning");
+		warn("input image must be square for scattered scanning");
 		return(ERROR_RETURN);
 	}
 
@@ -364,7 +364,7 @@ static int _setup_clr_requantize(SINGLE_QSP_ARG_DECL)
 	by_ferr_dp = mk_img("by_ferror",
 		OBJ_ROWS(halftone_dp),OBJ_COLS(halftone_dp),1,prec_p);
 	if( lum_ferr_dp == NULL || rg_ferr_dp == NULL || by_ferr_dp == NULL ){
-		NWARN("couldn't create filtered error images");
+		warn("couldn't create filtered error images");
 		return(ERROR_RETURN);
 	}
 
@@ -375,7 +375,7 @@ static int _setup_clr_requantize(SINGLE_QSP_ARG_DECL)
 	by_err_dp = mk_img("by_error",
 		OBJ_ROWS(halftone_dp),OBJ_COLS(halftone_dp),1,prec_p);
 	if( lum_err_dp == NULL || rg_err_dp == NULL || by_err_dp == NULL ){
-		NWARN("couldn't create error images");
+		warn("couldn't create error images");
 		return(ERROR_RETURN);
 	}
 
@@ -406,7 +406,7 @@ COMMAND_FUNC( init_clr_requant )
 	/* initialize error images */
 
 	if( halftone_dp == NULL ){
-		NWARN("init_clr_requant:  no halftone image specified");
+		warn("init_clr_requant:  no halftone image specified");
 		return;
 	}
 	/*
@@ -604,8 +604,8 @@ static void _clr_migrate_pixel2(QSP_ARG_DECL  incr_t x, incr_t y)
 
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"clr_migrate %d %d:  orig_state = %d, orig_sos = %g",x,y,init_state,orig_sos);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"clr_migrate %d %d:  orig_state = %d, orig_sos = %g",x,y,init_state,orig_sos);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -625,9 +625,9 @@ advise(DEFAULT_ERROR_STRING);
 				delta_arr[mask1][dir][mask2] = the_sos - orig_sos;
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"clr_migrate2 %d %d %d:  the_sos = %g, delta = %g",
+sprintf(ERROR_STRING,"clr_migrate2 %d %d %d:  the_sos = %g, delta = %g",
 mask1,dir,mask2,the_sos,delta_arr[mask1][dir][mask2]);
-advise(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 			}
@@ -653,8 +653,8 @@ advise(DEFAULT_ERROR_STRING);
 	if( min_delta > 0 ){
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"clr_migrate2 %d %d, no improvement possible",x,y);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"clr_migrate2 %d %d, no improvement possible",x,y);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		return;	/* no improvement anywhere */
@@ -666,10 +666,10 @@ advise(DEFAULT_ERROR_STRING);
 // Is this the source of the uninitialized use warning?
 /*
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"FINAL clr_migrate2 %d %d %d (was %d), %d %d %d (was %d)",x,y,min_mask1,
+sprintf(ERROR_STRING,"FINAL clr_migrate2 %d %d %d (was %d), %d %d %d (was %d)",x,y,min_mask1,
 init_state,
 x+_dx[min_dir],y+_dy[min_dir],min_mask2,neighbor);
-advise(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 */
 #endif /* QUIP_DEBUG */
@@ -696,8 +696,8 @@ void _clr_migrate_pixel(QSP_ARG_DECL  incr_t x, incr_t y)
 
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"clr_migrate %d %d:  orig_sos = %g",x,y,orig_sos);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"clr_migrate %d %d:  orig_sos = %g",x,y,orig_sos);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -707,9 +707,9 @@ advise(DEFAULT_ERROR_STRING);
 		this_bit = init_state & bit;
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"clr_migrate %d:  bit = %d, init_state = %d, this_bit = %d",
+sprintf(ERROR_STRING,"clr_migrate %d:  bit = %d, init_state = %d, this_bit = %d",
 i,bit,init_state,this_bit);
-advise(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		/* now for this component, try to migrate in all directions */
@@ -722,8 +722,8 @@ advise(DEFAULT_ERROR_STRING);
 			neighbor = get_ht(x+_dx[j],y+_dy[j]);
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"clr_migrate %d %d:  neighbor = %d",i,j,neighbor);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"clr_migrate %d %d:  neighbor = %d",i,j,neighbor);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 			if( this_bit == (neighbor&bit) ){
@@ -737,17 +737,17 @@ advise(DEFAULT_ERROR_STRING);
 			delta_arr[i][j] = the_sos - orig_sos;
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"clr_migrate %d %d:  the_sos = %g, delta = %g",i,j,the_sos,delta_arr[i][j]);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"clr_migrate %d %d:  the_sos = %g, delta = %g",i,j,the_sos,delta_arr[i][j]);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 			/* restore former state! */
 			try_it(neighbor,x+_dx[j],y+_dy[j]);
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"clr_migrate %d %d:  %d %d  %d, %d %d  %d, delta = %g",i,j,
+sprintf(ERROR_STRING,"clr_migrate %d %d:  %d %d  %d, %d %d  %d, delta = %g",i,j,
 x,y,init_state^bit,x+_dx[j],y+_dy[j],neighbor^bit,delta_arr[i][j]);
-advise(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		}
@@ -763,8 +763,8 @@ advise(DEFAULT_ERROR_STRING);
 		for(j=0;j<8;j++){
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"clr_migrate %d %d, delta = %g",i,j,delta_arr[i][j]);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"clr_migrate %d %d, delta = %g",i,j,delta_arr[i][j]);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 			if( delta_arr[i][j] < min_delta ){
@@ -778,8 +778,8 @@ advise(DEFAULT_ERROR_STRING);
 	if( min_delta > 0 ){
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"clr_migrate %d %d, no improvement possible",x,y);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"clr_migrate %d %d, no improvement possible",x,y);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		return;	/* no improvement anywhere */
@@ -794,12 +794,12 @@ advise(DEFAULT_ERROR_STRING);
 	set_ht(neighbor^min_bit,x+_dx[min_dir],y+_dy[min_dir]);
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"clr_migrate %d %d:  %d %d, final setting %d",
+sprintf(ERROR_STRING,"clr_migrate %d %d:  %d %d, final setting %d",
 i,j,x,y,init_state^min_bit);
-advise(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"clr_migrate %d %d:  %d %d, final setting %d",
+advise(ERROR_STRING);
+sprintf(ERROR_STRING,"clr_migrate %d %d:  %d %d, final setting %d",
 i,j,x+_dx[min_dir],y+_dy[min_dir],neighbor^min_bit);
-advise(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -829,25 +829,25 @@ void _clr_redo_pixel(QSP_ARG_DECL  incr_t x,incr_t y)
 	double del_sos[8];
 
 	if( !cspread_inited ) {
-		WARN("cspread module not initialized");
+		warn("cspread module not initialized");
 		return;
 	}
 
 	min_mask = 0;		// quiet compiler
 
 	if( x < 0 || x >= OBJ_COLS(halftone_dp) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "clr_redo_pixel:  x coordinate %d is out of range for image %s (0-%d)",
 			x,OBJ_NAME(halftone_dp),OBJ_COLS(halftone_dp));
-		WARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( y < 0 || y >= OBJ_ROWS(halftone_dp) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "clr_redo_pixel:  y coordinate %d is out of range for image %s (0-%d)",
 			y,OBJ_NAME(halftone_dp),OBJ_ROWS(halftone_dp));
-		WARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -857,8 +857,8 @@ void _clr_redo_pixel(QSP_ARG_DECL  incr_t x,incr_t y)
 
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"clr_redo_pixel %d %d:  orig_sos = %g",x,y,orig_sos);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"clr_redo_pixel %d %d:  orig_sos = %g",x,y,orig_sos);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	for(mask=0;mask<8;mask++){
@@ -867,8 +867,8 @@ advise(DEFAULT_ERROR_STRING);
 		del_sos[mask]=delta;
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"clr_redo_pixel %d  %d %d:  the_sos = %g,  delta = %g",mask,x,y,the_sos,delta);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"clr_redo_pixel %d  %d %d:  the_sos = %g,  delta = %g",mask,x,y,the_sos,delta);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 		if( mask==0 || delta <= min_delta ){
@@ -879,10 +879,10 @@ advise(DEFAULT_ERROR_STRING);
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
 for(mask=0;mask<8;mask++)
-sprintf(DEFAULT_ERROR_STRING,"%d, %d\tdelta SOS for mask %d is %g\n",x,y,mask,del_sos[mask]);
-advise(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"%d, %d\t\tfinal mask is %d\n",x,y,min_mask);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"%d, %d\tdelta SOS for mask %d is %g\n",x,y,mask,del_sos[mask]);
+advise(ERROR_STRING);
+sprintf(ERROR_STRING,"%d, %d\t\tfinal mask is %d\n",x,y,min_mask);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	/* set error image & sos */
@@ -898,7 +898,7 @@ void _clr_scan_requant(QSP_ARG_DECL  uint32_t ntimes)
 
 
 	if( _npixels == NO_PIXELS ){
-		NWARN("have to tell me which images first!");
+		warn("have to tell me which images first!");
 		return;
 	}
 
@@ -908,7 +908,7 @@ void _clr_scan_requant(QSP_ARG_DECL  uint32_t ntimes)
 
 	for(j=0;j<ntimes;j++){
 		for(i=0;i<_npixels;i++){
-			(*scan_func)(i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
+			(*scan_func)(QSP_ARG  i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
 			clr_redo_pixel(x,y);
 		}
 	}
@@ -921,7 +921,7 @@ void _clr_scan_migrate(QSP_ARG_DECL  uint32_t n_times)
 	dimension_t x,y;
 
 	if( _npixels == NO_PIXELS ){
-		NWARN("have to tell me which images first!");
+		warn("have to tell me which images first!");
 		return;
 	}
 
@@ -933,7 +933,7 @@ void _clr_scan_migrate(QSP_ARG_DECL  uint32_t n_times)
 
 	for(j=0;j<n_times;j++){
 		for(i=0;i<_npixels;i++){
-			(*scan_func)(i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
+			(*scan_func)(QSP_ARG  i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
 			clr_migrate_pixel2(x,y);
 		}
 	}
@@ -941,8 +941,8 @@ void _clr_scan_migrate(QSP_ARG_DECL  uint32_t n_times)
 	if( n_pixels_changed == 0 ){
 		advise("No pixels changed.");
 	} else {
-		sprintf(DEFAULT_ERROR_STRING,"%d pixels changed.",n_pixels_changed);
-		advise(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"%d pixels changed.",n_pixels_changed);
+		advise(ERROR_STRING);
 	}
 }
 

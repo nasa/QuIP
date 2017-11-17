@@ -129,7 +129,7 @@ static double rn_uni(double arg)		/* arg is not used... */
 #ifdef HAVE_DRAND48
 	d=drand48();
 #else
-	NWARN("rn_uni:  no drand48!?");
+	_warn(DEFAULT_QSP_ARG  "rn_uni:  no drand48!?");
 	d=1.0;
 #endif // ! HAVE_DRAND48
 	return( d );

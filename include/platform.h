@@ -455,4 +455,6 @@ extern void show_gpu_vector(QSP_ARG_DECL  Platform_Device *pdp, void *ptr, int l
 
 extern long set_fused_kernel_args(QSP_ARG_DECL  void *kernel, int *idx_p, Vec_Expr_Node *enp, Compute_Platform *cpp);
 
+extern Platform_Device *default_pfdev(void);
+extern void set_default_pfdev(Platform_Device *pdp);
 #endif // _PLATFORM_H_

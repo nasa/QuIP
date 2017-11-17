@@ -32,12 +32,13 @@ extern Item * _pick_item(QSP_ARG_DECL  Item_Type *itp, const char *prompt);
 
 extern void	_set_del_method(QSP_ARG_DECL  Item_Type *,void (*func)(QSP_ARG_DECL  Item *) );
 extern void _del_item(QSP_ARG_DECL Item_Type *itp, void *ip );
-extern void recycle_item(Item_Type *itp, void *ip );
+extern void _recycle_item(QSP_ARG_DECL  Item_Type *itp, void *ip );
 extern void _delete_item_context(QSP_ARG_DECL Item_Context *icp );
 extern void _delete_item_context_with_callback(QSP_ARG_DECL Item_Context *icp, void (*func)(Item *) );
 
 #define set_del_method(itp,func)	_set_del_method(QSP_ARG  itp,func)
 #define del_item(itp,ip)		_del_item(QSP_ARG itp, ip )
+#define recycle_item(itp,ip)		_recycle_item(QSP_ARG  itp,ip)
 #define delete_item_context(icp)	_delete_item_context(QSP_ARG icp )
 #define delete_item_context_with_callback(icp,func)	_delete_item_context_with_callback(QSP_ARG icp, func)
 
@@ -71,8 +72,9 @@ extern Item * _get_member(QSP_ARG_DECL  Item_Class *icp,const char *name);
 extern Member_Info *_get_member_info(QSP_ARG_DECL  Item_Class *icp,const char *name);
 extern Member_Info *_check_member_info(QSP_ARG_DECL  Item_Class *icp,const char *name);
 
-extern void add_items_to_class(Item_Class *icp,Item_Type * itp,void* data,
-		Item * (*lookup)(QSP_ARG_DECL  const char *));
+extern void add_items_to_class(Item_Class *icp,Item_Type * itp,void* data, Item * (*lookup)(QSP_ARG_DECL  const char *));
+//extern void _add_items_to_class(QSP_ARG_DECL  Item_Class *icp,Item_Type * itp,void* data, Item * (*lookup)(QSP_ARG_DECL  const char *));
+//#define add_items_to_class(icp,itp,data,lookup) _add_items_to_class(QSP_ARG  icp,itp,data,lookup)
 
 #define get_item_type(name)	_get_item_type(QSP_ARG  name)
 #define new_item_class(name)	_new_item_class(QSP_ARG  name)

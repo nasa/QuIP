@@ -92,7 +92,7 @@ static void setup_generic_macro_arg(Macro_Arg *map, int idx)
 	map->ma_prompt = savestr(str);	// memory leak?  BUG?  where freed?
 }
 
-Macro_Arg **create_generic_macro_args(int n)
+Macro_Arg **_create_generic_macro_args(QSP_ARG_DECL  int n)
 {
 	Macro_Arg **ma_tbl;
 	int i;

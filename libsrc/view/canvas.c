@@ -38,7 +38,7 @@ int add_image( Viewer *vp, Data_Obj *dp, int x, int y )
 }
 #endif /* ! BUILD_FOR_IOS */
 
-void old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
+void _old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 {
 	dimension_t i;
 

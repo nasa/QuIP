@@ -84,6 +84,7 @@ extern "C" {
 
 #define QUERY_PROMPT			QS_PROMPT(THIS_QSP)
 #define QLEVEL				QS_LEVEL(THIS_QSP)
+#define Q_STOP_LEVEL			QS_STOP_LEVEL(THIS_QSP)
 #define INIT_QSP			THIS_QSP=new_query_stream(NULL_QSP_ARG  "default_query_stream");
 
 //#define BUILTINS_INITED			(QUERY_FLAGS & QS_BUILTINS_INITED)

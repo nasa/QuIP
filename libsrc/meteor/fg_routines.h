@@ -104,7 +104,8 @@
  *      video_format: MERGE_FIELDS, SEPARATE_FIELDS
  *      ram_location: DISPLAY_RAM, BIGPHYS_RAM, KERNEL_RAM
  */
-extern int fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location);
+extern int _fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location);
+#define fg_open(video_source, video_format,ram_location) _fg_open(QSP_ARG  video_source, video_format,ram_location)
 extern void fg_close(void);
 
 /*

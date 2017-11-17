@@ -121,7 +121,7 @@ COMMAND_FUNC( setup_diff_computation )
 	if( !frames_known ) setup_frame_ptrs(SINGLE_QSP_ARG);
 }
 
-void setup_blur(QSP_ARG_DECL  Data_Obj *dp)
+void _setup_blur(QSP_ARG_DECL  Data_Obj *dp)
 {
 	/* BUG need to do checks here */
 

@@ -57,10 +57,10 @@ static int whkeyword(Keyword *table,const char *str);
 
 double parse_stuff(SINGLE_QSP_ARG_DECL);
 
-double nullfunc();
-double dummyfunc();
-double rn_number();
-double dstrcmp();
+//double nullfunc();
+//double dummyfunc();
+double rn_number(double);
+double dstrcmp(char *,char *);
 
 /* We use a fixed number of static string buffers to hold string names.
  * This works ok if we have a short program, or if we use the strings
@@ -300,7 +300,7 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 %token <idp> PTRNAME
 %token <idp> STRNAME
 %token <idp> LABELNAME
-%token <idp> SCALARNAME
+/* %token <idp> SCALARNAME */
 %token <idp> FUNCPTRNAME
 
 %token <e_string> LEX_STRING
@@ -315,7 +315,7 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 
 %type <enp> program
 %type <enp> prog_elt
-%type <enp> subroutine
+%type <enp> subroutine_decl
 %type <enp> new_func_decl
 %type <enp> old_func_decl
 /* %type <enp> function_prototype */
@@ -354,7 +354,7 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 %type <enp> info_stat
 
 %type <enp> objref
-%type <enp> scalref
+/* %type <enp> scalref */
 %type <enp> lvalue
 %type <enp> pointer
 %type <enp> func_ptr
@@ -428,12 +428,14 @@ subsamp_spec	:	expression ':' expression ':' expression
 			}
 		;
 
-scalref		: SCALARNAME
-			{
-			$$=node0(T_SCALAR_VAR);
-			SET_VN_STRING($$, savestr(ID_NAME($1)));
-			}
-		;
+/*
+//scalref		: SCALARNAME
+//			{
+//			$$=node0(T_SCALAR_VAR);
+//			SET_VN_STRING($$, savestr(ID_NAME($1)));
+//			}
+//		;
+		*/
 
 objref		: OBJNAME
 			{
@@ -557,11 +559,13 @@ expression	: FIX_SIZE '(' expression ')'
 			// BUG - we cast to int, but this could be a long???
 			SET_VN_INTVAL($$, (int) $1);
 			}
-		| SCALARNAME
-			{
-			$$=node0(T_SCALAR_VAR);
-			SET_VN_STRING($$, savestr(ID_NAME($1)));
-			}
+		/*
+//		| SCALARNAME
+//			{
+//			$$=node0(T_SCALAR_VAR);
+//			SET_VN_STRING($$, savestr(ID_NAME($1)));
+//			}
+			*/
 		| expression LOG_EQ expression {
 			$$=node2(T_BOOL_EQ,$1,$3);
 			}
@@ -756,7 +760,7 @@ expression	: FIX_SIZE '(' expression ')'
 		| FUNCNAME '(' func_args ')'
 			{
 			$$=node1(T_CALLFUNC,$3);
-			SET_VN_SUBRT_CALL($$, make_call_instance($1));
+			SET_VN_SUBRT($$, $1);
 			/* make sure this is not a void subroutine! */
 			if( SR_PREC_CODE($1) == PREC_VOID ){
 				node_error($$);
@@ -866,7 +870,7 @@ void_call	: FUNCNAME '(' func_args ')'
 			{
 			/* BUG check to see that this subrt is void! */
 			$$=node1(T_CALLFUNC,$3);
-			SET_VN_SUBRT_CALL($$, make_call_instance($1));
+			SET_VN_SUBRT($$, $1);
 			if( SR_PREC_CODE($1) != PREC_VOID ){
 				node_error($$);
 				sprintf(YY_ERR_STR,"return value of function %s is ignored",SR_NAME($1));
@@ -895,7 +899,7 @@ ref_arg		: '&' objref %prec UNARY
 		| REFFUNC '(' func_args ')'
 			{
 			$$=node1(T_CALLFUNC,$3);
-			SET_VN_SUBRT_CALL($$, make_call_instance($1));
+			SET_VN_SUBRT($$, $1);
 			/* make sure this is not a void subroutine! */
 			if( SR_PREC_CODE($1) == PREC_VOID ){
 				node_error($$);
@@ -938,7 +942,7 @@ str_assgn	: str_ptr '=' print_list {
  */
 
 lvalue		: objref
-		| scalref
+		/* | scalref */
 		;
 
 assignment	: lvalue '=' expression {
@@ -1017,7 +1021,7 @@ statline	: simple_stat ';'
 			{
 			Identifier *idp;
 			$$ = node0(T_LABEL);
-			idp = new_id($1);
+			idp = new_identifier($1);
 			SET_ID_TYPE(idp, ID_LABEL);
 			//SET_VN_STRING($$, savestr(ID_NAME(idp)));
 			SET_VN_STRING($$, $1);
@@ -1138,12 +1142,12 @@ old_func_decl	: FUNCNAME '(' arg_decl_list ')'
 			}
 		;
 
-subroutine	: data_type new_func_decl stat_block
+subroutine_decl	: data_type new_func_decl stat_block
 			{
 			Subrt *srp;
 			srp=remember_subrt(QSP_ARG  $1,VN_STRING($2),VN_CHILD($2,0),$3);
 			SET_SR_PREC_PTR(srp, $1);
-			$$=node0(T_SUBRT);
+			$$=node0(T_SUBRT_DECL);
 			SET_VN_SUBRT($$,srp);
 			delete_subrt_ctx(QSP_ARG  VN_STRING($2));	/* this deletes the objects... */
 			// But why is the context in existence here?
@@ -1156,7 +1160,7 @@ subroutine	: data_type new_func_decl stat_block
 			SET_SR_PREC_PTR(srp, $1);
 			SET_SR_FLAG_BITS(srp, SR_REFFUNC);
 			/* set a flag to show returns ptr */
-			$$=node0(T_SUBRT);
+			$$=node0(T_SUBRT_DECL);
 			SET_VN_SUBRT($$,srp);
 			delete_subrt_ctx(QSP_ARG  VN_STRING($3));	/* this deletes the objects... */
 			compile_subrt(srp);
@@ -1169,7 +1173,7 @@ subroutine	: data_type new_func_decl stat_block
 			assert( srp != NULL );
 
 			update_subrt(QSP_ARG  srp,$3);
-			$$=node0(T_SUBRT);
+			$$=node0(T_SUBRT_DECL);
 			SET_VN_SUBRT($$,srp);
 			delete_subrt_ctx(QSP_ARG  VN_STRING($2));
 			compile_subrt(srp);
@@ -1191,7 +1195,7 @@ arg_decl_list	:		/* nuthin */
 			}
 		;
 
-prog_elt	: subroutine
+prog_elt	: subroutine_decl
 		| decl_statement
 			{
 			if( $$ != NULL ) {
@@ -1411,9 +1415,11 @@ decl_identifier	: NEWNAME	/* saved */
 			{ $$ = savestr(ID_NAME($1)); }
 		| STRNAME
 			{ $$ = savestr(ID_NAME($1)); }
-		| SCALARNAME
-			{
-			$$ = savestr(ID_NAME($1)); }
+		/*
+//		| SCALARNAME
+//			{
+//			$$ = savestr(ID_NAME($1)); }
+			*/
 		|	precision
 			{
 			yyerror(THIS_QSP,  (char *)"illegal attempt to use a keyword as an identifier");
@@ -2161,7 +2167,7 @@ static const char *match_quote(QSP_ARG_DECL  const char **spp)
 		(*spp)++; /* YY_CP++; */
 	}
 	if( c != '"' ) {
-		NWARN("missing quote");
+		warn("missing quote");
 		sprintf(ERROR_STRING,"string \"%s\" stored",CURR_STRING);
 		advise(ERROR_STRING);
 	} else (*spp)++;			/* skip over closing quote */
@@ -2708,9 +2714,9 @@ WARN(ERROR_STRING);
 				yylvp->dp = (Data_Obj *)REF_SBUF(ID_REF(idp));
 			}
 			return(OBJNAME);
-		} else if( IS_SCALAR_ID(idp) ){
-			yylvp->idp = idp;
-			return(SCALARNAME);
+//		} else if( IS_SCALAR_ID(idp) ){
+//			yylvp->idp = idp;
+//			return(SCALARNAME);
 		} else if( IS_LABEL(idp) ){
 			yylvp->idp = idp;
 			return(LABELNAME);
@@ -2782,8 +2788,6 @@ void yyerror(Query_Stack *qsp,  char *s)
 {
 	const char *filename;
 	int ql,n;
-	char yyerror_str[YY_LLEN];
-
 	/* get the filename and line number */
 
 	filename=CURRENT_FILENAME;
@@ -2791,26 +2795,26 @@ void yyerror(Query_Stack *qsp,  char *s)
 	//n = THIS_QSP->qs_query[ql].q_lineno;
 	n = current_line_number(SINGLE_QSP_ARG);
 
-	sprintf(yyerror_str,"%s, line %d:  %s",filename,n,s);
-	NWARN(yyerror_str);
+	sprintf(ERROR_STRING,"%s, line %d:  %s",filename,n,s);
+	warn(ERROR_STRING);
 
-	sprintf(yyerror_str,"\t%s",sb_buffer(YY_INPUT_LINE));
-	advise(yyerror_str);
+	sprintf(ERROR_STRING,"\t%s",sb_buffer(YY_INPUT_LINE));
+	advise(ERROR_STRING);
 	/* print an arrow at the problem point... */
 	n=(int)(strlen(sb_buffer(YY_INPUT_LINE))-strlen(YY_CP));
 	n-=2;
 	if( n < 0 ) n=0;
-	strcpy(yyerror_str,"\t");
-	while(n--) strcat(yyerror_str," ");
-	strcat(yyerror_str,"^");
-	NADVISE(yyerror_str);
+	strcpy(ERROR_STRING,"\t");
+	while(n--) strcat(ERROR_STRING," ");
+	strcat(ERROR_STRING,"^");
+	advise(ERROR_STRING);
 
 	/* we might use this to print an arrow at the problem point... */
 	/*
 	if( *YY_CP ){
-		sprintf(yyerror_str,"\"%s\" left in the buffer",YY_CP);
-		NADVISE(yyerror_str);
-	} else NADVISE("no buffered text");
+		sprintf(ERROR_STRING,"\"%s\" left in the buffer",YY_CP);
+		advise(ERROR_STRING);
+	} else advise("no buffered text");
 	*/
 
 	FINAL=(-1);

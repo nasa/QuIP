@@ -16,7 +16,7 @@
 #include <limits.h>
 #endif // HAVE_LIMITS_H
 
-double rn_number();
+double rn_number(double);
 
 #include "nexpr.h"
 #include "func_helper.h"
@@ -385,30 +385,8 @@ e_string	: E_STRING {
 // Because when we say ncols(xxx) we want the number of columns of an object
 // named xxx, not the length of the string "xxx"...
 
-data_object	: /* E_STRING {			// the name of an object
-			Scalar_Expr_Node *enp;
-			enp=NODE0(N_LITSTR);
-			enp->sen_tsp = $1;
-			$$=NODE1(N_OBJNAME,enp);
-			}
-		| E_QSTRING {
-			/* the string is the data, not the name of an object... */
-			/* We added this node type to support things like
-			 * isdigit("abc1"[2]), but treating quoted strings
-			 * as row vectors broke a lot of things where we quote
-			 * the name of an image file...
-			 *
-			 * A compromise is to strip the quotes as normally,
-			 * but if the data_obj does not exist, THEN treat it
-			 * as a string... messy!
-			 */
-			 /*
-			Scalar_Expr_Node *enp;
-			enp=NODE0(N_LITSTR);
-			enp->sen_tsp = $1;
-			$$=NODE1(N_QUOT_STR,enp);
-			}
-		|*/ e_string {
+data_object	:
+		  e_string {
 			$$=NODE1(N_OBJNAME,$1);
 			}
  
@@ -694,7 +672,7 @@ static Item* eval_tsbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 				sprintf(ERROR_STRING,
 					"No time-stampable object \"%s\"!?",s);
 				NWARN(ERROR_STRING);
-				return(NULL);
+				return NULL;
 			}
 			break;
 		default:
@@ -717,245 +695,245 @@ N_CONDITIONAL
 	switch(enp->sen_code){
 		case N_QUOT_STR:
 			s = EVAL_SCALEXP_STRING(enp);
-			sprintf(ERROR_STRING,"0x%lx\tstring\t%s",
-				(long/*int_for_addr*/)enp, s);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tstring\t%s",
+				(uintptr_t)enp, s);
 			advise(ERROR_STRING);
 			break;
 
 #ifdef FOOBAR
 		case N_SIZABLE:
-			sprintf(ERROR_STRING,"0x%lx\tsizable\t%s",
-				(long/*int_for_addr*/)enp, enp->sen_string);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tsizable\t%s",
+				(uintptr_t)enp, enp->sen_string);
 			advise(ERROR_STRING);
 			break;
 #endif /* FOOBAR */
 
 		case N_TSABLE:
 			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
-			sprintf(ERROR_STRING,"0x%lx\ttsable\t%s",
-				(long/*int_for_addr*/)enp, s);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\ttsable\t%s",
+				(uintptr_t)enp, s);
 			advise(ERROR_STRING);
 			break;
 
 		case N_STRVFUNC:
-			sprintf(ERROR_STRING,"0x%lx\tstrvfunc\t%s",
-				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tstrvfunc\t%s",
+				(uintptr_t)enp, FUNC_NAME( enp->sen_func_p ) );
 			break;
 
 		case N_STRV2FUNC:
-			sprintf(ERROR_STRING,"0x%lx\tstrv2func\t%s",
-				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tstrv2func\t%s",
+				(uintptr_t)enp, FUNC_NAME( enp->sen_func_p ) );
 			break;
 
 		case N_SIZFUNC:
-			sprintf(ERROR_STRING,"0x%lx\tsizefunc\t%s",
-				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tsizefunc\t%s",
+				(uintptr_t)enp, FUNC_NAME( enp->sen_func_p ) );
 			advise(ERROR_STRING);
 			break;
 
 		case N_TSFUNC:
-			sprintf(ERROR_STRING,"0x%lx\tts_func\t%s",
-				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tts_func\t%s",
+				(uintptr_t)enp, FUNC_NAME( enp->sen_func_p ) );
 			advise(ERROR_STRING);
 			break;
 
 		case N_ILACEFUNC:
-			sprintf(ERROR_STRING,"0x%lx\tinterlace_func\t%s",
-				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tinterlace_func\t%s",
+				(uintptr_t)enp, FUNC_NAME( enp->sen_func_p ) );
 			advise(ERROR_STRING);
 			break;
 
 		case N_POSNFUNC:
-			sprintf(ERROR_STRING,"0x%lx\tposn_func\t%s",
-				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tposn_func\t%s",
+				(uintptr_t)enp, FUNC_NAME( enp->sen_func_p ) );
 			advise(ERROR_STRING);
 			break;
 
 		case N_MATH0FUNC:
-			sprintf(ERROR_STRING,"0x%lx\tmath0_func\t%s",
-				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tmath0_func\t%s",
+				(uintptr_t)enp, FUNC_NAME( enp->sen_func_p ) );
 			advise(ERROR_STRING);
 			break;
 
 		case N_MATH2FUNC:
-			sprintf(ERROR_STRING,"0x%lx\tmath2_func\t%s",
-				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tmath2_func\t%s",
+				(uintptr_t)enp, FUNC_NAME( enp->sen_func_p ) );
 			advise(ERROR_STRING);
 			break;
 
 		case N_MISCFUNC:
-			sprintf(ERROR_STRING,"0x%lx\tmisc_func\t%s",
-				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tmisc_func\t%s",
+				(uintptr_t)enp, FUNC_NAME( enp->sen_func_p ) );
 			advise(ERROR_STRING);
 			break;
 
 		case N_STR2FUNC:
-			sprintf(ERROR_STRING,"0x%lx\tstr2_func\t%s",
-				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tstr2_func\t%s",
+				(uintptr_t)enp, FUNC_NAME( enp->sen_func_p ) );
 			advise(ERROR_STRING);
 			break;
 
 		case N_STR3FUNC:
-			sprintf(ERROR_STRING,"0x%lx\tstr3_func\t%s",
-				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tstr3_func\t%s",
+				(uintptr_t)enp, FUNC_NAME( enp->sen_func_p ) );
 			advise(ERROR_STRING);
 			break;
 
 		case N_DATAFUNC:
-			sprintf(ERROR_STRING,"0x%lx\tdatafunc\t%s",
-				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tdatafunc\t%s",
+				(uintptr_t)enp, FUNC_NAME( enp->sen_func_p ) );
 			advise(ERROR_STRING);
 			break;
 
 		case N_OBJNAME:
 			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
-			sprintf(ERROR_STRING,"0x%lx\tobjname\t%s",
-				(long/*int_for_addr*/)enp, s);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tobjname\t%s",
+				(uintptr_t)enp, s);
 			advise(ERROR_STRING);
 			break;
 
 		case N_SCALAR_OBJ:
-			sprintf(ERROR_STRING,"0x%lx\tscalar_obj\t0x%lx",
-				(long/*int_for_addr*/)enp, (long/*int_for_addr*/)enp->sen_child[0]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tscalar_obj\t0x%"PRIxPTR,
+				(uintptr_t)enp, (uintptr_t)enp->sen_child[0]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_SUBSCRIPT:
-			sprintf(ERROR_STRING,"0x%lx\tsubscript\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp, (long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tsubscript\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp, (uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 		case N_CSUBSCRIPT:
-			sprintf(ERROR_STRING,"0x%lx\tcsubscript\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp, (long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tcsubscript\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp, (uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_MATH1FUNC:
-			sprintf(ERROR_STRING,"0x%lx\tmath1func\t%s",
-				(long/*int_for_addr*/)enp, FUNC_NAME(enp->sen_func_p) );
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tmath1func\t%s",
+				(uintptr_t)enp, FUNC_NAME(enp->sen_func_p) );
 			advise(ERROR_STRING);
 			break;
 
 		case N_PLUS:
-			sprintf(ERROR_STRING,"0x%lx\tplus\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tplus\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp,(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_MINUS:
-			sprintf(ERROR_STRING,"0x%lx\tminus\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tminus\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp,(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_TIMES:
-			sprintf(ERROR_STRING,"0x%lx\ttimes\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\ttimes\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp,(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_DIVIDE:
-			sprintf(ERROR_STRING,"0x%lx\tdivide\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tdivide\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp,(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_MODULO:
-			sprintf(ERROR_STRING,"0x%lx\tmodulo\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tmodulo\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp,(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_BITAND:
-			sprintf(ERROR_STRING,"0x%lx\tbitand\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tbitand\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp,(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_BITOR:
-			sprintf(ERROR_STRING,"0x%lx\tbitor\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tbitor\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp,(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_BITXOR:
-			sprintf(ERROR_STRING,"0x%lx\tbitxor\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tbitxor\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp,(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_SHL:
-			sprintf(ERROR_STRING,"0x%lx\tshl\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tshl\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp,(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_SHR:
-			sprintf(ERROR_STRING,"0x%lx\tshr\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tshr\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp,(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_LOGOR:
-			sprintf(ERROR_STRING,"0x%lx\tlog_or\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tlog_or\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp,(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_LOGAND:
-			sprintf(ERROR_STRING,"0x%lx\tlog_and\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tlog_and\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp,(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_LOGXOR:
-			sprintf(ERROR_STRING,"0x%lx\tlog_xor\t0x%lx\t0x%lx",
-				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tlog_xor\t0x%"PRIxPTR"\t0x%"PRIxPTR,
+				(uintptr_t)enp,(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 
 		case N_LITNUM:
 			string_for_typed_scalar(MSG_STR,LLEN,enp->sen_tsp);
-			sprintf(ERROR_STRING,"0x%lx\tlit_num\t%s",
-				(long/*int_for_addr*/)enp,MSG_STR);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tlit_num\t%s",
+				(uintptr_t)enp,MSG_STR);
 			advise(ERROR_STRING);
 			break;
 		case N_LE:
-			sprintf(ERROR_STRING,"0x%lx\t<= (LE)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
-				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\t<= (LE)\t0x%"PRIxPTR", 0x%"PRIxPTR,(uintptr_t)enp,
+				(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 		case N_GE:
-			sprintf(ERROR_STRING,"0x%lx\t>= (GE)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
-				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\t>= (GE)\t0x%"PRIxPTR", 0x%"PRIxPTR,(uintptr_t)enp,
+				(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 		case N_NE:
-			sprintf(ERROR_STRING,"0x%lx\t!= (NE)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
-				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\t!= (NE)\t0x%"PRIxPTR", 0x%"PRIxPTR,(uintptr_t)enp,
+				(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 		case N_LT:
-			sprintf(ERROR_STRING,"0x%lx\t< (LT)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
-				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\t< (LT)\t0x%"PRIxPTR", 0x%"PRIxPTR,(uintptr_t)enp,
+				(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 		case N_GT:
-			sprintf(ERROR_STRING,"0x%lx\t> (GT)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
-				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\t> (GT)\t0x%"PRIxPTR", 0x%"PRIxPTR,(uintptr_t)enp,
+				(uintptr_t)enp->sen_child[0],(uintptr_t)enp->sen_child[1]);
 			advise(ERROR_STRING);
 			break;
 		case N_NOT:
-			sprintf(ERROR_STRING,"0x%lx\t! (NOT)\t0x%lx",
-				(long/*int_for_addr*/)enp,
-				(long/*int_for_addr*/)enp->sen_child[0]);
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\t! (NOT)\t0x%"PRIxPTR,
+				(uintptr_t)enp,
+				(uintptr_t)enp->sen_child[0]);
 			advise(ERROR_STRING);
 			break;
 		case N_STRFUNC:
 			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
-			sprintf(ERROR_STRING,"0x%lx\tSTRFUNC %s\t\"%s\"",
-				(long/*int_for_addr*/)enp,
+			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tSTRFUNC %s\t\"%s\"",
+				(uintptr_t)enp,
 				FUNC_NAME(enp->sen_func_p),
 				s);
 			advise(ERROR_STRING);
@@ -1017,11 +995,32 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_SCALAR_OBJ:
 			dp = eval_dobj_expr(QSP_ARG  enp->sen_child[0]);
 			if( IS_SCALAR(dp) ) return(dp);
-			return(NULL);
+			return NULL;
 			break;
-		case N_OBJNAME:
+		case N_OBJNAME:	// eval_dobj_expr
 			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
-			dp = (*obj_get_func)( QSP_ARG  s );
+			dp = (*exist_func)( QSP_ARG  s );
+			if( dp == NULL ){	// could be an identifier?
+				Identifier *idp;
+				idp = id_of(s);
+				if( idp == NULL ){
+					sprintf(ERROR_STRING,
+	"No object or identifier %s!?",s);
+					warn(ERROR_STRING);
+					return NULL;
+				}
+				if( ID_TYPE(idp) == ID_SCALAR ){
+					// create a temp scalar object
+					dp = mk_scalar("tmp_scal",ID_PREC_PTR(idp));
+
+					// BUG when to release this object???
+				} else {
+					sprintf(ERROR_STRING,
+	"Identifier %s is not a scalar!?",s);
+					warn(ERROR_STRING);
+					return NULL;
+				}
+			}
 			break;
 		case N_SUBSCRIPT:
 			dp2=eval_dobj_expr(QSP_ARG  enp->sen_child[0]);
@@ -1071,14 +1070,14 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 				sprintf(ERROR_STRING,
 					"No sizable object \"%s\"!?",s);
 				NWARN(ERROR_STRING);
-				return(NULL);
+				return NULL;
 			}
 			break;
 		//case N_SUBSIZ:
 		case N_SUBSCRIPT:
 			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
 			if( szp2 == NULL )
-				return(NULL);
+				return NULL;
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = sub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
@@ -1086,7 +1085,7 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_CSUBSCRIPT:
 			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
 			if( szp2 == NULL )
-				return(NULL);
+				return NULL;
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = csub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
@@ -1124,7 +1123,7 @@ static Item * eval_positionable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		sprintf(ERROR_STRING,
 			"No positionable object \"%s\"!?",s);
 		NWARN(ERROR_STRING);
-		return(NULL);
+		return NULL;
 	}
 
 	return(szp);
@@ -1145,7 +1144,7 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 				sprintf(ERROR_STRING,
 					"No interlaceable object \"%s\"!?",s);
 				NWARN(ERROR_STRING);
-				return(NULL);
+				return NULL;
 			}
 			break;
 		// are data objects interlaceable???
@@ -1154,7 +1153,7 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_SUBSCRIPT:
 			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
 			if( szp2 == NULL )
-				return(NULL);
+				return NULL;
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = sub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
@@ -1162,7 +1161,7 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_CSUBSCRIPT:
 			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
 			if( szp2 == NULL )
-				return(NULL);
+				return NULL;
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = csub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
@@ -1417,7 +1416,7 @@ dump_enode(QSP_ARG  enp);
 		*/
 		s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
 		s = (*enp->sen_func_p->fn_u.strv_func)( QSP_ARG s );
-//fprintf(stderr,"eval_expr:  strv_func returned string at 0x%lx\n",(long)s);
+//fprintf(stderr,"eval_expr:  strv_func returned string at 0x%"PRIxPTR"\n",(uintptr_t)s);
 		tsp = scalar_for_string(s);
 		break;
 	case N_STRV2FUNC:		// eval_expr
@@ -2126,7 +2125,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 			if( yylvp->func_p != NULL ){
 				int t;
 				t = token_for_func_type(FUNC_TYPE(yylvp->func_p));
-//fprintf(stderr,"Found function at 0x%lx, token = %d\n",(long)yylvp->func_p,t);
+//fprintf(stderr,"Found function at 0x%"PRIxPTR", token = %d\n",(long)yylvp->func_p,t);
 				return t;
 			}
 
@@ -2253,7 +2252,9 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 
 /* rls_tree should only be called when locked */
 
-static void rls_tree( Scalar_Expr_Node *enp )
+#define rls_tree(enp) _rls_tree(QSP_ARG  enp)
+
+static void _rls_tree(QSP_ARG_DECL  Scalar_Expr_Node *enp )
 {
 	Node *np;
 
@@ -2481,13 +2482,13 @@ static Data_Obj * _def_obj(QSP_ARG_DECL  const char *name)
 	NWARN(DEFAULT_ERROR_STRING);
 
 	NWARN("data module not linked");
-	return(NULL);
+	return NULL;
 }
 
 static Data_Obj *_def_sub(QSP_ARG_DECL  Data_Obj *object,index_t index)
 {
 	NWARN("can't get subobject; data module not linked");
-	return(NULL);
+	return NULL;
 }
 
 

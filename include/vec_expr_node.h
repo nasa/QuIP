@@ -22,14 +22,11 @@ typedef struct int_node_data {
 	long		intval;
 } Int_Node_Data;
 
-typedef struct subrt_node_data {
-	struct subrt *	srp;
-} Subrt_Node_Data;
-
-
 typedef struct callf_node_data {
-	struct subrt_call *	scp;
+	struct subrt *	srp;
 	List *		uk_args_lp;
+	// node child[0] is the argument list...
+	// node owns shape
 } Callf_Node_Data;
 
 typedef struct string_node_data {
@@ -80,7 +77,6 @@ typedef union {
 	Cast_Node_Data		cast_data;
 	Vec_Func_Node_Data	vf_data;
 	Sizechng_Node_Data	sizch_data;
-	Subrt_Node_Data		subrt_data;
 	Int_Node_Data		int_data;
 	Dbl_Node_Data		dbl_data;
 	Decl_Node_Data		decl_data;
@@ -97,14 +93,13 @@ typedef enum {
 	ND_CAST,		/* 4  */
 	ND_VFUNC,		/* 5  */
 	ND_SIZE_CHANGE,		/* 6  */
-	ND_SUBRT,		/* 7  */
-	ND_INT,			/* 8  */
-	ND_DBL,			/* 9  */
-	ND_DECL,		/* 10 */
-	ND_CALLF,		/* 11 */
-	ND_BMAP,		/* 12 */
-	ND_FUNC,		/* 13   this doesn't appear in the union!?  BUG??? */
-	N_NODE_DATA_TYPES	/* 14 */
+	ND_INT,			/* 7  */
+	ND_DBL,			/* 8  */
+	ND_DECL,		/* 9  */
+	ND_CALLF,		/* 10 */
+	ND_BMAP,		/* 11 */
+	ND_FUNC,		/* 12   this doesn't appear in the union!?  BUG??? */
+	N_NODE_DATA_TYPES	/* 13 */
 } Node_Data_Type;
 
 struct vec_expr_node {
@@ -187,8 +182,7 @@ struct vec_expr_node {
 #define VN_DECL_PREC_CODE(enp)	PREC_CODE(VN_DECL_PREC(enp))
 
 #define VN_OBJ(enp)		((enp)->ven_data).dobj_data.dp
-#define VN_SUBRT_CALL(enp)	((enp)->ven_data).call_data.scp
-#define VN_SUBRT(enp)		((enp)->ven_data).subrt_data.srp
+#define VN_SUBRT(enp)		((enp)->ven_data).call_data.srp
 
 #define VN_STRING(enp)		((enp)->ven_data).string_data.string
 #define VN_N_ELTS(enp)		((enp)->ven_data).list_data.n_elts
@@ -214,8 +208,7 @@ struct vec_expr_node {
 #define SET_VN_INTVAL(enp,v)		SET_VN_DATA(enp,int_data.intval,v)
 #define SET_VN_DBLVAL(enp,d)		SET_VN_DATA(enp,dbl_data.dblval,d)
 #define SET_VN_OBJ(enp,_dp)		SET_VN_DATA(enp,dobj_data.dp, _dp)
-#define SET_VN_SUBRT_CALL(enp,_scp)	SET_VN_DATA(enp,call_data.scp,_scp)
-#define SET_VN_SUBRT(enp,_srp)		SET_VN_DATA(enp,subrt_data.srp,_srp)
+#define SET_VN_SUBRT(enp,_srp)		SET_VN_DATA(enp,call_data.srp,_srp)
 
 #define SET_VN_DECL_NAME(enp,s)		SET_VN_DATA(enp,decl_data.decl_name,s)
 #define SET_VN_DECL_CTX(enp,icp)	SET_VN_DATA(enp,decl_data.decl_icp,icp)

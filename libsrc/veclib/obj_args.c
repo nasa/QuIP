@@ -52,8 +52,8 @@ longlist(OA_SRC_OBJ(oap,i) );
 			}
 			else	strcpy(msgbuf,"(invalid precision)");
 				
-			sprintf(buf,"Scalar value at addr 0x%lx = %s",
-				(int_for_addr)OA_SVAL(oap,i),msgbuf);
+			sprintf(buf,"Scalar value at addr 0x%"PRIxPTR" = %s",
+				(uintptr_t)OA_SVAL(oap,i),msgbuf);
 			(*report_func)(QSP_ARG  buf);
 			/* argset precision is not the same as regular precision? */
 		}
@@ -123,7 +123,7 @@ longlist(OA_SRC_OBJ(oap,i) );
 	}
 } // end private_show_obj_args
 
-void show_obj_args(QSP_ARG_DECL  const Vec_Obj_Args *oap)
+void _show_obj_args(QSP_ARG_DECL  const Vec_Obj_Args *oap)
 {
 	private_show_obj_args(QSP_ARG  ERROR_STRING,oap,_advise);
 }

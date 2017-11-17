@@ -97,7 +97,7 @@ static const char *ofmt_names[N_OFORMATS]={
 	"yuv_422"
 };
 
-void meteor_set_size(QSP_ARG_DECL  int r,int c,int nf)
+void _meteor_set_size(QSP_ARG_DECL  int r,int c,int nf)
 {
 	num_meteor_frames = nf;
 	meteor_rows = r & 0x7fe;
@@ -149,7 +149,7 @@ static COMMAND_FUNC( do_meteor_set_size )
 
 	c=HOW_MANY("number of columns");
 	r=HOW_MANY("number of rows");
-	meteor_set_size(QSP_ARG  r,c,num_meteor_frames);
+	meteor_set_size(r,c,num_meteor_frames);
 }
 
 int get_bytes_per_pixel(QSP_ARG_DECL  int fmt)
@@ -211,7 +211,7 @@ static void meteor_set_geometry(QSP_ARG_DECL  struct meteor_geomet *gp)
 #ifndef FAKE_METEOR_HARDWARE
 	if (ioctl(meteor_fd, METEORSETGEO, gp) < 0){
 		perror("ioctl METEORSETGEO failed");
-		ERROR1("meteor_set_geometry:  Unable to allocate meteor memory");
+		error1("meteor_set_geometry:  Unable to allocate meteor memory");
 		return;
 	}
 #endif /* ! FAKE_METEOR_HARDWARE */
@@ -326,7 +326,7 @@ static COMMAND_FUNC( do_meteor_set_field_mode )
 		meteor_set_field_mode(QSP_ARG  0);
 }
 
-void set_grab_depth(QSP_ARG_DECL  int depth)
+void _set_grab_depth(QSP_ARG_DECL  int depth)
 {
 	switch (depth) {
 		case 24:
@@ -364,7 +364,7 @@ static COMMAND_FUNC( do_set_grab_depth )
 	int depth;
 
 	depth=HOW_MANY("grab bit depth");
-	set_grab_depth(QSP_ARG  depth);
+	set_grab_depth(depth);
 }
 
 static COMMAND_FUNC( do_even_only )

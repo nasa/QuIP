@@ -20,8 +20,8 @@ void gen_string( char *buf, int buflen )
 	const char *s;
 
 	if( buflen < 33 ){
-		sprintf(DEFAULT_ERROR_STRING,"gen_string:  buffer length (%d) should be at least 33",buflen);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"gen_string:  buffer length (%d) should be at least 33",buflen);
+		warn(ERROR_STRING);
 		for(i=0;i<buflen;i++){
 			buf[i] = 'a' + i;
 		}
@@ -57,7 +57,7 @@ void gen_string( char *buf, int buflen )
 
 /* Make the key */
 
-int init_my_symm_key(void **key_ptr)
+int _init_my_symm_key(QSP_ARG_DECL  void **key_ptr)
 {
 	/* For an AES key, we need 128 bits (16 bytes).
 	 * Our 'secret' string is 33 characters, so
@@ -78,7 +78,7 @@ int init_my_symm_key(void **key_ptr)
 
 	klen = hash_my_key(&my_symm_key,rawcryptokeyarr,KEYARR_LEN);
 	if( klen < encryption_key_size() ){
-		NWARN("init_my_symm_key:  hash length less than required key length!?");
+		warn("init_my_symm_key:  hash length less than required key length!?");
 		my_symm_key=NULL;
 		return -1;
 	}
@@ -92,7 +92,9 @@ int init_my_symm_key(void **key_ptr)
 
 /* utilities for converting hex ascii to binary */
 
-static int value_of_hex_digit(int c)
+#define value_of_hex_digit(c) _value_of_hex_digit(QSP_ARG  c)
+
+static int _value_of_hex_digit(QSP_ARG_DECL  int c)
 {
 	int d;
 
@@ -103,10 +105,10 @@ static int value_of_hex_digit(int c)
 	} else if( isupper(c) && c<='F' ){
 		d= 10 + c - 'A';
 	} else {
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"value_of_hex_digit:  character 0x%x is not a valid hex digit!?",
 			c);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		d = -1;
 	}
 	return d;
@@ -122,7 +124,9 @@ static int value_of_hex_digit(int c)
 
 // convert from hex assumes a string with no white space
 
-static int convert_from_hex(uint8_t *buf, const char *s)
+#define convert_from_hex(buf, s) _convert_from_hex(QSP_ARG  buf, s)
+
+static int _convert_from_hex(QSP_ARG_DECL  uint8_t *buf, const char *s)
 {
 	int n_converted=0;
 
@@ -132,7 +136,7 @@ static int convert_from_hex(uint8_t *buf, const char *s)
 		NEXT_DIGIT(d1)
 
 		if( ! (*s) ){
-	NWARN("convert_from_hex:  input string has an odd # chars!?");
+	warn("convert_from_hex:  input string has an odd # chars!?");
 			return -1;
 		}
 
@@ -161,7 +165,9 @@ static void format_hex(char *s,const uint8_t *input, size_t len)
 
 #define MAX_BYTES_PER_LINE	32
 
-static void print_hex_data(FILE *fp, const uint8_t *buf, size_t len)
+#define print_hex_data(fp, buf, len) _print_hex_data(QSP_ARG  fp, buf, len)
+
+static void _print_hex_data(QSP_ARG_DECL  FILE *fp, const uint8_t *buf, size_t len)
 {
 	size_t n_remaining, n_this_line;
 	char linechars[2*MAX_BYTES_PER_LINE+2];
@@ -174,7 +180,7 @@ static void print_hex_data(FILE *fp, const uint8_t *buf, size_t len)
 		linechars[n_this_line*2]='\n';
 		linechars[1+n_this_line*2]=0;
 		if( fputs(linechars,fp) == EOF ){
-			NWARN("Error writing hex line");
+			warn("Error writing hex line");
 			return;
 		}
 		buf += n_this_line;
@@ -197,14 +203,14 @@ int has_encryption_suffix(const char *name)
 
 #define PRINT_ERR1(fmt,arg)				\
 	{						\
-		sprintf(DEFAULT_ERROR_STRING,fmt,arg);	\
-		NWARN(DEFAULT_ERROR_STRING);		\
+		sprintf(ERROR_STRING,fmt,arg);	\
+		warn(ERROR_STRING);		\
 	}
 
 #define PRINT_ERR2(fmt,arg1,arg2)				\
 	{						\
-		sprintf(DEFAULT_ERROR_STRING,fmt,arg1,arg2);	\
-		NWARN(DEFAULT_ERROR_STRING);		\
+		sprintf(ERROR_STRING,fmt,arg1,arg2);	\
+		warn(ERROR_STRING);		\
 	}
 
 /* The original motivation for this is to be able
@@ -215,7 +221,9 @@ int has_encryption_suffix(const char *name)
  * that the string doesn't exist in the executable file.
  */
 
-static const char *encrypt_string(const char *input_string)
+#define encrypt_string(input_string) _encrypt_string(QSP_ARG  input_string)
+
+static const char *_encrypt_string(QSP_ARG_DECL  const char *input_string)
 {
 	size_t n,l,max_raw_size;
 	uint8_t *rawbuf;
@@ -232,7 +240,7 @@ static const char *encrypt_string(const char *input_string)
 	n=encrypt_char_buf(input_string,l,rawbuf,max_raw_size);
 
 	if( n <= 0 ){
-		NWARN("encryption failed!?");
+		warn("encryption failed!?");
 		givbuf(rawbuf);
 		return NULL;
 	} else {
@@ -245,7 +253,9 @@ static const char *encrypt_string(const char *input_string)
 	}
 }
 
-static const char *decrypt_string(const char *input_string)
+#define decrypt_string(input_string) _decrypt_string(QSP_ARG  input_string)
+
+static const char *_decrypt_string(QSP_ARG_DECL  const char *input_string)
 {
 	uint8_t *buf;
 	size_t buflen;
@@ -253,7 +263,7 @@ static const char *decrypt_string(const char *input_string)
 	size_t n;
 
 	if( strlen(input_string) & 1 ){
-		NWARN(
+		warn(
 	"decrypt_string:  input string has an odd number of chars!?");
 		return NULL;
 	}
@@ -261,7 +271,7 @@ static const char *decrypt_string(const char *input_string)
 	buflen=strlen(input_string)/2;
 	buf = (uint8_t *)getbuf(buflen);
 	if( convert_from_hex(buf,input_string) < 0 ){
-		NWARN("error converting hex string for decryption");
+		warn("error converting hex string for decryption");
 		return NULL;
 	}
 	asciibuf = (char *)getbuf(buflen+1);
@@ -272,7 +282,7 @@ static const char *decrypt_string(const char *input_string)
 	assert( n <= buflen );
 
 	if( n <= 0 ){
-		NWARN("decryption failed!?");
+		warn("decryption failed!?");
 		givbuf(asciibuf);
 		return NULL;
 	} else {
@@ -334,7 +344,9 @@ cleanup:
 
 #define MAX_LINE_SIZE	512
 
-static long convert_lines_from_hex(uint8_t *data, const char *text)
+#define convert_lines_from_hex(data, text) _convert_lines_from_hex(QSP_ARG  data, text)
+
+static long _convert_lines_from_hex(QSP_ARG_DECL  uint8_t *data, const char *text)
 {
 	char linebuf[MAX_LINE_SIZE];
 	const char *line_end, *line_start;
@@ -352,14 +364,14 @@ static long convert_lines_from_hex(uint8_t *data, const char *text)
 		line_end = strstr(line_start,"\n");
 		if( line_end == NULL ){		// no newline found
 			// do something special here?
-			NWARN("convert_lines_from_hex:  missing final newline");
+			warn("convert_lines_from_hex:  missing final newline");
 			line_end = line_start+strlen(line_start);
 		}
 		n_to_copy = line_end - line_start;
 		assert( n_to_copy > 0 );
 
 		if( n_to_copy >= MAX_LINE_SIZE ){
-			NWARN("convert_lines_from_hex:  line too long!?");
+			warn("convert_lines_from_hex:  line too long!?");
 			return -1;
 		}
 		strncpy(linebuf,line_start,n_to_copy);
@@ -367,7 +379,7 @@ static long convert_lines_from_hex(uint8_t *data, const char *text)
 
 		n_converted = convert_from_hex(data,linebuf);
 		if( n_converted < 0 ){
-	NWARN("decrypt_file:  error converting hex string for decryption");
+	warn("decrypt_file:  error converting hex string for decryption");
 			return -1;
 		}
 		data += n_converted;
@@ -378,7 +390,7 @@ static long convert_lines_from_hex(uint8_t *data, const char *text)
 	return total_converted;
 }
 
-String_Buf *decrypt_text( const char *text )
+String_Buf *_decrypt_text(QSP_ARG_DECL   const char *text )
 {
 	uint8_t *data;
 	size_t buf_size,n_bytes,n_decrypted;

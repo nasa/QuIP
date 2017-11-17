@@ -294,8 +294,8 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 		} else {
 			if( verbose ){
 				sprintf(DEFAULT_ERROR_STRING,
-		"init_glx_context( %s ):  created GL context 0x%lx",
-			vp->vw_name,(int_for_addr)VW_OGL_CTX(vp));
+		"init_glx_context( %s ):  created GL context 0x%"PRIxPTR,
+			vp->vw_name,(uintptr_t)VW_OGL_CTX(vp));
 				advise(DEFAULT_ERROR_STRING);
 			}
 		}
@@ -389,8 +389,8 @@ void select_gl_viewer(QSP_ARG_DECL  Viewer *vp)
 
 /*
 if( verbose ){
-sprintf(ERROR_STRING,"select_gl_viewer( %s ) setting current context to 0x%lx",
-vp->vw_name,(int_for_addr)VW_OGL_CTX(vp));
+sprintf(ERROR_STRING,"select_gl_viewer( %s ) setting current context to 0x%"PRIxPTR,
+vp->vw_name,(uintptr_t)VW_OGL_CTX(vp));
 advise(ERROR_STRING);
 }
 */
@@ -425,7 +425,7 @@ advise(ERROR_STRING);
 			error1("Error initializing OpenGLView!?");
 	}
 
-//fprintf(stderr,"Calling makeCurrentContext for context 0x%lx\n",
+//fprintf(stderr,"Calling makeCurrentContext for context 0x%"PRIxPTR"\n",
 //(long)VW_OGL_CTX(vp));
 	[ VW_OGL_CTX(vp) makeCurrentContext ];
 	gl_vp = vp;

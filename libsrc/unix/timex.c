@@ -29,7 +29,7 @@ static void tell_timex_retval(QSP_ARG_DECL  int retval)
 		case TIME_WAIT:  advise("leap second has occurred"); break;
 		case TIME_BAD:  advise("clock not synchronized"); break;
 		default:
-			NWARN("unexpected return value from adjtimex");
+			warn("unexpected return value from adjtimex");
 			return; 
 			break;
 	}
@@ -44,7 +44,7 @@ static void check_timex(QSP_ARG_DECL  struct timex *tp)
 	retval=adjtimex(tp);
 	if( retval < 0 ){
 		perror("adjtimex");
-		WARN("Unable to read timex values");
+		warn("Unable to read timex values");
 		return;
 	}
 	/* if( verbose ) */ tell_timex_retval(QSP_ARG  retval);
@@ -75,14 +75,14 @@ static void set_tick(QSP_ARG_DECL  int tick)
 	tb.modes=0;	/* don't set anything */
 	if( adjtimex(&tb) < 0 ){
 		perror("adjtimex");
-		WARN("unable to fetch timex parameters");
+		warn("unable to fetch timex parameters");
 		return;
 	}
 	tb.tick = tick;
 	tb.modes |= ADJ_TICK;
 	if( adjtimex(&tb) < 0 ){
 		perror("adjtimex");
-		WARN("unable to set timex tick parameter");
+		warn("unable to set timex tick parameter");
 		return;
 	}
 
@@ -97,14 +97,14 @@ static void set_freq(QSP_ARG_DECL  int freq)
 	tb.modes=0;	/* don't set anything */
 	if( adjtimex(&tb) < 0 ){
 		perror("adjtimex");
-		WARN("unable to fetch timex parameters");
+		warn("unable to fetch timex parameters");
 		return;
 	}
 	tb.freq = freq;
 	tb.modes |= ADJ_FREQUENCY;
 	if( adjtimex(&tb) < 0 ){
 		perror("adjtimex");
-		WARN("unable to set timex freq parameter");
+		warn("unable to set timex freq parameter");
 		return;
 	}
 
@@ -122,7 +122,7 @@ static COMMAND_FUNC( do_set_freq )
 	f=HOW_MANY("New value for frequency parameter");
 	if( f > MAX_FREQ || f < MIN_FREQ ){
 		sprintf(ERROR_STRING,"freq parameter (%ld) must be between %d and %d",f,MIN_FREQ,MAX_FREQ);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	set_freq(QSP_ARG  f);
@@ -135,11 +135,11 @@ static COMMAND_FUNC( do_set_tick )
 	t=HOW_MANY("New value for tick parameter");
 	if( abs(10000-t) > 1 ){
 		sprintf(ERROR_STRING,"tick parameter (%ld) usually differs by no more than one from default (10000)",t);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	if( abs(10000-t) > 100 ){
 		sprintf(ERROR_STRING,"tick parameter (%ld) may not differ by more than 100 from default (10000)",t);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	set_tick(QSP_ARG  t);

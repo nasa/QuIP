@@ -22,9 +22,9 @@
 /* global variables */
 extern debug_flag_t spread_debug;
 
-extern void (*scan_func)(dimension_t index,dimension_t,dimension_t,
+extern void (*scan_func)(QSP_ARG_DECL  dimension_t index,dimension_t,dimension_t,
 					dimension_t *,dimension_t *);
-extern void (*scan_func3d)(dimension_t index,Dimension_Set *sizes,posn_t *posn);
+extern void (*scan_func3d)(QSP_ARG_DECL  dimension_t index,Dimension_Set *sizes,posn_t *posn);
 
 
 
@@ -95,8 +95,10 @@ extern void dp_halftone(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,dimension_t 
 /* File gj.c */
 
 
-extern int gauss_jordan(float *matrix,dimension_t size);
-extern int dp_gauss_jordan(double *matrix,dimension_t size);
+extern int _gauss_jordan(QSP_ARG_DECL  float *matrix,dimension_t size);
+extern int _dp_gauss_jordan(QSP_ARG_DECL  double *matrix,dimension_t size);
+#define gauss_jordan(matrix,size) _gauss_jordan(QSP_ARG  matrix,size)
+#define dp_gauss_jordan(matrix,size) _dp_gauss_jordan(QSP_ARG  matrix,size)
 
 
 /* File histo.c */
@@ -169,26 +171,36 @@ extern void convolve3d(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpf
 // BUG?  these should go in a module-specific include file?
 
 extern void setup_ffilter3d(QSP_ARG_DECL  Data_Obj *fdp);
-extern void get_3d_scattered_point(dimension_t n,Dimension_Set *sizes,posn_t *posn );
-extern void get_3d_raster_point(dimension_t n,Dimension_Set *sizes,posn_t *posn );
-extern void get_3d_random_point(dimension_t n,Dimension_Set *sizes,posn_t *posn );
-extern int redo_pixel3d(posn_t *posn);
-extern void redo_two_pixels3d(posn_t *posn);
+extern void _get_3d_scattered_point(QSP_ARG_DECL  dimension_t n,Dimension_Set *sizes,posn_t *posn );
+extern void _get_3d_raster_point(QSP_ARG_DECL  dimension_t n,Dimension_Set *sizes,posn_t *posn );
+extern void _get_3d_random_point(QSP_ARG_DECL  dimension_t n,Dimension_Set *sizes,posn_t *posn );
+extern int _redo_pixel3d(QSP_ARG_DECL  posn_t *posn);
+extern void _redo_two_pixels3d(QSP_ARG_DECL  posn_t *posn);
 extern double get_sos3d(Data_Obj *edp,Data_Obj *fdp);
-extern double add_to_sos3d(posn_t *posn,Data_Obj *edp,Data_Obj *fdp,int factor);
 extern float get_delta3d(posn_t *posn);
 extern void set_filter3d(Data_Obj *fdp);
 extern void set_grayscale3d(Data_Obj *gdp);
 extern void set_halftone3d(Data_Obj *hdp);
-extern int scan_requant3d(int ntimes);
-extern void scan2_requant3d(int ntimes);
-extern void scan_anneal3d(double temp,int ntimes);
+extern int _scan_requant3d(QSP_ARG_DECL  int ntimes);
+extern void _scan2_requant3d(QSP_ARG_DECL  int ntimes);
+extern void _scan_anneal3d(QSP_ARG_DECL  double temp,int ntimes);
 extern void set_temp3d(double temp);
-extern void normalize_filter3d(Data_Obj *fdp);
+extern void _normalize_filter3d(QSP_ARG_DECL  Data_Obj *fdp);
 
+extern double _add_to_sos3d(QSP_ARG_DECL  posn_t *posn,Data_Obj *edp,Data_Obj *fdp,int factor);
 extern int _setup_requantize3d(SINGLE_QSP_ARG_DECL);
 extern void _init_requant3d(SINGLE_QSP_ARG_DECL);
 
+#define get_3d_scattered_point(n,sizes,posn ) _get_3d_scattered_point(QSP_ARG  n,sizes,posn )
+#define get_3d_raster_point(n,sizes,posn ) _get_3d_raster_point(QSP_ARG  n,sizes,posn )
+#define get_3d_random_point(n,sizes,posn ) _get_3d_random_point(QSP_ARG  n,sizes,posn )
+#define scan_requant3d(ntimes) _scan_requant3d(QSP_ARG  ntimes)
+#define scan2_requant3d(ntimes) _scan2_requant3d(QSP_ARG  ntimes)
+#define scan_anneal3d(temp,ntimes) _scan_anneal3d(QSP_ARG  temp,ntimes)
+#define redo_pixel3d(posn) _redo_pixel3d(QSP_ARG  posn)
+#define redo_two_pixels3d(posn) _redo_two_pixels3d(QSP_ARG  posn)
+#define normalize_filter3d(fdp) _normalize_filter3d(QSP_ARG  fdp)
+#define add_to_sos3d(posn,edp,fdp,factor) _add_to_sos3d(QSP_ARG  posn,edp,fdp,factor)
 #define setup_requantize3d()	_setup_requantize3d(SINGLE_QSP_ARG)
 #define init_requant3d()	_init_requant3d(SINGLE_QSP_ARG)
 
@@ -201,22 +213,35 @@ extern void set_filter(Data_Obj *fdp);
 extern void set_grayscale(Data_Obj *gdp);
 extern void set_halftone(Data_Obj *hdp);
 extern double get_volume(Data_Obj *dp);
-extern void normalize_filter(Data_Obj *fdp);
-extern void init_requant(void);
-extern int scan_requant(int ntimes);
-extern void scan_anneal(double temp,int ntimes);
+extern void _normalize_filter(QSP_ARG_DECL  Data_Obj *fdp);
+extern void _init_requant(SINGLE_QSP_ARG_DECL);
+extern int _scan_requant(QSP_ARG_DECL  int ntimes);
+extern void _scan_anneal(QSP_ARG_DECL  double temp,int ntimes);
 extern float get_delta(dimension_t x,dimension_t y);
-extern int redo_pixel(dimension_t x,dimension_t y);
-extern int redo_two_pixels(dimension_t x,dimension_t y);
+extern int _redo_pixel(QSP_ARG_DECL  dimension_t x,dimension_t y);
+extern int _redo_two_pixels(QSP_ARG_DECL  dimension_t x,dimension_t y);
 extern void set_temp(double temp);
 extern void insist_pixel(dimension_t x,dimension_t y);
-extern double add_to_sos(dimension_t x,dimension_t y,Data_Obj *edp,Data_Obj *fdp,int factor);
-extern void get_xy_scattered_point(dimension_t n,dimension_t xsize,dimension_t ysize,
+extern void _get_xy_scattered_point(QSP_ARG_DECL  dimension_t n,dimension_t xsize,dimension_t ysize,
 							dimension_t *xp,dimension_t *yp);
-extern void get_xy_raster_point(dimension_t n,dimension_t xsize,dimension_t ysize,
+extern void _get_xy_raster_point(QSP_ARG_DECL  dimension_t n,dimension_t xsize,dimension_t ysize,
 							dimension_t *xp,dimension_t *yp);
-extern void get_xy_random_point(dimension_t n,dimension_t xsize,dimension_t ysize,
+extern void _get_xy_random_point(QSP_ARG_DECL  dimension_t n,dimension_t xsize,dimension_t ysize,
 							dimension_t *xp,dimension_t *yp);
+
+extern double _add_to_sos(QSP_ARG_DECL  dimension_t x,dimension_t y,Data_Obj *edp,Data_Obj *fdp,int factor);
+
+#define normalize_filter(fdp) _normalize_filter(QSP_ARG  fdp)
+#define init_requant() _init_requant(SINGLE_QSP_ARG)
+#define scan_requant(ntimes) _scan_requant(QSP_ARG  ntimes)
+#define scan_anneal(temp,ntimes) _scan_anneal(QSP_ARG  temp,ntimes)
+#define redo_pixel(x,y) _redo_pixel(QSP_ARG  x,y)
+#define redo_two_pixels(x,y) _redo_two_pixels(QSP_ARG  x,y)
+#define add_to_sos(x,y,edp,fdp,factor) _add_to_sos(QSP_ARG  x,y,edp,fdp,factor)
+
+#define get_xy_scattered_point(n,xsize,ysize,xp,yp) _get_xy_scattered_point(QSP_ARG  n,xsize,ysize,xp,yp)
+#define get_xy_raster_point(n,xsize,ysize,xp,yp) _get_xy_raster_point(QSP_ARG  n,xsize,ysize,xp,yp)
+#define get_xy_random_point(n,xsize,ysize,xp,yp) _get_xy_random_point(QSP_ARG  n,xsize,ysize,xp,yp)
 
 /* File cspread.c */
 extern double adjust_sos(dimension_t x,dimension_t y,Data_Obj *fedp,Data_Obj *fdp,double factor);

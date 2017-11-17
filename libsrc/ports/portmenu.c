@@ -31,7 +31,7 @@ static double port_exists(QSP_ARG_DECL  const char *name)
 	return(1.0);
 }
 
-void null_proc(QSP_ARG_DECL  const char *s)
+void _null_proc(QSP_ARG_DECL  const char *s)
 {}
 
 static COMMAND_FUNC( start_client )
@@ -392,7 +392,7 @@ static COMMAND_FUNC(do_send_obj)
 	if( mpp == NULL || dp == NULL ) return;
 
 	s = OBJ_N_MACH_ELTS(dp) * PREC_SIZE( OBJ_PREC_PTR(dp) );
-	if( write_port(QSP_ARG  mpp,OBJ_DATA_PTR(dp), s ) != s ){
+	if( write_port(mpp,OBJ_DATA_PTR(dp), s ) != s ){
 		warn("Error writing data vector!?");
 	}
 	// WHY did this test code close the port here???
@@ -412,7 +412,7 @@ static void send_constant_data(QSP_ARG_DECL  Port *mpp,
 	for(i=0;i<n;i++)
 		buf[i]=(char)val;	// make sure this not magic number!
 
-	if( write_port(QSP_ARG  mpp,buf, n ) != n ){
+	if( write_port(mpp,buf, n ) != n ){
 		warn("Error writing constant data vector!?");
 	}
 	//close_port(QSP_ARG  mpp);
@@ -441,7 +441,7 @@ static COMMAND_FUNC(do_partial_type)
 	Port *mpp;
 
 	mpp = pick_port("");
-	if( put_port_int32(QSP_ARG  mpp,PORT_MAGIC_NUMBER) == (-1) ){
+	if( put_port_int32(mpp,PORT_MAGIC_NUMBER) == (-1) ){
 		warn("do_partial_type:  error sending magic number");
 		return;
 	}
@@ -454,11 +454,11 @@ static COMMAND_FUNC(do_bad_type)
 	Port *mpp;
 
 	mpp = pick_port("");
-	if( put_port_int32(QSP_ARG  mpp,PORT_MAGIC_NUMBER) == (-1) ){
+	if( put_port_int32(mpp,PORT_MAGIC_NUMBER) == (-1) ){
 		warn("do_bad_type:  error sending magic number");
 		return;
 	}
-	if( put_port_int32(QSP_ARG  mpp,MAX_PORT_CODES+1) == (-1) ){
+	if( put_port_int32(mpp,MAX_PORT_CODES+1) == (-1) ){
 		warn("do_bad_type:  error sending packet code");
 		return;
 	}
@@ -471,11 +471,11 @@ static COMMAND_FUNC(do_empty_packet)
 	Port *mpp;
 
 	mpp = pick_port("");
-	if( put_port_int32(QSP_ARG  mpp,PORT_MAGIC_NUMBER) == (-1) ){
+	if( put_port_int32(mpp,PORT_MAGIC_NUMBER) == (-1) ){
 		warn("do_empty_packet:  error sending magic number");
 		return;
 	}
-	if( put_port_int32(QSP_ARG  mpp,P_TEXT) == (-1) ){
+	if( put_port_int32(mpp,P_TEXT) == (-1) ){
 		warn("do_empty_packet:  error sending packet code");
 		return;
 	}
@@ -555,43 +555,43 @@ static void init_default_port_data_types(SINGLE_QSP_ARG_DECL)
 	}
 #endif // BUILD_FOR_WINDOWS
 
-	if( define_port_data_type(QSP_ARG  (int)P_TEXT, "text",
+	if( define_port_data_type((int)P_TEXT, "text",
 			"text to send", recv_text,
 			_nameof, xmit_text) == -1 )
 		warn("error adding text data type to port tables");
 
-	if( define_port_data_type(QSP_ARG  (int)P_FILE_AS_TEXT, "file_as_text",
+	if( define_port_data_type((int)P_FILE_AS_TEXT, "file_as_text",
 			"local name", recv_text,
 			_nameof, xmit_file_as_text) == -1 )
 		warn("error adding text data type to port tables");
 
-	if( define_port_data_type(QSP_ARG  (int)P_PLAIN_FILE, "plain_file",
+	if( define_port_data_type((int)P_PLAIN_FILE, "plain_file",
 			"local filename", recv_plain_file,
 			_nameof, xmit_plain_file) == -1 )
 		warn("error adding plain_file data type to port tables");
 
-	if( define_port_data_type(QSP_ARG  (int)P_FILENAME, "filename",
+	if( define_port_data_type((int)P_FILENAME, "filename",
 			"local filename", recv_filename,
 			_nameof, xmit_filename) == -1 )
 		warn("error adding plain_file data type to port tables");
 
 #ifdef HAVE_ENCRYPTION
-	if( define_port_data_type(QSP_ARG  (int)P_AUTHENTICATION,
+	if( define_port_data_type((int)P_AUTHENTICATION,
 			"authentication", "data to send", recv_enc_text,
 			_nameof, xmit_auth) == -1 )
 		warn("error adding authentication data type to port tables");
 
-	if( define_port_data_type(QSP_ARG  (int)P_ENCRYPTED_TEXT,
+	if( define_port_data_type((int)P_ENCRYPTED_TEXT,
 			"encrypted_text", "text to send", recv_enc_text,
 			_nameof, xmit_enc_text) == -1 )
 		warn("error adding encrypted text data type to port tables");
 
-	if( define_port_data_type(QSP_ARG  (int)P_ENCRYPTED_FILE,
+	if( define_port_data_type((int)P_ENCRYPTED_FILE,
 			"encrypted_file", "local filename", recv_enc_file,
 			_nameof, xmit_enc_file) == -1 )
 		warn("error adding encrypted file data type to port tables");
 
-	if( define_port_data_type(QSP_ARG  (int)P_ENC_FILE_AS_TEXT,
+	if( define_port_data_type((int)P_ENC_FILE_AS_TEXT,
 			"encrypted_file_as_text", "local filename", recv_enc_text,
 			_nameof, xmit_enc_file_as_text) == -1 )
 		warn("error adding encrypted file data type to port tables");

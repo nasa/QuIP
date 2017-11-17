@@ -77,7 +77,7 @@ static COMMAND_FUNC( set_onintr )
 	s=NAMEOF("text to interpret upon interrupt");
 	if( *intr_str == 0 ) {
 		sigpush((int)SIGINT,my_onintr);
-		/*WARN("no previous interrupt action"); */
+		/*warn("no previous interrupt action"); */
 	} else {
 		if( verbose ){
 			sprintf(ERROR_STRING,
@@ -112,7 +112,7 @@ static COMMAND_FUNC( do_showmaps )
 #ifdef USE_GETBUF
 	showmaps();
 #else /* ! USE_GETBUF */
-	WARN("do_showmaps:  program not configured with USE_GETBUF, nothing to show.");
+	warn("do_showmaps:  program not configured with USE_GETBUF, nothing to show.");
 #endif /* ! USE_GETBUF */
 }
 
@@ -129,7 +129,7 @@ void set_discard_func(void (*func)(SINGLE_QSP_ARG_DECL) )
 static COMMAND_FUNC( do_flush_events )
 { 
 	if( discard_event_func_vec == NULL ){
-		WARN("do_flush_events:  no discard function specified!?");
+		warn("do_flush_events:  no discard function specified!?");
 	} else {
 		(*discard_event_func_vec)(SINGLE_QSP_ARG);
 	}
@@ -204,17 +204,17 @@ static COMMAND_FUNC( do_ckpt )
 	if( strlen(s) >= MAX_MSG_LEN ){
 		sprintf(ERROR_STRING,"Sorry, checkpoint tag has too many characters (%ld, max %d), truncating...",
 			(long)strlen(s),MAX_MSG_LEN-1);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	if( n_ckpts >= MAX_CKPTS ){
 		sprintf(ERROR_STRING,"Sorry, %d checkpoints already placed, can't place '%s'.",n_ckpts,s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( gettimeofday(&tv,NULL) < 0 ){
 		perror("gettimeofday");
-		WARN("error reading system time");
+		warn("error reading system time");
 		return;
 	}
 
@@ -232,7 +232,7 @@ static COMMAND_FUNC( do_ckpt )
 
 	n_ckpts++;
 #else // ! HAVE_GETTIMEOFDAY
-	WARN("Sorry, no checkpointing available in this build!?");
+	warn("Sorry, no checkpointing available in this build!?");
 #endif // ! HAVE_GETTIMEOFDAY
 }
 
@@ -246,7 +246,7 @@ static COMMAND_FUNC( do_tell_ckpts )
 	double delta_ms, cum_ms;
 
 	if( n_ckpts == 0 ){
-		WARN("do_tell_ckpts:  no checkpoints set.");
+		warn("do_tell_ckpts:  no checkpoints set.");
 		return;
 	}
 
@@ -297,7 +297,7 @@ static COMMAND_FUNC( get_time_of_day )
 #ifdef HAVE_GETTIMEOFDAY
 	if( gettimeofday(&tv,NULL) < 0 ){
 		perror("gettimeofday");
-		WARN("error reading system time");
+		warn("error reading system time");
 		return;
 	}
 
@@ -309,7 +309,7 @@ static COMMAND_FUNC( get_time_of_day )
 #else // ! HAVE_GETTIMEOFDAY
 	assign_var(s1,"0");
 	assign_var(s2,"0");
-	WARN("Sorry, no gettimeofday!?");
+	warn("Sorry, no gettimeofday!?");
 #endif // ! HAVE_GETTIMEOFDAY
 }
 
@@ -342,7 +342,7 @@ static COMMAND_FUNC( do_system )				/** execute a shell command */
 	ruid = getuid();
 	
 	if( euid == 0 && ruid != 0 ){
-		WARN("Sorry, shell commands not allowed for set-uid root programs");
+		warn("Sorry, shell commands not allowed for set-uid root programs");
 		return;
 	}
 #endif // HAVE_GETUID
@@ -359,7 +359,7 @@ static COMMAND_FUNC( do_system )				/** execute a shell command */
 		advise(ERROR_STRING);
 	}
 #else // ! BUILD_FOR_IOS
-	WARN("Sorry, system command is temporarily unavailable for iOS!?");
+	warn("Sorry, system command is temporarily unavailable for iOS!?");
 	stat=(-1);
 #endif // ! BUILD_FOR_IOS
 

@@ -24,11 +24,15 @@ expressions
   script test_it 1 'advise "passed $1"'
   script test_2 1 'Call_It $1'
   script test_3 1 'Call_2 $1'
+  script test_with_pause 1 'Call_2 $1 Pause'
   script problem_func 0 'Problem_Macro'
 #  debug expressions
   read -
     u_byte b[$h][$w];
     b=0;
+    print("calling test_with_pause...");
+    test_with_pause(b);
+    print("back from test_with_pause...");
     test_it(b);
     print("back from test script function.");
     problem_func();

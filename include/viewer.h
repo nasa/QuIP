@@ -535,43 +535,68 @@ extern int add_image(Viewer *vp,Data_Obj *dp,int x,int y);
 extern void insert_image(Data_Obj *dpto,Data_Obj *dpfr,int x,int y,int frameno);
 extern void update_image(Viewer *vp);
 extern void load_viewer(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp);
-extern void old_load_viewer(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp);
+extern void _old_load_viewer(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp);
+#define old_load_viewer(vp,dp) _old_load_viewer(QSP_ARG  vp,dp)
 
 /* xplot.c */
 
-extern void tell_plot_space(SINGLE_QSP_ARG_DECL);
-extern void xp_ffill_arc(float, float, float, float, float, float);
-extern void xp_fill_polygon(int num_points, float* xarray, float* yarray);
-extern void xp_space(int x1,int y1,int x2,int y2);
-extern void xp_fspace(float x1,float y1,float x2,float y2);
 extern void scale_fxy(Viewer *,float *px,float *py);
 extern void scalexy(Viewer *,int *px,int *py);
-extern void xp_fmove(float x,float y);
-extern void xp_move(int x,int y);
-extern void xp_fcont(float x,float y);
-extern void xp_point(int x,int y);
-extern void xp_fpoint(float x,float y);
-extern void xp_cont(int x,int y);
-extern void xp_line(int x1,int y1,int x2,int y2);
-extern void xp_text(const char *);
-extern void xp_fline(float x1,float y1,float x2,float y2);
-extern void xp_setup(QSP_ARG_DECL  Viewer *vp);
+extern void _xplot_fpoint(QSP_ARG_DECL  float x,float y);
+extern void _xplot_fcont(QSP_ARG_DECL  float x,float y);
+extern void _tell_plot_space(SINGLE_QSP_ARG_DECL);
+extern void _xplot_ffill_arc(QSP_ARG_DECL  float, float, float, float, float, float);
+extern void _xplot_fill_polygon(QSP_ARG_DECL  int num_points, float* xarray, float* yarray);
+extern void _xplot_space(QSP_ARG_DECL  int x1,int y1,int x2,int y2);
+extern void _xplot_fspace(QSP_ARG_DECL  float x1,float y1,float x2,float y2);
+extern void _xplot_fmove(QSP_ARG_DECL  float x,float y);
+extern void _xplot_move(QSP_ARG_DECL  int x,int y);
+extern void _xplot_point(QSP_ARG_DECL  int x,int y);
+extern void _xplot_cont(QSP_ARG_DECL  int x,int y);
+extern void _xplot_line(QSP_ARG_DECL  int x1,int y1,int x2,int y2);
+extern void _xplot_text(QSP_ARG_DECL  const char *);
+extern void _xplot_fline(QSP_ARG_DECL  float x1,float y1,float x2,float y2);
+extern void _xplot_setup(QSP_ARG_DECL  Viewer *vp);
+extern void _xplot_select(QSP_ARG_DECL  u_long color);
+extern void _xplot_bgselect(QSP_ARG_DECL  u_long color);
+extern void _xplot_arc(QSP_ARG_DECL  int,int,int,int,int,int);
+extern void _xplot_fill_arc(QSP_ARG_DECL  int,int,int,int,int,int);
+extern void _xplot_farc(QSP_ARG_DECL  float,float, float, float, float, float);
+extern void _xplot_circle(QSP_ARG_DECL  float radius);
 
-extern void xp_erase(void );
+#define xplot_fcont(x,y) _xplot_fcont(QSP_ARG  x,y)
+#define xplot_fpoint(x,y) _xplot_fpoint(QSP_ARG  x,y)
+#define tell_plot_space() _tell_plot_space(SINGLE_QSP_ARG)
+#define xplot_ffill_arc(a,b,c,d,e,f) _xplot_ffill_arc(QSP_ARG  a,b,c,d,e,f)
+#define xplot_fill_polygon(num_points,xarray,yarray) _xplot_fill_polygon(QSP_ARG  num_points,xarray,yarray)
+#define xplot_space(x1,y1,x2,y2) _xplot_space(QSP_ARG  x1,y1,x2,y2)
+#define xplot_fspace(x1,y1,x2,y2) _xplot_fspace(QSP_ARG  x1,y1,x2,y2)
+#define xplot_fmove(x,y) _xplot_fmove(QSP_ARG  x,y)
+#define xplot_move(x,y) _xplot_move(QSP_ARG  x,y)
+#define xplot_point(x,y) _xplot_point(QSP_ARG  x,y)
+#define xplot_cont(x,y) _xplot_cont(QSP_ARG  x,y)
+#define xplot_line(x1,y1,x2,y2) _xplot_line(QSP_ARG  x1,y1,x2,y2)
+#define xplot_text(s) _xplot_text(QSP_ARG  s)
+#define xplot_fline(x1,y1,x2,y2) _xplot_fline(QSP_ARG  x1,y1,x2,y2)
+#define xplot_setup(vp) _xplot_setup(QSP_ARG  vp)
+#define xplot_select(color) _xplot_select(QSP_ARG  color)
+#define xplot_bgselect(color) _xplot_bgselect(QSP_ARG  color)
+#define xplot_arc(a,b,c,d,e,f) _xplot_arc(QSP_ARG  a,b,c,d,e,f)
+#define xplot_fill_arc(a,b,c,d,e,f) _xplot_fill_arc(QSP_ARG  a,b,c,d,e,f)
+#define xplot_farc(a,b,c,d,e,f) _xplot_farc(QSP_ARG  a,b,c,d,e,f)
+#define xplot_circle(radius) _xplot_circle(QSP_ARG  radius)
+
+extern void _xplot_erase(SINGLE_QSP_ARG_DECL);
+#define xplot_erase() _xplot_erase(SINGLE_QSP_ARG)
 
 #ifdef BUILD_FOR_IOS
-extern void xp_update(void);
+extern void _xplot_update(SINGLE_QSP_ARG_DECL);
+#define xplot_update()	_xplot_update(SINGLE_QSP_ARG)
 extern quipImageView *image_view_for_viewer(Viewer *vp);
 #endif /* BUILD_FOR_IOS */
 
-extern void dump_drawlist(QSP_ARG_DECL  Viewer *vp);
-extern void xp_select(u_long color);
-extern void xp_bgselect(u_long color);
-extern void xp_arc(int,int,int,int,int,int);
-extern void xp_fill_arc(int,int,int,int,int,int);
-extern void xp_farc(float,float,
-	float, float, float, float);
-extern void xp_circle(float radius);
+extern void _dump_drawlist(QSP_ARG_DECL  Viewer *vp);
+#define dump_drawlist(vp) _dump_drawlist(QSP_ARG  vp)
 
 /* rdplot.c */
 
@@ -609,10 +634,15 @@ extern void assign_cursor(Viewer *vp,View_Cursor *vcp);
 extern void posn_viewer(Viewer *vp,int x,int y);
 extern void relabel_viewer(Viewer *vp,const char *s);
 extern void zap_viewer(Viewer *vp);
-extern void _xp_select(Viewer *vp,u_long color);
-extern void _xp_bgselect(Viewer *vp,u_long color);
-extern void _xp_text(Viewer *vp,int x1,int y1,const char *);
-extern void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2);
+extern void _xp_select(QSP_ARG_DECL  Viewer *vp,u_long color);
+extern void _xp_bgselect(QSP_ARG_DECL  Viewer *vp,u_long color);
+extern void _xp_text(QSP_ARG_DECL  Viewer *vp,int x1,int y1,const char *);
+extern void _xp_line(QSP_ARG_DECL  Viewer *vp,int x1,int y1,int x2,int y2);
+
+#define xp_select(vp,color) _xp_select(QSP_ARG  vp,color)
+#define xp_bgselect(vp,color) _xp_bgselect(QSP_ARG  vp,color)
+#define xp_text(vp,x1,y1,s) _xp_text(QSP_ARG  vp,x1,y1,s)
+#define xp_line(vp,x1,y1,x2,y2) _xp_line(QSP_ARG  vp,x1,y1,x2,y2)
 
 extern void _show_viewer(QSP_ARG_DECL  Viewer *vp);
 extern void _unshow_viewer(QSP_ARG_DECL  Viewer *vp);
@@ -636,30 +666,44 @@ extern void _xp_linewidth(Viewer *vp,int w);
 #endif // ! BUILD_FOR_OBJC
 extern void _xp_cont(Viewer *vp,int x,int y);
 extern void _xp_arc(Viewer *,int,int,int,int,int,int);
-extern void _xp_erase(Viewer *vp);
 extern void _xp_update(Viewer *vp);
 extern void set_remember_gfx(int flag);
 extern void _xp_fill_arc(Viewer*, int, int, int, int, int, int);
 extern void _xp_fill_polygon(Viewer* vp, int num_points, int* px_vals, int* py_vals);
 extern void _xp_move(Viewer *vp,int x1,int y1);
-extern int exec_drawlist(Viewer *vp);
-extern void set_font_size(Viewer *vp,int sz);
-extern void set_char_spacing(Viewer *vp,int sz);
-extern void set_font_by_name(Viewer *vp,const char *s);
-extern void set_text_angle(Viewer *vp,float a);
 
-extern void center_text(Viewer *vp);
-extern void left_justify(Viewer *vp);
-extern void right_justify(Viewer *vp);
-extern int	get_string_width(Viewer *vp, const char *s);
+
+extern void _set_char_spacing(QSP_ARG_DECL  Viewer *vp,int sz);
+extern int _exec_drawlist(QSP_ARG_DECL  Viewer *vp);
+extern void _set_font_by_name(QSP_ARG_DECL  Viewer *vp,const char *s);
+extern void _xp_erase(QSP_ARG_DECL  Viewer *vp);
+extern void _set_text_angle(QSP_ARG_DECL  Viewer *vp,float a);
+extern void _set_font_size(QSP_ARG_DECL  Viewer *vp,int sz);
+
+#define set_char_spacing(vp,sz) _set_char_spacing(QSP_ARG  vp,sz)
+#define exec_drawlist(vp) _exec_drawlist(QSP_ARG  vp)
+#define set_font_by_name(vp,s) _set_font_by_name(QSP_ARG  vp,s)
+#define xp_erase(vp) _xp_erase(QSP_ARG  vp)
+#define set_text_angle(vp,a) _set_text_angle(QSP_ARG  vp,a)
+#define set_font_size(vp,sz) _set_font_size(QSP_ARG  vp,sz)
+
 int event_loop(SINGLE_QSP_ARG_DECL);
 extern void embed_draggable(Data_Obj *dp,Draggable *dgp);
 extern void window_sys_init(SINGLE_QSP_ARG_DECL);
+
+extern void _center_text(QSP_ARG_DECL  Viewer *vp);
+extern void _left_justify(QSP_ARG_DECL  Viewer *vp);
+extern void _right_justify(QSP_ARG_DECL  Viewer *vp);
+#define center_text(vp) _center_text(QSP_ARG  vp)
+#define left_justify(vp) _left_justify(QSP_ARG  vp)
+#define right_justify(vp) _right_justify(QSP_ARG  vp)
+
 extern void	set_viewer_display(QSP_ARG_DECL  Viewer *vp);
 extern void	cmap_setup(Viewer *);
 extern void set_action_for_event(Viewer *vp,Canvas_Event *cep,const char *s);
 
 extern void declare_canvas_events(SINGLE_QSP_ARG_DECL);
+extern int	_get_string_width(QSP_ARG_DECL  Viewer *vp, const char *s);
 
 //#endif /* HAVE_X11 */
 
@@ -676,6 +720,7 @@ extern void declare_canvas_events(SINGLE_QSP_ARG_DECL);
 #define make_gl_window(vp, width, height)	_make_gl_window(QSP_ARG  vp, width, height)
 #define display_depth()				_display_depth(SINGLE_QSP_ARG)
 #define extra_viewer_info(vp)			_extra_viewer_info(QSP_ARG  vp)
+#define get_string_width(vp,s)			_get_string_width(QSP_ARG  vp,s)
 
 
 #ifdef __cplusplus

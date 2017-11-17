@@ -55,7 +55,14 @@ static void dfunc(float *p,float *df)
 
 void halt_frprmn(void)
 {
-	NWARN("Sorry, don't know how to halt frprmn");
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+
+	assert(pr_qsp!=NULL);
+	qsp = pr_qsp;
+#endif // THREAD_SAFE_QUERY
+
+	warn("Sorry, don't know how to halt frprmn");
 }
 
 static float frprmn_scr_funk(float *p)
@@ -69,11 +76,13 @@ static float frprmn_scr_funk(float *p)
 #ifdef THREAD_SAFE_QUERY
 	Query_Stack *qsp;
 
+	assert(pr_qsp!=NULL);
 	qsp = pr_qsp;
 #endif // THREAD_SAFE_QUERY
+
 	lp=opt_param_list();
 	if( lp==NULL ) {
-		NWARN("no parameters!?");
+		warn("no parameters!?");
 		return(0.0);
 	}
 
@@ -108,8 +117,15 @@ static float frprmn_c_funk(float *p)
 	List *lp;
 	Opt_Param *opp;
 	Node *np;
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
 
-	lp=_opt_param_list(SGL_DEFAULT_QSP_ARG);
+	assert(pr_qsp!=NULL);
+	qsp = pr_qsp;
+#endif // THREAD_SAFE_QUERY
+
+
+	lp=opt_param_list();
 	np=QLIST_HEAD(lp);
 
 	i=0;
@@ -120,14 +136,16 @@ static float frprmn_c_funk(float *p)
 		i++;
 	}
 
-	err = (*user_c_func)(SGL_DEFAULT_QSP_ARG);
+	err = (*user_c_func)(SINGLE_QSP_ARG);
 
 	return(err);
 }
 
 static float p[MAX_OPT_PARAMS];
 
-static void run_frprmn( QSP_ARG_DECL  float (*func)(float *) )
+#define run_frprmn(func) _run_frprmn( QSP_ARG  func)
+
+static void _run_frprmn( QSP_ARG_DECL  float (*func)(float *) )
 {
 	float ftol;
 	int iter;
@@ -180,13 +198,13 @@ printf("&iter = 0x%x\n",&iter);
 void run_frprmn_scr(SINGLE_QSP_ARG_DECL)
 {
 	pr_qsp = THIS_QSP;
-	run_frprmn( QSP_ARG  frprmn_scr_funk );
+	run_frprmn( frprmn_scr_funk );
 }
 
 void run_frprmn_c( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) )
 {
 	user_c_func = func;
-	run_frprmn( QSP_ARG  frprmn_c_funk );
+	run_frprmn( frprmn_c_funk );
 }
 
 

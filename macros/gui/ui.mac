@@ -34,7 +34,7 @@ Define Interface_Go 0
 interface control show $main_panel dispatch quit quit
 .
 
-Define Update_Toggle 3 name value panel
+Define Update_Toggle 3 widget_name value panel_name
 interface
   decorate $3
     If $2
@@ -44,7 +44,15 @@ interface
   quit
 .
 
-Define Update_Chooser 3 name value panel
+Define Update_Edit_Text 3 widget_name value panel_name
+interface
+  decorate $3
+    set_edit_text $1 $2
+    quit
+  quit
+.
+
+Define Update_Chooser 3 widget_name value panel
 interface
   decorate $3
     set_choice $1 $2

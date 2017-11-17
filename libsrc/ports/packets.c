@@ -169,7 +169,7 @@ oops:
  * between separate processes
  */
 
-int define_port_data_type(QSP_ARG_DECL  int code,const char *my_typename,const char *prompt,
+int _define_port_data_type(QSP_ARG_DECL  int code,const char *my_typename,const char *prompt,
 	//const char * (*recvfunc)(QSP_ARG_DECL  Port *),
 	long (*recvfunc)(QSP_ARG_DECL  Port *, Packet *pkp),
 	const char * (*datafunc)(QSP_ARG_DECL const char *),
@@ -301,7 +301,7 @@ Packet *recv_data(QSP_ARG_DECL  Port *mpp)
 
 top:
 	// receive a magic word before the port data code
-	code=get_port_int32(QSP_ARG  mpp);
+	code=get_port_int32(mpp);
 	if( code == -1L ){
 		// We don't log this, this is what happens
 		// when an upload client closes.
@@ -320,7 +320,7 @@ top:
 
 	SET_PORT_FLAG_BITS(mpp,PORT_RECEIVING_PACKET);
 
-	code=get_port_int32(QSP_ARG  mpp);
+	code=get_port_int32(mpp);
 	if( code == -1L ){
 		log_message("Missing packet code, resetting port");
 		if( reset_port(QSP_ARG  mpp) ) goto top;

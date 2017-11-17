@@ -95,12 +95,12 @@ void clear_input_buf(SINGLE_QSP_ARG_DECL)
 {
 	u_char buf[MAX_PKT_SIZE];
 
-	if( !(recv_somex(QSP_ARG  usb2000_fd, buf, MAX_PKT_SIZE,MAX_PKT_SIZE-1)) )
+	if( !(recv_somex(usb2000_fd, buf, MAX_PKT_SIZE,MAX_PKT_SIZE-1)) )
 		usleep(1000);
 
 	usleep(1000);
 
-	if( !(recv_somex(QSP_ARG  usb2000_fd, buf, MAX_PKT_SIZE, MAX_PKT_SIZE-1)) )
+	if( !(recv_somex(usb2000_fd, buf, MAX_PKT_SIZE, MAX_PKT_SIZE-1)) )
 		usleep(1000);
 }
 
@@ -112,7 +112,7 @@ int recv_a_byte(SINGLE_QSP_ARG_DECL)
 	int value_recvd;
 
 	while( n_received < 1 && n_waits < MAX_WAITS ) {
-		n_received = recv_somex(QSP_ARG   usb2000_fd, recv_buf, RECV_BUF_SIZE, 1 );
+		n_received = recv_somex(usb2000_fd, recv_buf, RECV_BUF_SIZE, 1 );
 		if( !n_received ) {
 			n_waits++;
 			usleep(1); /* .001 ms */
@@ -165,7 +165,7 @@ advise("recv_a_value:  not ascii mode");
 		for( n_words_received=0;  n_words_received<2; n_words_received++ ) {
 
 			while( n_received < 1 && n_waits < MAX_WAITS ) {
-				n_received = recv_somex(QSP_ARG   usb2000_fd, recv_buf, RECV_BUF_SIZE, 1 );
+				n_received = recv_somex(usb2000_fd, recv_buf, RECV_BUF_SIZE, 1 );
 				if( !n_received ) {
 					n_waits++;
 					usleep(1); /* .001 ms */
@@ -193,7 +193,7 @@ advise("recv_a_value:  not ascii mode");
 		while( recv_buf[0] != SPACE ) {
 
 			while( n_received < 1 && n_waits < MAX_WAITS ) {
-				n_received = recv_somex(QSP_ARG   usb2000_fd, recv_buf, RECV_BUF_SIZE, 1 );
+				n_received = recv_somex(usb2000_fd, recv_buf, RECV_BUF_SIZE, 1 );
 				if( !n_received ) {
 					n_waits++;
 					usleep(1); /* .001 ms */
@@ -247,10 +247,10 @@ advise(ERROR_STRING);
 int send_pkt( QSP_ARG_DECL  const char *pkt )
 {
 	if( ascii_mode )
-		send_serial(QSP_ARG  usb2000_fd, (u_char *)pkt, strlen(pkt) );
+		send_serial(usb2000_fd, (u_char *)pkt, strlen(pkt) );
 
 	else	/* if binary mode */
-		send_hex(QSP_ARG  usb2000_fd, (u_char *)pkt );
+		send_hex(usb2000_fd, (u_char *)pkt );
 
 	return 0;
 
@@ -271,7 +271,7 @@ int xmit_pxl_mode_pkt(QSP_ARG_DECL  const char *pkt, int pxl_mode, int n )
 
 			int n_waits;
 
-			send_serial(QSP_ARG  usb2000_fd, (u_char *)pkt, 1 );
+			send_serial(usb2000_fd, (u_char *)pkt, 1 );
 
 			if( *pkt == '\n' || *pkt == '\r' ) {
 				if( *(pkt+1) ) {	/* not the last char */
@@ -321,7 +321,7 @@ int xmit_pxl_mode_pkt(QSP_ARG_DECL  const char *pkt, int pxl_mode, int n )
 		/* I have observed that a delay is not required in binary mode.
 		 */
 
-		send_hex(QSP_ARG  usb2000_fd, (u_char *)pkt );
+		send_hex(usb2000_fd, (u_char *)pkt );
 
 
 		/* The expected number of CRs is not documented in
@@ -390,15 +390,17 @@ static int get_echo(QSP_ARG_DECL  char *pkt)
 	return 0;
 }
 
-static void baud_rate(int data_word)
+#define baud_rate(data_word) _baud_rate(QSP_ARG  data_word)
+
+static void _baud_rate(QSP_ARG_DECL  int data_word)
 {
 	switch(data_word){
-		case 0:	set_baud(usb2000_fd, B2400);  NADVISE("Communicating at 2400 baud");  break;
-		case 1:	set_baud(usb2000_fd, B4800);  NADVISE("Communicating at 4800 baud");  break;
-		case 2:	set_baud(usb2000_fd, B9600);  NADVISE("Communicating at 9600 baud");  break;
-		case 3:	set_baud(usb2000_fd, B19200); NADVISE("Communicating at 19200 baud"); break;
-		case 4:	set_baud(usb2000_fd, B38400); NADVISE("Communicating at 38400 baud"); break;
-		case 5:	set_baud(usb2000_fd, B57600); NADVISE("Communicating at 57600 baud"); break;
+		case 0:	set_baud(usb2000_fd, B2400);  advise("Communicating at 2400 baud");  break;
+		case 1:	set_baud(usb2000_fd, B4800);  advise("Communicating at 4800 baud");  break;
+		case 2:	set_baud(usb2000_fd, B9600);  advise("Communicating at 9600 baud");  break;
+		case 3:	set_baud(usb2000_fd, B19200); advise("Communicating at 19200 baud"); break;
+		case 4:	set_baud(usb2000_fd, B38400); advise("Communicating at 38400 baud"); break;
+		case 5:	set_baud(usb2000_fd, B57600); advise("Communicating at 57600 baud"); break;
 	}
 }
 
@@ -508,10 +510,10 @@ static short verify_baud_rate(SINGLE_QSP_ARG_DECL)
 
 void init_usb2000(SINGLE_QSP_ARG_DECL)
 {
-	usb2000_fd = open_serial_device(QSP_ARG  "/dev/usb2000");
+	usb2000_fd = open_serial_device("/dev/usb2000");
 
 	if( usb2000_fd < 0 )
-		ERROR1("unable to open usb2000 serial port device");
+		error1("unable to open usb2000 serial port device");
 
 	/* we first verify the baud rate and data mode */
 
@@ -593,7 +595,7 @@ int set_timer(QSP_ARG_DECL  int data_word)
 
 void send_usb2000_packet(QSP_ARG_DECL  const char *pkt, int len)
 {
-	send_serial(QSP_ARG usb2000_fd,(u_char *)pkt,len);
+	send_serial(usb2000_fd,(u_char *)pkt,len);
 }
 
 #endif /* USE_SERIAL_LINE */

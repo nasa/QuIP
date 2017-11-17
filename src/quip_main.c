@@ -146,7 +146,10 @@ int main(int argc,char *argv[])
     @autoreleasepool {
 #endif // BUILD_FOR_MACOS
 	input_on_stdin();
-	CHECK_MENU(quip);
+	//CHECK_MENU(quip);
+	if( quip_menu == NULL ){
+		init_quip_menu(SGL_DEFAULT_QSP_ARG);
+	}
 	start_quip_with_menu(argc,argv,quip_menu);
 	while( QS_LEVEL(DEFAULT_QSP) >= 0 ){
 		qs_do_cmd(DEFAULT_QSP);

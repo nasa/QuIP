@@ -427,7 +427,7 @@ COMMAND_FUNC( do_list_panel_objs )
  *  class_str is imbedded in the prompts
  */
 
-Screen_Obj *get_parts(QSP_ARG_DECL  const char *class_str)
+Screen_Obj *_get_parts(QSP_ARG_DECL  const char *class_str)
 {
 	char pmpt[BUF_LEN];
 	//char text[BUF_LEN];
@@ -454,7 +454,7 @@ Screen_Obj *get_parts(QSP_ARG_DECL  const char *class_str)
 	return(sop);
 }
 
-Screen_Obj *mk_menu(QSP_ARG_DECL  Screen_Obj *mip)
+Screen_Obj *_mk_menu(QSP_ARG_DECL  Screen_Obj *mip)
 {
 	Screen_Obj *mp;
 
@@ -496,7 +496,7 @@ COMMAND_FUNC( mk_menu_button )
 {
 	Screen_Obj *mp, *bp;
 
-	bp=GET_PARTS("menu");
+	bp=get_parts("menu");
 	if( bp == NULL ) return;
 	SET_SOB_TYPE(bp, SOT_MENU_BUTTON);
 
@@ -577,7 +577,7 @@ COMMAND_FUNC( do_normal )
 {
 	Screen_Obj *mip;
 
-	mip=GET_PARTS("menu");
+	mip=get_parts("menu");
 	if( mip==NULL ) return;
 	SET_SOB_PANEL(mip, SOB_PANEL(curr_parent) );
 	SET_SOB_TYPE(mip, SOT_MENU_ITEM);
@@ -594,7 +594,7 @@ COMMAND_FUNC( do_pullright )
 {
 	Screen_Obj *pr, *mip;
 
-	mip=GET_PARTS("menu");
+	mip=get_parts("menu");
 	if( mip==NULL ) return;
 	SET_SOB_PANEL(mip, SOB_PANEL(curr_parent) );
 	SET_SOB_PARENT(mip, NULL);
@@ -651,7 +651,7 @@ COMMAND_FUNC( mk_button )
 {
 	Screen_Obj *bo;
 
-	bo = GET_PARTS("button");
+	bo = get_parts("button");
 	if( bo == NULL ) return;
 	SET_SOB_TYPE(bo, SOT_BUTTON);
 
@@ -665,7 +665,7 @@ COMMAND_FUNC( mk_toggle )
 {
 	Screen_Obj *to;
 
-	to = GET_PARTS("toggle");
+	to = get_parts("toggle");
 	if( to == NULL ) return;
 	SET_SOB_TYPE(to, SOT_TOGGLE);
 
@@ -680,13 +680,13 @@ static void mk_text_input_line(QSP_ARG_DECL  int so_code)
 	Screen_Obj *to;
 	const char *s;
 
-	to = GET_PARTS("text");		// sets name and action
+	to = get_parts("text");		// sets name and action
 
 	s = NAMEOF("default value");
 
 	if( to == NULL ) return;
 
-	SET_SOB_CONTENT(to, savestr(s));
+	SET_SOB_CONTENT(to, save_possibly_empty_str(s));
 	SET_SOB_TYPE(to, so_code);
 
 #ifdef BUILD_FOR_IOS
@@ -753,7 +753,7 @@ COMMAND_FUNC( mk_edit_box )
 	Screen_Obj *sop;
 	const char *s;
 
-	sop = GET_PARTS("edit box");
+	sop = get_parts("edit box");
 	s = NAMEOF("default value");
 	if( sop == NULL ) return;
 	SET_SOB_CONTENT(sop, save_possibly_empty_str(s));	// overloads action?
@@ -848,7 +848,7 @@ COMMAND_FUNC( mk_gauge )
 	int maxval;
 	int val;
 
-	gop=GET_PARTS("gauge");
+	gop=get_parts("gauge");
 	get_min_max_val(&minval,&maxval,&val);
 	if( gop == NULL ) return;
 	SET_SOB_TYPE(gop, SOT_GAUGE);
@@ -921,7 +921,7 @@ COMMAND_FUNC( mk_slider )
 	Screen_Obj *sop;
 	int min, max, val;
 
-	sop = GET_PARTS("slider");
+	sop = get_parts("slider");
 	get_min_max_val(&min,&max,&val);
 	if( sop == NULL ) return;
 	SET_SOB_WIDTH(sop,DEFAULT_SLIDER_WIDTH);
@@ -933,7 +933,7 @@ COMMAND_FUNC( mk_adjuster )
 	Screen_Obj *sop;
 	int min, max, val;
 
-	sop = GET_PARTS("adjuster");
+	sop = get_parts("adjuster");
 	get_min_max_val(&min,&max,&val);
 	if( sop == NULL ) return;
 	SET_SOB_WIDTH(sop,DEFAULT_SLIDER_WIDTH);
@@ -948,7 +948,7 @@ COMMAND_FUNC( mk_slider_w )
 	int val;
 	int width;
 
-	sop = GET_PARTS("slider");
+	sop = get_parts("slider");
 	get_min_max_val(&min,&max,&val);
 	get_so_width(&width);
 	if( sop == NULL ) return;
@@ -964,7 +964,7 @@ COMMAND_FUNC( mk_adjuster_w )
 	int val;
 	int width;
 
-	sop = GET_PARTS("slider");
+	sop = get_parts("slider");
 	get_min_max_val(&min,&max,&val);
 	get_so_width(&width);
 	if( sop == NULL ) return;
@@ -980,7 +980,7 @@ COMMAND_FUNC( mk_label )
 	// BUG?  why get action text for a message???
 	// Here the action text is not the action, it is the message.
 	// The message can be different from the name.
-	mp=GET_PARTS("label");
+	mp=get_parts("label");
 	if( mp == NULL ) return;
 
 	SET_SOB_TYPE(mp, SOT_LABEL);
@@ -1006,7 +1006,7 @@ COMMAND_FUNC( mk_message )
 	// BUG?  why get action text for a message???
 	// Here the action text is not the action, it is the message.
 	// The message can be different from the name.
-	mp=GET_PARTS("message");
+	mp=get_parts("message");
 	if( mp == NULL ) return;
 	SET_SOB_TYPE(mp, SOT_MESSAGE);
 	/* get_parts gets the name and the action text, but for a message
@@ -1032,7 +1032,7 @@ COMMAND_FUNC( mk_text_box )
 	// BUG?  why get action text for a text_box???
 	// Here the action text is not the action, it is the initial text.
 
-	tb=GET_PARTS("initial text");
+	tb=get_parts("initial text");
 #ifdef BUILD_FOR_IOS
 	if( tb == NULL ) return;
 	SET_SOB_TYPE(tb, SOT_TEXT_BOX);
@@ -1488,7 +1488,7 @@ COMMAND_FUNC( mk_scroller )
 {
 	Screen_Obj *sop;
 
-	sop=GET_PARTS("scroller");
+	sop=get_parts("scroller");
 	if( sop == NULL ) return;
 	SET_SOB_TYPE(sop, SOT_SCROLLER);
 
@@ -1632,7 +1632,7 @@ COMMAND_FUNC( do_mlt_chooser )
 	int n;
 	const char **string_arr;
 
-	sop=GET_PARTS("mlt_chooser");
+	sop=get_parts("mlt_chooser");
 	if( sop == NULL ) return;
 	SET_SOB_TYPE(sop, SOT_MLT_CHOOSER);
 
@@ -1658,7 +1658,7 @@ COMMAND_FUNC( do_chooser )
 	int n;
 	const char **string_arr;
 
-	sop=GET_PARTS("chooser");
+	sop=get_parts("chooser");
 	if( sop == NULL ) return;
 	SET_SOB_TYPE(sop, SOT_CHOOSER);
 
@@ -1746,7 +1746,7 @@ COMMAND_FUNC( do_picker )
 	Screen_Obj *sop;
 	int n_cyl;
 
-	sop=GET_PARTS("picker");
+	sop=get_parts("picker");
 	if( sop == NULL ) return;
 	SET_SOB_TYPE(sop, SOT_PICKER);
 

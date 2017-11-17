@@ -263,11 +263,11 @@ static COMMAND_FUNC( do_read_obj )
 		fp=try_open( s, "r" );
 		if( !fp ) return;
 
-		read_ascii_data(QSP_ARG  ram_dp,fp,s,expect_exact_count);
+		read_ascii_data(ram_dp,fp,s,expect_exact_count);
 	} else {
 		/* read from stdin, no problem... */
 
-		read_obj(QSP_ARG  ram_dp);
+		read_obj(ram_dp);
 	}
 
 	RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
@@ -293,7 +293,7 @@ static COMMAND_FUNC( do_pipe_obj )
 	INSURE_OK_FOR_WRITING(dp)
 
 	sprintf(cmdbuf,"Pipe:  %s",pp->p_cmd);
-	read_ascii_data(QSP_ARG  ram_dp,pp->p_fp,cmdbuf,expect_exact_count);
+	read_ascii_data(ram_dp,pp->p_fp,cmdbuf,expect_exact_count);
 	/* If there was just enough data, then the pipe
 	 * will have been closed already... */
 

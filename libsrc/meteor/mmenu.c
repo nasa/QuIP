@@ -212,7 +212,7 @@ static COMMAND_FUNC( do_meteor_get_input )
 
 static void setup_meteor_device(SINGLE_QSP_ARG_DECL)
 {
-	if ( fg_open(QSP_ARG  SOURCE_NTSC, METEOR_GEO_RGB24, KERNEL_RAM) < 0) {
+	if ( fg_open(SOURCE_NTSC, METEOR_GEO_RGB24, KERNEL_RAM) < 0) {
 		perror("fg_open()");
 		exit(-1);
 	}
@@ -335,7 +335,7 @@ static COMMAND_FUNC( do_make_frame_obj )
 	s=NAMEOF("name for this frame object");
 	i=HOW_MANY("frame index");
 
-	dp = make_frame_object(QSP_ARG  s,i);
+	dp = make_frame_object(s,i);
 
 	/* WHY do we do this here??? */
 	/* Probably just to make things easy for the user? */
@@ -358,7 +358,7 @@ static COMMAND_FUNC( do_close_dev )
 /* These timestamps are added by the driver, and make the frame a bit bigger on rv disk...
  */
 
-void enable_meteor_timestamps(QSP_ARG_DECL  uint32_t flag)
+void _enable_meteor_timestamps(QSP_ARG_DECL  uint32_t flag)
 {
 	uint32_t arg;
 
@@ -415,7 +415,7 @@ static COMMAND_FUNC( do_set_timestamp )
 	}
 
 	arg =  ASKIF("enable timestamping of meteor frames");
-	enable_meteor_timestamps(QSP_ARG  arg);		/* enable timestamps in the driver */
+	enable_meteor_timestamps(arg);		/* enable timestamps in the driver */
 }
 
 static COMMAND_FUNC( do_compute_diff )
@@ -440,10 +440,10 @@ static COMMAND_FUNC( do_setup_blur )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("impulse response");
+	dp = pick_obj("impulse response");
 	if( dp == NULL ) return;
 
-	setup_blur(QSP_ARG  dp);
+	setup_blur(dp);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(pupfind_menu,s,f,h)
@@ -487,7 +487,7 @@ ADD_CMD( pupil_finder,	pf_menu,		pupil finder submenu )
 MENU_END(meteor)
 
 
-void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
+void _make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
 {
 	Movie *mvip;
 	Image_File *ifp;
@@ -500,13 +500,13 @@ void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
 		return;
 	}
 
-	mvip = create_movie(QSP_ARG  rv_name(inp));
+	mvip = create_movie(rv_name(inp));
 	if( mvip == NULL ){
 		sprintf(ERROR_STRING,
 			"error creating movie %s",rv_name(inp));
 		WARN(ERROR_STRING);
 	} else {
-		ifp = img_file_of(QSP_ARG  rv_name(inp));
+		ifp = img_file_of(rv_name(inp));
 		if( ifp == NULL ){
 			sprintf(ERROR_STRING,
 	"image file struct for rv file %s does not exist!?",rv_name(inp));
@@ -525,7 +525,7 @@ void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
  * structs to read/playback...
  */
 
-void update_movie_database(QSP_ARG_DECL  RV_Inode *inp)
+void _update_movie_database(QSP_ARG_DECL  RV_Inode *inp)
 {
 	if( ! is_rv_movie(inp) ){
 		if( verbose ){
@@ -535,13 +535,13 @@ void update_movie_database(QSP_ARG_DECL  RV_Inode *inp)
 		return;
 	}
 
-	setup_rv_iofile(QSP_ARG  inp);		/* open read file	*/
-	make_movie_from_inode(QSP_ARG  inp);	/* make movie struct	*/
+	setup_rv_iofile(inp);		/* open read file	*/
+	make_movie_from_inode(inp);	/* make movie struct	*/
 }
 
 static void init_rv_movies(SINGLE_QSP_ARG_DECL)
 {
-	traverse_rv_inodes( QSP_ARG  update_movie_database );
+	traverse_rv_inodes( _update_movie_database );
 }
 
 void meteor_init(SINGLE_QSP_ARG_DECL)
@@ -554,8 +554,8 @@ void meteor_init(SINGLE_QSP_ARG_DECL)
 	
 	/* verbose=1; */
 	setup_meteor_device(SINGLE_QSP_ARG);
-	set_grab_depth(QSP_ARG  24);
-	meteor_set_size(QSP_ARG  DEFAULT_METEOR_HEIGHT,DEFAULT_METEOR_WIDTH,DEFAULT_METEOR_FRAMES);
+	set_grab_depth(24);
+	meteor_set_size(DEFAULT_METEOR_HEIGHT,DEFAULT_METEOR_WIDTH,DEFAULT_METEOR_FRAMES);
 	meteor_set_iformat(DEFAULT_FORMAT);
 
 	meteor_inited++;
@@ -578,7 +578,7 @@ advise("initializing rawvol movies");
 advise("calling meteor init");
 		meteor_init(SINGLE_QSP_ARG);
 advise("back from meteor init");
-		load_movie_module(QSP_ARG  &meteor_movie_module);
+		load_movie_module(&meteor_movie_module);
 
 		inited=1;
 	}

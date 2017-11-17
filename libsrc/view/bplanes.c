@@ -33,14 +33,12 @@ extern double t_sin(double);
 extern double t_cos(double);
 #endif /* SINE_TBL */
 
-void set_lvls_per_comp(int n)
+void _set_lvls_per_comp(QSP_ARG_DECL  int n)
 {
-	char str[256];
-
 	if( n < 2 || n > MAX_LEVELS ){
-		sprintf(str, "bad number of bits per component, using %d",
+		sprintf(ERROR_STRING, "bad number of bits per component, using %d",
 			MAX_LEVELS);
-		NWARN(str);
+		warn(ERROR_STRING);
 		n = MAX_LEVELS;
 	}  
 	lvls_per_comp = n ;
@@ -50,7 +48,7 @@ void set_lvls_per_comp(int n)
  * the digits array tells us the level of each component
  */
 
-void set_c_amps(QSP_ARG_DECL  int index)
+void _set_c_amps(QSP_ARG_DECL  int index)
 {
 	float fctr, color[3];
 	int i,r,g,b;
@@ -73,9 +71,10 @@ void set_c_amps(QSP_ARG_DECL  int index)
 /* What does this do?
  *
  * digit is the place (bit), we call this once for each component
+ * REEEEALY bad name!!!
  */
 
-void count(QSP_ARG_DECL  int digit,int offset)
+void _count(QSP_ARG_DECL  int digit,int offset)
 {
 	int i,osi;	/* offset increment */
 
@@ -86,25 +85,23 @@ void count(QSP_ARG_DECL  int digit,int offset)
 	for(i=0;i<lvls_per_comp;i++){
 		digits[digit] = i;
 		if( digit == 0 ){	/* ones place, doit */
-			set_c_amps(QSP_ARG  offset+i);
+			set_c_amps(offset+i);
 		} else {
-			count(QSP_ARG  digit-1,offset+i*osi);
+			count(digit-1,offset+i*osi);
 		}
 	}
 }
 
-void set_ncomps(int n)
+void _set_ncomps(QSP_ARG_DECL  int n)
 {
-	char str[256];
-
 	if( n > MAX_COMPS ) {
-		sprintf(str,
-			"too many image components specified, using %d",
+		sprintf(ERROR_STRING,
+			"set_ncomps:  too many image components specified, using %d",
 			MAX_COMPS);
-		NWARN(str);
+		warn(ERROR_STRING);
 		n = MAX_COMPS;
 	} else if( n < 2 ){
-		NWARN("must be at least two components, set to 2");
+		warn("set_ncomps:  must be at least two components, set to 2");
 		n = 2;
 	}
 	n_comps = n;
@@ -115,13 +112,13 @@ int get_ncomps(void)
 	return(n_comps);
 }
 
-void set_comp_amps(QSP_ARG_DECL  float *amps)
+void _set_comp_amps(QSP_ARG_DECL  float *amps)
 {
 	int i;
 	float minc;
 
 	if( n_comps < 0 ){
-		NWARN("must specify number of components");
+		warn("must specify number of components");
 		return;
 	}
 
@@ -137,13 +134,13 @@ void set_comp_amps(QSP_ARG_DECL  float *amps)
 
 	push_cm_state();
 	CLR_CM_STATE(IMMEDIATE);
-	count(QSP_ARG  n_comps-1,base_index);
+	count(n_comps-1,base_index);
 	pop_cm_state();
 
 	update_if();
 }
 
-void sine_mod_amp(QSP_ARG_DECL  int nframes,float *phases,int period,float *envelope,const char *lutstem)
+void _sine_mod_amp(QSP_ARG_DECL  int nframes,float *phases,int period,float *envelope,const char *lutstem)
 {
 	float amps[MAX_COMPS];
 	float arginc;
@@ -155,7 +152,7 @@ void sine_mod_amp(QSP_ARG_DECL  int nframes,float *phases,int period,float *enve
 	for(i=0;i<nframes;i++){
 		sprintf(str,"%s%d",lutstem,i);
 		if( new_colormap(str) == NULL )
-			NERROR1("error creating LUT buffer");
+			error1("error creating LUT buffer");
 		if( envelope != ((float *)NULL) )
 			factor=envelope[i];
 		else
@@ -168,16 +165,16 @@ void sine_mod_amp(QSP_ARG_DECL  int nframes,float *phases,int period,float *enve
 #endif /* ! SINE_TBL */
 			phases[j]+=arginc;
 		}
-		set_comp_amps(QSP_ARG  amps);
+		set_comp_amps(amps);
 		index_alpha(i,0,255);
 	}
 }
 
 
-void set_base_index(int i)
+void _set_base_index(QSP_ARG_DECL  int i)
 {
 	if( i<0 || i>DACMAX ) {
-		NWARN("base value out of range, using 0");
+		warn("base value out of range, using 0");
 		base_index=0;
 		return;
 	}
@@ -197,12 +194,12 @@ void setwhite(float *white)
 	SET_CM_FLAG( SETWHITE );
 }
 
-void set_bit_vecs( float veclist[MAX_COMPS][3] )
+void _set_bit_vecs(QSP_ARG_DECL  float veclist[MAX_COMPS][3] )
 {
 	int i;
 
 	if( n_comps < 0 ){
-		NWARN("must set number of components before specifing vectors");
+		warn("must set number of components before specifing vectors");
 		return;
 	}
 	for(i=0;i<n_comps;i++){
@@ -215,15 +212,15 @@ void set_bit_vecs( float veclist[MAX_COMPS][3] )
 
 /* backwards compatibility */
 
-void set_bitplanes(QSP_ARG_DECL  int nplanes,float *amps)
+void _set_bitplanes(QSP_ARG_DECL  int nplanes,float *amps)
 {
 	/* BUG here is where we should be checking status for white & vectors */
 
 	set_ncomps(nplanes);
-	set_comp_amps(QSP_ARG  amps);
+	set_comp_amps(amps);
 }
 
-void set_bits_per_comp(int n)
+void _set_bits_per_comp(QSP_ARG_DECL  int n)
 {
 	int nl=1;
 

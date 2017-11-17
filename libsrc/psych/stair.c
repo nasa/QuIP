@@ -585,7 +585,9 @@ Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 	return(tcp);
 }
 
-static void init_data_tbl(Data_Tbl *dtp)
+#define init_data_tbl(dtp) _init_data_tbl(QSP_ARG  dtp)
+
+static void _init_data_tbl(QSP_ARG_DECL  Data_Tbl *dtp)
 {
 	SET_DTBL_N(dtp,0);
 	if( _nvals > 0 ){
@@ -594,7 +596,7 @@ static void init_data_tbl(Data_Tbl *dtp)
 	} else {
 		SET_DTBL_SIZE(dtp,0);
 		SET_DTBL_DATA(dtp,NULL);
-		NWARN("init_data_tbl:  number of x-values is not set!?");
+		warn("init_data_tbl:  number of x-values is not set!?");
 	}
 }
 
@@ -638,7 +640,7 @@ static void clear_data(Trial_Class *tcp)	/* clear data table for this class */
 	}
 }
 
-List *class_list(SINGLE_QSP_ARG_DECL)
+List *_class_list(SINGLE_QSP_ARG_DECL)
 {
 	if( trial_class_itp == NULL ) return(NULL);
 	return( item_list(trial_class_itp) );

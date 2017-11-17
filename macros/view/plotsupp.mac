@@ -53,13 +53,14 @@ Require_Var xmax
 Require_Var ymax
 Require_Var y_legend
 Require_Var y_tick_spacing
+Check_Var y_tick_offset 0
 If !$vars_ok exit_macro
 
 Plot_Data_Range $xmin $ymin $xmax $ymax
 
 Y_Legend $y_legend
-Plot_Y_Axis $ymin $ymax $y_tick_spacing $xmin
-Label_Y_Ticks $ymin $ymax $y_tick_spacing
+Plot_Y_Axis_Offset $ymin $ymax $y_tick_spacing $xmin $y_tick_offset
+Label_Y_Ticks $ymin+$y_tick_offset $ymax $y_tick_spacing
 .
 
 Define Redraw_X_Axis 0
@@ -74,6 +75,10 @@ Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
 Label_X_Ticks $xmin $xmax $x_tick_spacing
 .
 
+Define Check_Var 2 varname default_value
+If !var_exists('$1')
+  "Set $1 $2"
+.
 
 Define Setup_X_Axis 0
 Set vars_ok 1
@@ -83,11 +88,13 @@ Require_Var xmax
 Require_Var ymax
 Require_Var x_legend
 Require_Var x_tick_spacing
+Check_Var x_tick_offset 0
 If !$vars_ok exit_macro
 
 X_Legend $x_legend
-Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
-Label_X_Ticks $xmin $xmax $x_tick_spacing
+#Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
+Plot_X_Axis_Offset $xmin $xmax $x_tick_spacing $ymin $x_tick_offset
+Label_X_Ticks $xmin+$x_tick_offset $xmax $x_tick_spacing
 .
 
 #
@@ -1351,11 +1358,13 @@ Define Set_Line_Width 1 width
 view draw $the_plotter line_width $1 quit quit
 .
 
+# BUG should have shared code for x and y!
+
 Define Label_X_Ticks 3 first max delta 
-Assign x ($2-$1)/$3
+Assign x ($2-($1))/$3
 Assign n_x_ticks 1+floor($x)
 Select_Pen $label_color
-Set tick_x $1
+Assign tick_x $1
 repeat $n_x_ticks
   Label_X_Tick $tick_x	$tick_x
   Add_Var tick_x $3
@@ -1393,10 +1402,10 @@ repeat $n_x_ticks
 
 Define Label_Y_Ticks 3 first max delta 
 If !$allow_color_tick_labels "Push_Var pen_color Select_Pen $label_color"
-Assign n_y_ticks 1+floor($tiny+($2-$1)/$3)
+Assign n_y_ticks 1+floor($tiny+($2-($1))/$3)
 #advise "Label_Y_Ticks $1 $2 $3"
 #Print n_y_ticks
-Set tick_y $1
+Assign tick_y $1
 repeat $n_y_ticks
   Label_Y_Tick $tick_y	$tick_y
   Add_Var tick_y $3

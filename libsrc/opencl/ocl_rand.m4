@@ -38,6 +38,6 @@ void h_ocl_sp_vuni(HOST_CALL_ARG_DECLS)
 
 void h_ocl_dp_vuni(HOST_CALL_ARG_DECLS)
 {
-	NWARN("Sorry, dp_vuni not implemented for OpenCL");
+	warn("Sorry, dp_vuni not implemented for OpenCL");
 }
 

@@ -34,7 +34,7 @@
 	sprintf(ERROR_STRING,				\
 "Unable to call %s, program not configured with raw volume support!?",	\
 		#funcname);				\
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 
 #endif // ! HAVE_RAWVOL
 
@@ -52,7 +52,7 @@ static COMMAND_FUNC( do_mkfs )
 		sprintf(ERROR_STRING,
 	"Number of disks (%d) must be between 1 and %d",
 			ndisks,MAX_DISKS);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		ndisks=1;
 	}
 	for(i=0;i<ndisks;i++){
@@ -72,12 +72,12 @@ static COMMAND_FUNC( do_mkfs )
 
 	if( nib <= 0  ){
 		sprintf(ERROR_STRING,"number of inode blocks (%ld) must be positive",nib);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( nsb <= 0  ){
 		sprintf(ERROR_STRING,"number of string blocks (%ld) must be positive",nsb);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -123,7 +123,7 @@ static COMMAND_FUNC( do_rm )
 	inp = pick_rv_inode("");
 	if( inp==NULL ) return;
 #ifdef HAVE_RAWVOL
-	rv_rmfile(QSP_ARG  inp->rvi_name);
+	rv_rmfile(inp->rvi_name);
 #else // ! HAVE_RAWVOL
 	MISSING_CONFIG(rv_rmfile)
 #endif // ! HAVE_RAWVOL
@@ -167,7 +167,7 @@ static COMMAND_FUNC( do_mkfile )
 	nw=HOW_MANY("number of blocks per write");
 
 	if( nt<= 1 || nw <= 1 ){
-		WARN("number of blocks must be greater than 1");
+		warn("number of blocks must be greater than 1");
 		return;
 	}
 
@@ -215,14 +215,14 @@ static COMMAND_FUNC( do_set_root )
 	s=NAMEOF("user name for root privileges");
 
 	if( getuid() != 0 ){
-		WARN("Only root can grant rawvol super-user privileges to other users");
+		warn("Only root can grant rawvol super-user privileges to other users");
 		return;
 	}
 
 #ifdef HAVE_RAWVOL
 	if( grant_root_access(QSP_ARG  s) < 0 ){
 		sprintf(ERROR_STRING,"Error granting root access to user %s",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #else // ! HAVE_RAWVOL
 	MISSING_CONFIG(grant_root_access)
@@ -303,7 +303,7 @@ static COMMAND_FUNC( do_rv_info )
 	if( inp == NULL ) return;
 
 #ifdef HAVE_RAWVOL
-	rv_info(QSP_ARG  inp);
+	rv_info(inp);
 #else // ! HAVE_RAWVOL
 	MISSING_CONFIG(rv_info)
 #endif // ! HAVE_RAWVOL
@@ -355,7 +355,7 @@ static COMMAND_FUNC( do_err_frms )
 	dp = mk_vec(QSP_ARG  s,FRAME_INFO_N_SAVED(fi_p),1,PREC_FOR_CODE(PREC_DI));
 	if( dp == NULL ){
 		sprintf(ERROR_STRING,"do_err_frms:  unable to create data vector %s",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 #ifdef HAVE_RAWVOL
@@ -393,7 +393,7 @@ static COMMAND_FUNC( do_default_rv )
 {
 #ifdef HAVE_RAWVOL
 	if( insure_default_rv(SINGLE_QSP_ARG) < 0 )
-		WARN("Unable to mount default raw volume");
+		warn("Unable to mount default raw volume");
 #else // ! HAVE_RAWVOL
 	MISSING_CONFIG(insure_default_rv)
 #endif // ! HAVE_RAWVOL

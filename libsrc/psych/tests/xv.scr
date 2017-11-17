@@ -1,0 +1,27 @@
+
+Define Synth_Xvals 0
+experiments
+  xvals
+    range 0 1
+    n_vals 21
+    step_type linear
+    save test_xv.asc
+    quit
+  quit
+.
+
+Define Load_Stored_Xvals 1 filename
+If !file_exists('$1') "warn 'File $1 does not exist!?' exit_macro"
+experiments
+  xvals
+    load $1
+    quit
+  quit
+.
+
+#Load_Stored_Xvals test_xv.asc
+
+Synth_Xvals
+
+
+

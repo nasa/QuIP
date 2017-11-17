@@ -42,7 +42,7 @@ Precision *prec_for_code(prec_t prec)
 	return NULL;
 }
 
-void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
+void _describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 {
 	assert( SHP_PREC_PTR(shpp) != NULL );
 	
@@ -135,10 +135,10 @@ void dump_shape(QSP_ARG_DECL  Shape_Info *shpp)
 {
 	int i;
 
-	sprintf(MSG_STR,"shpp = 0x%lx",(int_for_addr)shpp);
+	sprintf(MSG_STR,"shpp = 0x%"PRIxPTR,(uintptr_t)shpp);
 	prt_msg(MSG_STR);
 
-	describe_shape(QSP_ARG  shpp);
+	describe_shape(shpp);
 	sprintf(MSG_STR,"prec = 0x%"PREC_FMT_X,SHP_PREC(shpp));
 	prt_msg(MSG_STR);
 	for(i=0;i<N_DIMENSIONS;i++){
@@ -174,12 +174,12 @@ void _list_dobj(QSP_ARG_DECL  Data_Obj *dp)
 		sprintf(string,"%s:%s", AREA_NAME( OBJ_AREA(dp) ), OBJ_NAME(dp) );
 	sprintf(MSG_STR,"%-40s",string);
 	prt_msg_frag(MSG_STR);
-	describe_shape(QSP_ARG   OBJ_SHAPE(dp) );
+	describe_shape(OBJ_SHAPE(dp) );
 
 	/*
 	if( dp->dt_extra != NULL ){
-		sprintf(MSG_STR,"Decl node has addr 0x%lx\n",
-			(int_for_addr)dp->dt_extra);
+		sprintf(MSG_STR,"Decl node has addr 0x%"PRIxPTR"\n",
+			(uintptr_t)dp->dt_extra);
 		prt_msg(MSG_STR);
 	}
 	*/
@@ -445,7 +445,7 @@ static void list_data(QSP_ARG_DECL  Data_Obj *dp)
 #endif // ! BITNUM_64
 	prt_msg(MSG_STR);
 
-	sprintf(MSG_STR,"\tdata at   0x%lx",(int_for_addr)OBJ_DATA_PTR(dp));
+	sprintf(MSG_STR,"\tdata at   0x%"PRIxPTR,(uintptr_t)OBJ_DATA_PTR(dp));
 	prt_msg(MSG_STR);
 	if( IS_BITMAP(dp) ){
 #ifdef BITNUM_64
@@ -520,7 +520,7 @@ void info_all_dps(SINGLE_QSP_ARG_DECL)
 
 void show_space_used(QSP_ARG_DECL  Data_Obj *dp)
 {
-	sprintf(MSG_STR,"%s:\t\t0x%lx",OBJ_NAME(dp),(int_for_addr)OBJ_DATA_PTR(dp));
+	sprintf(MSG_STR,"%s:\t\t0x%"PRIxPTR,OBJ_NAME(dp),(uintptr_t)OBJ_DATA_PTR(dp));
 	prt_msg(MSG_STR);
 }
 

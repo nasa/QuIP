@@ -100,13 +100,13 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 
 	perf_vfunc(QSP_ARG  FVMINV, oap);
 
-	extract_scalar_value(QSP_ARG  &scratch_scalar_val, scratch_scalar_dp);
-	omn = cast_from_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp));
+	extract_scalar_value(&scratch_scalar_val, scratch_scalar_dp);
+	omn = cast_from_scalar_value(&scratch_scalar_val,OBJ_PREC_PTR(dp));
 
 	perf_vfunc(QSP_ARG  FVMAXV, oap);
 
-	extract_scalar_value(QSP_ARG  &scratch_scalar_val, scratch_scalar_dp);
-	omx = cast_from_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp));
+	extract_scalar_value(&scratch_scalar_val, scratch_scalar_dp);
+	omx = cast_from_scalar_value(&scratch_scalar_val,OBJ_PREC_PTR(dp));
 
 	/*	y = ( x - omn ) * (mx-mn)/(omx-omn) + mn
 	 *	  = x * rf + mn - omn*rf
@@ -136,13 +136,13 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 	// stick with the tried and true...
 
 	SET_OA_SVAL(oap,0,&scratch_scalar_val);
-	cast_dbl_to_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp),rf);
+	cast_dbl_to_scalar_value(&scratch_scalar_val,OBJ_PREC_PTR(dp),rf);
 	OA_DEST(oap) = dp;
 	perf_vfunc(QSP_ARG  FVSMUL, oap);
 
 	offset = desmin - omn*rf;
 	if( offset != 0 ){
-		cast_dbl_to_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp),offset);
+		cast_dbl_to_scalar_value(&scratch_scalar_val,OBJ_PREC_PTR(dp),offset);
 		perf_vfunc(QSP_ARG  FVSADD, oap);
 	}
 }

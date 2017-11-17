@@ -410,6 +410,7 @@ int n_map_frags(FreeList *list)
  * an application with a know environment.
  */
 
+//int _takespace(QSP_ARG_DECL  FreeList *list, u_long a, u_long s)
 int takespace(FreeList *list, u_long a, u_long s)
 			/* list = list from which to allocate */
 			/* a = address */
@@ -422,9 +423,9 @@ int takespace(FreeList *list, u_long a, u_long s)
 		if( a >= frp->blkno && a < (frp->blkno+frp->size) ){
 			offset = a - frp->blkno;
 			if( s > (frp->size - offset) ){
-				sprintf(DEFAULT_ERROR_STRING,
-			"takespace:  can't allocate %ld blocks at %ld",s,a);
-				NWARN(DEFAULT_ERROR_STRING);
+//				sprintf(ERROR_STRING,
+//			"takespace:  can't allocate %ld blocks at %ld",s,a);
+//				warn(ERROR_STRING);
 				return(-1);
 			}
 			if( offset == 0 ){

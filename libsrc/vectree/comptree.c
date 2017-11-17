@@ -94,8 +94,8 @@ static Shape_Info *_void_shpp;
 
 #include "vt_native.h"
 
-void (*native_prelim_func)(QSP_ARG_DECL  Vec_Expr_Node *)=prelim_vt_native_shape;
-void (*native_update_func)(Vec_Expr_Node *)=update_vt_native_shape;
+void (*native_prelim_func)(QSP_ARG_DECL  Vec_Expr_Node *)=_prelim_vt_native_shape;
+void (*native_update_func)(QSP_ARG_DECL  Vec_Expr_Node *)=_update_vt_native_shape;
 
 #define MULTIPLY_DIMENSIONS(p,dsp)			\
 							\
@@ -238,7 +238,7 @@ void _point_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
 	"point_node_shape:  %s node n%d already owns shape info!?",NNAME(enp),VN_SERIAL(enp));
 		warn(ERROR_STRING);
 		/*
-		DESCRIBE_SHAPE(VN_SHAPE(enp));
+		describe_shape(VN_SHAPE(enp));
 		*/
 		discard_node_shape(enp);
 	}
@@ -529,8 +529,8 @@ static Shape_Info * _shapes_mate(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node
 	}
 
 /*
-DESCRIBE_SHAPE(VN_SHAPE(enp1));
-DESCRIBE_SHAPE(VN_SHAPE(enp2));
+describe_shape(VN_SHAPE(enp1));
+describe_shape(VN_SHAPE(enp2));
 	advise("shapes_mate:  should we fall through??");
 	*/
 
@@ -621,8 +621,8 @@ static void update_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		if( ! shapes_mate(VN_CHILD(enp,0),VN_CHILD(enp,1),enp) ){
 			node_error(enp);
 			warn("update_assign_shape:  assignment shapes do not mate");
-			DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,0));
-			DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,1));
+			describe_shape(VN_CHILD_SHAPE(enp,0));
+			describe_shape(VN_CHILD_SHAPE(enp,1));
 			CURDLE(enp)
 		} else {
 			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
@@ -791,7 +791,7 @@ if( debug & cast_debug ){
 sprintf(ERROR_STRING,"typecast_child %s:  typecasting child %s to %s",node_desc(enp),node_desc(VN_CHILD(enp,index)),
 PREC_NAME(prec_p));
 advise(ERROR_STRING);
-DESCRIBE_SHAPE(VN_SHAPE(VN_CHILD(enp,index)));
+describe_shape(VN_SHAPE(VN_CHILD(enp,index)));
 }
 #endif /* QUIP_DEBUG */
 
@@ -1140,7 +1140,7 @@ advise("check_mating_shapes:  no mating shapes");
 		ALL_SCALAR_BINOP_CASES
 //sprintf(ERROR_STRING,"check_mating_shapes %s:  pointing to shape:",node_desc(enp));
 //advise(ERROR_STRING);
-//DESCRIBE_SHAPE(shpp);
+//describe_shape(shpp);
 			point_node_shape(enp,shpp);
 			break;
 
@@ -1173,7 +1173,7 @@ static Shape_Info * _get_mating_shapes(QSP_ARG_DECL   Vec_Expr_Node *enp,int i1,
 void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Shape_Info *tmp_shpp;
-	Subrt_Call *scp;
+	Subrt *srp;
 	dimension_t i1,i2,len ;
 #ifdef NOT_YET
 	Image_File *ifp;
@@ -1311,7 +1311,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 		case T_CALL_NATIVE:
 			/* update_native_shape(enp); */
-			(*native_update_func)(enp);
+			(*native_update_func)(QSP_ARG  enp);
 			break;
 
 		case T_SUBSCRIPT1:	/* update_node_shape */
@@ -1669,25 +1669,23 @@ no_file:
 
 		case T_CALLFUNC:			/* update_node_shape */
 
-			scp=VN_SUBRT_CALL(enp);
-			SET_SC_CALL_VN(scp, enp);
+			srp=VN_SUBRT(enp);
 
 			/* Why do we do this here??? */
 
 			/* make sure the number of aruments is correct */
-			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(SC_SUBRT(scp)) ){
+			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(srp) ){
 				node_error(enp);
 				sprintf(ERROR_STRING,
-	"Subrt %s expects %d arguments (%d passed)",SR_NAME(SC_SUBRT(scp)), SR_N_ARGS(SC_SUBRT(scp)),
+	"Subrt %s expects %d arguments (%d passed)",SR_NAME(srp), SR_N_ARGS(srp),
 					arg_count(VN_CHILD(enp,0)));
 				warn(ERROR_STRING);
 				CURDLE(enp)
 				break;
 			}
 
-			if( SC_SHAPE(scp) != NULL ){
-				copy_node_shape(enp,SC_SHAPE(scp));
-			}
+			// No basis to determine shape at this stage?
+			//copy_node_shape(enp,SC_SHAPE(scp));
 			break;
 
 		case T_ARGLIST:		/* update_node_shape */
@@ -2115,9 +2113,9 @@ static Shape_Info *compatible_shape(Vec_Expr_Node *enp1,Vec_Expr_Node *enp2,Vec_
 				/* allow this */
 			} else {
 NADVISE("compatible_shape:  enp1");
-describe_shape(DEFAULT_QSP_ARG  VN_SHAPE(enp1));
+_describe_shape(DEFAULT_QSP_ARG  VN_SHAPE(enp1));
 NADVISE("compatible_shape:  enp2");
-describe_shape(DEFAULT_QSP_ARG  VN_SHAPE(enp2));
+_describe_shape(DEFAULT_QSP_ARG  VN_SHAPE(enp2));
 				return(NULL);
 			}
 		}
@@ -2191,9 +2189,9 @@ static void compute_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 				node_error(enp);
 				warn("compute_assign_shape:  assignment shapes do not mate");
 				advise(node_desc(VN_CHILD(enp,0)));
-				DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,0));
+				describe_shape(VN_CHILD_SHAPE(enp,0));
 				advise(node_desc(VN_CHILD(enp,1)));
-				DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,1));
+				describe_shape(VN_CHILD_SHAPE(enp,1));
 dump_tree(enp);
 				CURDLE(enp)
 			} else {
@@ -2329,10 +2327,12 @@ static int _count_name_refs(QSP_ARG_DECL  Vec_Expr_Node *enp,const char *lhs_nam
 			}
 			break;
 
+#ifdef SCALARS_NOT_OBJECTS
+		case T_SCALAR_VAR:
+#endif // SCALARS_NOT_OBJECTS
 		case T_FUNCPTR:
 		case T_POINTER:
 		case T_STR_PTR:
-		case T_SCALAR_VAR:
 		case T_DYN_OBJ:		// _count_name_refs
 			if( strcmp(VN_STRING(enp),lhs_name) ){
 				SET_VN_LHS_REFS(enp,0);
@@ -4318,10 +4318,17 @@ dump_tree(enp);
 			 * by transforming to render(img,coords,samples);
 			 */
 
+if( VN_CHILD_SHAPE(enp,1)==NULL){
+fprintf(stderr,"compile_node %s:  null child shape!?\n",node_desc(enp));
+dump_tree(enp);
+}
 			assert( VN_CHILD_SHAPE(enp,1) != NULL );
 
 //fprintf(stderr,"compile_node T_ASSIGN\n");
 //dump_tree(enp);
+			assert(VN_CHILD_SHAPE(enp,0)!=NULL);
+			assert(SHP_PREC_PTR(VN_CHILD_SHAPE(enp,0))!=NULL);
+			assert(SHP_PREC_PTR(VN_CHILD_SHAPE(enp,1))!=NULL);
 			if( (!SCALAR_SHAPE(VN_CHILD_SHAPE(enp,1))) &&
 				/* next line added for matlab */
 				VN_CHILD_SHAPE(enp,0) != NULL &&
@@ -4385,7 +4392,7 @@ dump_tree(enp);
 
 		/* all these cases are do-nothings... */
 
-		case T_SUBRT:
+		case T_SUBRT_DECL:
 		case T_EXIT:
 		case T_CALLFUNC:		/* compile_node */
 		case T_CALL_NATIVE:
@@ -4400,7 +4407,9 @@ dump_tree(enp);
 		case T_CSUBSAMP:
 		case T_LIT_INT:
 		case T_LIT_DBL:
+#ifdef SCALARS_NOT_OBJECTS
 		case T_SCALAR_VAR:
+#endif // SCALARS_NOT_OBJECTS
 		case T_SET_FUNCPTR:
 		case T_CURLY_SUBSCR:	/* compile_node */
 		case T_SQUARE_SUBSCR:		/* compile_node */
@@ -4517,7 +4526,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	Data_Obj *dp;
 	Shape_Info *tmp_shpp;
-	Subrt_Call *scp;
+	Subrt *srp;
 	Vec_Expr_Node *decl_enp;
 	dimension_t i1;
 	const char *s;
@@ -5120,16 +5129,17 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_CALLFUNC:			/* prelim_node_shape */
 
-			scp=VN_SUBRT_CALL(enp);
-			SET_SC_CALL_VN(scp, enp);
+			srp=VN_SUBRT(enp);
 
 			/* We probably need a separate list! */
 			/* link any unknown shape args to the callfunc node */
+			/* what is the child?  the arg list? */
 			if( ! NULL_CHILD(enp,0) )
 				link_uk_args(QSP_ARG  enp,VN_CHILD(enp,0));
 
 			/* void subrt's never need to have a shape */
-			if( SR_PREC_CODE(SC_SUBRT(scp)) == PREC_VOID ){
+			if( SR_PREC_CODE(srp) == PREC_VOID ){
+fprintf(stderr,"prelim_node_shape:  Subroutine %s returns void, setting callfunc shape to null!\n",SR_NAME(srp));
 				SET_VN_SHAPE(enp, NULL);
 				return;
 			}
@@ -5139,16 +5149,17 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 				&& enp != SR_BODY(curr_srp) &&
 				VN_CODE(VN_PARENT(enp)) != T_STAT_LIST ){
 
+fprintf(stderr,"prelim_node_shape:  remembering subroutine %s\n",SR_NAME(srp));
 				/* Why are we doing this?? */
 				remember_callfunc_node(curr_srp,enp);
 			}
 
 
 			/* make sure the number of aruments is correct */
-			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(SC_SUBRT(scp)) ){
+			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(srp) ){
 				node_error(enp);
 				sprintf(ERROR_STRING,
-	"Subrt %s expects %d arguments (%d passed)",SR_NAME(SC_SUBRT(scp)), SR_N_ARGS(SC_SUBRT(scp)),
+	"Subrt %s expects %d arguments (%d passed)",SR_NAME(srp), SR_N_ARGS(srp),
 					arg_count(VN_CHILD(enp,0)));
 				warn(ERROR_STRING);
 				CURDLE(enp)
@@ -5158,7 +5169,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 
 			//copy_node_shape(enp,SR_SHAPE(srp));
-			point_node_shape(enp,SC_SHAPE(scp));
+			copy_node_shape(enp,uk_shape( SR_PREC_CODE(srp)  ) );
 			break;
 
 		case T_ROW_LIST:				/* prelim_node_shape */
@@ -5594,7 +5605,7 @@ warn(ERROR_STRING);
 /*
 sprintf(ERROR_STRING,"prelim_node_shape %s:  pointing to %s",node_desc(enp),node_desc(decl_enp));
 advise(ERROR_STRING);
-DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
+describe_shape(VN_SHAPE(decl_enp));
 */
 				assert( VN_SHAPE(decl_enp) != NULL );
 
@@ -5627,6 +5638,7 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			point_node_shape(enp,scalar_shape(PREC_DI));
 			SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
 			break;
+#ifdef SCALARS_NOT_OBJECTS
 		case T_SCALAR_VAR:
 			{
 			Identifier *idp;
@@ -5634,9 +5646,11 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			idp=get_id(VN_STRING(enp));
 			assert(idp!=NULL);
 			assert(ID_SHAPE(idp)!=NULL);
+			assert(SHP_PREC_PTR(ID_SHAPE(idp))!=NULL);
 			point_node_shape(enp,scalar_shape(SHP_PREC(ID_SHAPE(idp))));
 			}
 			break;
+#endif // SCALARS_NOT_OBJECTS
 		case T_LIT_DBL:			/* prelim_node_shape */
 			point_node_shape(enp,scalar_shape(PREC_DP));
 			SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
@@ -5750,7 +5764,7 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 		case T_MIXED_LIST:
 		case T_PERFORM:
 		case T_SCRIPT:
-		case T_SUBRT:
+		case T_SUBRT_DECL:
 		case T_STRCPY:
 		case T_STRCAT:
 		case T_OUTPUT_FILE:
@@ -6673,8 +6687,8 @@ Shape_Info * product_shape(Shape_Info *shpp1,Shape_Info *shpp2)
 #endif /* FOOBAR */
 
 /*
-DESCRIBE_SHAPE(shpp1);
-DESCRIBE_SHAPE(shpp2);
+describe_shape(shpp1);
+describe_shape(shpp2);
 	advise("product_shape:  should we fall through??");
 	*/
 
@@ -6767,11 +6781,14 @@ void _update_tree_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 const char *_get_lhs_name(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
+
 	switch(VN_CODE(enp)){
+#ifdef SCALARS_NOT_OBJECTS
+		case T_SCALAR_VAR:
+#endif // SCALARS_NOT_OBJECTS
 		case T_POINTER:
 		case T_STR_PTR:
 		case T_DYN_OBJ:
-		case T_SCALAR_VAR:
 			return(VN_STRING(enp));
 		case T_STATIC_OBJ:
 			return(OBJ_NAME(VN_OBJ(enp)));

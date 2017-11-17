@@ -128,9 +128,13 @@ extern void query_cuda_device(QSP_ARG_DECL  int dev);
 
 /* cuda.cpp */
 extern void _init_cuda_devices(SINGLE_QSP_ARG_DECL);
-extern void set_cuda_device(Cuda_Device *);
-extern void *tmpvec(int,int,const char *whence);
+extern void _set_cuda_device(QSP_ARG_DECL  Cuda_Device *);
+#define set_cuda_device(cdp) _set_cuda_device(QSP_ARG  cdp)
+
 extern void freetmp(void *,const char *whence);
+
+extern void *_tmpvec(QSP_ARG_DECL  int,int,const char *whence);
+#define tmpvec(a,b,whence) _tmpvec(QSP_ARG  a,b,whence)
 
 
 extern COMMAND_FUNC( do_gpu_obj_upload );

@@ -75,14 +75,14 @@ NADVISE(DEFAULT_ERROR_STRING);
 	vp->vw_n_protected_colors = n_to_protect;
 }
 
-u_long simulate_lut_mapping(Viewer *vp, u_long color)
+u_long _simulate_lut_mapping(QSP_ARG_DECL  Viewer *vp, u_long color)
 {
 	int index;
 	int r,g,b;
 
 	/* need to get the color map for this viewer */
 	if( VW_CMAP_OBJ(vp) == NULL ){
-NWARN("simulate_lut_mapping:  no colormap!?");
+warn("simulate_lut_mapping:  no colormap!?");
 		return(color);
 	}
 
@@ -91,7 +91,7 @@ NWARN("simulate_lut_mapping:  no colormap!?");
 	if( index < 0 || index >= N_COLORS ){
 		sprintf(DEFAULT_ERROR_STRING,"simulate_lut_mapping:  index %d (0x%x) must be in the range 0-%d",
 			index,index,N_COLORS);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(DEFAULT_ERROR_STRING);
 		return(0);
 	}
 
@@ -206,7 +206,7 @@ void x_assign_lutbuf(Lutbuf *lbp,Data_Obj *cm_dp)
 
 	if( lbp == NULL ){
 		if( !warned_once ){
-			NWARN("assign_lutbuf(): lbp = NULL");
+			warn("assign_lutbuf(): lbp = NULL");
 			warned_once++;
 		}
 		return;
@@ -239,7 +239,7 @@ void x_set_n_protect(int n)
  * what about a function to read back the hardware?
  */
 
-void x_read_lutbuf(Data_Obj *cm_dp,Lutbuf *lbp)
+void _x_read_lutbuf(QSP_ARG_DECL  Data_Obj *cm_dp,Lutbuf *lbp)
 {
 	u_long j;
 	XlibData *xldp;
@@ -248,7 +248,7 @@ void x_read_lutbuf(Data_Obj *cm_dp,Lutbuf *lbp)
 	if( luts_disabled ) return;
 
 	if( lbp == NULL ){
-		NWARN("read_lutbuf():  lbp = NULL");
+		warn("read_lutbuf():  lbp = NULL");
 		return;
 	}
 	if( simulating_luts ){

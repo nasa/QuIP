@@ -138,7 +138,7 @@ typedef struct pt_arg {
 	if( ios_eltcount(VW_DRAW_LIST(vp)) > MAX_DRAWLIST_LEN ){\
 		static int warned=0;				\
 		if( !warned ){					\
-			NWARN("Too many stored draw ops!?");	\
+			warn("Too many stored draw ops!?");	\
 			warned=1;				\
 		}						\
 	} else {						\
@@ -165,10 +165,10 @@ typedef struct pt_arg {
 
 #define CHECK_COLOR_INDEX(funcname,color)		\
 	if( color > 255 ){				\
-		sprintf(DEFAULT_ERROR_STRING,		\
+		sprintf(ERROR_STRING,		\
 "%s:  color (%ld) must be in the range 0-255",		\
 			#funcname,color);		\
-		NWARN(DEFAULT_ERROR_STRING);		\
+		warn(ERROR_STRING);		\
 		return;					\
 	}
 
@@ -331,7 +331,7 @@ static void init_text_font(Viewer *vp)
 {
 #ifdef CAUTIOUS
 	if( VW_GFX_CTX(vp) == NULL ){
-		NWARN("CAUTIOUS:  init_text_font:  viewer has null context!?");
+		warn("CAUTIOUS:  init_text_font:  viewer has null context!?");
 		return;
 	}
 #endif /* CAUTIOUS */
@@ -367,7 +367,9 @@ static void init_text_font(Viewer *vp)
 	CGContextSetTextMatrix (VW_GFX_CTX(vp), myTextTransform);
 }
 
-static int exec_drawop(Viewer *vp, Draw_Op *do_p)
+#define exec_drawop(vp,do_p) _exec_drawop(QSP_ARG  vp,do_p)
+
+static int _exec_drawop(QSP_ARG_DECL  Viewer *vp, Draw_Op *do_p)
 {
 	QUIP_COLOR_TYPE *c;
 	static CGFloat x=0.0;
@@ -379,13 +381,13 @@ static int exec_drawop(Viewer *vp, Draw_Op *do_p)
 	if( do_p == NULL ) NERROR1("CAUTIOUS:  exec_drawop:  null operation ptr!?");
 
 	if( VW_GFX_CTX(vp) == NULL ){
-		NWARN("CAUTIOUS:  exec_drawop:  null context!?");
+		warn("CAUTIOUS:  exec_drawop:  null context!?");
 		return -1;
 	}
 #endif /* CAUTIOUS */
 	switch( do_p.code ){
 		case DO_UNUSED:
-			NWARN("invalid zero Draw_Op_Code!?");
+			warn("invalid zero Draw_Op_Code!?");
 			return 0;
 			break;
 		case DO_MOVE:
@@ -502,8 +504,8 @@ CGSize drawn_size =
 				CGContextShowTextAtPoint (VW_GFX_CTX(vp),
 					x-pt.x, y-pt.y, DOA_STR(do_p), strlen(DOA_STR(do_p)) );
 			} else {
-				sprintf(DEFAULT_ERROR_STRING,"Unexpected text justification mode 0x%x!?",VW_FLAGS(vp)&VW_JUSTIFY_MASK);
-				NWARN(DEFAULT_ERROR_STRING);
+				sprintf(ERROR_STRING,"Unexpected text justification mode 0x%x!?",VW_FLAGS(vp)&VW_JUSTIFY_MASK);
+				warn(ERROR_STRING);
 			}
 			break;
 
@@ -538,13 +540,13 @@ CGSize drawn_size =
 			return -1;
 			break;
 		default:
-			NWARN("Unexpected code in exec_drawop!?");
+			warn("Unexpected code in exec_drawop!?");
 			break;
 	}
 	return 0;
 }
 
-int exec_drawlist(Viewer *vp)
+int _exec_drawlist(QSP_ARG_DECL  Viewer *vp)
 {
 	IOS_Node *np;
 	int retval=0;
@@ -553,7 +555,7 @@ int exec_drawlist(Viewer *vp)
 
 #ifdef BUILD_FOR_IOS
 	if( VW_GFX_CTX(vp) != UIGraphicsGetCurrentContext() )
-		NWARN("viewer context does not match UIGraphicsGetCurrentContext !?");
+		warn("viewer context does not match UIGraphicsGetCurrentContext !?");
 #endif // BUILD_FOR_IOS
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 	CGContextSetStrokeColorSpace( VW_GFX_CTX(vp), colorSpace );
@@ -833,7 +835,7 @@ void set_remember_gfx(int flag)
 
 }
 
-void _xp_erase(Viewer *vp)
+void _xp_erase(QSP_ARG_DECL  Viewer *vp)
 {
 	// We used to release the drawlist here, but that is wrong
 	// because it may contain non-drawing directives, like setting the font etc.
@@ -857,7 +859,7 @@ void _xp_update(Viewer *vp)
 }
 
 
-void _xp_move(Viewer *vp,int x1,int y1)
+void _xp_move(QSP_ARG_DECL  Viewer *vp,int x1,int y1)
 {
 	Draw_Op *do_p;
 	do_p = new_drawop(DO_MOVE);
@@ -866,7 +868,7 @@ void _xp_move(Viewer *vp,int x1,int y1)
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void _xp_select(Viewer *vp, u_long index)
+void _xp_select(QSP_ARG_DECL  Viewer *vp, u_long index)
 {
 	QUIP_COLOR_TYPE *c;
 
@@ -881,7 +883,7 @@ void _xp_select(Viewer *vp, u_long index)
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void _xp_bgselect(Viewer *vp, u_long index)
+void _xp_bgselect(QSP_ARG_DECL  Viewer *vp, u_long index)
 {
 	QUIP_COLOR_TYPE *c;
 
@@ -894,7 +896,7 @@ void _xp_bgselect(Viewer *vp, u_long index)
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2)
+void _xp_line(QSP_ARG_DECL  Viewer *vp,int x1,int y1,int x2,int y2)
 {
 	Draw_Op *do_p;
 
@@ -908,7 +910,7 @@ void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2)
 	MAKE_NEEDY(vp);
 }
 
-void _xp_linewidth(Viewer *vp,CGFloat w)
+void _xp_linewidth(QSP_ARG_DECL  Viewer *vp,CGFloat w)
 {
 	Draw_Op *do_p;
 
@@ -920,7 +922,7 @@ void _xp_linewidth(Viewer *vp,CGFloat w)
 	//MAKE_NEEDY(vp);
 }
 
-void set_font_size(Viewer *vp,int sz)
+void _set_font_size(QSP_ARG_DECL  Viewer *vp,int sz)
 {
 	Draw_Op *do_p;
 
@@ -931,7 +933,7 @@ void set_font_size(Viewer *vp,int sz)
 				// e.g. get_string_offset
 }
 
-void set_text_angle(Viewer *vp,float a)
+void _set_text_angle(QSP_ARG_DECL  Viewer *vp,float a)
 {
 	Draw_Op *do_p;
 
@@ -940,7 +942,7 @@ void set_text_angle(Viewer *vp,float a)
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void set_char_spacing(Viewer *vp,int sz)
+void _set_char_spacing(QSP_ARG_DECL  Viewer *vp,int sz)
 {
 	Draw_Op *do_p;
 
@@ -950,7 +952,7 @@ void set_char_spacing(Viewer *vp,int sz)
 }
 
 
-void set_font_by_name(Viewer *vp,const char *s)
+void _set_font_by_name(QSP_ARG_DECL  Viewer *vp,const char *s)
 {
 	Draw_Op *do_p;
 
@@ -961,7 +963,7 @@ void set_font_by_name(Viewer *vp,const char *s)
 	//MAKE_NEEDY(vp);
 }
 
-void _xp_text(Viewer *vp,int x, int y, const char *s)
+void _xp_text(QSP_ARG_DECL  Viewer *vp,int x, int y, const char *s)
 {
 	Draw_Op *do_p;
 	_xp_move(vp,x,y);
@@ -971,50 +973,50 @@ void _xp_text(Viewer *vp,int x, int y, const char *s)
 	MAKE_NEEDY(vp);
 }
 
-void _xp_arc(Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
+void _xp_arc(QSP_ARG_DECL  Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
 {
 
 	// Not sure what the args are???
-	//advise("_xp_arc:  UNIMPLEMENTED!?");
+	warn("_xp_arc:  UNIMPLEMENTED!?");
 	//CGContextAddArc(VW_GFX_CTX(vp),x,y,radius,startAngle,endAngle,clockwise);
 }
 
-void _xp_fill_arc(Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
+void _xp_fill_arc(QSP_ARG_DECL  Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
 {
-	NADVISE("_xp_fill_arc:  UNIMPLEMENTED!?");
+	warn("_xp_fill_arc:  UNIMPLEMENTED!?");
 
 }
 
-void _xp_fill_polygon(Viewer* vp, int num_points, int* px_vals, int* py_vals)
+void _xp_fill_polygon(QSP_ARG_DECL  Viewer* vp, int num_points, int* px_vals, int* py_vals)
 {
-	NADVISE("_xp_fill_polygon:  UNIMPLEMENTED!?");
+	warn("_xp_fill_polygon:  UNIMPLEMENTED!?");
 
 }
 
 // CGContextSetAllowsAntialiasing
 // CGContextSetShouldAntialias
 
-void dump_drawlist(QSP_ARG_DECL  Viewer *vp)
+void _dump_drawlist(QSP_ARG_DECL  Viewer *vp)
 {
 	advise("dump_drawlist:  UNIMPLEMENTED!?");
 
 }
 
-void left_justify(Viewer *vp)
+void _left_justify(QSP_ARG_DECL  Viewer *vp)
 {
 	Draw_Op *do_p;
 	do_p = new_drawop(DO_LJUST);
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void right_justify(Viewer *vp)
+void _right_justify(QSP_ARG_DECL  Viewer *vp)
 {
 	Draw_Op *do_p;
 	do_p = new_drawop(DO_RJUST);
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void center_text(Viewer *vp)
+void _center_text(QSP_ARG_DECL  Viewer *vp)
 {
 	Draw_Op *do_p;
 	do_p = new_drawop(DO_CJUST);
@@ -1100,10 +1102,10 @@ int get_string_width(Viewer *vp, const char *s)
 {
 	// Do we really initialize here???
 	if( VW_GFX_CTX(vp) == NULL ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"get_string_width '%s':  drawing context for viewer %s is NULL!?",
 			s,VW_NAME(vp));
-		NADVISE(DEFAULT_ERROR_STRING);
+		NADVISE(ERROR_STRING);
 		return( (int)strlen(s) * DEFAULT_PIXELS_PER_CHAR );
 	}
 
@@ -1192,9 +1194,9 @@ void init_viewer_images(Viewer *vp)
 	// That comment says we want the controls in front - so why
 	// are we bringing the images to the front???
 
-//sprintf(DEFAULT_ERROR_STRING,"init_viewer_images:  bringing images 0x%lx to front, superview = 0x%lx",
+//sprintf(ERROR_STRING,"init_viewer_images:  bringing images 0x%lx to front, superview = 0x%lx",
 //(long)qip,(long)VW_QV(vp));
-//advise(DEFAULT_ERROR_STRING);
+//advise(ERROR_STRING);
 
 	//[VW_QV(vp) bringSubviewToFront:qip];
 

@@ -65,7 +65,7 @@ void cat_string(String_Buf *sbp,const char *str)
 
 	if( sbp->sb_buf == NULL ){
 		assert( sbp->sb_size == 0 );
-		need = strlen(str)+1;
+		need = (u_int) strlen(str)+1;
 		enlarge_buffer(sbp,need);
 	}
 

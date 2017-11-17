@@ -16,7 +16,8 @@ typedef struct sfont {
 } XFont;
 
 /* vbl.c */
-extern void vbl_wait(void);
+extern void _vbl_wait(SINGLE_QSP_ARG_DECL);
+#define vbl_wait() _vbl_wait(SINGLE_QSP_ARG)
 
 extern void set_font(Viewer *,XFont *);
 extern Viewer *_find_viewer(QSP_ARG_DECL  Window win);
