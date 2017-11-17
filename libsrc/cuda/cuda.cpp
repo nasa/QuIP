@@ -479,6 +479,9 @@ void freetmp(void *ptr,const char *whence)
 #ifdef HAVE_CUDA
 //CUFFT
 //static const char* getCUFFTError(cufftResult_t status)
+
+#define getCUFFTError(status) _getCUFFTError(QSP_ARG  status)
+
 const char* _getCUFFTError(QSP_ARG_DECL  cufftResult status)
 {
 	switch (status) {

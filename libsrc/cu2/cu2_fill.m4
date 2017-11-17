@@ -224,7 +224,7 @@ dnl		//SCALE_INDICES_XYZ_2
 	}
 }
 
-void h_sp_ifl( Data_Obj *dp, int x, int y, float tol, float fill_val )
+void h_sp_ifl( QSP_ARG_DECL   Data_Obj *dp, int x, int y, float tol, float fill_val )
 {
 	BLOCK_VARS_DECLS
 	cudaError_t e;
