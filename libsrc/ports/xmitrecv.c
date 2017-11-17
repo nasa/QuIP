@@ -449,7 +449,7 @@ static char *get_file_contents(QSP_ARG_DECL  const char *filename, struct stat *
 	FILE *fp;
 	char *buf;
 
-	fp=try_open(QSP_ARG  filename,"r");
+	fp=try_open(filename,"r");
 	if( !fp ) return NULL;
 
 	// get the file size

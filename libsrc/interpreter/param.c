@@ -332,7 +332,7 @@ static COMMAND_FUNC( do_prm_rd )
 	const char *s;
 
 	s=nameof(pfstr);
-	fp=TRY_OPEN( s,"r" );
+	fp=try_open( s,"r" );
 	if( !fp ) return;
 	rdprms(QSP_ARG  theptbl,fp,s);
 }
@@ -340,7 +340,7 @@ static COMMAND_FUNC( do_prm_rd )
 static COMMAND_FUNC( do_prm_wt )
 {
 	FILE *fp;
-	fp=TRYNICE(nameof(pfstr),"w");
+	fp=try_nice(nameof(pfstr),"w");
 	if( fp== NULL ) return;
 	wtprms(QSP_ARG  fp,theptbl);
 }

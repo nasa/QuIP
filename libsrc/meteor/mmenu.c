@@ -303,7 +303,7 @@ static COMMAND_FUNC( do_getc )
 	int c;
 	int n_eof=0;
 
-	fp=TRY_OPEN("/dev/tty","r");
+	fp=try_open("/dev/tty","r");
 	if( !fp ) return;
 
 	c=(-1);

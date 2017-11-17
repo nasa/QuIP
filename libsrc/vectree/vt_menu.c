@@ -33,7 +33,7 @@ static COMMAND_FUNC( do_fileparse )
 	/* disable_lookahead(); */
 	s=NAMEOF("expression file");
 	if( strcmp(s,"-") ){
-		fp=TRY_OPEN( s, "r" );
+		fp=try_open( s, "r" );
 		if( !fp ) return;
 fprintf(stderr,"Parsing contents of file %s\n",s);
 		//push_input_file(QSP_ARG  s);

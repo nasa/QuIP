@@ -112,7 +112,7 @@ int _askif(QSP_ARG_DECL  const char *prompt)
 	return( -1 );
 }
 
-int confirm(QSP_ARG_DECL  const char *s)
+int _confirm(QSP_ARG_DECL  const char *s)
 {
 	if( !intractive( SINGLE_QSP_ARG ) ) return(1);
 	return(askif(s));

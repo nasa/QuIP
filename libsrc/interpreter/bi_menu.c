@@ -1284,7 +1284,7 @@ static COMMAND_FUNC( do_count_lines )
 
 	vn=nameof("variable name for result");
 	fn=nameof("filename");
-	fp = try_open(QSP_ARG  fn,"r");
+	fp = try_open(fn,"r");
 	if( !fp ) return;
 
 	/* Now count the lines in the file */
@@ -1331,7 +1331,7 @@ static void set_output_file(QSP_ARG_DECL  const char *new_filename)
 	if( (!strcmp(new_filename,"-")) || (!strcmp(new_filename,"stdout")) )
 		fp=stdout;
 	else {
-		fp=TRYNICE(new_filename,open_mode_string[ APPEND_FLAG ]);
+		fp=try_nice(new_filename,open_mode_string[ APPEND_FLAG ]);
 	}
 
 	if( !fp ) return;
@@ -1366,7 +1366,7 @@ static COMMAND_FUNC( do_error_redir )
 	if( (!strcmp(s,"-")) || (!strcmp(s,"stderr")) )
 		fp=stderr;
 	else {
-		fp=TRYNICE(s,open_mode_string[ APPEND_FLAG ]);
+		fp=try_nice(s,open_mode_string[ APPEND_FLAG ]);
 	}
 
 	if( !fp ) return;
@@ -1473,7 +1473,7 @@ static COMMAND_FUNC( do_copy_cmd )
 {
 	FILE *fp;
 
-	fp=TRYNICE( nameof("transcript file"), "w" );
+	fp=try_nice( nameof("transcript file"), "w" );
 	if( fp ) {
 		if(dupout(fp)==(-1))
 			fclose(fp);
@@ -1580,7 +1580,7 @@ static COMMAND_FUNC( do_pmpttext )
 	//push_input_file(QSP_ARG   "-" );
 	redir(tfile(), "-" );
 	t=savestr( nameof(p) );
-	pop_file(SINGLE_QSP_ARG);
+	pop_file();
 	assign_var(s,t);
 	rls_str(t);
 #else // BUILD_FOR_OBJC

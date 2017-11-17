@@ -1,0 +1,22 @@
+# mmvi script to record a pic test
+# we run this on dirac...
+
+If $argc!=2 "error_exit 'usage:  mmvi movie_name n_fields < r.scr'"
+
+movie
+  control
+    geometry
+      field_mode yes
+      quit
+    quit
+  assemble
+    #advise "Type ^D to begin recording $2 fields to movie $1"
+    #< /dev/tty
+    date
+    advise "Record $1 $2 BEGIN"
+    record $1 $2
+    date
+    quit
+  quit
+exit
+

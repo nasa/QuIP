@@ -22,12 +22,17 @@ extern char * printable_string(const char *);
 extern char * printable_version(int);
 extern int buffered_char(QSP_ARG_DECL  Serial_Buffer *);
 extern char * expect_string(QSP_ARG_DECL  Serial_Buffer *,const char *);
-extern void expected_response(QSP_ARG_DECL  Serial_Buffer *,const char *);
-extern void read_until_string(QSP_ARG_DECL  char *,Serial_Buffer *,const char *,Consume_Flag);
+extern void _expected_response(QSP_ARG_DECL  Serial_Buffer *,const char *);
+#define expected_response(sbp,s) _expected_response(QSP_ARG  sbp,s)
+
+extern void _read_until_string(QSP_ARG_DECL  char *,Serial_Buffer *,const char *,Consume_Flag);
+#define read_until_string(dst,sbp,m,f) _read_until_string(QSP_ARG  dst,sbp,m,f)
+
 extern void reset_buffer(Serial_Buffer *);
 extern void init_response_buf(int fd);
 extern int get_number(QSP_ARG_DECL  Serial_Buffer *);
 extern void show_buffer(Serial_Buffer *);
-extern int replenish_buffer(QSP_ARG_DECL  Serial_Buffer *,int max);
+extern int _replenish_buffer(QSP_ARG_DECL  Serial_Buffer *,int max);
+#define replenish_buffer(sbp,max) _replenish_buffer(QSP_ARG  sbp,max)
 
 

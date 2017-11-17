@@ -206,12 +206,17 @@ typedef struct visca_cmd_set {
 ITEM_INTERFACE_PROTOTYPES(Visca_Command,visca_cmd)
 #define pick_visca_cmd(p)	_pick_visca_cmd(QSP_ARG  p)
 #define init_visca_cmds()	_init_visca_cmds(SINGLE_QSP_ARG)
+#define new_visca_cmd(p)	_new_visca_cmd(QSP_ARG  p)
 
 ITEM_INTERFACE_PROTOTYPES(Visca_Cmd_Set,cmd_set)
+#define cmd_set_of(s)	_cmd_set_of(QSP_ARG  s)
+#define new_cmd_set(s)	_new_cmd_set(QSP_ARG  s)
+
 ITEM_INTERFACE_PROTOTYPES(Visca_Inquiry,visca_inq)
 
 #define pick_cmd_set(p)		_pick_cmd_set(QSP_ARG  p)
 #define pick_visca_inq(p)	_pick_visca_inq(QSP_ARG  p)
+#define new_visca_inq(p)	_new_visca_inq(QSP_ARG  p)
 
 extern Item_Context *_create_visca_cmd_context(QSP_ARG_DECL  const char *name);
 extern void _push_visca_cmd_context(QSP_ARG_DECL  Item_Context *);
@@ -313,10 +318,12 @@ typedef struct visca_cam {
 ITEM_INTERFACE_PROTOTYPES(Visca_Cam,vcam)
 #define pick_vcam(p)	_pick_vcam(QSP_ARG  p)
 #define list_vcams(fp)	_list_vcams(QSP_ARG  fp)
+#define new_vcam(p)	_new_vcam(QSP_ARG  p)
 
 ITEM_INTERFACE_PROTOTYPES(Visca_Port,vport)
 #define pick_vport(p)	_pick_vport(QSP_ARG  p)
 #define list_vports(fp)	_list_vports(QSP_ARG  fp)
+#define new_vport(p)	_new_vport(QSP_ARG  p)
 
 
 #endif /* undev _VISCA_H */

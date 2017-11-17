@@ -651,7 +651,7 @@ static void _interp_file(QSP_ARG_DECL  const char *filename)
 	if( !strcmp(filename,"-") ){
 		redir(stdin,"-");
 	} else {
-		fp=TRY_OPEN( filename,"r");
+		fp=try_open( filename,"r");
 		if( fp ){
 			redir(fp,filename);
 		}

@@ -50,7 +50,7 @@ static COMMAND_FUNC( do_get_file_from_server )
 	url=NAMEOF("remote file name or URL");
 	s=NAMEOF("output filename");
 
-	fp_out = TRY_OPEN(s,"w");
+	fp_out = try_open(s,"w");
 	if( fp_out == NULL ) return;
 
 	write_file_from_url( QSP_ARG  fp_out, url );

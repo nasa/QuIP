@@ -547,7 +547,7 @@ static const char *error_message(int code)
 
 #ifdef HAVE_VISCA
 
-#define table_index_for_inq(tbl,code)	_table_index_for_inq(tbl,code)
+#define table_index_for_inq(tbl,code)	_table_index_for_inq(QSP_ARG  tbl,code)
 
 static int _table_index_for_inq(QSP_ARG_DECL   Visca_Inq_Def *tbl, Inq_Type code )
 {
@@ -598,7 +598,7 @@ static void _init_visca_cmd( QSP_ARG_DECL  Visca_Cmd_Def *vcdp )
 		error1(ERROR_STRING);
 	}
 
-	pop_visca_cmd_context(SINGLE_QSP_ARG);
+	pop_visca_cmd_context();
 
 	vcmdp->vcmd_vcdp = vcdp;
 
@@ -2716,7 +2716,9 @@ static COMMAND_FUNC( select_cam )
 /* add another camera to our databse.
  */
 
-static void add_camera(QSP_ARG_DECL  Visca_Port *vport_p)
+#define add_camera(vport_p) _add_camera(QSP_ARG  vport_p)
+
+static void _add_camera(QSP_ARG_DECL  Visca_Port *vport_p)
 {
 	Visca_Cam *vcam_p;
 	char str[32];
@@ -2786,7 +2788,9 @@ static void add_camera(QSP_ARG_DECL  Visca_Port *vport_p)
 
 /* was do_daisy_chain */
 
-static void detect_daisy_chain(QSP_ARG_DECL  Visca_Port *vport_p)
+#define detect_daisy_chain(vport_p) _detect_daisy_chain(QSP_ARG  vport_p)
+
+static void _detect_daisy_chain(QSP_ARG_DECL  Visca_Port *vport_p)
 {
 /*#define ADDR_SET_BROADCAST 883001ff */
 
@@ -2914,7 +2918,9 @@ static COMMAND_FUNC( do_vport_info )
 
 #ifdef HAVE_VISCA
 
-static Visca_Port *open_port(QSP_ARG_DECL  const char *name)
+#define open_port(name) _open_port(QSP_ARG  name)
+
+static Visca_Port *_open_port(QSP_ARG_DECL  const char *name)
 {
 	Visca_Port *vport_p;
 	int fd;
@@ -3118,7 +3124,7 @@ COMMAND_FUNC( do_visca_menu )
 {
 #ifdef HAVE_VISCA
 	if( the_vcam_p == NULL ){
-		load_visca_cmds(SINGLE_QSP_ARG);
+		load_visca_cmds();
 		default_camera(SINGLE_QSP_ARG);
 	}
 #else

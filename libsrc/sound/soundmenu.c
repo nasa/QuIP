@@ -331,7 +331,7 @@ static COMMAND_FUNC( do_show_stamps )
 	struct timeval tv;
 
 	fn=NAMEOF("timestamp filename");
-	fp=TRY_OPEN(fn,"r");
+	fp=try_open(fn,"r");
 	if( !fp ) return;
 
 	while( fread(&tv,sizeof(tv),1,fp) == 1 ){

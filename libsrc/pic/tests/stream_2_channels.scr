@@ -1,0 +1,42 @@
+# test of 128 bit streaming to two interfaces
+
+Set n 128
+#Set n 256	# about 4 seconds worth?
+
+Vector both_channels $n 4 u_long
+Vector one_channel $n 2 u_long
+VSet both_channels 0
+VSet one_channel 0
+
+# set up the array to light a single circuit, stepping through all circuits
+
+Set i 0
+repeat $n/16
+  Set bit 0
+  repeat 16
+    VSet both_channels[$i]{0} (1<<$bit)|(1<<($bit+16))
+    VSet both_channels[$i]{1} (1<<$bit)|(1<<($bit+16))
+    VSet both_channels[$i]{2} (1<<$bit)|(1<<($bit+16))
+    VSet both_channels[$i]{3} (1<<$bit)|(1<<($bit+16))
+    Increment bit
+    Increment i
+    end
+  end
+
+data ascii output_fmt hexadecimal quit quit
+#Display led_data
+
+pic
+  device /dev/ttyS4
+#  device /dev/ttyS5
+#  debug pic
+  advise "STREAMING to one channel..."
+  stream_led one_channel
+  advise "DONE STREAMING to one channel..."
+  exit
+
+  advise "STREAMING to two channels..."
+  stream_led both_channels
+  advise "DONE STREAMING to two channels..."
+  exit
+

@@ -1,0 +1,9 @@
+# sync test
+
+pic
+  device /dev/ttyS4
+  repeat 100
+    read_mem 7 1
+    end
+  Pause
+

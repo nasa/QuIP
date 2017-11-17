@@ -116,7 +116,7 @@ void reset_buffer(Serial_Buffer *sbp)
  * the characters are placed in the response buffer.
  */
 		
-int replenish_buffer(QSP_ARG_DECL  Serial_Buffer *sbp,int max_expected)
+int _replenish_buffer(QSP_ARG_DECL  Serial_Buffer *sbp,int max_expected)
 {
 	int n;
 
@@ -193,7 +193,7 @@ else prt_msg_frag(",");
 //advise(ERROR_STRING);
 //}
 //#endif /* QUIP_DEBUG */
-		replenish_buffer(QSP_ARG  sbp,n);
+		replenish_buffer(sbp,n);
 /*show_buffer(sbp); */
 	}
 
@@ -252,7 +252,7 @@ static int expect_char(Serial_Buffer *sbp, int expected)
  * was found.  That should be called read_until_char !?
  */
 
-void read_until_string(QSP_ARG_DECL  char *dst,Serial_Buffer *sbp, const char *marker,
+void _read_until_string(QSP_ARG_DECL  char *dst,Serial_Buffer *sbp, const char *marker,
 							Consume_Flag consume)
 {
 	int c;
@@ -455,7 +455,7 @@ advise(ERROR_STRING);
 }
 */
 #endif /* QUIP_DEBUG */
-			replenish_buffer(QSP_ARG  sbp,MAX_TOKEN_CHARS);
+			replenish_buffer(sbp,MAX_TOKEN_CHARS);
 		} else if( isdigit(*s) ){
 			/* Store this char */
 			if( i < MAX_TOKEN_CHARS ){
@@ -516,7 +516,7 @@ int get_number( QSP_ARG_DECL  Serial_Buffer *sbp )
 
 /* this has the calling sequence like the old expect_string(), but prints a better error msg */
 
-void expected_response( QSP_ARG_DECL  Serial_Buffer *sbp, const char *expected_str )
+void _expected_response( QSP_ARG_DECL  Serial_Buffer *sbp, const char *expected_str )
 {
 	const char *s;
 

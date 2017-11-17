@@ -949,7 +949,7 @@ static COMMAND_FUNC( read_matches )
 	int d[3];
 
 	p=HOW_MANY("phosphor index");
-	fp=TRY_OPEN( nameof("filename"), "r" );
+	fp=try_open( nameof("filename"), "r" );
 	if( !fp ) return;
 
 	for(i=0;i<n_ramp_levels;i++){

@@ -1608,7 +1608,7 @@ COMMAND_FUNC( do_file_scroller )
 	FILE *fp;
 
 	sop = pick_scrnobj("scroller");
-	fp = TRY_OPEN( NAMEOF("item file"), "r" );
+	fp = try_open( NAMEOF("item file"), "r" );
 	if( !fp ) return;
 
 	while( fscanf(fp,"%s",word) == 1 ){

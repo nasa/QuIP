@@ -62,7 +62,7 @@ static struct passwd **get_pw_tbl()
  * Returns a valid file pointer or NULL on error.
  */
 
-FILE *try_open(QSP_ARG_DECL  const char *filename, const char *mode)
+FILE *_try_open(QSP_ARG_DECL  const char *filename, const char *mode)
 			/* filename = name of file to open */
 			/* mode = file mode (see fopen(3)) */
 {
@@ -210,12 +210,12 @@ proceed:
  * Treat any errors as fatal, exit program.
  */
 
-FILE *try_hard( QSP_ARG_DECL  const char *filename, const char *mode )
+FILE *_try_hard( QSP_ARG_DECL  const char *filename, const char *mode )
 		/* filename = name of file to open */
 		/* mode = file mode (see fopen(3)) */
 {
         FILE *fp;
-        fp=try_open(QSP_ARG  filename,mode);
+        fp=try_open(filename,mode);
         if( !fp ) error1("Missing file caused fatal error");
         return(fp);
 }
@@ -233,7 +233,7 @@ COMMAND_FUNC( togclobber )
 	}
 }
 
-FILE *trynice(QSP_ARG_DECL  const char *fnam, const char *mode)
+FILE *_try_nice(QSP_ARG_DECL  const char *fnam, const char *mode)
 {
         FILE *fp;
 #ifdef HAVE_STAT
@@ -255,12 +255,12 @@ FILE *trynice(QSP_ARG_DECL  const char *fnam, const char *mode)
 			} else {
                        		sprintf(pstr, "file %s exists, overwrite",fnam);
 			}
-                       	if( !confirm(QSP_ARG pstr) ) return(NULL);
+                       	if( !confirm(pstr) ) return(NULL);
                 }
         }
 #endif /* HAVE_STAT */
     
-        fp=TRY_OPEN(fnam, mode);
+        fp=try_open(fnam, mode);
 	return(fp);
 }
 

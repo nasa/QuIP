@@ -36,6 +36,7 @@ SUBDIRS =			\
 		das1602		\
 		ieee1394	\
 		parport		\
+		pic		\
 		knox		\
 		gsl		\
 		seq		\

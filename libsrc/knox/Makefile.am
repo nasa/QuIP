@@ -9,5 +9,3 @@ libknox_a_SOURCES = 					\
 				knox.c			\
 				knox_tbl.c
 
-noinst_HEADERS =		knox.h
-

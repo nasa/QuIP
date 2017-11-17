@@ -1772,7 +1772,7 @@ static const char *hist_select(QSP_ARG_DECL const char* pline)
 	s=get_response_from_user(QSP_ARG  pline,QRY_FILE_PTR(qp),stderr);
 	if( s==NULL ){			/* ^D */
 		if( QLEVEL > 0 ){
-			pop_file(SINGLE_QSP_ARG);
+			pop_file();
 			return NULL;
 		} else {
 			advise("EOF");
@@ -1791,7 +1791,7 @@ static const char *hist_select(QSP_ARG_DECL const char* pline)
 static void query_stream_finished(SINGLE_QSP_ARG_DECL)
 {
 	if( QLEVEL > 0 ){	/* EOF redir file */
-		pop_file(SINGLE_QSP_ARG);
+		pop_file();
 	} else if( has_stdin ){
 sprintf(ERROR_STRING,"EOF on %s",QS_NAME(THIS_QSP));
 advise(ERROR_STRING);
@@ -1805,7 +1805,7 @@ advise(ERROR_STRING);
 		// and the first file is the startup file.
 		//
 		// This caused an infinite loop of prompt printing...
-		pop_file(SINGLE_QSP_ARG);
+		pop_file();
 	}
 }
 
@@ -1890,7 +1890,7 @@ const char * _nextline(QSP_ARG_DECL  const char *pline)
 
 	if( IS_HALTING(THIS_QSP) ){
 		if( QLEVEL > 0 )		// or should >= ???  BUG?
-			pop_file(SINGLE_QSP_ARG);
+			pop_file();
 		return(NULL);
 	}
 
@@ -2982,7 +2982,7 @@ static inline void release_macro_args(Query *qp)
  * Cleans up appropriately.
  */
 
-Query * pop_file(SINGLE_QSP_ARG_DECL)
+Query * _pop_file(SINGLE_QSP_ARG_DECL)
 {
 	Query *qp;
 
@@ -3122,7 +3122,7 @@ void _close_loop(SINGLE_QSP_ARG_DECL)
 	 * How would we know???
 	 */
 
-	loop_qp=pop_file(SINGLE_QSP_ARG);	// are we sure we should do this?
+	loop_qp=pop_file();	// are we sure we should do this?
 
 	qp=(CURR_QRY(THIS_QSP));
 
@@ -3206,7 +3206,7 @@ void _whileloop(QSP_ARG_DECL  int value)
 		return;
 	}
 
-	pop_file(SINGLE_QSP_ARG);
+	pop_file();
 	qp=(CURR_QRY(THIS_QSP));
 	CLEAR_QRY_FLAG_BITS(qp,Q_SAVING);
 
@@ -3761,7 +3761,7 @@ void exit_current_file(SINGLE_QSP_ARG_DECL)
 	}
 	i=QLEVEL;
 	while(i>=done_level){
-		pop_file(SINGLE_QSP_ARG);
+		pop_file();
 		i--;
 	}
 }
@@ -3805,7 +3805,7 @@ void exit_current_macro(SINGLE_QSP_ARG_DECL)
 
 	i=QLEVEL;
 	while(i>done_level){
-		pop_file(SINGLE_QSP_ARG);
+		pop_file();
 		i--;
 	}
 }

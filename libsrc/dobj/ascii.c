@@ -1227,7 +1227,7 @@ void read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int ex
 				OBJ_N_MACH_ELTS(dp),OBJ_NAME( dp) ,orig_filename);
 			warn(ERROR_STRING);
 		}
-		pop_file(SINGLE_QSP_ARG);
+		pop_file();
 	}
 
 	rls_str( orig_filename);

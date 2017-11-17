@@ -185,7 +185,7 @@ static COMMAND_FUNC( do_rdplot )
 {
 	FILE *fp;
 
-	fp=TRY_OPEN( NAMEOF("filename"), "r") ;
+	fp=try_open( NAMEOF("filename"), "r") ;
 	if( !fp ) return;
 	rdplot(QSP_ARG  fp);
 }

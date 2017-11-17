@@ -1,0 +1,13 @@
+#
+pic
+#  debug pic
+  device /dev/ttyS4
+  led8 0 255
+  led8 1 255
+  led8 0 0
+  led8 1 0
+  quit
+exit
+
+  Pause
+

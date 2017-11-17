@@ -10,7 +10,7 @@ void rdxvals(QSP_ARG_DECL  const char *fnam)
 	float ftmp;
 	char str[32];
 
-        fp=TRY_OPEN(fnam,"r");
+        fp=try_open(fnam,"r");
 	if(fp){
 		sprintf(ERROR_STRING,"reading x values from file %s",fnam);
 		advise(ERROR_STRING);

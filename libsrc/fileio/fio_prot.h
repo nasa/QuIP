@@ -40,7 +40,9 @@ extern int open_fd(QSP_ARG_DECL  Image_File *ifp);
 #ifndef PC
 extern int ifp_iopen(Image_File *ifp);
 #endif /* ! PC */
-extern int open_fp(Image_File *ifp);
+extern int _open_fp(QSP_ARG_DECL  Image_File *ifp);
+#define open_fp(ifp) _open_fp(QSP_ARG  ifp)
+
 extern void image_file_clobber(int);
 extern void image_file_init(SINGLE_QSP_ARG_DECL);
 

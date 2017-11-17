@@ -373,7 +373,7 @@ static void setup_files(SINGLE_QSP_ARG_DECL)
 	if( IS_DRIBBLING ){
 		init_dribble_file(SINGLE_QSP_ARG);
 	} else {
-		while( (fp=TRYNICE(NAMEOF("summary data file"),"w"))
+		while( (fp=try_nice(NAMEOF("summary data file"),"w"))
 			== NULL ) ;
 		set_summary_file(fp);
 	}
@@ -616,7 +616,7 @@ void get_rsp_word(QSP_ARG_DECL const char **sptr,const char *def_rsp)
 	sprintf(buf,"word %s response",def_rsp);
 	s=NAMEOF(buf);
 	sprintf(buf,"use \"%s\" for %s response",s,def_rsp);
-	if( !CONFIRM(buf) ) return;
+	if( !confirm(buf) ) return;
 
 	set_rsp_word(sptr,s,def_rsp);
 }
@@ -666,7 +666,7 @@ int response(QSP_ARG_DECL  const char *question_string)
 	} while( n < 0 );
 
 	if( get_response_from_keyboard )
-		pop_file(SINGLE_QSP_ARG);		/* back to default input */
+		pop_file();		/* back to default input */
 
 	switch(n){
 		case YES_INDEX:		return(YES); break;

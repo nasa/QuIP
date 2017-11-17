@@ -117,6 +117,14 @@ AC_ARG_ENABLE([knox-switcher],
 	[ use_knox=${enableval}], [use_knox=no])
 
 
+# disable PIC microcontroller support by default
+
+AC_ARG_ENABLE([pic-microcontroller],
+	[AS_HELP_STRING([--enable-pic-microcontroller],
+		[enable PIC microcontroller support @<:@default: yes@:>@])],
+	[ use_pic=${enableval}], [use_pic=no])
+
+
 # Enable tty_ctl by default:
 AC_ARG_ENABLE([tty-ctl],
 	[AS_HELP_STRING([--disable-tty-ctl],[disable low level tty control @<:@default: no@:>@])],
@@ -306,6 +314,7 @@ if test "x${minimal_build}" = xyes; then
 	use_visca=no
 	use_fb_dev=no
 	use_knox=no
+	use_pic=no
 	use_tty_ctl=no
 	use_my_intr=no
 	use_viewers=no
@@ -563,6 +572,10 @@ fi
 
 # check for knox video switcher
 AC_CHECK_FILE([/dev/knox],[have_knox=yes],[have_knox=no])
+
+
+# check for PIC microcontroller
+AC_CHECK_FILE([/dev/pic],[have_pic=yes],[have_pic=no])
 
 
 # check for meteor
@@ -1646,6 +1659,7 @@ AC_CONFIG_FILES([Makefile
 		 libsrc/opencv/Makefile
 		 libsrc/visca/Makefile
 		 libsrc/knox/Makefile
+		 libsrc/pic/Makefile
 		 libsrc/opengl/Makefile
 		 libsrc/polhemus/Makefile
 		 libsrc/ieee1394/Makefile
@@ -1913,6 +1927,24 @@ fi
 if test "x${have_knox}" = xyes; then
 #  if test "x${use_knox}" = xyes; then
     AC_DEFINE([HAVE_KNOX], 1, [Knox video switcher support enabled])
+#  fi
+fi
+
+if test "x${have_pic}" = xno; then
+  if test "x${use_pic}" = xyes; then
+  AC_MSG_WARN([
+-------------------------------------------
+Device /dev/pic not found.
+Building without PIC LED controller support.
+-------------------------------------------])
+    use_pic=no
+  fi
+fi
+
+# Here we enable PIC support if /dev/pic is present, regardless of the state of use_pic
+if test "x${have_pic}" = xyes; then
+#  if test "x${use_pic}" = xyes; then
+    AC_DEFINE([HAVE_PIC], 1, [PIC LED controller support enabled])
 #  fi
 fi
 

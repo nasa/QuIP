@@ -36,7 +36,7 @@ int _nvals=0;
 
 static COMMAND_FUNC( do_load_xvals )
 {
-	rdxvals( QSP_ARG  NAMEOF("x value file") );
+	rdxvals( QSP_ARG  nameof("x value file") );
 }
 
 static COMMAND_FUNC( do_set_nxvals )
@@ -93,7 +93,7 @@ static COMMAND_FUNC( do_save_xvals )
 	FILE *fp;
 	int i;
 
-	fp=TRYNICE( NAMEOF("output file"), "w" );
+	fp=try_nice( nameof("output file"), "w" );
 	if( !fp ) return;
 
 	for(i=0;i<_nvals;i++)

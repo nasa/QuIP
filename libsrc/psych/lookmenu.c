@@ -27,8 +27,8 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 	const char *filename;
 	char num_str[16];
 
-	filename=NAMEOF("data file");
-	fp=TRY_OPEN( filename, "r" );
+	filename=nameof("data file");
+	fp=try_open( filename, "r" );
 	if( !fp ) return;
 
 	/* We used to clear the data tables here,
@@ -80,7 +80,7 @@ static COMMAND_FUNC( prquic )
 	int in_db;
 	Trial_Class *tcp;
 
-	fp=TRYNICE( NAMEOF("quic file"), "w");
+	fp=try_nice( nameof("quic file"), "w");
 	tcp = pick_trial_class("");
 	in_db = ASKIF("transform x values to decibels");
 
@@ -127,7 +127,7 @@ static COMMAND_FUNC( pntgrph )
 	Trial_Class *tcp;
 
 	tcp = pick_trial_class("");
-	fp=TRYNICE( NAMEOF("output file"), "w" );
+	fp=try_nice( nameof("output file"), "w" );
 	if( fp == NULL || tcp == NULL ) return;
 
 	if( no_data(QSP_ARG  "pntgrph") ) return;
@@ -278,7 +278,7 @@ static COMMAND_FUNC( do_pnt_bars )
 	Trial_Class *tcp;
 
 	tcp = pick_trial_class("");
-	fp=TRYNICE( NAMEOF("output file"), "w" );
+	fp=try_nice( nameof("output file"), "w" );
 	if( fp == NULL || tcp == NULL ) return;
 
 	pnt_bars( QSP_ARG  fp, tcp );
@@ -288,7 +288,7 @@ static COMMAND_FUNC( do_xv_xform )
 {
 	const char *s;
 
-	s=NAMEOF("dm expression string for x-value transformation");
+	s=nameof("dm expression string for x-value transformation");
 	set_xval_xform(s);
 }
 

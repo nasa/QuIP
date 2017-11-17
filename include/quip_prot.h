@@ -107,15 +107,15 @@ ITEM_INTERFACE_PROTOTYPES( Pipe, pipe )
 
 
 // try_hard.c
-extern FILE *try_hard( QSP_ARG_DECL  const char *filename, const char *mode );
-extern FILE *trynice(QSP_ARG_DECL  const char *fnam, const char *mode);
-extern QUIP_BOOL confirm(QSP_ARG_DECL  const char *pmpt);
-extern FILE *try_open(QSP_ARG_DECL  const char *filename, const char *mode);
+extern FILE *_try_hard( QSP_ARG_DECL  const char *filename, const char *mode );
+extern FILE *_try_nice(QSP_ARG_DECL  const char *fnam, const char *mode);
+extern QUIP_BOOL _confirm(QSP_ARG_DECL  const char *pmpt);
+extern FILE *_try_open(QSP_ARG_DECL  const char *filename, const char *mode);
 
-#define TRY_OPEN(s,m)		try_open(QSP_ARG  s,m)
-#define TRY_HARD(s,m)		try_hard(QSP_ARG  s,m)
-#define TRYNICE(s,m)		trynice(QSP_ARG  s,m)
-#define CONFIRM(p)		confirm(QSP_ARG  p)
+#define try_open(s,m)		_try_open(QSP_ARG  s,m)
+#define try_hard(s,m)		_try_hard(QSP_ARG  s,m)
+#define try_nice(s,m)		_try_nice(QSP_ARG  s,m)
+#define confirm(p)		_confirm(QSP_ARG  p)
 
 extern COMMAND_FUNC( togclobber );
 
@@ -467,8 +467,9 @@ extern void push_first_menu(Query_Stack *qsp);
 
 /* BUG - these prototypes should go somewhere else and be shared w/ ObjC!?!? */
 extern int lookahead_til(QSP_ARG_DECL  int level);
-extern int tell_qlevel(SINGLE_QSP_ARG_DECL);
-extern Query * pop_file( SINGLE_QSP_ARG_DECL );
+
+extern Query * _pop_file( SINGLE_QSP_ARG_DECL );
+#define pop_file() _pop_file(SINGLE_QSP_ARG)
 
 extern void redir_with_flags( QSP_ARG_DECL  FILE *fp, const char *filename, uint32_t flags );
 extern void _redir( QSP_ARG_DECL  FILE *fp, const char *filename );

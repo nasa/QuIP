@@ -547,17 +547,17 @@ advise(ERROR_STRING);
 }
 #endif /* HAVE_IOPEN */
 
-int open_fp(Image_File *ifp)
+int _open_fp(QSP_ARG_DECL  Image_File *ifp)
 {
 #ifndef HAVE_RGB
 
 	if( IS_READABLE(ifp) ){
-		ifp->if_fp = try_open(DEFAULT_QSP_ARG  ifp->if_pathname,"r");
+		ifp->if_fp = try_open(ifp->if_pathname,"r");
 	} else {
 		/* open read-write so we can read back
 		 * the header if necessary...  (see hips2.c)
 		 */
-		ifp->if_fp = try_open(DEFAULT_QSP_ARG  ifp->if_pathname,"w+");
+		ifp->if_fp = try_open(ifp->if_pathname,"w+");
 	}
 	if( ! ifp->if_fp ) return(-1);
 	return(0);
@@ -571,11 +571,11 @@ int open_fp(Image_File *ifp)
 				sprintf(ERROR_STRING,
 			"open_fp:  error getting RGB descriptor for file %s",
 					ifp->if_pathname);
-				NWARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				return(-1);
 			} else return(0);
 		} else {
-			ifp->if_fp = TRY_OPEN(ifp->if_pathname,"r");
+			ifp->if_fp = try_open(ifp->if_pathname,"r");
 		}
 	} else {
 		/* if .rgb defer the iopen until we know the image size */
@@ -583,7 +583,7 @@ int open_fp(Image_File *ifp)
 			/* open read-write so we can read back
 			 * the header if necessary...  (see hips2.c)
 			 */
-			ifp->if_fp = TRY_OPEN(ifp->if_pathname,"w+");
+			ifp->if_fp = try_open(ifp->if_pathname,"w+");
 		}
 	}
 	if(  FT_CODE(IF_TYPE(ifp))  != IFT_RGB ){

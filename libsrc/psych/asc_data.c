@@ -311,7 +311,7 @@ again:
 		NWARN(ERROR_STRING);
 		return;
 	}
-	fp=try_open(DEFAULT_QSP_ARG  tmpfilename,"r");
+	fp=try_open(tmpfilename,"r");
 	if( !fp ) {
 		advise("retrying");
 		sleep(1);
@@ -444,7 +444,7 @@ void init_dribble_file(SINGLE_QSP_ARG_DECL)
 	FILE *fp;
 
 	// BUG - we should only keep trying if interactive!?
-	while( (fp=TRYNICE(NAMEOF("dribble data file"),"w")) == NULL )
+	while( (fp=try_nice(NAMEOF("dribble data file"),"w")) == NULL )
 		;
 	set_dribble_file(fp);
 	write_data_preamble(QSP_ARG  fp);
