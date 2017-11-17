@@ -164,7 +164,11 @@ static const char *firmware_version=NULL;
 		return;						\
 	}
 
-ITEM_INTERFACE_DECLARATIONS_STATIC(PIC_Device,pic_dev,0)
+//ITEM_INTERFACE_DECLARATIONS_STATIC(PIC_Device,pic_dev,0)
+static Item_Type *pic_dev_itp=NULL;
+static ITEM_INIT_FUNC(PIC_Device,pic_dev,0)
+static ITEM_NEW_FUNC(PIC_Device,pic_dev)
+static ITEM_CHECK_FUNC(PIC_Device,pic_dev)
 
 #define pic_dev_of(s)	_pic_dev_of(QSP_ARG  s)
 #define new_pic_dev(s)	_new_pic_dev(QSP_ARG  s)
