@@ -1,0 +1,38 @@
+#
+# test of rawvol disk recording
+#
+
+Set n_seconds 60
+
+Set d1 /dev/video0
+Set d2 /dev/video1
+Set d3 /dev/video2
+Set d4 /dev/video3
+
+#fileio rawvol volume /dev/sdb1 quit quit
+rawvol default quit
+
+Define Open_Dev 1 name
+v4l2
+  open $1
+  standards
+    set_standard NTSC
+    quit
+  quit
+.
+
+
+Open_Dev $d1
+Open_Dev $d2
+Open_Dev $d3
+Open_Dev $d4
+
+v4l2
+  stream
+    date
+    record foo 4*30*$n_seconds 4 $d1 $d2 $d3 $d4
+    date
+    exit
+
+Pause
+

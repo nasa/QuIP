@@ -158,6 +158,7 @@ void release_oldest_buffer(QSP_ARG_DECL  Video_Device *vdp)
 	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	buf.memory = V4L2_MEMORY_MMAP;
 	buf.index = vdp->vd_oldest;
+fprintf(stderr,"release_oldest_buffer:  will release buffer %d\n",buf.index);
 
 	if( xioctl(vdp->vd_fd, VIDIOC_QBUF, &buf) < 0 )
 		ERRNO_WARN ("VIDIOC_QBUF #3");

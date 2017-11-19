@@ -155,9 +155,9 @@ Variable *_assign_reserved_var(QSP_ARG_DECL  const char *var_name, const char *v
 		return NULL;
 	} else if( ! IS_RESERVED_VAR(vp) ){
 		sprintf(ERROR_STRING,
-"assign_reserved_var:  variable %s is not reserved!?",
+"assign_reserved_var:  variable %s already exists but is not reserved!?",
 			VAR_NAME(vp));
-		warn(ERROR_STRING);
+		advise(ERROR_STRING);
 abort();
 		return NULL;
 	}

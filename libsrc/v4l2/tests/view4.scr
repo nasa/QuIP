@@ -1,0 +1,36 @@
+# display contents of a movie file that has 4 cameras interleaved...
+
+Set f foo.jpg
+
+Read_File_Header $f
+
+Assign w ncols($f)
+Assign h nrows($f)
+Assign d depth($f)
+Assign n nframes($f)
+
+advise "File $f has $n frames..."
+
+Image b $h $w $d u_byte
+
+Viewer_For v1 b
+Viewer_For v2 b
+Viewer_For v3 b
+Viewer_For v4 b
+
+Assign dx $w+10
+
+Posn_Window v1 0*$dx 0
+Posn_Window v2 1*$dx 0
+Posn_Window v3 2*$dx 0
+Posn_Window v4 3*$dx 0
+
+Set i_win 1
+repeat $n
+  Get_Next b $f
+  Set vname v$i_win
+  Show_Bytes b $vname
+  Increment i_win
+  If $i_win>4 "Set i_win 1"
+  end
+

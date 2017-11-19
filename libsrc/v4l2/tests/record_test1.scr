@@ -1,0 +1,22 @@
+#
+# test of rawvol disk recording
+#
+
+Set d /dev/video3
+
+rawvol default quit
+
+Set n_rec	240
+
+#fileio rawvol volume /dev/sdb1 quit quit
+
+v4l2
+  open $d
+  stream
+    advise "recording $n_rec frames..."
+    date
+    record foo $n_rec 1 $d
+    date
+
+Pause
+

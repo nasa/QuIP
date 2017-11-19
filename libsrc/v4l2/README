@@ -1,3 +1,7 @@
+In CentOS 6, all of our cards seem to be supported, but the test
+script is now working...  we used to test with xawtv - or bttv - or something?
+
+--------------------------------------------------------------
 
 This code was developed to run the LMLBT44 (bttv driver), and
 was subsequently used without modification for the Sensoray 811
@@ -9,5 +13,4 @@ kernel updates, we can simply copy the module to the new location???
 Instructions for building module:
 
 see CentOS wiki...
-
 
