@@ -6,8 +6,9 @@
 #ifndef BUILD_FOR_OBJC
 #ifdef HAVE_GL_GLEW_H
 #include <GL/glew.h>
-#endif
+#endif	// HAVE_GL_GLEW_H
 #endif // BUILD_FOR_OBJC
+
 
 #ifdef HAVE_GLUT
 #include "glut_supp.h"
@@ -1623,6 +1624,8 @@ static COMMAND_FUNC( do_new_gl_buffer )
 //advise("calling glGenBuffers");
 //fprintf(stderr,"OBJ_GL_INFO(%s) = 0x%lx\n",OBJ_NAME(dp),(long)OBJ_GL_INFO(dp));
 //fprintf(stderr,"OBJ_BUF_ID_P(%s) = 0x%lx\n",OBJ_NAME(dp),(long)OBJ_BUF_ID_P(dp));
+
+	// BUG glGenBuffers seems to require v1.5???
 	glGenBuffers(1, OBJ_BUF_ID_P(dp) );	// first arg is # buffers to generate?
 
 //sprintf(ERROR_STRING,"glGenBuffers gave us buf_id = %d",OBJ_BUF_ID(dp));
