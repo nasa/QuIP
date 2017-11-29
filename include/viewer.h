@@ -691,6 +691,9 @@ int event_loop(SINGLE_QSP_ARG_DECL);
 extern void embed_draggable(Data_Obj *dp,Draggable *dgp);
 extern void window_sys_init(SINGLE_QSP_ARG_DECL);
 
+extern void _init_reserved_vars(SINGLE_QSP_ARG_DECL);
+#define init_reserved_vars() _init_reserved_vars(SINGLE_QSP_ARG)
+
 extern void _center_text(QSP_ARG_DECL  Viewer *vp);
 extern void _left_justify(QSP_ARG_DECL  Viewer *vp);
 extern void _right_justify(QSP_ARG_DECL  Viewer *vp);

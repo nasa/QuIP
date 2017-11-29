@@ -646,7 +646,7 @@ warn(ERROR_STRING);
 
 #define init_reserved_vars() _init_reserved_vars(SINGLE_QSP_ARG)
 
-static void _init_reserved_vars(SINGLE_QSP_ARG_DECL)
+void _init_reserved_vars(SINGLE_QSP_ARG_DECL)
 {
 	assign_reserved_var("left_button_down","0");
 	assign_reserved_var("left_button_up","1");

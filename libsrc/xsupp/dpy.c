@@ -792,6 +792,8 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 		assign_reserved_var("DISPLAY_HEIGHT",s);
 	}
 
+	init_reserved_vars();	// view_xpos etc.
+
 	//window_sys_inited=1;
 }
 

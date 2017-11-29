@@ -76,12 +76,16 @@ void print_buf_info(const char *msg, My_Buffer *mbp)
 		return;
 	}
 
+#ifdef HAVE_V4L2
 	if( mbp->mb_flags & V4L2_BUF_FLAG_MAPPED )
 		fprintf(stderr," mapped");
 	if( mbp->mb_flags & V4L2_BUF_FLAG_QUEUED )
 		fprintf(stderr," queued");
 	if( mbp->mb_flags & V4L2_BUF_FLAG_DONE )
 		fprintf(stderr," done");
+#else // ! HAVE_V4L2
+	fprintf(stderr," (v4l2 not present)");
+#endif // ! HAVE_V4L2
 	fprintf(stderr,"\n");
 }
 
@@ -117,6 +121,7 @@ static int vfmt_index=DEFAULT_VFMT_INDEX;	// BUG why is this global???
 static const char *vfmt_names[N_VIDEO_FORMATS];
 static int vfmt_names_inited=0;
 
+#ifdef HAVE_V4L2
 static const char *name_for_type(int t)
 {
 	char *s;
@@ -155,6 +160,7 @@ static inline void get_name_for_buffer(char *name,My_Buffer *mbp)
 {
 	sprintf(name,"%s.buffer%d",mbp->mb_vdp->vd_name,mbp->mb_index);
 }
+#endif // HAVE_V4L2
 
 static COMMAND_FUNC(set_vfmt)
 {
@@ -214,6 +220,8 @@ static COMMAND_FUNC( set_field_mode )
 	if( i>=0 ) vfld_index=i;
 }
 
+#ifdef HAVE_V4L2
+
 #define setup_buffer_dimensions(dsp) _setup_buffer_dimensions(QSP_ARG  dsp)
 
 static void _setup_buffer_dimensions(QSP_ARG_DECL  Dimension_Set *dsp)
@@ -256,7 +264,6 @@ static void _setup_buffer_dimensions(QSP_ARG_DECL  Dimension_Set *dsp)
 	dsp->ds_dimension[4]=1;
 }
 
-#ifdef HAVE_V4L2
 
 // init_video_buffer handles the device driver calls
 
@@ -729,6 +736,8 @@ static void report_status(QSP_ARG_DECL  Video_Device *vdp)
 
 }
 
+#ifdef HAVE_V4L2
+
 #define enqueue_buffer(mbp) _enqueue_buffer(QSP_ARG  mbp)
 
 static inline int _enqueue_buffer(QSP_ARG_DECL  My_Buffer *mbp)
@@ -763,6 +772,7 @@ print_buf_info("enqueue_buffer",mbp);
 
 	return 0;
 }
+#endif // HAVE_V4L2
 
 /* based on start_capturing() from capture.c */
 
@@ -1239,6 +1249,8 @@ static int open_video_device(QSP_ARG_DECL  const char *dev_name)
 }
 
 
+#ifdef HAVE_V4L2
+
 #define close_video_device(vdp) _close_video_device(QSP_ARG  vdp)
 
 static int _close_video_device(QSP_ARG_DECL  Video_Device *vdp)
@@ -1256,6 +1268,7 @@ static int _close_video_device(QSP_ARG_DECL  Video_Device *vdp)
 	return 0;
 }
 
+#endif // HAVE_V4L2
 
 
 static COMMAND_FUNC( do_open )
@@ -1276,7 +1289,9 @@ static COMMAND_FUNC( do_close )
 	vdp = pick_video_dev("");
 	if( vdp == NULL ) return;
 
+#ifdef HAVE_V4L2
 	close_video_device(vdp);
+#endif // HAVE_V4L2
 }
 
 static COMMAND_FUNC( do_select_device )
@@ -1861,11 +1876,13 @@ static COMMAND_FUNC(do_set_n_buffers)
 
 	n = how_many("number of buffers");
 
+#ifdef HAVE_V4L2
 	if( curr_vdp->vd_n_buffers > 0 )
 		dealloc_buffers(curr_vdp);
 
 	if( setup_buffers(curr_vdp,n) < 0 )
 		warn("Unable to allocate buffers!?");
+#endif // HAVE_V4L2
 }
 
 
