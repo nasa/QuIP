@@ -2,6 +2,7 @@
 
 #include "quip_prot.h"
 #include "my_v4l2.h"
+#include "../rawvol/rawvol.h"	// BUG elim dependency?  FRAMES_TO_ALLOCATE
 
 #ifdef HAVE_V4L2
 
@@ -218,7 +219,9 @@ int get_v4l2_async_record()
 
 static struct v4l2_buffer nf_buf;
 
-static struct v4l2_buffer *next_frame(QSP_ARG_DECL  int n_devices, Video_Device **vdp_tbl)
+#define next_frame(n_devices, vdp_tbl) _next_frame(QSP_ARG  n_devices, vdp_tbl)
+
+static struct v4l2_buffer *_next_frame(QSP_ARG_DECL  int n_devices, Video_Device **vdp_tbl)
 {
 	fd_set fds;
 	struct timeval tv;
@@ -374,13 +377,15 @@ static struct v4l2_buffer *next_frame(QSP_ARG_DECL  int n_devices, Video_Device 
 	return(&nf_buf);
 } /* end next_frame */
 
-static void v4l2_finish_recording(QSP_ARG_DECL  Image_File *ifp)
+#define v4l2_finish_recording(ifp) _v4l2_finish_recording(QSP_ARG  ifp)
+
+static void _v4l2_finish_recording(QSP_ARG_DECL  Image_File *ifp)
 {
 	RV_Inode *inp;
 
 //sprintf(ERROR_STRING,"v4l2_finish_recording %s",ifp->if_name);
 //advise(ERROR_STRING);
-	inp = get_rv_inode(QSP_ARG  ifp->if_name);
+	inp = get_rv_inode(ifp->if_name);
 #ifdef CAUTIOUS
 	if( inp == NULL ){
 		sprintf(ERROR_STRING,"CAUTIOUS: v4l2_finish_recording:  missing rv inode %s",ifp->if_name);
@@ -388,7 +393,7 @@ static void v4l2_finish_recording(QSP_ARG_DECL  Image_File *ifp)
 	}
 #endif
 
-	close_image_file(QSP_ARG  ifp);		/* close write file	*/
+	close_image_file(ifp);		/* close write file	*/
 
 	/* FIXME - when we do the full moviemenu interface, we need to make
 	 * sure our new recording gets incorporated into the database here...
@@ -403,7 +408,7 @@ static void v4l2_finish_recording(QSP_ARG_DECL  Image_File *ifp)
 /*
  */
 
-void v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp,long n_frames,int n_cameras, Video_Device **vd_tbl)
+void _v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp,long n_frames,int n_cameras, Video_Device **vd_tbl)
 {
 #ifdef HAVE_RAWVOL
 	int fd_arr[MAX_DISKS];
@@ -442,7 +447,7 @@ void v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp,long n_frames,int n_camera
 
 
 	inp = (RV_Inode *) ifp->if_hdr_p;
-	ndisks = queue_rv_file(QSP_ARG  inp,fd_arr);
+	ndisks = queue_rv_file(inp,fd_arr);
 
 #ifdef CAUTIOUS
 	if( ndisks < 1 ){
@@ -465,7 +470,7 @@ void v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp,long n_frames,int n_camera
 	SET_SHP_PREC_PTR(shpp, PREC_FOR_CODE(PREC_UBY) );
 	auto_shape_flags(shpp);
 
-	rv_set_shape(QSP_ARG  ifp->if_name,shpp);
+	rv_set_shape(ifp->if_name,shpp);
 
 
 	/* We write an entire frame to each disk in turn... */
@@ -479,12 +484,12 @@ void v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp,long n_frames,int n_camera
 	/* stuff from video_reader */
 
 	for(i=0;i<n_cameras;i++)
-		start_capturing(QSP_ARG  vd_tbl[i]);
+		start_capturing(vd_tbl[i]);
 
 	n_so_far = 0;
 	which_disk=0;
 
-	bufp=next_frame(QSP_ARG  n_cameras,vd_tbl);
+	bufp=next_frame(n_cameras,vd_tbl);
 	while( bufp != NULL ){
 		int n_written;
 
@@ -512,7 +517,7 @@ if( really_writing ){
 		if( n_so_far >= n_frames )
 			bufp = NULL;
 		else
-			bufp=next_frame(QSP_ARG  n_cameras,vd_tbl);
+			bufp=next_frame(n_cameras,vd_tbl);
 	}
 	if( bufp != NULL ){
 		if( xioctl(vd_tbl[which_device]->vd_fd, VIDIOC_QBUF, bufp) < 0 )
@@ -520,7 +525,7 @@ if( really_writing ){
 	}
 
 	for(i=0;i<n_cameras;i++)
-		stop_capturing(QSP_ARG  vd_tbl[i]);
+		stop_capturing(vd_tbl[i]);
 
 	rv_sync(SINGLE_QSP_ARG);
 
@@ -543,7 +548,7 @@ if( really_writing ){
 	}
 #endif /* CAUTIOUS */
 
-	v4l2_finish_recording( QSP_ARG  ifp );
+	v4l2_finish_recording( ifp );
 
 	/* Because the disk writers don't use the fileio library,
 	 * the ifp doesn't know how many frames have been written.
@@ -631,23 +636,23 @@ COMMAND_FUNC( do_stream_record )
 	n_frames=HOW_MANY("number of frames (or fields if field mode)");
 	nc=HOW_MANY("number of cameras");
 	for(i=0;i<nc;i++)
-		vd_tbl[i] = PICK_VIDEO_DEV("");
+		vd_tbl[i] = pick_video_dev("");
 	/* BUG should make sure that all are distinct */
 
 	for(i=0;i<nc;i++)
 		if( vd_tbl[i] == NULL ) return;
 
-	ifp = img_file_of(QSP_ARG  name);
+	ifp = img_file_of(name);
 
 	if( ifp != NULL ){
 		sprintf(ERROR_STRING,"Clobbering existing image file %s",name);
 		advise(ERROR_STRING);
 		image_file_clobber(1);	/* not necessary !? */
-		delete_image_file(QSP_ARG  ifp);
+		delete_image_file(ifp);
 	}
 
-	set_filetype(QSP_ARG  FILETYPE_FOR_CODE(IFT_RV));
-	ifp = write_image_file(QSP_ARG  name,n_frames);	/* nf stored in if_frms_to_write */
+	set_filetype(FILETYPE_FOR_CODE(IFT_RV));
+	ifp = write_image_file(name,n_frames);	/* nf stored in if_frms_to_write */
 
 	/* sets nframes in ifp, but doesn't allocate rv blocks properly...
 	 * (WHY NOT??? maybe because the image dimensions are not known???)
@@ -664,7 +669,7 @@ COMMAND_FUNC( do_stream_record )
 
 	/* n_blocks is the total number of blocks, not the number per disk(?) */
 
-	if( rv_realloc(QSP_ARG  name,n_blocks) < 0 ){
+	if( rv_realloc(name,n_blocks) < 0 ){
 		sprintf(ERROR_STRING,"error reallocating %d blocks for rv file %s",
 			n_blocks,name);
 		WARN(ERROR_STRING);
@@ -678,7 +683,7 @@ COMMAND_FUNC( do_stream_record )
 
 	recording_in_process = 1;
 
-	v4l2_stream_record(QSP_ARG  ifp,n_frames,nc,vd_tbl);
+	v4l2_stream_record(ifp,n_frames,nc,vd_tbl);
 #else // ! HAVE_RAWVOL
 	WARN("do_stream_record:  no rawvol support, can't record!?");
 #endif // ! HAVE_RAWVOL

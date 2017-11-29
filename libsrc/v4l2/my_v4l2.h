@@ -11,12 +11,17 @@
 #define TIMESTAMP_SIZE	sizeof(struct timeval)
 #endif
 
-extern debug_flag_t stream_debug;
+extern debug_flag_t v4l2_debug;
 
 /* vmenu.c */
 
 #ifdef HAVE_V4L2
-extern int stop_capturing(QSP_ARG_DECL  Video_Device *);
+extern int _stop_capturing(QSP_ARG_DECL  Video_Device *);
+#define stop_capturing(vdp) _stop_capturing(QSP_ARG  vdp)
+
+extern void _find_oldest_buffer(QSP_ARG_DECL  Video_Device *vdp);
+#define find_oldest_buffer(vdp) _find_oldest_buffer(QSP_ARG  vdp)
+
 extern int check_queue_status(QSP_ARG_DECL  Video_Device *);
 #endif /* HAVE_V4L2 */
 
@@ -36,7 +41,9 @@ extern void dump_timestamps(const char *filename);
 extern COMMAND_FUNC( do_stream_record );
 
 #ifdef HAVE_V4L2
-extern void v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp, long nf, int nc, Video_Device **vd_tbl);
+extern void _v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp, long nf, int nc, Video_Device **vd_tbl);
+#define v4l2_stream_record(ifp,nf,nc,vd_tbl) _v4l2_stream_record(QSP_ARG  ifp,nf,nc,vd_tbl)
+
 extern void release_oldest_buffer(QSP_ARG_DECL  Video_Device *);
 #endif /* HAVE_V4L2 */
 

@@ -1,0 +1,119 @@
+
+# test script for vmenu
+
+If $argc!=1 "error_exit 'usage:  quip video_dev_idx < mon2.scr'"
+
+Set device_idx	$1
+
+max_warnings 2
+
+Set dev /dev/video$device_idx
+
+v4l2
+  repeat 2
+    advise "Opening $dev"
+    open $dev
+    Pause
+    advise "Closing $dev"
+    close $dev
+    Pause
+    end
+  exit
+
+#  open /dev/video1
+#  advise "second device opened"
+
+  Assign n 640*480
+  advise "640x480 = $n"
+
+#  start
+#  next
+#  next next next
+  quit
+
+Image rgb 480 640 3 u_byte
+Image y 480 640 1 u_byte
+Image u 480 320 1 u_byte
+Image v 480 320 1 u_byte
+data
+  subsample c1 y
+  	320 0 2
+	480 0 1
+  subsample c2 y
+  	320 1 2
+	480 0 1
+  quit
+
+#Viewer_For v1 /dev/video$device_idx.buffer0{0}
+Viewer_For v1 y
+Viewer_For v2 y
+
+Posn_Window v1 0 0
+Posn_Window v2 650 0
+
+Set i_buf 0
+
+Define Next 0
+Set name /dev/video$device_idx.buffer$i_buf
+v4l2 dequeue_next yuv2rgb rgb $name quit
+#v4l2 next yuv2y y $name quit
+Show_Bytes rgb v2
+Increment i_buf
+If $i_buf>=4 "Set i_buf 0"
+.
+
+#  Next
+
+Dup_Float f y
+Dup_Float accum y
+Dup_Float mean y
+Dup_Float var_accum y
+Dup_Float var_mean y
+Info f
+Set n_accum 0
+VSet accum 0
+VSet var_accum 0
+
+v4l2
+  standards
+    advise "listing standards:"
+    list
+    advise "listing inputs:"
+    list_inputs
+    quit
+  quit
+
+v4l2
+  start
+  quit
+
+Define NF 0
+v4l2
+  dequeue_next
+  quit
+.
+
+# SR - show and release
+Define SR 1 idx
+Set bufname /dev/video$device_idx.buffer$1
+Print bufname
+v4l2
+  flow
+    yuv2rgb rgb $bufname
+    quit
+  enqueue_buf $1
+  quit
+Show_Bytes rgb v1
+.
+
+repeat 10
+  NF
+  Pause
+  end
+
+Pause
+
+advise "\nType ^D to proceed..."
+  < /dev/tty
+
+

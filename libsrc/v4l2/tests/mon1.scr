@@ -3,11 +3,17 @@ If $argc!=1 "error_exit 'usage:  quip video_dev_idx < mon1.scr'"
 
 Set device_idx	$1
 
-max_warnings 2
+max_warnings 10
+
+Set devname /dev/video$device_idx
+Set ready_name n_ready.$devname
+Set newest_name newest.$devname
+Set oldest_name oldest.$devname
 
 v4l2
-  open /dev/video$device_idx
+  open $devname
   advise "first device opened"
+  standards set_standard NTSC quit
 #  open /dev/video1
 #  advise "second device opened"
 
@@ -61,19 +67,21 @@ Set n_accum 0
 VSet accum 0
 VSet var_accum 0
 
+Define Stat 1 msg
+advise "$1:  n_ready = $$ready_name   newest = $$newest_name   oldest = $$oldest_name"
+.
+
+#debug v4l2
+
 v4l2
-  standards
-    advise "listing standards:"
-    list
-    advise "listing inputs:"
-    list_inputs
-    quit
   flow
+    advise "flow STARTING"
     start
+      Stat started
       do
-advise "calling wait"
+        Stat 'calling wait'
 	wait
-advise "back from wait"
+        Stat 'back from wait'
 
 	Set oname oldest./dev/video$device_idx
 	Set bufname /dev/video$device_idx.buffer$$oname
@@ -82,16 +90,17 @@ advise "back from wait"
 #	Convert f y
 	yuv2rgb rgb $bufname
 
-advise "NOT calling release"
-#advise "calling release"
-#	release
-#advise "back from release"
-Pause
+	release
+        Stat 'back from release'
 	date
+
+	#Pause
 
 	quit quit
 #	    Disp_Gray f v1
 	    Show_Bytes rgb v1
+#	    usleep 32000
+	    usleep 12000
 	#  #  Disp_Gray var_mean v2
 	    v4l2 flow
 

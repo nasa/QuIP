@@ -2363,7 +2363,6 @@ _pexpr(QSP_ARG_DECL  const char *buf)	/** parse expression */
 	Typed_Scalar *tsp;
 
 //fprintf(stderr,"pexpr('%s') BEGIN, thread %d, IN_PEXPR = %d\n",buf,QS_SERIAL,IN_PEXPR);
-	if( ! ESTRINGS_INITED ) initialize_estrings(SINGLE_QSP_ARG);
 
 #ifdef QUIP_DEBUG
 	if( expr_debug <= 0 )
@@ -2373,9 +2372,14 @@ _pexpr(QSP_ARG_DECL  const char *buf)	/** parse expression */
 	// The parser won't parse things inside of quote strings.
 	// To handle this, we have to make pexpr rentrant (like yyparse)
 	// Therefore the per-qsp parser data has to be kept on a stack
+	
+	SET_QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP,1+QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP));
 	assert(QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP)<MAX_SCALAR_PARSER_CALL_DEPTH);
-	if( QS_CURR_SCALAR_PARSER_DATA(THIS_QSP) == NULL )
-		SET_QS_CURR_SCALAR_PARSER_DATA(THIS_QSP,getbuf(sizeof(Scalar_Parser_Data)));
+	if( QS_CURR_SCALAR_PARSER_DATA(THIS_QSP) == NULL ){
+		init_scalar_parser_data_at_idx(QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP));
+	}
+
+	if( ! ESTRINGS_INITED ) initialize_estrings(SINGLE_QSP_ARG);
 
 	EDEPTH=0;
 	YY_ORIGINAL=YYSTRPTR[EDEPTH]=buf;
@@ -2400,10 +2404,6 @@ dump_etree(QSP_ARG  FINAL_EXPR_NODE_P);
 #endif /* QUIP_DEBUG */
 
 //fprintf(stderr,"pexpr:  evaluating expression tree, thread %d\n",QS_SERIAL);
-	
-	assert(QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP)<MAX_SCALAR_PARSER_CALL_DEPTH);
-	SET_QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP,1+QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP));
-
 	tsp = eval_expr(FINAL_EXPR_NODE_P);
 //fprintf(stderr,"pexpr:  done with expression tree, thread %d\n",QS_SERIAL);
 
@@ -2446,6 +2446,8 @@ advise(ERROR_STRING);
 	rls_tree(FINAL_EXPR_NODE_P);
 
 	//UNLOCK_ENODES
+	SET_QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP,QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP)-1);
+	assert( QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP) >= (-1) );
 
 	return( tsp );
 }

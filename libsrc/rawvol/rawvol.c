@@ -315,7 +315,8 @@ int insure_default_rv(SINGLE_QSP_ARG_DECL)
 	/* we used to have per-system defaults, now we assume there
 	 * is a symlink /dev/rawvol
 	 */
-	default_name = "/dev/rawvol-disk1";
+	//default_name = "/dev/rawvol-disk1";
+	default_name = "/dev/rawvol";
 
 	if( verbose ){
 		sprintf(ERROR_STRING,"%s:  using default raw volume %s",
@@ -1422,7 +1423,7 @@ static RV_Inode *search_directory(RV_Inode *inp, int index)
 static int _perform_seek(QSP_ARG_DECL  int fd, off64_t offset )
 {
 	off64_t retoff;
-fprintf(stderr,"perform_seek 0x%llx\n",offset);
+fprintf(stderr,"perform_seek 0x%"PRIx64"\n",offset);
 	retoff = my_lseek64(fd,offset,SEEK_SET);
 	if( retoff != offset ){
 		sprintf(ERROR_STRING,"perform_write_test:  Error seeking on raw disk");
@@ -2678,7 +2679,7 @@ advise(ERROR_STRING);
 
 	offset = (off64_t) RV_ADDR(inp) * (off64_t) curr_rv_sbp->rv_blocksize;
 	retval=curr_rv_sbp->rv_ndisks;
-fprintf(stderr,"queue_rv_file:  offset = %lld (0x%llx)\n",offset,offset);
+fprintf(stderr,"queue_rv_file:  offset = %"PRId64" (0x%"PRIx64")\n",offset,offset);
 	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
 		retoff = my_lseek64(curr_rv_sbp->rv_fd[i],offset,SEEK_SET);
 		if( retoff != offset ){

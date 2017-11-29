@@ -22,8 +22,11 @@
 
 typedef struct my_buffer {
 	void *			mb_start;
-	size_t			mb_length;
+	Data_Obj *		mb_dp;
+	int			mb_index;
+	int			mb_flags;
 #ifdef HAVE_V4L2
+	struct v4l2_buffer	mb_buf;
 	struct video_device *	mb_vdp;
 #endif // HAVE_V4L2
 } My_Buffer;
@@ -33,7 +36,9 @@ typedef struct choice {
 	int		ch_id;
 } Choice;
 
+// One device gives 27, while another gives 6!?
 #define MAX_BUFFERS_PER_DEVICE	32
+#define DEFAULT_N_VIDEO_BUFFERS	6	// smallest number we are given by an interface?
 
 typedef struct video_device {
 	const char *	vd_name;
@@ -41,11 +46,12 @@ typedef struct video_device {
 	int		vd_flags;
 
 	/* stuff for stream record */
-	int		vd_oldest;
-	int		vd_newest;
 	int		vd_n_buffers;
-	List *		vd_buf_lp;
+
+	// Better to allocate this table dynamically?
 	My_Buffer 	vd_buf_tbl[MAX_BUFFERS_PER_DEVICE];
+	My_Buffer * 	vd_oldest_mbp;
+	My_Buffer * 	vd_newest_mbp;
 
 	/* stuff for setting controls */
 	int		vd_n_standards;
@@ -57,7 +63,16 @@ typedef struct video_device {
 #define NO_VIDEO_DEVICE	((Video_Device *)NULL)
 
 /* flag bits */
-#define VD_CAPTURING		1
+#define VD_CAPTURING				1
+#define VD_SUPPORTS_USERSPACE_BUFFERS		2
+#define VD_SUPPORTS_MMAP_BUFFERS		4
+#define VD_USING_USERSPACE_BUFFERS		8
+#define VD_USING_MMAP_BUFFERS			16
+
+#define IS_USING_MMAP_BUFFERS(vdp)		((vdp)->vd_flags & VD_USING_MMAP_BUFFERS)
+#define IS_USING_USERSPACE_BUFFERS(vdp)		((vdp)->vd_flags & VD_USING_USERSPACE_BUFFERS)
+#define CAN_USE_MMAP_BUFFERS(vdp)		((vdp)->vd_flags & VD_SUPPORTS_MMAP_BUFFERS)
+#define CAN_USE_USERSPACE_BUFFERS(vdp)		((vdp)->vd_flags & VD_SUPPORTS_USERSPACE_BUFFERS)
 
 #define IS_CAPTURING( vdp )			( (vdp)->vd_flags & VD_CAPTURING )
 
@@ -93,12 +108,16 @@ extern unsigned int n_buffers;
 
 /* prototypes */
 
-extern int start_capturing(QSP_ARG_DECL  Video_Device *);
+extern int _start_capturing(QSP_ARG_DECL  Video_Device *);
+#define start_capturing(vdp) _start_capturing(QSP_ARG  vdp)
+
 #ifdef HAVE_V4L2
 extern int dq_buf(QSP_ARG_DECL  Video_Device *vdp,struct v4l2_buffer *bufp);
 #endif /* HAVE_V4L2 */
 extern int xioctl(int fd, int request, void *arg);
 extern void errno_warn(QSP_ARG_DECL  const char *s);
+
+extern void print_buf_info(const char *msg, My_Buffer *mbp);
 
 #define ERRNO_WARN(s)	errno_warn(QSP_ARG  s)
 

@@ -547,4 +547,8 @@ extern int _pop_stop_level(SINGLE_QSP_ARG_DECL);
 #define push_stop_level(l) _push_stop_level(QSP_ARG  l)
 #define pop_stop_level() _pop_stop_level(SINGLE_QSP_ARG)
 
+
+extern void _init_scalar_parser_data_at_idx(QSP_ARG_DECL   int idx);
+#define init_scalar_parser_data_at_idx(idx) _init_scalar_parser_data_at_idx(QSP_ARG   idx)
+
 #endif /* !  _QUERY_STACK_H_ */

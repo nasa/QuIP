@@ -28,6 +28,7 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "img_file.h"
+#include "debug.h"
 #include "my_video_dev.h"
 #include "my_v4l2.h"
 #include "veclib_api.h"	// do_yuv2rgb
@@ -39,18 +40,6 @@
 
 #endif /* HAVE_V4L2 */
 
-static COMMAND_FUNC( start_flow )
-{
-	CHECK_DEVICE
-
-	/* start capturing - oldest & newest are initialized withing start_capturing now */
-
-#ifdef HAVE_V4L2
-	if( start_capturing(QSP_ARG  curr_vdp) < 0 )
-		WARN("error starting capture");
-#endif
-}
-
 static COMMAND_FUNC( stop_flow )
 {
 	CHECK_DEVICE
@@ -58,34 +47,60 @@ static COMMAND_FUNC( stop_flow )
 	/* start capturing - oldest & newest are initialized withing start_capturing now */
 
 #ifdef HAVE_V4L2
-	if( stop_capturing(QSP_ARG  curr_vdp) < 0 )
+	if( stop_capturing(curr_vdp) < 0 )
 		WARN("error stopping capture");
 #endif
 }
 
 #ifdef HAVE_V4L2
+
+#define update_index_var(stem,mbp) _update_index_var(QSP_ARG  stem,mbp)
+
+static inline void _update_index_var(QSP_ARG_DECL  const char *stem, My_Buffer *mbp)
+{
+	char varname[128];
+	char val[32];
+
+	sprintf(varname,"%s.%s",stem,curr_vdp->vd_name);
+	if( mbp == NULL ){
+		assign_var(varname,"-1");
+	} else {
+		sprintf(val,"%d",mbp->mb_index);
+		assign_var(varname,val);
+	}
+}
+
 static COMMAND_FUNC( update_vars )
 {
-
-	char s[32];
-	char varname[64];
+	char val[32];
+	char varname[128];
 	int n;
 
 	n=check_queue_status(QSP_ARG  curr_vdp);
 
-	sprintf(s,"%d",n);
+	sprintf(val,"%d",n);
 	sprintf(varname,"n_ready.%s",curr_vdp->vd_name);
-	assign_var(varname,s);
+	assign_var(varname,val);
 
-	sprintf(s,"%d",oldest);
-	sprintf(varname,"oldest.%s",curr_vdp->vd_name);
-	assign_var(varname,s);
-
-	sprintf(s,"%d",newest);
-	sprintf(varname,"newest.%s",curr_vdp->vd_name);
-	assign_var(varname,s);
+	update_index_var("oldest",curr_vdp->vd_oldest_mbp);
+	update_index_var("newest",curr_vdp->vd_newest_mbp);
 }
-#endif
+
+#endif // HAVE_V4L2
+
+static COMMAND_FUNC( start_flow )
+{
+	CHECK_DEVICE
+
+	/* start capturing - oldest & newest are initialized withing start_capturing now */
+
+#ifdef HAVE_V4L2
+	if( start_capturing(curr_vdp) < 0 )
+		WARN("error starting capture");
+
+	update_vars(SINGLE_QSP_ARG);
+#endif // HAVE_V4L2
+}
 
 static COMMAND_FUNC( wait_next )	/* wait til we have another frame */
 {
@@ -114,6 +129,9 @@ static COMMAND_FUNC( wait_next )	/* wait til we have another frame */
 		m = check_queue_status(QSP_ARG  curr_vdp);
 	} while( m == n );
 
+if( debug & v4l2_debug ){
+fprintf(stderr,"wait_next:  %d buffers available\n",m);
+}
 	update_vars(SINGLE_QSP_ARG);
 #endif
 } // end wait_next
@@ -141,33 +159,60 @@ static COMMAND_FUNC( wait_drip )	/* wait til we have at least one frame */
 } // end wait_drip
 
 #ifdef HAVE_V4L2
+
+#define release_buffer(mbp) _release_buffer(QSP_ARG  mbp)
+
+static inline void _release_buffer(QSP_ARG_DECL  My_Buffer *mbp)
+{
+	struct v4l2_buffer *bufp;
+
+if( debug & v4l2_debug ){
+print_buf_info("release_buffer",mbp);
+}
+	assert(mbp->mb_flags & V4L2_BUF_FLAG_DONE);
+	bufp = &(mbp->mb_vdp->vd_oldest_mbp->mb_buf);
+
+	assert(bufp->type == V4L2_BUF_TYPE_VIDEO_CAPTURE);
+	assert(bufp->memory == V4L2_MEMORY_MMAP);
+	assert(bufp->index == mbp->mb_index);
+
+//	if( xioctl(mbp->mb_vdp->vd_fd, VIDIOC_DQBUF, bufp ) < 0 )
+//		ERRNO_WARN ("VIDIOC_DQBUF (release_oldest_buffer)");
+//fprintf(stderr,"release_buffer:  after dequeueing buffer %d, flags = 0x%x\n",
+//bufp->index,bufp->flags);
+	if( xioctl(mbp->mb_vdp->vd_fd, VIDIOC_QBUF, bufp ) < 0 )
+		ERRNO_WARN ("VIDIOC_QBUF (release_oldest_buffer)");
+//if( debug & v4l2_debug ){
+//fprintf(stderr,"release_buffer:  after enqueued buffer %d, flags = 0x%x\n",
+//bufp->index,bufp->flags);
+//}
+
+	mbp->mb_flags &= ~V4L2_BUF_FLAG_DONE;
+}
+
 void release_oldest_buffer(QSP_ARG_DECL  Video_Device *vdp)
 {
-	struct v4l2_buffer buf;
-
-//sprintf(ERROR_STRING,"release_oldest_buffer %s BEGIN (newest = %d, oldest = %d)",
-//vdp->vd_name,vdp->vd_oldest,vdp->vd_newest);
-//advise(ERROR_STRING);
-
-	if( vdp->vd_oldest < 0 ){
+	if( vdp->vd_oldest_mbp == NULL ){
 		WARN("release_oldest_buffer:  no oldest buffer to release!?");
 		return;
 	}
+if( debug & v4l2_debug ){
+fprintf(stderr,"release_oldest_buffer releasing buffer %d\n",vdp->vd_oldest_mbp->mb_index);
+}
+	release_buffer(vdp->vd_oldest_mbp);
 
-	CLEAR(buf);
-	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	buf.memory = V4L2_MEMORY_MMAP;
-	buf.index = vdp->vd_oldest;
-fprintf(stderr,"release_oldest_buffer:  will release buffer %d\n",buf.index);
-
-	if( xioctl(vdp->vd_fd, VIDIOC_QBUF, &buf) < 0 )
-		ERRNO_WARN ("VIDIOC_QBUF #3");
-
-	if( vdp->vd_newest == vdp->vd_oldest ){
-		vdp->vd_oldest=vdp->vd_newest=(-1);
+	if( vdp->vd_newest_mbp == vdp->vd_oldest_mbp ){
+		vdp->vd_oldest_mbp=vdp->vd_newest_mbp=NULL;
 	} else {
-		vdp->vd_oldest++;
-		if( vdp->vd_oldest >= vdp->vd_n_buffers ) vdp->vd_oldest=0;
+if( debug & v4l2_debug ){
+fprintf(stderr,"release_oldest_buffer calling find_oldest_buffer\n");
+}
+		vdp->vd_oldest_mbp=vdp->vd_newest_mbp;
+		find_oldest_buffer(vdp);
+if( debug & v4l2_debug ){
+assert(vdp->vd_oldest_mbp!=NULL);
+fprintf(stderr,"release_oldest_buffer new oldest_buffer is %d\n",vdp->vd_oldest_mbp->mb_index);
+}
 	}
 }
 #endif /* HAVE_V4L2 */

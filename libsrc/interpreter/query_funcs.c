@@ -2542,17 +2542,6 @@ static void _rls_vector_parser_data(QSP_ARG_DECL  Vector_Parser_Data *vpd_p)
 	rls_list(VPD_SUBRT_CTX_STACK(vpd_p));
 }
 
-static void init_scalar_parser_data(Scalar_Parser_Data *spd_p)
-{
-	SET_SPD_EDEPTH(spd_p,-1);
-	SET_SPD_WHICH_STR(spd_p,0);
-	SET_SPD_IN_PEXPR(spd_p,0);
-	SET_SPD_ORIGINAL_STRING(spd_p,NULL);
-	SET_SPD_ESTRINGS_INITED(spd_p,0);
-	SET_SPD_FREE_EXPR_NODE_LIST(spd_p,NULL);
-	// set spd_expr_string's to NULL ???
-}
-
 static Vector_Parser_Data *find_free_vector_parser_data(SINGLE_QSP_ARG_DECL)
 {
 	Vector_Parser_Data *vpd_p;
@@ -2605,6 +2594,21 @@ void pop_vector_parser_data(SINGLE_QSP_ARG_DECL)
 	SET_QS_VECTOR_PARSER_DATA(THIS_QSP,vpd_p);
 }
 
+void _init_scalar_parser_data_at_idx(QSP_ARG_DECL  int idx)
+{
+	Scalar_Parser_Data *spd_p;
+
+	spd_p = getbuf(sizeof(Scalar_Parser_Data));
+	SET_QS_SCALAR_PARSER_DATA_AT_IDX(THIS_QSP,idx,spd_p);
+
+	SET_SPD_EDEPTH(spd_p,-1);
+	SET_SPD_WHICH_STR(spd_p,0);
+	SET_SPD_IN_PEXPR(spd_p,0);
+	SET_SPD_ORIGINAL_STRING(spd_p,NULL);
+	SET_SPD_ESTRINGS_INITED(spd_p,0);
+	SET_SPD_FREE_EXPR_NODE_LIST(spd_p,NULL);
+	// set spd_expr_string's to NULL ???
+}
 
 // Initialize a Query_Stack
 
@@ -2661,15 +2665,12 @@ void init_query_stack(Query_Stack *qsp)
 
 	init_vector_parser_data_stack(qsp);
 
-	SET_QS_SCALAR_PARSER_DATA_AT_IDX(qsp,0,getbuf(sizeof(Scalar_Parser_Data)));
-	init_scalar_parser_data( QS_SCALAR_PARSER_DATA_AT_IDX(qsp,0) );
-	{
-		int i;
-		for(i=1;i<MAX_SCALAR_PARSER_CALL_DEPTH;i++){
-			SET_QS_SCALAR_PARSER_DATA_AT_IDX(qsp,i,NULL);
-		}
+	for(i=0;i<MAX_SCALAR_PARSER_CALL_DEPTH;i++){
+		SET_QS_SCALAR_PARSER_DATA_AT_IDX(qsp,i,NULL);
 	}
-	SET_QS_SCALAR_PARSER_CALL_DEPTH(qsp,0);
+	init_scalar_parser_data_at_idx(0);
+
+	SET_QS_SCALAR_PARSER_CALL_DEPTH(qsp,-1);
 
 	SET_QS_CHEW_LIST(qsp, NULL);
 	SET_QS_CALLBACK_LIST(qsp, NULL);
