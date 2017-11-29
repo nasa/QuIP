@@ -1,0 +1,52 @@
+# quip script to test chi-square macros, and also
+# to compute and cache the CDF for a range of DOFs
+
+< $macro_dir/compute/chisq.mac
+< $macro_dir/view/plotsupp.mac
+
+max_warnings 2
+
+Set max_dof		30
+
+Set biggest_x		75
+Set x_increment		0.001	# 1/1000
+Assign n_cdf_samples	round($biggest_x/$x_increment)
+
+#Set n_cdf_samples	75000
+
+
+Image cdf_tbl $max_dof $n_cdf_samples 1 double
+Vector cdf_x $n_cdf_samples 1 double
+Ramp1D cdf_x 0 $x_increment
+
+Vector cdf_pts $n_cdf_samples 2 float
+Convert cdf_pts{0} cdf_x
+
+# The computation blows up for an input of 0, so we fudge it...
+VMov cdf_x[0] cdf_x[1]
+
+New_Plotter plotwin 800 800
+Set xmin 0
+Set xmax $biggest_x
+Set x_tick_spacing 20
+Set x_legend x
+Set ymin 0
+Set ymax 1
+Set y_tick_spacing 0.2
+Set y_legend 'p value'
+Setup_Axes
+
+Set k 1
+repeat $max_dof
+  advise "\nComputing cumulative chi-square distribution with $k degrees of freedom\n"
+  Compute_ChiSq_CDF cdf_tbl[$k-1] cdf_x $k
+#  Display cdf_tbl[$k-1][0]
+#  Display cdf_tbl[$k-1][1]
+  VSet Display cdf_tbl[$k-1][0] 0.0
+  Convert cdf_pts{1} cdf_tbl[$k-1]
+  XYPlot cdf_pts
+  Increment k
+  end
+
+# Now we should save to a cache file
+Pause
