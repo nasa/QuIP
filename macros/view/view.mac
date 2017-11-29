@@ -29,6 +29,7 @@ Set tracing	0
 
 Set saving_all	0
 
+
 Define Delete_Viewer 1 name
 view viewers delete $1 quit quit
 .
@@ -75,14 +76,6 @@ View_Loop
 Define Default_Click 0
 Set clicked 1
 .
-
-# these are now reserved vars...
-#Set left_button_up	1
-#Set middle_button_up	1
-#Set right_button_up	1
-#Set left_button_down	0
-#Set middle_button_down	0
-#Set right_button_down	0
 
 Define Wait_While_Button_Up 0
 
@@ -629,5 +622,4 @@ Assign gray_max		$gray_base+$n_gray_levels-1
 .
 
 Stop_File view.mac
-
 
