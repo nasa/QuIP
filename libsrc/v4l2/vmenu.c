@@ -54,8 +54,10 @@ int xioctl(int fd, int request, void *arg)
 	int r;
 
 	do {
+//fprintf(stderr,"xiotcl calling ioctl\n");
 		r = ioctl(fd, request, arg);
 	} while( r == -1 && errno== EINTR );
+//fprintf(stderr,"xiotcl returning %d\n",r);
 
 	return r;
 }
@@ -63,7 +65,7 @@ int xioctl(int fd, int request, void *arg)
 void errno_warn(QSP_ARG_DECL  const char *s)
 {
 	sprintf(ERROR_STRING,"%s:  %s",s,strerror(errno));
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 }
 
 
@@ -96,9 +98,48 @@ static Video_Format vfmt_list[N_VIDEO_FORMATS]={
 
 #define DEFAULT_VFMT_INDEX 0	// YUYV
 
-static int vfmt_index=DEFAULT_VFMT_INDEX;
+static int vfmt_index=DEFAULT_VFMT_INDEX;	// BUG why is this global???
 static const char *vfmt_names[N_VIDEO_FORMATS];
 static int vfmt_names_inited=0;
+
+static const char *name_for_type(int t)
+{
+	char *s;
+	switch(t){
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+			return "video_capture";
+			break;
+		default:
+			s="unhandled type code";
+			break;
+	}
+	return s;
+}
+
+static const char *name_for_mem(int t)
+{
+	char *s;
+	switch(t){
+		case V4L2_MEMORY_MMAP:
+			return "memory_map";
+			break;
+		default:
+			s="unhandled mem code";
+			break;
+	}
+	return s;
+}
+
+static void print_buf_info(struct v4l2_buffer *bufp)
+{
+	fprintf(stderr,"buf at 0x%lx, type = %s, mem = %s, index = %d\n",
+		(long)bufp,name_for_type(bufp->type),name_for_mem(bufp->memory),bufp->index);
+}
+
+static inline void get_name_for_buffer(char *name,Video_Device *vdp,int i_buffer)
+{
+	sprintf(name,"%s.buffer%d",vdp->vd_name,i_buffer);
+}
 
 static COMMAND_FUNC(set_vfmt)
 {
@@ -158,26 +199,62 @@ static COMMAND_FUNC( set_field_mode )
 	if( i>=0 ) vfld_index=i;
 }
 
+#define setup_buffer_dimensions(dsp) _setup_buffer_dimensions(QSP_ARG  dsp)
 
-/* based on init_device from capture.c */
-
-/* CHECK_CROPCAP is maybe here to retain some code we didn't orignally need? */
-
-static int init_video_device(QSP_ARG_DECL  Video_Device *vdp)
+static void _setup_buffer_dimensions(QSP_ARG_DECL  Dimension_Set *dsp)
 {
+	/* BUG need to do these dynamically, might be using scaler */
+	// Use the current pixel format
+	switch( vfmt_list[vfmt_index].vfmt_code ){
+		case V4L2_PIX_FMT_YUYV:
+#ifdef FOOBAR
+			dsp->ds_dimension[0]=4;	/* four bytes per pixel pair */
+			dsp->ds_dimension[1]=320;	/* pixel pairs per row */
+#endif // FOOBAR
+			dsp->ds_dimension[0]=2;	/* two bytes per pixel - YU or YV */
+			dsp->ds_dimension[1]=640;	/* pixels row */
+			break;
+		case V4L2_PIX_FMT_GREY:
+			dsp->ds_dimension[0]=1;
+			dsp->ds_dimension[1]=640;
+			break;
+		case V4L2_PIX_FMT_RGB24:
+		case V4L2_PIX_FMT_BGR24:
+			dsp->ds_dimension[0]=3;
+			dsp->ds_dimension[1]=640;
+			break;
+		case V4L2_PIX_FMT_RGB32:
+		case V4L2_PIX_FMT_BGR32:
+			dsp->ds_dimension[0]=4;
+			dsp->ds_dimension[1]=640;
+			break;
+		default:
+			sprintf(ERROR_STRING,"Oops, haven't implemented buffer creation for %s pixel format!?",
+				vfmt_list[vfmt_index].vfmt_name);
+			warn(ERROR_STRING);
+			// default to YUYV
+			dsp->ds_dimension[0]=4;	/* four bytes per pixel pair */
+			dsp->ds_dimension[1]=320;	/* pixel pairs per row */
+			break;
+	}
+	/* rows */
+	dsp->ds_dimension[2]=vfld_tbl[vfld_index].vfld_height;
+
+	dsp->ds_dimension[3]=1;
+	dsp->ds_dimension[4]=1;
+}
+
 #ifdef HAVE_V4L2
 
+#define check_capabilities(vdp) _check_capabilities(QSP_ARG  vdp)
+
+static int _check_capabilities(QSP_ARG_DECL  Video_Device *vdp)
+{
 	struct v4l2_capability cap;
 #ifdef 	CHECK_CROPCAP
 	struct v4l2_cropcap cropcap;
 	struct v4l2_crop crop;
 #endif
-	struct v4l2_format fmt;
-	unsigned int min;
-	unsigned int i_buffer;
-	int bytes_per_pixel;
-
-	struct v4l2_requestbuffers req;		/* for init_mmap() */
 
 	if(-1 == xioctl(vdp->vd_fd, VIDIOC_QUERYCAP, &cap)) {
 		if( errno == EINVAL ){
@@ -185,19 +262,19 @@ static int init_video_device(QSP_ARG_DECL  Video_Device *vdp)
 		} else {
 			sprintf(ERROR_STRING,"VIDIOC_QUERYCAP:  %s",strerror(errno));
 		}
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	if(!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
 		sprintf(ERROR_STRING,"%s does not have video capture capability",vdp->vd_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	if(!(cap.capabilities & V4L2_CAP_STREAMING)) {
 		sprintf(ERROR_STRING,"%s does not support streaming i/o",vdp->vd_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -225,7 +302,7 @@ static int init_video_device(QSP_ARG_DECL  Video_Device *vdp)
 			switch(errno) {
 			case EINVAL:
 				/* Cropping not supported. */
-				WARN("cropping not supported");
+				warn("cropping not supported");
 				break;
 			default:
 				errno_warn("VIDIOC_S_CROP");
@@ -239,6 +316,122 @@ static int init_video_device(QSP_ARG_DECL  Video_Device *vdp)
 		/* Errors ignored. */
 	}
 #endif /* CHECK_CROPCAP */
+	return 0;
+}
+
+#define setup_one_buffer(vdp, i_buffer, dsp ) _setup_one_buffer(QSP_ARG  vdp, i_buffer, dsp )
+
+static Data_Obj * _setup_one_buffer(QSP_ARG_DECL  Video_Device *vdp, int i_buffer, Dimension_Set *dsp )
+{
+	struct v4l2_buffer buf;
+	char name[128];
+	Data_Obj *dp;
+
+	CLEAR(buf);
+
+	buf.type	= V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	buf.memory	= V4L2_MEMORY_MMAP;
+	buf.index	= i_buffer;
+
+	if(-1 == xioctl( vdp->vd_fd, VIDIOC_QUERYBUF, &buf)){
+		errno_warn(QSP_ARG  "VIDIOC_QUERYBUF");
+		return NULL;
+	}
+
+	vdp->vd_buf_tbl[i_buffer].mb_length = buf.length;
+	vdp->vd_buf_tbl[i_buffer].mb_vdp = vdp;
+	vdp->vd_buf_tbl[i_buffer].mb_start =
+		mmap(NULL /* start anywhere */,
+			buf.length,
+			PROT_READ | PROT_WRITE /* required */,
+			MAP_SHARED /* recommended */,
+			vdp->vd_fd, buf.m.offset);
+
+	if(MAP_FAILED == vdp->vd_buf_tbl[i_buffer].mb_start){
+		ERRNO_WARN("mmap");
+		return NULL;
+	}
+
+	/* We create an object that points to this buffer in case
+	 * we want to perform scripted operations involving vector
+	 * expressions (e.g. real-time tracking); see flow.c
+	 */
+
+	get_name_for_buffer(name,vdp,i_buffer);
+	dp = _make_dp(QSP_ARG  name,dsp,PREC_FOR_CODE(PREC_UBY));
+#ifdef CAUTIOUS
+	if( dp == NULL ) error1("CAUTIOUS:  error creating data_obj for video buffer");
+#endif /* CAUTIOUS */
+	point_obj_to_ext_data(dp, vdp->vd_buf_tbl[i_buffer].mb_start );
+
+	return dp;
+}
+
+#define setup_buffers(vdp) _setup_buffers(QSP_ARG  vdp)
+
+static int _setup_buffers(QSP_ARG_DECL  Video_Device *vdp)
+{
+	unsigned int i_buffer;
+	struct v4l2_requestbuffers req;
+	Dimension_Set dimset;
+
+	/* the next section came from init_mmap, capture.c */
+
+	CLEAR(req);
+
+	//req.count		= 8;			/* only 8??? */
+	req.count		= MAX_BUFFERS_PER_DEVICE;		/* one second of buffering... */
+	req.type		= V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	req.memory		= V4L2_MEMORY_MMAP;
+
+	if( xioctl(vdp->vd_fd, VIDIOC_REQBUFS, &req) < 0 ){
+		if(EINVAL == errno) {
+			sprintf(ERROR_STRING, "%s does not support memory mapping", vdp->vd_name);
+		} else {
+			sprintf(ERROR_STRING,"VIDIOC_REQBUFS:  %s",strerror(errno));
+		}
+		warn(ERROR_STRING);
+		return(-1);
+	}
+
+	if(req.count < 2) {
+		sprintf(ERROR_STRING, "Insufficient buffer memory on %s\n",
+			vdp->vd_name);
+		warn(ERROR_STRING);
+		return(-1);
+	}
+sprintf(ERROR_STRING,"Requested %d buffers, got %d",MAX_BUFFERS_PER_DEVICE,req.count);
+advise(ERROR_STRING);
+
+	vdp->vd_n_buffers = 0;
+
+	// make sure data area is set to ram...
+	curr_ap = ram_area_p;
+
+	setup_buffer_dimensions(&dimset);
+
+	for(i_buffer = 0; i_buffer < req.count; ++i_buffer) {
+		Node *np;
+		Data_Obj *dp;
+		if( (dp=setup_one_buffer(vdp,i_buffer,&dimset)) == NULL ){
+			warn("error setting up buffer");
+			return -1;
+		}
+		vdp->vd_n_buffers ++;
+		np = mk_node(dp);
+		addTail(vdp->vd_buf_lp,np);
+	}
+	return 0;
+}
+
+
+#define setup_video_format(vdp) _setup_video_format(QSP_ARG  vdp)
+
+static int _setup_video_format(QSP_ARG_DECL  Video_Device *vdp)
+{
+	struct v4l2_format fmt;
+	int bytes_per_pixel;
+	unsigned int min;
 
 
 	CLEAR(fmt);
@@ -260,7 +453,7 @@ static int init_video_device(QSP_ARG_DECL  Video_Device *vdp)
 
 	if(-1 == xioctl(vdp->vd_fd, VIDIOC_S_FMT, &fmt)){
 		sprintf(ERROR_STRING,"VIDIOC_S_FMT:  %s",strerror(errno));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -285,124 +478,37 @@ fmt.fmt.pix.sizeimage,min);
 advise(ERROR_STRING);
 		fmt.fmt.pix.sizeimage = min;
 	}
+	return 0;
+}
 
-	/* the next section came from init_mmap, capture.c */
+#endif // HAVE_V4L2
 
-	CLEAR(req);
+/* based on init_device from capture.c */
 
-	//req.count		= 8;			/* only 8??? */
-	req.count		= MAX_BUFFERS_PER_DEVICE;		/* one second of buffering... */
-	req.type		= V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	req.memory		= V4L2_MEMORY_MMAP;
+/* CHECK_CROPCAP is maybe here to retain some code we didn't orignally need? */
 
-	if( xioctl(vdp->vd_fd, VIDIOC_REQBUFS, &req) < 0 ){
-		if(EINVAL == errno) {
-			sprintf(ERROR_STRING, "%s does not support memory mapping", vdp->vd_name);
-		} else {
-			sprintf(ERROR_STRING,"VIDIOC_REQBUFS:  %s",strerror(errno));
-		}
-		WARN(ERROR_STRING);
-		return(-1);
-	}
+static int init_video_device(QSP_ARG_DECL  Video_Device *vdp, int fd)
+{
+#ifdef HAVE_V4L2
 
-	if(req.count < 2) {
-		sprintf(ERROR_STRING, "Insufficient buffer memory on %s\n",
-			vdp->vd_name);
-		WARN(ERROR_STRING);
-		return(-1);
-	}
-sprintf(ERROR_STRING,"Requested %d buffers, got %d",MAX_BUFFERS_PER_DEVICE,req.count);
-advise(ERROR_STRING);
+	vdp->vd_fd = fd;
+	vdp->vd_flags = 0;
+	vdp->vd_n_inputs = 0;
+	vdp->vd_n_standards = 0;
+	vdp->vd_input_choices = NULL;
+	vdp->vd_std_choices = NULL;
+	vdp->vd_buf_lp=new_list();;
 
-	vdp->vd_n_buffers = 0;
 
-	// make sure data area is set to ram...
-	curr_ap = ram_area_p;
+	if( check_capabilities(vdp) < 0 )
+		return -1;
 
-	for(i_buffer = 0; i_buffer < req.count; ++i_buffer) {
-		struct v4l2_buffer buf;
-		char name[128];
-		Dimension_Set dimset;
-		Data_Obj *dp;
+	if( setup_video_format(vdp) < 0 )
+		return -1;
 
-		CLEAR(buf);
+	if( setup_buffers(vdp) < 0 )
+		return -1;
 
-		buf.type	= V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		buf.memory	= V4L2_MEMORY_MMAP;
-		buf.index	= i_buffer;
-
-		if(-1 == xioctl( vdp->vd_fd, VIDIOC_QUERYBUF, &buf)){
-			errno_warn(QSP_ARG  "VIDIOC_QUERYBUF");
-			return(-1);
-		}
-
-		vdp->vd_buf_tbl[i_buffer].mb_length = buf.length;
-		vdp->vd_buf_tbl[i_buffer].mb_vdp = vdp;
-		vdp->vd_buf_tbl[i_buffer].mb_start =
-			mmap(NULL /* start anywhere */,
-				buf.length,
-				PROT_READ | PROT_WRITE /* required */,
-				MAP_SHARED /* recommended */,
-				vdp->vd_fd, buf.m.offset);
-
-		if(MAP_FAILED == vdp->vd_buf_tbl[i_buffer].mb_start){
-			ERRNO_WARN("mmap");
-			return(-1);
-		}
-
-		/* We create an object that points to this buffer in case
-		 * we want to perform scripted operations involving vector
-		 * expressions (e.g. real-time tracking); see flow.c
-		 */
-
-		sprintf(name,"%s.buffer%d",vdp->vd_name,i_buffer);
-		/* BUG need to do these dynamically, might be using scaler */
-		// Use the current pixel format
-		switch( vfmt_list[vfmt_index].vfmt_code ){
-			case V4L2_PIX_FMT_YUYV:
-#ifdef FOOBAR
-				dimset.ds_dimension[0]=4;	/* four bytes per pixel pair */
-				dimset.ds_dimension[1]=320;	/* pixel pairs per row */
-#endif // FOOBAR
-				dimset.ds_dimension[0]=2;	/* two bytes per pixel - YU or YV */
-				dimset.ds_dimension[1]=640;	/* pixels row */
-				break;
-			case V4L2_PIX_FMT_GREY:
-				dimset.ds_dimension[0]=1;
-				dimset.ds_dimension[1]=640;
-				break;
-			case V4L2_PIX_FMT_RGB24:
-			case V4L2_PIX_FMT_BGR24:
-				dimset.ds_dimension[0]=3;
-				dimset.ds_dimension[1]=640;
-				break;
-			case V4L2_PIX_FMT_RGB32:
-			case V4L2_PIX_FMT_BGR32:
-				dimset.ds_dimension[0]=4;
-				dimset.ds_dimension[1]=640;
-				break;
-			default:
-				sprintf(ERROR_STRING,"Oops, haven't implemented buffer creation for %s pixel format!?",
-					vfmt_list[vfmt_index].vfmt_name);
-				WARN(ERROR_STRING);
-				// default to YUYV
-				dimset.ds_dimension[0]=4;	/* four bytes per pixel pair */
-				dimset.ds_dimension[1]=320;	/* pixel pairs per row */
-				break;
-		}
-		/* rows */
-		dimset.ds_dimension[2]=vfld_tbl[vfld_index].vfld_height;
-
-		dimset.ds_dimension[3]=1;
-		dimset.ds_dimension[4]=1;
-		dp = _make_dp(QSP_ARG  name,&dimset,PREC_FOR_CODE(PREC_UBY));
-#ifdef CAUTIOUS
-		if( dp == NULL ) error1("CAUTIOUS:  error creating data_obj for video buffer");
-#endif /* CAUTIOUS */
-		SET_OBJ_DATA_PTR(dp, vdp->vd_buf_tbl[i_buffer].mb_start );
-
-		vdp->vd_n_buffers ++;
-	}
 #endif // HAVE_V4L2
 	return 0;
 }
@@ -450,7 +556,7 @@ int start_capturing(QSP_ARG_DECL  Video_Device *vdp)
 
 	if( IS_CAPTURING( vdp ) ){
 		sprintf(ERROR_STRING,"start_capturing:  Video device %s is already capturing!?",vdp->vd_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -514,7 +620,7 @@ int dq_buf(QSP_ARG_DECL  Video_Device *vdp,struct v4l2_buffer *bufp)
 
 	if( r == 0 ) {
 		sprintf(ERROR_STRING, "select timeout");
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -534,7 +640,7 @@ int dq_buf(QSP_ARG_DECL  Video_Device *vdp,struct v4l2_buffer *bufp)
 	if( bufp->index >= (unsigned int) vdp->vd_n_buffers ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  Unexpected buffer number (%d) from VIDIOC_DQBUF, expected 0-%d",
 			bufp->index,vdp->vd_n_buffers-1);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 #endif /* CAUTIOUS */
@@ -554,23 +660,26 @@ static void get_next_frame(QSP_ARG_DECL  Video_Device *vdp)
 	if( ! IS_CAPTURING(vdp) ){
 		sprintf(ERROR_STRING,"get_next_frame:  Video device %s is not capturing!?",
 			vdp->vd_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( dq_buf(QSP_ARG  vdp,&buf) < 0 ) return;	/* de-queue a buffer - release? */
+print_buf_info(&buf);
+}
 
-	/* here is where we use the data... */
+static void enqueue_indexed_buffer(QSP_ARG_DECL  Video_Device *vdp, int idx)
+{
+	struct v4l2_buffer buf;
 
-	/* presumably this call asks the driver to refill the buffer,
-	 * Old comment said:
-	 * this will be our "release" function...
-	 * But this is not the release function, dq is the release func???
-	 */
+	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	buf.memory = V4L2_MEMORY_MMAP;
+	buf.index = idx;
+
 	if( xioctl(vdp->vd_fd, VIDIOC_QBUF, &buf) < 0 )
-		ERRNO_WARN ("VIDIOC_QBUF #2");
+		ERRNO_WARN ("VIDIOC_QBUF (enqueue_indexed_buffer)");
 
-} /* end get_next_frame */
+}
 
 
 int check_queue_status(QSP_ARG_DECL  Video_Device *vdp)
@@ -582,7 +691,7 @@ int check_queue_status(QSP_ARG_DECL  Video_Device *vdp)
 
 	if( ! IS_CAPTURING(vdp) ){
 		sprintf(ERROR_STRING,"check_queue_status:  Video device %s is not capturing!?",vdp->vd_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -652,7 +761,7 @@ int stop_capturing(QSP_ARG_DECL  Video_Device *vdp)
 
 	if( ! IS_CAPTURING(vdp) ){
 		sprintf(ERROR_STRING,"stop_capturing:  Video device %s is not capturing!?",vdp->vd_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -685,20 +794,20 @@ static int open_video_device(QSP_ARG_DECL  const char *dev_name)
 	vdp = video_dev_of(dev_name);
 	if( vdp != NO_VIDEO_DEVICE ){
 		sprintf(ERROR_STRING,"open_video_device:  device %s is already open!?",dev_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	if( stat(dev_name, &st) < 0 ) {
 		sprintf(ERROR_STRING, "Cannot identify '%s': %d, %s\n",
 			dev_name, errno, strerror( errno));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 
 	if( !S_ISCHR( st.st_mode)) {
 		sprintf(ERROR_STRING, "%s is no device\n", dev_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 
@@ -707,7 +816,7 @@ static int open_video_device(QSP_ARG_DECL  const char *dev_name)
 	if( -1 == fd) {
 		sprintf(ERROR_STRING, "Cannot open '%s': %d, %s\n",
 			dev_name, errno, strerror( errno));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 
@@ -715,27 +824,53 @@ static int open_video_device(QSP_ARG_DECL  const char *dev_name)
 #ifdef CAUTIOUS
 	if( vdp == NO_VIDEO_DEVICE ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  open_video_device:  unable to create new Video_Device struct for %s",dev_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 #endif /* CAUTIOUS */
 
-	vdp->vd_name = savestr(dev_name);
-	vdp->vd_fd = fd;
-
-	vdp->vd_flags = 0;
-	vdp->vd_n_inputs = 0;
-	vdp->vd_n_standards = 0;
-	vdp->vd_input_choices = NULL;
-	vdp->vd_std_choices = NULL;
-
 	/* init_video_device does the v4l2 initializations */
-	init_video_device(QSP_ARG  vdp);
+	init_video_device(QSP_ARG  vdp,fd);
 
 	curr_vdp = vdp;
 
 	return 0;
 }
+
+#define release_buffers(vdp) _release_buffers(QSP_ARG  vdp)
+
+static void _release_buffers(QSP_ARG_DECL  Video_Device *vdp)
+{
+	Node *np;
+
+	while( (np=remHead(vdp->vd_buf_lp)) != NULL ){
+		Data_Obj *dp;
+		dp = NODE_DATA(np);
+		delvec(dp);
+		rls_node(np);
+	}
+	rls_list(vdp->vd_buf_lp);
+	vdp->vd_buf_lp=NULL;
+}
+
+
+#define close_video_device(vdp) _close_video_device(QSP_ARG  vdp)
+
+static int _close_video_device(QSP_ARG_DECL  Video_Device *vdp)
+{
+	if( close(vdp->vd_fd) < 0 ){
+		tell_sys_error("close");
+		return -1;
+	}
+
+	// Release the buffer objects
+	release_buffers(vdp);
+
+	del_video_dev(vdp);
+
+	return 0;
+}
+
 
 
 static COMMAND_FUNC( do_open )
@@ -745,8 +880,18 @@ static COMMAND_FUNC( do_open )
 	s=NAMEOF("video device");
 	if( open_video_device(QSP_ARG  s) < 0 ){
 		sprintf(ERROR_STRING,"Error opening video device %s",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
+}
+
+static COMMAND_FUNC( do_close )
+{
+	Video_Device *vdp;
+
+	vdp = pick_video_dev("");
+	if( vdp == NULL ) return;
+
+	close_video_device(vdp);
 }
 
 static COMMAND_FUNC( do_select )
@@ -785,11 +930,24 @@ static COMMAND_FUNC( do_stop )
 #endif // HAVE_V4L2
 }
 
-static COMMAND_FUNC( do_next )
+static COMMAND_FUNC( do_dq_next )
 {
 	CHECK_DEVICE
 #ifdef HAVE_V4L2
 	get_next_frame(QSP_ARG  curr_vdp);
+#endif // HAVE_V4L2
+}
+
+static COMMAND_FUNC( do_q_buf )
+{
+	int idx;
+
+	CHECK_DEVICE
+
+	idx = how_many("buffer index");
+	// BUG check for valid value
+#ifdef HAVE_V4L2
+	enqueue_indexed_buffer(QSP_ARG  curr_vdp, idx);
 #endif // HAVE_V4L2
 }
 
@@ -812,7 +970,7 @@ static COMMAND_FUNC( do_yuv2gray )
 static int query_control(QSP_ARG_DECL  struct v4l2_queryctrl *ctlp)
 {
 	if( ioctl(curr_vdp->vd_fd,VIDIOC_QUERYCTRL,ctlp) < 0 ){
-		WARN("error querying control");
+		warn("error querying control");
 		return(-1);
 	}
 
@@ -850,7 +1008,7 @@ static void set_integer_control(QSP_ARG_DECL uint32_t id)
 	ctrl.id = id;
 	if( ioctl(curr_vdp->vd_fd,VIDIOC_G_CTRL,&ctrl) < 0 ){
 		sprintf(ERROR_STRING,"error getting current %s setting",qry.name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	sprintf(ERROR_STRING,"Current value of %s is %d",qry.name,ctrl.value);
@@ -864,7 +1022,7 @@ static void set_integer_control(QSP_ARG_DECL uint32_t id)
 
 	if( ioctl(curr_vdp->vd_fd,VIDIOC_S_CTRL,&ctrl) < 0 ){
 		sprintf(ERROR_STRING,"error getting current %s setting",qry.name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 }
@@ -882,7 +1040,7 @@ static int get_integer_control(QSP_ARG_DECL uint32_t id)
 	ctrl.id = id;
 	if( ioctl(curr_vdp->vd_fd,VIDIOC_G_CTRL,&ctrl) < 0 ){
 		sprintf(ERROR_STRING,"error getting current %s setting",qry.name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 	r= ctrl.value;
@@ -911,13 +1069,13 @@ static int get_integer_control(QSP_ARG_DECL uint32_t id)
 									\
 	sprintf(ERROR_STRING,						\
 	"program not configured with V4L2 support, can't set %s to %d!?",label,value);	\
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 
 #define NO_V4L2_MSG2(label,string)					\
 									\
 	sprintf(ERROR_STRING,						\
 	"program not configured with V4L2 support, can't set %s to %s!?",label,string);	\
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 
 #endif // ! HAVE_V4L2
 
@@ -1189,7 +1347,7 @@ static void set_standard( QSP_ARG_DECL  int id )
 	if( (input.std & id) == 0 ){
 		sprintf(ERROR_STRING,"Oops, %s input does not support requested standard",
 			input.name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1320,11 +1478,13 @@ MENU_BEGIN(v4l2)
 ADD_CMD( format,	set_vfmt,	set pixel format )
 ADD_CMD( field_mode,	set_field_mode,	set field mode )
 ADD_CMD( open,		do_open,	open video device )
+ADD_CMD( close,		do_close,	close video device )
 ADD_CMD( list,		do_list_devs,	list open video devices & statuses )
 ADD_CMD( status,	do_status,	report status of  current video device )
 ADD_CMD( start,		do_start,	start capturing )
 ADD_CMD( stop,		do_stop,	stop capturing )
-ADD_CMD( next,		do_next,	capture next frame )
+ADD_CMD( dequeue_next,	do_dq_next,	get next captured frame )
+ADD_CMD( enqueue_buf,	do_q_buf,	release a buffer to be filled )
 ADD_CMD( select,	do_select,	select device )
 ADD_CMD( yuv2rgb,	do_yuv2rgb,	convert from YUYV to RGB )
 ADD_CMD( yuv2gray,	do_yuv2gray,	convert from YUYV to GRAY )
@@ -1343,7 +1503,7 @@ COMMAND_FUNC( do_v4l2_menu )
 		stream_debug=add_debug_module("stream_record");
 #ifdef HAVE_RAWVOL
 		if( insure_default_rv(SINGLE_QSP_ARG) < 0 ){
-			WARN("error opening default raw volume");
+			warn("error opening default raw volume");
 		}
 #endif // HAVE_RAWVOL
 

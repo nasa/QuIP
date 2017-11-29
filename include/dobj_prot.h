@@ -315,6 +315,7 @@ extern double seq_func(Data_Obj *);
 
 /* sub_obj.c */
 
+extern void point_obj_to_ext_data(Data_Obj *dp,void *p);
 extern void parent_relationship(Data_Obj *parent,Data_Obj *child);
 extern void propagate_flag_to_children(Data_Obj *dp, uint32_t flags );
 

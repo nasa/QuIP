@@ -76,12 +76,13 @@ Define Default_Click 0
 Set clicked 1
 .
 
-Set left_button_up	1
-Set middle_button_up	1
-Set right_button_up	1
-Set left_button_down	0
-Set middle_button_down	0
-Set right_button_down	0
+# these are now reserved vars...
+#Set left_button_up	1
+#Set middle_button_up	1
+#Set right_button_up	1
+#Set left_button_down	0
+#Set middle_button_down	0
+#Set right_button_down	0
 
 Define Wait_While_Button_Up 0
 

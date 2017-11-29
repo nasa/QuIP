@@ -44,6 +44,7 @@ typedef struct video_device {
 	int		vd_oldest;
 	int		vd_newest;
 	int		vd_n_buffers;
+	List *		vd_buf_lp;
 	My_Buffer 	vd_buf_tbl[MAX_BUFFERS_PER_DEVICE];
 
 	/* stuff for setting controls */

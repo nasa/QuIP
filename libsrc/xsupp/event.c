@@ -644,6 +644,25 @@ warn(ERROR_STRING);
 	return(retval);
 } // HandleEvent
 
+#define init_reserved_vars() _init_reserved_vars(SINGLE_QSP_ARG)
+
+static void _init_reserved_vars(SINGLE_QSP_ARG_DECL)
+{
+	assign_reserved_var("left_button_down","0");
+	assign_reserved_var("left_button_up","1");
+	assign_reserved_var("middle_button_down","0");
+	assign_reserved_var("middle_button_up","2");
+	assign_reserved_var("right_button_down","0");
+	assign_reserved_var("right_button_up","4");
+
+	assign_reserved_var("view_xpos","-1");
+	assign_reserved_var("view_ypos","-1");
+
+	assign_reserved_var("event_window","no_window");
+	assign_reserved_var("button","0");
+	assign_reserved_var("event_type","no_event");
+}
+
 static int check_one_display( QSP_ARG_DECL  Disp_Obj *dop )
 {
 	XEvent event;

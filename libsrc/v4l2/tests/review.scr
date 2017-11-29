@@ -1,0 +1,46 @@
+# rvtst script to review recording "foo"
+
+rawvol
+  default
+  quit
+
+If !iof_exists("foo") "error_exit 'Rawvol recording foo does not exist - run record_test1.scr'"
+
+Assign nf nframes(foo)
+
+Print nf
+
+Assign w ncols(foo)
+Assign h nrows(foo)
+
+Viewer v $w $h
+Posn_Window v 500 0
+Viewer fv $w $h/2
+Posn_Window fv 500 500
+
+Image rgb $h $w 3 u_byte
+Image field $h/2 $w 3 u_byte
+Interlace oddlines rgb even
+Interlace evenlines rgb odd
+
+Image yuv $h $w 2 u_byte
+
+Set frameno 1
+
+repeat $nf
+  Get_Next yuv foo
+  compute misc yuv2rgb rgb yuv quit quit
+  Show_Bytes rgb v
+  Label_Viewer v "Frame $frameno"
+  VMov field oddlines
+  Show_Bytes field fv
+  Label_Viewer fv "Frame $frameno  Field 1"
+  Pause
+  VMov field evenlines
+  Show_Bytes field fv
+  Label_Viewer fv "Frame $frameno  Field 2"
+  Pause
+  Increment frameno
+  end
+exit
+

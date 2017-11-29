@@ -24,6 +24,7 @@ ITEM_INTERFACE_PROTOTYPES(Video_Device,video_dev)
 #define pick_video_dev(p)	_pick_video_dev(QSP_ARG  p)
 #define video_dev_of(s)		_video_dev_of(QSP_ARG  s)
 #define new_video_dev(s)	_new_video_dev(QSP_ARG  s)
+#define del_video_dev(s)	_del_video_dev(QSP_ARG  s)
 
 /* stream.c */
 extern COMMAND_FUNC( print_grab_times );

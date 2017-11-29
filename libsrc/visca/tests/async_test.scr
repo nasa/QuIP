@@ -1,0 +1,28 @@
+#
+# test of asynchronous commands...
+#
+
+Define Point_To 2 pan tilt
+  advise "Pointing to $1 $2"
+  command pantilt absolute_pos 01 01 $1 $2
+  advise "DONE Pointing to $1 $2"
+.
+
+visca 
+  cameras 
+    specify cam1 evi70 
+    specify cam2 evi70 
+    quit 
+  set_asynchro yes 
+
+  Point_To 0 0
+  inquire pantilt_posn 
+  advise "pantilt posn is $pan_posn $tilt_posn"
+  Point_To 100 100 
+  inquire pantilt_posn 
+  advise "pantilt posn is $pan_posn $tilt_posn"
+  Point_To 0 0 
+  inquire pantilt_posn 
+  advise "pantilt posn is $pan_posn $tilt_posn"
+  Pause
+

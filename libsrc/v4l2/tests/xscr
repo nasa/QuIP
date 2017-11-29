@@ -1,0 +1,8 @@
+ v4l2 
+ ? 
+ open 
+ /dev/video0 
+ ? 
+ list 
+ quit 
+ quit 
