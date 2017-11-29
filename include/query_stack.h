@@ -77,7 +77,7 @@ typedef struct vector_parser_data {
 
 
 
-#define MAXEDEPTH	20
+#define MAXEDEPTH	20	// for variables inside expressions
 #define MAX_E_STRINGS	64
 
 typedef struct scalar_parser_data {
@@ -216,7 +216,10 @@ struct query_stack {
 	List *			qs_vector_parser_data_freelist;
 	Vector_Parser_Data *	qs_vector_parser_data;
 
-	Scalar_Parser_Data *	qs_scalar_parser_data;
+	// if we allow reentrant parsing, then we have to have more of these...
+#define MAX_SCALAR_PARSER_CALL_DEPTH	2
+	Scalar_Parser_Data *	qs_scalar_parser_data_tbl[MAX_SCALAR_PARSER_CALL_DEPTH];
+	int			qs_scalar_parser_call_depth;
 
 	int		qs_max_vectorizable;
 
@@ -360,8 +363,13 @@ struct query_stack {
 
 
 
-#define QS_SCALAR_PARSER_DATA(qsp)		(qsp)->qs_scalar_parser_data
-#define SET_QS_SCALAR_PARSER_DATA(qsp,d)	(qsp)->qs_scalar_parser_data = d
+#define QS_SCALAR_PARSER_DATA_AT_IDX(qsp,idx)		(qsp)->qs_scalar_parser_data_tbl[idx]
+#define SET_QS_SCALAR_PARSER_DATA_AT_IDX(qsp,idx,d)	(qsp)->qs_scalar_parser_data_tbl[idx] = d
+#define QS_SCALAR_PARSER_CALL_DEPTH(qsp)		(qsp)->qs_scalar_parser_call_depth
+#define SET_QS_SCALAR_PARSER_CALL_DEPTH(qsp,v)		(qsp)->qs_scalar_parser_call_depth = v
+
+#define QS_CURR_SCALAR_PARSER_DATA(qsp)	QS_SCALAR_PARSER_DATA_AT_IDX(qsp,QS_SCALAR_PARSER_CALL_DEPTH(qsp))
+#define SET_QS_CURR_SCALAR_PARSER_DATA(qsp,v)	QS_SCALAR_PARSER_DATA_AT_IDX(qsp,QS_SCALAR_PARSER_CALL_DEPTH(qsp)) = v
 
 #define QS_TMPVAR(qsp)			(qsp)->qs_tmpvar
 #define QS_BUILTIN_MENU(qsp)		(qsp)->qs_builtin_menu

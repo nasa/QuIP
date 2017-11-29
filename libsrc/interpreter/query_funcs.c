@@ -1067,7 +1067,7 @@ static char * get_varval(QSP_ARG_DECL  char **spp)			/** see if buf containts a 
 		advise(ERROR_STRING);
 		return(NULL);
 	}
-	val_str = var_value(QSP_ARG  vname);
+	val_str = var_value(vname);
 
 	/* if not a user defined variable, check environment */
 	if( val_str == NULL ){
@@ -2661,8 +2661,15 @@ void init_query_stack(Query_Stack *qsp)
 
 	init_vector_parser_data_stack(qsp);
 
-	SET_QS_SCALAR_PARSER_DATA(qsp,getbuf(sizeof(Scalar_Parser_Data)));
-	init_scalar_parser_data( QS_SCALAR_PARSER_DATA(qsp) );
+	SET_QS_SCALAR_PARSER_DATA_AT_IDX(qsp,0,getbuf(sizeof(Scalar_Parser_Data)));
+	init_scalar_parser_data( QS_SCALAR_PARSER_DATA_AT_IDX(qsp,0) );
+	{
+		int i;
+		for(i=1;i<MAX_SCALAR_PARSER_CALL_DEPTH;i++){
+			SET_QS_SCALAR_PARSER_DATA_AT_IDX(qsp,i,NULL);
+		}
+	}
+	SET_QS_SCALAR_PARSER_CALL_DEPTH(qsp,0);
 
 	SET_QS_CHEW_LIST(qsp, NULL);
 	SET_QS_CALLBACK_LIST(qsp, NULL);

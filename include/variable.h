@@ -43,7 +43,8 @@ struct variable {
 
 extern void find_vars(QSP_ARG_DECL  const char *s);
 extern void search_vars(QSP_ARG_DECL  const char *s);
-extern const char *var_value(QSP_ARG_DECL  const char *vname);
+extern const char *_var_value(QSP_ARG_DECL  const char *vname);
+#define var_value(vname) _var_value(QSP_ARG  vname)
 extern const char *var_p_value(QSP_ARG_DECL  Variable *vp);
 
 ITEM_INIT_PROT(Variable,var_)

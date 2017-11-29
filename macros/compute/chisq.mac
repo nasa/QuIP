@@ -195,6 +195,7 @@ Set max_sum_terms 4000
 
 Define Compute_Lower_Incomplete_Gamma_Log 3 dest src_x S_times_two
 
+advise "Compute_Lower_Incomplete_Gamma_Log $1 $2 $3 BEGIN"
 # First calculate the log of the factor outside of the sum
 # which is pow(x,s) * gamma(s) * exp (-x)
 # So the log is: s * log(x) + log(gamma(s)) - x
@@ -239,6 +240,7 @@ Set prev_mean_sq 0
 # So the log of this is:
 # k * log(x) - log(gamma(s+k+1)
 
+advise "before problem, arg 1 = $1"
 If obj_exists(sum_terms)&&ncols(sum_terms)!=ncols('$1') "Delete_Image sum_terms"
 If !obj_exists(sum_terms)
   "Image sum_terms $max_sum_terms ncols('$1') 1 double"
@@ -285,6 +287,7 @@ VExp use_sum use_sum
 #advise "exponentiated sum terms" Display use_sum
 VSum $1 use_sum
 #advise Sums Display $1
+advise "Compute_Lower_Incomplete_Gamma_Log $1 $2 $3 DONE"
 .
 
 Set min_gamma_iterations 30

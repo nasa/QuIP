@@ -268,7 +268,7 @@ static index_t ifarr(QSP_ARG_DECL  const char *s)	/* return index or NOTARR */
 		warn("ifarr:  no closing brace for index");
 		return(NOTARR);
 	}
-	tsp = pexpr(QSP_ARG  index_string );
+	tsp = pexpr(index_string );
 	i =  index_for_scalar( tsp );
 	RELEASE_SCALAR(tsp);
 

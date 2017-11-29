@@ -25,7 +25,7 @@ extern void _list_vars(SINGLE_QSP_ARG_DECL)
 fprintf(stderr,"list_vars, item_type %s at 0x%lx\n",ITEM_TYPE_NAME(var__itp),(long)var__itp);
 }
 
-const char *var_value(QSP_ARG_DECL  const char *s)
+const char *_var_value(QSP_ARG_DECL  const char *s)
 {
 	Variable *vp;
 	

@@ -29,7 +29,7 @@ long _how_many(QSP_ARG_DECL  const char *prompt)
 	pline = format_prompt(PROMPT_FORMAT, prompt);
 	s=next_query_word(pline);
 
-	tsp=pexpr(QSP_ARG  s);
+	tsp=pexpr(s);
 
 	if( SCALAR_PREC_CODE(tsp) == PREC_STR ){
 		sprintf(ERROR_STRING,
@@ -73,7 +73,7 @@ double _how_much(QSP_ARG_DECL  const char* s)		/**/
 	double d;
 
 	estr=nameof(s);
-	tsp=pexpr(QSP_ARG  estr);
+	tsp=pexpr(estr);
 	d=double_for_scalar(tsp);
 	RELEASE_SCALAR(tsp)
 	return( d );

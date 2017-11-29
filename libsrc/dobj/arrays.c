@@ -487,6 +487,7 @@ Data_Obj *_gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t ind
 
 	if( dp==NULL ) return(dp);
 
+fprintf(stderr,"gen_subscript %s %d %d BEGIN\n",OBJ_NAME(dp),which_dim,index);
 	if( which_dim < 0 || which_dim >= N_DIMENSIONS ){
 		warn("gen_subscript:  dimension index out of range");
 		return(NULL);

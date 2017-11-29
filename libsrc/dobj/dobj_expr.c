@@ -13,7 +13,9 @@
 #include "identifier.h"
 #include "dobj_private.h"
 
-static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
+#define eval_szbl_expr( enp ) _eval_szbl_expr( QSP_ARG  enp )
+
+static Item * _eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 {
 	Item *szp=NULL,*szp2;
 	index_t index;
@@ -22,7 +24,7 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 	switch(enp->sen_code){
 		case N_LITSTR:
 		case N_QUOT_STR:
-			s = EVAL_SCALEXP_STRING(enp);
+			s = eval_scalexp_string(enp);
 			szp = check_sizable( DEFAULT_QSP_ARG  s );
 			/*
 			if( szp == NULL ){
@@ -42,7 +44,7 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		//case N_SIZABLE:
 		case N_OBJNAME:
 			// Not necessarily a data object!?
-			s = EVAL_SCALEXP_STRING(enp);
+			s = eval_scalexp_string(enp);
 			szp = find_sizable( DEFAULT_QSP_ARG  s );
 			if( szp == NULL ){
 				sprintf(ERROR_STRING,
@@ -53,22 +55,22 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			break;
 		//case N_SUBSIZ:
 		case N_SUBSCRIPT:
-			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
+			szp2=eval_szbl_expr(enp->sen_child[0]);
 			if( szp2 == NULL )
 				return NULL;
-			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
+			index = index_for_scalar( eval_expr(enp->sen_child[1]) );
 			szp = sub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
 		//case N_CSUBSIZ:
 		case N_CSUBSCRIPT:
-			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
+			szp2=eval_szbl_expr(enp->sen_child[0]);
 			if( szp2 == NULL )
 				return NULL;
-			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
+			index = index_for_scalar( eval_expr(enp->sen_child[1]) );
 			szp = csub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
 		case N_DOBJV_STR_ARG_FUNC:	// eval_szbl_expr
-			s = eval_scalexp_string(QSP_ARG  enp->sen_child[0]);
+			s = eval_scalexp_string(enp->sen_child[0]);
 			if( s == NULL ){
 				warn("Error evaluating arg for object-valued function!?");
 				return NULL;
@@ -155,7 +157,7 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 
 	switch(enp->sen_code){
 		case N_QUOT_STR:
-			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
+			s = eval_scalexp_string(enp->sen_child[0]);
 			/* first try object lookup... */
 			/* we don't want a warning if does not exist... */
 			dp = (*exist_func)( QSP_ARG  s );
@@ -177,7 +179,7 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			return NULL;
 			break;
 		case N_OBJNAME:
-			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
+			s = eval_scalexp_string(enp->sen_child[0]);
 			dp = (*obj_get_func)( QSP_ARG  s );
 #ifdef SCALARS_NOT_OBJECTS
 			dp = (*exist_func)( QSP_ARG  s );
@@ -203,20 +205,20 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			break;
 		case N_SUBSCRIPT:
 			dp2=eval_dobj_expr(QSP_ARG  enp->sen_child[0]);
-			tsp = EVAL_EXPR(enp->sen_child[1]);
+			tsp = eval_expr(enp->sen_child[1]);
 			index=index_for_scalar( tsp );
 			RELEASE_SCALAR(tsp)
 			dp=(*sub_func)( QSP_ARG  dp2, index );
 			break;
 		case N_CSUBSCRIPT:
 			dp2=eval_dobj_expr(QSP_ARG  enp->sen_child[0]);
-			tsp=EVAL_EXPR(enp->sen_child[1]);
+			tsp=eval_expr(enp->sen_child[1]);
 			index=index_for_scalar(tsp);
 			RELEASE_SCALAR(tsp)
 			dp=(*csub_func)( QSP_ARG  dp2, index );
 			break;
 		case N_DOBJV_STR_ARG_FUNC:	// eval_szbl_expr
-			s = eval_scalexp_string(QSP_ARG  enp->sen_child[0]);
+			s = eval_scalexp_string(enp->sen_child[0]);
 			if( s == NULL ){
 				warn("Error evaluating arg for object-valued function!?");
 				return NULL;
@@ -237,6 +239,6 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 void init_dobj_expr_funcs(SINGLE_QSP_ARG_DECL)
 {
 	set_eval_dobj_func(QSP_ARG  eval_dobj_expr );
-	set_eval_szbl_func(QSP_ARG  eval_szbl_expr );
+	set_eval_szbl_func(QSP_ARG  _eval_szbl_expr );
 }
 

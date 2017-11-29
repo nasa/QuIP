@@ -36,6 +36,7 @@ Data_Obj * _index_data( QSP_ARG_DECL  Data_Obj *dp, const char *index_str )
 
 	if( dp == NULL ) return(dp);
 
+fprintf(stderr,"index_data %s \"%s\" BEGIN\n",OBJ_NAME(dp),index_str);
 	cp=index_str;
 	while( *cp && isspace(*cp) ) cp++;
 
@@ -78,6 +79,7 @@ next_index:
 	}
 	cp++;
 	str[i]=0;
+fprintf(stderr,"index_data:  after right delimiter found, str = \"%s\"\n",str);
 
 	/* first check to see if the index string is just a star */
 	i=0;
@@ -86,7 +88,7 @@ next_index:
 		if( isspace(str[i]) ) i++;
 		else if( str[i] == '*' ) i++;
 		else {
-			is_star=0;
+			is_star=0;	// not a star if any non-space character
 			i++;
 		}
 	}
@@ -97,8 +99,10 @@ next_index:
 		goto next_index;
 	} else {
 		Typed_Scalar *tsp;
-		tsp = pexpr( QSP_ARG  str );
+fprintf(stderr,"index_data:  calling pexpr with string \"%s\"\n",str);
+		tsp = pexpr( str );
 		index = index_for_scalar(tsp);
+fprintf(stderr,"index_data:  string \"%s\" evaluated to %d\n",str,index);
 		RELEASE_SCALAR(tsp)
 		if( right_delim == ']' )
 			newdp=gen_subscript(dp,maxd,index,SQUARE);

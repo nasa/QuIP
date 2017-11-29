@@ -358,7 +358,7 @@ static COMMAND_FUNC( do_if )
 	Typed_Scalar *tsp;
 	const char *s;
 
-	tsp=pexpr(QSP_ARG  nameof("condition") );
+	tsp=pexpr(nameof("condition") );
 
 	s=nameof("Command word or 'Then'");
 
@@ -617,7 +617,7 @@ static COMMAND_FUNC( do_assign_var )
     
 	CHECK_FMT_STRINGS
 
-	tsp=pexpr(QSP_ARG  estr);
+	tsp=pexpr(estr);
 	if( tsp == NULL ) return;
 
 	ensure_assign_var_stringbuf(SINGLE_QSP_ARG);
@@ -896,7 +896,7 @@ static COMMAND_FUNC( do_while )
 	Typed_Scalar *tsp;
 
 	s=nameof("expression");
-	tsp = pexpr(QSP_ARG  s);
+	tsp = pexpr(s);
 	if( has_zero_value(tsp) )
 		whileloop(0);
 	else

@@ -78,10 +78,15 @@ struct scalar_expr_node {
 
 //extern double parse_number(QSP_ARG_DECL  const char **);
 //extern double pexpr(QSP_ARG_DECL  const char *);
-extern Typed_Scalar * parse_number(QSP_ARG_DECL  const char **);
-extern Typed_Scalar * pexpr(QSP_ARG_DECL  const char *);
+extern Typed_Scalar * _parse_number(QSP_ARG_DECL  const char **);
+#define parse_number(sptr) _parse_number(QSP_ARG  sptr)
+
+extern Typed_Scalar * _pexpr(QSP_ARG_DECL  const char *);
+#define pexpr(s) _pexpr(QSP_ARG  s)
+
 extern const char *function_name(void *objp);
-extern const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp);
+extern const char *_eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp);
+#define eval_scalexp_string(enp) _eval_scalexp_string(QSP_ARG  enp)
 
 extern void set_obj_funcs(
 	Data_Obj *(*obj_get_func)(QSP_ARG_DECL  const char *),
@@ -102,10 +107,9 @@ extern void set_eval_dobj_func(QSP_ARG_DECL  Data_Obj * (*func)(QSP_ARG_DECL  Sc
 // temporary!  BUG
 /*static*/ extern void dump_etree(QSP_ARG_DECL  Scalar_Expr_Node *enp);
 
-extern Typed_Scalar * eval_expr(QSP_ARG_DECL  Scalar_Expr_Node *);
-#define EVAL_SCALEXP_STRING( s ) eval_scalexp_string( QSP_ARG  s )
-#define EVAL_EXPR( s )		eval_expr( QSP_ARG  s )
-#define EVAL_SZBL_EXPR( s )	eval_szbl_expr( QSP_ARG  s )
+extern Typed_Scalar * _eval_expr(QSP_ARG_DECL  Scalar_Expr_Node *);
+#define eval_expr( s )		_eval_expr( QSP_ARG  s )
+//#define eval_szbl_expr( s )	_eval_szbl_expr( QSP_ARG  s )
 
 #endif /* !NEXPR_H */
 
