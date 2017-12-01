@@ -150,7 +150,7 @@ int _replenish_buffer(QSP_ARG_DECL  Serial_Buffer *sbp,int max_expected)
  * 5000 sleeps of 200 usec, should be about 1 second?
  */
 
-int buffered_char(QSP_ARG_DECL  Serial_Buffer *sbp)
+int _buffered_char(QSP_ARG_DECL  Serial_Buffer *sbp)
 {
 	u_char *buf;
 	int n_tries=0;
@@ -228,7 +228,7 @@ static int expect_char(Serial_Buffer *sbp, int expected)
 //}
 //}
 //#endif /* QUIP_DEBUG */
-	c = buffered_char(QSP_ARG  sbp);
+	c = buffered_char(sbp);
 	if( c < 0 ) return(c);
 
 	sbp->sb_n_scanned ++;
@@ -263,7 +263,7 @@ void _read_until_string(QSP_ARG_DECL  char *dst,Serial_Buffer *sbp, const char *
 	w=marker;
 	while( 1 ){
 
-		c = buffered_char(QSP_ARG  sbp);
+		c = buffered_char(sbp);
 		sbp->sb_n_scanned ++;
 		*dst++ = c;
 
@@ -297,7 +297,7 @@ void _read_until_string(QSP_ARG_DECL  char *dst,Serial_Buffer *sbp, const char *
  * expect_string() now returns the received string, or NULL for a perfect match.
  */
 
-char *expect_string(QSP_ARG_DECL  Serial_Buffer *sbp, const char *expected_str)
+char *_expect_string(QSP_ARG_DECL  Serial_Buffer *sbp, const char *expected_str)
 {
 	int i_e;		/* index of expected char */
 	int i_r;		/* index of received char */
@@ -330,7 +330,7 @@ advise(ERROR_STRING);
 			i_e++;
 		}
 
-		received = buffered_char(QSP_ARG  sbp);
+		received = buffered_char(sbp);
 		if( received < 0 ){	/* no chars? */
 #ifdef QUIP_DEBUG
 if( debug & sb_debug ){
@@ -500,7 +500,7 @@ advise(ERROR_STRING);
 	return(n_scanned);
 }
 
-int get_number( QSP_ARG_DECL  Serial_Buffer *sbp )
+int _get_number( QSP_ARG_DECL  Serial_Buffer *sbp )
 {
 	int n_tok;
 	char token[MAX_TOKEN_CHARS+1];
@@ -520,7 +520,7 @@ void _expected_response( QSP_ARG_DECL  Serial_Buffer *sbp, const char *expected_
 {
 	const char *s;
 
-	s=expect_string(QSP_ARG  sbp,expected_str);
+	s=expect_string(sbp,expected_str);
 	if( s != NULL ){
 		warn("response mismatch");
 		sprintf(ERROR_STRING,"Expected string:  \"%s\"",printable_string(expected_str));
