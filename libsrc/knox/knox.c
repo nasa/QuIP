@@ -51,9 +51,6 @@ static int doing_command_set = 0;	/* flag for sending set of commands */
 	GET_WITH_LIMITS( var, string, MIN_SIGNAL_NUMBER, MAX_SIGNAL_NUMBER )
 
 
-#define GET_KNOX_ARGS(arg_buf)		get_knox_args(QSP_ARG  arg_buf)
-
-
 #ifndef HAVE_KNOX
 
 #define NO_KNOX_MSG WARN("Sorry, no knox support in this build.");
@@ -72,7 +69,7 @@ static int doing_command_set = 0;	/* flag for sending set of commands */
 
 #define DO_KNOX_CMD( code, args, error_msg )				\
 									\
-	if( do_knox_cmd(QSP_ARG  code,args) < 0 ) {			\
+	if( do_knox_cmd(code,args) < 0 ) {			\
 		WARN(error_msg);					\
 		return;							\
 	}
@@ -179,36 +176,40 @@ static void show_routing_map(SINGLE_QSP_ARG_DECL)
 	prt_msg("");
 }
 
-static void get_map_response(QSP_ARG_DECL  int i_output)
+#define get_map_response(i_output) _get_map_response(QSP_ARG  i_output)
+
+static void _get_map_response(QSP_ARG_DECL  int i_output)
 {
 	char str[32];
 	int n;
 
 	sprintf(str,"  OUTPUT  %d     VIDEO  ",i_output);
-	expected_response(QSP_ARG  curr_kdp->kd_sbp,str);
-	n=get_number(QSP_ARG  curr_kdp->kd_sbp);
+	expected_response(curr_kdp->kd_sbp,str);
+	n=get_number(curr_kdp->kd_sbp);
 	knox_state.ks_video[i_output-1] = n;
-	expected_response(QSP_ARG  curr_kdp->kd_sbp,"     AUDIO  ");
-	n=get_number(QSP_ARG  curr_kdp->kd_sbp);
+	expected_response(curr_kdp->kd_sbp,"     AUDIO  ");
+	n=get_number(curr_kdp->kd_sbp);
 	knox_state.ks_audio[i_output-1] = n;
-	expected_response(QSP_ARG  curr_kdp->kd_sbp," \r\n");
+	expected_response(curr_kdp->kd_sbp," \r\n");
 }
 
-static void get_condensed_map_response(QSP_ARG_DECL  int i_output)
+#define get_condensed_map_response(i_output) _get_condensed_map_response(QSP_ARG  i_output)
+
+static void _get_condensed_map_response(QSP_ARG_DECL  int i_output)
 {
 	char str[32];
 	int n;
 
-	expected_response(QSP_ARG  curr_kdp->kd_sbp,str);
+	expected_response(curr_kdp->kd_sbp,str);
 
 	sprintf(str,"%dV",i_output);
-	expected_response(QSP_ARG  curr_kdp->kd_sbp,str);
-	n=get_number(QSP_ARG  curr_kdp->kd_sbp);
+	expected_response(curr_kdp->kd_sbp,str);
+	n=get_number(curr_kdp->kd_sbp);
 	knox_state.ks_video[i_output-1] = n;
-	expected_response(QSP_ARG  curr_kdp->kd_sbp,"A");
-	n=get_number(QSP_ARG  curr_kdp->kd_sbp);
+	expected_response(curr_kdp->kd_sbp,"A");
+	n=get_number(curr_kdp->kd_sbp);
 	knox_state.ks_audio[i_output-1] = n;
-	expected_response(QSP_ARG  curr_kdp->kd_sbp,"\r\n");
+	expected_response(curr_kdp->kd_sbp,"\r\n");
 }
 
 /* We used to squirt the whole string out at once, but in that case we sometimes
@@ -216,7 +217,9 @@ static void get_condensed_map_response(QSP_ARG_DECL  int i_output)
  * one-at-a-time, and listen for the echo before proceeding.
  */
 
-static void send_knox_cmd(QSP_ARG_DECL  const char* buf)
+#define send_knox_cmd(buf) _send_knox_cmd(QSP_ARG  buf)
+
+static void _send_knox_cmd(QSP_ARG_DECL  const char* buf)
 {
 	int i,n;
 	char rstr[2];
@@ -229,15 +232,15 @@ advise(ERROR_STRING);
 	rstr[1]=0;
 	for(i=0;i<n;i++){
 		rstr[0]=buf[i];
-		send_serial(QSP_ARG  curr_kdp->kd_fd, (u_char *)rstr, 1);
-		expect_string(QSP_ARG  curr_kdp->kd_sbp,rstr);
+		send_serial(curr_kdp->kd_fd, (u_char *)rstr, 1);
+		expect_string(curr_kdp->kd_sbp,rstr);
 	}
 
 	/* append carriage return */
 
 	rstr[0]='\r';
-	send_serial(QSP_ARG  curr_kdp->kd_fd, (u_char *)rstr, 1);
-	expect_string(QSP_ARG  curr_kdp->kd_sbp,rstr);
+	send_serial(curr_kdp->kd_fd, (u_char *)rstr, 1);
+	expect_string(curr_kdp->kd_sbp,rstr);
 }
 
 static int identify_firmware(SINGLE_QSP_ARG_DECL)
@@ -254,32 +257,32 @@ static int identify_firmware(SINGLE_QSP_ARG_DECL)
 	 * immediately after.
 	 */
 
-	send_knox_cmd(QSP_ARG  "T11");
+	send_knox_cmd("T11");
 
 	/* Now the echo is read by send_knox_cmd */
-	/* expected_response(QSP_ARG  curr_kdp->kd_sbp,"T11\r"); */
+	/* expected_response(curr_kdp->kd_sbp,"T11\r"); */
 
 	/* now check the next character;
 	 * we expect EITHER " DONE\n\r" OR "DONE\r\n"
 	 */
 
-	c = buffered_char(QSP_ARG  curr_kdp->kd_sbp);
+	c = buffered_char(curr_kdp->kd_sbp);
 	if( c == '\n' ){
 advise("Knox 8x8 video switcher firmware 1 (newer) detected");
-		expected_response(QSP_ARG  curr_kdp->kd_sbp,"\n\r ");
+		expected_response(curr_kdp->kd_sbp,"\n\r ");
 		curr_kdp->kd_fwp = &newer_fw;
 		/*sleep(2); */
 		usleep(500000);
 		/* Now see if there's a character */
 		if( keyhit(  curr_kdp->kd_sbp->sb_fd ) ){
 			/* If the timer was off, then it prints this, otherwise not!? */
-			expected_response(QSP_ARG  curr_kdp->kd_sbp, "TIMER MODE ON\n\r");
+			expected_response(curr_kdp->kd_sbp, "TIMER MODE ON\n\r");
 	/*"\r\n\r TIMER MODE ON\n\r", */
 		}
 				/*curr_kdp->kd_fwp->krs_timer_response */
 	} else if( c == 'D' ){
 advise("Knox 8x8 video switcher firmware 2 (older) detected");
-		expected_response(QSP_ARG  curr_kdp->kd_sbp,"DONE\r\n");
+		expected_response(curr_kdp->kd_sbp,"DONE\r\n");
 		curr_kdp->kd_fwp = &older_fw;
 	} else {
 		show_buffer(curr_kdp->kd_sbp);
@@ -292,7 +295,9 @@ advise("Knox 8x8 video switcher firmware 2 (older) detected");
 	return(0);
 }
 
-static int process_knox_reply(QSP_ARG_DECL  Knox_Cmd_Code code)
+#define process_knox_reply(code) _process_knox_reply(QSP_ARG  code)
+
+static int _process_knox_reply(QSP_ARG_DECL  Knox_Cmd_Code code)
 {
 	int i;
 	const char *s;
@@ -301,44 +306,44 @@ static int process_knox_reply(QSP_ARG_DECL  Knox_Cmd_Code code)
 		case KNOX_MAP_REPORT:
 			s=curr_kdp->kd_fwp->krs_pre_map_response;
 			if( s != NULL && *s != 0 )
-				expected_response(QSP_ARG  curr_kdp->kd_sbp,
+				expected_response(curr_kdp->kd_sbp,
 					curr_kdp->kd_fwp->krs_pre_map_response);
 			/* the pre-map response is now an empty string? */
 			for(i=1;i<=8;i++)
-				get_map_response(QSP_ARG  i);
-			expected_response(QSP_ARG  curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_post_map_response);
+				get_map_response(i);
+			expected_response(curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_post_map_response);
 			break;
 		case KNOX_CONDENSE_REPORT:
 			sleep(2);
-			expected_response(QSP_ARG  curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_pre_map_response);
+			expected_response(curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_pre_map_response);
 			for(i=1;i<=8;i++)
-				get_condensed_map_response(QSP_ARG  i);
-			expected_response(QSP_ARG  curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_post_map_response);
+				get_condensed_map_response(i);
+			expected_response(curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_post_map_response);
 			break;
 
 		case KNOX_LAMP_TEST:
-			expected_response(QSP_ARG  curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_lamp_response);
+			expected_response(curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_lamp_response);
 			break;
 
 		case KNOX_STORE_CROSSPOINT:
 		case KNOX_RECALL_CROSSPOINT:
-			expected_response(QSP_ARG  curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_recall_response);
+			expected_response(curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_recall_response);
 			break;
 
 		case KNOX_STOP_TIMER:
-			expected_response(QSP_ARG  curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_stop_response);
+			expected_response(curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_stop_response);
 			timer_state = TIMER_STOPPED;
 			break;
 
 		case KNOX_SET_TIMER:
 			if( curr_kdp->kd_fwp == &older_fw ){
-				expected_response(QSP_ARG  curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_timer_response);
+				expected_response(curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_timer_response);
 			} else {
 				if( timer_state == TIMER_STOPPED ){
-					expected_response(QSP_ARG  curr_kdp->kd_sbp,
+					expected_response(curr_kdp->kd_sbp,
 							curr_kdp->kd_fwp->krs_timer_response);
 				} else
-					expected_response(QSP_ARG  curr_kdp->kd_sbp,"\r\n\r ");
+					expected_response(curr_kdp->kd_sbp,"\r\n\r ");
 			}
 			timer_state = TIMER_RUNNING;
 			break;
@@ -348,9 +353,9 @@ static int process_knox_reply(QSP_ARG_DECL  Knox_Cmd_Code code)
 		case KNOX_SET_DIFF:
 		case KNOX_SET_BOTH:
 			/* this works for the switcher in the main rack */
-			/* expected_response(QSP_ARG  "\r DONE\n\r"); */
-			/* expected_response(QSP_ARG  "\rDONE\r\n"); */
-			expected_response(QSP_ARG  curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_route_done_response);
+			/* expected_response("\r DONE\n\r"); */
+			/* expected_response("\rDONE\r\n"); */
+			expected_response(curr_kdp->kd_sbp,curr_kdp->kd_fwp->krs_route_done_response);
 			break;
 
 		default:
@@ -358,7 +363,7 @@ static int process_knox_reply(QSP_ARG_DECL  Knox_Cmd_Code code)
 				code,knox_tbl[code].kc_desc);
 			WARN(ERROR_STRING);
 			sleep(2);
-			replenish_buffer(QSP_ARG  curr_kdp->kd_sbp,256);
+			replenish_buffer(curr_kdp->kd_sbp,256);
 			show_buffer(curr_kdp->kd_sbp);
 			return(-1);
 	}
@@ -368,7 +373,9 @@ static int process_knox_reply(QSP_ARG_DECL  Knox_Cmd_Code code)
 
 #endif // HAVE_KNOX
 
-static int get_knox_args(QSP_ARG_DECL   char* arg_buf)
+#define get_knox_args(arg_buf) _get_knox_args(QSP_ARG   arg_buf)
+
+static int _get_knox_args(QSP_ARG_DECL   char* arg_buf)
 {
 	int input, first_output;
 	int ret_stat=0;
@@ -394,7 +401,9 @@ static int get_knox_args(QSP_ARG_DECL   char* arg_buf)
 }
 
 #ifdef HAVE_KNOX
-static int do_knox_cmd(QSP_ARG_DECL  Knox_Cmd_Code code, char* args)
+#define do_knox_cmd(code,args) _do_knox_cmd(QSP_ARG  code,args)
+
+static int _do_knox_cmd(QSP_ARG_DECL  Knox_Cmd_Code code, char* args)
 {
 	char buf[MAX_ARGS_LEN];
 	int stat;
@@ -402,16 +411,16 @@ static int do_knox_cmd(QSP_ARG_DECL  Knox_Cmd_Code code, char* args)
 	sprintf(buf, "%s", knox_tbl[code].kc_str);	// BUG check for overrun
 	if( args ) strcat(buf, args);
 	reset_buffer(curr_kdp->kd_sbp);
-	send_knox_cmd(QSP_ARG  buf);
+	send_knox_cmd(buf);
 
 	/* Now we read the echo char-by-char in send_knox_cmd */
-	/* expected_response(QSP_ARG  curr_kdp->kd_sbp,buf); */
+	/* expected_response(curr_kdp->kd_sbp,buf); */
 
 	/* This works for the switcher in the main video rack */
-	/* expected_response(QSP_ARG  "\r\n"); */
-	/* expected_response(QSP_ARG  "\r"); */
+	/* expected_response("\r\n"); */
+	/* expected_response("\r"); */
 
-	stat=process_knox_reply(QSP_ARG  code);
+	stat=process_knox_reply(code);
 	return(stat);
 }
 #endif // HAVE_KNOX
@@ -420,7 +429,7 @@ static COMMAND_FUNC( do_route_both )
 {
 	char knox_args[MAX_ARGS_LEN];
 
-	if( GET_KNOX_ARGS(knox_args) < 0 ) return;
+	if( get_knox_args(knox_args) < 0 ) return;
 
 	DO_KNOX_CMD(KNOX_SET_BOTH,knox_args,"Unable to route audio and video!")
 }
@@ -446,7 +455,7 @@ static COMMAND_FUNC( do_route_video )
 {
 	char knox_args[MAX_ARGS_LEN];
 
-	if( GET_KNOX_ARGS(knox_args) < 0 ) return;
+	if( get_knox_args(knox_args) < 0 ) return;
 
 	DO_KNOX_CMD(KNOX_SET_VIDEO,knox_args,"Unable to route video alone!")
 }
@@ -455,7 +464,7 @@ static COMMAND_FUNC( do_route_audio )
 {
 	char knox_args[MAX_ARGS_LEN];
 
-	if( GET_KNOX_ARGS(knox_args) < 0 ) return;
+	if( get_knox_args(knox_args) < 0 ) return;
 
 	DO_KNOX_CMD( KNOX_SET_AUDIO, knox_args,"Unable to route audio!?")
 }
@@ -724,18 +733,21 @@ static COMMAND_FUNC( do_knox_status_cmds )
 static COMMAND_FUNC( do_lamp_test )
 {
 	/* Lamp test command has no args! */
-	/*if( GET_KNOX_ARGS(args) < 0 ) return; */
+	/*if( get_knox_args(args) < 0 ) return; */
 
 	DO_KNOX_CMD(  KNOX_LAMP_TEST, NULL, "Unable to do lamp test!")
 }
 
 #ifdef HAVE_KNOX
-static void open_knox_device(QSP_ARG_DECL  const char *s)
+
+#define open_knox_device(s) _open_knox_device(QSP_ARG  s)
+
+static void _open_knox_device(QSP_ARG_DECL  const char *s)
 {
 	int fd;
 	Knox_Device *kdp;
 
-	kdp = knox_dev_of(QSP_ARG  s);
+	kdp = knox_dev_of(s);
 	if( kdp != NULL ){
 		sprintf(ERROR_STRING,
 	"open_knox_device:  knox device %s is already open",s);
@@ -743,7 +755,7 @@ static void open_knox_device(QSP_ARG_DECL  const char *s)
 		return;
 	}
 
-	if( (fd = open_serial_device(QSP_ARG  s)) < 0 ){ 
+	if( (fd = open_serial_device(s)) < 0 ){ 
 		sprintf(ERROR_STRING,"Unable to open knox device %s",s);
 		WARN(ERROR_STRING);
 		return;
@@ -759,7 +771,7 @@ static void open_knox_device(QSP_ARG_DECL  const char *s)
 	 */
 	set_baud(fd,B19200);
 
-	kdp = new_knox_dev(QSP_ARG  s);
+	kdp = new_knox_dev(s);
 	kdp->kd_fd=fd;
 
 	kdp->kd_sbp = (Serial_Buffer *)getbuf(sizeof(*kdp->kd_sbp));
@@ -797,13 +809,13 @@ static COMMAND_FUNC( do_select_device )
 	s=NAMEOF("knox device");
 
 #ifdef HAVE_KNOX
-	kdp = knox_dev_of(QSP_ARG  s);
+	kdp = knox_dev_of(s);
 	if( kdp != NULL ){
 		curr_kdp = kdp;
 		return;
 	}
 
-	open_knox_device(QSP_ARG  s);
+	open_knox_device(s);
 #else // ! HAVE_KNOX
 	NO_KNOX_MSG2("device",s)
 #endif // ! HAVE_KNOX
@@ -834,7 +846,7 @@ COMMAND_FUNC( do_knox_menu )
 {
 #ifdef HAVE_KNOX
 	if( curr_kdp == NULL ) {
-		open_knox_device(QSP_ARG  KNOX_TTY_DEV);
+		open_knox_device(KNOX_TTY_DEV);
 		if( curr_kdp == NULL )
 			error1("Unable to open default knox device");
 	}
