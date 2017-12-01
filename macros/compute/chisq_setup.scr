@@ -42,11 +42,18 @@ repeat $max_dof
   Compute_ChiSq_CDF cdf_tbl[$k-1] cdf_x $k
 #  Display cdf_tbl[$k-1][0]
 #  Display cdf_tbl[$k-1][1]
-  VSet Display cdf_tbl[$k-1][0] 0.0
+  VSet cdf_tbl[$k-1][0] 0.0
   Convert cdf_pts{1} cdf_tbl[$k-1]
   XYPlot cdf_pts
   Increment k
   end
 
 # Now we should save to a cache file
-Pause
+Clobber yes
+Filetype hips1
+Set f chisq_cdf.hips1
+Write_File_Header $f 1
+Put_Next cdf_tbl $f
+
+exit
+
