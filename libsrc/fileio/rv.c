@@ -322,7 +322,7 @@ fprintf(stderr,"bpi = %ld (0x%lx), bpf = %ld (0x%lx)\n",bpi,bpi,bpf,bpf);
 	disk_index = (int)(ifp->if_nfrms % n_disks);
 
 retoff = my_lseek64(rv_fd_arr[disk_index],(off64_t) 0,SEEK_CUR);
-fprintf(stderr,"Current file position is 0x%llx\n",retoff);
+fprintf(stderr,"Current file position is 0x%"PRIx64"\n",retoff);
 
 fprintf(stderr,"writing %ld (0x%lx) bytes of data from 0x%lx\n",bpi,bpi,(u_long)OBJ_DATA_PTR(dp));
 	if( (nw=write(rv_fd_arr[disk_index],OBJ_DATA_PTR(dp),bpi)) != bpi ){
