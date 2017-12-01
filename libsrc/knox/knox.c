@@ -156,6 +156,9 @@ static ITEM_INIT_FUNC(Knox_Device,knox_dev,0)
 static ITEM_NEW_FUNC(Knox_Device,knox_dev)
 static ITEM_CHECK_FUNC(Knox_Device,knox_dev)
 
+#define knox_dev_of(s)	_knox_dev_of(QSP_ARG  s)
+#define new_knox_dev(s)	_new_knox_dev(QSP_ARG  s)
+
 // FOOBAR?
 //#define PICK_KNOX_DEV(pmpt)		pick_knox_dev(QSP_ARG  pmpt)
 
@@ -280,7 +283,7 @@ advise("Knox 8x8 video switcher firmware 2 (older) detected");
 		curr_kdp->kd_fwp = &older_fw;
 	} else {
 		show_buffer(curr_kdp->kd_sbp);
-		ERROR1("Unrecognized knox firmware!?");
+		error1("Unrecognized knox firmware!?");
 		return(-1);
 	}
 
@@ -833,7 +836,7 @@ COMMAND_FUNC( do_knox_menu )
 	if( curr_kdp == NULL ) {
 		open_knox_device(QSP_ARG  KNOX_TTY_DEV);
 		if( curr_kdp == NULL )
-			ERROR1("Unable to open default knox device");
+			error1("Unable to open default knox device");
 	}
 #endif // HAVE_KNOX
 
