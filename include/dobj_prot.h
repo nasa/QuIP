@@ -117,7 +117,8 @@ extern void _list_temp_dps(QSP_ARG_DECL  FILE *fp);
 /* get_obj.c */
 /* formerly in get_obj.h */
 
-extern Data_Obj * hunt_obj(QSP_ARG_DECL  const char *s);
+extern Data_Obj * _hunt_obj(QSP_ARG_DECL  const char *s);
+#define hunt_obj(s) _hunt_obj(QSP_ARG  s)
 extern Data_Obj * get_obj(QSP_ARG_DECL  const char *s);
 #define GET_OBJ(s)	get_obj(QSP_ARG  s)
 extern Data_Obj * get_vec(QSP_ARG_DECL  const char *s);

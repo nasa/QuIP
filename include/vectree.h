@@ -220,7 +220,8 @@ extern Item_Context *	pop_subrt_ctx(QSP_ARG_DECL  const char *,Item_Type *);
 
 #define UNDEF_OF(s)		undef_of(QSP_ARG  s)
 
-extern Subrt *remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *,Vec_Expr_Node *,Vec_Expr_Node *);
+extern Subrt *_remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *,Vec_Expr_Node *,Vec_Expr_Node *);
+#define remember_subrt(prec_p,s,enp1,enp2) _remember_subrt(QSP_ARG  prec_p,s,enp1,enp2)
 extern void update_subrt(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *body );
 extern COMMAND_FUNC( do_run_subrt );
 extern void _exec_subrt(QSP_ARG_DECL  Vec_Expr_Node *,Data_Obj *dst_dp);
@@ -244,7 +245,8 @@ extern int _eval_tree(QSP_ARG_DECL  Vec_Expr_Node *enp,Data_Obj *dst_dp);
 #define eval_tree(enp,dst_dp)		_eval_tree(QSP_ARG enp,dst_dp)
 extern void undeclare_stuff(Vec_Expr_Node *enp);
 extern void set_subrt_ctx(QSP_ARG_DECL  const char *name);
-extern void delete_subrt_ctx(QSP_ARG_DECL  const char *name);
+extern void _delete_subrt_ctx(QSP_ARG_DECL  const char *name);
+#define delete_subrt_ctx(name) _delete_subrt_ctx(QSP_ARG  name)
 
 extern void compare_arg_trees(QSP_ARG_DECL  Vec_Expr_Node *,Vec_Expr_Node *);
 
@@ -362,14 +364,14 @@ extern void		_resolve_subrt_call(QSP_ARG_DECL  Vec_Expr_Node *call_enp,List *uk_
 
 /* resolve.c */
 
-extern Vec_Expr_Node *	resolve_node(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp);
-#define RESOLVE_NODE(uk_enp,shpp)		resolve_node(QSP_ARG uk_enp,shpp)
+extern Vec_Expr_Node *	_resolve_node(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp);
+#define resolve_node(uk_enp,shpp)		_resolve_node(QSP_ARG uk_enp,shpp)
 extern void		forget_resolved_shapes(QSP_ARG_DECL  Subrt *srp);
 extern void		forget_resolved_tree(QSP_ARG_DECL  Vec_Expr_Node *enp);
-extern void		resolve_tree(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Expr_Node *whence);
-#define RESOLVE_TREE(enp,whence)		resolve_tree(QSP_ARG enp,whence)
-extern void		late_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Data_Obj *dst_dp);
-#define LATE_CALLTIME_RESOLVE(srp,dst_dp)	late_calltime_resolve(QSP_ARG srp,dst_dp)
+extern void		_resolve_tree(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Expr_Node *whence);
+#define resolve_tree(enp,whence)		_resolve_tree(QSP_ARG enp,whence)
+extern void		_late_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Data_Obj *dst_dp);
+#define late_calltime_resolve(srp,dst_dp)	_late_calltime_resolve(QSP_ARG srp,dst_dp)
 extern void		_early_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *args_enp, Data_Obj *dst_dp);
 #define early_calltime_resolve(srp,enp,dst_dp)	_early_calltime_resolve(QSP_ARG srp,enp,dst_dp)
 

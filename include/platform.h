@@ -448,7 +448,8 @@ extern int platform_dispatch(QSP_ARG_DECL  const Compute_Platform *cpp,
 				Vec_Obj_Args *oap );
 
 extern int platform_dispatch_by_code(QSP_ARG_DECL  int code, Vec_Obj_Args *oap );
-extern void dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
+extern void _dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
+#define dp_convert(dst_dp, src_dp) _dp_convert(QSP_ARG  dst_dp, src_dp)
 
 // currently in ocl.c but should be moved - BUG
 extern void show_gpu_vector(QSP_ARG_DECL  Platform_Device *pdp, void *ptr, int len);

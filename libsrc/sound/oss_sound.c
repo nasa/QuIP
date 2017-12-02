@@ -436,7 +436,7 @@ void audio_init(int mode)
 	static int ts_class_inited=0;
 
 	if( ! ts_class_inited ){
-		add_tsable(dobj_itp,&dobj_tsf,(Item * (*)(char *))hunt_obj);
+		add_tsable(dobj_itp,&dobj_tsf,(Item * (*)(char *))_hunt_obj);
 		ts_class_inited++;
 	}
 

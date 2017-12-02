@@ -406,7 +406,7 @@ sprintf(ERROR_STRING,"resolve_uk_nodes trying to fix %s",node_desc(enp));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-			resolve_tree(QSP_ARG  enp,NULL);
+			resolve_tree(enp,NULL);
 		}
 
 		/* If we remove nodes from the list as they are resolved,
@@ -421,7 +421,7 @@ advise(ERROR_STRING);
  * called after subroutine context has been set, and the arg values have been set.
  */
 
-void late_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Data_Obj *dst_dp)
+void _late_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Data_Obj *dst_dp)
 {
 	List *lp;
 	uint32_t save_res;
@@ -592,7 +592,7 @@ void dump_resolvers(Vec_Expr_Node *enp)
  * The whence arg is needed to prevent infinte recursion...
  */
 
-void resolve_tree(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Expr_Node *whence)
+void _resolve_tree(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Expr_Node *whence)
 {
 	Node *np;
 	Vec_Expr_Node *resolver_enp;
@@ -747,7 +747,7 @@ dump_tree(enp);
 
 			if( rip->ri_arg_stat >= 0 ){ 
 				eval_decl_tree(SR_BODY(srp));
-				late_calltime_resolve(QSP_ARG  srp,NULL);
+				late_calltime_resolve(srp,NULL);
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 advise("resolve_tree:  after late_calltime_resolve:");
@@ -900,7 +900,7 @@ advise(ERROR_STRING);
 			if( VN_SHAPE(resolver_enp) == NULL ||	/* could be a void callfunc node */
 				UNKNOWN_SHAPE(VN_SHAPE(resolver_enp)) ){
 
-				resolve_tree(QSP_ARG  resolver_enp,enp);	// should this be enp or whence?
+				resolve_tree(resolver_enp,enp);	// should this be enp or whence?
 			}
 			
 			/* The above call to resolve_tree could have resolved resolver_enp */
@@ -988,7 +988,7 @@ warn(ERROR_STRING);
 	// scp now holds shape struct, not a ptr
 	//SET_SC_DEST_SHAPE(scp, NULL);
 
-	delete_subrt_ctx(QSP_ARG  SR_NAME(srp));
+	delete_subrt_ctx(SR_NAME(srp));
 
 givup:
 
@@ -1446,7 +1446,7 @@ static void resolve_obj_list(QSP_ARG_DECL  Vec_Expr_Node *enp, Shape_Info *shpp)
 			break;
 
 		case T_DYN_OBJ:
-			resolve_node(QSP_ARG  enp,shpp);
+			resolve_node(enp,shpp);
 			break;
 
 		default:
@@ -1468,7 +1468,7 @@ static void resolve_obj_list(QSP_ARG_DECL  Vec_Expr_Node *enp, Shape_Info *shpp)
  * return NULL.
  */
 
-Vec_Expr_Node *resolve_node(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
+Vec_Expr_Node *_resolve_node(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 {
 	SET_VN_FLAG_BITS(uk_enp, resolution_flags);		/* resolve_node */
 
@@ -1664,7 +1664,7 @@ static Vec_Expr_Node *resolve_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_I
 		case T_ASSIGN:
 		case T_TYPECAST:
 		case T_RETURN:
-			return( resolve_node(QSP_ARG  uk_enp,shpp) );
+			return( resolve_node(uk_enp,shpp) );
 			break;
 
 		case T_VV_FUNC:
@@ -1682,12 +1682,12 @@ static Vec_Expr_Node *resolve_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_I
 		break;
 
 		case T_BOOL_NOT:
-			return( resolve_node(QSP_ARG  uk_enp,shpp) );
+			return( resolve_node(uk_enp,shpp) );
 			break;
 
 		default:
 			missing_case(uk_enp,"resolve_parent");
-			return( resolve_node(QSP_ARG  uk_enp,shpp) );
+			return( resolve_node(uk_enp,shpp) );
 			break;
 	}
 	return(NULL);
@@ -1903,7 +1903,7 @@ if( debug & resolve_debug ){
 }
 #endif /* QUIP_DEBUG */
 
-	return(resolve_node(QSP_ARG  uk_enp,shpp));
+	return(resolve_node(uk_enp,shpp));
 } /* resolve_unknown_child */
 
 #ifdef NOT_USED
@@ -1953,7 +1953,7 @@ describe_shape(VN_SHAPE(enp));
 	if( VN_PARENT(enp) == uk_enp ) ret_enp=resolve_unknown_parent(QSP_ARG  uk_enp,enp);
 	else if( VN_PARENT(uk_enp) == enp ) ret_enp=resolve_unknown_child(QSP_ARG  uk_enp,enp);
 	else {
-		resolve_node(QSP_ARG  uk_enp,VN_SHAPE(enp));
+		resolve_node(uk_enp,VN_SHAPE(enp));
 	}
 
 

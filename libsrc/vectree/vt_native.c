@@ -155,9 +155,9 @@ void _eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			/* should just use vmov... */
 			//setvarg2(oap,dst_dp,src_dp);
 			//h_vl2_convert(HOST_CALL_ARGS);
-			dp_convert(QSP_ARG  dst_dp,src_dp);
+			dp_convert(dst_dp,src_dp);
 			/* dtinvert operates inplace */
-			dt_invert(QSP_ARG  dst_dp);
+			dt_invert(dst_dp);
 			/* set value set flag??? */
 			}
 			break;

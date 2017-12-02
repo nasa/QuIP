@@ -240,7 +240,7 @@ static double id_exists(QSP_ARG_DECL  const char *name)
 		// We didn't find it, but it might be a subscripted object
 		Data_Obj *dp;
 
-		dp=hunt_obj( QSP_ARG  name);
+		dp=hunt_obj(name);
 		if( dp != NULL ){
 			dp = base_object(dp);
 			ip=id_of(OBJ_NAME(dp));

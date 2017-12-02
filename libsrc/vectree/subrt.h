@@ -90,8 +90,12 @@ ITEM_LIST_PROT(Subrt,subrt)
 extern Item_Type *subrt_itp;
 
 extern void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp);
-extern void fuse_subrt(QSP_ARG_DECL  Subrt *srp);
-extern void * find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp);
+extern void _fuse_subrt(QSP_ARG_DECL  Subrt *srp);
+#define fuse_subrt(srp) _fuse_subrt(QSP_ARG  srp)
+
+extern void * _find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp);
+#define find_fused_kernel(srp, pdp ) _find_fused_kernel(QSP_ARG  srp, pdp )
+
 extern void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp);
 
 extern void _run_fused_kernel(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *args_enp, void * kp, Platform_Device *pdp);

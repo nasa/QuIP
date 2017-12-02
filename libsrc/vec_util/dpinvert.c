@@ -9,7 +9,7 @@
 
 #include "vec_util.h"
 
-double dt_invert(QSP_ARG_DECL  Data_Obj *dp)
+double _dt_invert(QSP_ARG_DECL  Data_Obj *dp)
 {
 	dimension_t size;
 	float *matrix;

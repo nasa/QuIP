@@ -24,7 +24,7 @@ void update_subrt(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *body )
 	SET_SR_BODY(srp, body);
 }
 
-Subrt * remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Expr_Node *args,Vec_Expr_Node *body)
+Subrt * _remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Expr_Node *args,Vec_Expr_Node *body)
 {
 	Subrt *srp;
 	int i;
@@ -303,7 +303,7 @@ COMMAND_FUNC( do_fuse_kernel )
 	srp=pick_subrt("");
 	if( srp==NULL ) return;
 
-	fuse_subrt(QSP_ARG  srp);
+	fuse_subrt(srp);
 }
 
 COMMAND_FUNC( do_tell_cost )
@@ -400,7 +400,7 @@ Subrt *create_script_subrt(QSP_ARG_DECL  const char *name,int nargs,const char *
 {
 	Subrt *srp;
 
-	srp = remember_subrt(QSP_ARG  PREC_FOR_CODE(PREC_VOID),name,NULL,NULL);
+	srp = remember_subrt(PREC_FOR_CODE(PREC_VOID),name,NULL,NULL);
 	if( srp == NULL ) return srp;
 
 	SET_SR_FLAG_BITS(srp, SR_SCRIPT);
@@ -566,7 +566,7 @@ static void clear_decl_obj( Item *ip )
  * all of the objects it created.
  */
 
-void delete_subrt_ctx(QSP_ARG_DECL  const char *name)
+void _delete_subrt_ctx(QSP_ARG_DECL  const char *name)
 {
 	Item_Context *icp;
 	Node *np;

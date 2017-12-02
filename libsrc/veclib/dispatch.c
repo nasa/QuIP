@@ -646,7 +646,7 @@ int platform_dispatch_by_code( QSP_ARG_DECL   int code, Vec_Obj_Args *oap )
 	return platform_dispatch( QSP_ARG  cpp, vfp, oap );
 }
 
-void dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp )
+void _dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp )
 {
 	int code;
 	Vec_Obj_Args oa1,*oap=&oa1;

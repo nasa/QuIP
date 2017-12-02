@@ -760,13 +760,13 @@ void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 
 //	/* BUG need to make context items sizables too!? */
 	add_sizable(dobj_itp,&dobj_sf,
-		(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
+		(Item * (*)(QSP_ARG_DECL  const char *))_hunt_obj);
 	add_positionable(dobj_itp,&dobj_pf,
-		(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
+		(Item * (*)(QSP_ARG_DECL  const char *))_hunt_obj);
 	add_interlaceable(dobj_itp,&dobj_if,
-		(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
+		(Item * (*)(QSP_ARG_DECL  const char *))_hunt_obj);
 	add_subscriptable(dobj_itp,&dobj_ssf,
-		(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
+		(Item * (*)(QSP_ARG_DECL  const char *))_hunt_obj);
 
 	// This was commented out - why?
 	// Maybe because initial iOS implementation didn't include ports menu?

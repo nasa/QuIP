@@ -89,7 +89,7 @@ static int init_matrices(SINGLE_QSP_ARG_DECL)
 		for(j=0;j<3;j++)
 			*ptr++ = p2c_mat[i][j];
 	dp_copy(c2p_dp,p2c_dp);
-	dt_invert(QSP_ARG  c2p_dp);
+	dt_invert(c2p_dp);
 	ptr = (float *)OBJ_DATA_PTR(c2p_dp);
 	for(i=0;i<3;i++)
 		for(j=0;j<3;j++)
@@ -324,7 +324,7 @@ showvec(wc);
 		for(k=0;k<3;k++)
 			*ptr++ = o2p_mat[j][k];
 	dp_copy(p2o_dp,o2p_dp);
-	dt_invert(QSP_ARG  p2o_dp);
+	dt_invert(p2o_dp);
 	ptr = (float *)OBJ_DATA_PTR(p2o_dp);
 	for(j=0;j<3;j++)
 		for(k=0;k<3;k++)

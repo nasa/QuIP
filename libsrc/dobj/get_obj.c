@@ -13,7 +13,7 @@
 
 #define MAX_NAME_LEN	512	// BUG need to check for buffer overrun
 
-Data_Obj * hunt_obj(QSP_ARG_DECL  const char *name)
+Data_Obj * _hunt_obj(QSP_ARG_DECL  const char *name)
 {
 	Data_Obj *dp;
 	char stem[MAX_NAME_LEN], *cp;
@@ -55,7 +55,7 @@ Data_Obj *get_obj(QSP_ARG_DECL  const char *name)
 {
 	Data_Obj *dp;
 
-	dp = hunt_obj(QSP_ARG  name);
+	dp = hunt_obj(name);
 	if( dp == NULL ){
 		sprintf(ERROR_STRING,"No data object \"%s\"",name);
 		warn(ERROR_STRING);

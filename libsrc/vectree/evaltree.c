@@ -1623,7 +1623,7 @@ static int c_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *dp)
 	// BUG need to update for quaternion case!
 	if( IS_REAL(dst_dp) ){
 		if( IS_REAL(dp) ){
-			dp_convert(QSP_ARG  dst_dp,dp);
+			dp_convert(dst_dp,dp);
 		} else {
 			sprintf(ERROR_STRING,
 		"c_convert:  can't convert complex/quaternion object %s to real object %s",
@@ -1634,12 +1634,12 @@ static int c_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *dp)
 	} else if( IS_COMPLEX(dst_dp) ){
 		if( IS_REAL(dp) ){
 			tmp_dp = c_subscript(dst_dp,0);
-			dp_convert(QSP_ARG  tmp_dp,dp);
+			dp_convert(tmp_dp,dp);
 			// BUG should set imaginary part to 0!
 			tmp_dp = c_subscript(dst_dp,1);
 			return zero_dp(QSP_ARG  tmp_dp);
 		} else if( IS_COMPLEX(dp) ){
-			dp_convert(QSP_ARG  dst_dp,dp);
+			dp_convert(dst_dp,dp);
 		} else {
 			sprintf(ERROR_STRING,
 		"c_convert:  unhandled type combination, will not convert %s to %s",
@@ -2950,7 +2950,7 @@ void wrapup_context(QSP_ARG_DECL  Run_Info *rip)
 
 	/* get rid of the context, restore the context of the caller , if any */
 
-	delete_subrt_ctx(QSP_ARG  SR_NAME(rip->ri_srp));
+	delete_subrt_ctx(SR_NAME(rip->ri_srp));
 	if( rip->ri_prev_cpp != NULL ){
 		restore_previous(rip->ri_prev_cpp);
 	}
@@ -3027,7 +3027,7 @@ void _run_subrt(QSP_ARG_DECL Subrt *srp, Data_Obj *dst_dp, Vec_Expr_Node *call_e
 	pdp = NULL;
 #endif // HAVE_ANY_GPU
 
-	if( (kp=find_fused_kernel(QSP_ARG  srp,pdp)) != NULL ){
+	if( (kp=find_fused_kernel(srp,pdp)) != NULL ){
 		run_fused_kernel(srp,args_enp,kp,pdp);
 	} else {
 		if( rip->ri_arg_stat >= 0 ){
@@ -3216,7 +3216,7 @@ static void _eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, 
 					prototype_mismatch(QSP_ARG  SR_ARG_DECLS(srp),enp);
 				break;
 			}
-			srp = remember_subrt(QSP_ARG  prec_p,VN_STRING(enp),VN_CHILD(enp,0),NULL);
+			srp = remember_subrt(prec_p,VN_STRING(enp),VN_CHILD(enp,0),NULL);
 			SET_SR_N_ARGS(srp, decl_count(QSP_ARG  SR_ARG_DECLS(srp)) );	/* set # args */
 			SET_SR_FLAG_BITS(srp, SR_PROTOTYPE);
 			return;
@@ -3253,7 +3253,7 @@ static void _eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, 
 					node_error(enp);
 					warn("LHS and RHS are both unknown shape!?");
 				} else {
-					resolve_tree(QSP_ARG  enp,NULL);
+					resolve_tree(enp,NULL);
 					dump_tree(enp);
 				}
 			}
@@ -4828,7 +4828,7 @@ assign_literal:
 			}
 			/* do we need to make sure they are the same size??? */
 			//setvarg2(oap,dp,src_dp);
-			dp_convert(QSP_ARG  dp,src_dp);
+			dp_convert(dp,src_dp);
 			return(1);
 			break;
 
@@ -4856,7 +4856,7 @@ Data_Obj *_eval_obj_ref(QSP_ARG_DECL Vec_Expr_Node *enp)
 	switch(VN_CODE(enp)){
 		case T_EQUIVALENCE:		/* eval_obj_ref() */
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
-				resolve_tree(QSP_ARG  enp,NULL);
+				resolve_tree(enp,NULL);
 			}
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
 				node_error(enp);
@@ -4948,7 +4948,7 @@ dump_tree(enp);
 				/*
 				resolve_one_uk_node(VN_CHILD(enp,0));
 				*/
-				resolve_tree(QSP_ARG  VN_CHILD(enp,0),NULL);
+				resolve_tree(VN_CHILD(enp,0),NULL);
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"eval_obj_ref:  after last ditch attempt at runtime resolution of %s",node_desc(VN_CHILD(enp,0)));
@@ -6929,7 +6929,7 @@ dump_tree(enp);
 					OBJ_PREC_PTR(ifp->if_dp));
 				read_object_from_file(QSP_ARG  dp1,ifp);
 				//h_vl2_convert(QSP_ARG  dst_dp,dp1);
-				dp_convert(QSP_ARG  dst_dp,dp1);
+				dp_convert(dst_dp,dp1);
 				delvec(dp1);	// doesn't need delete_local_objects?
 			}
 			break;
@@ -6996,7 +6996,7 @@ advise(ERROR_STRING);
 					dp2 = d_subscript(dst_dp,1);
 					//setvarg2(oap,dst_dp,dp1);
 					//h_vl2_convert(HOST_CALL_ARGS);
-					dp_convert(QSP_ARG  dst_dp,dp1);
+					dp_convert(dst_dp,dp1);
 					break;
 				}
 			}
@@ -7011,7 +7011,7 @@ advise(ERROR_STRING);
 				if( dst_dp != dp1 ){
 					//setvarg2(oap,dst_dp,dp1);
 					//h_vl2_convert(HOST_CALL_ARGS);
-					dp_convert(QSP_ARG  dst_dp,dp1);
+					dp_convert(dst_dp,dp1);
 				}
 			}
 			break;
@@ -7334,7 +7334,7 @@ static void eval_assignment(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			update_tree_shape(VN_CHILD(enp,1));
 		if( UNKNOWN_SHAPE(VN_SHAPE(enp)) &&
 				! UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) ){
-			resolve_tree(QSP_ARG  enp,NULL);
+			resolve_tree(enp,NULL);
 		}
 	}
 
@@ -7349,7 +7349,7 @@ dump_tree(enp);
 		/*
 		resolve_one_uk_node(VN_CHILD(enp,0));
 		*/
-		resolve_tree(QSP_ARG  VN_CHILD(enp,0),NULL);
+		resolve_tree(VN_CHILD(enp,0),NULL);
 
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
@@ -7366,7 +7366,7 @@ sprintf(ERROR_STRING,"eval_assignment:  last ditch attempt at runtime resolution
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-		resolve_tree(QSP_ARG  VN_CHILD(enp,1),NULL);
+		resolve_tree(VN_CHILD(enp,1),NULL);
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"eval_assignment:  after last ditch attempt at runtime resolution of RHS %s:",node_desc(VN_CHILD(enp,1)));
@@ -7475,7 +7475,7 @@ sprintf(ERROR_STRING,"eval_work_tree:  attemping to runtime resolution of %s",no
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-		resolve_tree(QSP_ARG  enp,NULL);
+		resolve_tree(enp,NULL);
 	}
 
 	/* Where should we put this? */

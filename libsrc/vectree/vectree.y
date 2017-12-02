@@ -1145,24 +1145,24 @@ old_func_decl	: FUNCNAME '(' arg_decl_list ')'
 subroutine_decl	: data_type new_func_decl stat_block
 			{
 			Subrt *srp;
-			srp=remember_subrt(QSP_ARG  $1,VN_STRING($2),VN_CHILD($2,0),$3);
+			srp=remember_subrt($1,VN_STRING($2),VN_CHILD($2,0),$3);
 			SET_SR_PREC_PTR(srp, $1);
 			$$=node0(T_SUBRT_DECL);
 			SET_VN_SUBRT($$,srp);
-			delete_subrt_ctx(QSP_ARG  VN_STRING($2));	/* this deletes the objects... */
+			delete_subrt_ctx(VN_STRING($2));	/* this deletes the objects... */
 			// But why is the context in existence here?
 			compile_subrt(srp);
 			}
 		| data_type '*' new_func_decl stat_block
 			{
 			Subrt *srp;
-			srp=remember_subrt(QSP_ARG  $1,VN_STRING($3),VN_CHILD($3,0),$4);
+			srp=remember_subrt($1,VN_STRING($3),VN_CHILD($3,0),$4);
 			SET_SR_PREC_PTR(srp, $1);
 			SET_SR_FLAG_BITS(srp, SR_REFFUNC);
 			/* set a flag to show returns ptr */
 			$$=node0(T_SUBRT_DECL);
 			SET_VN_SUBRT($$,srp);
-			delete_subrt_ctx(QSP_ARG  VN_STRING($3));	/* this deletes the objects... */
+			delete_subrt_ctx(VN_STRING($3));	/* this deletes the objects... */
 			compile_subrt(srp);
 			}
 		| data_type old_func_decl stat_block
@@ -1175,7 +1175,7 @@ subroutine_decl	: data_type new_func_decl stat_block
 			update_subrt(QSP_ARG  srp,$3);
 			$$=node0(T_SUBRT_DECL);
 			SET_VN_SUBRT($$,srp);
-			delete_subrt_ctx(QSP_ARG  VN_STRING($2));
+			delete_subrt_ctx(VN_STRING($2));
 			compile_subrt(srp);
 			}
 		;
@@ -1434,11 +1434,11 @@ decl_item	: decl_identifier {
 			}
 		| new_func_decl
 			{
-			delete_subrt_ctx(QSP_ARG  VN_STRING($1));
+			delete_subrt_ctx(VN_STRING($1));
 			}
 		| old_func_decl				/* repeated prototype */
 			{
-			delete_subrt_ctx(QSP_ARG  VN_STRING($1));
+			delete_subrt_ctx(VN_STRING($1));
 			}
 		| '(' '*' decl_identifier ')' '(' arg_decl_list ')'
 			{

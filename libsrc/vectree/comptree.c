@@ -6260,7 +6260,7 @@ dump_tree(SR_BODY(srp));
 
 	compile_tree(SR_BODY(srp));
 
-	delete_subrt_ctx(QSP_ARG  SR_NAME(srp));
+	delete_subrt_ctx(SR_NAME(srp));
 
 	if( SR_PREC_CODE(srp) != PREC_VOID && ! final_return(QSP_ARG  SR_BODY(srp)) ){
 		/* what node should we report the error at ? */

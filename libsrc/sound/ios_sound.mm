@@ -787,7 +787,7 @@ advise("audio_init BEGIN");
 	init_ios_audio(QSP_ARG  mode);
 
 	if( ! ts_class_inited ){
-		add_tsable(dobj_itp,&dobj_tsf,(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
+		add_tsable(dobj_itp,&dobj_tsf,(Item * (*)(QSP_ARG_DECL  const char *))_hunt_obj);
 		ts_class_inited++;
 	}
 

@@ -27,7 +27,9 @@ static void add_to_global_var_list(const char *varname)
 	addTail( global_var_list, np );
 }
 
-static void emit_indentation(QSP_ARG_DECL  String_Buf *sbp)
+#define emit_indentation(sbp) _emit_indentation(QSP_ARG  sbp)
+
+static void _emit_indentation(QSP_ARG_DECL  String_Buf *sbp)
 {
 	int i=indentation_level;
 
@@ -35,7 +37,9 @@ static void emit_indentation(QSP_ARG_DECL  String_Buf *sbp)
 		cat_string(sbp,"\t");
 }
 
-static void emit_index_declarations(QSP_ARG_DECL  String_Buf *sbp)
+#define emit_index_declarations(sbp) _emit_index_declarations(QSP_ARG  sbp)
+
+static void _emit_index_declarations(QSP_ARG_DECL  String_Buf *sbp)
 {
 	Node *np;
 
@@ -44,7 +48,7 @@ static void emit_index_declarations(QSP_ARG_DECL  String_Buf *sbp)
 	while(np!=NULL){
 		const char *varname;
 		varname = NODE_DATA(np);
-		emit_indentation(QSP_ARG  sbp);
+		emit_indentation(sbp);
 		cat_string(sbp,"int ");
 		cat_string(sbp,varname);
 		cat_string(sbp,"_index;\n");
@@ -52,7 +56,9 @@ static void emit_index_declarations(QSP_ARG_DECL  String_Buf *sbp)
 	}
 }
 
-static void check_index_initialization(QSP_ARG_DECL  String_Buf *sbp)
+#define check_index_initialization(sbp) _check_index_initialization(QSP_ARG  sbp)
+
+static void _check_index_initialization(QSP_ARG_DECL  String_Buf *sbp)
 {
 	Node *np;
 
@@ -63,7 +69,7 @@ static void check_index_initialization(QSP_ARG_DECL  String_Buf *sbp)
 	while(np!=NULL){
 		const char *varname;
 		varname = NODE_DATA(np);
-		emit_indentation(QSP_ARG  sbp);
+		emit_indentation(sbp);
 		cat_string(sbp,varname);
 		cat_string(sbp,"_index = ");
 		cat_string(sbp,"get_global_id(0)");	// BUG - platform dependent!
@@ -85,7 +91,9 @@ static void rls_global_var_list()
 	}
 }
 
-static void emit_symbol_for_func(QSP_ARG_DECL  String_Buf *sbp, Vec_Func_Code code)
+#define emit_symbol_for_func(sbp, code) _emit_symbol_for_func(QSP_ARG  sbp, code)
+
+static void _emit_symbol_for_func(QSP_ARG_DECL  String_Buf *sbp, Vec_Func_Code code)
 {
 	const char *s;
 	switch(code){
@@ -112,7 +120,9 @@ static void emit_symbol_for_func(QSP_ARG_DECL  String_Buf *sbp, Vec_Func_Code co
 
 }
 
-static void emit_ptr_index(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
+#define emit_ptr_index(sbp, enp) _emit_ptr_index(QSP_ARG  sbp, enp)
+
+static void _emit_ptr_index(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
 {
 	// We need to keep track of which arg is which!
 	cat_string(sbp,VN_STRING(enp));
@@ -123,16 +133,18 @@ static void emit_ptr_index(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
 	cat_string(sbp,"_offset");
 }
 
-static void emit_kern_arg_decl(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
+#define emit_kern_arg_decl(sbp, enp) _emit_kern_arg_decl(QSP_ARG  sbp, enp)
+
+static void _emit_kern_arg_decl(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
 {
 	assert(enp!=NULL);
 	if( enp == NULL ) return;
 
 	switch( VN_CODE(enp) ){
 		case T_DECL_STAT_LIST:
-			emit_kern_arg_decl(QSP_ARG  sbp, VN_CHILD(enp,0) );
+			emit_kern_arg_decl(sbp, VN_CHILD(enp,0) );
 			cat_string(sbp,", ");
-			emit_kern_arg_decl(QSP_ARG  sbp, VN_CHILD(enp,1) );
+			emit_kern_arg_decl(sbp, VN_CHILD(enp,1) );
 			break;
 		case T_DECL_STAT:
 			assert( VN_CHILD(enp,0) != NULL );
@@ -150,7 +162,7 @@ static void emit_kern_arg_decl(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp
 
 			cat_string(sbp,PREC_NAME(VN_DECL_PREC(enp)));
 			cat_string(sbp," ");
-			emit_kern_arg_decl(QSP_ARG  sbp, VN_CHILD(enp,0) );
+			emit_kern_arg_decl(sbp, VN_CHILD(enp,0) );
 			break;
 		case T_PTR_DECL:
 			cat_string(sbp,"*");
@@ -170,7 +182,9 @@ static void emit_kern_arg_decl(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp
 	}
 }
 
-static void emit_bool_op(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
+#define emit_bool_op(sbp, enp) _emit_bool_op(QSP_ARG  sbp, enp)
+
+static void _emit_bool_op(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
 {
 	switch( VN_BM_CODE(enp) ){
 		case FVV_VV_GT:
@@ -227,48 +241,50 @@ static void emit_bool_op(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
 // first action statement!?  So we insert the check function in the case for any
 // action nodes...
 
-static void emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
+#define emit_kern_body_node(sbp, enp) _emit_kern_body_node(QSP_ARG  sbp, enp)
+
+static void _emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
 {
 	switch( VN_CODE(enp) ){
 		case T_TYPECAST:
 			cat_string(sbp, "(");
 			cat_string(sbp, PREC_NAME(VN_CAST_PREC_PTR(enp)));
 			cat_string(sbp, ")(");
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,0));
+			emit_kern_body_node(sbp, VN_CHILD(enp,0));
 			cat_string(sbp, ")");
 			break;
 		case T_VS_VS_CONDASS:
 		//ALL_CONDASS_CASES
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,2));
-			emit_bool_op(QSP_ARG  sbp, enp);
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,3));
+			emit_kern_body_node(sbp, VN_CHILD(enp,2));
+			emit_bool_op(sbp, enp);
+			emit_kern_body_node(sbp, VN_CHILD(enp,3));
 			cat_string(sbp, " ? ");
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,0));
+			emit_kern_body_node(sbp, VN_CHILD(enp,0));
 			cat_string(sbp, " : ");
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,1));
+			emit_kern_body_node(sbp, VN_CHILD(enp,1));
 			break;
 		case T_BITRSHIFT:
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,0));
+			emit_kern_body_node(sbp, VN_CHILD(enp,0));
 			cat_string(sbp, " >> ");
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,1));
+			emit_kern_body_node(sbp, VN_CHILD(enp,1));
 			break;
 		case T_BITLSHIFT:
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,0));
+			emit_kern_body_node(sbp, VN_CHILD(enp,0));
 			cat_string(sbp, " << ");
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,1));
+			emit_kern_body_node(sbp, VN_CHILD(enp,1));
 			break;
 		case T_MATH2_FN:
 			cat_string(sbp, FUNC_NAME(VN_FUNC_PTR(enp) ) );
 			cat_string(sbp, "(");
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,0));
+			emit_kern_body_node(sbp, VN_CHILD(enp,0));
 			cat_string(sbp, ",");
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,1));
+			emit_kern_body_node(sbp, VN_CHILD(enp,1));
 			cat_string(sbp, ")");
 			break;
 		case T_MATH1_FN:
 			cat_string(sbp, FUNC_NAME(VN_FUNC_PTR(enp) ) );
 			cat_string(sbp, "(");
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,0));
+			emit_kern_body_node(sbp, VN_CHILD(enp,0));
 			cat_string(sbp, ")");
 			break;
 		case T_LIT_INT:
@@ -280,11 +296,11 @@ static void emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *en
 			cat_string(sbp,msg_str);
 			break;
 		case T_DECL_STAT:
-			emit_indentation(QSP_ARG  sbp);
+			emit_indentation(sbp);
 			// problem with int32?
 			cat_string(sbp,PREC_NAME(VN_DECL_PREC(enp)));
 			cat_string(sbp," ");
-			emit_kern_arg_decl(QSP_ARG  sbp, VN_CHILD(enp,0) );
+			emit_kern_arg_decl(sbp, VN_CHILD(enp,0) );
 			cat_string(sbp,";\n");
 			break;
 #ifdef SCALARS_NOT_OBJECTS
@@ -301,40 +317,40 @@ static void emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *en
 
 			cat_string(sbp,VN_STRING(enp));
 			cat_string(sbp,"[");
-			emit_ptr_index(QSP_ARG  sbp,enp);
+			emit_ptr_index(sbp,enp);
 			cat_string(sbp,"]");
 
 			break;
 
 		case T_STAT_LIST:
 		case T_DECL_STAT_LIST:
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,0));
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,1));
+			emit_kern_body_node(sbp, VN_CHILD(enp,0));
+			emit_kern_body_node(sbp, VN_CHILD(enp,1));
 			break;
 		case T_ASSIGN:
 			// Can this occur in a declaration???
-			check_index_initialization(QSP_ARG  sbp);
+			check_index_initialization(sbp);
 
-			emit_indentation(QSP_ARG  sbp);
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,0));
+			emit_indentation(sbp);
+			emit_kern_body_node(sbp, VN_CHILD(enp,0));
 			cat_string(sbp," = ");
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,1));
+			emit_kern_body_node(sbp, VN_CHILD(enp,1));
 			cat_string(sbp," ;\n");
 			break;
 		case T_VV_FUNC:
 			cat_string(sbp,"( ");
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,0));
-			emit_symbol_for_func(QSP_ARG  sbp,VN_VFUNC_CODE(enp));
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,1));
+			emit_kern_body_node(sbp, VN_CHILD(enp,0));
+			emit_symbol_for_func(sbp,VN_VFUNC_CODE(enp));
+			emit_kern_body_node(sbp, VN_CHILD(enp,1));
 			cat_string(sbp," )");
 			break;
 
 		case T_VS_FUNC:
 			cat_string(sbp,"( ");
 			// scalar should be emitted first...
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,1));
-			emit_symbol_for_func(QSP_ARG  sbp,VN_VFUNC_CODE(enp));
-			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,0));
+			emit_kern_body_node(sbp, VN_CHILD(enp,1));
+			emit_symbol_for_func(sbp,VN_VFUNC_CODE(enp));
+			emit_kern_body_node(sbp, VN_CHILD(enp,0));
 			cat_string(sbp," )");
 			break;
 		default:
@@ -343,16 +359,20 @@ static void emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *en
 	}
 }
 
-static void emit_kern_body(QSP_ARG_DECL  String_Buf *sbp, Subrt *srp)
+#define emit_kern_body(sbp, srp) _emit_kern_body(QSP_ARG  sbp, srp)
+
+static void _emit_kern_body(QSP_ARG_DECL  String_Buf *sbp, Subrt *srp)
 {
 	cat_string(sbp,"{\n");
 	indentation_level++;
-	emit_index_declarations(QSP_ARG  sbp);
-	emit_kern_body_node(QSP_ARG  sbp, SR_BODY(srp));
+	emit_index_declarations(sbp);
+	emit_kern_body_node(sbp, SR_BODY(srp));
 	cat_string(sbp,"}\n");
 }
 
-static void emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, const char *kname, Subrt *srp)
+#define emit_kern_decl(sbp, kname, srp) _emit_kern_decl(QSP_ARG  sbp, kname, srp)
+
+static void _emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, const char *kname, Subrt *srp)
 {
 	Vec_Expr_Node *arg_decl_enp;
 	const char *s;
@@ -369,12 +389,14 @@ static void emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, const char *kname, Sub
 	cat_string(sbp,"(");
 
 	arg_decl_enp = SR_ARG_DECLS(srp);
-	emit_kern_arg_decl(QSP_ARG  sbp, arg_decl_enp);
+	emit_kern_arg_decl(sbp, arg_decl_enp);
 
 	cat_string(sbp,")\n");
 }
 
-static void * make_platform_kernel(QSP_ARG_DECL  const char *src, const char *name)
+#define make_platform_kernel(src, name) _make_platform_kernel(QSP_ARG  src, name)
+
+static void * _make_platform_kernel(QSP_ARG_DECL  const char *src, const char *name)
 {
 	void *kp;
 
@@ -387,7 +409,7 @@ static void * make_platform_kernel(QSP_ARG_DECL  const char *src, const char *na
 	return kp;
 }
 
-void * find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp )
+void * _find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp )
 {
 	Kernel_Info_Ptr kip;
 
@@ -403,7 +425,9 @@ void _run_fused_kernel(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *args_enp, void *
 	//fprintf(stderr,"Sorry, run_fused_kernel not implemented yet...\n");
 }
 
-static void store_platform_kernel(QSP_ARG_DECL  Subrt *srp, void *kp, Platform_Device *pdp)
+#define store_platform_kernel(srp, kp, pdp) _store_platform_kernel(QSP_ARG  srp, kp, pdp)
+
+static void _store_platform_kernel(QSP_ARG_DECL  Subrt *srp, void *kp, Platform_Device *pdp)
 {
 	Kernel_Info_Ptr *kip_p;
 	kip_p = SR_KERNEL_INFO_PTR_ADDR(srp,PF_TYPE(PFDEV_PLATFORM(pdp)));
@@ -421,7 +445,7 @@ static void make_kernel_name(String_Buf *sbp, Subrt *srp, const char *speed)
 
 // Should we assume the current platform?
 
-void fuse_subrt(QSP_ARG_DECL  Subrt *srp)
+void _fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 {
 	String_Buf *sbp;
 	String_Buf *kname;
@@ -435,7 +459,7 @@ void fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 	}
 
 	// Make sure that this one hasn't already been fused...
-	kp = find_fused_kernel(QSP_ARG  srp, curr_pdp);
+	kp = find_fused_kernel(srp, curr_pdp);
 	if( kp != NULL ){
 		sprintf(ERROR_STRING,"fuse_subrt:  Subroutine %s has already been fused!?",SR_NAME(srp));
 		warn(ERROR_STRING);
@@ -448,20 +472,20 @@ void fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 
 	kname = new_stringbuf();
 	make_kernel_name(kname, srp,"fast");
-	emit_kern_decl(QSP_ARG  sbp, sb_buffer(kname), srp );
+	emit_kern_decl(sbp, sb_buffer(kname), srp );
 	indices_inited=0;
-	emit_kern_body(QSP_ARG  sbp, srp );
+	emit_kern_body(sbp, srp );
 	rls_global_var_list();
 
 	if( verbose )
 		fprintf(stderr,"Kernel source:\n\n%s\n\n",sb_buffer(sbp));
 
 	// BUG OpenCL specific code!?!?
-	kp = make_platform_kernel(QSP_ARG  sb_buffer(sbp), sb_buffer(kname) );
+	kp = make_platform_kernel(sb_buffer(sbp), sb_buffer(kname) );
 
 	// BUG release stringbufs here!
 
-	store_platform_kernel(QSP_ARG  srp,kp,curr_pdp);
+	store_platform_kernel(srp,kp,curr_pdp);
 }
 
 void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)
@@ -474,7 +498,7 @@ void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			if( IS_SCRIPT(srp) ){
 				warn("Sorry, can't fuse script subroutines");
 			} else {
-				fuse_subrt(QSP_ARG  srp);
+				fuse_subrt(srp);
 			}
 			break;
 		default:

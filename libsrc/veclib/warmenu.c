@@ -1874,7 +1874,7 @@ static COMMAND_FUNC( do_invert )
 
 	dp=pick_obj( "matrix" );
 	if( dp == NULL ) return;
-	det=dt_invert(QSP_ARG  dp);
+	det=dt_invert(dp);
 	if( det == 0.0 ) warn("ZERO DETERMINANT!!!");
 	else if( verbose ) {
 		sprintf(msg_str,"determinant:  %g",det);

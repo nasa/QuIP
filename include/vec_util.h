@@ -83,7 +83,8 @@ extern void odither(QSP_ARG_DECL  Data_Obj *dp,int size);
 
 /* dpinvert.c */
 
-extern double dt_invert(QSP_ARG_DECL  Data_Obj *dp);
+extern double _dt_invert(QSP_ARG_DECL  Data_Obj *dp);
+#define dt_invert(dp) _dt_invert(QSP_ARG  dp)
 extern double invert_sq_matrix(QSP_ARG_DECL  float *,dimension_t);
 
 
