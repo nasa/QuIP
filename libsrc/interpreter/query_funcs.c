@@ -2620,6 +2620,12 @@ void init_query_stack(Query_Stack *qsp)
 
 	assert( qsp != NULL );
 
+	// THIS_QSP is referenced in init_scalar_parser_data, which is
+	// called below, and that evaluates to default_qsp in single-thread
+	// compilation
+	if( default_qsp == NULL )
+		default_qsp = qsp;
+
 	// This test is bad - the new memory may not have
 	// been zeroed, so this may fail when there is
 	// garbage in the structure...
