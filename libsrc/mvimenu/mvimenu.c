@@ -322,7 +322,7 @@ if( debug & mvi_debug ) advise("calling movie play_func");
 if( debug & mvi_debug ) advise("calling movie wait_func");
 #endif /* QUIP_DEBUG */
 
-	(*the_mmp->wait_func)();			/* device specific */
+	(*the_mmp->wait_func)(SINGLE_QSP_ARG);			/* device specific */
 }
 
 static int is_ready_to_play(QSP_ARG_DECL  Movie *mvip)
@@ -344,7 +344,7 @@ static int is_ready_to_play(QSP_ARG_DECL  Movie *mvip)
 if( debug & mvi_debug ) advise("calling movie setup_play_func");
 #endif /* QUIP_DEBUG */
 
-	if( (*the_mmp->setup_play_func)(mvip) < 0 )	/* device specific */
+	if( (*the_mmp->setup_play_func)(QSP_ARG  mvip) < 0 )	/* device specific */
 		return(0);
 	
 	/* remember the time this movie was played */
@@ -963,12 +963,12 @@ COMMAND_FUNC( do_movie_menu )
 	/* initialize the sequencer module */
 
 	if( the_mmp != NULL ){
-		mvi_sm.init_func = (int (*)(void *)) the_mmp->setup_play_func;
-		mvi_sm.get_func  = (void * (*)(const char *)) lookup_movie;
-		mvi_sm.show_func = (void (*)(void *)) the_mmp->play_func;
-		mvi_sm.rev_func  = (void (*)(void *)) the_mmp->reverse_func;
+		mvi_sm.init_func = (int (*)(QSP_ARG_DECL  void *)) the_mmp->setup_play_func;
+		mvi_sm.get_func  = (void * (*)(QSP_ARG_DECL  const char *)) lookup_movie;
+		mvi_sm.show_func = (void (*)(QSP_ARG_DECL  void *)) the_mmp->play_func;
+		mvi_sm.rev_func  = (void (*)(QSP_ARG_DECL  void *)) the_mmp->reverse_func;
 		mvi_sm.wait_func = the_mmp->wait_func;
-		mvi_sm.ref_func  = (void (*)(void *))ref_mvi;
+		mvi_sm.ref_func  = (void (*)(QSP_ARG_DECL  void *))ref_mvi;
 
 		load_seq_module(&mvi_sm);
 	}
