@@ -59,7 +59,7 @@ void check_cu2_vfa_tbl(SINGLE_QSP_ARG_DECL)
 ////		return -1;
 //	}
 	assert( N_OCL_ARRAYED_VEC_FUNCS == N_VEC_FUNCS );
-	check_vfa_tbl(QSP_ARG  cu2_vfa_tbl, N_OCL_ARRAYED_VEC_FUNCS);
+	check_vfa_tbl(cu2_vfa_tbl, N_OCL_ARRAYED_VEC_FUNCS);
 }
 
 suppress_if

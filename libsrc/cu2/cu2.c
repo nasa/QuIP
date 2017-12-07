@@ -288,7 +288,9 @@ int cu2_dispatch( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 // BUG - these are for host global - can we determine from the data area exactly
 // which type of memory we should allocate?
 
-static void *cu2_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align)
+#define cu2_mem_alloc(pdp,size,align) _cu2_mem_alloc(QSP_ARG  pdp,size,align)
+
+static void *_cu2_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align)
 {
 	cudaError_t e;
 	void *ptr;
@@ -308,17 +310,21 @@ static void *cu2_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size,
 	return ptr;
 }
 
-static int cu2_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align)
+//#define cu2_obj_alloc(dp,size,align) _cu2_obj_alloc(QSP_ARG  dp,size,align)
+
+static int _cu2_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align)
 {
 	void *ptr;
-	ptr=cu2_mem_alloc(QSP_ARG  OBJ_PFDEV(dp), size, align);
+	ptr=cu2_mem_alloc(OBJ_PFDEV(dp), size, align);
 	SET_OBJ_DATA_PTR(dp,ptr);
 	if( ptr == NULL ) return -1;
 	return 0;
 }
 
 
-static void cu2_mem_free(QSP_ARG_DECL  void *ptr)
+#define cu2_mem_free(ptr) _cu2_mem_free(QSP_ARG  ptr)
+
+static void _cu2_mem_free(QSP_ARG_DECL  void *ptr)
 {
 	cudaError_t e;
 
@@ -329,13 +335,13 @@ static void cu2_mem_free(QSP_ARG_DECL  void *ptr)
 	}
 }
 
-static void cu2_obj_free(QSP_ARG_DECL  Data_Obj *dp)
+static void _cu2_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 {
-	cu2_mem_free(QSP_ARG  OBJ_DATA_PTR(dp));
+	cu2_mem_free(OBJ_DATA_PTR(dp));
 }
 
-static void (*cu2_offset_data)(QSP_ARG_DECL  Data_Obj *dp, index_t o ) = default_offset_data_func;
-static void cu2_update_offset(QSP_ARG_DECL  Data_Obj *dp)
+static void (*_cu2_offset_data)(QSP_ARG_DECL  Data_Obj *dp, index_t o ) = default_offset_data_func;
+static void _cu2_update_offset(QSP_ARG_DECL  Data_Obj *dp)
 { WARN("cu2_update_offset not implemented!?"); }
 
 static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, Platform_Device *pdp )
@@ -496,7 +502,7 @@ static const char *cu2_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID whi
 	return s;
 }
 
-static void * cu2_make_kernel(QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp)
+static void * _cu2_make_kernel(QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp)
 {
 	nvrtcProgram prog;
 	const char *opts[]={"",""};	// put options here
@@ -683,7 +689,7 @@ void cu2_init_platform(SINGLE_QSP_ARG_DECL)
 	if( pop_pfdev_context(SINGLE_QSP_ARG) == NULL )
 		error1("cu2_init_platform:  Failed to pop platform device context!?");
 
-	check_vfa_tbl(QSP_ARG  cu2_vfa_tbl, N_VEC_FUNCS);
+	check_vfa_tbl(cu2_vfa_tbl, N_VEC_FUNCS);
 
 	if( inited < 0 ){
 		// problem above

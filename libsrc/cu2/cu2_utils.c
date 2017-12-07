@@ -25,8 +25,9 @@
 /* NOT Suppressing ! */
 
 
-extern void *cu2_tmp_vec(Platform_Device *pdp, size_t size, size_t len, const char *whence);
-extern void cu2_free_tmp(void *a, const char *whence);
+// should go in a header file!?
+//extern void *cu2_tmp_vec(Platform_Device *pdp, size_t size, size_t len, const char *whence);
+//extern void cu2_free_tmp(void *a, const char *whence);
 
 /* cu2_port.m4 DONE */
 
@@ -288,7 +289,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 }
 
-void *cu2_tmp_vec (Platform_Device *pdp, size_t size,size_t len,const char *whence)
+void *_cu2_tmp_vec (QSP_ARG_DECL  Platform_Device *pdp, size_t size,size_t len,const char *whence)
 {
 	// Why is this commented out???
 /*
@@ -312,7 +313,7 @@ void *cu2_tmp_vec (Platform_Device *pdp, size_t size,size_t len,const char *when
 	return NULL;
 }
 
-void cu2_free_tmp (void *ptr,const char *whence)
+void _cu2_free_tmp (QSP_ARG_DECL  void *ptr,const char *whence)
 {
 	/*
 	cudaError_t drv_err;

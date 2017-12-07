@@ -114,7 +114,7 @@ advise(ERROR_STRING);
 
 }
 
-void *TMPVEC_NAME `(Platform_Device *pdp, size_t size,size_t len,const char *whence)'
+void *TMPVEC_NAME `(QSP_ARG_DECL  Platform_Device *pdp, size_t size,size_t len,const char *whence)'
 {
 	// Why is this commented out???
 /*
@@ -138,7 +138,7 @@ void *TMPVEC_NAME `(Platform_Device *pdp, size_t size,size_t len,const char *whe
 	return NULL;
 }
 
-void FREETMP_NAME `(void *ptr,const char *whence)'
+void FREETMP_NAME `(QSP_ARG_DECL  void *ptr,const char *whence)'
 {
 	/*
 	cudaError_t drv_err;

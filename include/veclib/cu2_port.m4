@@ -39,8 +39,9 @@ define(`OBJ_MAX_THREADS_PER_BLOCK',`PFDEV_CUDA_MAX_THREADS_PER_BLOCK(OBJ_PFDEV($
 
 suppress_no
 
-extern void *TMPVEC_NAME`(Platform_Device *pdp, size_t size, size_t len, const char *whence);'
-extern void FREETMP_NAME`(void *a, const char *whence);'
+dnl  BUG should use a macro for the arg declarations...
+extern void *TMPVEC_NAME`(QSP_ARG_DECL  Platform_Device *pdp, size_t size, size_t len, const char *whence);'
+extern void FREETMP_NAME`(QSP_ARG_DECL  void *a, const char *whence);'
 
 /* cu2_port.m4 DONE */
 
