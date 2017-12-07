@@ -88,10 +88,10 @@ typedef struct mvi_module {
 
 	/* playback functions */
 	void (*open_func)(QSP_ARG_DECL  const char *);		/* open movie by name, create object */
-	int (*setup_play_func)(Movie *);
+	int (*setup_play_func)(QSP_ARG_DECL  Movie *);
 	void (*play_func)(QSP_ARG_DECL  Movie *);		/* play back movie */
-	void (*wait_func)(void);		/* wait for playback to finish */
-	void (*reverse_func)(Movie *);		/* play back movie in reverse */
+	void (*wait_func)(SINGLE_QSP_ARG_DECL);		/* wait for playback to finish */
+	void (*reverse_func)(QSP_ARG_DECL  Movie *);		/* play back movie in reverse */
 	void (*frame_func)(QSP_ARG_DECL  Movie *,uint32_t,Data_Obj *);/* read a frame to mem */
 	void (*field_func)(QSP_ARG_DECL  Movie *,uint32_t,Data_Obj *);/* read a field to mem */
 	void (*framec_func)(QSP_ARG_DECL  Movie *,uint32_t,Data_Obj *,int);/* read component */
