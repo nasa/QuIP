@@ -850,7 +850,7 @@ int _display_depth(SINGLE_QSP_ARG_DECL)
 void window_sys_init(SINGLE_QSP_ARG_DECL)
 { UNIMP_MSG(window_sys_init) }
 
-void show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
+void _show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
 { UNIMP_MSG(show_visuals) }
 
 #endif /* !HAVE_X11 */
