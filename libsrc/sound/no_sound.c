@@ -65,7 +65,7 @@ void pause_sound(SINGLE_QSP_ARG_DECL)
 	advise_no_sound(SINGLE_QSP_ARG);
 }
 
-void record_sound(QSP_ARG_DECL  Data_Obj *dp)
+void _record_sound(QSP_ARG_DECL  Data_Obj *dp)
 {
 	advise_no_sound(SINGLE_QSP_ARG);
 }
