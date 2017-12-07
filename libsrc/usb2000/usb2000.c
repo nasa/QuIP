@@ -669,7 +669,9 @@ advise(ERROR_STRING);
 	return check_sum;
 }
 
-static void do_wavlen_crktion(Spectral_Data *sdp, int n_spec_recvd, Pxl_Mode_Info *pxl_mode_info_p )
+#define do_wavlen_crktion(sdp, n_spec_recvd, pxl_mode_info_p ) _do_wavlen_crktion(QSP_ARG  sdp, n_spec_recvd, pxl_mode_info_p )
+
+static inline void _do_wavlen_crktion(QSP_ARG_DECL  Spectral_Data *sdp, int n_spec_recvd, Pxl_Mode_Info *pxl_mode_info_p )
 {
 	u_short i;
 	u_short j;
@@ -690,7 +692,7 @@ static void do_wavlen_crktion(Spectral_Data *sdp, int n_spec_recvd, Pxl_Mode_Inf
 			break;
 
 		case 2:
-			NWARN("Impossible pixel mode");
+			warn("Impossible pixel mode");
 			break;
 
 		case 3:
@@ -710,7 +712,7 @@ static void do_wavlen_crktion(Spectral_Data *sdp, int n_spec_recvd, Pxl_Mode_Inf
 			break;
 
 		default:
-			NWARN("do_wavelen_crktion:  unknown case");
+			warn("do_wavelen_crktion:  unknown case");
 	}
 
 	/*

@@ -97,8 +97,8 @@ static Item * _eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 
 static Data_Obj * _def_obj(QSP_ARG_DECL  const char *name)
 {
-	sprintf(DEFAULT_ERROR_STRING,"can't search for object \"%s\"; ",name);
-	warn(DEFAULT_ERROR_STRING);
+	sprintf(ERROR_STRING,"can't search for object \"%s\"; ",name);
+	warn(ERROR_STRING);
 
 	warn("data module not linked");
 	return NULL;

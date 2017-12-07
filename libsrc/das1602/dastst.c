@@ -58,12 +58,12 @@ static int nvram_fd=(-1);
 
 #define CONFIRM_ADC						\
 				if( adc_fd < 0 ){		\
-					NWARN("adc not open");	\
+					warn("adc not open");	\
 					return;			\
 				}
 #define CONFIRM_DAC						\
 				if( dac_fd < 0 ){		\
-					NWARN("dac not open");	\
+					warn("dac not open");	\
 					return;			\
 				}
 
@@ -72,7 +72,7 @@ static int nvram_fd=(-1);
 	if( dio_fd[ channel ] < 0 ){				\
 		sprintf(ERROR_STRING,				\
 			"dio channel %d not open",channel);	\
-		NWARN(ERROR_STRING);				\
+		warn(ERROR_STRING);				\
 		return;						\
 	}
 
@@ -101,13 +101,13 @@ static COMMAND_FUNC( set_reg )
 
 #ifdef HAVE_DAS1602
 	if( das_fd < 0 ){
-		NWARN("device not open");
+		warn("device not open");
 		return;
 	}
 
 	if( ioctl(das_fd,DAS_SET_REG,&reg_setting) < 0 ){
 		perror("ioctl");
-		NWARN("error setting das1602 register");
+		warn("error setting das1602 register");
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -124,14 +124,14 @@ static COMMAND_FUNC( get_reg )
 
 #ifdef HAVE_DAS1602
 	if( das_fd < 0 ){
-		NWARN("device not open");
+		warn("device not open");
 		return;
 	}
 
 	reg_setting.reg_data.u_s = 0;	/* clear all bits */
 	if( ioctl(das_fd,DAS_GET_REG,&reg_setting) < 0 ){
 		perror("ioctl");
-		NWARN("error getting das1602 register");
+		warn("error getting das1602 register");
 	}
 
 	sprintf(ERROR_STRING,"Reg %d %d:  0x%x (0x%x)",
@@ -153,7 +153,7 @@ static COMMAND_FUNC( open_device )
 	das_fd = open("/dev/das1602",O_RDWR);
 	if( das_fd < 0 ){
 		perror("open");
-		NWARN("error opening /dev/das1602");
+		warn("error opening /dev/das1602");
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -184,7 +184,7 @@ static int get_adc_channel(QSP_ARG_DECL  const char *pmpt,
 	if( chno < chmin || chno > chmax ){
 		sprintf(ERROR_STRING,
 	"channel number (%d) must be between %d and %d",chno,chmin,chmax);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(chno);
@@ -199,7 +199,7 @@ static int get_dac_channel(SINGLE_QSP_ARG_DECL)
 	if( chno < 0 || chno > 2 ){
 		sprintf(ERROR_STRING,
 	"channel number (%d) must be between 0 and 2",chno);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(chno);
@@ -225,7 +225,7 @@ static COMMAND_FUNC( open_adc )
 
 #ifdef HAVE_DAS1602
 	if( adc_fd >= 0 ){
-		NWARN("An adc is already open!?");
+		warn("An adc is already open!?");
 		return;
 	}
 
@@ -238,7 +238,7 @@ static COMMAND_FUNC( open_adc )
 	if( adc_fd < 0 ){
 		perror("open");
 		sprintf(ERROR_STRING,"Error opening adc file %s",fn);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 #else /* ! HAVE_DAS1602 */
@@ -269,7 +269,7 @@ static COMMAND_FUNC( close_adc )
 		"%d bytes requested, %d actually read,nw=%d", n,nr,nw);				\
 				advise(ERROR_STRING);							\
 			}										\
-			NWARN("error reading adc data");							\
+			warn("error reading adc data");							\
 		}
 
 #define N_TRIG	2
@@ -293,13 +293,13 @@ static COMMAND_FUNC( read_adc )
 	"Object %s has precision %s, should be %s or %s for ADC data",
 			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),
 			PREC_IN_NAME,PREC_UIN_NAME);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( ! IS_CONTIGUOUS(dp) ){
 		sprintf(ERROR_STRING,
 	"read_adc:  object %s must be contiguous",OBJ_NAME(dp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -411,7 +411,7 @@ static COMMAND_FUNC( adc_range )
 
 	if( ioctl(adc_fd,ADC_SET_RANGE,range) < 0 ){
 		perror("ioctl");
-		NWARN("error setting adc range");
+		warn("error setting adc range");
 		return;
 	}
 
@@ -446,7 +446,7 @@ static COMMAND_FUNC( adc_config )
 
 	if( ioctl(adc_fd,ADC_SET_CFG,code) < 0 ){
 		perror("ioctl");
-		NWARN("error setting adc configuration");
+		warn("error setting adc configuration");
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -477,7 +477,7 @@ static COMMAND_FUNC( adc_pacer )
 
 	if( ioctl(adc_fd,ADC_SET_PACER,code) < 0 ){
 		perror("ioctl ADC_SET_PACER");
-		NWARN("error setting adc pacer mode");
+		warn("error setting adc pacer mode");
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -510,7 +510,7 @@ static COMMAND_FUNC( adc_mode )
 	}
 	if( ioctl(adc_fd,ADC_SET_MODE,arg) < 0 ){
 		perror("ioctl");
-		NWARN("error setting adc mode");
+		warn("error setting adc mode");
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -526,7 +526,7 @@ static COMMAND_FUNC( pacer_freq )
 
 	f=HOW_MUCH("pacer frequency");
 	if( f <= 0 ){
-		NWARN("pacer frequency must be positive");
+		warn("pacer frequency must be positive");
 		return;
 	}
 #ifdef HAVE_DAS1602
@@ -542,7 +542,7 @@ static COMMAND_FUNC( pacer_freq )
 
 	if( ioctl(adc_fd,ADC_PACER_FREQ,dividers) < 0 ){
 		perror("ioctl ADC_PACER_FREQ");
-		NWARN("error setting adc pacer mode");
+		warn("error setting adc pacer mode");
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -562,14 +562,14 @@ static COMMAND_FUNC( set_trig_chan )
 
 	n=HOW_MANY("trigger channel");
 	if( first_adc_channel < 0 ){
-		NWARN("select adc channels (with open) before selecting trigger channel");
+		warn("select adc channels (with open) before selecting trigger channel");
 		return;
 	}
 #ifdef HAVE_DAS1602
 	if( n < first_adc_channel || n > last_adc_channel ){
 		sprintf(ERROR_STRING,"requested trigger channel (%d) is not in range of active adc channels (%d-%d)",
 			n,first_adc_channel,last_adc_channel);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	adc_trigger_channel = n;
@@ -591,7 +591,7 @@ static COMMAND_FUNC( do_ld_dac08 )
 
 	if( value < 0 || value > MAX_BYTE_VALUE ){
 		sprintf(ERROR_STRING,"ld_dac08:  value %d must be in the range 0-255",value);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -600,7 +600,7 @@ static COMMAND_FUNC( do_ld_dac08 )
 
 	if( ioctl(adc_fd,ADC_LOAD_DAC08,value) < 0 ){
 		perror("ioctl ADC_LOAD_DAC08");
-		NWARN("error load dac08 value");
+		warn("error load dac08 value");
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -616,13 +616,13 @@ static COMMAND_FUNC( do_ld_8402 )
 
 	if( addr < 0 || addr > 1 ) {
 		sprintf(ERROR_STRING,"ld_8402:  address %d must be 0 or 1",addr);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( value < 0 || value > MAX_BYTE_VALUE ){
 		sprintf(ERROR_STRING,"ld_8402:  value %d must be in the range 0-255",value);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 #ifdef HAVE_DAS1602
@@ -634,7 +634,7 @@ static COMMAND_FUNC( do_ld_8402 )
 
 	if( ioctl(adc_fd,ADC_LOAD_8402,value) < 0 ){
 		perror("ioctl ADC_LOAD_8402");
-		NWARN("error load 8402 value");
+		warn("error load 8402 value");
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -653,12 +653,12 @@ static COMMAND_FUNC( do_calib )
 	if( yesno ){
 		if( ioctl(adc_fd,ADC_CALIB_ENABLE,NULL) < 0 ){
 			perror("ioctl ADC_CALIB_ENABLE");
-			NWARN("error setting calibration mode");
+			warn("error setting calibration mode");
 		}
 	} else {
 		if( ioctl(adc_fd,ADC_CALIB_DISABLE,NULL) < 0 ){
 			perror("ioctl ADC_CALIB_DISABLE");
-			NWARN("error clearing calibration mode");
+			warn("error clearing calibration mode");
 		}
 	}
 #else /* ! HAVE_DAS1602 */
@@ -692,7 +692,7 @@ static COMMAND_FUNC( do_setsrc )
 
 	if( ioctl(adc_fd,ADC_CALIB_SRC,i) < 0 ){
 		perror("ioctl ADC_CALIB_SRC");
-		NWARN("error setting calibration source");
+		warn("error setting calibration source");
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -751,7 +751,7 @@ static COMMAND_FUNC( open_dac )
 
 #ifdef HAVE_DAS1602
 	if( dac_fd >= 0 ){
-		NWARN("A dac is already open!?");
+		warn("A dac is already open!?");
 		return;
 	}
 
@@ -765,7 +765,7 @@ static COMMAND_FUNC( open_dac )
 	if( dac_fd < 0 ){
 		perror("open");
 		sprintf(ERROR_STRING,"Error opening dac file %s",fn);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 #else /* ! HAVE_DAS1602 */
@@ -803,7 +803,7 @@ static COMMAND_FUNC( write_dac )
 		"Object %s has precision %s, should be %s or %s",
 			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),
 			PREC_IN_NAME,PREC_UIN_NAME);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -812,7 +812,7 @@ static COMMAND_FUNC( write_dac )
 		sprintf(ERROR_STRING,
 	"Error writing object %s (%d bytes requested, %d actual)",
 			OBJ_NAME(dp),nwant,n);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -854,7 +854,7 @@ static COMMAND_FUNC( set_dac_mode )
 
 	if( ioctl(dac_fd,DAC_SET_MODE,arg) < 0 ){
 		perror("ioctl");
-		NWARN("error setting dac pacer mode");
+		warn("error setting dac pacer mode");
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -870,7 +870,7 @@ static COMMAND_FUNC( dac_pacer_freq )
 
 	f=HOW_MUCH("pacer frequency");
 	if( f <= 0 ){
-		NWARN("pacer frequency must be positive");
+		warn("pacer frequency must be positive");
 		return;
 	}
 #ifdef HAVE_DAS1602
@@ -887,7 +887,7 @@ static COMMAND_FUNC( dac_pacer_freq )
 
 	if( ioctl(dac_fd,DAC_PACER_FREQ,dividers) < 0 ){
 		perror("ioctl DAC_PACER_FREQ");
-		NWARN("error setting dac pacer freq");
+		warn("error setting dac pacer freq");
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -937,12 +937,12 @@ static COMMAND_FUNC( set_dac_range )
 
 	if( ioctl(dac_fd,DAC1_SET_RANGE,arg) < 0 ){
 		perror("ioctl");
-		NWARN("error setting dac1 range");
+		warn("error setting dac1 range");
 	}
 
 	if( ioctl(dac_fd,DAC0_SET_RANGE,arg) < 0 ){
 		perror("ioctl");
-		NWARN("error setting dac0 range");
+		warn("error setting dac0 range");
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -958,13 +958,13 @@ static COMMAND_FUNC( do_ld_8800 )
 
 	if( addr < 0 || addr > 7 ) {
 		sprintf(ERROR_STRING,"ld_8800:  address %d must between 0 and 7",addr);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( value < 0 || value > MAX_BYTE_VALUE ){
 		sprintf(ERROR_STRING,"ld_8800:  value %d must be in the range 0-255",value);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -977,7 +977,7 @@ static COMMAND_FUNC( do_ld_8800 )
 
 	if( ioctl(dac_fd,DAC_LOAD_8800,value) < 0 ){
 		perror("ioctl DAC_LOAD_8800");
-		NWARN("error load 8800 value");
+		warn("error load 8800 value");
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -1016,7 +1016,7 @@ static int get_dio_channel(SINGLE_QSP_ARG_DECL)
 	if( i < 0 || i > 3 ) {
 		sprintf(ERROR_STRING,
 	"Invalid dio port index %d, must be 0-3",i);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(i);
@@ -1052,7 +1052,7 @@ static COMMAND_FUNC( open_dio )
 		perror("open");
 		sprintf(ERROR_STRING,"error opening dio port %d in %s mode",
 			i,dio_mode_strs[mode]);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -1070,7 +1070,7 @@ static COMMAND_FUNC( close_dio )
 	if( close(dio_fd[i]) < 0 ) {
 		perror("close");
 		sprintf(ERROR_STRING,"error closing dio port %d",i);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	dio_fd[i]=(-1);
 #else /* ! HAVE_DAS1602 */
@@ -1102,14 +1102,14 @@ static COMMAND_FUNC( write_dio )
 		"Object %s has %s precision, should be %s or %s for dio",
 			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),
 			PREC_BY_NAME,PREC_UBY_NAME);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( ! IS_CONTIGUOUS(dp) ){
 		sprintf(ERROR_STRING,"Object %s must be contiguous for dio",
 			OBJ_NAME(dp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1118,7 +1118,7 @@ static COMMAND_FUNC( write_dio )
 		sprintf(ERROR_STRING,
 	"dio error writing object %s, %d bytes requested, %d actual",
 			OBJ_NAME(dp),OBJ_N_MACH_ELTS(dp),n);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -1149,14 +1149,14 @@ static COMMAND_FUNC( read_dio )
 		"Object %s has %s precision, should be %s or %s for dio",
 			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),
 			PREC_BY_NAME,PREC_UBY_NAME);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( ! IS_CONTIGUOUS(dp) ){
 		sprintf(ERROR_STRING,"Object %s must be contiguous for dio",
 			OBJ_NAME(dp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1165,7 +1165,7 @@ static COMMAND_FUNC( read_dio )
 		sprintf(ERROR_STRING,
 	"dio error reading object %s, %d bytes requested, %d actual",
 			OBJ_NAME(dp),OBJ_N_MACH_ELTS(dp),n);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -1217,7 +1217,7 @@ static COMMAND_FUNC( do_close_nvram )
 #ifdef HAVE_DAS1602
 
 	if( nvram_fd < 0 ){
-		NWARN("nvram not open");
+		warn("nvram not open");
 		return;
 	}
 
@@ -1249,14 +1249,14 @@ static COMMAND_FUNC( read_nvram )
 		"Object %s has %s precision, should be %s or %s for nvram",
 			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),
 			PREC_BY_NAME,PREC_UBY_NAME);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( ! IS_CONTIGUOUS(dp) ){
 		sprintf(ERROR_STRING,"Object %s must be contiguous for nvram",
 			OBJ_NAME(dp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1265,7 +1265,7 @@ static COMMAND_FUNC( read_nvram )
 		sprintf(ERROR_STRING,
 	"nvram error reading object %s, %d bytes requested, %d actual",
 			OBJ_NAME(dp),OBJ_N_MACH_ELTS(dp),n);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -1292,14 +1292,14 @@ static COMMAND_FUNC( write_nvram )		/* sq */
 		"Object %s has %s precision, should be %s or %s for nvram",
 			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),
 			PREC_BY_NAME,PREC_UBY_NAME);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( ! IS_CONTIGUOUS(dp) ){
 		sprintf(ERROR_STRING,"Object %s must be contiguous for nvram",
 			OBJ_NAME(dp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1308,7 +1308,7 @@ static COMMAND_FUNC( write_nvram )		/* sq */
 		sprintf(ERROR_STRING,
 	"nvram error writing object %s, %d bytes requested, %d actual",
 			OBJ_NAME(dp),OBJ_N_MACH_ELTS(dp),n);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
@@ -1338,13 +1338,13 @@ static COMMAND_FUNC( ld_nvram )		/*sq */
 
 	if(lseek(nvram_fd,addr,SEEK_SET)!=addr) {
 		perror("lseek NVRAM");
-		NWARN("error setting NVRAM offset");
+		warn("error setting NVRAM offset");
 		return;
 	}
 
 	if( addr+OBJ_N_MACH_ELTS(dp) > NVRAM_SIZE ){
 		sprintf(ERROR_STRING,"NVRAM: Can't write requested number of bytes. Check address and size of object %s",OBJ_NAME(dp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1352,13 +1352,13 @@ static COMMAND_FUNC( ld_nvram )		/*sq */
 	if( ! VALID_NVRAM_PREC(dp) ){
 		sprintf(ERROR_STRING,"Object %s has %s precision, should be %s or %s for nvram",
 			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),PREC_BY_NAME,PREC_UBY_NAME);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( ! IS_CONTIGUOUS(dp) ){
 		sprintf(ERROR_STRING,"Object %s must be contiguous for nvram",OBJ_NAME(dp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1366,7 +1366,7 @@ static COMMAND_FUNC( ld_nvram )		/*sq */
 		if( n < 0 ) perror("write nvram");
 		sprintf(ERROR_STRING, "nvram error writing object %s, %d bytes requested, %d actual",
 					OBJ_NAME(dp),OBJ_N_MACH_ELTS(dp),n);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	lseek(nvram_fd,original_fd_position,SEEK_SET);
@@ -1399,13 +1399,13 @@ static COMMAND_FUNC( rd_nvram )		/*sq */
 
 	if(lseek(nvram_fd,addr,SEEK_SET)!=addr) {
 		perror("lseek NVRAM");
-		NWARN("error setting NVRAM offset");
+		warn("error setting NVRAM offset");
 		return;
 	}
 
 	if( addr+OBJ_N_MACH_ELTS(dp) > NVRAM_SIZE ){
 		sprintf(ERROR_STRING,"NVRAM: Can't read requested number of bytes. Check address and size of object %s",OBJ_NAME(dp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1415,13 +1415,13 @@ static COMMAND_FUNC( rd_nvram )		/*sq */
 		"Object %s has %s precision, should be %s or %s for nvram",
 			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),
 			PREC_BY_NAME,PREC_UBY_NAME);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( ! IS_CONTIGUOUS(dp) ){
 		sprintf(ERROR_STRING,"Object %s must be contiguous for nvram",OBJ_NAME(dp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1429,7 +1429,7 @@ static COMMAND_FUNC( rd_nvram )		/*sq */
 		if( n < 0 ) perror("read nvram");
 		sprintf(ERROR_STRING, "nvram error reading object %s, %d bytes requested, %d actual",
 					OBJ_NAME(dp),OBJ_N_MACH_ELTS(dp),n);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	lseek(nvram_fd,original_fd_position,SEEK_SET);

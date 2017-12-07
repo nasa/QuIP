@@ -47,8 +47,10 @@ extern void keyboard (unsigned char, int, int);
 extern void setup_view(void);
 
 /* glx_supp.c */
-extern void swap_buffers(void);
-extern void wait_video_sync(int n);
+//extern void swap_buffers(void);
+extern void _wait_video_sync(QSP_ARG_DECL  int n);
+#define wait_video_sync(n) _wait_video_sync(QSP_ARG  n)
+
 extern
 #ifdef BUILD_FOR_MACOS
        GLboolean

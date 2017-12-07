@@ -68,7 +68,9 @@ static COMMAND_FUNC(  do_open_pport )
 	}
 }
 
-static int rd_byte(void)
+#define rd_byte() _rd_byte(SINGLE_QSP_ARG)
+
+static inline int _rd_byte(SINGLE_QSP_ARG_DECL)
 {
 	unsigned char b;
 	/*
@@ -76,7 +78,7 @@ static int rd_byte(void)
 	*/
 
 	if( pport_fd < 0 ){
-		NWARN("no parallel port device open");
+		warn("no parallel port device open");
 		return(-1);
 	}
 
@@ -84,14 +86,14 @@ static int rd_byte(void)
 	if( (n=read(pport_fd,&b,1)) != 1 ){
 		if( n < 0 ){
 			perror("read");
-			NWARN("error reading byte from parallel port");
+			warn("error reading byte from parallel port");
 			return;
 		}
 	}
 	*/
 	if( ioctl(pport_fd,/* PPRDATA */ PPRSTATUS,&b) < 0 ){
 		perror("ioctl");
-		NWARN("error reading data");
+		warn("error reading data");
 		return(-1);
 	}
 	//sprintf(msg_str,"%d (0x%x)",b,b);

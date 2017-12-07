@@ -64,13 +64,13 @@ static Vec_Expr_Node *get_scalar_arg(QSP_ARG_DECL  Precision *prec_p, const char
 		case PREC_SP:
 		case PREC_DP:
 			enp = node0(T_LIT_DBL);
-			SET_VN_DBLVAL(enp,(*(prec_p->cast_to_double_func))(&sv));
+			SET_VN_DBLVAL(enp,(*(prec_p->cast_to_double_func))(QSP_ARG  &sv));
 			break;
 		case PREC_BY: case PREC_IN: case PREC_DI: case PREC_LI:
 		case PREC_UBY: case PREC_UIN: case PREC_UDI: case PREC_ULI:
 			enp = node0(T_LIT_INT);
 			// BUG should cast to long not int???
-			SET_VN_INTVAL(enp,(int) (*(prec_p->cast_to_double_func))(&sv));
+			SET_VN_INTVAL(enp,(int) (*(prec_p->cast_to_double_func))(QSP_ARG  &sv));
 			break;
 		default:
 			fprintf(stderr,"get_scalar_arg:  unhandled precision %s!?",PREC_NAME(prec_p));

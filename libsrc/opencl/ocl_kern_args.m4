@@ -43,7 +43,7 @@ dnl _SET_KERNEL_ARG(kernel,type,value)
 define(`_SET_KERNEL_ARG',`
 	status = clSetKernelArg($1,	ki_idx++, sizeof($2), $3);
 	if( status != CL_SUCCESS )
-		report_ocl_error(DEFAULT_QSP_ARG  status, "clSetKernelArg" );
+		report_ocl_error(status, "clSetKernelArg" );
 ')
 
 

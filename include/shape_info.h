@@ -83,13 +83,13 @@ struct precision {
 	int			(*assign_scalar_obj_func)(Data_Obj *dp, Scalar_Value *svp);
 
 	// extract a value from a scalar data object
-	void			(*extract_scalar_func)(Scalar_Value *svp, Data_Obj *dp);
+	void			(*extract_scalar_func)(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp);
 
-	double			(*cast_to_double_func)(Scalar_Value *svp);
+	double			(*cast_to_double_func)(QSP_ARG_DECL  Scalar_Value *svp);
 	void			(*cast_from_double_func)
-					(Scalar_Value *,double val);
+					(QSP_ARG_DECL  Scalar_Value *,double val);
 	void			(*cast_indexed_type_from_double_func)
-					(Scalar_Value *,int idx,double val);
+					(QSP_ARG_DECL  Scalar_Value *,int idx,double val);
 	void			(*copy_value_func)
 					(Scalar_Value *,Scalar_Value *);
 } ;

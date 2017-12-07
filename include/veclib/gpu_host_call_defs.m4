@@ -122,7 +122,7 @@ define(`FINISH_MM_ITERATION',`
 	/* Each temp vector gets used twice,
 	 * first as result, then as source */
 	if( src_to_free != (src_type *)NULL ){
-		FREETMP_NAME`(src_to_free,"$1");'
+		FREETMP_CALL(src_to_free,"$1");
 		src_to_free=(src_type *)NULL;
 	}
 
@@ -139,7 +139,7 @@ define(`FINISH_IDX_MM_ITERATION',`
 	/* Each temp vector gets used twice,
 	 * first as result, then as source */
 	if( src_to_free != (index_type *)NULL ){
-		FREETMP_NAME`(src_to_free,"$1");'
+		FREETMP_CALL(src_to_free,"$1");
 		src_to_free=(index_type *)NULL;
 	}
 
@@ -162,7 +162,7 @@ define(`SETUP_IDX_ITERATION',`
 		indices = (index_type *) VA_DEST_PTR(vap);
 		dst_to_free = (index_type *)NULL;
 	} else {
-		indices = (index_type *) TMPVEC_NAME`(VA_PFDEV(vap),sizeof(index_type),len1,"$3")';
+		indices = (index_type *) TMPVEC_CALL(VA_PFDEV(vap),sizeof(index_type),len1,"$3");
 		dst_to_free = indices;
 	}
 ')
@@ -178,11 +178,11 @@ define(`FINISH_NOCC_ITERATION',`
 	/* Each temp vector gets used twice,
 	 * first as result, then as source */
 	if( src_vals_to_free != (dest_type *)NULL ){
-		FREETMP_NAME`(src_vals_to_free,"$1");'
+		FREETMP_CALL(src_vals_to_free,"$1");
 		src_vals_to_free=(dest_type *)NULL;
 	}
 	if( src_counts_to_free != (index_type *)NULL ){
-		FREETMP_NAME`(src_counts_to_free,"$1");'
+		FREETMP_CALL(src_counts_to_free,"$1");
 		src_counts_to_free=(index_type *)NULL;
 	}
 
@@ -212,9 +212,9 @@ define(`SETUP_NOCC_ITERATION',`
 		dst_counts = (index_type *) VA_SVAL2(vap);
 		dst_counts_to_free = (index_type *)NULL;
 	} else {
-		dst_values = (dest_type *) TMPVEC_NAME`('VA_PFDEV(vap),sizeof(dest_type),len1,"$1");
+		dst_values = (dest_type *) TMPVEC_CALL(VA_PFDEV(vap),sizeof(dest_type),len1,"$1");
 		dst_vals_to_free = (dest_type *) dst_values;
-		dst_counts = (index_type *) TMPVEC_NAME`('VA_PFDEV(vap),sizeof(index_type),len1,"$1");
+		dst_counts = (index_type *) TMPVEC_CALL(VA_PFDEV(vap),sizeof(index_type),len1,"$1");
 		dst_counts_to_free = dst_counts;
 	}
 ')
@@ -273,7 +273,7 @@ static void HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARG_DECLS)
 		FINISH_IDX_MM_ITERATION($1)
 	}
 	if( src_to_free != (index_type *)NULL ){
-		FREETMP_NAME`(src_to_free,"$1");'
+		FREETMP_CALL(src_to_free,"$1");
 		src_to_free=(index_type *)NULL;
 	}
 }
@@ -479,14 +479,14 @@ static void HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARG_DECLS)
 		stride = 2*stride;
 	}
 	if( src_vals_to_free != (dest_type *)NULL ){
-		FREETMP_NAME`(src_vals_to_free,"$1");'
+		FREETMP_CALL(src_vals_to_free,"$1");
 		src_vals_to_free=(dest_type *)NULL;
 	}
 	if( src_counts_to_free != (int32_t *)NULL ){
-		FREETMP_NAME`(src_counts_to_free,"$1");'
+		FREETMP_CALL(src_counts_to_free,"$1");
 		src_counts_to_free=(int32_t *)NULL;
 	}
-	/*FREETMP_NAME`(indices,"$1");'*/
+	/*FREETMP_CALL(indices,"$1");*/
 }
 
 static void HOST_TYPED_CALL_NAME($1,type_code)(HOST_CALL_ARG_DECLS )
@@ -566,7 +566,7 @@ define(`SETUP_PROJ_ITERATION',`
 		dst_to_free = (dst_type *)NULL;
 	} else {
 dnl fprintf(stderr,"setup_proj_iteration $2:  allocating temp vec\n");
-		dst_values = ($1 *) TMPVEC_NAME`(VA_PFDEV(vap),sizeof($1),len1,"$2")';
+		dst_values = ($1 *) TMPVEC_CALL(VA_PFDEV(vap),sizeof($1),len1,"$2");
 dnl fprintf(stderr,"setup_proj_iteration $2:  DONE allocating temp vec\n");
 		dst_to_free = dst_values;
 	}
@@ -629,14 +629,14 @@ dnl	show_gpu_vector(QSP_ARG  VA_PFDEV(vap), dst_values,len1);
 		/* Each temp vector gets used twice,
 		 * first as result, then as source */
 		if( src_to_free != ($2 *)NULL ){
-			FREETMP_NAME`(src_to_free,"$1");'
+			FREETMP_CALL(src_to_free,"$1");
 			src_to_free=($2 *)NULL;
 		}
 		src_to_free = dst_to_free;
 		dst_to_free = ($2 *)NULL;
 	}
 	if( src_to_free != ($2 *)NULL ){
-		FREETMP_NAME`(src_to_free,"$1");'
+		FREETMP_CALL(src_to_free,"$1");
 		src_to_free=($2 *)NULL;
 	}
 }
@@ -703,14 +703,14 @@ dnl			src1_values = dst_values;
 dnl			/* Each temp vector gets used twice,
 dnl			 * first as result, then as source */
 dnl			if( src_to_free != (dst_type *)NULL ){
-dnl				FREETMP_NAME`(src_to_free,"$1");'
+dnl				FREETMP_CALL(src_to_free,"$1");
 dnl				src_to_free=(dst_type *)NULL;
 dnl			}
 dnl			src_to_free = dst_to_free;
 dnl			dst_to_free = (dst_type *)NULL;
 dnl		}
 dnl		if( src_to_free != (dst_type *)NULL ){
-dnl			FREETMP_NAME`(src_to_free,"$1");'
+dnl			FREETMP_CALL(src_to_free,"$1");
 dnl			src_to_free=(dst_type *)NULL;
 dnl		}
 dnl	}

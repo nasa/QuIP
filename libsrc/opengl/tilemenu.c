@@ -19,7 +19,7 @@ u_long debug_tiles=0;
 #define TILE_ITERATE( statement )					\
 									\
 	if ( tile_lp == NULL ){						\
-		NWARN("no tiles");					\
+		warn("no tiles");					\
 		return;							\
 	}								\
 									\

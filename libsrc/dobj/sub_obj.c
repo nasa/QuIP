@@ -520,7 +520,9 @@ Data_Obj * _nmk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos,
 /* get_machine_dimensions - utility function to support make_equivalence
  */
 
-static void get_machine_dimensions(Dimension_Set *dst_dsp, Dimension_Set *src_dsp, prec_t prec)
+#define get_machine_dimensions(dst_dsp, src_dsp, prec) _get_machine_dimensions(QSP_ARG  dst_dsp, src_dsp, prec)
+
+static void _get_machine_dimensions(QSP_ARG_DECL  Dimension_Set *dst_dsp, Dimension_Set *src_dsp, prec_t prec)
 {
 	//*dst_dsp = *src_dsp;	/* Default - they are the same */
 
@@ -528,7 +530,7 @@ static void get_machine_dimensions(Dimension_Set *dst_dsp, Dimension_Set *src_ds
 
 	if( BITMAP_PRECISION(prec) ){
 		if( DIMENSION(src_dsp,0) != 1 )
-			NERROR1("get_machine_dimensions:  Sorry, don't handle multi-component bitmaps");
+			error1("get_machine_dimensions:  Sorry, don't handle multi-component bitmaps");
 		SET_DIMENSION(dst_dsp,0,1);
 
 		// round number of columns up
@@ -536,15 +538,15 @@ static void get_machine_dimensions(Dimension_Set *dst_dsp, Dimension_Set *src_ds
 	} else if( COMPLEX_PRECISION(prec) ){
 		// complex can't have a component dimension
 		if( DIMENSION(src_dsp,0) != 1 ){
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 		"Sorry, complex images must have component dimension (%d) equal to 1",
 				DIMENSION(src_dsp,0));
-			NERROR1(DEFAULT_ERROR_STRING);
+			error1(ERROR_STRING);
 		}
 		SET_DIMENSION(dst_dsp,0,2);
 	} else if( QUAT_PRECISION(prec) ){
 		if( DIMENSION(src_dsp,0) != 1 )
-			NERROR1("Sorry, complex quaternion images must have component dimension equal to 1");
+			error1("Sorry, complex quaternion images must have component dimension equal to 1");
 		SET_DIMENSION(dst_dsp,0,4);
 	}
 }

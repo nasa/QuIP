@@ -33,7 +33,7 @@ void h_ocl_sp_vuni(HOST_CALL_ARG_DECLS)
 		NULL	/* event */
 		);
 	if( status != CL_SUCCESS )
-		report_ocl_error(DEFAULT_QSP_ARG  status, "clEnqueueNDRangeKernel" );
+		report_ocl_error(status, "clEnqueueNDRangeKernel" );
 }
 
 void h_ocl_dp_vuni(HOST_CALL_ARG_DECLS)

@@ -54,7 +54,7 @@ static int phc_cmp(const void *p1,const void *p2)
 	else return(0);
 }
 
-void sort_table(void)
+void _sort_table(SINGLE_QSP_ARG_DECL)
 {
 	int i;
 
@@ -64,9 +64,9 @@ void sort_table(void)
 
 	for(i=0;i<N_PH_CMD_CODES;i++){
 		if( polh_cmds[i].pc_code != i ){
-			sprintf(DEFAULT_ERROR_STRING,"Polhemus command table entry %d has code %d!?",
+			sprintf(ERROR_STRING,"Polhemus command table entry %d has code %d!?",
 					i,polh_cmds[i].pc_code);
-			NERROR1(DEFAULT_ERROR_STRING);
+			error1(ERROR_STRING);
 		}
 	}
 }

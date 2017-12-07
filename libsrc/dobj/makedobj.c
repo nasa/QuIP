@@ -339,13 +339,13 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 
 	new_dp = new_dobj(QSP_ARG  name);
 	if( new_dp==NULL )
-		NERROR1("make_device_alias:  error creating alias object");
+		error1("make_device_alias:  error creating alias object");
 
 	// Need to allocate dimensions and increments...
 	SET_OBJ_SHAPE(new_dp, ALLOC_SHAPE );
 
 	if( set_obj_dimensions(new_dp,OBJ_TYPE_DIMS(dp),OBJ_PREC_PTR(dp)) < 0 )
-		NERROR1("make_device_alias:  error setting alias dimensions");
+		error1("make_device_alias:  error setting alias dimensions");
 	parent_relationship(dp,new_dp);
 	for(i=0;i<N_DIMENSIONS;i++){
 		SET_OBJ_MACH_INC(new_dp,i,OBJ_MACH_INC(dp,i));
@@ -353,7 +353,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 	}
 	new_dp = setup_dp_with_shape(QSP_ARG  new_dp,OBJ_PREC_PTR(dp),type_flag);
 	if( new_dp==NULL )
-		NERROR1("make_device_alias:  failure in setup_dp");
+		error1("make_device_alias:  failure in setup_dp");
 
 	SET_OBJ_AREA(new_dp, ap);
 

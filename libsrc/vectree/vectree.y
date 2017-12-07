@@ -2238,7 +2238,7 @@ nexttok:
 		 */
 
 
-		lookahead_til(QSP_ARG  EXPR_LEVEL-1);
+		lookahead_til(EXPR_LEVEL-1);
 		if( EXPR_LEVEL > (ql=QLEVEL) ){
 			return(0);	/* EOF */
 		}

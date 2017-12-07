@@ -45,7 +45,7 @@ static void _del_chain(QSP_ARG_DECL  Chain *cp)
 }
 #endif /* NOT_USED */
 
-void exec_chain(Chain *cp)
+void _exec_chain(QSP_ARG_DECL  Chain *cp)
 {
 	Vec_Chn_Blk *vcb_p;
 	Node *np;

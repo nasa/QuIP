@@ -477,7 +477,8 @@ extern void start_quip_with_menu(int argc, char **argv, Menu *mp);
 extern void push_first_menu(Query_Stack *qsp);
 
 /* BUG - these prototypes should go somewhere else and be shared w/ ObjC!?!? */
-extern int lookahead_til(QSP_ARG_DECL  int level);
+extern int _lookahead_til(QSP_ARG_DECL  int level);
+#define lookahead_til(level) _lookahead_til(QSP_ARG  level)
 
 extern Query * _pop_file( SINGLE_QSP_ARG_DECL );
 #define pop_file() _pop_file(SINGLE_QSP_ARG)

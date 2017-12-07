@@ -44,7 +44,6 @@ Panel_Obj *curr_panel=NULL;
 #define COL_STR	":"
 
 /* local prototypes */
-static void list_widgets(Panel_Obj *po);
 
 static void _get_menu_items(QSP_ARG_DECL  Screen_Obj *mp);
 #define get_menu_items(mp)		_get_menu_items(QSP_ARG  mp)
@@ -94,8 +93,8 @@ void show_panel_children(Panel_Obj *po)
 	while(np!=NULL){
 		sop=(Screen_Obj *)np->n_data;
 		if( sop != NULL ){
-			sprintf(DEFAULT_ERROR_STRING,"\t%s",SOB_NAME(sop));
-			advise(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"\t%s",SOB_NAME(sop));
+			advise(ERROR_STRING);
 		} else {
 			advise("\tnull screen_obj!?");
 		}
@@ -386,7 +385,9 @@ printf("%d %d\n",PO_WIDTH(po), PO_HEIGHT(po));
 }
 
 
-static void list_widgets(Panel_Obj *po)
+#define list_widgets(po) _list_widgets(QSP_ARG  po)
+
+static void _list_widgets(QSP_ARG_DECL  Panel_Obj *po)
 {
 	IOS_List *lp;
 	IOS_Node *np;
@@ -403,9 +404,9 @@ static void list_widgets(Panel_Obj *po)
 		//	printf("\t%s\n",SOB_NAME(sop));
 			so_info(sop);
 		} else {
-			sprintf(DEFAULT_ERROR_STRING,"widget %s does not belong to panel %s!?",
+			sprintf(ERROR_STRING,"widget %s does not belong to panel %s!?",
 				SOB_NAME(sop),PO_NAME(po));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 		np=IOS_NODE_NEXT(np);
 	}

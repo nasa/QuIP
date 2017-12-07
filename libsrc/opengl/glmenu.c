@@ -15,6 +15,7 @@
 #endif	/* HAVE_GLUT */
 
 #include "glx_supp.h"
+#include "gl_viewer.h"
 
 #include "quip_prot.h"
 #include "debug.h"
@@ -34,7 +35,7 @@
 #include <OpenGL/glu.h>
 #endif // BUILD_FOR_MACOS
 
-#define NOT_IMP(s)	{ sprintf(ERROR_STRING,"Sorry, %s not implemented yet.",s); NWARN(ERROR_STRING); }
+#define NOT_IMP(s)	{ sprintf(ERROR_STRING,"Sorry, %s not implemented yet.",s); warn(ERROR_STRING); }
 
 #include "string.h"
 
@@ -170,7 +171,7 @@ static COMMAND_FUNC( do_gl_begin )
 		if( s != NULL ){
 			sprintf(ERROR_STRING,
 		"Can't begin new primitive, already specifying %s", s );
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 	}
@@ -183,7 +184,7 @@ static COMMAND_FUNC( do_gl_begin )
 static COMMAND_FUNC( do_gl_end )
 {
 	if( current_primitive == INVALID_CONSTANT ){
-		NWARN("Can't end, no object begun!?");
+		warn("Can't end, no object begun!?");
 		return;
 	}
 
@@ -811,7 +812,7 @@ void set_texture_image(QSP_ARG_DECL  Data_Obj *dp)
 		sprintf(ERROR_STRING,
 			"set_texture_image:  Object %s has type dimension %d, expected 1 or 3",
 			OBJ_NAME(dp),OBJ_COMPS(dp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -821,7 +822,7 @@ void set_texture_image(QSP_ARG_DECL  Data_Obj *dp)
 		sprintf(ERROR_STRING,"set_texture_image:  Object %s has precision %s, expected %s or %s",
 			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)),
 			NAME_FOR_PREC_CODE(PREC_SP),NAME_FOR_PREC_CODE(PREC_UBY));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1489,7 +1490,7 @@ static COMMAND_FUNC( do_glfb_menu )
 }
 
 #ifdef HAVE_OPENGL
-int gl_pixel_type(Data_Obj *dp)
+int _gl_pixel_type(QSP_ARG_DECL  Data_Obj *dp)
 {
 	int t;
 
@@ -1500,7 +1501,7 @@ int gl_pixel_type(Data_Obj *dp)
 		case 4: t = GL_BGRA; break;
 		default:
 			t=0;	// quiet compiler
-			NERROR1("bad pixel depth!?");
+			error1("bad pixel depth!?");
 			break;
 	}
 	return(t);
@@ -1513,7 +1514,7 @@ void glew_check(SINGLE_QSP_ARG_DECL)
 
 	if( glew_checked ){
 		if( verbose )
-			NADVISE("glew_check:  glew already checked.");
+			advise("glew_check:  glew already checked.");
 		return;
 	}
 
@@ -1535,7 +1536,7 @@ void glew_check(SINGLE_QSP_ARG_DECL)
 		cudaThreadExit();
 		exit(-1);
 		*/
-NERROR1("glew_check:  Please create a GL window before specifying a cuda viewer.");
+error1("glew_check:  Please create a GL window before specifying a cuda viewer.");
 	}
 
 	glew_checked=1;
@@ -1580,7 +1581,7 @@ static COMMAND_FUNC( do_new_gl_buffer )
 	dp = dobj_of(s);
 	if( dp != NULL ){
 		sprintf(ERROR_STRING,"Data object name '%s' is already in use, can't use for GL buffer object.",s);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 

@@ -616,7 +616,7 @@ void dpair_iterate(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,void (*func)(QSP_AR
 	SET_INCREMENT(isp,i2,tmp_inc);
 
 
-void gen_xpose(Data_Obj *dp,int dim1,int dim2)
+void _gen_xpose(QSP_ARG_DECL  Data_Obj *dp,int dim1,int dim2)
 {
 	dimension_t	tmp_dim;
 	incr_t		tmp_inc;
@@ -632,7 +632,7 @@ void gen_xpose(Data_Obj *dp,int dim1,int dim2)
 
 	/* should this be CAUTIOUS??? */ 
 	if( auto_shape_flags(OBJ_SHAPE(dp)) < 0 )
-		NWARN("gen_xpose:  RATS!?");
+		warn("gen_xpose:  RATS!?");
 
 	check_contiguity(dp);
 }

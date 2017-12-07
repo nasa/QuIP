@@ -381,12 +381,12 @@ static void eatup_space_for_lookahead(SINGLE_QSP_ARG_DECL)
 
 void lookahead(SINGLE_QSP_ARG_DECL)
 {
-	lookahead_til(QSP_ARG  /* QLEVEL */ 0 );	// in quip arg is 0???
+	lookahead_til(0);
 }
 
 // lookahead_til won't try to read at stop_level...
 
-int lookahead_til(QSP_ARG_DECL  int stop_level)
+int _lookahead_til(QSP_ARG_DECL  int stop_level)
 {
 	int initial_level = QLEVEL;
 
@@ -2011,7 +2011,6 @@ int intractive(SINGLE_QSP_ARG_DECL)
 	// We need to call lookahead to make sure
 	// that we really know what the current input file is.
 
-	//lookahead_til(QSP_ARG  0);	// used to be lookahead?
 	lookahead(SINGLE_QSP_ARG);
 
 	if( QLEVEL < 0 ) return 0;

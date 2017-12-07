@@ -9,7 +9,9 @@ extern "C" {
 
 
 /* glx_supp.c */
-extern void swap_buffers(void);
+extern void _swap_buffers(SINGLE_QSP_ARG_DECL);
+#define swap_buffers() _swap_buffers(SINGLE_QSP_ARG)
+
 extern void select_gl_viewer(QSP_ARG_DECL  Viewer *vp);
 
 

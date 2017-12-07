@@ -324,7 +324,7 @@ static void consume_format_line(QSP_ARG_DECL  Precision *prec_p)
 		}
 		fmt_p = CURRENT_FORMAT;
 		fmt_p->fmt_type->consume(QSP_ARG  prec_p);
-		lookahead_til(QSP_ARG  ASCII_LEVEL-1);
+		lookahead_til(ASCII_LEVEL-1);
 	} while( CURRENT_FORMAT_NODE != FIRST_INPUT_FORMAT_NODE );
 }
 
@@ -333,10 +333,12 @@ static int is_numeric_prec( Precision *prec_p )
 	return (*(prec_p->is_numeric_func))();
 }
 
-static void consume_literal_string(QSP_ARG_DECL  Input_Format_Spec *fmt_p)
+#define consume_literal_string(fmt_p) _consume_literal_string(QSP_ARG  fmt_p)
+
+static inline void _consume_literal_string(QSP_ARG_DECL  Input_Format_Spec *fmt_p)
 {
 	const char *s;
-	s=NAMEOF(fmt_p->fmt_litstr);
+	s=nameof(fmt_p->fmt_litstr);
 	if( strcmp(s,fmt_p->fmt_litstr) ){
 		sprintf(ERROR_STRING,
 	"expected literal string \"%s\", saw string \"%s\"",
@@ -347,7 +349,9 @@ static void consume_literal_string(QSP_ARG_DECL  Input_Format_Spec *fmt_p)
 
 #define RESET_INPUT_FORMAT_FIELD	CURRENT_FORMAT_NODE = QLIST_HEAD(INPUT_FORMAT_LIST);
 
-static void advance_format(SINGLE_QSP_ARG_DECL)
+#define advance_format() _advance_format(SINGLE_QSP_ARG)
+
+static inline void _advance_format(SINGLE_QSP_ARG_DECL)
 {
 	assert(HAS_FORMAT_LIST);
 	if( CURRENT_FORMAT_NODE == NULL )
@@ -377,7 +381,7 @@ long next_input_int_with_format(QSP_ARG_DECL   const char *pmpt)
 		assert(CURRENT_FORMAT_NODE != NULL);
 		assert(CURRENT_FORMAT != NULL);
 		done = CURRENT_FORMAT->fmt_type->read_long(QSP_ARG  &l, pmpt, CURRENT_FORMAT);
-		advance_format(SINGLE_QSP_ARG);
+		advance_format();
 	} while(!done);
 
 	return(l);
@@ -396,7 +400,7 @@ double next_input_flt_with_format(QSP_ARG_DECL  const char *pmpt)
 		assert(CURRENT_FORMAT_NODE != NULL);
 		assert(CURRENT_FORMAT != NULL);
 		done = CURRENT_FORMAT->fmt_type->read_double(QSP_ARG  &d, pmpt, CURRENT_FORMAT);
-		advance_format(SINGLE_QSP_ARG);
+		advance_format();
 	} while(!done);
 
 	return(d);
@@ -413,7 +417,7 @@ static void int_format_consume(QSP_ARG_DECL  Precision *prec_p)
 	} else {
 		long l;
 		l=HOW_MANY("dummy integer");
-		advance_format(SINGLE_QSP_ARG);
+		advance_format();
 	}
 }
 
@@ -425,7 +429,7 @@ static void float_format_consume(QSP_ARG_DECL  Precision *prec_p)
 	} else {
 		double d;
 		d=HOW_MUCH("dummy float");
-		advance_format(SINGLE_QSP_ARG);
+		advance_format();
 	}
 }
 
@@ -436,21 +440,21 @@ static void string_format_consume(QSP_ARG_DECL  Precision *prec_p)
 		return;
 	} else {
 		const char *s;
-		s=NAMEOF("dummy string");
-		advance_format(SINGLE_QSP_ARG);
+		s=nameof("dummy string");
+		advance_format();
 	}
 }
 
 static void literal_format_consume(QSP_ARG_DECL  Precision *prec_p)
 {
-	consume_literal_string(QSP_ARG  CURRENT_FORMAT);
-	advance_format(SINGLE_QSP_ARG);
+	consume_literal_string(CURRENT_FORMAT);
+	advance_format();
 }
 
 
 static void consume_variable_string(SINGLE_QSP_ARG_DECL)
 {
-	/*s=*/NAMEOF("don't-care string");
+	/*s=*/nameof("don't-care string");
 }
 
 static int string_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, Input_Format_Spec *fmt_p)
@@ -461,7 +465,7 @@ static int string_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt,
 
 static int literal_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, Input_Format_Spec *fmt_p)
 {
-	consume_literal_string(QSP_ARG  fmt_p);
+	consume_literal_string(fmt_p);
 	return 0;
 }
 
@@ -485,11 +489,13 @@ static int string_format_read_double(QSP_ARG_DECL  double *result, const char *p
 
 static int literal_format_read_double(QSP_ARG_DECL  double *result, const char *pmpt, Input_Format_Spec *fmt_p)
 {
-	consume_literal_string(QSP_ARG  fmt_p);
+	consume_literal_string(fmt_p);
 	return 0;
 }
 
-static const char * next_input_str(QSP_ARG_DECL  const char *pmpt)
+#define next_input_str(pmpt) _next_input_str(QSP_ARG  pmpt)
+
+static const char * _next_input_str(QSP_ARG_DECL  const char *pmpt)
 {
 	const char *s = NULL;	/* quiet compiler to elim possibly used w/o init warning */
 	int done=0;
@@ -497,7 +503,7 @@ static const char * next_input_str(QSP_ARG_DECL  const char *pmpt)
 	do {
 		assert(CURRENT_FORMAT != NULL);
 		done = CURRENT_FORMAT->fmt_type->read_string(QSP_ARG  &s, pmpt, CURRENT_FORMAT);
-		advance_format(SINGLE_QSP_ARG);
+		advance_format();
 	} while(!done);
 
 	return(s);
@@ -519,17 +525,19 @@ static int float_format_read_string(QSP_ARG_DECL  const char **sptr, const char 
 
 static int string_format_read_string(QSP_ARG_DECL  const char **sptr, const char *pmpt, Input_Format_Spec *fmt_p)
 {
-	*sptr = NAMEOF(pmpt);
+	*sptr = nameof(pmpt);
 	return 1;
 }
 
 static int literal_format_read_string(QSP_ARG_DECL  const char **sptr, const char *pmpt, Input_Format_Spec *fmt_p)
 {
-	consume_literal_string(QSP_ARG  fmt_p);
+	consume_literal_string(fmt_p);
 	return 0;
 }
 
-static int check_input_level(SINGLE_QSP_ARG_DECL)
+#define check_input_level() _check_input_level(SINGLE_QSP_ARG)
+
+static inline int _check_input_level(SINGLE_QSP_ARG_DECL)
 {
 	if( QLEVEL != ASCII_LEVEL ){
 		sprintf(ERROR_STRING,"check_input_level (ascii):  input depth is %d, expected %d!?",
@@ -555,13 +563,13 @@ static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap,int dim)
 
 	assert( dim >= 0 );
 
-	if( check_input_level(SINGLE_QSP_ARG) < 0 ) return(-1);
+	if( check_input_level() < 0 ) return(-1);
 
 	/* see if we need to look at the input format string */
 	if( ! HAS_FORMAT_LIST )
-		s = NAMEOF("string data");
+		s = nameof("string data");
 	else
-		s = next_input_str(QSP_ARG  "string data");
+		s = next_input_str("string data");
 
 	t=datap;
 
@@ -586,7 +594,7 @@ static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap,int dim)
 	*t = 0;	// add null terminator
 
 	/* now lookahead to pop the file if it is empty */
-	lookahead_til(QSP_ARG  ASCII_LEVEL-1);
+	lookahead_til(ASCII_LEVEL-1);
 
 	return(0);
 } // get_a_string
@@ -615,7 +623,7 @@ static int get_next_element(QSP_ARG_DECL   Data_Obj *dp,void *datap)
 	Precision *prec_p;
 	char *prompt;
 
-	if( check_input_level(SINGLE_QSP_ARG) < 0 ) return(-1);
+	if( check_input_level() < 0 ) return(-1);
 
 	// should the old test have been >= instead of > ???
 	assert( OBJ_MACH_PREC(dp) < N_MACHINE_PRECS );
@@ -637,7 +645,7 @@ advise(ERROR_STRING);
 	dobj_n_gotten++;
 
 	/* now lookahead to pop the file if it is empty */
-	lookahead_til(QSP_ARG  ASCII_LEVEL-1);
+	lookahead_til(ASCII_LEVEL-1);
 
 	return(0);
 } /* end get_next_element() */
@@ -919,9 +927,9 @@ static void pnt_dim( QSP_ARG_DECL  FILE *fp, Data_Obj *dp, unsigned char *data, 
 		inc=(ELEMENT_SIZE(dp)*OBJ_MACH_INC(dp,dim));
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(DEFAULT_ERROR_STRING,"pntdim: dim=%d, n=%d, inc=%d",dim,OBJ_MACH_DIM(dp,dim),
+sprintf(ERROR_STRING,"pntdim: dim=%d, n=%d, inc=%d",dim,OBJ_MACH_DIM(dp,dim),
 inc);
-advise(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -1091,12 +1099,12 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 
 static void shp_trace(QSP_ARG_DECL  const char *name,Shape_Info *shpp)
 {
-	sprintf(DEFAULT_ERROR_STRING,
+	sprintf(ERROR_STRING,
 		"%s: mindim = %d,  maxdim = %d",
 		name, SHP_MINDIM(shpp), SHP_MAXDIM(shpp));
-	advise(DEFAULT_ERROR_STRING);
+	advise(ERROR_STRING);
 
-	sprintf(DEFAULT_ERROR_STRING,
+	sprintf(ERROR_STRING,
 		"%s dim:  %u %u %u %u %u",
 		name,
 		SHP_TYPE_DIM(shpp,0),
@@ -1104,14 +1112,14 @@ static void shp_trace(QSP_ARG_DECL  const char *name,Shape_Info *shpp)
 		SHP_TYPE_DIM(shpp,2),
 		SHP_TYPE_DIM(shpp,3),
 		SHP_TYPE_DIM(shpp,4));
-	advise(DEFAULT_ERROR_STRING);
+	advise(ERROR_STRING);
 }
 
 void dptrace( QSP_ARG_DECL  Data_Obj *dp )
 {
 	shp_trace(QSP_ARG  OBJ_NAME( dp) ,OBJ_SHAPE(dp) );
 
-	sprintf(DEFAULT_ERROR_STRING,
+	sprintf(ERROR_STRING,
 		// why %u format when increment can be negative???
 		"%s inc:  %u %u %u %u %u  (%u %u %u %u %u)",
 		OBJ_NAME( dp) ,
@@ -1125,7 +1133,7 @@ void dptrace( QSP_ARG_DECL  Data_Obj *dp )
 		OBJ_MACH_INC(dp,2),
 		OBJ_MACH_INC(dp,3),
 		OBJ_MACH_INC(dp,4));
-	advise(DEFAULT_ERROR_STRING);
+	advise(ERROR_STRING);
 }
 
 /* read an array of strings... */

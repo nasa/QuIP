@@ -35,6 +35,9 @@ typedef struct polh_read_info {
 	void *	pri_addr;
 	prec_t	pri_prec;
 	int	pri_station;
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *	pri_qsp;
+#endif // THREAD_SAFE_QUERY
 } Polh_Read_Info;
 
 #define INT_TO_COS(ptr)		( ((float) (*(ptr))) / 0x7fff )
@@ -68,7 +71,7 @@ static void format_chunk(Fmt_Pt *fpp, short *pdp, Polh_Output_Type type )
 		case XYZ_INT:
 #ifdef QUIP_DEBUG
 if( debug & debug_polhemus ){
-NADVISE("raw buffer for XYZ_INT:");
+advise("raw buffer for XYZ_INT:");
 display_buffer(pdp,3);
 }
 #endif /* QUIP_DEBUG */
@@ -84,7 +87,7 @@ display_buffer(pdp,3);
 			}
 #ifdef CAUTIOUS
 			else {
-				NWARN("CAUTIOUS:  format_chunk: not cm or inches!?");
+				warn("CAUTIOUS:  format_chunk: not cm or inches!?");
 				return;
 			}
 #endif /* CAUTIOUS */
@@ -154,9 +157,9 @@ display_buffer(pdp,3);
 
 #ifdef CAUTIOUS
 		default:
-			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  format_chunk:  Oops, not programmed to format %s",
+			sprintf(ERROR_STRING,"CAUTIOUS:  format_chunk:  Oops, not programmed to format %s",
 					od_tbl[type].od_name);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 #endif /* CAUTIOUS */
 	}
@@ -194,14 +197,14 @@ int format_polh_data(Fmt_Pt *fpp, short *pdp, Polh_Record_Format *prfp)
 #ifdef QUIP_DEBUG
 	/*
 if( debug & debug_polhemus ){
-NADVISE("raw buffer for single record:");
+advise("raw buffer for single record:");
 display_buffer(pdp,station_info[ curr_station_idx ].sd_single_prf.rf_n_words);
 }
 */
 #endif /* QUIP_DEBUG */
 
 	if( check_polh_data((char *)pdp, prfp) < 0 ){
-		NWARN("problem found in polhemus data");
+		warn("problem found in polhemus data");
 		return(-1);
 	}
 
@@ -231,27 +234,27 @@ static int parse_polh_reading( QSP_ARG_DECL  Data_Obj *dp, char * s )
 
 #ifdef QUIP_DEBUG
 if( debug & debug_polhemus ){
-sprintf(DEFAULT_ERROR_STRING,"parse_polh_reading \"%s\"",show_printable(DEFAULT_QSP_ARG  s));
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"parse_polh_reading \"%s\"",show_printable(DEFAULT_QSP_ARG  s));
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
 	if( OBJ_PREC(dp) != PREC_SP ){
-		sprintf(DEFAULT_ERROR_STRING,"Object %s has %s precision, should be %s",
+		sprintf(ERROR_STRING,"Object %s has %s precision, should be %s",
 			OBJ_NAME(dp),
 			PREC_NAME(OBJ_PREC_PTR(dp)),
 			PREC_NAME(prec_for_code(PREC_SP)) );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( ! IS_CONTIGUOUS(dp) ){
-		sprintf(DEFAULT_ERROR_STRING,"Object %s should be contiguous",OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"Object %s should be contiguous",OBJ_NAME(dp));
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( OBJ_N_MACH_ELTS(dp) < 6 ){
-		sprintf(DEFAULT_ERROR_STRING,"Object %s should have at least 6 elements",OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"Object %s should have at least 6 elements",OBJ_NAME(dp));
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -265,13 +268,40 @@ NADVISE(DEFAULT_ERROR_STRING);
 		f_p+4,
 		f_p+5
 		) != 7 ){
-		sprintf(DEFAULT_ERROR_STRING,"Error scanning polhemus data string");
-		NWARN(DEFAULT_ERROR_STRING);
-		sprintf(DEFAULT_ERROR_STRING,"String:  \"%s\"",show_printable(DEFAULT_QSP_ARG  s));
-		NADVISE(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"Error scanning polhemus data string");
+		warn(ERROR_STRING);
+		sprintf(ERROR_STRING,"String:  \"%s\"",show_printable(DEFAULT_QSP_ARG  s));
+		advise(ERROR_STRING);
 		return(-1);
 	}
 	return(0);
+}
+
+#define start_continuous_mode() _start_continuous_mode(SINGLE_QSP_ARG)
+
+static inline void _start_continuous_mode(SINGLE_QSP_ARG_DECL)
+{
+#ifdef INSIDE_TRACK
+	if( ioctl( polh_fd, POLHEMUS_SET_CONTINUOUS_MODE, NULL )  < 0 ){
+		perror("ioctl");
+		warn("Unable to set polhemus device to continuous output");
+		return;
+	}
+	usleep(100000);	/* 1/10 sec */
+#else
+	if(send_polh_cmd(PH_CONTINUOUS, NULL) < 0 ) {
+		warn("start_continuous_mode:  unable to start continuous mode");
+		return;
+	}
+#endif
+
+	/* should we call clear_polh_dev() here???
+	 *
+	 * How do we know for sure that the buffer has been emptied?
+	 */
+
+	polh_continuous = 1;
+//advise("start_continuous_mode:  done.");
 }
 
 /* call this routine to read the next reading when we are streaming in continuous mode.
@@ -309,7 +339,7 @@ static void *cont_reader(void *vp)
  * in a case where the program is clocked by another event (e.g. video refresh).
  */
 
-int read_cont_polh_dp(Data_Obj *dp)
+int _read_cont_polh_dp(QSP_ARG_DECL  Data_Obj *dp)
 {
 	halting=0;
 
@@ -321,12 +351,37 @@ int read_cont_polh_dp(Data_Obj *dp)
 
 	if( pthread_create(&polh_thread, &thread_attr, cont_reader, dp) != 0 ){
 		perror("pthread_create");
-		NWARN("error creating polhemus cont_reader thread");
+		warn("error creating polhemus cont_reader thread");
 		return -1;
 	}
 
 	thread_running=1;
 	return 0;
+}
+
+#define stop_continuous_mode() _stop_continuous_mode(SINGLE_QSP_ARG)
+
+static inline void _stop_continuous_mode(SINGLE_QSP_ARG_DECL)
+{
+	if( !polh_continuous ){
+		warn("stop_continuous_mode:  device is already stopped!?");
+	}
+
+#ifdef INSIDE_TRACK
+	/* Set the polhemus device back to non-continuous mode. */
+	if( ioctl(polh_fd, POLHEMUS_SET_NONCONTINUOUS_MODE, NULL) < 0 ) 
+		warn("stop_continuous_output_file: Unable to set polhemus device to non-continuous mode!");
+	else
+		polh_continuous = 0;
+#else
+	if(send_polh_cmd(PH_NONCONTINUOUS, NULL) < 0 ) {
+		warn("stop_continuous_mode:  unable to stop continuous mode");
+		return;
+	}
+	flush_input_data();
+#endif
+
+	polh_continuous = 0;
 }
 
 int read_single_polh_dp(QSP_ARG_DECL  Data_Obj *dp)
@@ -339,7 +394,7 @@ int read_single_polh_dp(QSP_ARG_DECL  Data_Obj *dp)
 #ifdef FOOBAR
 	/* Set the polhemus device to non-continuous mode. */
 	if( ioctl(polh_fd, POLHEMUS_SET_NONCONTINUOUS_MODE, NULL) < 0 ) {
-		NWARN("read_single_polh_dp: Unable to set polhemus device to non-continuous mode!");
+		warn("read_single_polh_dp: Unable to set polhemus device to non-continuous mode!");
 		return(-1);
 	}
 #endif
@@ -358,9 +413,9 @@ int read_single_polh_dp(QSP_ARG_DECL  Data_Obj *dp)
 	usleep(1000);	/* sleep 1 msec. */
 
 	if( n_active_stations < 1 ){
-		sprintf(DEFAULT_ERROR_STRING,"read_single_polh_dp:  at least one station must be active (%d)",
+		sprintf(ERROR_STRING,"read_single_polh_dp:  at least one station must be active (%d)",
 				n_active_stations);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -369,7 +424,7 @@ int read_single_polh_dp(QSP_ARG_DECL  Data_Obj *dp)
 	n_want_bytes = n_active_stations * station_info[ curr_station_idx ].sd_single_prf.rf_n_words * sizeof(short);
 
 	if( read_polh_dev(pdp, n_want_bytes ) < 0 ){
-		NWARN("error reading polhemus data");
+		warn("error reading polhemus data");
 		return(-1);
 	}
 #else
@@ -393,10 +448,10 @@ int good_polh_vector(QSP_ARG_DECL  Data_Obj *dp)
 	if( dp == NULL ) return(0);
 
 	if( OBJ_PREC(dp) != PREC_IN && OBJ_PREC(dp) != PREC_UIN ) {
-		sprintf(DEFAULT_ERROR_STRING, "Object %s has %s precision, should be %s or %s for polhemus data",
+		sprintf(ERROR_STRING, "Object %s has %s precision, should be %s or %s for polhemus data",
 			OBJ_NAME(dp), OBJ_PREC_NAME(dp), NAME_FOR_PREC_CODE(PREC_IN),
 			NAME_FOR_PREC_CODE(PREC_UIN) );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 
@@ -407,15 +462,15 @@ int good_polh_vector(QSP_ARG_DECL  Data_Obj *dp)
 		n_expected_words = station_info[curr_station_idx].sd_multi_prf.rf_n_words ;
 
 	if( OBJ_COMPS(dp) != n_expected_words ) {
-		sprintf(DEFAULT_ERROR_STRING, "Object %s has bad type dimensions (%d), should be %d",
+		sprintf(ERROR_STRING, "Object %s has bad type dimensions (%d), should be %d",
 			OBJ_NAME(dp), OBJ_COMPS(dp), n_expected_words);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 
 	if( !IS_CONTIGUOUS(dp) ) {
-		sprintf(DEFAULT_ERROR_STRING, "good_polh_vector: Object %s must be contiguous", OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING, "good_polh_vector: Object %s must be contiguous", OBJ_NAME(dp));
+		warn(ERROR_STRING);
 		return(0);
 	}
 	return(1);
@@ -423,7 +478,9 @@ int good_polh_vector(QSP_ARG_DECL  Data_Obj *dp)
 
 /* This code reads an ascii record from the fastrak */ 
 
-static int good_polh_char(void)
+#define good_polh_char() _good_polh_char(SINGLE_QSP_ARG)
+
+static inline int _good_polh_char(SINGLE_QSP_ARG_DECL)
 {
 	int c;
 
@@ -435,7 +492,9 @@ static int good_polh_char(void)
 	/* NOTREACHED */
 }
 
-static void read_data_string(char *s)
+#define read_data_string(s) _read_data_string(QSP_ARG  s)
+
+static inline void _read_data_string(QSP_ARG_DECL  char *s)
 {
 	int c;
 
@@ -477,39 +536,39 @@ fprintf(stderr,"read_next_record 0x%lx\n",(long)raw_pdp);
 	} while( isspace(c) );
 
 	while( c != '0' ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"read 0x%x, expected '0' in first header position",c);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		c=good_polh_char();
 	}
 	c=good_polh_char();
 	expect_c = '1' + curr_station_idx;
 	while( c != expect_c ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"read '%c' (0x%x), expected '%c' in second header position",
 			c,c,expect_c);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		c=good_polh_char();
 	}
 	c=good_polh_char();
 	if( c != 'D' && c != 'Y' ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"read '%c' (0x%x), expected 'D' or 'Y' in third header position",c,c);
-		//NWARN(DEFAULT_ERROR_STRING);
-		NADVISE(DEFAULT_ERROR_STRING);
+		//warn(ERROR_STRING);
+		advise(ERROR_STRING);
 
 		c=good_polh_char();
 
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"read '%c' (0x%x) after unexpected character",c,c);
-		//NWARN(DEFAULT_ERROR_STRING);
-		NADVISE(DEFAULT_ERROR_STRING);
+		//warn(ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 
 	/* BUG don't assume 6 data - use format? */
 	for(i=0;i<6;i++){
 		read_data_string(data_string[i]);
-	//	NADVISE(data_string[i]);
+	//	advise(data_string[i]);
 		/* raw_pdp doesn't indicate the format? */
 	}
 
@@ -531,6 +590,11 @@ static void *transfer_polh_data(void *prip)
 	int records_to_read;
 	char *data_p;
 	int station;
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+
+	qsp		= ((Polh_Read_Info *)prip)->pri_qsp;
+#endif // THREAD_SAFE_QUERY
 
 	records_to_read	= ((Polh_Read_Info *)prip)->pri_n_requested;
 	data_p		= ((Polh_Read_Info *)prip)->pri_addr;
@@ -540,10 +604,10 @@ static void *transfer_polh_data(void *prip)
 	/* This code, with its fixed read size, seems to assume binary transfer mode... */
 	while( records_to_read-- && !halting ) {
 		if( read_polh_data(data_p, station_info[ station ].sd_multi_prf.rf_n_words*sizeof(short) ) < 0 ) {
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 		"transfer_polh_data: Error reading raw polhemus data (%d points left to read)",
 				records_to_read);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			halting=1;
 		} else {
 			((Polh_Read_Info *)prip)->pri_n_obtained ++ ;
@@ -556,7 +620,7 @@ static void *transfer_polh_data(void *prip)
 #else
 	while( records_to_read-- && !halting ) {
 		if( read_next_record(DEFAULT_QSP_ARG  data_p,station) < 0 ){
-			NWARN("error reading record");
+			warn("error reading record");
 			halting=1;
 		} else {
 			((Polh_Read_Info *)prip)->pri_n_obtained ++ ;
@@ -578,7 +642,9 @@ static void *transfer_polh_data(void *prip)
 	return(NULL);
 }
 
-static void start_data_thread(Polh_Read_Info *prip)
+#define start_data_thread(prip) _start_data_thread(QSP_ARG  prip)
+
+static inline void _start_data_thread(QSP_ARG_DECL  Polh_Read_Info *prip)
 {
 	/* create data-processing threads */
 	pthread_attr_init(&thread_attr);
@@ -588,7 +654,7 @@ static void start_data_thread(Polh_Read_Info *prip)
 
 	if( pthread_create(&polh_thread, &thread_attr, transfer_polh_data, prip) != 0 ){
 		perror("pthread_create");
-		NWARN("error creating polhemus transfer thread");
+		warn("error creating polhemus transfer thread");
 		return;
 	}
 
@@ -598,13 +664,13 @@ static void start_data_thread(Polh_Read_Info *prip)
 COMMAND_FUNC( polhemus_wait )
 {
 	if( ! thread_running ){
-		NWARN("polhemus_wait:  no thread running!?");
+		warn("polhemus_wait:  no thread running!?");
 		return;
 	}
 
 	if( pthread_join( polh_thread, NULL ) != 0 ){
 		perror("pthread_join");
-		NWARN("error waiting for data collection thread to exit");
+		warn("error waiting for data collection thread to exit");
 	}
 	thread_running=0;
 }
@@ -631,7 +697,7 @@ void read_polh_vector(QSP_ARG_DECL  Data_Obj *dp)
 	if( polh_continuous ){
 		WARN("start_async_read:  polhemus is already in continuous mode!?");
 	} else	{
-//NADVISE("read_polh_vector:  starting continuous mode");
+//advise("read_polh_vector:  starting continuous mode");
 		start_continuous_mode();
 //WARN("read_polh_vector:  exiting before reading for debugging purposes!");
 		//return;
@@ -650,12 +716,15 @@ void read_polh_vector(QSP_ARG_DECL  Data_Obj *dp)
 	} else if( n_active_stations == 1 )
 		station = curr_station_idx;
 	else {
-		sprintf(DEFAULT_ERROR_STRING,"read_polh_vector:  number of active stations (%d) should be 1 or 2",
+		sprintf(ERROR_STRING,"read_polh_vector:  number of active stations (%d) should be 1 or 2",
 				n_active_stations);
-		WARN(DEFAULT_ERROR_STRING);
+		WARN(ERROR_STRING);
 		return;
 	}
 
+#ifdef THREAD_SAFE_QUERY
+	pri1.pri_qsp = THIS_QSP;
+#endif // THREAD_SAFE_QUERY
 	pri1.pri_n_requested = records_to_read;
 	pri1.pri_n_obtained = 0;
 	pri1.pri_addr = raw_pdp;
@@ -663,8 +732,8 @@ void read_polh_vector(QSP_ARG_DECL  Data_Obj *dp)
 
 	halting=0;
 
-//sprintf(DEFAULT_ERROR_STRING,"read_polh_vector:  _read_async = %d",_read_async);
-//NADVISE(DEFAULT_ERROR_STRING);
+//sprintf(ERROR_STRING,"read_polh_vector:  _read_async = %d",_read_async);
+//advise(ERROR_STRING);
 
 	if( _read_async ){
 advise("read_polh_vector:  calling start_data_thread");
@@ -722,8 +791,8 @@ static int fmt_one(QSP_ARG_DECL  char *str, Fmt_Pt *fpp, Polh_Output_Type type )
 			sprintf(msg_str,"%s%g\t%g\t%g",separator,fpp->fp_zdc_x,fpp->fp_zdc_y,fpp->fp_zdc_z);
 			break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,"disp_one:  Oops, no display routine for %s",od_tbl[type].od_name);
-			NWARN(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"disp_one:  Oops, no display routine for %s",od_tbl[type].od_name);
+			warn(ERROR_STRING);
 			return(-1);
 			break;
 	}
@@ -760,8 +829,8 @@ int set_continuous_output_file(QSP_ARG_DECL  const char *fname)
 	polh_output_file = try_open(fname, "w");
 
 	if( !polh_output_file ) {
-		sprintf(DEFAULT_ERROR_STRING, "Unable to open file for continuous output: %s", fname);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING, "Unable to open file for continuous output: %s", fname);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -779,9 +848,9 @@ void assign_polh_var_data(char *varname, Data_Obj *dp, Polh_Output_Type type, in
 	int i;
 
 	if( OBJ_COLS(dp) != 1 ){
-		sprintf(DEFAULT_ERROR_STRING,"assign_polh_var_data:  object %s has %d columns, should be 1",
+		sprintf(ERROR_STRING,"assign_polh_var_data:  object %s has %d columns, should be 1",
 				OBJ_NAME(dp),OBJ_COLS(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -799,11 +868,11 @@ void assign_polh_var_data(char *varname, Data_Obj *dp, Polh_Output_Type type, in
 	}
 #ifdef CAUTIOUS
 	if( *s == 0 ){
-		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  assign_polh_var_data:  not enough words for index %d",
+		sprintf(ERROR_STRING,"CAUTIOUS:  assign_polh_var_data:  not enough words for index %d",
 				index);
-		NWARN(DEFAULT_ERROR_STRING);
-		sprintf(DEFAULT_ERROR_STRING,"formatted string:  %s",msg_str);
-		NADVISE(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
+		sprintf(ERROR_STRING,"formatted string:  %s",msg_str);
+		advise(ERROR_STRING);
 		return;
 	}
 #endif /* CAUTIOUS */
@@ -836,7 +905,7 @@ void format_polh_vector(Data_Obj *dp)
 	if( n_active_stations == 2 )
 		station=0;
 	else if(n_active_stations < 1 ){
-		NWARN("format_polh_vector:  no active stations!?");
+		warn("format_polh_vector:  no active stations!?");
 		return;
 	} else
 		station=curr_station_idx;
@@ -861,7 +930,7 @@ static void convert_chunk(float *fltp,Fmt_Pt *fpp, Polh_Output_Type type )
 {
 	switch(type){
 		case DATE:
-			NWARN("convert_chunk:  can't convert DATE");
+			warn("convert_chunk:  can't convert DATE");
 			break;
 
 		case SECONDS:
@@ -873,8 +942,8 @@ static void convert_chunk(float *fltp,Fmt_Pt *fpp, Polh_Output_Type type )
 			break;
 
 		default:
-			sprintf(DEFAULT_ERROR_STRING,"convert_chunk:  unhandled type code %d!?",type);
-			NWARN(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"convert_chunk:  unhandled type code %d!?",type);
+			warn(ERROR_STRING);
 			break;
 	}
 }
@@ -888,15 +957,15 @@ void convert_polh_vector(Data_Obj *flt_dp,Data_Obj *polh_dp)
 	int station;
 
 	if( OBJ_PREC(flt_dp) != PREC_SP ){
-		sprintf(DEFAULT_ERROR_STRING,"convert_polh_data:  object %s has precision %s, should be %s",
+		sprintf(ERROR_STRING,"convert_polh_data:  object %s has precision %s, should be %s",
 				OBJ_NAME(flt_dp),PREC_NAME(OBJ_PREC_PTR(flt_dp)),PREC_NAME(prec_for_code(PREC_SP)));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( OBJ_COLS(flt_dp) != OBJ_COLS(polh_dp) ){
-		sprintf(DEFAULT_ERROR_STRING,"convert_polh_data:  vectors %s (%d) and %s (%d) do not have the same number of columns",
+		sprintf(ERROR_STRING,"convert_polh_data:  vectors %s (%d) and %s (%d) do not have the same number of columns",
 				OBJ_NAME(flt_dp),OBJ_COLS(flt_dp),OBJ_NAME(polh_dp),OBJ_COLS(polh_dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	/* BUG should make sure that tdim of flt_dp is correct! */
@@ -906,7 +975,7 @@ void convert_polh_vector(Data_Obj *flt_dp,Data_Obj *polh_dp)
 	if( n_active_stations == 2 )
 		station=0;
 	else if(n_active_stations < 1 ){
-		NWARN("format_polh_vector:  no active stations!?");
+		warn("format_polh_vector:  no active stations!?");
 		return;
 	} else
 		station=curr_station_idx;
@@ -944,63 +1013,15 @@ COMMAND_FUNC( do_start_continuous_mode )
 	start_continuous_mode();
 }
 
-void start_continuous_mode(void)
-{
-#ifdef INSIDE_TRACK
-	if( ioctl( polh_fd, POLHEMUS_SET_CONTINUOUS_MODE, NULL )  < 0 ){
-		perror("ioctl");
-		NWARN("Unable to set polhemus device to continuous output");
-		return;
-	}
-	usleep(100000);	/* 1/10 sec */
-#else
-	if(send_polh_cmd(PH_CONTINUOUS, NULL) < 0 ) {
-		NWARN("start_continuous_mode:  unable to start continuous mode");
-		return;
-	}
-#endif
-
-	/* should we call clear_polh_dev() here???
-	 *
-	 * How do we know for sure that the buffer has been emptied?
-	 */
-
-	polh_continuous = 1;
-//NADVISE("start_continuous_mode:  done.");
-}
-
 COMMAND_FUNC( do_stop_continuous_mode )
 {
 	stop_continuous_mode();
 }
 
-void stop_continuous_mode(void)
-{
-	if( !polh_continuous ){
-		NWARN("stop_continuous_mode:  device is already stopped!?");
-	}
-
-#ifdef INSIDE_TRACK
-	/* Set the polhemus device back to non-continuous mode. */
-	if( ioctl(polh_fd, POLHEMUS_SET_NONCONTINUOUS_MODE, NULL) < 0 ) 
-		NWARN("stop_continuous_output_file: Unable to set polhemus device to non-continuous mode!");
-	else
-		polh_continuous = 0;
-#else
-	if(send_polh_cmd(PH_NONCONTINUOUS, NULL) < 0 ) {
-		NWARN("stop_continuous_mode:  unable to stop continuous mode");
-		return;
-	}
-	flush_input_data();
-#endif
-
-	polh_continuous = 0;
-}
-
 void polh_read_async( int flag )
 {
-//sprintf(DEFAULT_ERROR_STRING,"polh_read_async:  setting flag to %d",flag);
-//NADVISE(DEFAULT_ERROR_STRING);
+//sprintf(ERROR_STRING,"polh_read_async:  setting flag to %d",flag);
+//advise(ERROR_STRING);
 	_read_async=flag;
 }
 

@@ -123,21 +123,21 @@ COMMAND_FUNC( do_end_dl )
 	end_dl();
 }
 
-void end_dl(void)
+void _end_dl(SINGLE_QSP_ARG_DECL)
 {
 	if( current_dlp == NULL )
-		NWARN("No display list currently open, can't end.");
+		warn("No display list currently open, can't end.");
 	else {
 		glEndList();
 		current_dlp = NULL;
 	}
 }
 
-void call_dl(Display_List *dlp)
+void _call_dl(QSP_ARG_DECL  Display_List *dlp)
 {
 	if( current_dlp != NULL && dlp==current_dlp ){
-		sprintf(DEFAULT_ERROR_STRING,"Recursive call to display list %s!?",dlp->dl_name);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"Recursive call to display list %s!?",dlp->dl_name);
+		warn(ERROR_STRING);
 		return;
 	}
 	glCallList(dlp->dl_serial);

@@ -19,7 +19,7 @@ typedef struct vec_chn_blk {
 
 
 #define CHAIN_FUNC(vcbp)	vcbp->vcb_func
-#define CHAIN_ARGS(vcbp)	vcbp->vcb_vf_code, vcbp->vcb_args
+#define CHAIN_ARGS(vcbp)	QSP_ARG  vcbp->vcb_vf_code, vcbp->vcb_args
 
 /* Chain_Block */
 #define NEW_CHAIN_BLOCK(vcp_p,code,func,args)				\
@@ -53,7 +53,8 @@ extern void dump_chain(Chain *);
 extern void terse_dump_chain(Chain *);
 extern void chain_info(QSP_ARG_DECL  Chain *);
 extern void start_chain(QSP_ARG_DECL  const char *);
-extern void exec_chain(Chain *);
+extern void _exec_chain(QSP_ARG_DECL  Chain *);
+#define exec_chain(chp) _exec_chain(QSP_ARG  chp)
 
 extern void _end_chain(SINGLE_QSP_ARG_DECL);
 

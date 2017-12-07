@@ -155,7 +155,7 @@ dnl fprintf(stderr,"_check_kernel $2:  pd_idx = %d\n",pd_idx);
 		cl_kernel kernel;
 		ksrc = KERN_SOURCE_NAME($2,$3);
 dnl fprintf(stderr,"_check_kernel $2:  creating kernel\n");
-		kernel = ocl_make_kernel(DEFAULT_QSP_ARG  ksrc, "$4", VA_PFDEV(vap));
+		kernel = ocl_make_kernel(ksrc, "$4", VA_PFDEV(vap));
 		if( kernel == NULL )
 			NERROR1("kernel creation failure!?");
 		$1[pd_idx] = kernel;
@@ -327,7 +327,7 @@ define(`FINISH_KERNEL_CALL',`
 		KERNEL_FINISH_EVENT	/* event */
 		);
 	if( status != CL_SUCCESS )
-		report_ocl_error(DEFAULT_QSP_ARG  status, "clEnqueueNDRangeKernel" );
+		report_ocl_error(status, "clEnqueueNDRangeKernel" );
 	WAIT_FOR_KERNEL
 ')
 

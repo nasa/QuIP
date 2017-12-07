@@ -28,7 +28,11 @@ define(`suppress_if',`suppress_no')
 suppress_if
 
 define(`TMPVEC_NAME',`_TMPVEC_NAME(pf_str)')
-define(`_TMPVEC_NAME',$1`_tmp_vec')
+define(`_TMPVEC_NAME',`_'$1`_tmp_vec')
+
+dnl TMPVEC_CALL(pdp,size,len,whence)
+
+define(`TMPVEC_CALL',`TMPVEC_NAME`'(QSP_ARG  $1,$2,$3,$4)')
 
 define(`IDX3',`index3')
 
@@ -37,7 +41,9 @@ define(`BIT_NUMBER_MASK',`(BITS_PER_BITMAP_WORD-1)')
 define(`NUMBERED_BIT',`(1L << ( ($1) & BIT_NUMBER_MASK ) )')
 
 define(`FREETMP_NAME',`_FREETMP_NAME(pf_str)')
-define(`_FREETMP_NAME',$1`_free_tmp')
+define(`_FREETMP_NAME',`_'$1`_free_tmp')
+
+define(`FREETMP_CALL',`FREETMP_NAME`'(QSP_ARG  $1,$2)')
 
 define(`PF_COMMAND_FUNC',`COMMAND_FUNC( MENU_FUNC_NAME($1) )')
 define(`PF_FUNC_NAME',`PLATFORM_SYMBOL_NAME($1)')

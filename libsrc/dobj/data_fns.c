@@ -236,12 +236,12 @@ void assign_scalar_obj(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 
 double _cast_from_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p)
 {
-	return (*(prec_p->cast_to_double_func))(svp);
+	return (*(prec_p->cast_to_double_func))(QSP_ARG  svp);
 }
 
 void _cast_dbl_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,double val)
 {
-	(*(prec_p->cast_from_double_func))(svp,val);
+	(*(prec_p->cast_from_double_func))(QSP_ARG  svp,val);
 }
 
 // This function casts to a single component
@@ -249,20 +249,20 @@ void _cast_dbl_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_
 void _cast_dbl_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 1 );
-	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
+	(*(prec_p->cast_indexed_type_from_double_func))(QSP_ARG  svp,index,val);
 }
 
 
 void _cast_dbl_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 3 );
-	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
+	(*(prec_p->cast_indexed_type_from_double_func))(QSP_ARG  svp,index,val);
 }
 
 void _cast_dbl_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 2 );
-	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
+	(*(prec_p->cast_indexed_type_from_double_func))(QSP_ARG  svp,index,val);
 }
 
 void _extract_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)
@@ -281,7 +281,7 @@ void _extract_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)
 	}
 
 	prec_p = OBJ_PREC_PTR(dp);
-	(*(prec_p->extract_scalar_func))(svp,dp);
+	(*(prec_p->extract_scalar_func))(QSP_ARG  svp,dp);
 }
 
 

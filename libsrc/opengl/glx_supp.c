@@ -41,10 +41,10 @@ typedef struct renderer_info {
 
 static Renderer_Info *curr_renderer_info_p=NULL;
 
-void swap_buffers(void)
+void _swap_buffers(SINGLE_QSP_ARG_DECL)
 {
 	if( gl_vp == NULL ){
-		NWARN("swap_buffers:  no viewer selected");
+		warn("swap_buffers:  no viewer selected");
 		return;
 	}
 	// This should wait for retrace
@@ -75,7 +75,7 @@ static int (*m_glXGetVideoSyncSGI)(unsigned int*)=NULL;
 
 #endif
 
-void wait_video_sync(int n)
+void _wait_video_sync(QSP_ARG_DECL  int n)
 {
 #ifndef BUILD_FOR_OBJC
 	unsigned int count;
@@ -87,13 +87,13 @@ void wait_video_sync(int n)
 		m_glXWaitVideoSyncSGI = (int (*)(int, int, unsigned int*))
 			glXGetProcAddress((const GLubyte*)"glXWaitVideoSyncSGI");
 		if (!m_glXWaitVideoSyncSGI) {
-	NWARN("wait_video_sync:  couldn't get address for glXWaitVideoSyncSGI!?");
+	warn("wait_video_sync:  couldn't get address for glXWaitVideoSyncSGI!?");
 			warned=1;
 		}
 		m_glXGetVideoSyncSGI = (int (*)(unsigned int*))
 			glXGetProcAddress((const GLubyte*)"glXGetVideoSyncSGI");
 		if (!m_glXGetVideoSyncSGI) {
-	NWARN("wait_video_sync:  couldn't get address for glXGetVideoSyncSGI!?");
+	warn("wait_video_sync:  couldn't get address for glXGetVideoSyncSGI!?");
 			warned=1;
 		}
 	}
@@ -105,7 +105,7 @@ void wait_video_sync(int n)
 #endif /* ! HAVE_VIDEOSYNCSGI */
 
 	if( gl_vp == NULL ){
-		NWARN("wait_video_sync:  no viewer selected");
+		warn("wait_video_sync:  no viewer selected");
 		return;
 	}
 
@@ -137,7 +137,7 @@ advise(ERROR_STRING);
 	(*m_glXWaitVideoSyncSGI)(divisor,remainder,&count);
 
 #else // BUILD_FOR_OBJC
-	NWARN("Need to implement wait_video_sync for Apple!");
+	warn("Need to implement wait_video_sync for Apple!");
 #endif // BUILD_FOR_OBJC
 }
 
@@ -252,19 +252,19 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 	vis_info_p = glXChooseVisual(VW_DPY(vp),VW_SCREEN_NO(vp),list);
 
 	if( vis_info_p == NULL ){
-		sprintf(DEFAULT_ERROR_STRING,"unable to get a visual with DEPTH_SIZE %d",list[1]);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"unable to get a visual with DEPTH_SIZE %d",list[1]);
+		warn(ERROR_STRING);
 		vis_info_p = XGetVisualInfo(VW_DPY(vp),mask,&vinfo_template,&n);
 		if( vis_info_p == NULL )
-			NERROR1("XGetVisualInfo failed!?");
+			error1("XGetVisualInfo failed!?");
 	} else {
 //		advise("FOUND visual with desired DEPTH_SIZE");
-//sprintf(DEFAULT_ERROR_STRING,"visual id = %ld (0x%lx)",vis_info_p->visualid,vis_info_p->visualid);
-//advise(DEFAULT_ERROR_STRING);
+//sprintf(ERROR_STRING,"visual id = %ld (0x%lx)",vis_info_p->visualid,vis_info_p->visualid);
+//advise(ERROR_STRING);
 	}
 
-//sprintf(DEFAULT_ERROR_STRING,"init_glx_context:  visual id = %ld (0x%lx)",vis_info_p->visualid,vis_info_p->visualid);
-//advise(DEFAULT_ERROR_STRING);
+//sprintf(ERROR_STRING,"init_glx_context:  visual id = %ld (0x%lx)",vis_info_p->visualid,vis_info_p->visualid);
+//advise(ERROR_STRING);
 
 
 	/* Old comment when all windows used the same context:
@@ -287,16 +287,16 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 			NULL,	/* list of shared contexts? */
 			True);
 		if( VW_OGL_CTX(vp)== NULL ){
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 		"init_glx_context( %s ): glXCreateContext failed!?",
 				vp->vw_name);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 		} else {
 			if( verbose ){
-				sprintf(DEFAULT_ERROR_STRING,
+				sprintf(ERROR_STRING,
 		"init_glx_context( %s ):  created GL context 0x%"PRIxPTR,
 			vp->vw_name,(uintptr_t)VW_OGL_CTX(vp));
-				advise(DEFAULT_ERROR_STRING);
+				advise(ERROR_STRING);
 			}
 		}
 	}
@@ -316,7 +316,9 @@ COMMAND_FUNC( do_render_to )
 
 static int glut_inited=0;
 
-static int insure_glut(void)
+#define insure_glut() _insure_glut(SINGLE_QSP_ARG)
+
+static int _insure_glut(SINGLE_QSP_ARG_DECL)
 {
 #ifdef HAVE_GLUT
 	int argc=0;
@@ -327,7 +329,7 @@ static int insure_glut(void)
 #ifdef HAVE_GLUT
 	glutInit(&argc,argv);
 #else // ! HAVE_GLUT
-	NWARN("insure_glut:  No GLUT support in this build!?");
+	warn("insure_glut:  No GLUT support in this build!?");
 	return -1;
 #endif // ! HAVE_GLUT
 	glut_inited=1;

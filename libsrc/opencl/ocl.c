@@ -89,7 +89,7 @@ static void ocl_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, index
 			NULL);		// event - id for use if asynchronous
  
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clEnqueueWriteBuffer");
+		report_ocl_error(status, "clEnqueueWriteBuffer");
 	}
 }
 
@@ -116,7 +116,7 @@ static void ocl_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, index
 			NULL);		// event
  
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clEnqueueReadBuffer");
+		report_ocl_error(status, "clEnqueueReadBuffer");
 	}
 }
 
@@ -147,7 +147,7 @@ static const char * available_ocl_device_name(QSP_ARG_DECL  const char *name,cha
 	}
 	sprintf(ERROR_STRING,"Number of %s OpenCL devices exceed configured maximum %d!?",
 		name,MAX_OCL_DEVICES);
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 	error1(ERROR_STRING);
 	return(NULL);	// NOTREACHED - quiet compiler
 }
@@ -175,7 +175,7 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_ocl_dev_memory:  error creating global data area %s",area_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	// g++ won't take this line!?
 	SET_AREA_PFDEV(ap,pdp);
@@ -511,7 +511,7 @@ fprintf(stderr,"Setting %s device index to %d\n",PFDEV_NAME(pdp),n_ocl_devs);
 		);
 	}
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clCreateContext");
+		report_ocl_error(status, "clCreateContext");
 		SET_OCLDEV_CTX(pdp,NULL);
 		//return;
 	}
@@ -533,7 +533,7 @@ fprintf(stderr,"Setting %s device index to %d\n",PFDEV_NAME(pdp),n_ocl_devs);
 	// CL_QUEUE_PROFILING_ENABLE
 	command_queue = clCreateCommandQueue(context, dev_id, 0, &status);
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clCreateCommandQueue");
+		report_ocl_error(status, "clCreateCommandQueue");
 		SET_OCLDEV_QUEUE(pdp,NULL);
 		//return;
 	} else {
@@ -560,7 +560,7 @@ static void init_ocl_devices(QSP_ARG_DECL  Compute_Platform *cpp )
 		MAX_OPENCL_DEVICES, dev_tbl, &n_devs);
 
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clGetDeviceIDs");
+		report_ocl_error(status, "clGetDeviceIDs");
 		return;
 		// BUG make sure to return cleanly...
 	}
@@ -582,7 +582,9 @@ static void init_ocl_devices(QSP_ARG_DECL  Compute_Platform *cpp )
 	//SET_PF_DISPATCH_FUNC( cpp, ocl_dispatch );
 } // end init_ocl_devices
 
-static void *ocl_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align )
+#define ocl_mem_alloc(pdp,size,align) _ocl_mem_alloc(QSP_ARG  pdp,size,align)
+
+static void *_ocl_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align )
 {
 	cl_int status;
 	void *ptr;
@@ -591,7 +593,7 @@ static void *ocl_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size,
 	ptr = clCreateBuffer(OCLDEV_CTX(pdp), CL_MEM_READ_WRITE, size, NULL, &status);
 
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status,"clCreateBuffer");
+		report_ocl_error(status,"clCreateBuffer");
 		sprintf(ERROR_STRING,"ocl_mem_alloc:  Attempting to allocate %d bytes.",size);
 		advise(ERROR_STRING);
 		return NULL;
@@ -600,19 +602,21 @@ static void *ocl_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size,
 	return ptr;
 }
 
-static int ocl_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
+static int _ocl_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
 {
-	OBJ_DATA_PTR(dp) = ocl_mem_alloc(QSP_ARG  OBJ_PFDEV(dp), size, align );
+	OBJ_DATA_PTR(dp) = ocl_mem_alloc(OBJ_PFDEV(dp), size, align );
 	if( OBJ_DATA_PTR(dp) == NULL ){
 		sprintf(ERROR_STRING,"ocl_obj_alloc:  error allocating memory for object %s!?",OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 	return 0;
 }
 
 
-static void ocl_mem_free(QSP_ARG_DECL  void *ptr)
+#define ocl_mem_free(ptr) _ocl_mem_free(QSP_ARG  ptr)
+
+static void _ocl_mem_free(QSP_ARG_DECL  void *ptr)
 {
 	cl_int		ret;
 
@@ -620,7 +624,7 @@ static void ocl_mem_free(QSP_ARG_DECL  void *ptr)
 	// BUG check return value
 }
 
-static void ocl_obj_free(QSP_ARG_DECL  Data_Obj *dp)
+static void _ocl_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 {
 	cl_int		ret;
 
@@ -629,28 +633,31 @@ static void ocl_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 }
 
 //void *TMPVEC_NAME(Platform_Device *pdp, size_t size,size_t len,const char *whence)
-void *ocl_tmp_vec(Platform_Device *pdp, size_t size,size_t len,const char *whence)
+void *_ocl_tmp_vec(QSP_ARG_DECL  Platform_Device *pdp, size_t size,size_t len,const char *whence)
 {
 	void *ptr;
 
-	ptr = ocl_mem_alloc(DEFAULT_QSP_ARG  pdp, len*size, 0 /* alignment arg not used? */ );
+	ptr = ocl_mem_alloc(pdp, len*size, 0 /* alignment arg not used? */ );
 	// Nice to zero it for testing???
 	return ptr;
 }
 
 //void FREETMP_NAME(void *ptr,const char *whence)
-void ocl_free_tmp(void *ptr,const char *whence)
+void _ocl_free_tmp(QSP_ARG_DECL  void *ptr,const char *whence)
 {
-	ocl_mem_free(DEFAULT_QSP_ARG  ptr);
+	ocl_mem_free(ptr);
 }
 
-static void ocl_update_offset(QSP_ARG_DECL  Data_Obj *dp )
+static void _ocl_update_offset(QSP_ARG_DECL  Data_Obj *dp )
 {
 	error1("ocl_update_offset not implemented!?");
 }
 
 #ifdef USE_OPENCL_SUBREGION
-static cl_mem find_parent_buf(QSP_ARG_DECL  Data_Obj *dp, int *offset_p )
+
+#define find_parent_buf(dp,offset_p) _find_parent_buf(QSP_ARG  dp,offset_p)
+
+static cl_mem _find_parent_buf(QSP_ARG_DECL  Data_Obj *dp, int *offset_p )
 {
 	int offset=0;
 
@@ -674,7 +681,7 @@ static cl_mem find_parent_buf(QSP_ARG_DECL  Data_Obj *dp, int *offset_p )
  * buffer.
  */
 
-static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
+static void _ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 {
 #ifndef USE_OPENCL_SUBREGION
 	/* The original code used subBuffers, but overlapping subregions
@@ -707,7 +714,7 @@ static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 	cl_int status;
 	int extra_offset;
 
-	parent_buf = find_parent_buf(QSP_ARG  OBJ_PARENT(dp),&extra_offset);
+	parent_buf = find_parent_buf(OBJ_PARENT(dp),&extra_offset);
 	assert( parent_buf != NULL );
 
 	reg.origin = (offset+extra_offset) * ELEMENT_SIZE(dp);
@@ -739,7 +746,7 @@ static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 		&reg,
 			&status);
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clCreateSubBuffer");
+		report_ocl_error(status, "clCreateSubBuffer");
 		SET_OBJ_DATA_PTR(dp,OBJ_DATA_PTR(OBJ_PARENT(dp)));
 	} else {
 		SET_OBJ_DATA_PTR(dp,buf);
@@ -778,7 +785,7 @@ static int ocl_register_buf(QSP_ARG_DECL  Data_Obj *dp)
 				&status);
 
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clCreateFromGLTexture");
+		report_ocl_error(status, "clCreateFromGLTexture");
 		return -1;
 	} else {
 		SET_OBJ_DATA_PTR(dp,img);
@@ -790,7 +797,7 @@ static int ocl_register_buf(QSP_ARG_DECL  Data_Obj *dp)
 	//cl_mem = clCreate
 	return 0;
 #else // ! HAVE_OPENGL
-	WARN("ocl_register_buf:  Sorry, no OpenGL support in this build!?");
+	warn("ocl_register_buf:  Sorry, no OpenGL support in this build!?");
 	return -1;
 #endif // ! HAVE_OPENGL
 }
@@ -813,7 +820,7 @@ static int ocl_map_buf(QSP_ARG_DECL  Data_Obj *dp)
 			0);
 
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clEnqueueAcquireGLObjects");
+		report_ocl_error(status, "clEnqueueAcquireGLObjects");
 		return -1;
 	}
 
@@ -836,13 +843,13 @@ static int ocl_unmap_buf(QSP_ARG_DECL  Data_Obj *dp)
 			NULL		// cl_event *event
 			);
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clEnqueueReleaseGLObjects");
+		report_ocl_error(status, "clEnqueueReleaseGLObjects");
 		return -1;
 	}
 	// Force pending CL commands to get executed
 	status = clFlush( OCLDEV_QUEUE(OBJ_PFDEV(dp)) );
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clFlush");
+		report_ocl_error(status, "clFlush");
 	}
 	
 	// Bind GL texture and use for rendering
@@ -854,7 +861,7 @@ static int ocl_unmap_buf(QSP_ARG_DECL  Data_Obj *dp)
 			);
 	return 0;
 #else // ! HAVE_OPENGL
-	WARN("ocl_unmap_buf:  Sorry, no OpenGL support in this build!?");
+	warn("ocl_unmap_buf:  Sorry, no OpenGL support in this build!?");
 	return -1;
 #endif // ! HAVE_OPENGL
 }
@@ -881,7 +888,7 @@ static const char *ocl_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID whi
 
 // Can't be static because used by ocl_rand
 
-/*cl_kernel*/ void *ocl_make_kernel(QSP_ARG_DECL  const char *ksrc,const char *kernel_name,Platform_Device *pdp)
+/*cl_kernel*/ void *_ocl_make_kernel(QSP_ARG_DECL  const char *ksrc,const char *kernel_name,Platform_Device *pdp)
 {
 	cl_program program;
 	static cl_kernel kernel;	// is this really a pointer???
@@ -931,7 +938,7 @@ static void ocl_set_kernel_arg(QSP_ARG_DECL  /*cl_kernel*/ void * kp, int *idx_p
 //fprintf(stderr,"Setting kernel arg %d with vector at 0x%lx\n",*idx_p,(long)vp);
 			status = clSetKernelArg(kernel,*idx_p, sizeof(void *), vp );
 			if( status != CL_SUCCESS )
-				report_ocl_error(DEFAULT_QSP_ARG  status, "clSetKernelArg (vector arg)" );
+				report_ocl_error(status, "clSetKernelArg (vector arg)" );
 			// Vector args always have an offset parameter in OpenCL
 			// BUG - for now we assume 0 - how do we pass???
 			(*idx_p)++;
@@ -939,22 +946,22 @@ static void ocl_set_kernel_arg(QSP_ARG_DECL  /*cl_kernel*/ void * kp, int *idx_p
 //fprintf(stderr,"Setting kernel arg %d with int at 0x%lx\n",*idx_p,(long)vp);
 			status = clSetKernelArg(kernel,*idx_p, sizeof(int), &offset );
 			if( status != CL_SUCCESS )
-				report_ocl_error(DEFAULT_QSP_ARG  status, "clSetKernelArg (int arg)" );
+				report_ocl_error(status, "clSetKernelArg (int arg)" );
 			break;
 		case KERNEL_ARG_DBL:
 //fprintf(stderr,"Setting kernel arg %d with double at 0x%lx\n",*idx_p,(long)vp);
 			status = clSetKernelArg(kernel,*idx_p, sizeof(double), vp );
 			if( status != CL_SUCCESS )
-				report_ocl_error(DEFAULT_QSP_ARG  status, "clSetKernelArg (double arg)" );
+				report_ocl_error(status, "clSetKernelArg (double arg)" );
 			break;
 		case KERNEL_ARG_INT:
 //fprintf(stderr,"Setting kernel arg %d with int at 0x%lx\n",*idx_p,(long)vp);
 			status = clSetKernelArg(kernel,*idx_p, sizeof(int), vp );
 			if( status != CL_SUCCESS )
-				report_ocl_error(DEFAULT_QSP_ARG  status, "clSetKernelArg (int arg)" );
+				report_ocl_error(status, "clSetKernelArg (int arg)" );
 			break;
 		default:
-			WARN("ocl_set_kernel_arg:  BAD ARG TYPE CODE!?");
+			warn("ocl_set_kernel_arg:  BAD ARG TYPE CODE!?");
 			break;
 	}
 
@@ -971,7 +978,7 @@ static void ocl_run_kernel(QSP_ARG_DECL  void *kp, Vec_Expr_Node *arg_enp, Platf
 
 	kernel = kp;
 
-	global_work_size[0] = set_fused_kernel_args(QSP_ARG  kernel, &karg_idx, arg_enp, PFDEV_PLATFORM(pdp));
+	global_work_size[0] = set_fused_kernel_args(kernel, &karg_idx, arg_enp, PFDEV_PLATFORM(pdp));
   
  //fprintf(stderr,"ocl_run_kernel:  global work size = %ld\n",global_work_size[0]);
 	status = clEnqueueNDRangeKernel(
@@ -986,7 +993,7 @@ static void ocl_run_kernel(QSP_ARG_DECL  void *kp, Vec_Expr_Node *arg_enp, Platf
 		&event	/* event */
 		);
 	if( status != CL_SUCCESS )
-		report_ocl_error(DEFAULT_QSP_ARG  status, "clEnqueueNDRangeKernel" );
+		report_ocl_error(status, "clEnqueueNDRangeKernel" );
 	clWaitForEvents(1,&event);
 }
 
@@ -1018,7 +1025,7 @@ static void * ocl_fetch_kernel(QSP_ARG_DECL  Kernel_Info_Ptr kip, Platform_Devic
 	status = clGetPlatformInfo(platform_id,code,			\
 		0,NULL,&ret_size);					\
 	if( status != CL_SUCCESS ){					\
-		report_ocl_error(QSP_ARG  status, "clGetPlatformInfo");	\
+		report_ocl_error(status, "clGetPlatformInfo");	\
 		return;							\
 		/* BUG make sure to return cleanly... */		\
 	}								\
@@ -1026,7 +1033,7 @@ static void * ocl_fetch_kernel(QSP_ARG_DECL  Kernel_Info_Ptr kip, Platform_Devic
 	status = clGetPlatformInfo(platform_id,code,			\
 		ret_size+1,platform_str,&ret_size);			\
 	if( status != CL_SUCCESS ){					\
-		report_ocl_error(QSP_ARG  status, "clGetPlatformInfo");	\
+		report_ocl_error(status, "clGetPlatformInfo");	\
 		return;							\
 		/* BUG make sure to return cleanly... */		\
 	}

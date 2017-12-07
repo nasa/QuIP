@@ -47,6 +47,7 @@ static int yylex(YYSTYPE *yylval_p, Query_Stack *qsp);
 //#define YY_(msg)	QSP_ARG msg
 //#endif /* THREAD_SAFE_QUERY */
 
+
 int yyerror(Query_Stack *qsp,  const char *);
 
 
@@ -56,45 +57,45 @@ static const char *ipptr;
 static int ended;
 static Seq *final_mviseq;
 
-static void null_show_func(void *vp)
+static void _null_show_func(QSP_ARG_DECL  void *vp)
 {
-	NWARN("no sequence show function defined");
+	warn("no sequence show function defined");
 }
 
-static void * null_get_func(const char *name)
+static void * _null_get_func(QSP_ARG_DECL  const char *name)
 {
-	NWARN("no sequence item get function defined");
+	warn("no sequence item get function defined");
 	return(NULL);
 }
 
-static void null_rev_func(void *vp)
+static void _null_rev_func(QSP_ARG_DECL  void *vp)
 {
-	NWARN("no reverse function defined");
+	warn("no reverse function defined");
 }
 
-static int null_init_func(void *vp)
+static int _null_init_func(QSP_ARG_DECL  void *vp)
 {
-	NWARN("no init function defined");
+	warn("no init function defined");
 	return(0);
 }
 
-static void null_wait_func(void)
+static void _null_wait_func(SINGLE_QSP_ARG_DECL)
 {
-	NWARN("no wait function defined");
+	warn("no wait function defined");
 }
 
-static void null_ref_func(void *vp)
+static void _null_ref_func(QSP_ARG_DECL  void *vp)
 {
-	NWARN("no reference function defined");
+	warn("no reference function defined");
 }
 
 static Seq_Module null_seq_module = {
-	null_get_func,
-	null_init_func,
-	null_show_func,
-	null_rev_func,
-	null_wait_func,
-	null_ref_func
+	_null_get_func,
+	_null_init_func,
+	_null_show_func,
+	_null_rev_func,
+	_null_wait_func,
+	_null_ref_func
 };
 
 static Seq_Module *the_smp=(&null_seq_module);
@@ -108,14 +109,16 @@ static void init_seq_struct(Seq *sp)
 	sp->seq_count=0;
 }
 
-static Seq *unnamed_seq(void)	/* return an unused seq. struct */
+#define unnamed_seq() _unnamed_seq(SINGLE_QSP_ARG)
+
+static Seq *_unnamed_seq(SINGLE_QSP_ARG_DECL)	/* return an unused seq. struct */
 {
 	register Seq *sp;
 
 	sp = (Seq *)getbuf(sizeof(*sp));
 
 	if( sp == NULL )
-		NERROR1("no more memory for sequences");
+		error1("no more memory for sequences");
 
 	sp->seq_name=NULL;
 
@@ -123,7 +126,9 @@ static Seq *unnamed_seq(void)	/* return an unused seq. struct */
 	return(sp);
 }
 
-static Seq *joinseq(Seq *s1,Seq *s2)		/* pointer to concatenation */
+#define joinseq(s1,s2) _joinseq(QSP_ARG  s1,s2)
+
+static Seq *_joinseq(QSP_ARG_DECL  Seq *s1,Seq *s2)		/* pointer to concatenation */
 {
 	register Seq *sp;
 
@@ -142,7 +147,9 @@ static Seq *joinseq(Seq *s1,Seq *s2)		/* pointer to concatenation */
 	return(sp);
 }
 
-static Seq *reptseq(int cnt,Seq *seqptr)	/* pointer to repetition */
+#define reptseq(cnt,seqptr) _reptseq(QSP_ARG  cnt,seqptr)
+
+static Seq *_reptseq(QSP_ARG_DECL  int cnt,Seq *seqptr)	/* pointer to repetition */
 {
 	register Seq *sp;
 
@@ -157,7 +164,9 @@ static Seq *reptseq(int cnt,Seq *seqptr)	/* pointer to repetition */
 	return(sp);
 }
 
-static Seq *revseq(Seq *seqptr)	/* pointer to reversal */
+#define revseq(seqptr) _revseq(QSP_ARG  seqptr)
+
+static Seq *_revseq(QSP_ARG_DECL  Seq *seqptr)
 {
 	register Seq *sp;
 
@@ -172,7 +181,9 @@ static Seq *revseq(Seq *seqptr)	/* pointer to reversal */
 	return(sp);
 }
 
-static Seq *makfrm(int cnt,void *vp)	/* get a new link for this frame */
+#define makfrm(cnt,vp) _makfrm(QSP_ARG  cnt,vp)
+
+static inline Seq *_makfrm(QSP_ARG_DECL  int cnt,void *vp)	/* get a new link for this frame */
 {
 	register Seq *sp;
 
@@ -184,7 +195,7 @@ static Seq *makfrm(int cnt,void *vp)	/* get a new link for this frame */
 		sp->seq_refcnt++;
 
 		/* increment reference count on this leaf */
-		(*the_smp->ref_func)(vp);
+		(*the_smp->ref_func)(QSP_ARG  vp);
 	}
 	return(sp);
 }
@@ -257,7 +268,7 @@ void load_seq_module(Seq_Module *smp)
 	the_smp = smp;
 }
 
-int init_show_seq(Seq *sp)
+int _init_show_seq(QSP_ARG_DECL  Seq *sp)
 {
 	/* travel down this sequence until we find a leaf to pass
 	 * to the application specific routine
@@ -266,12 +277,12 @@ int init_show_seq(Seq *sp)
 	while( sp->seq_flags != SEQ_MOVIE )
 		sp = sp->seq_first;
 
-	return( (*the_smp->init_func)(sp->seq_data) );
+	return( (*the_smp->init_func)(QSP_ARG  sp->seq_data) );
 }
 
-void wait_show_seq(void)
+void _wait_show_seq(SINGLE_QSP_ARG_DECL)
 {
-	(*the_smp->wait_func)();
+	(*the_smp->wait_func)(SINGLE_QSP_ARG);
 }
 
 void show_sequence(QSP_ARG_DECL  const char *s)
@@ -300,7 +311,7 @@ void show_sequence(QSP_ARG_DECL  const char *s)
 					( c ) == '-'   ||	\
 					( c ) == '_' )
 
-int yylex( YYSTYPE *yylval_p, /*SINGLE_QSP_ARG_DECL*/ Query_Stack *qsp )
+int yylex( YYSTYPE *yylval_p, Query_Stack *qsp )
 {
 	char *numptr, *wrdptr;
 	int n;
@@ -337,7 +348,7 @@ int yylex( YYSTYPE *yylval_p, /*SINGLE_QSP_ARG_DECL*/ Query_Stack *qsp )
 
 		/* not a sequence, try a pattern name */
 
-		yylval_p->yyvp = (*the_smp->get_func)( wrdbuf );
+		yylval_p->yyvp = (*the_smp->get_func)( QSP_ARG  wrdbuf );
 		if( yylval_p->yyvp != NULL ) return( MY_MOVIE_NAME );
 
 		/* error */
@@ -421,7 +432,7 @@ void delseq(QSP_ARG_DECL  Seq *sp)
 	}
 }
 
-void evalseq(Seq *seqptr)		/* recursive procedure to compile a subsequence */
+void _evalseq(QSP_ARG_DECL  Seq *seqptr)		/* recursive procedure to compile a subsequence */
 {
 	int cnt;
 
@@ -434,7 +445,7 @@ void evalseq(Seq *seqptr)		/* recursive procedure to compile a subsequence */
 	}
 	if( seqptr->seq_flags==SEQ_MOVIE ){	 		/* a frame */
 		while( cnt-- )
-			(*the_smp->show_func)(seqptr->seq_data);
+			(*the_smp->show_func)(QSP_ARG  seqptr->seq_data);
 	} else {
 		while( cnt-- ){
 			evalseq(seqptr->seq_first);
@@ -443,7 +454,7 @@ void evalseq(Seq *seqptr)		/* recursive procedure to compile a subsequence */
 	}
 }
 
-void reverse_eval(Seq *seqptr)	/* recursive procedure to reverse a sequence */
+void _reverse_eval(QSP_ARG_DECL  Seq *seqptr)	/* recursive procedure to reverse a sequence */
 {
 	int cnt;
 
@@ -456,7 +467,7 @@ void reverse_eval(Seq *seqptr)	/* recursive procedure to reverse a sequence */
 	}
 	if( seqptr->seq_flags==SEQ_MOVIE ){	 		/* a frame */
 		while( cnt-- )
-			(*the_smp->rev_func)(seqptr->seq_data);
+			(*the_smp->rev_func)(QSP_ARG  seqptr->seq_data);
 	} else {
 		while( cnt-- ){
 			reverse_eval(seqptr->seq_next);

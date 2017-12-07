@@ -22,7 +22,9 @@ double obj_exists(QSP_ARG_DECL  const char *name)
 
 /* return a given component of the pointed-to pixel */
 
-static inline double comp_func( Data_Obj *dp, index_t index )
+#define comp_func(dp,index) _comp_func( QSP_ARG   dp,index)
+
+static inline double _comp_func( QSP_ARG_DECL   Data_Obj *dp, index_t index )
 {
 	Precision *prec_p;
 	double d;
@@ -31,16 +33,16 @@ static inline double comp_func( Data_Obj *dp, index_t index )
 	if( dp==NULL ) return(0.0);
 
 	if( !IS_SCALAR(dp) ){
-		sprintf(DEFAULT_ERROR_STRING,"comp_func:  %s is not a scalar",
+		sprintf(ERROR_STRING,"comp_func:  %s is not a scalar",
 			OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0.0);
 	}
 	if( OBJ_MACH_DIM(dp,0) <= (dimension_t)index ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 		"Component index %d out of range for object %s",
 			index,OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	prec_p = OBJ_MACH_PREC_PTR(dp);
 	assert(prec_p!=NULL);
@@ -65,16 +67,16 @@ double val_func(QSP_ARG_DECL  Data_Obj *dp )
 {
 	if( dp==NULL ) return(0.0);
 	if( !IS_SCALAR(dp) ){
-		sprintf(DEFAULT_ERROR_STRING,"val_func:  %s is not a scalar",
+		sprintf(ERROR_STRING,"val_func:  %s is not a scalar",
 			OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0.0);
 	}
 	if( OBJ_MACH_DIM(dp,0) > 1 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"value:  %s has %d components; returning comp. #0",
 			OBJ_NAME(dp),OBJ_MACH_DIM(dp,0));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return( comp_func(dp,0) );
 }
@@ -83,19 +85,19 @@ static double re_func(QSP_ARG_DECL  Data_Obj *dp )
 {
 	if( dp==NULL ) return(0.0);
 	if( !IS_SCALAR(dp) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"re_func:  %s is not a scalar",OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0.0);
 	}
 	if( OBJ_MACH_DIM(dp,0) == 1 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"%s is real, not complex!?",OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	} else if( OBJ_MACH_DIM(dp,0) != 2 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"%s is multidimensional, not complex!?",OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return( comp_func(dp,0) );
 }
@@ -104,15 +106,15 @@ static double im_func(QSP_ARG_DECL  Data_Obj *dp )
 {
 	if( dp==NULL ) return(0.0);
 	if( !IS_SCALAR(dp) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"im_func:  %s is not a scalar",OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0.0);
 	}
 	if( OBJ_MACH_DIM(dp,0) != 2 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"%s is not complex; returning 0.0", OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return( comp_func(dp,1) );
 }

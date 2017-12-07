@@ -28,14 +28,14 @@
 #define OCL_STATUS_CHECK(stat,whence)				\
 								\
 	if( stat != CL_SUCCESS ){				\
-		report_ocl_error(QSP_ARG  stat, #whence );	\
+		report_ocl_error(stat, #whence );		\
 		return;						\
 	}
 #endif // FOOBAR
 
 #define ERROR_CASE(code,string)	case code: msg = string; break;
 
-void report_ocl_error(QSP_ARG_DECL  cl_int status, const char *whence)
+void _report_ocl_error(QSP_ARG_DECL  cl_int status, const char *whence)
 {
 	char *msg;
 
@@ -297,7 +297,7 @@ static void display_dev_param(QSP_ARG_DECL  OCL_Dev_Param_Spec *psp,
 			default:
 				sprintf(MSG_STR,"\t%s:  %s",PS_NAME(psp), "unhandled error");
 				prt_msg(MSG_STR);
-				report_ocl_error(QSP_ARG  status,"clGetDeviceInfo");
+				report_ocl_error(status,"clGetDeviceInfo");
 				return;
 			}
 	}
@@ -393,7 +393,7 @@ static void print_pfdev_info_short(QSP_ARG_DECL  Platform_Device *pdp)
 #endif // NOT_USED
 
 
-void shutdown_opencl_platform(void)
+void _shutdown_opencl_platform(SINGLE_QSP_ARG_DECL)
 {
 	//cl_int status;
 
@@ -401,7 +401,7 @@ void shutdown_opencl_platform(void)
 	ret = clReleaseCommandQueue(command_queue);
 	ret = clReleaseContext(context);
 	*/
-	NWARN("shutdown_opencl_platform NOT implemented!?");
+	warn("shutdown_opencl_platform NOT implemented!?");
 
 	// Need to iterate over all devices...
 }
@@ -452,7 +452,7 @@ done:
 
 // Apparently we have to create kernels on a per-context basis...
 
-cl_program ocl_create_program( const char *buf, Platform_Device *pdp )
+cl_program _ocl_create_program( QSP_ARG_DECL  const char *buf, Platform_Device *pdp )
 {
 	cl_program program;	//cl_program is a program executable
 	//size_t len;		// NULL len array indicates null-terminated strings
@@ -465,8 +465,7 @@ cl_program ocl_create_program( const char *buf, Platform_Device *pdp )
 		(const char **)&buf, /*(const size_t *)&len*/ NULL, &status);
 
 	if( status != CL_SUCCESS ){
-		report_ocl_error(DEFAULT_QSP_ARG  status,
-					"clCreateProgramWithSource");
+		report_ocl_error(status,"clCreateProgramWithSource");
 		return NULL;
 	}
 	return program;
@@ -474,7 +473,9 @@ cl_program ocl_create_program( const char *buf, Platform_Device *pdp )
 
 #define BUF_SIZE	256
 
-static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pdp)
+#define report_build_info(prog,pdp) _report_build_info(QSP_ARG  prog,pdp)
+
+static void _report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pdp)
 {
 	cl_int ret;
 	char buf[BUF_SIZE];
@@ -491,14 +492,14 @@ static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pd
 				);
 
 	if( ret != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  ret,"clGetProgramBuildInfo");
+		report_ocl_error(ret,"clGetProgramBuildInfo");
 	}
 	switch(bs){
-		case CL_BUILD_NONE:  NADVISE("No build!?"); break;
-		case CL_BUILD_ERROR:  NADVISE("Build errors:"); break;
-		case CL_BUILD_SUCCESS:  NADVISE("Build success!"); break;
-		case CL_BUILD_IN_PROGRESS:  NADVISE("Build in progress..."); break;
-		default: NWARN("Unexpected build status!?"); break;
+		case CL_BUILD_NONE:  advise("No build!?"); break;
+		case CL_BUILD_ERROR:  advise("Build errors:"); break;
+		case CL_BUILD_SUCCESS:  advise("Build success!"); break;
+		case CL_BUILD_IN_PROGRESS:  advise("Build in progress..."); break;
+		default: warn("Unexpected build status!?"); break;
 	}
 
 	if( bs == CL_BUILD_ERROR ){
@@ -525,7 +526,7 @@ static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pd
 		}
 
 		if( ret != CL_SUCCESS ){
-			report_ocl_error(QSP_ARG  ret,"clGetProgramBuildInfo");
+			report_ocl_error(ret,"clGetProgramBuildInfo");
 		}
 
 //fprintf(stderr,"%zu log bytes returned, strlen(bufp) = %ld...\n",bytes_returned,
@@ -552,7 +553,7 @@ static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pd
 }
 
 
-cl_kernel ocl_create_kernel(cl_program program,
+cl_kernel _ocl_create_kernel(QSP_ARG_DECL  cl_program program,
 			const char *name, Platform_Device *pdp )
 {
 	cl_kernel kernel;
@@ -568,22 +569,22 @@ cl_kernel ocl_create_kernel(cl_program program,
 				NULL		// user_data
 				);
 	if( status != CL_SUCCESS ){
-		report_ocl_error(DEFAULT_QSP_ARG  status,"clBuildProgram");
-		report_build_info(DEFAULT_QSP_ARG  program,pdp);
+		report_ocl_error(status,"clBuildProgram");
+		report_build_info(program,pdp);
 		return NULL;
 	}
 
 	//create a kernel object with specified name
 	if( verbose ){
-		sprintf(DEFAULT_ERROR_STRING,"ocl_create_kernel:  creating kernel with name '%s'\n",name);
-		NADVISE(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"ocl_create_kernel:  creating kernel with name '%s'\n",name);
+		advise(ERROR_STRING);
 	}
 	kernel = clCreateKernel(program, name, &status);
 	if( status != CL_SUCCESS ){
-		report_ocl_error(DEFAULT_QSP_ARG  status,"clCreateKernel");
+		report_ocl_error(status,"clCreateKernel");
 		if( status == CL_INVALID_KERNEL_NAME ){
-			sprintf(DEFAULT_ERROR_STRING,"Name:  \"%s\"",name);
-			NADVISE(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"Name:  \"%s\"",name);
+			advise(ERROR_STRING);
 		}
 		return NULL;
 	}
@@ -666,7 +667,7 @@ void delete_kernel(QSP_ARG_DECL  Kernel *kp)
 #ifdef FOOBAR
 int get_max_threads_per_block(Data_Obj *dp)
 {
-	NWARN("get_max_threads_per_block:  unimplemented, returning 8!?");
+	warn("get_max_threads_per_block:  unimplemented, returning 8!?");
 	return 8;
 }
 #endif // FOOBAR

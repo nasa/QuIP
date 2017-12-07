@@ -53,20 +53,27 @@ extern Vec_Func_Array ocl_vfa_tbl[N_VEC_FUNCS];
 
 /* prototypes here */
 
-//extern void init_opencl_platform(void);
-extern void shutdown_opencl_platform(void);
+extern void _shutdown_opencl_platform(SINGLE_QSP_ARG_DECL);
+#define shutdown_opencl_platform() _shutdown_opencl_platform(SINGLE_QSP_ARG)
+
 extern cl_kernel create_kernel(QSP_ARG_DECL  const char * name, const char *pathname);
 //extern const char *load_file(QSP_ARG_DECL  const char *pathname, size_t *len);
 extern void delete_kernel(QSP_ARG_DECL  Kernel *kp);
 
 // ocl_utils.c
 
-extern void report_ocl_error(QSP_ARG_DECL  cl_int status, const char *whence);
-extern cl_program ocl_create_program(const char *buf, Platform_Device *pdp );
-//extern cl_kernel ocl_create_kernel(cl_program program,
-extern cl_kernel ocl_create_kernel(/*QSP_ARG_DECL*/  cl_program program,
+extern void _report_ocl_error(QSP_ARG_DECL  cl_int status, const char *whence);
+#define report_ocl_error(status, whence) _report_ocl_error(QSP_ARG  status, whence)
+
+extern cl_program _ocl_create_program(QSP_ARG_DECL  const char *buf, Platform_Device *pdp );
+#define ocl_create_program(buf,pdp) _ocl_create_program(QSP_ARG  buf,pdp)
+
+extern cl_kernel _ocl_create_kernel(QSP_ARG_DECL  cl_program program,
 			const char *name, Platform_Device *pdp );
-extern void * ocl_make_kernel( QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp );
+#define ocl_create_kernel(program,name,pdp) _ocl_create_kernel(QSP_ARG  program,name,pdp)
+
+extern void * _ocl_make_kernel( QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp );
+#define ocl_make_kernel(src,name,pdp) _ocl_make_kernel(QSP_ARG  src,name,pdp )
 
 extern void _insure_ocl_device(QSP_ARG_DECL  Data_Obj *dp);
 
@@ -80,14 +87,14 @@ extern void h_ocl_set_seed(int seed);
 #define OCL_STATUS_CHECK(stat,whence)				\
 								\
 	if( stat != CL_SUCCESS ){				\
-		report_ocl_error(QSP_ARG  stat, #whence );	\
+		report_ocl_error(stat, #whence );		\
 		return;						\
 	}
 
 #define OCL_STATUS_CHECK_WITH_RETURN(stat,whence,retval)	\
 								\
 	if( stat != CL_SUCCESS ){				\
-		report_ocl_error(QSP_ARG  stat, #whence );	\
+		report_ocl_error(stat, #whence );		\
 		return retval;					\
 	}
 

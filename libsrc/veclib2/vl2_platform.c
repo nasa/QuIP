@@ -25,15 +25,15 @@
 
 static void (*vl2_mem_upload)(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, struct platform_device *pdp )=NULL;
 static void (*vl2_mem_dnload)(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, struct platform_device *pdp ) = NULL;
-static int (*vl2_obj_alloc)(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align) = _cpu_obj_alloc;
-static void (*vl2_obj_free)(QSP_ARG_DECL  Data_Obj *dp) = _cpu_obj_free;
-static void * (*vl2_mem_alloc)(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align) = _cpu_mem_alloc;
-static void (*vl2_mem_free)(QSP_ARG_DECL  void *ptr) = _cpu_mem_free;
-static void (*vl2_offset_data)(QSP_ARG_DECL  Data_Obj *dp, index_t o ) = default_offset_data_func;
+static int (*_vl2_obj_alloc)(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align) = _cpu_obj_alloc;
+static void (*_vl2_obj_free)(QSP_ARG_DECL  Data_Obj *dp) = _cpu_obj_free;
+static void * (*_vl2_mem_alloc)(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align) = _cpu_mem_alloc;
+static void (*_vl2_mem_free)(QSP_ARG_DECL  void *ptr) = _cpu_mem_free;
+static void (*_vl2_offset_data)(QSP_ARG_DECL  Data_Obj *dp, index_t o ) = default_offset_data_func;
 
 // Update the offsets in a child after the parent is relocated
 
-static void vl2_update_offset(QSP_ARG_DECL  Data_Obj *dp )
+static void _vl2_update_offset(QSP_ARG_DECL  Data_Obj *dp )
 {
 	// We don't need to SET_OBJ_OFFSET, because the child offset
 	// is relative to the parent...
@@ -60,7 +60,7 @@ static const char *vl2_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID whi
 	return NULL;
 }
 
-static void *vl2_make_kernel(QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp)
+static void *_vl2_make_kernel(QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp)
 {
 	WARN("Sorry, no kernel compilation for CPU yet!?");
 	return NULL;

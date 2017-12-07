@@ -38,7 +38,7 @@ static Data_Obj *tmp_pt_dp=NULL;
 	if( tmp_pt_dp == NULL ){								\
 		/* BUG?  should we get the precision based on the current format? */		\
 		tmp_pt_dp = mk_vec(QSP_ARG  "tmp_polhemus_pt",1,POLHEMUS_READING_COUNT,prec_for_code(PREC_SP));		\
-		if( tmp_pt_dp == NULL ) NERROR1("error creating temporary polhemus point");	\
+		if( tmp_pt_dp == NULL ) error1("error creating temporary polhemus point");	\
 	}
 
 Output_Datum od_tbl[N_OUTPUT_TYPES]={
@@ -97,7 +97,7 @@ static COMMAND_FUNC( do_set_curr_align )
 	sprintf(align, "%3.2f,%3.2f,%3.2f,%3.2f,0,0,0,%3.2f,0,0,0,%3.2f",
 		pdp[ixyz], pdp[ixyz+1], pdp[ixyz+2], pdp[ixyz], pdp[ixyz+1], pdp[ixyz+2]); 
 		*/
-	NERROR1("need to fix alignment code");
+	error1("need to fix alignment code");
 
 
 	if(send_polh_cmd(PH_ALIGNMENT, align) < 0) WARN("Unable to set polhemus alignment!");	
@@ -406,7 +406,7 @@ static Polh_Output_Type get_record_type(SINGLE_QSP_ARG_DECL)
 			sprintf(ERROR_STRING,
 				"CAUTIOUS:  Output data table entry %d has type code %d!?",
 				i,od_tbl[i].od_type);
-			NERROR1(ERROR_STRING);
+			error1(ERROR_STRING);
 		}
 #endif /* CAUTIOUS */
 	}

@@ -39,8 +39,8 @@ define(`OCL_OFFSET_TYPE',`int')
 suppress_no
 
 #include "platform.h"
-extern void *TMPVEC_NAME`(Platform_Device *pdp, size_t size, size_t len, const char *whence);'
-extern void FREETMP_NAME`(void *a, const char *whence);'
+extern void *TMPVEC_NAME`(QSP_ARG_DECL  Platform_Device *pdp, size_t size, size_t len, const char *whence);'
+extern void FREETMP_NAME`(QSP_ARG_DECL  void *a, const char *whence);'
 extern int get_max_threads_per_block(Data_Obj *odp);
 extern int max_threads_per_block;
 

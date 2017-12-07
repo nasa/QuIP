@@ -14,8 +14,8 @@ define(`HOST_CALL_ARG_DECLS',`QSP_ARG_DECL  VFCODE_ARG_DECL  Vec_Obj_Args *oap')
 // A vector arg used to just have a length and a stride, but now
 // with gpus we have three-dimensional lengths.  But in principle
 // there's no reason why we couldn't have full shapes passed...
-define(`LINK_FUNC_ARGS',`VFCODE_ARG  vap')
-define(`LINK_FUNC_ARG_DECLS',`VFCODE_ARG_DECL  const Vector_Args *vap')
+define(`LINK_FUNC_ARGS',`QSP_ARG  VFCODE_ARG  vap')
+define(`LINK_FUNC_ARG_DECLS',`QSP_ARG_DECL  VFCODE_ARG_DECL  const Vector_Args *vap')
 
 /* vecgen.m4 DONE */
 

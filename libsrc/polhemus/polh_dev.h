@@ -266,14 +266,24 @@ extern ssize_t n_response_chars;
 
 /* polh_dev.c */
 
-extern char *read_polh_line(void);
+extern char *_read_polh_line(SINGLE_QSP_ARG_DECL);
+#define read_polh_line() _read_polh_line(SINGLE_QSP_ARG)
+
 extern int polh_getc(void);
 extern int polh_ungetc(int);
-extern void flush_polh_buffer(void);
-extern void fill_polh_buffer(void);
-extern void flush_input_data(void);
+extern void _flush_polh_buffer(SINGLE_QSP_ARG_DECL);
+#define flush_polh_buffer() _flush_polh_buffer(SINGLE_QSP_ARG)
+
+extern void _fill_polh_buffer(SINGLE_QSP_ARG_DECL);
+#define fill_polh_buffer() _fill_polh_buffer(SINGLE_QSP_ARG)
+
+extern void _flush_input_data(SINGLE_QSP_ARG_DECL);
+#define flush_input_data() _flush_input_data(SINGLE_QSP_ARG)
+
 extern void show_output_data_format(int);
-extern int polhemus_output_data_format( Polh_Record_Format *prfp );
+extern int _polhemus_output_data_format(QSP_ARG_DECL  Polh_Record_Format *prfp );
+#define polhemus_output_data_format(prfp) _polhemus_output_data_format(QSP_ARG  prfp)
+
 extern void get_active_stations(SINGLE_QSP_ARG_DECL);
 
 extern void display_buffer(short *buf,int n);
@@ -281,35 +291,54 @@ extern int read_polh_dev(short* databuf, int n_want);
 extern int read_polh_data(void* raw_pdp, int n_want);
 
 extern int init_polh_dev(SINGLE_QSP_ARG_DECL);
-extern int send_string(const char *);
-extern void read_response(int display_flag);
-extern void clear_polh_dev(void);
-extern int reopen_polh_dev(SINGLE_QSP_ARG_DECL);
-extern int polhemus_word_count(void);
-extern int polhemus_byte_count(void);
+extern int _send_string(QSP_ARG_DECL  const char *);
+#define send_string(s) _send_string(QSP_ARG  s)
 
-extern int send_polh_cmd(Ph_Cmd_Code, const char*);
+extern void _read_response(QSP_ARG_DECL  int display_flag);
+#define read_response(display_flag) _read_response(QSP_ARG  display_flag)
+
+extern void _clear_polh_dev(SINGLE_QSP_ARG_DECL);
+#define clear_polh_dev() _clear_polh_dev(SINGLE_QSP_ARG)
+
+extern int reopen_polh_dev(SINGLE_QSP_ARG_DECL);
+extern int _polhemus_word_count(SINGLE_QSP_ARG_DECL);
+#define polhemus_word_count() _polhemus_word_count(SINGLE_QSP_ARG)
+
+extern int _polhemus_byte_count(SINGLE_QSP_ARG_DECL);
+#define polhemus_byte_count() _polhemus_byte_count(SINGLE_QSP_ARG)
+
+extern int _send_polh_cmd(QSP_ARG_DECL  Ph_Cmd_Code, const char*);
+#define send_polh_cmd(code,s) _send_polh_cmd(QSP_ARG  code,s)
+
 extern int get_polh_info(QSP_ARG_DECL  Ph_Cmd_Code, const char*);
 extern int read_single_polh_dp(QSP_ARG_DECL  Data_Obj *);
 extern int read_next_polh_dp(QSP_ARG_DECL  Data_Obj *);
-extern int read_cont_polh_dp(Data_Obj *);
+extern int _read_cont_polh_dp(QSP_ARG_DECL  Data_Obj *);
+#define read_cont_polh_dp(dp) _read_cont_polh_dp(QSP_ARG  dp)
+
 extern void read_polh_vector(QSP_ARG_DECL  Data_Obj*);
 extern int good_polh_vector(QSP_ARG_DECL  Data_Obj*);
 extern void format_polh_vector(Data_Obj *);
 extern void convert_polh_vector(Data_Obj *,Data_Obj *);
 extern void display_formatted_point(QSP_ARG_DECL  Fmt_Pt *, Polh_Record_Format * );
-extern int set_polh_sync_mode(int mode_code);
+extern int _set_polh_sync_mode(QSP_ARG_DECL  int mode_code);
+#define set_polh_sync_mode(mode_code) _set_polh_sync_mode(QSP_ARG  mode_code)
+
 extern void set_polh_sync_rate(long);
 extern int set_continuous_output_file(QSP_ARG_DECL  const char*);
 extern COMMAND_FUNC( start_continuous_output_file );
 extern COMMAND_FUNC( do_start_continuous_mode );
 extern COMMAND_FUNC( do_stop_continuous_mode );
-extern void start_continuous_mode(void);
-extern void stop_continuous_mode(void);
 extern void stop_continuous_output_file(void);
-extern void sort_table(void);
-extern void activate_station(int station,int flag);
-extern void set_polh_units(Ph_Cmd_Code);
+extern void _sort_table(SINGLE_QSP_ARG_DECL);
+#define sort_table() _sort_table(SINGLE_QSP_ARG)
+
+extern void _activate_station(QSP_ARG_DECL  int station,int flag);
+#define activate_station(station,flag) _activate_station(QSP_ARG  station,flag)
+
+extern void _set_polh_units(QSP_ARG_DECL  Ph_Cmd_Code);
+#define set_polh_units(code) _set_polh_units(QSP_ARG  code)
+
 extern void dump_polh_data(void);
 extern void raw_dump_polh_data(void);
 
@@ -322,8 +351,11 @@ extern int ask_env(QSP_ARG_DECL const char* name, const char* type, float* max, 
 #define ASK_ENV(name,type,max,min,sys_max,sys_min)	ask_env(QSP_ARG name,type,max,min,sys_max,sys_min)
 
 /* polh_err.c */
-extern int check_polh_data(char *, Polh_Record_Format *);
-extern int check_polh_output(char *, int, Ph_Cmd_Code );
+extern int _check_polh_data(QSP_ARG_DECL  char *, Polh_Record_Format *);
+#define check_polh_data(s,rfp) _check_polh_data(QSP_ARG  s,rfp)
+
+extern int _check_polh_output(QSP_ARG_DECL  char *, int, Ph_Cmd_Code );
+#define check_polh_output(s,n,c) _check_polh_output(QSP_ARG  s,n,c)
 
 /* acquire.c */
 extern COMMAND_FUNC( polhemus_wait );

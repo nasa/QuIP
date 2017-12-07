@@ -22,12 +22,12 @@ typedef struct sequence {
 
 
 typedef struct seq_module {
-	void *	(*get_func)(const char *);	/* lookup function for leaf's */
-	int	(*init_func)(void *);	/* setup device for playback */
-	void	(*show_func)(void *);
-	void	(*rev_func)(void *);
-	void	(*wait_func)(void);
-	void	(*ref_func)(void *);	/* note reference to a leaf */
+	void *	(*get_func)(QSP_ARG_DECL  const char *);	/* lookup function for leaf's */
+	int	(*init_func)(QSP_ARG_DECL  void *);	/* setup device for playback */
+	void	(*show_func)(QSP_ARG_DECL  void *);
+	void	(*rev_func)(QSP_ARG_DECL  void *);
+	void	(*wait_func)(SINGLE_QSP_ARG_DECL);
+	void	(*ref_func)(QSP_ARG_DECL  void *);	/* note reference to a leaf */
 } Seq_Module;
 
 

@@ -27,10 +27,10 @@ Item_Type *prec_itp=NULL;
 	SET_PREC_INDEXED_DATA_FUNC(prec_p,name##_indexed_data);	\
 	SET_PREC_IS_NUMERIC_FUNC(prec_p,name##_is_numeric);	\
 	SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,name##_assign_scalar_obj);	\
-	SET_PREC_EXTRACT_SCALAR_FUNC(prec_p,name##_extract_scalar);	\
-	SET_PREC_CAST_TO_DOUBLE_FUNC(prec_p,cast_##name##_to_double);	\
-	SET_PREC_CAST_FROM_DOUBLE_FUNC(prec_p,cast_##name##_from_double);	\
-	SET_PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p,cast_indexed_##name##_from_double);	\
+	SET_PREC_EXTRACT_SCALAR_FUNC(prec_p,_##name##_extract_scalar);	\
+	SET_PREC_CAST_TO_DOUBLE_FUNC(prec_p,_cast_##name##_to_double);	\
+	SET_PREC_CAST_FROM_DOUBLE_FUNC(prec_p,_cast_##name##_from_double);	\
+	SET_PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p,_cast_indexed_##name##_from_double);	\
 	SET_PREC_COPY_VALUE_FUNC(prec_p,copy_##name##_value);	\
 	if( (code & PSEUDO_PREC_MASK) == 0 )		\
 		SET_PREC_MACH_PREC_PTR(prec_p, prec_p);	\
@@ -241,14 +241,14 @@ static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 
 #define DECLARE_EXTRACT_REAL_SCALAR_FUNC(stem,type,member)		\
 									\
-static void stem##_extract_scalar(Scalar_Value *svp, Data_Obj *dp)		\
+static void _##stem##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)		\
 {									\
 	svp->member = *((type     *)OBJ_DATA_PTR(dp));				\
 }
 
 #define DECLARE_EXTRACT_CPX_SCALAR_FUNC(stem,type,member)		\
 									\
-static void stem##_extract_scalar(Scalar_Value *svp, Data_Obj *dp)		\
+static void _##stem##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)		\
 {									\
 	svp->member[0] = *(((type *)OBJ_DATA_PTR(dp)));				\
 	svp->member[1] = *(((type *)OBJ_DATA_PTR(dp))+1);				\
@@ -256,7 +256,7 @@ static void stem##_extract_scalar(Scalar_Value *svp, Data_Obj *dp)		\
 
 #define DECLARE_EXTRACT_QUAT_SCALAR_FUNC(stem,type,member)		\
 									\
-static void stem##_extract_scalar(Scalar_Value *svp, Data_Obj *dp)		\
+static void _##stem##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)		\
 {									\
 	svp->member[0] = *(((type *)OBJ_DATA_PTR(dp)));				\
 	svp->member[1] = *(((type *)OBJ_DATA_PTR(dp))+1);				\
@@ -266,37 +266,37 @@ static void stem##_extract_scalar(Scalar_Value *svp, Data_Obj *dp)		\
 
 #define DECLARE_EXTRACT_COLOR_SCALAR_FUNC(stem,type,member)		\
 									\
-static void stem##_extract_scalar(Scalar_Value *svp, Data_Obj *dp)		\
+static void _##stem##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)	\
 {									\
-	svp->member[0] = *(((type *)OBJ_DATA_PTR(dp)));				\
-	svp->member[1] = *(((type *)OBJ_DATA_PTR(dp))+1);				\
-	svp->member[2] = *(((type *)OBJ_DATA_PTR(dp))+2);				\
+	svp->member[0] = *(((type *)OBJ_DATA_PTR(dp)));			\
+	svp->member[1] = *(((type *)OBJ_DATA_PTR(dp))+1);		\
+	svp->member[2] = *(((type *)OBJ_DATA_PTR(dp))+2);		\
 }
 
 #define DECLARE_BAD_EXTRACT_SCALAR_FUNC(stem)				\
 									\
-static void stem##_extract_scalar(Scalar_Value *svp, Data_Obj *dp)		\
+static void _##stem##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)	\
 {									\
-	sprintf(DEFAULT_ERROR_STRING,"Nonsensical call to %s_extract_scalar!?", #stem);\
-	NWARN(DEFAULT_ERROR_STRING);					\
+	sprintf(ERROR_STRING,"Nonsensical call to %s_extract_scalar!?", #stem);\
+	warn(ERROR_STRING);						\
 }
 
 ////////////////////////////
 
 #define DECLARE_CAST_TO_DOUBLE_FUNC(stem,member)			\
 									\
-static double cast_##stem##_to_double(Scalar_Value *svp)		\
+static double _cast_##stem##_to_double(QSP_ARG_DECL  Scalar_Value *svp)	\
 {									\
 	return (double) svp->member;					\
 }
 
 #define DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)				\
 									\
-static double cast_##stem##_to_double(Scalar_Value *svp)		\
+static double _cast_##stem##_to_double(QSP_ARG_DECL  Scalar_Value *svp)	\
 {									\
-	sprintf(DEFAULT_ERROR_STRING,					\
+	sprintf(ERROR_STRING,						\
 		"Can't cast %s to double!?",#stem);			\
-	NWARN(DEFAULT_ERROR_STRING);					\
+	warn(ERROR_STRING);						\
 	return 0.0;							\
 }
 
@@ -304,18 +304,18 @@ static double cast_##stem##_to_double(Scalar_Value *svp)		\
 
 #define DECLARE_CAST_FROM_DOUBLE_FUNC(stem,type,member)			\
 									\
-static void cast_##stem##_from_double(Scalar_Value *svp, double val)	\
+static void _cast_##stem##_from_double(QSP_ARG_DECL  Scalar_Value *svp, double val)	\
 {									\
 	svp->member = (type) val;					\
 }
 
 #define DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)				\
 									\
-static void cast_##stem##_from_double(Scalar_Value *svp, double val)	\
+static void _cast_##stem##_from_double(QSP_ARG_DECL  Scalar_Value *svp, double val)	\
 {									\
-	sprintf(DEFAULT_ERROR_STRING,					\
+	sprintf(ERROR_STRING,						\
 		"Can't cast %s from double!?",#stem);			\
-	NWARN(DEFAULT_ERROR_STRING);					\
+	warn(ERROR_STRING);						\
 }
 
 ////////////////////////////
@@ -336,8 +336,8 @@ static void copy_void_value(Scalar_Value *dst_svp, Scalar_Value *src_svp) {}
 
 #define DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,member)	\
 									\
-static void cast_indexed_##stem##_from_double				\
-			(Scalar_Value *svp, int idx, double val)	\
+static void _cast_indexed_##stem##_from_double				\
+			(QSP_ARG_DECL  Scalar_Value *svp, int idx, double val)	\
 {									\
 	svp->member[idx] = (type) val;					\
 }
@@ -345,12 +345,12 @@ static void cast_indexed_##stem##_from_double				\
 
 #define DECLARE_BAD_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem)		\
 									\
-static void cast_indexed_##stem##_from_double				\
-			(Scalar_Value *svp, int idx, double val)	\
+static void _cast_indexed_##stem##_from_double				\
+			(QSP_ARG_DECL  Scalar_Value *svp, int idx, double val)	\
 {									\
-	sprintf(DEFAULT_ERROR_STRING,					\
+	sprintf(ERROR_STRING,						\
 		"cast_indexed_%s_from_double:  Can't cast to %s with an index (%d)!?",#stem,#stem,idx);		\
-	NWARN(DEFAULT_ERROR_STRING);					\
+	warn(ERROR_STRING);						\
 }
 
 /////////////////////////////
@@ -425,13 +425,13 @@ static int bit_assign_scalar_obj(Data_Obj *dp,Scalar_Value *svp)
 	return 0;
 }
 
-static void bit_extract_scalar(Scalar_Value *svp, Data_Obj *dp)
+static void _bit_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)
 {
 	svp->bitmap_scalar = *( (BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp) ) & (1 << OBJ_BIT0(dp)) ;
 }
 
 
-static void cast_bit_from_double(Scalar_Value *svp,double val)
+static void _cast_bit_from_double(QSP_ARG_DECL  Scalar_Value *svp,double val)
 {
 	if( val == 0.0 )
 		svp->bitmap_scalar = 0;
@@ -439,7 +439,7 @@ static void cast_bit_from_double(Scalar_Value *svp,double val)
 		svp->bitmap_scalar = 1;
 }
 
-static double cast_bit_to_double(Scalar_Value *svp)
+static double _cast_bit_to_double(QSP_ARG_DECL  Scalar_Value *svp)
 {
 	if( svp->bitmap_scalar )  return 1;
 	else		return 0;

@@ -22,16 +22,17 @@ static cl_kernel ocl_sp_vuni_kernel = NULL;
 // BUG the kernel is created for the device,
 // so this code is broken in the case that we have multiple devices
 
-static int ocl_sp_vuni_init(Platform_Device *pdp)
+#define ocl_sp_vuni_init(pdp) _ocl_sp_vuni_init(QSP_ARG  pdp)
+
+static int _ocl_sp_vuni_init(QSP_ARG_DECL  Platform_Device *pdp)
 {
 	struct timeval tv;
 	cl_kernel kernel;
 
 	ocl_sp_vuni_inited=1;
 	// BUG need to be able to name the source string!?
-	if( (kernel=ocl_make_kernel(DEFAULT_QSP_ARG  opencl_src,"g_ocl_fast_sp_vuni",pdp))
-			== NULL ){
-		NWARN("Error creating kernel for g_ocl_fast_sp_vuni!?");
+	if( (kernel=ocl_make_kernel(opencl_src,"g_ocl_fast_sp_vuni",pdp)) == NULL ){
+		warn("Error creating kernel for g_ocl_fast_sp_vuni!?");
 		return -1;
 	}
 	ocl_sp_vuni_kernel = kernel;
@@ -39,7 +40,7 @@ static int ocl_sp_vuni_init(Platform_Device *pdp)
 	if( !ocl_sp_vuni_seeded ){
 		// "randomize" the seed so that we don't get the same numbers every time
 		if( gettimeofday(&tv,NULL) < 0 ){
-			NWARN("ocl_sp_vuni_init:  error calling gettimeofday, not setting random seed!?");
+			warn("ocl_sp_vuni_init:  error calling gettimeofday, not setting random seed!?");
 		} else {
 			ocl_sp_vuni_counter = 100*(tv.tv_usec / 100);
 			ocl_sp_vuni_counter += tv.tv_sec % 100;

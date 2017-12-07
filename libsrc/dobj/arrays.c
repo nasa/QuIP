@@ -230,7 +230,7 @@ static Data_Obj *_recycle_used_tmpobj(QSP_ARG_DECL  Data_Obj *dp)
 		addHead(used_tmpobj_lp,np);
 		np=remTail(used_tmpobj_lp);
 		if( np == first_np )
-			NERROR1("out of temporary objects!?");
+			error1("out of temporary objects!?");
 		new_dp = (Data_Obj *)NODE_DATA(np);
 	}
 	/* The deallocate routine has freed the old name etc */
@@ -456,7 +456,9 @@ void _make_array_name( QSP_ARG_DECL  char *target_str, int buflen, Data_Obj *dp,
 	strcat(target_str,index_string);
 }
 
-static Node *existing_tmpobj_node(const char *name)
+#define existing_tmpobj_node(name) _existing_tmpobj_node(QSP_ARG  name)
+
+static Node *_existing_tmpobj_node(QSP_ARG_DECL  const char *name)
 {
 	Node *np;
 	Data_Obj *dp;
@@ -466,7 +468,7 @@ static Node *existing_tmpobj_node(const char *name)
 	while(np!=NULL){
 		dp = (Data_Obj *)NODE_DATA(np);
 		if( OBJ_NAME(dp)==NULL ) {
-			NERROR1("existing_tmpobj_node:  null object!?");
+			error1("existing_tmpobj_node:  null object!?");
 			return NULL; // NOTREACHED - silence static analyzer
 		}
 		if( !strcmp(OBJ_NAME(dp),name) )

@@ -26,10 +26,13 @@ extern COMMAND_FUNC( do_end_dl );
 
 extern void info_dl(QSP_ARG_DECL  Display_List *);
 extern void dump_dl(Display_List *);
-extern void call_dl(Display_List *);
+extern void _call_dl(QSP_ARG_DECL  Display_List *);
+#define call_dl(dlp) _call_dl(QSP_ARG dlp)
 
 extern void new_display_list(QSP_ARG_DECL  const char *name);
-extern void end_dl(void);
+extern void _end_dl(SINGLE_QSP_ARG_DECL);
+#define end_dl() _end_dl(SINGLE_QSP_ARG)
+
 extern void delete_dl(QSP_ARG_DECL  Display_List *dlp);
 
 extern double display_list_exists(QSP_ARG_DECL  const char *name);

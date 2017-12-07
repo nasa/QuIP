@@ -1338,7 +1338,7 @@ static COMMAND_FUNC( do_load )
 			prt_msg("");
 		s=NAMEOF("hex file line");
 		problems=load_hex_line(s);
-		lookahead_til(QSP_ARG  l-1);
+		lookahead_til(l-1);
 	}
 	prt_msg("");
 	/* fp is closed automatically when it is popped */
@@ -1369,7 +1369,7 @@ static COMMAND_FUNC( do_verify )
 			prt_msg("");
 		s=NAMEOF("hex file line");
 		verify_hex_line(s);
-		lookahead_til(QSP_ARG  l-1);
+		lookahead_til(l-1);
 	}
 	prt_msg("");
 	/* fp is closed automatically when it is popped */

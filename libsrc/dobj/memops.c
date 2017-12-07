@@ -122,7 +122,9 @@ static double equate_value;
 			ptr += inc;					\
 		}
 
-static void fast_equate( Data_Obj *dp )
+#define fast_equate(dp ) _fast_equate(QSP_ARG  dp )
+
+static inline void _fast_equate(QSP_ARG_DECL  Data_Obj *dp )
 {
 	u_long i;
 	u_long n;
@@ -133,8 +135,8 @@ static void fast_equate( Data_Obj *dp )
 
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(DEFAULT_ERROR_STRING,"fast_equate %s",OBJ_NAME(dp));
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"fast_equate %s",OBJ_NAME(dp));
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -154,7 +156,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		EQUATE_IT( long )
 	} else if( OBJ_PREC(dp) == PREC_UDI ){
 		EQUATE_IT( u_long )
-	} else NWARN("fast_equate:  unsupported pixel type");
+	} else warn("fast_equate:  unsupported pixel type");
 }
 
 void _dp_equate( QSP_ARG_DECL  Data_Obj *dp, double v )
@@ -165,19 +167,21 @@ void _dp_equate( QSP_ARG_DECL  Data_Obj *dp, double v )
 
 	set_max_vectorizable(N_DIMENSIONS-1);     /* default: vectorize over all */
 	check_vectorization(dp);
-	dp1_vectorize((int)(N_DIMENSIONS-1),dp,fast_equate);
+	dp1_vectorize((int)(N_DIMENSIONS-1),dp,_fast_equate);
 }
 
 /* this version works for contiguous objects only */
 
-static void contig_copy( Data_Obj *dp_to, Data_Obj *dp_fr )
+#define contig_copy(dp_to,dp_fr) _contig_copy(QSP_ARG  dp_to, dp_fr )
+
+static void _contig_copy(QSP_ARG_DECL  Data_Obj *dp_to, Data_Obj *dp_fr )
 {
 	u_long nb;
 
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(DEFAULT_ERROR_STRING,"contig_copy:  %s  %s",OBJ_NAME(dp_to),OBJ_NAME(dp_fr));
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"contig_copy:  %s  %s",OBJ_NAME(dp_to),OBJ_NAME(dp_fr));
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -199,7 +203,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		memcpy(OBJ_DATA_PTR(dp_to),OBJ_DATA_PTR(dp_fr),(int)nb);
 	else
 		/* BUG should go ahead and copy blocks... */
-		NWARN("Sorry, can't copy large blocks");
+		warn("Sorry, can't copy large blocks");
 #endif /* PC */
 	return;
 }
@@ -217,7 +221,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 			pfr += fr_inc;					\
 		}
 
-static void fast_copy( Data_Obj *dp_to, Data_Obj *dp_fr )
+static void _fast_copy(QSP_ARG_DECL  Data_Obj *dp_to, Data_Obj *dp_fr )
 {
 	u_long i;
 	long to_inc,fr_inc;
@@ -230,8 +234,8 @@ static void fast_copy( Data_Obj *dp_to, Data_Obj *dp_fr )
 
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(DEFAULT_ERROR_STRING,"fast_copy:  %s  %s",OBJ_NAME(dp_to),OBJ_NAME(dp_fr));
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"fast_copy:  %s  %s",OBJ_NAME(dp_to),OBJ_NAME(dp_fr));
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -244,9 +248,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(DEFAULT_ERROR_STRING,"fast_copy'ing %s (inc %ld) to %s (inc %ld)",
+sprintf(ERROR_STRING,"fast_copy'ing %s (inc %ld) to %s (inc %ld)",
 OBJ_NAME(dp_fr),fr_inc,OBJ_NAME(dp_to),to_inc);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif
 
@@ -280,7 +284,7 @@ void _dp_copy( QSP_ARG_DECL  Data_Obj *dp_to, Data_Obj *dp_fr )
 		set_max_vectorizable(N_DIMENSIONS-1);     /* default: vectorize over all */
 		check_vectorization(dp_to);
 		check_vectorization(dp_fr);
-		dp2_vectorize(N_DIMENSIONS-1,dp_to,dp_fr,fast_copy);
+		dp2_vectorize(N_DIMENSIONS-1,dp_to,dp_fr,_fast_copy);
 	}
 }
 
@@ -288,7 +292,7 @@ void _dp_copy( QSP_ARG_DECL  Data_Obj *dp_to, Data_Obj *dp_fr )
 
 static int _imin,_imax;
 
-static void fast_rand( Data_Obj *dp )
+static void _fast_rand( QSP_ARG_DECL  Data_Obj *dp )
 {
 	u_long i;
 	u_char *cp;
@@ -321,10 +325,10 @@ void _i_rnd( QSP_ARG_DECL  Data_Obj *dp, int imin, int imax )
 
 	set_max_vectorizable(N_DIMENSIONS-1);     /* default: vectorize over all */
 	check_vectorization(dp);
-	dp1_vectorize(N_DIMENSIONS-1,dp,fast_rand);
+	dp1_vectorize(N_DIMENSIONS-1,dp,_fast_rand);
 }
 
-static void fast_uni( Data_Obj *dp )
+static inline void _fast_uni( QSP_ARG_DECL  Data_Obj *dp )
 {
 #ifdef HAVE_DRAND48
 	u_long i;
@@ -343,7 +347,7 @@ static void fast_uni( Data_Obj *dp )
 		fptr += inc;
 	}
 #else
-	NERROR1("Sorry, no implementation of drand48() on this configuration...");
+	error1("Sorry, no implementation of drand48() on this configuration...");
 #endif
 
 }
@@ -364,7 +368,7 @@ void _dp_uni( QSP_ARG_DECL  Data_Obj *dp )
 
 	set_max_vectorizable(N_DIMENSIONS-1);     /* default: vectorize over all */
 	check_vectorization(dp);
-	dp1_vectorize(N_DIMENSIONS-1,dp,fast_uni);
+	dp1_vectorize(N_DIMENSIONS-1,dp,_fast_uni);
 }
 
 
@@ -585,7 +589,7 @@ advise(ERROR_STRING);
  * does one frame; vectorize(wtp,3) will do the sequence
  */
 
-void _dp2_vectorize(QSP_ARG_DECL  int level,Data_Obj *dpto,Data_Obj *dpfr,void (*dp_func)(Data_Obj *,Data_Obj *) )
+void _dp2_vectorize(QSP_ARG_DECL  int level,Data_Obj *dpto,Data_Obj *dpfr,void (*dp_func)(QSP_ARG_DECL  Data_Obj *,Data_Obj *) )
 {
 
 #ifdef QUIP_DEBUG
@@ -596,7 +600,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	if( level == max_vectorizable() ){
-		(*dp_func)(dpto,dpfr);
+		(*dp_func)(QSP_ARG  dpto,dpfr);
 	} else if(OBJ_TYPE_DIM(dpto,level)==1){
 		dp2_vectorize(level-1,dpto,dpfr,dp_func);
 	} else {
@@ -633,7 +637,7 @@ advise(ERROR_STRING);
 // dp1_vectorize applies a function to an object (if level == max_vectorizable),
 // or applies the function to an array of indexed subobjects (possibly recursively)...
 
-void _dp1_vectorize(QSP_ARG_DECL  int level,Data_Obj *dp,void (*dp_func)(Data_Obj *))
+void _dp1_vectorize(QSP_ARG_DECL  int level,Data_Obj *dp,void (*dp_func)(QSP_ARG_DECL  Data_Obj *))
 {
 
 #ifdef QUIP_DEBUG
@@ -644,7 +648,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	if( level == max_vectorizable() ){
-		(*dp_func)(dp);
+		(*dp_func)(QSP_ARG  dp);
 	} else if(OBJ_TYPE_DIM(dp,level)==1){
 		dp1_vectorize(level-1,dp,dp_func);
 	} else {

@@ -24,8 +24,12 @@ char VersionId_inc_seq[] = QUIP_VERSION_STRING;
 //#define PICK_SEQ(p)	pick_mviseq(QSP_ARG  p)
 
 extern void	load_seq_module(Seq_Module *smp);
-extern int	init_show_seq(Seq *);
-extern void	wait_show_seq(void);
+extern int	_init_show_seq(QSP_ARG_DECL  Seq *);
+#define init_show_seq(sp) _init_show_seq(QSP_ARG  sp)
+
+extern void	_wait_show_seq(SINGLE_QSP_ARG_DECL);
+#define wait_show_seq() _wait_show_seq(SINGLE_QSP_ARG)
+
 extern void	init_movie_sequences(SINGLE_QSP_ARG_DECL);
 
 //extern int	yylex(void);
@@ -33,8 +37,12 @@ extern void	init_movie_sequences(SINGLE_QSP_ARG_DECL);
 extern void	seqinit(void);
 extern Seq *	defseq(QSP_ARG_DECL  const char *name,const char *seqstr);
 //extern void	delseq(QSP_ARG_DECL  Seq *sp);
-extern void	evalseq(Seq *seqptr);
-extern void	reverse_eval(Seq *seqptr);
+extern void	_evalseq(QSP_ARG_DECL  Seq *seqptr);
+#define evalseq(seqptr) _evalseq(QSP_ARG  seqptr)
+
+extern void	_reverse_eval(QSP_ARG_DECL  Seq *seqptr);
+#define reverse_eval(seqptr) _reverse_eval(QSP_ARG  seqptr)
+
 extern void	setrefn(int n);
 
 /* seqprint.c */

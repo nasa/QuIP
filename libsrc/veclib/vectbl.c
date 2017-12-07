@@ -381,7 +381,7 @@ int check_vfa_tbl_size(QSP_ARG_DECL  Vec_Func_Array vfa_tbl[], int size)
 	return 0;
 }
 
-void check_vfa_tbl(QSP_ARG_DECL  Vec_Func_Array *vfa_tbl, int size)
+void _check_vfa_tbl(QSP_ARG_DECL  Vec_Func_Array *vfa_tbl, int size)
 {
 	int i;
 //	int retval=0;

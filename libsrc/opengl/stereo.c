@@ -16,6 +16,7 @@
 #include "quip_prot.h"
 #include "query_stack.h"
 #include "glut_supp.h"
+#include "gl_viewer.h"
 
 #include "nvstusb.h"
 
@@ -200,7 +201,7 @@ static COMMAND_FUNC( swap_stereo )
 
 #ifdef HAVE_LIBUSB
 	// image for current eye should have been drawn already...
-	nvstusb_swap(nv_ctx, (nvstusb_eye) current_eye, /*glutSwapBuffers*/ swap_buffers );
+	nvstusb_swap(nv_ctx, (nvstusb_eye) current_eye, /*glutSwapBuffers*/ _swap_buffers );
 	current_eye = (current_eye + 1) % 2;
 
 	read_emitter();	// they say we have to do this...

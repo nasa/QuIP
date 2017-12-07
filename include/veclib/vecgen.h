@@ -383,8 +383,9 @@ struct vector_function;
 // A vector arg used to just have a length and a stride, but now
 // with gpu's we have three-dimensional lengths.  But in principle
 // there's no reason why we couldn't have full shapes passed...
-#define LINK_FUNC_ARGS		VFCODE_ARG  vap
-#define LINK_FUNC_ARG_DECLS	VFCODE_ARG_DECL  const Vector_Args *vap
+// BUG these are also defined in vecgen.m4!?!?
+#define LINK_FUNC_ARGS		QSP_ARG  VFCODE_ARG  vap
+#define LINK_FUNC_ARG_DECLS	QSP_ARG_DECL  VFCODE_ARG_DECL  const Vector_Args *vap
 
 
 typedef struct vec_func_array {
@@ -395,7 +396,8 @@ typedef struct vec_func_array {
 
 extern Vec_Func_Array vl2_vfa_tbl[];	// BUG put in platform-specific file
 
-extern void check_vfa_tbl(QSP_ARG_DECL  Vec_Func_Array vfa_tbl[], int size );
+extern void _check_vfa_tbl(QSP_ARG_DECL  Vec_Func_Array vfa_tbl[], int size );
+#define check_vfa_tbl(vfa_tbl, size ) _check_vfa_tbl(QSP_ARG  vfa_tbl, size )
 
 // BUG - these should be part of the platform code?
 extern void check_vl2_vfa_tbl(SINGLE_QSP_ARG_DECL);

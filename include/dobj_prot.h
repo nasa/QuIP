@@ -49,7 +49,9 @@ extern void		show_space_used(QSP_ARG_DECL  Data_Obj * dp);
 extern void		dobj_iterate(Data_Obj * dp,void (*func)(Data_Obj * ,uint32_t));
 extern void		dpair_iterate(QSP_ARG_DECL  Data_Obj * dp,Data_Obj * dp2,
 				void (*func)(QSP_ARG_DECL  Data_Obj * ,uint32_t,Data_Obj * ,uint32_t));
-extern void		gen_xpose(Data_Obj * dp,int dim1,int dim2);
+extern void		_gen_xpose(QSP_ARG_DECL  Data_Obj * dp,int dim1,int dim2);
+#define gen_xpose(dp,dim1,dim2) _gen_xpose(QSP_ARG  dp,dim1,dim2)
+
 extern double		get_dobj_size(QSP_ARG_DECL  Data_Obj * dp,int index);
 extern const char *	get_dobj_prec_name(QSP_ARG_DECL  Data_Obj * dp);
 extern double		get_dobj_il_flg(QSP_ARG_DECL  Data_Obj * dp);
@@ -256,8 +258,8 @@ extern void mxpose(Data_Obj *dp_to, Data_Obj *dp_fr);
 
 extern int _not_prec(QSP_ARG_DECL  Data_Obj *,prec_t);
 extern void _check_vectorization(QSP_ARG_DECL  Data_Obj *dp);
-extern void _dp1_vectorize(QSP_ARG_DECL  int,Data_Obj *,void (*func)(Data_Obj *) );
-extern void _dp2_vectorize(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *, void (*func)(Data_Obj *,Data_Obj *) );
+extern void _dp1_vectorize(QSP_ARG_DECL  int,Data_Obj *,void (*func)(QSP_ARG_DECL  Data_Obj *) );
+extern void _dp2_vectorize(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *, void (*func)(QSP_ARG_DECL  Data_Obj *,Data_Obj *) );
 extern void _getmean(QSP_ARG_DECL  Data_Obj *dp);
 extern void _dp_equate(QSP_ARG_DECL  Data_Obj *dp, double v);
 extern void _dp_copy(QSP_ARG_DECL  Data_Obj *dp_to, Data_Obj *dp_fr);

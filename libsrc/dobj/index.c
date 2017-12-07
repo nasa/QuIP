@@ -45,8 +45,8 @@ Data_Obj * _index_data( QSP_ARG_DECL  Data_Obj *dp, const char *index_str )
 next_index:
 
 	if( *cp != '[' && *cp != '{' ){
-		sprintf(DEFAULT_ERROR_STRING,"bad index delimiter \"%s\"",index_str);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"bad index delimiter \"%s\"",index_str);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 	left_delim = *cp;
@@ -72,8 +72,8 @@ next_index:
 		str[i++]=(*cp++);
 	}
 	if( *cp != right_delim ){
-		sprintf(DEFAULT_ERROR_STRING,"missing index delimiter '%c'",right_delim);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"missing index delimiter '%c'",right_delim);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 	cp++;

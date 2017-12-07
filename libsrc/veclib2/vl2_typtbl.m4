@@ -65,7 +65,7 @@ void check_vl2_vfa_tbl(SINGLE_QSP_ARG_DECL)
 //		return -1;
 	}
 	assert( N_VL2_ARRAYED_VEC_FUNCS <= N_VEC_FUNCS );
-	check_vfa_tbl(QSP_ARG  vl2_vfa_tbl, N_VL2_ARRAYED_VEC_FUNCS);
+	check_vfa_tbl(vl2_vfa_tbl, N_VL2_ARRAYED_VEC_FUNCS);
 	assert( N_VL2_ARRAYED_VEC_FUNCS == N_VEC_FUNCS );
 }
 
