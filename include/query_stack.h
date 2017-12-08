@@ -123,6 +123,19 @@ struct mouthful {
 #define DBL_QUOTE	'"'
 #define SGL_QUOTE	'\''
 
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+
+// when is this ever undefined???  BUG
+#ifndef PATH_MAX
+#ifndef _POSIX_PATH_MAX
+#define PATH_MAX	256
+#else
+#define PATH_MAX	_POSIX_PATH_MAX
+#endif /* POSIX_PATH_MAX */
+#endif /* ! PATH_MAX */
+
 // The retstr buffers are used to scan words out of input lines...
 // But sometimes one of these buffers can itself become the input;
 // The buffers need to be flagged as in use or not, rather than
@@ -184,6 +197,8 @@ struct query_stack {
 	Stack *		qs_menu_stack;
 
 	String_Buf *	qs_output_filename;
+
+	char		qs_pathname[PATH_MAX];
 
 	int		qs_fmt_code;
 	Stack *		qs_var_fmt_stack;
@@ -268,6 +283,8 @@ struct query_stack {
 		(qsp)->qs_output_filename = create_stringbuf(str);	\
 	else copy_string((qsp)->qs_output_filename,str);		\
 	}
+
+#define QS_PATHNAME(qsp)		(qsp)->qs_pathname
 
 /* query_stack flags - flag bits */
 #define QS_INITED		1	// 0x001

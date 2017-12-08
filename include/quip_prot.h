@@ -401,7 +401,8 @@ extern void rcfile( Query_Stack *qsp, char* progname );
 
 // pathnm.c
 extern void strip_fullpath(char **strp);
-extern const char *parent_directory_of(const char *pathname);
+extern const char *_parent_directory_of(QSP_ARG_DECL  const char *pathname);
+#define parent_directory_of(pathname) _parent_directory_of(QSP_ARG  pathname)
 
 // function.c ?
 extern void declare_functions(SINGLE_QSP_ARG_DECL);

@@ -17,7 +17,9 @@ GENERATED_SRCS=								\
 clean-local:
 	rm -rf $(GENERATED_SRCS)
 
-$(builddir)/cu2_utils_expanded.c:	$(LOCAL_M4FILES) $(srcdir)/_cu2_utils.c
+#	$(srcdir)/_cu2_utils.c
+
+$(builddir)/cu2_utils_expanded.c:	$(LOCAL_M4FILES)
 	m4 $(M4OPTS) < $(srcdir)/cu2_utils.m4 > $(builddir)/cu2_utils_expanded.c
 
 $(builddir)/cu2_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
@@ -238,6 +240,7 @@ INC_M4FILES=							\
 #			cu2_typtbl.h
 
 #			new_fill.cu
+#			_cu2_utils.c
 
 noinst_HEADERS =					\
 			$(LOCAL_M4FILES)		\
@@ -245,7 +248,6 @@ noinst_HEADERS =					\
 			cu2_fill.cu			\
 			cu2_func_tbl.h			\
 			cu2.c				\
-			_cu2_utils.c			\
 			m4_cu2_veclib.c
 
 if HAVE_NVCC

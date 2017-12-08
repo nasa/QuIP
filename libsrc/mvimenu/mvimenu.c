@@ -87,13 +87,15 @@ List *movie_list(SINGLE_QSP_ARG_DECL)
 	return(item_list(mvi_itp));
 }
 
-int movie_ok(void)
+#define movie_ok() _movie_ok(SINGLE_QSP_ARG)
+
+static inline int _movie_ok(SINGLE_QSP_ARG_DECL)
 {
 	if( the_mmp == NULL ){
-		NWARN("No movie module loaded");
-		return(0);
+		warn("No movie module loaded");
+		return 0;
 	}
-	return(1);
+	return 1;
 }
 
 
@@ -218,12 +220,12 @@ if( debug & mvi_debug ) advise("calling movie open_func");
 	}
 	if( mvip == NULL ){
 		sprintf(ERROR_STRING,"No movie \"%s\"",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(mvip);
 	}
 
 	if( IS_ASSEMBLING(mvip) ){
-		WARN("can't play a movie that is being assembled");
+		warn("can't play a movie that is being assembled");
 		return(NULL);
 	}
 
@@ -330,12 +332,12 @@ static int is_ready_to_play(QSP_ARG_DECL  Movie *mvip)
 
 #ifdef CAUTIOUS
 	if( IS_RECORDING(mvip) ){
-		WARN("CAUTIOUS:  can't play a movie that is being recorded");
-		return(0);
+		warn("CAUTIOUS:  can't play a movie that is being recorded");
+		return 0;
 	}
 	if( IS_ASSEMBLING(mvip) ){
-		WARN("CAUTIOUS:  can't play a movie that is being assembled");
-		return(0);
+		warn("CAUTIOUS:  can't play a movie that is being assembled");
+		return 0;
 	}
 #endif /* CAUTIOUS */
 
@@ -345,12 +347,12 @@ if( debug & mvi_debug ) advise("calling movie setup_play_func");
 #endif /* QUIP_DEBUG */
 
 	if( (*the_mmp->setup_play_func)(QSP_ARG  mvip) < 0 )	/* device specific */
-		return(0);
+		return 0;
 	
 	/* remember the time this movie was played */
 	SET_MOVIE_TIME(mvip, time((time_t *)NULL) );
 
-	return(1);
+	return 1;
 }
 
 static COMMAND_FUNC( do_shuttle )
@@ -366,7 +368,7 @@ static COMMAND_FUNC( do_shuttle )
 	if( frame < 0 || frame >= (incr_t) MOVIE_FRAMES(mvip) ){
 		sprintf(ERROR_STRING,"Frame index %d out of range for movie %s",
 			frame,MOVIE_NAME(mvip));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -380,14 +382,14 @@ static COMMAND_FUNC( do_shuttle )
 static int obj_prec_ok(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( OBJ_PREC(dp) != PREC_BY && OBJ_PREC(dp) != PREC_UBY ){
-		WARN("movie frame/field precision should be byte or u_byte");
-		return(0);
+		warn("movie frame/field precision should be byte or u_byte");
+		return 0;
 	}
 	if( OBJ_COMPS(dp) != 4 ){
-		WARN("movie frame/field objects should have 4 components");
-		return(0);
+		warn("movie frame/field objects should have 4 components");
+		return 0;
 	}
-	return(1);
+	return 1;
 }
 
 /* There is some confusion about what this should do, i.e., frames
@@ -417,7 +419,7 @@ static COMMAND_FUNC( do_getframe )
 		sprintf(ERROR_STRING,
 			"frame index %d out of range for movie %s",
 			frame,MOVIE_NAME(mvip));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( OBJ_ROWS(dp) != MOVIE_HEIGHT(mvip) ||
@@ -425,7 +427,7 @@ static COMMAND_FUNC( do_getframe )
 		sprintf(ERROR_STRING,
 			"frame size mismatch between image %s and movie %s",
 			OBJ_NAME(dp),MOVIE_NAME(mvip));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		sprintf(ERROR_STRING,"image %s is %d x %d, movie %s is %d x %d",
 			OBJ_NAME(dp),OBJ_ROWS(dp),OBJ_COLS(dp),
 			MOVIE_NAME(mvip),MOVIE_HEIGHT(mvip),MOVIE_WIDTH(mvip));
@@ -462,7 +464,7 @@ static COMMAND_FUNC( do_getframec )
 		sprintf(ERROR_STRING,
 			"frame index %d out of range for movie %s",
 			frame,MOVIE_NAME(mvip));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( OBJ_ROWS(dp) != MOVIE_HEIGHT(mvip) ||
@@ -470,7 +472,7 @@ static COMMAND_FUNC( do_getframec )
 		sprintf(ERROR_STRING,
 			"frame size mismatch between image %s and movie %s",
 			OBJ_NAME(dp),MOVIE_NAME(mvip));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		sprintf(ERROR_STRING,"image %s is %d x %d, movie %s is %d x %d",
 			OBJ_NAME(dp),OBJ_ROWS(dp),OBJ_COLS(dp),
 			MOVIE_NAME(mvip),MOVIE_HEIGHT(mvip),MOVIE_WIDTH(mvip));
@@ -505,7 +507,7 @@ static COMMAND_FUNC( do_getfields )
 		sprintf(ERROR_STRING,
 			"field index %d out of range for movie %s",
 			field,MOVIE_NAME(mvip));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( OBJ_ROWS(dp) != MOVIE_HEIGHT(mvip)/2 ||
@@ -513,7 +515,7 @@ static COMMAND_FUNC( do_getfields )
 		sprintf(ERROR_STRING,
 			"field size mismatch between image %s and movie %s",
 			OBJ_NAME(dp),MOVIE_NAME(mvip));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		sprintf(ERROR_STRING,
 		"image %s is %d x %d, movie %s field size is %d x %d",
 			OBJ_NAME(dp),OBJ_ROWS(dp),OBJ_COLS(dp),
@@ -549,7 +551,7 @@ static COMMAND_FUNC( do_getfieldc )
 		sprintf(ERROR_STRING,
 			"field index %d out of range for movie %s",
 			field,MOVIE_NAME(mvip));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( OBJ_ROWS(dp) != MOVIE_HEIGHT(mvip)/2 ||
@@ -557,7 +559,7 @@ static COMMAND_FUNC( do_getfieldc )
 		sprintf(ERROR_STRING,
 			"field size mismatch between image %s and movie %s",
 			OBJ_NAME(dp),MOVIE_NAME(mvip));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		sprintf(ERROR_STRING,
 		"image %s is %d x %d, movie %s field size is %d x %d",
 			OBJ_NAME(dp),OBJ_ROWS(dp),OBJ_COLS(dp),
@@ -580,7 +582,7 @@ static COMMAND_FUNC( do_del_mvi )
 	if( mvip == NULL ) return;
 
 	if( IS_ASSEMBLING(mvip) ){
-		WARN("can't delete a movie which is being assembled");
+		warn("can't delete a movie which is being assembled");
 		return;
 	}
 	close_movie(QSP_ARG  mvip);
@@ -646,7 +648,7 @@ static COMMAND_FUNC( do_set_nrefresh )
 	if( n > 0 )
 		n_refresh=n;
 	else
-		WARN("refresh cound must be positive");
+		warn("refresh cound must be positive");
 }
 
 static COMMAND_FUNC( do_set_mvidir )
@@ -668,14 +670,14 @@ static void set_mvidir(QSP_ARG_DECL  const char *dirname)
 	if( stat(dirname,&statb) < 0 ){
 		tell_sys_error(dirname);
 		sprintf(ERROR_STRING,"Couldn't set movie directory to %s",dirname);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( ! S_ISDIR(statb.st_mode) ){
 		sprintf(ERROR_STRING,
 			"%s is not a directory",dirname);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -752,7 +754,7 @@ static COMMAND_FUNC( do_end_movie )
 
 	if( ! IS_ASSEMBLING(mvip) ){
 		sprintf(ERROR_STRING,"Movie \"%s\" is not being assembled",MOVIE_NAME(mvip));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -843,7 +845,7 @@ if( debug & mvi_debug ) advise("calling movie device menu");
 static COMMAND_FUNC( report_mm )
 {
 	if( the_mmp == NULL )
-		WARN("No movie module loaded");
+		warn("No movie module loaded");
 	else {
 		sprintf(msg_str,"Current movie module:  %s",the_mmp->mm_name);
 		prt_msg(msg_str);
@@ -878,8 +880,8 @@ static double get_mvi_size(QSP_ARG_DECL  Item *ip,int index)
 		case 2: d=MOVIE_HEIGHT(mvip); break;
 		case 3: d=MOVIE_FRAMES(mvip); break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,"Unsupported movie size function, index %d",index);
-			NWARN(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"Unsupported movie size function, index %d",index);
+			warn(ERROR_STRING);
 			d=1.0;
 			break;
 	}

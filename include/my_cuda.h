@@ -48,8 +48,6 @@ extern "C" {
 
 #include <cuda_runtime_api.h>
 
-extern const char* getCUFFTError(cufftResult status);
-
 #else // ! HAVE_CUDA
 
 #define NO_CUDA_MSG(whence)					\

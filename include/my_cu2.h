@@ -80,7 +80,8 @@ extern void insure_cu2_device( QSP_ARG_DECL   Data_Obj *dp );
 
 // whence?
 #ifdef HAVE_CUDA
-extern const char* getCUFFTError(cufftResult status);
+extern const char* _getCUFFTError(QSP_ARG_DECL  cufftResult status);
+#define getCUFFTError(status) _getCUFFTError(QSP_ARG  status)
 #endif // HAVE_CUDA
 
 extern void insure_cuda_device( Data_Obj *dp );

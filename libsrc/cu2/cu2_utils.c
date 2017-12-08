@@ -112,7 +112,7 @@ COMMAND_FUNC( do_cu2_dev_info  )
 	if( pdp == NULL ) return;
 
 	//print_cudev_info_short(QSP_ARG  pdp);
-	WARN("do_cudev_info not implemented!?");
+	warn("do_cudev_info not implemented!?");
 }
 */
 
@@ -134,7 +134,7 @@ void cu2_init_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_dev_memory:  error creating global data area %s",dname);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	// g++ won't take this line!?
 //fprintf(stderr,"initializing data areas for device %s\n",
@@ -210,19 +210,19 @@ void cu2_shutdown(void)
 	ret = clReleaseCommandQueue(command_queue);
 	ret = clReleaseContext(context);
 	*/
-	NWARN("shutdown_cu2_platform NOT implemented!?");
+	warn("shutdown_cu2_platform NOT implemented!?");
 
 	// Need to iterate over all devices...
 }
 
 void cu2_alloc_data(QSP_ARG_DECL  Data_Obj *dp, dimension_t size)
 {
-	WARN("cu2_alloc_data not implemented!?");
+	warn("cu2_alloc_data not implemented!?");
 }
 
 void cu2_sync(SINGLE_QSP_ARG_DECL)
 {
-	WARN("sync_cu2:  not implemented!?");
+	warn("sync_cu2:  not implemented!?");
 }
 #endif // FOOBAR
 
@@ -234,15 +234,15 @@ void cu2_set_device( QSP_ARG_DECL  Platform_Device *pdp )
 #endif // HAVE_CUDA
 
 	if( curr_pdp == pdp ){
-		sprintf(DEFAULT_ERROR_STRING,"%s:  current device is already %s!?",
+		sprintf(ERROR_STRING,"%s:  current device is already %s!?",
 			STRINGIFY(h_cu2_set_device),PFDEV_NAME(pdp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( PFDEV_PLATFORM_TYPE(pdp) != PLATFORM_CUDA ){
 		sprintf(ERROR_STRING,"%s:  device %s is not a CUDA device!?",
 			STRINGIFY(h_cu2_set_device),PFDEV_NAME(pdp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -267,9 +267,9 @@ void insure_cu2_device( QSP_ARG_DECL  Data_Obj *dp )
 	Platform_Device *pdp;
 
 	if( AREA_FLAGS(OBJ_AREA(dp)) & DA_RAM ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"insure_cu2_device:  Object %s is a host RAM object!?",OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -277,13 +277,13 @@ void insure_cu2_device( QSP_ARG_DECL  Data_Obj *dp )
 	assert( pdp != NULL );
 
 	if( curr_pdp != pdp ){
-sprintf(DEFAULT_ERROR_STRING,"insure_cu2_device:  curr_pdp = 0x%"PRIxPTR"  pdp = 0x%"PRIxPTR,
+sprintf(ERROR_STRING,"insure_cu2_device:  curr_pdp = 0x%"PRIxPTR"  pdp = 0x%"PRIxPTR,
 (uintptr_t)curr_pdp,(uintptr_t)pdp);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 
-sprintf(DEFAULT_ERROR_STRING,"insure_cu2_device:  current device is %s, want %s",
+sprintf(ERROR_STRING,"insure_cu2_device:  current device is %s, want %s",
 PFDEV_NAME(curr_pdp),PFDEV_NAME(pdp));
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 		cu2_set_device(QSP_ARG  pdp);
 	}
 
@@ -300,7 +300,7 @@ void *_cu2_tmp_vec (QSP_ARG_DECL  Platform_Device *pdp, size_t size,size_t len,c
 	if( drv_err != cudaSuccess ){
 		sprintf(DEFAULT_MSG_STR,"tmpvec (%s)",whence);
 		describe_cuda_driver_error2(DEFAULT_MSG_STR,"cudaMalloc",drv_err);
-		NERROR1("CUDA memory allocation error");
+		error1("CUDA memory allocation error");
 	}
 
 //sprintf(ERROR_STRING,"tmpvec:  %d bytes allocated at 0x%"PRIxPTR,len,(uintptr_t)cuda_mem);
@@ -347,14 +347,14 @@ static void init_cu2_ckpts(int n)
 	int i;
 
 	if( max_cu2_ckpts > 0 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "init_cu2_ckpts (%d):  already initialized with %d checpoints",
 			n,max_cu2_ckpts);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	ckpt_tbl = (Cuda_Checkpoint *) getbuf( n * sizeof(*ckpt_tbl) );
-	if( ckpt_tbl == NULL ) NERROR1("failed to allocate checkpoint table");
+	if( ckpt_tbl == NULL ) error1("failed to allocate checkpoint table");
 
 	max_cu2_ckpts = n;
 
@@ -363,7 +363,7 @@ static void init_cu2_ckpts(int n)
 		if( drv_err != cudaSuccess ){
 			describe_cuda_driver_error2("init_cu2_ckpts",
 				"cudaEventCreate",drv_err);
-			NERROR1("failed to initialize checkpoint table");
+			error1("failed to initialize checkpoint table");
 		}
 		ckpt_tbl[i].ckpt_tag=NULL;
 	}
@@ -390,7 +390,7 @@ COMMAND_FUNC( do_cu2_set_ckpt  )
 	s = NAMEOF("tag for this checkpoint");
 
 	if( max_cu2_ckpts == 0 ){
-		NWARN("do_place_ckpt:  checkpoint table not initialized, setting to default size");
+		warn("do_place_ckpt:  checkpoint table not initialized, setting to default size");
 		init_cu2_ckpts(256);
 	}
 
@@ -398,7 +398,7 @@ COMMAND_FUNC( do_cu2_set_ckpt  )
 		sprintf(ERROR_STRING,
 	"do_place_ckpt:  Sorry, all %d checkpoints have already been placed",
 			max_cu2_ckpts);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -420,7 +420,7 @@ COMMAND_FUNC( do_cu2_show_ckpts  )
 	int i;
 
 	if( n_cu2_ckpts <= 0 ){
-		NWARN("do_show_cu2_ckpts:  no checkpoints placed!?");
+		warn("do_show_cu2_ckpts:  no checkpoints placed!?");
 		return;
 	}
 

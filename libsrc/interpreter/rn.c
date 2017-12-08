@@ -63,11 +63,8 @@ u_long rn( u_long max ) /** returns a number between 0 and max (inclusive) */
 	if( n > max ) n = (int)max;
 
 #else
-	NWARN("rn.c:  No random number function found on this system by configure!?");
+	NERROR1("rn.c:  No random number function found on this system by configure!?");
 #endif /* DRAND48, RANDOM */
-
-//sprintf(ERROR_STRING,"rn( %ld ) returning %ld",max,n);
-//NADVISE(ERROR_STRING);
 
 	return(n);
 }

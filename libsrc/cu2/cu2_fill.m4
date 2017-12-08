@@ -77,7 +77,7 @@ dnl	 CHECK_CUDA_RETURN_VAL(msg)
 
 define(`CHECK_CUDA_RETURN_VAL',`
 	if( e != cudaSuccess ){
-		NWARN($1);
+		warn($1);
 	}
 ')
 
@@ -309,7 +309,7 @@ dnl		/* Clear the flag */
 	}
 }
 
-void h_sp_ifl2( Data_Obj *dp, int seed_x, int seed_y, float tol, float fill_val )
+void h_sp_ifl2( QSP_ARG_DECL  Data_Obj *dp, int seed_x, int seed_y, float tol, float fill_val )
 {
 	BLOCK_VARS_DECLS
 	cudaError_t e;

@@ -13,8 +13,8 @@ define(`CUDA_CPX_FFT_BODY',`
 		OBJ_N_TYPE_ELTS( OA_DEST(oap) ),
 		CUFFT_C2C, 1 /* BATCH */ );	// why called batch?
 	if (status != CUFFT_SUCCESS) {
-		sprintf(DEFAULT_ERROR_STRING, "Error in cufftPlan1d: %s\\n", getCUFFTError(status));
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING, "Error in cufftPlan1d: %s\\n", getCUFFTError(status));
+		warn(ERROR_STRING);
 fprintf(stderr,"requested size:  %d\\n",OBJ_N_TYPE_ELTS(OA_DEST(oap)));
 		return;
 	}
@@ -23,8 +23,8 @@ fprintf(stderr,"cufft complex, direction %d\\n",$3);
 	status = $1(plan, ($2 *) OBJ_DATA_PTR( OA_SRC1(oap) ),
 			($2 *) OBJ_DATA_PTR( OA_DEST(oap) ), $3);
 	if (status != CUFFT_SUCCESS) {
-		sprintf(DEFAULT_ERROR_STRING, "Error in $1: %s\\n", getCUFFTError(status));
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING, "Error in $1: %s\\n", getCUFFTError(status));
+		warn(ERROR_STRING);
 	}
 
 	// BUG?  should we cache the plan?
@@ -43,16 +43,16 @@ define(`CUDA_REAL_FFT_BODY',`
 		/*OBJ_N_TYPE_ELTS( OA_DEST(oap) )*/ $5,
 		$2, 1 /* BATCH */ );	// why called batch?
 	if (status != CUFFT_SUCCESS) {
-		sprintf(DEFAULT_ERROR_STRING, "Error in cufftPlan1d: %s\\n", getCUFFTError(status));
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING, "Error in cufftPlan1d: %s\\n", getCUFFTError(status));
+		warn(ERROR_STRING);
 		return;
 	}
 
 	status = $1(plan, ($4 *) OBJ_DATA_PTR( OA_SRC1(oap) ),
 			($3 *) OBJ_DATA_PTR( OA_DEST(oap) ) );
 	if (status != CUFFT_SUCCESS) {
-		sprintf(DEFAULT_ERROR_STRING, "Error in $1: %s\\n", getCUFFTError(status));
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING, "Error in $1: %s\\n", getCUFFTError(status));
+		warn(ERROR_STRING);
 	}
 
 	// BUG?  should we cache the plan?
@@ -89,40 +89,40 @@ CUDA_REAL_FFT_BODY(cuda_real_ift_func,CUFFT_C2R,cuda_real_fft_type,cuda_cpx_fft_
 }
 
 dnl static void HOST_TYPED_CALL_NAME(rvfft,type_code)(HOST_CALL_ARG_DECLS)
-dnl { NWARN("HOST_TYPED_CALL_NAME(rvfft,type_code) not implemented!?"); }
+dnl { warn("HOST_TYPED_CALL_NAME(rvfft,type_code) not implemented!?"); }
 
 dnl static void HOST_TYPED_CALL_NAME(rvift,type_code)(HOST_CALL_ARG_DECLS)
-dnl { NWARN("HOST_TYPED_CALL_NAME(rvift,type_code) not implemented!?"); }
+dnl { warn("HOST_TYPED_CALL_NAME(rvift,type_code) not implemented!?"); }
 
 dnl static void HOST_TYPED_CALL_NAME(cvfft,type_code)(HOST_CALL_ARG_DECLS)
-dnl { NWARN("HOST_TYPED_CALL_NAME(cvfft,type_code) not implemented!?"); }
+dnl { warn("HOST_TYPED_CALL_NAME(cvfft,type_code) not implemented!?"); }
 
 dnl static void HOST_TYPED_CALL_NAME(cvift,type_code)(HOST_CALL_ARG_DECLS)
-dnl { NWARN("HOST_TYPED_CALL_NAME(cvift,type_code) not implemented!?"); }
+dnl { warn("HOST_TYPED_CALL_NAME(cvift,type_code) not implemented!?"); }
 
 static void HOST_TYPED_CALL_NAME(rfft2d,type_code)(HOST_CALL_ARG_DECLS)
-{ NWARN("HOST_TYPED_CALL_NAME(rfft2d,type_code) not implemented!?"); }
+{ warn("HOST_TYPED_CALL_NAME(rfft2d,type_code) not implemented!?"); }
 
 static void HOST_TYPED_CALL_NAME(rift2d,type_code)(HOST_CALL_ARG_DECLS)
-{ NWARN("HOST_TYPED_CALL_NAME(rift2d,type_code) not implemented!?"); }
+{ warn("HOST_TYPED_CALL_NAME(rift2d,type_code) not implemented!?"); }
 
 static void HOST_TYPED_CALL_NAME(cfft2d,type_code)(HOST_CALL_ARG_DECLS)
-{ NWARN("HOST_TYPED_CALL_NAME(cfft2d,type_code) not implemented!?"); }
+{ warn("HOST_TYPED_CALL_NAME(cfft2d,type_code) not implemented!?"); }
 
 static void HOST_TYPED_CALL_NAME(cift2d,type_code)(HOST_CALL_ARG_DECLS)
-{ NWARN("HOST_TYPED_CALL_NAME(cift2d,type_code) not implemented!?"); }
+{ warn("HOST_TYPED_CALL_NAME(cift2d,type_code) not implemented!?"); }
 
 static void HOST_TYPED_CALL_NAME(rfftrows,type_code)(HOST_CALL_ARG_DECLS)
-{ NWARN("HOST_TYPED_CALL_NAME(rfftrows,type_code) not implemented!?"); }
+{ warn("HOST_TYPED_CALL_NAME(rfftrows,type_code) not implemented!?"); }
 
 static void HOST_TYPED_CALL_NAME(riftrows,type_code)(HOST_CALL_ARG_DECLS)
-{ NWARN("HOST_TYPED_CALL_NAME(riftrows,type_code) not implemented!?"); }
+{ warn("HOST_TYPED_CALL_NAME(riftrows,type_code) not implemented!?"); }
 
 static void HOST_TYPED_CALL_NAME(cfftrows,type_code)(HOST_CALL_ARG_DECLS)
-{ NWARN("HOST_TYPED_CALL_NAME(cfftrows,type_code) not implemented!?"); }
+{ warn("HOST_TYPED_CALL_NAME(cfftrows,type_code) not implemented!?"); }
 
 static void HOST_TYPED_CALL_NAME(ciftrows,type_code)(HOST_CALL_ARG_DECLS)
-{ NWARN("HOST_TYPED_CALL_NAME(ciftrows,type_code) not implemented!?"); }
+{ warn("HOST_TYPED_CALL_NAME(ciftrows,type_code) not implemented!?"); }
 
 ') dnl endif ! BUILDING_KERNELS
 

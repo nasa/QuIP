@@ -6,24 +6,12 @@
 #include <string.h>
 #endif
 
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#endif
-
 #include "quip_prot.h"
+#include "query_stack.h"
 
-// when is this ever undefined???  BUG
-#ifndef PATH_MAX
-#ifndef _POSIX_PATH_MAX
-#define PATH_MAX	256
-#else
-#define PATH_MAX	_POSIX_PATH_MAX
-#endif /* POSIX_PATH_MAX */
-#endif /* ! PATH_MAX */
+#define parent_name	QS_PATHNAME(THIS_QSP)
 
-static char parent_name[PATH_MAX];
-
-const char *parent_directory_of(const char *pathname)
+const char *_parent_directory_of(QSP_ARG_DECL  const char *pathname)
 {
 	char *s;
 
@@ -37,9 +25,9 @@ const char *parent_directory_of(const char *pathname)
 	s+=strlen(parent_name)-1;		/* now points to last char */
 
 	if( *s == '/' ){
-		sprintf(DEFAULT_ERROR_STRING,"Pathname \"%s\" ends with a slash!?",
+		sprintf(ERROR_STRING,"Pathname \"%s\" ends with a slash!?",
 			pathname);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	while( s!=parent_name ){
 		if( *s == '/' ){

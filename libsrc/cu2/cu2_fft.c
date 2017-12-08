@@ -13,7 +13,7 @@
 #ifdef HAVE_CUDA
 //CUFFT
 //static const char* getCUFFTError(cufftResult_t status)
-const char* getCUFFTError(cufftResult status)
+const char* _getCUFFTError(QSP_ARG_DECL  cufftResult status)
 {
 	switch (status) {
 		case CUFFT_SUCCESS:
@@ -57,8 +57,8 @@ const char* getCUFFTError(cufftResult status)
 			return "License error";
 #endif
 	}
-	sprintf(DEFAULT_ERROR_STRING,"Unexpected CUFFT return value:  %d",status);
-	return(DEFAULT_ERROR_STRING);
+	sprintf(ERROR_STRING,"Unexpected CUFFT return value:  %d",status);
+	return(ERROR_STRING);
 }
 #endif // HAVE_CUDA
 // What precision is this?  assume single preciscion?
@@ -86,12 +86,12 @@ void g_cu2_vfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 	//cutilSafeCall(cudaMalloc(&result, sizeof(cufftComplex)*NX*BATCH));
 	drv_err = cudaMalloc(&data, sizeof(cufftComplex)*NX*BATCH);
 	if( drv_err != cudaSuccess ){
-		WARN("error allocating cuda data buffer for fft!?");
+		warn("error allocating cuda data buffer for fft!?");
 		return;
 	}
 	drv_err = cudaMalloc(&result, sizeof(cufftComplex)*NX*BATCH);
 	if( drv_err != cudaSuccess ){
-		WARN("error allocating cuda result buffer for fft!?");
+		warn("error allocating cuda result buffer for fft!?");
 		// BUG clean up previous malloc...
 		return;
 	}
@@ -100,7 +100,7 @@ void g_cu2_vfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 	status = cufftPlan1d(&plan, NX, CUFFT_C2C, BATCH);
 	if (status != CUFFT_SUCCESS) {
 		sprintf(ERROR_STRING, "Error in cufftPlan1d: %s\n", getCUFFTError(status));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	//Run forward fft on data
@@ -108,7 +108,7 @@ void g_cu2_vfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 			(cufftComplex *)result, CUFFT_FORWARD);
 	if (status != CUFFT_SUCCESS) {
 		sprintf(ERROR_STRING, "Error in cufftExecC2C: %s\n", getCUFFTError(status));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	//Run inverse fft on data
@@ -116,7 +116,7 @@ void g_cu2_vfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 	if (status != CUFFT_SUCCESS)
 	{
 		sprintf(ERROR_STRING, "Error in cufftExecC2C: %s\n", getCUFFTError(status));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}*/
 
 	//Free resources
@@ -126,13 +126,4 @@ void g_cu2_vfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 	NO_CUDA_MSG(g_fwdfft)
 #endif // ! HAVE_CUDA
 }
-
-#ifdef FOOBAR
-void h_cu2_fft2d( FFT_FUNC_ARG_DECLS ) { NERROR1("Sorry, h_cu2_fft2d not implemented!?"); }
-void h_cu2_ift2d( FFT_FUNC_ARG_DECLS ) { NERROR1("Sorry, h_cu2_ift2d not implemented!?"); }
-void h_cu2_fftrows( FFT_FUNC_ARG_DECLS ) { NERROR1("Sorry, h_cu2_fftrows not implemented!?"); }
-void h_cu2_iftrows( FFT_FUNC_ARG_DECLS ) { NERROR1("Sorry, h_cu2_iftrows not implemented!?"); }
-#endif // FOOBAR
-
-
 

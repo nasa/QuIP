@@ -17,7 +17,7 @@ include(`../../include/veclib/cu2_port.m4')
 #define INSURE_CURR_ODP(whence)					\
 	if( curr_pdp == NULL ){					\
 		sprintf(ERROR_STRING,"CAUTIOUS:  %s:  curr_pdp is null!?",#whence);	\
-		WARN(ERROR_STRING);				\
+		warn(ERROR_STRING);				\
 	}
 #else // ! CAUTIOUS
 #define INSURE_CURR_ODP(whence)
@@ -40,12 +40,12 @@ void PF_FUNC_NAME(shutdown)(void)
 
 void PF_FUNC_NAME(alloc_data)(QSP_ARG_DECL  Data_Obj *dp, dimension_t size)
 {
-	WARN("PF_FUNC_NAME(alloc_data) not implemented!?");
+	warn("PF_FUNC_NAME(alloc_data) not implemented!?");
 }
 
 void PF_FUNC_NAME(sync)(SINGLE_QSP_ARG_DECL)
 {
-	WARN("PF_FUNC_NAME(sync):  not implemented!?");
+	warn("PF_FUNC_NAME(sync):  not implemented!?");
 }
 
 void PF_FUNC_NAME(set_device)( QSP_ARG_DECL  Platform_Device *pdp )
@@ -63,7 +63,7 @@ void PF_FUNC_NAME(set_device)( QSP_ARG_DECL  Platform_Device *pdp )
 	if( PFDEV_PLATFORM_TYPE(pdp) != PLATFORM_CUDA ){
 		sprintf(ERROR_STRING,"%s:  device %s is not a CUDA device!?",
 			STRINGIFY(HOST_CALL_NAME(set_device)),PFDEV_NAME(pdp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -223,7 +223,7 @@ PF_COMMAND_FUNC( set_ckpt )
 		sprintf(ERROR_STRING,
 	"do_place_ckpt:  Sorry, all %d checkpoints have already been placed",
 			max_cu2_ckpts);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
