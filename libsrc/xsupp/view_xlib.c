@@ -1987,49 +1987,49 @@ void update_shm_viewer(Viewer *vp,char *src,int pinc,int cinc,int dx,int dy,int 
 void posn_viewer(Viewer *vp,int x,int y)
 { UNIMP_MSG(posn_viewer) }
 
-void show_viewer(QSP_ARG_DECL  Viewer *vp)
+void _show_viewer(QSP_ARG_DECL  Viewer *vp)
 { UNIMP_MSG(show_viewer) }
 
-void unshow_viewer(QSP_ARG_DECL  Viewer *vp)
+void _unshow_viewer(QSP_ARG_DECL  Viewer *vp)
 { UNIMP_MSG(unshow_viewer) }
 
-void extra_viewer_info(QSP_ARG_DECL  Viewer *vp)
+void _extra_viewer_info(QSP_ARG_DECL  Viewer *vp)
 { UNIMP_MSG(extra_viewer_info) }
 
 void zap_viewer(Viewer *vp)
 { UNIMP_MSG(zap_viewer) }
 
-int make_mousescape(QSP_ARG_DECL  Viewer *vp, int width, int height)
+int _make_mousescape(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
 	UNIMP_MSG(make_mousescape)
 	return -1;
 }
 
-int make_viewer(QSP_ARG_DECL  Viewer *vp, int width, int height)
+int _make_viewer(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
 	UNIMP_MSG(make_viewer)
 	return -1;
 }
 
-int make_button_arena(QSP_ARG_DECL  Viewer *vp, int width, int height)
+int _make_button_arena(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
 	UNIMP_MSG(make_button_arena)
 	return -1;
 }
 
-int make_2d_adjuster(QSP_ARG_DECL  Viewer *vp,int width,int height)
+int _make_2d_adjuster(QSP_ARG_DECL  Viewer *vp,int width,int height)
 {
 	UNIMP_MSG(make_2d_adjuster)
 	return -1;
 }
 
-int make_dragscape(QSP_ARG_DECL  Viewer *vp, int width, int height)
+int _make_dragscape(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
 	UNIMP_MSG(make_dragscape)
 	return -1;
 }
 
-int get_string_width(Viewer *vp, const char *s)
+int _get_string_width(QSP_ARG_DECL  Viewer *vp, const char *s)
 {
 	UNIMP_MSG(get_string_width)
 	return -1;
@@ -2038,10 +2038,10 @@ int get_string_width(Viewer *vp, const char *s)
 void _xp_arc(Viewer *vp,int xl,int yu,int w,int h,int a1,int a2)
 { UNIMP_MSG(_xp_arc) }
 
-void _xp_text(Viewer *vp,int x,int y,const char *s)
+void _xp_text(QSP_ARG_DECL  Viewer *vp,int x,int y,const char *s)
 { UNIMP_MSG(_xp_text) }
 
-void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2)
+void _xp_line(QSP_ARG_DECL  Viewer *vp,int x1,int y1,int x2,int y2)
 { UNIMP_MSG(_xp_line) }
 
 void _xp_linewidth(Viewer *vp,int w)
@@ -2059,43 +2059,43 @@ void _xp_fill_polygon(Viewer* vp, int num_points, int* px_vals, int* py_vals)
 void _xp_fill_arc(Viewer *vp,int xl,int yu,int w,int h,int a1,int a2)
 { UNIMP_MSG(_xp_fill_arc) }
 
-void _xp_erase(Viewer *vp)
+void _xp_erase(QSP_ARG_DECL  Viewer *vp)
 { UNIMP_MSG(_xp_erase) }
 
 void _xp_update(Viewer *vp)
 { UNIMP_MSG(_xp_update) }
 
-void _xp_select(Viewer *vp,u_long color)
+void _xp_select(QSP_ARG_DECL  Viewer *vp,u_long color)
 { UNIMP_MSG(_xp_select) }
 
-void _xp_bgselect(Viewer *vp,u_long color)
+void _xp_bgselect(QSP_ARG_DECL  Viewer *vp,u_long color)
 { UNIMP_MSG(_xp_bgselect) }
 
-void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
+void _embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 { UNIMP_MSG(embed_image) }
 
-void redraw_viewer(QSP_ARG_DECL  Viewer *vp)
+void _redraw_viewer(QSP_ARG_DECL  Viewer *vp)
 { UNIMP_MSG(redraw_viewer) }
 
-void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
+void _unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 { UNIMP_MSG(unembed_image) }
 
-void dump_drawlist(QSP_ARG_DECL  Viewer *vp)
+void _dump_drawlist(QSP_ARG_DECL  Viewer *vp)
 { UNIMP_MSG(dump_drawlist) }
 
-void set_font_size(Viewer *vp, int s)
+void _set_font_size(QSP_ARG_DECL  Viewer *vp, int s)
 { UNIMP_MSG(set_font_size) }
 
-void center_text(Viewer *vp)
+void _center_text(QSP_ARG_DECL  Viewer *vp)
 { UNIMP_MSG(center_text) }
 
-void right_justify(Viewer *vp)
+void _right_justify(QSP_ARG_DECL  Viewer *vp)
 { UNIMP_MSG(right_justify) }
 
-void left_justify(Viewer *vp)
+void _left_justify(QSP_ARG_DECL  Viewer *vp)
 { UNIMP_MSG(left_justify) }
 
-void set_text_angle(Viewer *vp, float a)
+void _set_text_angle(QSP_ARG_DECL  Viewer *vp, float a)
 { UNIMP_MSG(set_text_angle) }
 
 void set_remember_gfx(int flag)

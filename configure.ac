@@ -881,7 +881,9 @@ EOF
     fi
     if test "x${comp_cap}" = x2.1; then
       AC_DEFINE([CUDA_COMP_CAP],21,[CUDA Compute Capability 2.1])
-      AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_21'])
+      #AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_21'])
+      # BUG the new cuda compiler doesn't recognize this option - does that
+      # mean that it doesn't support these devices any more???
       arch_set=yes
       have_cuda_device=yes
     fi
