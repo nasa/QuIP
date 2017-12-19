@@ -74,6 +74,7 @@ advise "$1:  n_ready = $$ready_name   newest = $$newest_name   oldest = $$oldest
 #debug v4l2
 
 v4l2
+  set_n_buffers 6
   flow
     advise "flow STARTING"
     start

@@ -6,9 +6,10 @@
 #verbose yes
 verbose no
 
-variables
-  set QUIPSTARTUPDIR /usr/local/share/$QUIP/macros/startup
-  quit
+#variables
+#  set QUIPSTARTUPDIR /usr/local/share/$QUIP/macros/startup
+#  quit
+If !var_exists(QUIPSTARTUPDIR) "error_exit 'QUIPSTARTUPDIR is not defined!?'"
 
 
 < $QUIPSTARTUPDIR/generic.scr
@@ -16,27 +17,9 @@ variables
 < $QUIPSTARTUPDIR/gencomp.scr
 < $QUIPSTARTUPDIR/genview.scr
 
-#movie playback
-#  directory /u/jbm/fusion2
-#  directory /export/home/fusion3/jbm/osa
-#  quit quit
-
-
 < $macro_dir/movie/mmvi.mac
-< $macro_dir/knox/knox.mac
-
-advise Meteor_Defaults
-Meteor_Defaults
-
-# end of .mmvi
-# now start mon_cam.scr
-
-# monitor 5 cameras
-#
-# with 3 viewing windows (three meteor channels)
-#
-
-#max_warnings 1
+# < $macro_dir/knox/knox.mac	# when knox interface is local
+  < $macro_dir/knox/knoxc.mac	# when knox interface is remote
 
 #Set v_reduction_factor	4	# 4 works well over home dsl...
 #Set h_reduction_factor	4	# 4 works well over home dsl...
@@ -44,9 +27,6 @@ Set v_reduction_factor	1	# 4 works well over home dsl...
 Set h_reduction_factor	1	# 4 works well over home dsl...
 #Set v_reduction_factor	2	# 4 works well over home dsl...
 #Set h_reduction_factor	2	# 4 works well over home dsl...
-
-movie control geometry nframes 4 quit quit quit
-
 
 < $macro_dir/galvo/mon_cam.mac
 < $macro_dir/galvo/ptz_cam.mac
@@ -56,6 +36,9 @@ movie control geometry nframes 4 quit quit quit
 < $macro_dir/compute/curv.mac
 
 Clobber yes		# so save function works...
+
+Knox_Init
+Default_Routing
 
 advise Init_Stuff
 Init_Stuff

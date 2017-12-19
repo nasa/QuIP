@@ -113,7 +113,7 @@ typedef struct rv_movie_info {
 	int32_t		mi_extra_bytes;		/* to account for timestamp at end of frame... */
 } RV_Movie_Info;
 
-struct rv_inode {
+struct rv_inode_data {
 	char *		rvi_name;	/* pointer to the heap, item mgmt */
 
 	struct rv_inode *	rvi_inp;	/* ptr to working mem struct, for disk inode */
@@ -129,7 +129,7 @@ struct rv_inode {
 	int32_t		rvi_addr;	/* address of first block for
 					 * plain file */
 
-	uint32_t	rbi_n_blocks;	/* number of blocks (per-disk or total???) */
+	uint32_t	rvi_n_blocks;	/* number of blocks (per-disk or total???) */
 	int32_t		rvi_flags;
 
 	/* these are patterned on stat(2) */
@@ -147,18 +147,25 @@ struct rv_inode {
 		RV_Dir_Info	u_di;
 		RV_Link_Info	u_li;
 	} rvi_u;
+};
 
+// on 64 bit machine with pad of 112, size was 288...
+// So pad should be 112-(288-256) = 112 - 32 = 80
+//
+struct rv_inode {
+	struct rv_inode_data	rvi_inode;
 	// We only need the pad if using O_DIRECT...
 	// size above is 0xb0, we need a pad of 0x50 to round up to 256 bytes
 	//
 	// on 32bit machine, size is 144 bytes?
-#define N_RV_INODE_PAD_BYTES	112
+#define N_RV_INODE_PAD_BYTES	80
+
 	char			pad_bytes[N_RV_INODE_PAD_BYTES];
 };
 
 /* We use the mode bits from stat(2) */
 #define DIRECTORY_BIT			040000
-#define IS_DIRECTORY(inp)	((inp)->rvi_mode&DIRECTORY_BIT)
+#define IS_DIRECTORY(inp)	((inp)->rvi_inode.rvi_mode&DIRECTORY_BIT)
 
 // On disk, the inodes are a big array, but in memory they are dynamic items
 
@@ -169,70 +176,72 @@ struct rv_inode {
 // general inode flags
 #define RVI_LINK	4
 
-#define RV_INUSE(inp)		(( inp )->rvi_flags & RVI_INUSE)
-#define RV_SCANNED(inp)		(( inp )->rvi_flags & RVI_SCANNED)
-#define IS_LINK(inp)		(( inp )->rvi_flags & RVI_LINK)
+#define RV_INUSE(inp)		(( inp )->rvi_inode.rvi_flags & RVI_INUSE)
+#define RV_SCANNED(inp)		(( inp )->rvi_inode.rvi_flags & RVI_SCANNED)
+#define IS_LINK(inp)		(( inp )->rvi_inode.rvi_flags & RVI_LINK)
 #define IS_REGULAR_FILE(inp)	( !IS_LINK(inp) && ! IS_DIRECTORY(inp) )
 
-#define RV_NAME(inp)		((inp)->rvi_name)
-#define SET_RV_NAME(inp,s)	((inp)->rvi_name) = s
-#define RV_INODE(inp)		((inp)->rvi_inp)
-#define SET_RV_INODE(inp,t)	((inp)->rvi_inp) = t
-//#define RV_SHAPE(inp)		((inp)->rvi_shpp)
-//#define SET_RV_SHAPE(inp,shpp)	((inp)->rvi_shpp) = shpp
-#define RV_MODE(inp)		((inp)->rvi_mode)
-#define SET_RV_MODE(inp,m)	((inp)->rvi_mode) = m
-#define RV_UID(inp)		((inp)->rvi_uid)
-#define SET_RV_UID(inp,id)	((inp)->rvi_uid) = id
-#define RV_GID(inp)		((inp)->rvi_gid)
-#define SET_RV_GID(inp,id)	((inp)->rvi_gid) = id
-#define RV_INODE_IDX(inp)	((inp)->rvi_inode_idx)
-#define SET_RV_INODE_IDX(inp,i)	((inp)->rvi_inode_idx) = i
-#define RV_NAME_IDX(inp)	((inp)->rvi_name_idx)
-#define SET_RV_NAME_IDX(inp,i)	((inp)->rvi_name_idx) = i
-#define RV_ADDR(inp)		((inp)->rvi_addr)
-#define SET_RV_ADDR(inp,a)	((inp)->rvi_addr) = a
-#define RV_FLAGS(inp)		((inp)->rvi_flags)
-#define SET_RV_FLAGS(inp,f)	((inp)->rvi_flags) = f
-#define SET_RV_FLAG_BITS(inp,b)	((inp)->rvi_flags) |= (b)
-#define CLR_RV_FLAG_BITS(inp,b)	((inp)->rvi_flags) &= ~(b)
-#define RV_N_BLOCKS(inp)	((inp)->rbi_n_blocks)
-#define SET_RV_N_BLOCKS(inp,n)	((inp)->rbi_n_blocks) = n
-#define RV_PARENT(inp)		((inp)->rvi_parent)
-#define SET_RV_PARENT(inp,p)	((inp)->rvi_parent) = p
-#define RV_MTIME(inp)		((inp)->rvi_mtime)
-#define RV_ATIME(inp)		((inp)->rvi_atime)
-#define RV_CTIME(inp)		((inp)->rvi_ctime)
-#define SET_RV_MTIME(inp,t)	((inp)->rvi_mtime) = t
-#define SET_RV_ATIME(inp,t)	((inp)->rvi_atime) = t
-#define SET_RV_CTIME(inp,t)	((inp)->rvi_ctime) = t
+#define RV_NAME(inp)		((inp)->rvi_inode.rvi_name)
+#define SET_RV_NAME(inp,s)	((inp)->rvi_inode.rvi_name) = s
+#define RV_INODE(inp)		((inp)->rvi_inode.rvi_inp)
+#define SET_RV_INODE(inp,t)	((inp)->rvi_inode.rvi_inp) = t
+//#define RV_SHAPE(inp)		((inp)->rvi_inode.rvi_shpp)
+//#define SET_RV_SHAPE(inp,shpp)	((inp)->rvi_inode.rvi_shpp) = shpp
+#define RV_MODE(inp)		((inp)->rvi_inode.rvi_mode)
+#define SET_RV_MODE(inp,m)	((inp)->rvi_inode.rvi_mode) = m
+#define RV_UID(inp)		((inp)->rvi_inode.rvi_uid)
+#define SET_RV_UID(inp,id)	((inp)->rvi_inode.rvi_uid) = id
+#define RV_GID(inp)		((inp)->rvi_inode.rvi_gid)
+#define SET_RV_GID(inp,id)	((inp)->rvi_inode.rvi_gid) = id
+#define RV_INODE_IDX(inp)	((inp)->rvi_inode.rvi_inode_idx)
+#define SET_RV_INODE_IDX(inp,i)	((inp)->rvi_inode.rvi_inode_idx) = i
+#define RV_NAME_IDX(inp)	((inp)->rvi_inode.rvi_name_idx)
+#define SET_RV_NAME_IDX(inp,i)	((inp)->rvi_inode.rvi_name_idx) = i
+#define RV_ADDR(inp)		((inp)->rvi_inode.rvi_addr)
+#define SET_RV_ADDR(inp,a)	((inp)->rvi_inode.rvi_addr) = a
+#define RV_FLAGS(inp)		((inp)->rvi_inode.rvi_flags)
+#define SET_RV_FLAGS(inp,f)	((inp)->rvi_inode.rvi_flags) = f
+#define SET_RV_FLAG_BITS(inp,b)	((inp)->rvi_inode.rvi_flags) |= (b)
+#define CLR_RV_FLAG_BITS(inp,b)	((inp)->rvi_inode.rvi_flags) &= ~(b)
+#define RV_N_BLOCKS(inp)	((inp)->rvi_inode.rvi_n_blocks)
+#define SET_RV_N_BLOCKS(inp,n)	((inp)->rvi_inode.rvi_n_blocks) = n
+#define RV_PARENT(inp)		((inp)->rvi_inode.rvi_parent)
+#define SET_RV_PARENT(inp,p)	((inp)->rvi_inode.rvi_parent) = p
+#define RV_MTIME(inp)		((inp)->rvi_inode.rvi_mtime)
+#define RV_ATIME(inp)		((inp)->rvi_inode.rvi_atime)
+#define RV_CTIME(inp)		((inp)->rvi_inode.rvi_ctime)
+#define SET_RV_MTIME(inp,t)	((inp)->rvi_inode.rvi_mtime) = t
+#define SET_RV_ATIME(inp,t)	((inp)->rvi_inode.rvi_atime) = t
+#define SET_RV_CTIME(inp,t)	((inp)->rvi_inode.rvi_ctime) = t
 
 // macros for Directories
-#define RV_CHILDREN(inp)		((inp)->rvi_u.u_di.di_children)
-#define SET_RV_CHILDREN(inp,lp)	((inp)->rvi_u.u_di.di_children) = lp
+#define rvi_children		rvi_inode.rvi_u.u_di.di_children
+#define RV_CHILDREN(inp)	((inp)->rvi_inode.rvi_u.u_di.di_children)
+
+#define SET_RV_CHILDREN(inp,lp)	((inp)->rvi_inode.rvi_u.u_di.di_children) = lp
 
 // macros for links
-#define RV_LINK_INODE_PTR(inp)		((inp)->rvi_u.u_li.li_inp)
-#define SET_RV_LINK_INODE_PTR(inp,v)	((inp)->rvi_u.u_li.li_inp) = v
-#define RV_LINK_INODE_IDX(inp)		((inp)->rvi_u.u_li.li_ini)
-#define SET_RV_LINK_INODE_IDX(inp,v)	((inp)->rvi_u.u_li.li_ini) = v
+#define RV_LINK_INODE_PTR(inp)		((inp)->rvi_inode.rvi_u.u_li.li_inp)
+#define SET_RV_LINK_INODE_PTR(inp,v)	((inp)->rvi_inode.rvi_u.u_li.li_inp) = v
+#define RV_LINK_INODE_IDX(inp)		((inp)->rvi_inode.rvi_u.u_li.li_ini)
+#define SET_RV_LINK_INODE_IDX(inp,v)	((inp)->rvi_inode.rvi_u.u_li.li_ini) = v
 
 // macros for movies
 
-#define RV_MOVIE_SHAPE(inp)		((inp)->rvi_u.u_mi.mi_shpp)
-#define SET_RV_MOVIE_SHAPE(inp,shpp)	((inp)->rvi_u.u_mi.mi_shpp) = shpp
-#define RV_MOVIE_DIMS(inp)		((inp)->rvi_u.u_mi.mi_dimset)
-#define SET_RV_MOVIE_DIMS(inp,d)	((inp)->rvi_u.u_mi.mi_dimset) = d
-#define RV_MOVIE_INCS(inp)		((inp)->rvi_u.u_mi.mi_incset)
-#define SET_RV_MOVIE_INCS(inp,v)	((inp)->rvi_u.u_mi.mi_incset) = v
-#define RV_MOVIE_PREC_CODE(inp)		((inp)->rvi_u.u_mi.mi_prec_code)
-#define SET_RV_MOVIE_PREC_CODE(inp,v)	((inp)->rvi_u.u_mi.mi_prec_code) = v
-#define RV_MOVIE_FRAME_INFO(inp,idx)	((inp)->rvi_u.u_mi.mi_frame_info[idx])
-#define SET_RV_MOVIE_FRAME_INFO(inp,idx,v)	((inp)->rvi_u.u_mi.mi_frame_info[idx]) = v
-#define RV_MOVIE_EXTRA(inp)	((inp)->rvi_u.u_mi.mi_extra_bytes)
-#define SET_RV_MOVIE_EXTRA(inp,v)	((inp)->rvi_u.u_mi.mi_extra_bytes) = v
+#define RV_MOVIE_SHAPE(inp)		((inp)->rvi_inode.rvi_u.u_mi.mi_shpp)
+#define SET_RV_MOVIE_SHAPE(inp,shpp)	((inp)->rvi_inode.rvi_u.u_mi.mi_shpp) = shpp
+#define RV_MOVIE_DIMS(inp)		((inp)->rvi_inode.rvi_u.u_mi.mi_dimset)
+#define SET_RV_MOVIE_DIMS(inp,d)	((inp)->rvi_inode.rvi_u.u_mi.mi_dimset) = d
+#define RV_MOVIE_INCS(inp)		((inp)->rvi_inode.rvi_u.u_mi.mi_incset)
+#define SET_RV_MOVIE_INCS(inp,v)	((inp)->rvi_inode.rvi_u.u_mi.mi_incset) = v
+#define RV_MOVIE_PREC_CODE(inp)		((inp)->rvi_inode.rvi_u.u_mi.mi_prec_code)
+#define SET_RV_MOVIE_PREC_CODE(inp,v)	((inp)->rvi_inode.rvi_u.u_mi.mi_prec_code) = v
+#define RV_MOVIE_FRAME_INFO(inp,idx)	((inp)->rvi_inode.rvi_u.u_mi.mi_frame_info[idx])
+#define SET_RV_MOVIE_FRAME_INFO(inp,idx,v)	((inp)->rvi_inode.rvi_u.u_mi.mi_frame_info[idx]) = v
+#define RV_MOVIE_EXTRA(inp)	((inp)->rvi_inode.rvi_u.u_mi.mi_extra_bytes)
+#define SET_RV_MOVIE_EXTRA(inp,v)	((inp)->rvi_inode.rvi_u.u_mi.mi_extra_bytes) = v
 
-//#define rvi_shpp		rvi_u.u_mi.mi_shpp
+//#define rvi_shpp		rvi_inode.rvi_u.u_mi.mi_shpp
 // Why directory parent???
 
 /* Block size is 1024 under linux...  maybe we should try
@@ -258,8 +267,7 @@ struct rv_inode {
 #define NO_SUPER ((RV_Super *)NULL)
 #define N_INODE_PAD	36
 
-#define rvi_frame_info		rvi_u.u_mi.mi_frame_info
-#define rvi_children		rvi_u.u_di.di_children
+#define rvi_frame_info		rvi_inode.rvi_u.u_mi.mi_frame_info
 
 #include "off64_t.h"
 

@@ -95,12 +95,12 @@ static int port_listen(QSP_ARG_DECL  Port *mpp)
 	 * is required, the process would hang while waiting...
 	 */
 
-fprintf(stderr,"calling listen...\n");
+//fprintf(stderr,"calling listen...\n");
 	if( listen(mpp->mp_o_sock,PORT_BACKLOG) != 0 ){
 		tell_sys_error("listen");
 		return(-1);
 	}
-fprintf(stderr,"listen returned...\n");
+//fprintf(stderr,"listen returned...\n");
 	return(0);
 } // port_listen
 
@@ -173,7 +173,7 @@ int open_server_port(QSP_ARG_DECL  const char *name,int  port_no)
 	}
 
 #ifdef HAVE_SOCKET
-fprintf(stderr,"Setting socket options...\n");
+//fprintf(stderr,"Setting socket options...\n");
 	setsockopt(mpp->mp_o_sock,SOL_SOCKET,SO_REUSEADDR,
 		(char *)&on,sizeof(on));
 
@@ -193,14 +193,14 @@ fprintf(stderr,"Setting socket options...\n");
 	mpp->mp_addrp->sin_addr.s_addr = INADDR_ANY;
 	length=sizeof(*(mpp->mp_addrp));
 	mpp->mp_addrp->sin_port = htons( port_no );
-fprintf(stderr,"Binding socket...\n");
+//fprintf(stderr,"Binding socket...\n");
 	if( bind(mpp->mp_o_sock,(struct sockaddr *)(mpp->mp_addrp), length) ){
 		tell_sys_error("bind");
 		warn("open_server_port:  couldn't bind to port");
 		goto cleanup;
 	}
 
-fprintf(stderr,"Getting socket name...\n");
+//fprintf(stderr,"Getting socket name...\n");
 	if( getsockname(mpp->mp_o_sock,
 		(struct sockaddr *)mpp->mp_addrp,&length) ){
 		warn("open_server_port:  error getting socket name");
@@ -214,7 +214,7 @@ fprintf(stderr,"Getting socket name...\n");
 	if( port_listen(QSP_ARG  mpp) < 0 )
 		goto cleanup;
 
-fprintf(stderr,"Back from port_listen...\n");
+//fprintf(stderr,"Back from port_listen...\n");
 #endif // HAVE_SOCKET
 
 	return(port_no);

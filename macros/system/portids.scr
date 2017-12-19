@@ -91,7 +91,7 @@ Assign	soundd_port	$soundd_base+$ear_os
 Set	rawvol_server_host		craik
 Assign	rawvol_server_port		$rawvol_server_base+$ear_os
 
-Set	knox_host	poisson
+Set	knox_host	wheatstone
 Assign  knoxd_port	$knoxd_base+$ear_os
 
 Set	fly_host	euler

@@ -61,8 +61,11 @@ Make_Master_Panel
 
 ## This knox stuff is peculiar to the wheatstone setup!?
 advise 'checking video routing...'
-If !strcmp('$HOST','wheatstone.arc.nasa.gov')
-  'Knox_Init Default_Routing'
+#If !strcmp('$HOST','wheatstone.arc.nasa.gov')
+#  'Knox_Init Default_Routing'
+#  But on patrol_boat we have a remote connection...
+Knox_Init
+Default_Routing
 advise 'video routing set.'
 
 Init_Video_Window video_window
@@ -75,6 +78,7 @@ Set_Button_Actions video_window "LClick" "MClick" "RClick"
 
 advise 'entering main event loop...'
 do
+  advise 'checking events'
   os events quit
   Update_Viewer
   while 1

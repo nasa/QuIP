@@ -699,13 +699,13 @@ static void link_directory(QSP_ARG_DECL  RV_Inode *dk_inp)
 	while( *sp > 0 ){
 		RV_Inode *inp2;
 		Node *np;
-		inp2 = rv_inode_tbl[*sp].rvi_inp; /* look up an inode from its on-disk index */
+		inp2 = RV_INODE(&(rv_inode_tbl[*sp])); /* look up an inode from its on-disk index */
 
 		assert( inp2 != NULL );
 
 		np = mk_node(inp2);
-		addTail(dk_inp->rvi_inp->rvi_children,np);
-		RV_PARENT(inp2) = dk_inp->rvi_inp;
+		addTail(RV_CHILDREN(RV_INODE(dk_inp)),np);
+		SET_RV_PARENT(inp2,RV_INODE(dk_inp));
 		sp++;
 	}
 }
@@ -720,6 +720,7 @@ static void check_inode_size()
 		fprintf(stderr,"Need to adjust RV_Inode padding:\n");
 		fprintf(stderr,"RV_Inode size = %d:\n",s);
 		fprintf(stderr,"BLOCK_SIZE size = %d:\n",BLOCK_SIZE);
+		fflush(stderr);
 		abort();
 	}
 }
@@ -1014,7 +1015,7 @@ static void scan_rv_file_system(SINGLE_QSP_ARG_DECL)
 	if( ! in_mkfs ){
 		scan_directory(QSP_ARG  &rv_inode_tbl[0],scan_inode);		/* this will recursively descend all the directories */
 		scan_directory(QSP_ARG  &rv_inode_tbl[0],link_directory);
-		RV_PARENT(rv_inode_tbl[0].rvi_inp) = NULL;
+		SET_RV_PARENT(RV_INODE(&rv_inode_tbl[0]),NULL);
 
 		if( curr_rv_sbp->rv_magic == RV_MAGIC2 ){
 			RV_Inode *inp;
@@ -1118,9 +1119,9 @@ int rv_access_allowed(QSP_ARG_DECL  RV_Inode *inp)
 	/* root should be able to do anything */
 	if( has_root_access(my_uid) ) return 1;
 
-	if( my_uid != inp->rvi_uid ){
+	if( my_uid != RV_UID(inp) ){
 		/* not owner ... check group permissions */
-		if( getgid() != inp->rvi_gid ) return(0);;
+		if( getgid() != RV_GID(inp) ) return(0);;
 		/* group member, check mode */
 		if( (RV_MODE(inp) & 020) == 0 ) return(0);;
 		/* allow group members to delete */
@@ -1570,8 +1571,8 @@ advise(ERROR_STRING);
 
 	/* set the mode, uid, gid */
 	SET_RV_MODE(inp,0644);			/* default */
-	inp->rvi_uid = getuid();		/* should we use real or effective? */
-	inp->rvi_gid = getgid();
+	SET_RV_UID(inp,getuid());		/* should we use real or effective? */
+	SET_RV_GID(inp,getgid());
 
 	//inp->rvi_sbp = curr_rv_sbp;
 	SET_RV_MOVIE_EXTRA(inp, n_extra_bytes);
@@ -2031,14 +2032,14 @@ void rv_ls_inode(QSP_ARG_DECL  RV_Inode *inp)
 
 	prt_msg_frag("   ");
 
-	pwp=getpwuid(inp->rvi_uid);
+	pwp=getpwuid(RV_UID(inp));
 	if( pwp==NULL )
 		sprintf(msg_str,"%-12s","(null)");
 	else
 		sprintf(msg_str,"%-12s",pwp->pw_name);
 	prt_msg_frag(msg_str);
 
-	grpp = getgrgid(inp->rvi_gid);
+	grpp = getgrgid(RV_GID(inp));
 	if( grpp == NULL )
 		sprintf(msg_str,"%-12s","(null)");
 	else
@@ -2573,8 +2574,8 @@ static void make_link(QSP_ARG_DECL  const char *name,RV_Inode *inp)
 		tbl_inp = &rv_inode_tbl[RV_INODE_IDX(new_inp)];
 		SET_RV_FLAGS( tbl_inp, RV_FLAGS(new_inp));
 
-		new_inp->rvi_u.u_li.li_inp = inp;
-		new_inp->rvi_u.u_li.li_ini = RV_INODE_IDX(inp);
+		SET_RV_LINK_INODE_PTR(new_inp,inp);
+		SET_RV_LINK_INODE_IDX(new_inp,RV_INODE_IDX(inp));
 	}
 }
 
@@ -2617,7 +2618,7 @@ static void rv_mksubdir(QSP_ARG_DECL  const char *dirname)
 	}
 
 	RV_MODE(inp) |= DIRECTORY_BIT;			/* BUG use a symbolic constant here! */
-	rv_inode_tbl[RV_INODE_IDX(inp)].rvi_mode |= DIRECTORY_BIT;	/* make the change to the disk image too */
+	RV_MODE(&rv_inode_tbl[RV_INODE_IDX(inp)]) |= DIRECTORY_BIT;	/* make the change to the disk image too */
 	inp->rvi_children = new_list();
 
 	if( curr_rv_sbp->rv_cwd == NULL ){

@@ -30,7 +30,7 @@ off64_t my_lseek64(int fd,off64_t offset,int whence)
 {
 	off64_t r;
 	r=lseek64(fd,offset,whence);
-fprintf(stderr,"my_lseek64 %d:  requested 0x%llx, returning 0x%llx\n",fd,(long long) offset,(long long) r);
+//fprintf(stderr,"my_lseek64 %d:  requested 0x%llx, returning 0x%llx\n",fd,(long long) offset,(long long) r);
 	/*
 	if( r < 0 )
 		return (off64_t) r;	// is off_t unsigned?

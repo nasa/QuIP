@@ -68,11 +68,13 @@ typedef struct video_device {
 #define VD_SUPPORTS_MMAP_BUFFERS		4
 #define VD_USING_USERSPACE_BUFFERS		8
 #define VD_USING_MMAP_BUFFERS			16
+#define VD_HAS_BUFFERS				32
 
 #define IS_USING_MMAP_BUFFERS(vdp)		((vdp)->vd_flags & VD_USING_MMAP_BUFFERS)
 #define IS_USING_USERSPACE_BUFFERS(vdp)		((vdp)->vd_flags & VD_USING_USERSPACE_BUFFERS)
 #define CAN_USE_MMAP_BUFFERS(vdp)		((vdp)->vd_flags & VD_SUPPORTS_MMAP_BUFFERS)
 #define CAN_USE_USERSPACE_BUFFERS(vdp)		((vdp)->vd_flags & VD_SUPPORTS_USERSPACE_BUFFERS)
+#define HAS_BUFFERS(vdp)			((vdp)->vd_flags & VD_HAS_BUFFERS)
 
 #define IS_CAPTURING( vdp )			( (vdp)->vd_flags & VD_CAPTURING )
 

@@ -13,5 +13,6 @@
 
 #verbose yes
 
+advise "Starting knox daemon on port $knoxd_port"
 Daemon_Start $knoxd_port
 

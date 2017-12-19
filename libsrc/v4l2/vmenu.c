@@ -408,7 +408,8 @@ static inline int _request_mmap_buffers(QSP_ARG_DECL  Video_Device *vdp, int nre
 
 fprintf(stderr,"request_mmap_buffers calling try_buffer_request\n");
 	if( try_buffer_request("memory-mapped buffers",vdp,&req) == 0 ){
-		vdp->vd_flags |= VD_USING_MMAP_BUFFERS;
+fprintf(stderr,"request_mmap_buffers setting using flag!\n");
+		vdp->vd_flags |= VD_USING_MMAP_BUFFERS | VD_HAS_BUFFERS;
 		vdp->vd_flags &= ~VD_USING_USERSPACE_BUFFERS;
 		if( req.count == nreq ){
 			sprintf(MSG_STR,"%d buffers allocated",nreq);
@@ -724,6 +725,11 @@ static void report_status(QSP_ARG_DECL  Video_Device *vdp)
 	flags = vdp->vd_flags;
 
 	REPORT_FLAG(VD_CAPTURING,"CAPTURING","not capturing")
+	REPORT_FLAG( VD_SUPPORTS_MMAP_BUFFERS,"Supports mmap buffers","Does not support mmap buffers")
+	REPORT_FLAG( VD_HAS_BUFFERS,"Has buffers","Does not have buffers")
+	REPORT_FLAG( VD_USING_MMAP_BUFFERS,"Using mmap buffers","Not using mmap buffers")
+//	REPORT_FLAG( VD_SUPPORTS_USERSPACE_BUFFERS,"Supports userspace buffers","Does not support userspace buffers")
+//	REPORT_FLAG( VD_USING_USERSPACE_BUFFERS,"Using userspace buffers","Not using userspace buffers")
 
 #ifdef CAUTIOUS
 	if( flags != 0 ){
@@ -1319,6 +1325,11 @@ static COMMAND_FUNC( do_status )
 static COMMAND_FUNC( do_start )
 {
 	CHECK_DEVICE
+
+	if( ! HAS_BUFFERS(curr_vdp) ){
+		warn("Current device has no buffers!?");
+		return;
+	}
 	start_capturing(curr_vdp);
 }
 

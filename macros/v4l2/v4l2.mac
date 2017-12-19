@@ -97,6 +97,7 @@ If $flowing "warn 'Start_V4L2_Flow:  already flowing!? exit_macro"
 Tell_If "Start_V4L2_Flow:  starting $1"
 v4l2
   select $1
+  set_n_buffers 6	# seems to be the upper limit for one card...
   flow
     start	# how do we know which device we are flowing???
     quit
@@ -116,6 +117,7 @@ Set flowing 0
 Set flowing 0
 
 Define Update_V4L2_Flow 0
+advise "Update_V4L2_Flow:  getting next frame from dev $video_dev_index"
 Next_Frame_In /dev/video$video_dev_index
 .
 
@@ -123,7 +125,9 @@ Define Next_Frame_In 1 devicename
 v4l2
   select $1
   flow
+    advise "waiting..."
     wait
+    advise "done waiting..."
     Set oname oldest.$1
     If !var_exists('$oname')
       "advise 'var $oname does not exist!?' quit quit exit_macro"

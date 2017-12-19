@@ -40,11 +40,14 @@
 
 #endif /* HAVE_V4L2 */
 
-static COMMAND_FUNC( stop_flow )
+static COMMAND_FUNC( do_stop_flow )
 {
 	CHECK_DEVICE
 
-	/* start capturing - oldest & newest are initialized withing start_capturing now */
+	if( ! IS_CAPTURING(curr_vdp) ){
+		warn("do_stop_flow:  Current video device is not capturing!?");
+		return;
+	}
 
 #ifdef HAVE_V4L2
 	if( stop_capturing(curr_vdp) < 0 )
@@ -88,10 +91,18 @@ static COMMAND_FUNC( update_vars )
 
 #endif // HAVE_V4L2
 
-static COMMAND_FUNC( start_flow )
+static COMMAND_FUNC( do_start_flow )
 {
 	CHECK_DEVICE
 
+	if( IS_CAPTURING(curr_vdp) ){
+		warn("do_start_flow:  Current video device is already capturing!?");
+		return;
+	}
+	if( ! HAS_BUFFERS(curr_vdp) ){
+		warn("do_start_flow:  Current video device has no buffers!?");
+		return;
+	}
 	/* start capturing - oldest & newest are initialized withing start_capturing now */
 
 #ifdef HAVE_V4L2
@@ -238,8 +249,8 @@ static COMMAND_FUNC( do_release_buffer )
 #define ADD_CMD(s,f,h)	ADD_COMMAND(flow_menu,s,f,h)
 
 MENU_BEGIN(flow)
-ADD_CMD( start,		start_flow,		start capture )
-ADD_CMD( stop,		stop_flow,		start capture )
+ADD_CMD( start,		do_start_flow,		start capture )
+ADD_CMD( stop,		do_stop_flow,		start capture )
 ADD_CMD( wait,		wait_drip,		wait for at least one frame in memory )
 ADD_CMD( next,		wait_next,		wait for the next frame )
 ADD_CMD( release,	do_release_buffer,	release oldest buffer )

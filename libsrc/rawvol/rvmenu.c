@@ -123,7 +123,7 @@ static COMMAND_FUNC( do_rm )
 	inp = pick_rv_inode("");
 	if( inp==NULL ) return;
 #ifdef HAVE_RAWVOL
-	rv_rmfile(inp->rvi_name);
+	rv_rmfile(RV_NAME(inp));
 #else // ! HAVE_RAWVOL
 	MISSING_CONFIG(rv_rmfile)
 #endif // ! HAVE_RAWVOL
@@ -331,11 +331,11 @@ static COMMAND_FUNC( do_err_frms )
 
 	if( inp==NULL || i < 0 ) return;
 
-	fi_p = &(inp->rvi_frame_info[i]);
+	fi_p = &(RV_MOVIE_FRAME_INFO(inp,i));
 	if( FRAME_INFO_N_SAVED(fi_p) <= 0 ){
 		/*if( verbose ){ */
 			sprintf(ERROR_STRING,
-	"rv file %s has no %s errors",inp->rvi_name,error_type_list[i]);
+	"rv file %s has no %s errors",RV_NAME(inp),error_type_list[i]);
 			advise(ERROR_STRING);
 		/*} */
 		return;

@@ -77,7 +77,9 @@ VSet var_accum 0
 #    quit
 #  quit
 
+advise "Starting capture"
 v4l2
+  set_n_buffers 6
   start
   quit
 
@@ -107,6 +109,10 @@ If 'var_exists(REMOTEHOST)&&strstr("$REMOTEHOST","mach")==0'
 Set i 0
 Set n_buffers 6
 #Set n_buffers 27	# different device???
+#
+
+
+advise 'looping...'
 do
   NF
   SR $i
