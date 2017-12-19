@@ -10,6 +10,10 @@ char VersionId_inc_visca[] = QUIP_VERSION_STRING;
 #include "quip_prot.h"
 #include "item_obj.h"
 
+#ifdef HAVE_PTHREADS
+#define VISCA_THREADS
+#endif // HAVE_PTHREADS
+
 #define MAX_VISCA_REQS 10 /* size of the buffer of requests */
 
 #define MAX_VISCA_REQS                  10 /* size of the buffer of requests */
@@ -289,7 +293,7 @@ typedef struct visca_cam {
 	int		vcam_index;
 	int		vcam_pan_speed;
 	int		vcam_tilt_speed;
-#ifdef HAVE_PTHREADS
+#ifdef VISCA_THREADS
 	List *		vcam_cmd_lp;
 	pthread_t	vcam_ctl_thread;
 	Visca_Inq_Def *	vcam_vidp;
@@ -298,7 +302,7 @@ typedef struct visca_cam {
 #define SERVER_LOCK	1
 #define CLIENT_LOCK	2
 
-#endif /* HAVE_PTHREADS */
+#endif /* VISCA_THREADS */
 
 	int		vcam_flipped;	// evi-d70 only
 

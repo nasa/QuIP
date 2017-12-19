@@ -46,10 +46,11 @@ static void *camera_request_server(void *);
 static void queue_visca_command( Visca_Queued_Cmd *vqcp );
 static void queue_visca_inquiry( Visca_Inq_Def *vidp );
 static void init_server_thread(Visca_Cam *vcam_p);
-static int async_reqs=0;
 #endif /* VISCA_THREADS */
 #endif // FOOBAR
 
+// global var not thread safe???   BUG?
+static int async_reqs=0;
 
 Visca_Params evi30_params = { 
 
@@ -1506,6 +1507,18 @@ static void _set_tilt_speed(QSP_ARG_DECL  u_char *pkt, int speed )
 	hex_digit_to_ascii(&pkt[10],(speed&0xf0)>>4);
 }
 
+#define exec_visca_inquiry(vcam_p,vidp)	_exec_visca_inquiry(QSP_ARG  vcam_p,vidp)
+
+static void _exec_visca_inquiry(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp )
+{
+	u_char pkt[MAX_PACKET_LEN];
+
+	strcpy((char *)pkt,vidp->vid_pkt);
+	hex_digit_to_ascii(&(pkt[1]), vcam_p->vcam_index);
+	send_hex(vcam_p->vcam_fd,(u_char *)pkt);
+	get_inq_reply(vcam_p,vidp);
+}
+
 
 #define GET_CAMERA_LOCK( vcam_p , code )						\
 											\
@@ -1517,77 +1530,6 @@ static void _set_tilt_speed(QSP_ARG_DECL  u_char *pkt, int speed )
 #define RLS_CAMERA_LOCK( vcam_p )							\
 											\
 	vcam_p->vcam_qlock = 0;
-
-#ifdef VISCA_THREADS
-
-
-/* Functions used to control the requests by a thread */
-
-static void init_server_thread(Visca_Cam *vcam_p)
-{
-	pthread_attr_t attr1;
-
-	vcam_p->vcam_qlock=0;
-	pthread_attr_init(&attr1);
-	pthread_attr_setinheritsched(&attr1,PTHREAD_INHERIT_SCHED);
-	pthread_create(&vcam_p->vcam_ctl_thread,&attr1,camera_request_server,vcam_p);
-}
-
-
-/* This is the function executed by a thread to control the commands
- * sent to the camera.
- * If the asynchronous mode have been selected, we don't execute a
- * request when there are newer requests in the buffer of the same
- * type (command + set)
- */
-static void *camera_request_server(void *arg)
-{
-	Visca_Cam *vcam_p;
-	Node *np;
-	int did_something;
-
-	vcam_p = arg;
-	np = NULL;
-	while(1) {	
-		did_something=0;
-		/* Process inquiries first */
-		if( vcam_p->vcam_vidp != NULL ){
-			exec_visca_inquiry(THIS_QSP  vcam_p,vcam_p->vcam_vidp);
-			did_something = 1;
-			/* tell the client it can free the old request */
-			vcam_p->vcam_old_vidp = vcam_p->vcam_vidp;
-			vcam_p->vcam_vidp = NULL;
-		}
-		/* Lock the queue before we get the next command... */
-		GET_CAMERA_LOCK(vcam_p,SERVER_LOCK)
-
-		/* Now process a command if there is one... */ 
-		np = QLIST_HEAD(vcam_p->vcam_cmd_lp);
-		while( np != NULL ){
-			Visca_Queued_Cmd *vqcp;
-
-			vqcp = np->n_data;
-			if( !vqcp->vqc_finished ){
-				/* Now we're done with the queue */
-				RLS_CAMERA_LOCK(vcam_p)
-				exec_visca_command(vcam_p,vqcp->vqc_vcdp,pkt);
-				vqcp->vqc_finished=1;
-				np = NULL;
-				did_something=1;
-			}
-			if( np != NULL )
-				np = np->n_next;
-		}
-		if( vcam_p->vcam_qlock == SERVER_LOCK ){
-			RLS_CAMERA_LOCK(vcam_p)
-		}
-		if( ! did_something )
-			usleep(1000);		/* nothing to do? */
-	}
-	return(NULL);	/* not reached? */
-}
-
-#endif /* VISCA_THREADS */
 
 
 /* we need to give the system time to send the code,
@@ -1643,15 +1585,102 @@ static void _exec_visca_command( QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def 
 	 * that the execution of the command has completed on the camera.
 	 */
 }
+#ifdef VISCA_THREADS
 
-#define exec_visca_inquiry(vcam_p,vidp,pkt)	_exec_visca_inquiry(QSP_ARG  vcam_p,vidp,pkt)
 
-static void _exec_visca_inquiry(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp, u_char *pkt)
+/* Functions used to control the requests by a thread */
+
+typedef struct visca_server_args {
+	Visca_Cam *	vsa_vcam_p;
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *	vsa_qsp;
+#endif // THREAD_SAFE_QUERY
+} Visca_Server_Args;
+
+
+/* This is the function executed by a thread to control the commands
+ * sent to the camera.
+ * If the asynchronous mode have been selected, we don't execute a
+ * request when there are newer requests in the buffer of the same
+ * type (command + set)
+ */
+static void *camera_request_server(void *arg)
 {
-	hex_digit_to_ascii(&(pkt[1]), vcam_p->vcam_index);
-	send_hex(vcam_p->vcam_fd,(u_char *)pkt);
-	get_inq_reply(vcam_p,vidp);
+	Visca_Cam *vcam_p;
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+#endif // THREAD_SAFE_QUERY
+	Visca_Server_Args *vsa_p;
+
+	Node *np;
+	int did_something;
+
+	vsa_p = arg;
+	vcam_p = vsa_p->vsa_vcam_p;
+#ifdef THREAD_SAFE_QUERY
+	qsp = vsa_p->vsa_qsp;
+#endif // THREAD_SAFE_QUERY
+
+	np = NULL;
+	while(1) {	
+		did_something=0;
+		/* Process inquiries first */
+		if( vcam_p->vcam_vidp != NULL ){
+			exec_visca_inquiry(vcam_p,vcam_p->vcam_vidp);
+			did_something = 1;
+			/* tell the client it can free the old request */
+			vcam_p->vcam_old_vidp = vcam_p->vcam_vidp;
+			vcam_p->vcam_vidp = NULL;
+		}
+		/* Lock the queue before we get the next command... */
+		GET_CAMERA_LOCK(vcam_p,SERVER_LOCK)
+
+		/* Now process a command if there is one... */ 
+		np = QLIST_HEAD(vcam_p->vcam_cmd_lp);
+		while( np != NULL ){
+			Visca_Queued_Cmd *vqcp;
+
+			vqcp = np->n_data;
+			if( !vqcp->vqc_finished ){
+				/* Now we're done with the queue */
+				RLS_CAMERA_LOCK(vcam_p)
+				exec_visca_command(vcam_p,vqcp->vqc_vcdp,(u_char *)vqcp->vqc_vcdp->vcd_pkt);
+				vqcp->vqc_finished=1;
+				np = NULL;
+				did_something=1;
+			}
+			if( np != NULL )
+				np = np->n_next;
+		}
+		if( vcam_p->vcam_qlock == SERVER_LOCK ){
+			RLS_CAMERA_LOCK(vcam_p)
+		}
+		if( ! did_something )
+			usleep(1000);		/* nothing to do? */
+	}
+	return(NULL);	/* not reached? */
 }
+
+#define init_server_thread(vcam_p) _init_server_thread(QSP_ARG  vcam_p)
+
+static void _init_server_thread(QSP_ARG_DECL  Visca_Cam *vcam_p)
+{
+	pthread_attr_t attr1;
+	Visca_Server_Args vsa1;
+
+	vcam_p->vcam_qlock=0;
+	vsa1.vsa_vcam_p = vcam_p;
+#ifdef THREAD_SAFE_QUERY
+	vsa1.vsa_qsp = THIS_QSP;
+#endif // THREAD_SAFE_QUERY
+
+	pthread_attr_init(&attr1);
+	pthread_attr_setinheritsched(&attr1,PTHREAD_INHERIT_SCHED);
+	pthread_create(&vcam_p->vcam_ctl_thread,&attr1,camera_request_server,&vsa1);
+}
+
+#endif /* VISCA_THREADS */
+
 
 /* Make sure that this command is valid with the given camera.
  */
@@ -2411,6 +2440,87 @@ advise(ERROR_STRING);
 	}
 } /* end get_command_args */
 
+#ifdef VISCA_THREADS
+
+static void cleanup_queue(Visca_Cam *vcam_p)
+{
+	Node *np;
+
+	np = QLIST_HEAD(vcam_p->vcam_cmd_lp);
+	while( np != NULL ){
+		Visca_Queued_Cmd *vqcp;
+
+		vqcp = np->n_data;
+		if( vqcp->vqc_finished ){
+			GET_CAMERA_LOCK(vcam_p,CLIENT_LOCK)
+			np = remHead(vcam_p->vcam_cmd_lp);
+			RLS_CAMERA_LOCK(vcam_p)
+
+			givbuf(vqcp->vqc_vcdp->vcd_pkt);
+			givbuf(vqcp->vqc_vcdp);
+			givbuf(vqcp);
+			rls_node(np);
+			np = QLIST_HEAD(vcam_p->vcam_cmd_lp);
+		} else {
+			/* the head of the queue has not finished executing yet */
+			return;
+		}
+	}
+}
+
+#define init_camera_queue(vcam_p) _init_camera_queue(QSP_ARG  vcam_p)
+
+static void _init_camera_queue(QSP_ARG_DECL  Visca_Cam *vcam_p)
+{
+	vcam_p->vcam_cmd_lp = new_list();
+	init_server_thread(vcam_p);
+}
+
+#define queue_visca_command(vqcp) _queue_visca_command(QSP_ARG  vqcp )
+
+static void _queue_visca_command(QSP_ARG_DECL  Visca_Queued_Cmd *vqcp )
+{
+	Node *np;
+
+	if( the_vcam_p->vcam_cmd_lp == NULL )
+		init_camera_queue(the_vcam_p);
+
+	/* Before we add this request, see if there are any commands at the head of the queue
+	 * that can be removed.
+	 */
+	cleanup_queue(the_vcam_p);
+
+	np = mk_node(vqcp);
+	GET_CAMERA_LOCK(the_vcam_p,CLIENT_LOCK)
+	addTail(the_vcam_p->vcam_cmd_lp,np);
+	RLS_CAMERA_LOCK(the_vcam_p)
+}
+
+/* Because we want the answer to an inquiry RIGHT NOW there is no point
+ * to queueing them in a list - but we have to let the server thread handle
+ * them so they don't interfere with queued commands.
+ */
+
+#define queue_visca_inquiry(vidp) _queue_visca_inquiry(QSP_ARG  vidp )
+
+static void _queue_visca_inquiry(QSP_ARG_DECL  Visca_Inq_Def *vidp )
+{
+	Visca_Inq_Def *q_vidp;
+
+	/* inquiries don't use the list, but we use the existence of the list
+	 * as a flag to determine when to start the server thread.
+	 */
+	if( the_vcam_p->vcam_cmd_lp == NULL )
+		init_camera_queue(the_vcam_p);
+
+	q_vidp = getbuf(sizeof(Visca_Inq_Def));
+	*q_vidp = *vidp;
+	q_vidp->vid_pkt = savestr(vidp->vid_pkt);
+	the_vcam_p->vcam_vidp = q_vidp;
+	/* now wait... */
+}
+
+#endif /* VISCA_THREADS */
 static COMMAND_FUNC( do_visca_cmd )
 {
 	Visca_Cmd_Def *vcdp;
@@ -2488,7 +2598,7 @@ static COMMAND_FUNC( do_visca_cmd )
 
 		q_vcdp = getbuf(sizeof(Visca_Cmd_Def));
 		*q_vcdp = *vcdp;
-		q_vcdp->vcd_pkt = savestr(vcdp->vcd_pkt);
+		q_vcdp->vcd_pkt = savestr((char *)pkt);
 
 		vqcp = getbuf(sizeof(Visca_Queued_Cmd));
 		vqcp->vqc_vcdp = q_vcdp;
@@ -2503,81 +2613,6 @@ static COMMAND_FUNC( do_visca_cmd )
 #endif /* VISCA_THREADS */
 } /* end do_visca_cmd() */
 
-#ifdef VISCA_THREADS
-
-static void cleanup_queue(Visca_Cam *vcam_p)
-{
-	Node *np;
-
-	np = QLIST_HEAD(vcam_p->vcam_cmd_lp);
-	while( np != NULL ){
-		Visca_Queued_Cmd *vqcp;
-
-		vqcp = np->n_data;
-		if( vqcp->vqc_finished ){
-			GET_CAMERA_LOCK(vcam_p,CLIENT_LOCK)
-			np = remHead(vcam_p->vcam_cmd_lp);
-			RLS_CAMERA_LOCK(vcam_p)
-
-			givbuf(vqcp->vqc_vcdp->vcd_pkt);
-			givbuf(vqcp->vqc_vcdp);
-			givbuf(vqcp);
-			rls_node(np);
-			np = QLIST_HEAD(vcam_p->vcam_cmd_lp);
-		} else {
-			/* the head of the queue has not finished executing yet */
-			return;
-		}
-	}
-}
-
-static void init_camera_queue(Visca_Cam *vcam_p)
-{
-	vcam_p->vcam_cmd_lp = new_list();
-	init_server_thread(vcam_p);
-}
-
-static void queue_visca_command( Visca_Queued_Cmd *vqcp )
-{
-	Node *np;
-
-	if( the_vcam_p->vcam_cmd_lp == NULL )
-		init_camera_queue(the_vcam_p);
-
-	/* Before we add this request, see if there are any commands at the head of the queue
-	 * that can be removed.
-	 */
-	cleanup_queue(the_vcam_p);
-
-	np = mk_node(vqcp);
-	GET_CAMERA_LOCK(the_vcam_p,CLIENT_LOCK)
-	addTail(the_vcam_p->vcam_cmd_lp,np);
-	RLS_CAMERA_LOCK(the_vcam_p)
-}
-
-/* Because we want the answer to an inquiry RIGHT NOW there is no point
- * to queueing them in a list - but we have to let the server thread handle
- * them so they don't interfere with queued commands.
- */
-
-static void queue_visca_inquiry( Visca_Inq_Def *vidp )
-{
-	Visca_Inq_Def *q_vidp;
-
-	/* inquiries don't use the list, but we use the existence of the list
-	 * as a flag to determine when to start the server thread.
-	 */
-	if( the_vcam_p->vcam_cmd_lp == NULL )
-		init_camera_queue(the_vcam_p);
-
-	q_vidp = getbuf(sizeof(Visca_Inq_Def));
-	*q_vidp = *vidp;
-	q_vidp->vid_pkt = savestr(vidp->vid_pkt);
-	the_vcam_p->vcam_vidp = q_vidp;
-	/* now wait... */
-}
-
-#endif /* VISCA_THREADS */
 
 static int verify_inq(Visca_Inq_Def *vidp)
 {
@@ -2616,7 +2651,6 @@ static COMMAND_FUNC( do_visca_inq )
 {
 	Visca_Inq_Def *vidp;
 	Visca_Inquiry *vip;
-	u_char pkt[MAX_PACKET_LEN];
 	
 	vip = pick_visca_inq("inquiry");
 	if( vip == NULL ){
@@ -2638,7 +2672,7 @@ static COMMAND_FUNC( do_visca_inq )
 
 	/* We're moving this to exec_visca_inq... */
 	//hex_digit_to_ascii(&(pkt[1]), the_vcam_p->vcam_index);
-	strcpy((char *)pkt,vidp->vid_pkt);
+	//strcpy((char *)pkt,vidp->vid_pkt);
 
 #ifdef VISCA_THREADS
 	/* BUG - if we are in asynchronous mode, we need
@@ -2659,10 +2693,10 @@ static COMMAND_FUNC( do_visca_inq )
 		givbuf(the_vcam_p->vcam_old_vidp->vid_pkt);
 		givbuf(the_vcam_p->vcam_old_vidp);
 	} else {
-		exec_visca_inquiry(the_vcam_p,vidp,pkt);
+		exec_visca_inquiry(the_vcam_p,vidp);
 	}
 #else /* ! VISCA_THREADS */
-	exec_visca_inquiry(the_vcam_p,vidp,pkt);
+	exec_visca_inquiry(the_vcam_p,vidp);
 #endif /* ! VISCA_THREADS */
 } /* end do_visca_inq() */
 
@@ -2723,7 +2757,6 @@ static void _add_camera(QSP_ARG_DECL  Visca_Port *vport_p)
 	Visca_Cam *vcam_p;
 	char str[32];
 	Node *np;
-	u_char pkt[MAX_PACKET_LEN];
 	int i;
 
 	sprintf(str,"cam%d",++n_vcams);
@@ -2747,8 +2780,7 @@ static void _add_camera(QSP_ARG_DECL  Visca_Port *vport_p)
 	i=table_index_for_inq(vid_common_tbl,INFO_INQ);
 	assert( i >= 0 );
 
-	strcpy((char *)pkt,(const char *)vid_common_tbl[i].vid_pkt);
-	exec_visca_inquiry(vcam_p, &vid_common_tbl[i],pkt);
+	exec_visca_inquiry(vcam_p, &vid_common_tbl[i]);
 
 	/* Now set the camera type based on the info returned */
 	switch( vcam_p->vcam_model_id ){
@@ -2767,8 +2799,7 @@ static void _add_camera(QSP_ARG_DECL  Visca_Port *vport_p)
 			i=table_index_for_inq(vid_evi70_tbl,FLIP_MODE_INQ);
 			assert( i >= 0 );
 
-			strcpy((char *)pkt,(const char *)vid_evi70_tbl[i].vid_pkt);
-			exec_visca_inquiry(vcam_p, &vid_evi70_tbl[i],pkt);
+			exec_visca_inquiry(vcam_p, &vid_evi70_tbl[i]);
 			if( vcam_p->vcam_flipped ){
 				// Need to adjust limits for tilt!?
 			}

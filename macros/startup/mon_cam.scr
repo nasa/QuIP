@@ -19,7 +19,8 @@ If !var_exists(QUIPSTARTUPDIR) "error_exit 'QUIPSTARTUPDIR is not defined!?'"
 
 < $macro_dir/movie/mmvi.mac
 # < $macro_dir/knox/knox.mac	# when knox interface is local
-  < $macro_dir/knox/knoxc.mac	# when knox interface is remote
+#  < $macro_dir/knox/knoxc.mac	# when knox interface is remote
+  < $macro_dir/knox/knox_missing.mac	# temporary until network issues are fixed
 
 #Set v_reduction_factor	4	# 4 works well over home dsl...
 #Set h_reduction_factor	4	# 4 works well over home dsl...

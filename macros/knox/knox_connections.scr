@@ -1,0 +1,36 @@
+# knoxd client macros - for situation when knox is missing
+
+Start_File knox_connections.scr
+
+# These definitions pertain to the workstation eye-tracking setup in 217A
+
+# symbolic defns for the switcher outputs
+
+#Set meteor_in1		1
+#Set meteor_in2		2
+#Set meteor_in3		3
+Set video4_in1		1
+Set video5_in2		2
+Set video6_in3		3
+Set video0_in		4
+Set video1_in		5
+Set video2_in		6
+Set video3_in		7	# looped through the monitor
+Set sony_monitor_input	7
+Set sync_genlock_input	8
+# four outputs for bt848?
+
+# These defns reflect the connections of the cameras
+# to the knox switcher inputs:
+
+Set galvo_cam		1
+Set left_pupil_cam	2
+Set right_pupil_cam	3
+Set left_ptz_cam	4
+Set right_ptz_cam	5
+Set left_ptz_cam2	6
+Set right_ptz_cam2	7
+
+
+Stop_File knox_connections.mac
+

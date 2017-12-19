@@ -1,0 +1,48 @@
+# knoxd client macros - for situation when knox is missing
+
+Start_File knox_missing.mac
+
+# basic daemon macros
+
+
+Define Knox_Connect 0
+.
+
+Define Knox_Handshake 0
+.
+
+Define Knox_Get_Obj 1 obj_name
+.
+
+Define Knox_Send 1 text
+.
+
+Define Knox_Xmit 1 object
+.
+
+#_________mappings to functions in knox.mac_______________________#
+
+
+Define Knox_Init 0
+.
+
+Define Route 2 output_index input_index
+advise "NOT routing input $2 to output $1!?"
+.
+
+# do load and store go to files?
+
+Define Knox_Store 1 index
+.
+
+Define Knox_Load 1 index
+.
+
+Define Knox_Get_Map 1 object
+.
+
+Define Default_Routing 0
+.
+
+Stop_File knox_missing.mac
+
