@@ -1,0 +1,13 @@
+
+< tests/test_params.scr	# assume calling from parent directory...
+
+ports
+  advise "Will listen on port $server_port_num"
+  server server_ear $server_port_num
+  advise "waiting for a connection..."
+  connect server_ear
+  advise Connected
+  redir server_ear
+  exit	# never reached?
+
+

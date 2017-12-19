@@ -1,0 +1,7 @@
+
+< tests/test_params.scr
+
+ports
+  client client_mouth patrolboat $server_port_num
+  xmit text client_mouth 'advise "Message received from client"'
+  Pause

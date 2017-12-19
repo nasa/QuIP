@@ -100,7 +100,7 @@ fresh_start:
 		return(-1);
 	}
 
-advise("port struct created...");
+//advise("port struct created...");
 
 #ifdef HAVE_SOCKET
 	mpp->mp_sock=socket(AF_INET,SOCK_STREAM,0);
@@ -138,9 +138,9 @@ advise("port struct created...");
 
 	mpp->mp_text_var_name=NULL;
 	mpp->mp_output_filename=NULL;
-fprintf(stderr,"calling gethostbyname with hostname %s\n",hostname);
+//fprintf(stderr,"calling gethostbyname with hostname %s\n",hostname);
 	hp=gethostbyname((const char FAR *)hostname); 
-fprintf(stderr,"back from gethostbyname hp = 0x%lx\n",(long)hp);
+//fprintf(stderr,"back from gethostbyname hp = 0x%lx\n",(long)hp);
 
 	if( hp == NULL ){
 		switch( h_errno ){
@@ -173,16 +173,16 @@ fprintf(stderr,"back from gethostbyname hp = 0x%lx\n",(long)hp);
 #endif /* ! HAVE_BCOPY */
 #endif // ! HAVE_MEMCPY
 
-advise("calling htons...");
+//advise("calling htons...");
 	mpp->mp_addrp->sin_port = htons(port_no);
-fprintf(stderr,"calling connect (port = %d)...\n",port_no);
+//fprintf(stderr,"calling connect (port = %d)...\n",port_no);
 
 // BUG how many times should we try???
 // On iOS, there is no ctl-C to interrupt!
 
 	while( connect(mpp->mp_sock,(struct sockaddr *)mpp->mp_addrp,
 		sizeof(*(mpp->mp_addrp)) ) < 0 ){
-fprintf(stderr,"connect failed...\n");
+//fprintf(stderr,"connect failed...\n");
 		if( first_attempt ){
 			first_attempt = FALSE;
 			if( verbose )
@@ -227,7 +227,7 @@ fprintf(stderr,"connect failed...\n");
 
 		goto retry;
 	}
-fprintf(stderr,"connect succeeded...\n");
+//fprintf(stderr,"connect succeeded...\n");
 #endif // HAVE_SOCKET
 	mpp->mp_flags |= PORT_CONNECTED;
 //advise("connected!");
@@ -260,7 +260,7 @@ retry:
 	sleep(wait_seconds-1);
 #endif /* HAVE_SLEEP */
 
-fprintf(stderr,"retrying connect...\n");
+//fprintf(stderr,"retrying connect...\n");
 
 	goto fresh_start;
 
