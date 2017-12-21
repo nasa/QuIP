@@ -725,6 +725,10 @@ extern int	_get_string_width(QSP_ARG_DECL  Viewer *vp, const char *s);
 #define extra_viewer_info(vp)			_extra_viewer_info(QSP_ARG  vp)
 #define get_string_width(vp,s)			_get_string_width(QSP_ARG  vp,s)
 
+// shm_viewer.c
+extern Viewer *_init_shm_viewer(QSP_ARG_DECL  const char *name, int width, int height, int depth);
+#define init_shm_viewer(name,width,height,depth) _init_shm_viewer(QSP_ARG  name,width,height,depth)
+extern void display_to_shm_viewer(Viewer *vp,Data_Obj *dp);
 
 #ifdef __cplusplus
 }

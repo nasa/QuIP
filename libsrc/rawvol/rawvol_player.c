@@ -167,18 +167,12 @@ typedef struct per_proc_info {
 } Proc_Info;
 
 
-/* flag bits */
-#define DW_READY_TO_GO	1
-#define DW_EXITING	2
-
-#define READY_TO_GO(pip)	( (pip)->ppi_flags & DW_READY_TO_GO )
-#define EXITING(pip)		( (pip)->ppi_flags & DW_EXITING )
-
 static Viewer *rawvol_vp[MAX_VIEWERS]={NULL,NULL,NULL};
 static int rawvol_increment=4;	// BUG this should be a movie parameter!?
 
 static Proc_Info ppi[MAX_DISKS];
 
+#define RAWVOL_VIEWER_NAME	"rawvol_viewer"
 
 #define N_READ_BUFFERS	8
 static char *rdfrmptr[N_READ_BUFFERS];
@@ -209,7 +203,7 @@ void _play_rawvol_movie(QSP_ARG_DECL  Image_File *ifp)
 
 	/* make sure that the rawvol window is available */
 
-	init_rawvol_viewer(width, height, depth);
+	rawvol_vp = init_shm_viewer(RAWVOL_VIEWER_NAME,width, height, depth);
 
 	/* allocate two frame buffers */
 
@@ -292,7 +286,7 @@ advise("play_rawvol_frame");
 
 	/* make sure that the rawvol window is available */
 
-	init_rawvol_viewer(width, height, depth);
+	rawvol_vp = init_shm_viewer(RAWVOL_VIEWER_NAME,width, height, depth);
 
 	/* seek to the correct frame */
 
@@ -472,68 +466,10 @@ RSTATUS(DR_EXIT);
 	return(NULL);
 }
 
-#define MAKE_RAWVOL_VIEWER( index )					\
-									\
-	if( rawvol_vp[index] != NULL ){					\
-		sprintf(ERROR_STRING,					\
-		"init_rawvol_viewer:  rawvol viewer %d (%s) already exists",index,rawvol_vp[index]->vw_name);		\
-		WARN(ERROR_STRING);					\
-		return;							\
-	}								\
-									\
-	sprintf(name,"rawvol_viewer%d",index);				\
-	rawvol_vp[index] = viewer_init(name,width,height,0);		\
-	if( rawvol_vp[index] == NULL ) return;				\
-	posn_viewer(rawvol_vp[index],sx[index]*width,sy[index]*height);	\
-	/* set_n_protect(0); */						\
-	/* BUG: replace with make_grayscale(0, pow(depth, 2)) ?? */	\
-	/* if( ! displaying_color ) */					\
-		make_grayscale(0,256);					\
-									\
-	show_viewer(rawvol_vp[index]);					\
-	shm_setup(rawvol_vp[index]);
-
-
-static int sx[3]={0,1,1};
-static int sy[3]={0,0,1};
-
-void _init_rawvol_viewer(QSP_ARG_DECL  int width, int height, int depth)
-{
-	char name[LLEN];
-
-#ifdef FOOBAR
-	int i;
-	if( displaying_color ){
-		MAKE_RAWVOL_VIEWER(0)
-	} else {
-		for(i=0;i<n_displayed_components;i++){
-			MAKE_RAWVOL_VIEWER(i)
-		}
-	}
-#endif // FOOBAR
-	MAKE_RAWVOL_VIEWER(0)
-
-	/* use the depth of the first viewer to determine the
-	 * scanning increment...
-	 */
-
-}
-
 Viewer *rawvol_viewer(void)
 {
 	return rawvol_vp[0];
 }
-
-void display_to_rawvol_viewer(Data_Obj *dp)
-{
-	Viewer *vp;
-
-	vp=rawvol_vp[0];
-	update_shm_viewer(vp, ((char *)OBJ_DATA_PTR(dp)) /* +display_component[w] */ ,
-		rawvol_increment,1 /* this means advance src component */,
-		vp->vw_width,vp->vw_height, 0,0);
-}
-
 
 #endif /* HAVE_X11_EXT */
 

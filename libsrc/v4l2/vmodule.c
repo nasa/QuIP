@@ -17,10 +17,10 @@
 //int v4l2_debug=0;
 #endif /* QUIP_DEBUG */
 
-#ifdef HAVE_V4L2
 
 void v4l2_record(QSP_ARG_DECL  uint32_t n_fields,Movie *mvip)
 {
+#ifdef HAVE_V4L2
 	Image_File *ifp;
 	uint32_t n_frames_to_request;
 
@@ -57,9 +57,9 @@ void v4l2_record(QSP_ARG_DECL  uint32_t n_fields,Movie *mvip)
 	 * reference to it now.
 	 */
 	mvip->mvi_data = NULL;
+#endif /* HAVE_V4L2 */
 }
 
-#endif /* HAVE_V4L2 */
 
 /* open a file for playpack */
 
@@ -73,11 +73,15 @@ void v4l2_play_movie(QSP_ARG_DECL  Movie *mvip)
 	Image_File *ifp;
 
 	ifp= (Image_File *) mvip->mvi_data;
+#ifdef HAVE_RAWVOL
 #ifdef HAVE_X11_EXT
 	play_rawvol_movie(ifp);
 #else
 	warn("v4l2_play_movie:  Program was configured without X11 Extensions.");
 #endif
+#else // ! HAVE_RAWVOL
+	warn("v4l2_play_movie:  Program was configured without raw volume.");
+#endif // ! HAVE_RAWVOL
 }
 
 void v4l2_reverse_movie(QSP_ARG_DECL  Movie *mvip)
@@ -97,11 +101,15 @@ sprintf(ERROR_STRING,"v4l2_shuttle_movie %s %d",MOVIE_NAME(mvip),frame);
 advise(ERROR_STRING);
 	ifp= (Image_File *) mvip->mvi_data;
 
+#ifdef HAVE_RAWVOL
 #ifdef HAVE_X11_EXT
 	play_rawvol_frame(ifp, frame);
 #else
 	warn("v4l2_shuttle_movie:  Program was configured without X11 Extensions.");
 #endif
+#else // ! HAVE_RAWVOL
+	warn("v4l2_shuttle_movie:  Program was configured without raw volume.");
+#endif // ! HAVE_RAWVOL
 }
 
 
@@ -111,7 +119,7 @@ void v4l2_close_movie(QSP_ARG_DECL  Movie *mvip)
 
 int v4l2_setup_play(QSP_ARG_DECL  Movie *mvip)
 {
-	return(0);
+	return 0;
 }
 
 void v4l2_monitor(SINGLE_QSP_ARG_DECL)
@@ -153,6 +161,7 @@ void v4l2_movie_info(QSP_ARG_DECL  Movie *mvip)
 
 int v4l2_setup_movie(QSP_ARG_DECL  Movie *mvip,uint32_t n_fields)
 {
+#ifdef HAVE_V4L2
 	Filetype * ftp;
 	Image_File *ifp;
 	//struct v4l2_geomet _geo;
@@ -200,7 +209,7 @@ advise("v4l2_setup_movie");
 
 	ifp = write_image_file(MOVIE_NAME(mvip),n_frames);
 
-	if( ifp == NULL ) return(-1);
+	if( ifp == NULL ) return -1;
 
 	mvip->mvi_data = ifp;
 
@@ -208,7 +217,7 @@ advise("v4l2_setup_movie");
 
 	//if( v4l2_get_geometry(&_geo) < 0 ){
 	//	/* BUG close file */
-	//	return(-1);
+	//	return -1;
 	//}
 
 	//SET_MOVIE_HEIGHT(mvip, _geo.rows);
@@ -228,10 +237,11 @@ advise("v4l2_setup_movie");
 		sprintf(ERROR_STRING,"v4l2_setup_movie:  failed to allocate rawvol storage for %s",
 			MOVIE_NAME(mvip));
 		warn(ERROR_STRING);
-		return(-1);
+		return -1;
 	}
 
-	return(0);
+#endif // HAVE_V4L2
+	return 0;
 }
 
 void v4l2_add_frame(QSP_ARG_DECL  Movie *mvip,Data_Obj *dp)
@@ -248,6 +258,7 @@ advise("v4l2_add_frame");
 
 void v4l2_end_assemble(QSP_ARG_DECL  Movie *mvip)
 {
+#ifdef HAVE_RAWVOL
 	RV_Inode *inp;
 
 #ifdef QUIP_DEBUG
@@ -283,6 +294,7 @@ advise(ERROR_STRING);
 	assert( inp != NULL );
 
 	update_movie_database(inp);
+#endif // HAVE_RAWVOL
 }
 
 void v4l2_get_frame(QSP_ARG_DECL  Movie *mvip, uint32_t n, Data_Obj *dp)
@@ -315,14 +327,17 @@ void v4l2_get_fieldc(QSP_ARG_DECL  Movie *mvip,uint32_t f,Data_Obj* Datadp,int c
 
 void _monitor_v4l2_video(QSP_ARG_DECL  Data_Obj *dp)
 {
-	init_rawvol_viewer(OBJ_COLS(dp), OBJ_ROWS(dp), OBJ_COMPS(dp));
+	Viewer *vp;
+	
+	vp = init_shm_viewer(OBJ_NAME(dp),OBJ_COLS(dp), OBJ_ROWS(dp), OBJ_COMPS(dp));
+	if( vp == NULL ) return;
 
 	/* BUG should make this a background process or something... */
 	/* This routine just displays over and over again, no synchronization
 	 * with interrupts...
 	 */
 	while(1){
-		display_to_rawvol_viewer(dp);
+		display_to_shm_viewer(vp,dp);
 	}
 }
 

@@ -31,6 +31,7 @@ libview_a_SOURCES =				\
 			xplot.c			\
 			rdplot.c		\
 			drag.c			\
+			shm_viewer.c		\
 			viewer.c
 
 noinst_HEADERS =	bullseye.cursor		\
