@@ -42,7 +42,7 @@
 
 static COMMAND_FUNC( do_stop_flow )
 {
-	CHECK_DEVICE
+	CHECK_DEVICE(stop_flow)
 
 	if( ! IS_CAPTURING(curr_vdp) ){
 		warn("do_stop_flow:  Current video device is not capturing!?");
@@ -93,7 +93,7 @@ static COMMAND_FUNC( update_vars )
 
 static COMMAND_FUNC( do_start_flow )
 {
-	CHECK_DEVICE
+	CHECK_DEVICE(start_flow)
 
 	if( IS_CAPTURING(curr_vdp) ){
 		warn("do_start_flow:  Current video device is already capturing!?");
@@ -118,7 +118,7 @@ static COMMAND_FUNC( wait_next )	/* wait til we have another frame */
 #ifdef HAVE_V4L2
 	int n,m;
 
-	CHECK_DEVICE
+	CHECK_DEVICE(wait_next)
 
 	if( ! IS_CAPTURING(curr_vdp) ){
 		sprintf(ERROR_STRING,"wait_next:  Video device %s is not capturing!?",
@@ -152,7 +152,7 @@ static COMMAND_FUNC( wait_drip )	/* wait til we have at least one frame */
 #ifdef HAVE_V4L2
 	int n=0;
 
-	CHECK_DEVICE
+	CHECK_DEVICE(wait_drip)
 
 	if( ! IS_CAPTURING(curr_vdp) ){
 		sprintf(ERROR_STRING,"wait_drip:  Video device %s is not capturing!?",
@@ -231,7 +231,7 @@ fprintf(stderr,"release_oldest_buffer new oldest_buffer is %d\n",vdp->vd_oldest_
 static COMMAND_FUNC( do_release_buffer )
 {
 #ifdef HAVE_V4L2
-	CHECK_DEVICE
+	CHECK_DEVICE(release_buffer)
 
 	if( ! IS_CAPTURING(curr_vdp) ){
 		sprintf(ERROR_STRING,"wait_next:  Video device %s is not capturing!?",

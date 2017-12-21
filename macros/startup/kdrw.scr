@@ -1,7 +1,7 @@
 # Peano curve drawing program, emulates old 8-bit display
 
-variables set DOTFILEDIR /usr/local/share/quip/macros/startup quit
-< $DOTFILEDIR/quip.scr
+variables set QUIPSTARTUPDIR /usr/local/share/quip/macros/startup quit
+< $QUIPSTARTUPDIR/quip.scr
 
 Set gap 7
 Set size 128

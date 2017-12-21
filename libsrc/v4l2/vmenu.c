@@ -57,7 +57,6 @@ int xioctl(int fd, int request, void *arg)
 	int r;
 
 	do {
-//fprintf(stderr,"xiotcl calling ioctl\n");
 		r = ioctl(fd, request, arg);
 	} while( r == -1 && errno== EINTR );
 //fprintf(stderr,"xiotcl returning %d\n",r);
@@ -371,7 +370,6 @@ static inline void _release_mmap_buffers(QSP_ARG_DECL  Video_Device *vdp)
 	req.type		= V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	req.memory		= V4L2_MEMORY_MMAP;
 	req.count		= 0;	// release the buffers
-fprintf(stderr,"release_mmap_buffers calling try_buffer_request\n");
 	if( try_buffer_request("memory-mapped buffers",vdp,&req) < 0 )
 		warn("Error releasing memory-mapped buffers!?");
 	else {
@@ -393,7 +391,6 @@ static inline int _request_mmap_buffers(QSP_ARG_DECL  Video_Device *vdp, int nre
 	req.memory		= V4L2_MEMORY_MMAP;
 	req.count		= nreq;
 
-fprintf(stderr,"request_mmap_buffers calling try_buffer_request\n");
 	if( try_buffer_request("memory-mapped buffers",vdp,&req) == 0 ){
 fprintf(stderr,"request_mmap_buffers setting using flag!\n");
 		vdp->vd_flags |= VD_USING_MMAP_BUFFERS | VD_HAS_BUFFERS;
@@ -418,7 +415,6 @@ static inline int _request_userspace_buffers(QSP_ARG_DECL  Video_Device *vdp )
 	assert(CAN_USE_USERSPACE_BUFFERS(vdp));
 
 	if( IS_USING_MMAP_BUFFERS(vdp) ){
-fprintf(stderr,"request_userspace_buffers calling release_mmap_buffers\n");
 		release_mmap_buffers(vdp);
 		assert( ! IS_USING_MMAP_BUFFERS(vdp) );
 	}
@@ -427,7 +423,6 @@ fprintf(stderr,"request_userspace_buffers calling release_mmap_buffers\n");
 	req.type		= V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	req.memory		= V4L2_MEMORY_USERPTR;
 
-fprintf(stderr,"request_userspace_buffers calling try_buffer_request\n");
 	if( try_buffer_request("user-space buffers",vdp,&req) == 0 ){
 		vdp->vd_flags |= VD_USING_USERSPACE_BUFFERS;
 		vdp->vd_flags &= ~VD_USING_MMAP_BUFFERS;
@@ -450,12 +445,10 @@ static void _discover_buffer_options(QSP_ARG_DECL  Video_Device *vdp)
 //		vdp->vd_flags &= ~VD_SUPPORTS_USERSPACE_BUFFERS;	// remember this
 
 	vdp->vd_flags |= VD_SUPPORTS_MMAP_BUFFERS;	// trial to pass assertion
-fprintf(stderr,"discover_buffer_options calling request_mmap_buffers\n");
 	if( request_mmap_buffers(vdp,DEFAULT_N_VIDEO_BUFFERS) < 0 )
 		vdp->vd_flags &= ~VD_SUPPORTS_MMAP_BUFFERS;	// remember this
 
 	if( IS_USING_MMAP_BUFFERS(vdp) ){
-fprintf(stderr,"discover_buffer_options NOT calling release_mmap_buffers\n");
 		//release_mmap_buffers(vdp);
 	}
 }
@@ -1307,13 +1300,13 @@ static COMMAND_FUNC( do_select_device )
 
 static COMMAND_FUNC( do_status )
 {
-	CHECK_DEVICE
+	CHECK_DEVICE(status)
 	report_status(QSP_ARG  curr_vdp);
 }
 
 static COMMAND_FUNC( do_start )
 {
-	CHECK_DEVICE
+	CHECK_DEVICE(start)
 
 	if( ! HAS_BUFFERS(curr_vdp) ){
 		warn("Current device has no buffers!?");
@@ -1324,7 +1317,7 @@ static COMMAND_FUNC( do_start )
 
 static COMMAND_FUNC( do_stop )
 {
-	CHECK_DEVICE
+	CHECK_DEVICE(stop)
 #ifdef HAVE_V4L2
 	stop_capturing(curr_vdp);
 #endif // HAVE_V4L2
@@ -1332,7 +1325,7 @@ static COMMAND_FUNC( do_stop )
 
 static COMMAND_FUNC( do_dq_next )
 {
-	CHECK_DEVICE
+	CHECK_DEVICE(dq_next)
 #ifdef HAVE_V4L2
 	get_next_frame(QSP_ARG  curr_vdp);
 #endif // HAVE_V4L2
@@ -1342,7 +1335,7 @@ static COMMAND_FUNC( do_q_buf )
 {
 	int idx;
 
-	CHECK_DEVICE
+	CHECK_DEVICE(q_buf)
 
 	idx = how_many("buffer index");
 	// BUG check for valid value
@@ -1481,25 +1474,25 @@ static int get_integer_control(QSP_ARG_DECL uint32_t id)
 
 static COMMAND_FUNC( do_set_hue )
 {
-	CHECK_DEVICE
+	CHECK_DEVICE(set_hue)
 	SET_INTEGER_CONTROL(V4L2_CID_HUE);
 }
 
 static COMMAND_FUNC( do_set_bright )
 {
-	CHECK_DEVICE
+	CHECK_DEVICE(set_bright)
 	SET_INTEGER_CONTROL(V4L2_CID_BRIGHTNESS);
 }
 
 static COMMAND_FUNC( do_set_contrast )
 {
-	CHECK_DEVICE
+	CHECK_DEVICE(set_contrast)
 	SET_INTEGER_CONTROL(V4L2_CID_CONTRAST);
 }
 
 static COMMAND_FUNC( do_set_saturation )
 {
-	CHECK_DEVICE
+	CHECK_DEVICE(set_saturation)
 	SET_INTEGER_CONTROL(V4L2_CID_SATURATION);
 }
 
@@ -1509,7 +1502,7 @@ static void do_get_control( QSP_ARG_DECL const char *varname, int ctl_index )
 {
 	int v;
 
-	CHECK_DEVICE
+	CHECK_DEVICE(get_control)
 	v=get_integer_control(QSP_ARG ctl_index);
 	sprintf(msg_str,"%d",v);
 	assign_var(varname,msg_str);
@@ -1588,7 +1581,7 @@ static COMMAND_FUNC( do_report_input )
 	struct v4l2_input input;
 	int index;
 
-	CHECK_DEVICE
+	CHECK_DEVICE(report_input)
 
 	if (-1 == ioctl (curr_vdp->vd_fd, VIDIOC_G_INPUT, &index)) {
         	perror ("VIDIOC_G_INPUT");
@@ -1612,7 +1605,7 @@ static COMMAND_FUNC( do_list_inputs )
 #ifdef HAVE_V4L2
 	struct v4l2_input input;
 
-	CHECK_DEVICE
+	CHECK_DEVICE(list_inputs)
 
 	memset (&input, 0, sizeof (input));
 	input.index = 0;
@@ -1635,7 +1628,7 @@ static COMMAND_FUNC( do_list_stds )
 	struct v4l2_input input;
 	struct v4l2_standard standard;
 
-	CHECK_DEVICE
+	CHECK_DEVICE(list_stds)
 
 	memset (&input, 0, sizeof (input));
 
@@ -1676,7 +1669,7 @@ static int count_standards(QSP_ARG_DECL  Video_Device *vdp)
 {
 	struct v4l2_standard standard;
 
-	CHECK_DEVICE2
+	CHECK_DEVICE2(count_standards)
 
 	memset (&standard, 0, sizeof (standard));
 	standard.index = 0;
@@ -1766,7 +1759,7 @@ static COMMAND_FUNC( do_set_std )
 	int i;
 	const char **choices;
 
-	CHECK_DEVICE
+	CHECK_DEVICE(set_std)
 
 	if( curr_vdp->vd_n_standards <= 0 )
 		init_std_choices(QSP_ARG  curr_vdp);

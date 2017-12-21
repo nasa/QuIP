@@ -3,11 +3,11 @@
 
 
 
-< $DOTFILEDIR/.daemon
-#< $DOTFILEDIR/.generic
-< $DOTFILEDIR/.gendata
-< $DOTFILEDIR/.genwar
-< $DOTFILEDIR/.genview
+< $QUIPSTARTUPDIR/.daemon
+#< $QUIPSTARTUPDIR/.generic
+< $QUIPSTARTUPDIR/.gendata
+< $QUIPSTARTUPDIR/.genwar
+< $QUIPSTARTUPDIR/.genview
 
 < $macro_dir/flycap/fly.mac
 

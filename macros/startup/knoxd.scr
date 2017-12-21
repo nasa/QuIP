@@ -1,13 +1,12 @@
 #
 # mmvi record daemon
 
+< $QUIPSTARTUPDIR/quip.scr
 
-
-< $DOTFILEDIR/.daemon
-#< $DOTFILEDIR/.generic
-< $DOTFILEDIR/.gendata
-< $DOTFILEDIR/.genwar
-< $DOTFILEDIR/.genview
+##< $QUIPSTARTUPDIR/.generic
+#< $QUIPSTARTUPDIR/.gendata
+#< $QUIPSTARTUPDIR/.genwar
+#< $QUIPSTARTUPDIR/.genview
 
 < $macro_dir/knox/knox.mac
 
