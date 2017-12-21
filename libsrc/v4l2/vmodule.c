@@ -1,6 +1,5 @@
 #include "quip_config.h"
 
-#ifdef HAVE_V4L2
 
 #include <stdio.h>
 
@@ -17,6 +16,8 @@
 #ifdef QUIP_DEBUG
 //int v4l2_debug=0;
 #endif /* QUIP_DEBUG */
+
+#ifdef HAVE_V4L2
 
 void v4l2_record(QSP_ARG_DECL  uint32_t n_fields,Movie *mvip)
 {
@@ -58,6 +59,7 @@ void v4l2_record(QSP_ARG_DECL  uint32_t n_fields,Movie *mvip)
 	mvip->mvi_data = NULL;
 }
 
+#endif /* HAVE_V4L2 */
 
 /* open a file for playpack */
 
@@ -320,29 +322,10 @@ void _monitor_v4l2_video(QSP_ARG_DECL  Data_Obj *dp)
 	 * with interrupts...
 	 */
 	while(1){
-#ifdef FOOBAR
-		Viewer *vp;
-		int i;
-
-		if( displaying_color ){
-			vp=rawvol_vp[0];
-			update_shm_viewer(vp, ((char *)OBJ_DATA_PTR(dp)) /* +display_component[w] */ ,
-				rawvol_increment,1 /* this means advance src component */,
-				vp->vw_width,vp->vw_height, 0,0);
-		} else {
-			for(i=0;i<n_displayed_components;i++){
-				vp=rawvol_vp[i];
-				update_shm_viewer(vp, ((char *)OBJ_DATA_PTR(dp))+display_component[i],
-					rawvol_increment,0 /* don't advance src component at each pixel */,
-					vp->vw_width,vp->vw_height, 0,0);
-			}
-		}
-#endif // FOOBAR
 		display_to_rawvol_viewer(dp);
 	}
 }
 
 /***************************/
 
-#endif /* HAVE_V4L2 */
 

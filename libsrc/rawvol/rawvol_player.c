@@ -1,5 +1,6 @@
 #include "quip_config.h"
 
+#ifdef HAVE_RAWVOL
 #ifdef HAVE_X11_EXT
 
 #ifdef HAVE_PTHREAD_H
@@ -536,3 +537,4 @@ void display_to_rawvol_viewer(Data_Obj *dp)
 
 #endif /* HAVE_X11_EXT */
 
+#endif // HAVE_RAWVOL
