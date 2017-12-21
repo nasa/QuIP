@@ -107,7 +107,7 @@ ITEM_LIST_PROT(Filetype,file_type)	// added for debugging
 #define file_type_list()	_file_type_list(SINGLE_QSP_ARG)
 #define list_file_types(fp)	_list_file_types(QSP_ARG  fp)
 
-typedef struct image_file {
+struct image_file {
 	Item		if_item;
 #define if_name		if_item.item_name
 	union {
@@ -128,7 +128,7 @@ typedef struct image_file {
 //#ifdef BUILD_FOR_IOS
 //	UIImage *	if_imgp;	// for iOS png...
 //#endif // BUILD_FOR_IOS
-} Image_File;
+} ;
 
 
 /* Image_File */

@@ -66,6 +66,8 @@ FWD_TYPEDEF(platform_device,Platform_Device)
 FWD_TYPEDEF(platform_stream,Platform_Stream)
 FWD_TYPEDEF(curl_info,Curl_Info)
 
+FWD_TYPEDEF(image_file,Image_File)
+
 typedef List Stack;
 
 #ifndef BUILD_FOR_OBJC

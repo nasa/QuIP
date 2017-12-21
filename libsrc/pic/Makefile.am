@@ -10,3 +10,6 @@ libpic_a_SOURCES = 					\
 				pic.c			\
 				pic_tbl.c
 
+noinst_HEADERS =			\
+					\
+				pic.h
