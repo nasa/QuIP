@@ -2,7 +2,7 @@
 #ifndef NO_VIDEO_DEVICE
 
 #include "quip_config.h"
-
+#include "fio_api.h"
 
 
 #ifdef HAVE_ASM_TYPES_H
@@ -19,6 +19,8 @@
 #endif // HAVE_V4L2
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
+
+extern int v4l2_field_mode;	// BUG - avoid global
 
 typedef struct my_buffer {
 	void *			mb_start;
@@ -125,6 +127,9 @@ extern void print_buf_info(const char *msg, My_Buffer *mbp);
 
 
 extern COMMAND_FUNC( do_flow_menu );
+
+// ezstream.c
+extern void v4l2_record_clip(Image_File *ifp,int n_frames_to_request);
 
 #endif /* undef NO_VIDEO_DEVICE */
 

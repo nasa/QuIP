@@ -31,6 +31,10 @@ ITEM_INTERFACE_PROTOTYPES(Video_Device,video_dev)
 #define new_video_dev(s)	_new_video_dev(QSP_ARG  s)
 #define del_video_dev(s)	_del_video_dev(QSP_ARG  s)
 
+/* ezstream.c */
+extern uint32_t get_blocks_per_v4l2_frame(void);
+extern int get_async_record(void);
+
 /* stream.c */
 extern COMMAND_FUNC( print_grab_times );
 extern COMMAND_FUNC( print_store_times );

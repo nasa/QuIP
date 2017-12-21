@@ -470,7 +470,7 @@ static void _note_error_frames(QSP_ARG_DECL  RV_Inode *inp)
 	}
 }
 
-uint32_t get_blocks_per_frame()
+uint32_t get_blocks_per_meteor_frame()
 {
 	uint32_t blocks_per_frame, bytes_per_frame;
 
@@ -525,7 +525,7 @@ static COMMAND_FUNC( do_record )
 		return;
 	}
 
-	n_blocks = rv_frames_to_allocate(n_frames) * get_blocks_per_frame();
+	n_blocks = rv_frames_to_allocate(n_frames) * get_blocks_per_meteor_frame();
 
 	/* n_blocks is the total number of blocks, not the number per disk(?) */
 

@@ -1,5 +1,6 @@
-# test script for vmenu
-If $argc!=1 "error_exit 'usage:  quip video_dev_idx < mon1.scr'"
+# test of different buffering options.
+
+If $argc!=1 "error_exit 'usage:  quip video_dev_idx < buf.scr'"
 
 Set device_idx	$1
 
@@ -14,6 +15,10 @@ v4l2
   open $devname
   advise "first device opened"
   standards set_standard NTSC quit
+  Pause
+
+exit
+
 #  open /dev/video1
 #  advise "second device opened"
 
@@ -74,26 +79,25 @@ advise "$1:  n_ready = $$ready_name   newest = $$newest_name   oldest = $$oldest
 #debug v4l2
 
 v4l2
-  set_n_buffers 6
   flow
     advise "flow STARTING"
     start
-#      Stat started
+      Stat started
       do
-#        Stat 'calling wait'
+        Stat 'calling wait'
 	wait
-#        Stat 'back from wait'
+        Stat 'back from wait'
 
 	Set oname oldest./dev/video$device_idx
 	Set bufname /dev/video$device_idx.buffer$$oname
-#	Print bufname
+	Print bufname
 #	yuv2gray y $bufname
 #	Convert f y
 	yuv2rgb rgb $bufname
 
 	release
-#        Stat 'back from release'
-#	date
+        Stat 'back from release'
+	date
 
 	#Pause
 

@@ -120,9 +120,7 @@ static int recording_in_process = 0;
 /* raw video from the grabber is 422 YUYV */
 #define DEFAULT_BYTES_PER_PIXEL		2
 
-#ifdef NOT_USED
-static int async_capture=0;
-#endif /* NOT_USED */
+static int async_v4l2_capture=0;
 
 #ifdef RECORD_TIMESTAMPS
 
@@ -139,7 +137,7 @@ static unsigned int ts_array_size=0;
 #endif /* RECORD_TIMESTAMPS */
 
 #ifdef HAVE_RAWVOL
-static uint32_t get_blocks_per_frame()
+uint32_t get_blocks_per_v4l2_frame(void)
 {
 	uint32_t blocks_per_frame, bytes_per_frame;
 
@@ -154,6 +152,11 @@ static uint32_t get_blocks_per_frame()
 	return(blocks_per_frame);
 }
 #endif // HAVE_RAWVOL
+
+int get_async_record(void)
+{
+	return async_v4l2_capture;
+}
 
 #ifdef RECORD_TIMESTAMPS
 static void init_stamps(uint32_t n_frames)
@@ -196,15 +199,13 @@ show_tmr(&tmr1);
 
 #endif /* DEBUG_TIMERS */
 
-#ifdef NOT_USED
 /* These don't seem to be used anywhere in this module??? */
 
 void set_v4l2_async_record(int flag)
-{ async_capture = flag; }
+{ async_v4l2_capture = flag; }
 
 int get_v4l2_async_record()
-{ return async_capture; }
-#endif /* NOT_USED */
+{ return async_v4l2_capture; }
 
 /* Get the next frame from whichever device might be ready.  We want to store
  * the frames we get in device order, so we don't necessarily deliver up the frame
@@ -429,7 +430,7 @@ void _v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp,long n_frames,int n_camer
 	}
 
 /* grabber dependent? */
-	blocks_per_frame = get_blocks_per_frame();
+	blocks_per_frame = get_blocks_per_v4l2_frame();
 
 	n_to_write = blocks_per_frame * BLOCK_SIZE;
 //n_to_write>>=2;		/* write quarter for testing */
@@ -665,7 +666,7 @@ COMMAND_FUNC( do_stream_record )
 		return;
 	}
 
-	n_blocks = FRAMES_TO_ALLOCATE(n_frames,rv_get_ndisks()) * get_blocks_per_frame();
+	n_blocks = FRAMES_TO_ALLOCATE(n_frames,rv_get_ndisks()) * get_blocks_per_v4l2_frame();
 
 	/* n_blocks is the total number of blocks, not the number per disk(?) */
 
@@ -689,6 +690,12 @@ COMMAND_FUNC( do_stream_record )
 #endif // ! HAVE_RAWVOL
 }
  /* end do_record() */
+
+void v4l2_record_clip(Image_File *ifp,int n_frames_to_request)
+{
+	fprintf(stderr,"Oops - v4l2_record_clip not implemented!?\n");
+}
+
 
 #else /* ! HAVEV4L2 */
 

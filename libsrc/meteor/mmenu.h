@@ -59,9 +59,7 @@ extern void *map_mem_data(SINGLE_QSP_ARG_DECL);
 
 extern void gotframe(int signum);
 extern void	meteor_status(SINGLE_QSP_ARG_DECL);
-extern uint32_t	get_blocks_per_frame(void);
-extern void	_update_movie_database(QSP_ARG_DECL  RV_Inode *inp);
-#define update_movie_database(inp) _update_movie_database(QSP_ARG  inp)
+extern uint32_t	get_blocks_per_meteor_frame(void);
 
 extern void	mm_init(void);
 extern int	meteor_capture(SINGLE_QSP_ARG_DECL);
@@ -122,9 +120,6 @@ extern void set_disp_comp(int);
 
 void _enable_meteor_timestamps(QSP_ARG_DECL  uint32_t flag);
 #define enable_meteor_timestamps(flag) _enable_meteor_timestamps(QSP_ARG  flag)
-
-void _make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp);
-#define make_movie_from_inode(inp) _make_movie_from_inode(QSP_ARG  inp)
 
 /* flow.c */
 extern COMMAND_FUNC( meteor_flow_menu );

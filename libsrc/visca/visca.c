@@ -1615,10 +1615,13 @@ static void *camera_request_server(void *arg)
 	Node *np;
 	int did_something;
 
+	assert(arg!=NULL);
 	vsa_p = arg;
 	vcam_p = vsa_p->vsa_vcam_p;
+	assert(vcam_p!=NULL);
 #ifdef THREAD_SAFE_QUERY
 	qsp = vsa_p->vsa_qsp;
+	assert(qsp!=NULL);
 #endif // THREAD_SAFE_QUERY
 
 	np = NULL;
@@ -1666,9 +1669,10 @@ static void *camera_request_server(void *arg)
 static void _init_server_thread(QSP_ARG_DECL  Visca_Cam *vcam_p)
 {
 	pthread_attr_t attr1;
-	Visca_Server_Args vsa1;
+	static Visca_Server_Args vsa1;
 
 	vcam_p->vcam_qlock=0;
+	assert(vcam_p!=NULL);
 	vsa1.vsa_vcam_p = vcam_p;
 #ifdef THREAD_SAFE_QUERY
 	vsa1.vsa_qsp = THIS_QSP;

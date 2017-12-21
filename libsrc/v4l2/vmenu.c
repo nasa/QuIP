@@ -41,6 +41,9 @@
 #include "vec_util.h"		/* yuv422_to_rgb24 */
 #include "my_video_dev.h"
 #include "my_v4l2.h"
+#include "gmovie.h"
+#include "vmvi.h"
+#include "function.h"
 
 
 Video_Device *curr_vdp=NULL;
@@ -203,9 +206,11 @@ static Video_Field_Mode vfld_tbl[N_FIELD_MODES]={
 {	"seq_bt",	480,	V4L2_FIELD_SEQ_BT	}
 };
 
+// BUG - don't use globals!?  Make part of camera struct!
 static const char * field_mode_choices[N_FIELD_MODES];
 static int field_mode_choices_inited=0;
 static int vfld_index=0;	// default is interlaced
+int v4l2_field_mode=0;
 
 static COMMAND_FUNC( set_field_mode )
 {
@@ -228,35 +233,17 @@ static void _setup_buffer_dimensions(QSP_ARG_DECL  Dimension_Set *dsp)
 {
 	/* BUG need to do these dynamically, might be using scaler */
 	// Also, this assume NTSC standard!?!?
+	dsp->ds_dimension[1]=640;	/* pixels row */
 	// Use the current pixel format
-	switch( vfmt_list[vfmt_index].vfmt_code ){
-		case V4L2_PIX_FMT_YUYV:
-			dsp->ds_dimension[0]=2;	/* two bytes per pixel - YU or YV */
-			dsp->ds_dimension[1]=640;	/* pixels row */
-			break;
-		case V4L2_PIX_FMT_GREY:
-			dsp->ds_dimension[0]=1;
-			dsp->ds_dimension[1]=640;
-			break;
-		case V4L2_PIX_FMT_RGB24:
-		case V4L2_PIX_FMT_BGR24:
-			dsp->ds_dimension[0]=3;
-			dsp->ds_dimension[1]=640;
-			break;
-		case V4L2_PIX_FMT_RGB32:
-		case V4L2_PIX_FMT_BGR32:
-			dsp->ds_dimension[0]=4;
-			dsp->ds_dimension[1]=640;
-			break;
-		default:
-			sprintf(ERROR_STRING,"Oops, haven't implemented buffer creation for %s pixel format!?",
-				vfmt_list[vfmt_index].vfmt_name);
-			warn(ERROR_STRING);
-			// default to YUYV
-			dsp->ds_dimension[0]=4;	/* four bytes per pixel pair */
-			dsp->ds_dimension[1]=320;	/* pixel pairs per row */
-			break;
-	}
+	assert(
+		vfmt_list[vfmt_index].vfmt_code == V4L2_PIX_FMT_YUYV  ||
+		vfmt_list[vfmt_index].vfmt_code == V4L2_PIX_FMT_GREY  ||
+		vfmt_list[vfmt_index].vfmt_code == V4L2_PIX_FMT_RGB24 ||
+		vfmt_list[vfmt_index].vfmt_code == V4L2_PIX_FMT_BGR24 ||
+		vfmt_list[vfmt_index].vfmt_code == V4L2_PIX_FMT_RGB32 ||
+		vfmt_list[vfmt_index].vfmt_code == V4L2_PIX_FMT_BGR32 );
+	dsp->ds_dimension[0]= vfmt_list[vfmt_index].vfmt_bpp;
+
 	/* rows */
 	dsp->ds_dimension[2]=vfld_tbl[vfld_index].vfld_height;
 
@@ -506,10 +493,12 @@ static int _check_capabilities(QSP_ARG_DECL  Video_Device *vdp)
 		return -1;
 	}
 
-	if( cap.capabilities & V4L2_CAP_READWRITE ){
-		advise("Device supports read/write");
-	} else {
-		advise("Device does NOT support read/write");
+	if( verbose ){
+		if( cap.capabilities & V4L2_CAP_READWRITE ){
+			advise("Device supports read/write");
+		} else {
+			advise("Device does NOT support read/write");
+		}
 	}
 
 
@@ -643,24 +632,24 @@ static int _setup_video_format(QSP_ARG_DECL  Video_Device *vdp)
 	/* Note VIDIOC_S_FMT may change width and height. */
 
 	/* Buggy driver paranoia. */
-sprintf(ERROR_STRING,"pix.width = %d",
-fmt.fmt.pix.width);
-advise(ERROR_STRING);
 	min = fmt.fmt.pix.width * bytes_per_pixel;
 	if(fmt.fmt.pix.bytesperline < min){
-sprintf(ERROR_STRING,"bytesperline = %d, setting to min (%d)",
-fmt.fmt.pix.bytesperline,min);
-advise(ERROR_STRING);
-
 		fmt.fmt.pix.bytesperline = min;
 	}
 	min = fmt.fmt.pix.bytesperline * fmt.fmt.pix.height;
 	if(fmt.fmt.pix.sizeimage < min){
-sprintf(ERROR_STRING,"sizeimage = %d, setting to min (%d)",
-fmt.fmt.pix.sizeimage,min);
-advise(ERROR_STRING);
 		fmt.fmt.pix.sizeimage = min;
 	}
+
+	// read back to be sure!
+	if(-1 == xioctl(vdp->vd_fd, VIDIOC_G_FMT, &fmt)){
+		sprintf(ERROR_STRING,"VIDIOC_G_FMT:  %s",strerror(errno));
+		warn(ERROR_STRING);
+		return -1;
+	}
+	// Here we might check or print to make sure that the expected things happened...
+	// For example, PIX_FMT_GREY seems to return 2 bpp!?
+
 	return 0;
 }
 
@@ -1897,6 +1886,69 @@ static COMMAND_FUNC(do_set_n_buffers)
 }
 
 
+Movie_Module v4l2_movie_module = {
+	"v4l2",
+	v4l2_setup_movie,
+	v4l2_add_frame,
+	v4l2_end_assemble,
+	v4l2_record,
+	v4l2_monitor,
+
+	do_v4l2_menu,
+	v4l2_movie_info,
+	v4l2_init,
+
+	v4l2_open_movie,
+	v4l2_setup_play,
+	v4l2_play_movie,
+	v4l2_wait_play,
+	v4l2_reverse_movie,
+	v4l2_get_frame,
+	v4l2_get_field,
+	v4l2_get_framec,
+	v4l2_get_fieldc,
+	v4l2_close_movie,
+	v4l2_shuttle_movie
+};
+
+static double videodev_exists(QSP_ARG_DECL  const char *name)
+{
+	Video_Device *vdp;
+	vdp = video_dev_of(name);
+	if( vdp == NULL ) return 0.0;
+	return 1.0;
+}
+
+void v4l2_init(SINGLE_QSP_ARG_DECL)
+{
+	static int inited=0;
+
+	if( inited ) return;
+	inited=1;	// need to do this now, because init_rv_movies may call?
+
+fprintf(stderr,"v4l2_init performing one-time initializations\n");
+
+	v4l2_debug=add_debug_module("v4l2");
+#ifdef HAVE_RAWVOL
+	if( insure_default_rv(SINGLE_QSP_ARG) < 0 ){
+		warn("error opening default raw volume");
+	} else {
+		/* create movie structs for any existing rv files */
+advise("initializing rawvol movies");
+		init_rv_movies();
+	}
+#endif // HAVE_RAWVOL
+
+	/* FIXME put analogous stuff here for lml board,
+	 * someday write movie module...
+	 */
+	//init_rv_movies();
+	//meteor_init();
+	load_movie_module(&v4l2_movie_module);
+
+	DECLARE_STR1_FUNCTION(	videodev_exists,	videodev_exists )
+}
+
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(v4l2_menu,s,f,h)
@@ -1925,27 +1977,7 @@ MENU_END(v4l2)
 
 COMMAND_FUNC( do_v4l2_menu )
 {
-	static int inited=0;
-
-	if( ! inited ){
-		v4l2_debug=add_debug_module("v4l2");
-#ifdef HAVE_RAWVOL
-		if( insure_default_rv(SINGLE_QSP_ARG) < 0 ){
-			warn("error opening default raw volume");
-		}
-#endif // HAVE_RAWVOL
-
-		/* FIXME put analogous stuff here for lml board,
-		 * someday write movie module...
-		 */
-		//init_rv_movies();
-		//meteor_init();
-		//load_movie_module(&meteor_movie_module);
-
-		inited=1;
-
-	}
-
+	v4l2_init(SINGLE_QSP_ARG);
 	CHECK_AND_PUSH_MENU(v4l2);
 }
 

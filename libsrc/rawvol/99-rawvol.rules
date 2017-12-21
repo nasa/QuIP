@@ -1,0 +1,20 @@
+# udev rules file for raw volume disks
+#
+# This file needs to be installed in /etc/udev/rules.d on CentOS 6 or later
+# in order for permissions to "stick"
+
+# jbm - 6/17/2017
+# based on information in:
+#  https://fritshoogland.wordpress.com/2012/07/23/using-udev-on-rhel-6-ol-6-to-change-disk-permissions-for-asm/
+#
+# Attempts to solve problem of disk permissions being changed from 666 to 660
+# after a write operation
+
+# Obtain disk ids:  sudo scsi_id -g -u -d /dev/sdb
+# SSEAGATE_ST373307LC_3HZ69N0M0000745280ZF
+# sudo scsi_id -g -u -d /dev/sdc
+# SSEAGATE_ST336607LC_3JA003WL0000824738AQ
+
+KERNEL=="sdb1", BUS=="scsi", PROGRAM=="/sbin/scsi_id -g -u -d /dev/sdb", RESULT=="SSEAGATE_ST373307LC_3HZ69N0M0000745280ZF", NAME="rawvol-disk1", OWNER="root", GROUP="disk", MODE="0666"
+KERNEL=="sdc1", BUS=="scsi", PROGRAM=="/sbin/scsi_id -g -u -d /dev/sdc", RESULT=="SSEAGATE_ST336607LC_3JA003WL0000824738AQ", NAME="rawvol-disk2", OWNER="root", GROUP="disk", MODE="0666"
+

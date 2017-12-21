@@ -20,6 +20,7 @@ char VersionId_inc_rawvol[] = QUIP_VERSION_STRING;
 #endif
 
 #include "node.h"
+#include "fio_api.h"
 
 /* image shape information is not really properly part
  * of the raw file info, but since most of our use of raw

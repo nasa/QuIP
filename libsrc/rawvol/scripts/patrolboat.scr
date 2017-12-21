@@ -1,0 +1,12 @@
+# set up the raw volume on poisson
+# /dev/sdb /dev/sdc
+
+rawvol 
+  admin 
+#    mkfs 2 /dev/rawvol-disk1 /dev/rawvol-disk2 1024 1024 
+    mkfs 2 /dev/sdb1 /dev/sdc1 1024 1024 
+    quit 
+  quit 
+
+exit
+

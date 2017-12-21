@@ -207,7 +207,7 @@ advise("meteor_setup_movie");
 	SET_MOVIE_WIDTH(mvip, _geo.columns);
 	SET_MOVIE_FRAMES(mvip, n_frames);
 
-	blocks_per_frame = get_blocks_per_frame();
+	blocks_per_frame = get_blocks_per_meteor_frame();
 
 	/* Make sure that the number of frames requested is an integral multiple of n_disks */
 

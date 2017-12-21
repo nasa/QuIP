@@ -60,6 +60,23 @@ extern int	_rv_frame_seek(QSP_ARG_DECL  RV_Inode *,dimension_t);
 #define rv_realloc(buf,n) _rv_realloc(QSP_ARG  buf,n)
 #define rv_frame_seek(inp,n) _rv_frame_seek(QSP_ARG  inp,n)
 
+void _make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp);
+#define make_movie_from_inode(inp) _make_movie_from_inode(QSP_ARG  inp)
+extern void	_update_movie_database(QSP_ARG_DECL  RV_Inode *inp);
+#define update_movie_database(inp) _update_movie_database(QSP_ARG  inp)
+extern void _init_rv_movies(SINGLE_QSP_ARG_DECL);
+#define init_rv_movies() _init_rv_movies(SINGLE_QSP_ARG)
+
+// rawvol_player.c
+extern void _play_rawvol_movie(QSP_ARG_DECL  Image_File *ifp);
+#define play_rawvol_movie(ifp) _play_rawvol_movie(QSP_ARG  ifp)
+extern void _play_rawvol_frame(QSP_ARG_DECL  Image_File *ifp, uint32_t frame);
+#define play_rawvol_frame(ifp, frame) _play_rawvol_frame(QSP_ARG  ifp, frame)
+extern void _init_rawvol_viewer(QSP_ARG_DECL  int width, int height, int depth);
+#define init_rawvol_viewer(width, height, depth) _init_rawvol_viewer(QSP_ARG  width, height, depth)
+extern Viewer *rawvol_viewer(void);
+extern void display_to_rawvol_viewer(Data_Obj *dp);
+
 
 #endif /* undef _RV_API_H_ */
 

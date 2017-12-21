@@ -230,6 +230,10 @@ Set unit_font "-adobe-times-bold-r-normal--14-140-75-75-p-77-iso${iso_rev}-1"
 #Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
 Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
 #Print legend_font
+
+Set legend_font "-misc-liberation serif-bold-r-normal--0-0-0-0-p-0-iso8859-15"
+Set unit_font "-misc-liberation serif-bold-r-normal--0-0-0-0-p-0-iso8859-15"
+
 Validate_Fonts
 If $fonts_present exit_macro
 

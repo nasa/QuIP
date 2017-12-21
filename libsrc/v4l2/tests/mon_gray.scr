@@ -14,6 +14,8 @@ v4l2
   open $devname
   advise "first device opened"
   standards set_standard NTSC quit
+  #format gray	// doesn't do anything???
+  format yuyv
 #  open /dev/video1
 #  advise "second device opened"
 
@@ -25,20 +27,19 @@ v4l2
 #  next next next
   quit
 
-Image rgb 480 640 3 u_byte
+#Image rgb 480 640 3 u_byte
 Image y 480 640 1 u_byte
-Image u 480 320 1 u_byte
-Image v 480 320 1 u_byte
-data
-  subsample c1 y
-  	320 0 2
-	480 0 1
-  subsample c2 y
-  	320 1 2
-	480 0 1
-  quit
+#Image u 480 320 1 u_byte
+#Image v 480 320 1 u_byte
+#data
+#  subsample c1 y
+#  	320 0 2
+#	480 0 1
+#  subsample c2 y
+#  	320 1 2
+#	480 0 1
+#  quit
 
-#Viewer_For v1 /dev/video$device_idx.buffer0{0}
 Viewer_For v1 y
 Viewer_For v2 y
 
@@ -46,11 +47,15 @@ Posn_Window v1 0 0
 Posn_Window v2 650 0
 
 Set i_buf 0
+
 Define Next 0
 Set name /dev/video$device_idx.buffer$i_buf
-v4l2 next yuv2rgb rgb $name quit
-#v4l2 next yuv2y y $name quit
-Show_Bytes rgb v2
+v4l2 next quit
+#v4l2 yuv2rgb rgb $name quit
+#Show_Bytes rgb v2
+v4l2 yuv2y y $name quit
+Show_Bytes y v2
+#Show_Bytes $name v2
 Increment i_buf
 If $i_buf>=4 "Set i_buf 0"
 .
@@ -87,9 +92,8 @@ v4l2
 	Set oname oldest./dev/video$device_idx
 	Set bufname /dev/video$device_idx.buffer$$oname
 #	Print bufname
-#	yuv2gray y $bufname
+	quit yuv2gray y $bufname flow
 #	Convert f y
-	yuv2rgb rgb $bufname
 
 	release
 #        Stat 'back from release'
@@ -99,7 +103,7 @@ v4l2
 
 	quit quit
 #	    Disp_Gray f v1
-	    Show_Bytes rgb v1
+	    Show_Bytes y v1
 #	    usleep 32000
 	    usleep 12000
 	#  #  Disp_Gray var_mean v2

@@ -65,6 +65,7 @@
 #include "llseek.h"
 #include "fio_api.h"
 #include "debug.h"
+#include "gmovie.h"
 
 ITEM_INTERFACE_DECLARATIONS(RV_Inode,rv_inode,0)
 
@@ -3061,4 +3062,64 @@ int is_rv_movie(RV_Inode *inp)
 	if( IS_LINK(inp) || IS_DIRECTORY(inp) ) return 0;
 	return 1;
 }
+
+// These functions were in the meteor library, but they are not specific to meteor
+
+void _make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
+{
+	Movie *mvip;
+	Image_File *ifp;
+
+	if( ! is_rv_movie(inp) ){
+		if( verbose ){
+			sprintf(ERROR_STRING,"make_movie_from_inode:  rv inode %s is not a movie",rv_name(inp));
+			advise(ERROR_STRING);
+		}
+		return;
+	}
+
+	mvip = create_movie(rv_name(inp));
+	if( mvip == NULL ){
+		sprintf(ERROR_STRING,
+			"error creating movie %s",rv_name(inp));
+		WARN(ERROR_STRING);
+	} else {
+		ifp = img_file_of(rv_name(inp));
+		if( ifp == NULL ){
+			sprintf(ERROR_STRING,
+	"image file struct for rv file %s does not exist!?",rv_name(inp));
+			WARN(ERROR_STRING);
+		} else {
+			mvip->mvi_data = ifp;
+			SET_MOVIE_FRAMES(mvip, OBJ_FRAMES(ifp->if_dp));
+			SET_MOVIE_HEIGHT(mvip, OBJ_ROWS(ifp->if_dp));
+			SET_MOVIE_WIDTH(mvip, OBJ_COLS(ifp->if_dp));
+			SET_MOVIE_DEPTH(mvip, OBJ_COMPS(ifp->if_dp));
+		}
+	}
+}
+
+/* after recording an RV file, automatically create image_file and movie
+ * structs to read/playback...
+ */
+
+void _update_movie_database(QSP_ARG_DECL  RV_Inode *inp)
+{
+	if( ! is_rv_movie(inp) ){
+		if( verbose ){
+			sprintf(ERROR_STRING,"update_movie_database:  rv inode %s is not a movie",rv_name(inp));
+			advise(ERROR_STRING);
+		}
+		return;
+	}
+
+	setup_rv_iofile(inp);		/* open read file	*/
+	make_movie_from_inode(inp);	/* make movie struct	*/
+}
+
+void _init_rv_movies(SINGLE_QSP_ARG_DECL)
+{
+	traverse_rv_inodes( _update_movie_database );
+}
+
 #endif // HAVE_RAWVOL

@@ -1,0 +1,27 @@
+# test of different buffering options.
+
+If $argc!=1 "error_exit 'usage:  quip video_dev_idx < buf.scr'"
+
+Set device_idx	$1
+
+max_warnings 10
+
+Set devname /dev/video$device_idx
+Set ready_name n_ready.$devname
+Set newest_name newest.$devname
+Set oldest_name oldest.$devname
+
+v4l2
+  open $devname
+  advise "first device opened"
+  standards set_standard NTSC quit
+  format gray
+  field_mode alternate
+  set_n_buffers 10
+  quit
+data
+  info /dev/video$1.buffer0
+  Pause
+
+exit
+

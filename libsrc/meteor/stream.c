@@ -569,7 +569,7 @@ void _stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 
 	/* allow space for the timestamp, if we are recording timestamps... */
 
-	blocks_per_frame = get_blocks_per_frame();
+	blocks_per_frame = get_blocks_per_meteor_frame();
 
 	n_to_write = blocks_per_frame * BLOCK_SIZE;
 
