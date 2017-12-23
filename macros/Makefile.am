@@ -20,6 +20,7 @@ SUBDIRS = 			\
 		startup		\
 		system		\
 		v4l2		\
+		led		\
 		view		\
 		visca		
 

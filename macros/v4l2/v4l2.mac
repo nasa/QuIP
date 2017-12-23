@@ -6,10 +6,8 @@ v4l2
   Tell_If "Open_Video_Device:  opening $1"
   advise "Open_Video_Device:  opening $1"
   open $1
-  advise "Open_Video_Device:  DONE opening $1"
   advise 'Setting standard to ntsc...'
   standards set_standard NTSC quit
-  advise 'DONE Setting standard to ntsc...'
   Tell_If "Open_Video_Device:  DONE opening $1"
   quit
 .
@@ -117,29 +115,73 @@ Set flowing 0
 Set flowing 0
 
 Define Update_V4L2_Flow 0
-advise "Update_V4L2_Flow:  getting next frame from dev $video_dev_index"
-Next_Frame_In /dev/video$video_dev_index
+Update_Flow /dev/video$video_dev_index
+#Next_Frame_In /dev/video$video_dev_index
+Newest_Frame_In /dev/video$video_dev_index
 .
 
-Define Next_Frame_In 1 devicename
+Define Update_Flow 1 vdev_name
+
+If !videodev_exists('$1') 'error_exit "Update_Flow:  device $1 is not open!?"'
+
+#If !$flowing Start_Video_Flow
+#If !$flowing exit_macro
+
+Set oldest_name	oldest.$1
+Set newest_name	newest.$1
 v4l2
   select $1
   flow
-    advise "waiting..."
-    wait
-    advise "done waiting..."
-    Set oname oldest.$1
-    If !var_exists('$oname')
-      "advise 'var $oname does not exist!?' quit quit exit_macro"
-    If $$oname<0 exit_macro
-    Set bufname ${1}.buffer$$oname
+    update
+    If !var_exists('$oldest_name') 
+      "error_exit 'Variable $oldest_name does not exist!?'"
 
+    #advise "Update_Flow oldest = $$oldest_name   newest = $$newest_name"
+    If $$oldest_name!=$$newest_name release
+    quit
+  quit
+.
+
+
+Define Newest_Frame_In 1 devicename
+Set idx_name newest.$1
+If !var_exists('$idx_name')
+  "error_exit 'var $idx_name does not exist!?'"
+If $$idx_name>=0 "Process_This_Frame $1 $$idx_name"
+.
+
+
+Define Process_This_Frame 2 vdev_name index
+v4l2
+#  select $1
+  flow
+    Set bufname ${1}.buffer$2
     yuv2rgb rgb $bufname
-
     release
     quit
   quit
 .
+
+
+#Define Next_Frame_In 1 devicename
+#v4l2
+#  select $1
+#  flow
+#    advise "waiting..."
+#    wait
+#    advise "done waiting..."
+#    Set oname oldest.$1
+#    If !var_exists('$oname')
+#      "advise 'var $oname does not exist!?' quit quit exit_macro"
+#    If $$oname<0 exit_macro
+#    Set bufname ${1}.buffer$$oname
+#
+#    yuv2rgb rgb $bufname
+#
+#    release
+#    quit
+#  quit
+#.
 
 #Start_V4L2_Flow /dev/video0
 #Start_V4L2_Flow /dev/video1

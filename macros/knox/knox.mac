@@ -1,10 +1,10 @@
 
 Start_File knox.mac
 
-Define Knox_Init 0
-knox quit
+Define Knox_Init_Device 0
+knox quit	# opens device?
 os
-  serial
+  serial	# where do we select the device???
     stty
       setflag cstopb yes
       quit

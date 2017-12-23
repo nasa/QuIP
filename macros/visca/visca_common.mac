@@ -51,3 +51,19 @@ repeat $n_cameras
 Print_If cam_list
 .
 
+
+Define Visca_Init 0
+Set visca_host patrolboat.arc.nasa.gov
+
+# if hardware is controlled via a remote daemon...
+If strcmp('$HOSTNAME','$visca_host')
+  Then "advise 'Will use visca daemon on host $visca_host' Set USE_VISCA_DAEMON 1"
+  Else "advise 'Will NOT use visca daemon, running on visca host $visca_host'"
+
+If var_exists('USE_VISCA_DAEMON')
+  Then "< $macro_dir/visca/evic.mac"
+  Else "< $macro_dir/visca/visca.mac"
+
+Set_D70_Params
+.
+

@@ -7,11 +7,12 @@
 #max_warnings 100
 max_warnings 3
 
-#< $macro_dir/knox/knoxc.mac
-< $macro_dir/knox/knox_missing.mac
+< $macro_dir/knox/knox_common.mac
+#< $macro_dir/knox/knox_missing.mac
 < $macro_dir/v4l2/v4l2.mac
 < $macro_dir/v4l2/mon_ptz.mac
 < $macro_dir/v4l2/v4l2_gui.mac
+< $macro_dir/led/illum.mac
 
 Define Switch_To_Cam 1 index
 nop
@@ -23,23 +24,16 @@ Set have_visca 0	# 0 means remote?
 # used by all flavors
 < $macro_dir/visca/visca_common.mac
 
+Visca_Init
 
-# if hardware is controlled via a remote daemon...
-If !strcmp('$HOSTNAME','wheatstone.arc.nasa.gov') "Set USE_VISCA_DAEMON 1"
-
-If var_exists('USE_VISCA_DAEMON')
-  Then "< $macro_dir/visca/evic.mac"
-  Else "< $macro_dir/visca/visca.mac"
-
-Set_D70_Params		# to initialize...
-
-# for text w/o hardware
+# for test w/o hardware
 #< $macro_dir/visca/visca_fake.mac
 
 < $macro_dir/visca/ptz_gui.mac
 < $macro_dir/visca/evi_params.scr
 
-Init_EVI	# connect to daemon or nop
+advise "Not calling Init_EVI"
+#Init_EVI	# connect to daemon or nop
 
 advise 'counting cameras...'
 Count_Visca_Cameras
@@ -49,7 +43,6 @@ Count_Visca_Cameras
 advise 'initializing panels...'
 Init_PTZ_Panel
 Init_V4L2_Panel
-
 Set_PTZ_Index 1
 PTZ_Panel_On
 
@@ -60,14 +53,12 @@ Posn_Window ptz_panel 700 50
 Set live_video 0
 Make_Master_Panel
 
-## This knox stuff is peculiar to the wheatstone setup!?
 advise 'checking video routing...'
-#If !strcmp('$HOST','wheatstone.arc.nasa.gov')
-#  'Knox_Init Default_Routing'
-#  But on patrol_boat we have a remote connection...
 Knox_Init
 Default_Routing
 advise 'video routing set.'
+
+Pause
 
 Init_Video_Window video_window
 SetInChannel 1				# selects video channel...
@@ -77,9 +68,11 @@ SetInChoice 1
 
 Set_Button_Actions video_window "LClick" "MClick" "RClick"
 
+Init_LED_Controller
+Declare_LED_Panel
+
 advise 'entering main event loop...'
 do
-  advise 'checking events'
   os events quit
   Update_Viewer
   while 1

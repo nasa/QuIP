@@ -67,9 +67,9 @@ Stem_Xmit knoxd $1
 #_________mappings to functions in knox.mac_______________________#
 
 
-Define Knox_Init 0
+Define Knox_Init_Device 0
 Knox_Connect
-Knox_Send Knox_Init
+Knox_Send Knox_Init_Device
 .
 
 Define Route 2 output_index input_index
