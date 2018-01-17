@@ -1,0 +1,19 @@
+Define Knox_Init 0
+#Print HOSTNAME
+Set knox_host wheatstone.arc.nasa.gov
+
+# if hardware is controlled via a remote daemon...
+If strcmp('$HOSTNAME','$knox_host')
+  Then "advise 'Will use knox daemon on host $knox_host' Set USE_KNOX_DAEMON 1"
+  Else "advise 'Will NOT use knox daemon, running on knox host $knox_host'"
+
+If var_exists('USE_KNOX_DAEMON')
+  Then "< $macro_dir/knox/knoxc.mac"
+  Else "< $macro_dir/knox/knox.mac"
+
+Knox_Init_Device
+
+# initialize with default routing here???
+.
+
+
