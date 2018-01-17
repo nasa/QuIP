@@ -178,13 +178,13 @@ Set left_margin_index		4
 Set right_margin_index		5
 Set bot_margin_index		6
 Set top_margin_index		7
-Set plot_foreground_index	8
+Set plot_foreground_index	8	# the "pen" color
 Set plot_background_index	9
 Set grid_color_index		10
 Set label_color_index		11
-Set n_plotter_params		12
-#Set pen_color_index		12	# isn't the pen the foreground???
-#Set n_plotter_params		13
+Set minmax_set_index		12
+Set margins_set_index		13
+Set n_plotter_params		14	# must be last
 .
 
 Define Get_Param_Vec_Name 1 plotter_name
@@ -198,7 +198,8 @@ If strcmp('$the_plotter','no_plotter')
   "advise 'the_plotter = $the_plotter' Remember_Plotter_Params"
 # Here we need to forget everything about the old plotter...
 
-Set minmax_set 0		# BUG this should be a plotter param...
+Set minmax_set 0		# this is now a plotter param...
+Set margins_set 0		# ditto
 
 Set the_plotter "$1"
 Set current_window "$1"
@@ -230,6 +231,8 @@ data ascii
 	$plot_background
 	$grid_color
 	$label_color
+	$minmax_set
+	$margins_set
 
 	quit quit
 .
@@ -271,9 +274,15 @@ data
 	$plot_background
 	$grid_color
 	$label_color
-#	$pen_color
+	$minmax_set
+	$margins_set
     quit
   quit
+.
+
+Define Recall_Var 1 varname
+Set idx_name ${1}_index
+Assign $1 value($param_vec_name{$$idx_name})
 .
 
 # We call this to restore the settings of a plotter
@@ -283,19 +292,21 @@ data
 Define Recall_Plotter_Params 0
 If !strcmp('$the_plotter','no_plotter')
   "error_exit 'Recall_Plotter_Params:  no plotter set'"
-Assign plot_xmin value($param_vec_name{$plot_xmin_index})
-Assign plot_xmax value($param_vec_name{$plot_xmax_index})
-Assign plot_ymin value($param_vec_name{$plot_ymin_index})
-Assign plot_ymax value($param_vec_name{$plot_ymax_index})
-Assign left_margin value($param_vec_name{$left_margin_index})
-Assign right_margin value($param_vec_name{$right_margin_index})
-Assign bot_margin value($param_vec_name{$bot_margin_index})
-Assign top_margin value($param_vec_name{$top_margin_index})
-Assign plot_foreground value($param_vec_name{$plot_foreground_index})
-Assign plot_background value($param_vec_name{$plot_background_index})
-Assign grid_color value($param_vec_name{$grid_color_index})
-Assign label_color value($param_vec_name{$label_color_index})
-#Assign pen_color value($param_vec_name{$pen_color_index})
+Recall_Var plot_xmin
+Recall_Var plot_xmin
+Recall_Var plot_xmax
+Recall_Var plot_ymin
+Recall_Var plot_ymax
+Recall_Var left_margin
+Recall_Var right_margin
+Recall_Var bot_margin
+Recall_Var top_margin
+Recall_Var plot_foreground
+Recall_Var plot_background
+Recall_Var grid_color
+Recall_Var label_color
+Recall_Var minmax_set
+Recall_Var margins_set
 # show the plotter params when debugging...
 #Show_Plotter_Params
 Update_Range_Constants
@@ -306,6 +317,7 @@ advise "-> Plot parameters, current plotter '$the_plotter':"
 advise "  > plot limits:  $plot_xmin - $plot_xmax,   $plot_ymin - $plot_ymax"
 advise "  > plot margins:  $left_margin - $right_margin,   $bot_margin - $top_margin"
 advise "  > plot colors:  $plot_foreground, $plot_background"
+advise "  > minmax_set:  $minmax_set    margins_set:  $margins_set"
 .
 
 Define Init_Color_Indices 0
@@ -470,10 +482,8 @@ view
 
 Define Plot_Space 4 xmin ymin xmax ymax
 Tell_If "Plot_Space ($the_plotter) $1 $2 $3 $4"
-If !$margins_set "advise 'Plot_Space:  no margins set, using 0' Zero_Margins"
+If !$margins_set "advise 'Plot_Space $the_plotter:  no margins set, using 0' Zero_Margins"
 If !$minmax_set
-#  Then "Set_Plot_Minmax $1 $2 $3 $4"	# can't do this here if called from Plot_Data_Range
-#  Else "advise 'Plot_Space NOT calling Set_Plot_Minmax...'"
   "Set_Plot_Minmax $1 $2 $3 $4"	# can't do this here if called from Plot_Data_Range
 
 view
@@ -481,9 +491,7 @@ view
     space $1 $2 $3 $4
     quit
   quit
-# Why does Plot_Space call Remember_Plotter_Params???
-#advise "Plot_Space calling Remember_Plotter_Params"
-#Remember_Plotter_Params
+# should not need to call Remember_Plotter_Params here...
 .
 
 Define Erase_Plotter 1 plotter
