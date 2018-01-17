@@ -5,11 +5,11 @@
 
 advise 'evid.scr BEGIN'
 
-< $DOTFILEDIR/.daemon
-#< $DOTFILEDIR/.generic
-< $DOTFILEDIR/.gendata
-< $DOTFILEDIR/.genwar
-< $DOTFILEDIR/.genview
+< $QUIPSTARTUPDIR/.daemon
+#< $QUIPSTARTUPDIR/.generic
+< $QUIPSTARTUPDIR/.gendata
+< $QUIPSTARTUPDIR/.genwar
+< $QUIPSTARTUPDIR/.genview
 
 < $macro_dir/visca/visca.mac
 < $macro_dir/visca/visca_common.mac

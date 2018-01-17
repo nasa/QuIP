@@ -1,0 +1,8 @@
+# quip script to test connection to the knox daemon
+
+< $macro_dir/knox/knoxc.mac
+
+Knox_Init
+Route 1 1
+Pause
+

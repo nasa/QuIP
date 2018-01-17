@@ -92,7 +92,8 @@ Set	rawvol_server_host		craik
 Assign	rawvol_server_port		$rawvol_server_base+$ear_os
 
 Set	knox_host	wheatstone
-Assign  knoxd_port	$knoxd_base+$ear_os
+#Assign  knoxd_port	$knoxd_base+$ear_os
+Assign  knoxd_port	4040
 
 Set	fly_host	euler
 Assign  flyd_port	$flyd_base+$ear_os

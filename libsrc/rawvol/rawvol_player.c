@@ -167,7 +167,7 @@ typedef struct per_proc_info {
 } Proc_Info;
 
 
-static Viewer *rawvol_vp[MAX_VIEWERS]={NULL,NULL,NULL};
+static Viewer *rawvol_vp=NULL;
 static int rawvol_increment=4;	// BUG this should be a movie parameter!?
 
 static Proc_Info ppi[MAX_DISKS];
@@ -183,7 +183,6 @@ int displaying_color=0;
 void _play_rawvol_movie(QSP_ARG_DECL  Image_File *ifp)
 {
 	dimension_t frame_index;
-	int j;
 	RV_Inode *inp;
 	int ndisks;
 	int fd_arr[MAX_DISKS];
@@ -235,20 +234,15 @@ RMSTATUS(RM_READY);
 
 		which_buf = frame_index % N_READ_BUFFERS;
 
-		for(j=0;j<n_displayed_components;j++){
-			Viewer *vp;
-			vp=rawvol_vp[j];
+		/* BUG we need to have a non-shm version that will
+		 * work over the network...
+		 */
 
-			/* BUG we need to have a non-shm version that will
-			 * work over the network...
-			 */
-
-			update_shm_viewer(vp,
-				rdfrmptr[which_buf]+display_component[j],
-				rawvol_increment,0,
-				vp->vw_width,vp->vw_height,
-				0,0);
-		}
+		update_shm_viewer(rawvol_vp,
+			rdfrmptr[which_buf],
+			rawvol_increment,0,
+			rawvol_vp->vw_width,rawvol_vp->vw_height,
+			0,0);
 
 		read_frame_want++;
 RMSTATUS(RM_BOT);
@@ -329,11 +323,9 @@ RMSTATUS(RM_INIT);
 	RMSTATUS(RM_READY);
 
 	for(j=0;j<n_displayed_components;j++){
-		Viewer *vp;
-		vp=rawvol_vp[j];
-		update_shm_viewer(vp, rdfrmptr[0]+display_component[j],
+		update_shm_viewer(rawvol_vp, rdfrmptr[0]+display_component[j],
 				rawvol_increment,0,
-				vp->vw_width,vp->vw_height, 0,0);
+				rawvol_vp->vw_width,rawvol_vp->vw_height, 0,0);
 	}
 	
 	RMSTATUS(RM_BOT);
@@ -468,7 +460,7 @@ RSTATUS(DR_EXIT);
 
 Viewer *rawvol_viewer(void)
 {
-	return rawvol_vp[0];
+	return rawvol_vp;
 }
 
 #endif /* HAVE_X11_EXT */

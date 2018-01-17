@@ -89,7 +89,7 @@ Redir_Port daemon_sock
 # Stem_Connect - the client calls this.
 
 Define Stem_Connect 2 daemon_name host
-advise "Stem_Connect $1 $2"
+#advise "Stem_Connect $1 $2"
 #Set daemon_sock	${1}_sock	# who uses this?
 
 Set host $2

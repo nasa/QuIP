@@ -82,19 +82,21 @@ typedef struct video_device {
 
 #ifdef HAVE_V4L2
 
-#define CHECK_DEVICE						\
-								\
-	if( curr_vdp == NO_VIDEO_DEVICE ){			\
-		WARN("No video device selected");		\
-		return;						\
+#define CHECK_DEVICE(whence)							\
+										\
+	if( curr_vdp == NO_VIDEO_DEVICE ){					\
+		sprintf(ERROR_STRING,"%s:  no video device selected",#whence);	\
+		WARN(ERROR_STRING);						\
+		return;								\
 	}
 
 
-#define CHECK_DEVICE2						\
-								\
-	if( curr_vdp == NO_VIDEO_DEVICE ){			\
-		WARN("No video device selected");		\
-		return -1;					\
+#define CHECK_DEVICE2(whence)							\
+										\
+	if( curr_vdp == NO_VIDEO_DEVICE ){					\
+		sprintf(ERROR_STRING,"%s:  no video device selected",#whence);	\
+		WARN(ERROR_STRING);						\
+		return -1;							\
 	}
 
 #else // ! HAVE_V4L2

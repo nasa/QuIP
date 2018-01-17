@@ -1625,6 +1625,7 @@ AC_CONFIG_FILES([Makefile
 		 macros/v4l2/Makefile
 		 macros/gui/Makefile
 		 macros/ctrack/Makefile
+		 macros/led/Makefile
 		 macros/em_exp/Makefile
 		 macros/eyemov/Makefile
 		 macros/postproc/Makefile

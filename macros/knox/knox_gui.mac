@@ -6,20 +6,20 @@ Set gui_size 600
 Set input1_name 	galvo_cam
 Set input2_name 	left_pupil_cam
 Set input3_name 	right_pupil_cam
-Set input4_name 	left_ptz_cam
-Set input5_name 	right_ptz_cam
-Set input6_name 	purkinje_ptz_cam
-Set input7_name 	left_ptz_cam2
-Set input8_name 	right_ptz_cam2
+Set input4_name 	lower_left_ptz_cam
+Set input5_name 	lower_right_ptz_cam
+Set input6_name 	upper_left_ptz_cam2
+Set input7_name 	upper_right_ptz_cam2
+Set input8_name 	'(no connection)'
 
-Set output1_name	meteor_in1
-Set output2_name	meteor_in2
-Set output3_name	meteor_in3
+Set output1_name	/dev/video4
+Set output2_name	/dev/video5
+Set output3_name	/dev/video6
 Set output4_name	/dev/video0
 Set output5_name	/dev/video1
 Set output6_name	/dev/video2
-Set output7_name	sync_genlock_input
-Set output8_name	sony_monitor_input
+Set output7_name	/dev/video3
+Set output8_name	sync_genlock_input
 
 Set text_width 150
 Set border_width 50

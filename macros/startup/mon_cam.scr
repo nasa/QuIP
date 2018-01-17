@@ -1,26 +1,20 @@
-# @(#) .mon_cam ver: 1.1 2/12/99
+# startup file to monitor galvo cam setup
 
-# the first section is copied from .mmvi
-
-#advise 'reading .mmvi'
-#verbose yes
 verbose no
 
-#variables
-#  set QUIPSTARTUPDIR /usr/local/share/$QUIP/macros/startup
-#  quit
 If !var_exists(QUIPSTARTUPDIR) "error_exit 'QUIPSTARTUPDIR is not defined!?'"
 
+< $QUIPSTARTUPDIR/quip.scr
 
-< $QUIPSTARTUPDIR/generic.scr
-< $QUIPSTARTUPDIR/gendata.scr
-< $QUIPSTARTUPDIR/gencomp.scr
-< $QUIPSTARTUPDIR/genview.scr
+max_warnings 3
 
 < $macro_dir/movie/mmvi.mac
+
+< $macro_dir/knox/knox_common.mac	# local or remote
+
 # < $macro_dir/knox/knox.mac	# when knox interface is local
-#  < $macro_dir/knox/knoxc.mac	# when knox interface is remote
-  < $macro_dir/knox/knox_missing.mac	# temporary until network issues are fixed
+< $macro_dir/knox/knoxc.mac	# when knox interface is remote
+#  < $macro_dir/knox/knox_missing.mac	# temporary until network issues are fixed
 
 #Set v_reduction_factor	4	# 4 works well over home dsl...
 #Set h_reduction_factor	4	# 4 works well over home dsl...
@@ -46,13 +40,11 @@ Default_Routing
 advise Init_Stuff
 Init_Stuff
 
-Pause
-
 advise 'STARTING MAIN LOOP'
 do
-  If $flowing Update_Flow
   os events quit
-  If $live_video Update_Viewer
+  If $flowing Update_Video_Flow
+  If $flowing Update_Viewer
   while 1
 
 

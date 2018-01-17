@@ -42,7 +42,7 @@
 
 static COMMAND_FUNC( do_stop_flow )
 {
-	CHECK_DEVICE
+	CHECK_DEVICE(stop_flow)
 
 	if( ! IS_CAPTURING(curr_vdp) ){
 		warn("do_stop_flow:  Current video device is not capturing!?");
@@ -93,7 +93,7 @@ static COMMAND_FUNC( update_vars )
 
 static COMMAND_FUNC( do_start_flow )
 {
-	CHECK_DEVICE
+	CHECK_DEVICE(start_flow)
 
 	if( IS_CAPTURING(curr_vdp) ){
 		warn("do_start_flow:  Current video device is already capturing!?");
@@ -118,7 +118,7 @@ static COMMAND_FUNC( wait_next )	/* wait til we have another frame */
 #ifdef HAVE_V4L2
 	int n,m;
 
-	CHECK_DEVICE
+	CHECK_DEVICE(wait_next)
 
 	if( ! IS_CAPTURING(curr_vdp) ){
 		sprintf(ERROR_STRING,"wait_next:  Video device %s is not capturing!?",
@@ -152,7 +152,7 @@ static COMMAND_FUNC( wait_drip )	/* wait til we have at least one frame */
 #ifdef HAVE_V4L2
 	int n=0;
 
-	CHECK_DEVICE
+	CHECK_DEVICE(wait_drip)
 
 	if( ! IS_CAPTURING(curr_vdp) ){
 		sprintf(ERROR_STRING,"wait_drip:  Video device %s is not capturing!?",
@@ -228,23 +228,36 @@ fprintf(stderr,"release_oldest_buffer new oldest_buffer is %d\n",vdp->vd_oldest_
 }
 #endif /* HAVE_V4L2 */
 
+#define INSIST_CAPTURING								\
+	if( ! IS_CAPTURING(curr_vdp) ){							\
+		sprintf(ERROR_STRING,"wait_next:  Video device %s is not capturing!?",	\
+			curr_vdp->vd_name);						\
+		WARN(ERROR_STRING);							\
+		return;									\
+	}
+
+
 static COMMAND_FUNC( do_release_buffer )
 {
 #ifdef HAVE_V4L2
-	CHECK_DEVICE
-
-	if( ! IS_CAPTURING(curr_vdp) ){
-		sprintf(ERROR_STRING,"wait_next:  Video device %s is not capturing!?",
-			curr_vdp->vd_name);
-		WARN(ERROR_STRING);
-		return;
-	}
+	CHECK_DEVICE(release_buffer)
+	INSIST_CAPTURING
 
 	release_oldest_buffer(QSP_ARG  curr_vdp);
 	update_vars(SINGLE_QSP_ARG);
 #endif /* HAVE_V4L2 */
 }
 
+static COMMAND_FUNC( do_update_flow )
+{
+#ifdef HAVE_V4L2
+	CHECK_DEVICE(update_flow)
+	INSIST_CAPTURING
+
+	// should we wait???
+	update_vars(SINGLE_QSP_ARG);
+#endif /* HAVE_V4L2 */
+}
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(flow_menu,s,f,h)
 
@@ -252,6 +265,7 @@ MENU_BEGIN(flow)
 ADD_CMD( start,		do_start_flow,		start capture )
 ADD_CMD( stop,		do_stop_flow,		start capture )
 ADD_CMD( wait,		wait_drip,		wait for at least one frame in memory )
+ADD_CMD( update,	do_update_flow,		update flow variables )
 ADD_CMD( next,		wait_next,		wait for the next frame )
 ADD_CMD( release,	do_release_buffer,	release oldest buffer )
 ADD_CMD( yuv2rgb,	do_yuv2rgb,		convert from YUYV to RGB )
