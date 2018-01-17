@@ -20,14 +20,18 @@ Set n_refresh 5000
 
 Set n_tbl 10000
 Set outfile $HOME/.data_dir/erf_inv.$n_tbl.asc
-Set x_lim 3
+Set x_lim 3	# erf(3) = 0.9999779
 
 < $macro_dir/view/plotsupp.mac
-If $showing "New_Plotter p1 400 300"
-If $showing "New_Plotter p2 300 400"
-If $showing "Posn_Viewer p2 400 0"
-If $showing "New_Plotter p3 300 300"
-If $showing "Posn_Viewer p3 700 0"
+If $showing "New_Plotter p1 400 300 Zero_Margins"
+If $showing "Posn_Viewer p1 3000 200"
+
+If $showing "New_Plotter p2 300 400 Zero_Margins"
+#If $showing "Posn_Viewer p2 400 0"
+If $showing "Posn_Viewer p2 3400 200"
+If $showing "New_Plotter p3 300 300 Zero_Margins"
+#If $showing "Posn_Viewer p3 700 0"
+If $showing "Posn_Viewer p3 3700 200"
 If $showing "advise 'type ^D when plotters are up'"
 If $showing "Pause"
 
@@ -39,6 +43,7 @@ Vector I $n_tbl 1 float
 Vector I2 $n_tbl 1 float
 
 Vector y $n_tbl 1 float
+Vector tbl_pts $n_tbl 2 float
 Subvector y1 y $n_tbl-1 0
 Subvector y2 y $n_tbl-1 1
 
@@ -53,6 +58,8 @@ Vector pred $n_tbl 1 float
 
 # initialize I2 to go from -x_lim to x_lim
 Ramp1D I2 -$x_lim 2*$x_lim/($n_tbl-1)
+Print x_lim
+Print n_tbl
 
 #Ramp1D gain_v -$n_tbl 2
 #VAbs gain_v gain_v
@@ -64,6 +71,11 @@ Ramp1D I2 -$x_lim 2*$x_lim/($n_tbl-1)
 Ramp1D x -$x_lim 2*$x_lim/$n_tbl
 
 VErf y x
+#VMov tbl_pts{0} x
+Ramp1D tbl_pts{0} 0 1
+VMov tbl_pts{1} y
+Put_Ascii tbl_pts tpts.asc
+
 # differentiate erf (y)
 VVSub slope1 y1 y2
 
@@ -81,19 +93,25 @@ VSMul gain_v gain_v $gain
 
 Set y_max 1.1
 
+# plotter p1 can plot the table values, from -$y_max to +$y_max...
+# It is meant to plot things from -1 to 1 (like erf func!)
 If $showing "Select_Plotter p1"
-If $showing "Plot_Space 0 -$y_max $n_tbl $y_max"
+#If $showing "advise 'y_max = $y_max' Plot_Data_Range 0 -$y_max $n_tbl $y_max"
+If $showing "advise 'y_max = $y_max' Plot_Data_Range 0 -$y_max $n_tbl $y_max"
+
 If $showing "Select_Pen $red"
 
+# plotter p2 plots also plots a table but from -$x_lim to +$x_lim
 If $showing "Select_Plotter p2"
-If $showing "Plot_Space 0 -$x_lim $n_tbl $x_lim"
+If $showing "Plot_Data_Range 0 -$x_lim $n_tbl $x_lim"
 
 If $showing "Select_Plotter p3"
-If $showing "Plot_Space 0 -$y_max $n_tbl $y_max"
-#If $showing "Plot_Space 0 -$x_lim $n_tbl $x_lim"
+If $showing "Plot_Data_Range 0 -$y_max $n_tbl $y_max"
+#If $showing "Plot_Data_Range 0 -$x_lim $n_tbl $x_lim"
 If $showing "Select_Pen $red"
 If $showing "Select_Plotter p1"
-If $showing "YPlot y"
+#If $showing "YPlot y"
+If $showing "XYPlot tbl_pts"
 VMov w y
 
 # now we have to invert erf...
