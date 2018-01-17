@@ -101,8 +101,8 @@ typedef struct video_device {
 
 #else // ! HAVE_V4L2
 
-#define CHECK_DEVICE
-#define CHECK_DEVICE2
+#define CHECK_DEVICE(whence)
+#define CHECK_DEVICE2(whence)
 
 #endif // ! HAVE_V4L2
 

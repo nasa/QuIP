@@ -6,12 +6,9 @@ Start_File knox_connections.scr
 
 # symbolic defns for the switcher outputs
 
-#Set meteor_in1		1
-#Set meteor_in2		2
-#Set meteor_in3		3
-Set video4_in1		1
-Set video5_in2		2
-Set video6_in3		3
+Set video4_in		1
+Set video5_in		2
+Set video6_in		3
 Set video0_in		4
 Set video1_in		5
 Set video2_in		6
@@ -26,11 +23,10 @@ Set sync_genlock_input	8
 Set galvo_cam		1
 Set left_pupil_cam	2
 Set right_pupil_cam	3
-Set left_ptz_cam	4
-Set right_ptz_cam	5
-Set left_ptz_cam2	6
-Set right_ptz_cam2	7
+Set lower_left_ptz_cam	4
+Set lower_right_ptz_cam	5
+Set upper_left_ptz_cam	6
+Set upper_right_ptz_cam	7
 
-
-Stop_File knox_connections.mac
+Stop_File knox_connections.scr
 

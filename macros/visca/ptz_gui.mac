@@ -195,7 +195,7 @@ Inquire_PTZ_Param exposure_mode
 
 Define Get_Camera_Settings 1 cam_string
 Tell_If "Get_Camera_Settings $1 BEGIN"
-Select_PTZ $1
+Select_PTZ_By_Name $1
 
 # The inquire function returns the values in $pan_posn and $tilt_posn
 Inquire_PTZ_Posn
@@ -315,7 +315,7 @@ Set_V4L2_Device $1
 
 Define Install_PTZ_Index 1 index
 Set cam_index $1
-Select_PTZ_Cam $1
+Select_PTZ_By_Index $1
 Get_Camera_Settings $ptz_cam
 If $have_ptz_gui Update_PTZ_Sliders
 
@@ -326,12 +326,12 @@ Switch_To_Cam $1
 
 Set ptz_cam none		# initial default
 
-# Why do we have 2 macros, Select_PTZ_Cam and Select_PTZ???
-# Select_PTZ_Cam puts the camera-specific parameters into the global
+# Why do we have 2 macros, Select_PTZ_By_Index and Select_PTZ_By_Name???
+# Select_PTZ_By_Index puts the camera-specific parameters into the global
 # params used by the gui.
 
-Define Select_PTZ_Cam 1 index
-#advise "Select_PTZ_Cam $1"
+Define Select_PTZ_By_Index 1 index
+#advise "Select_PTZ_By_Index $1"
 If strcmp($ptz_cam,none) "Remember_Params $ptz_cam"
 Set pan_name	cam${1}_pan
 Set tilt_name	cam${1}_tilt
@@ -354,7 +354,7 @@ Set ir $$ir_name
 Set ae $$ae_name
 
 Set ptz_cam cam$1
-Select_PTZ $ptz_cam
+Select_PTZ_By_Name $ptz_cam
 Update_Zoom_Scale
 .
 
@@ -392,7 +392,7 @@ interface
   control
     show ptz_panel
     quit quit
-Select_PTZ $ptz_cam
+Select_PTZ_By_Name $ptz_cam
 Set ptz_panel_on 1
 .
 

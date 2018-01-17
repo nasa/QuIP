@@ -33,18 +33,6 @@ Posn_Window $p 40 580
 
 Set live_video 0
 
-# dirac setup
-Set c1name	galvo_cam
-Set c2name	left_pupil_cam
-Set c3name	right_pupil_cam
-Set c4name	left_ptz_cam
-Set c5name	right_ptz_cam
-Set c6name	purkinje_ptz_cam
-Set c7name	left_ptz_cam2
-Set c8name	right_ptz_cam2
-
-Set ptz_cam none
-
 Define DoDeinterlace 0
 Set deinterlace $toggle_state
 Update_Viewer
