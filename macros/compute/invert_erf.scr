@@ -175,7 +175,8 @@ YPlot yi
 Define Invert1 0
 Set n_iter 0
 #do
-repeat 5000
+Assign max_iterations 5000
+repeat $max_iterations	# how did we come up with this number?
   # yi is our guess of the inverse
   VErf pred yi
   VVSub error pred I
@@ -187,6 +188,7 @@ repeat 5000
   VVAdd yi yi error
   Increment n_iter
 #  If $showing&&(($n_iter%$n_refresh)==0) "Showit Print max_err"
+  If $n_iter%100==0 "advise '$n_iter/$max_iterations iterations completed'"
   #while $max_err>1/($n_tbl*2)
   If $showing Showit
   end

@@ -1,5 +1,7 @@
 # Test the t distribution macros
 
+Set viewer_x0	2800	# to work around bug on mach
+
 < tdist.mac
 < $macro_dir/view/plotsupp.mac
 
@@ -15,7 +17,7 @@ Assign f1 1
 # https://en.wikipedia.org/wiki/Student's_t-distribution
 
 New_Plotter PDF 500 500
-Posn_Window PDF 50 50
+Posn_Window PDF $viewer_x0+50 50
 Set xmin -6
 Set xmax 6
 Set x_tick_spacing 2
@@ -27,7 +29,7 @@ Set y_legend P(x)
 Setup_Axes
 
 New_Plotter CDF 500 500
-Posn_Window CDF 650 50
+Posn_Window CDF $viewer_x0+650 50
 Set xmin -6
 Set xmax 6
 Set x_tick_spacing 2
@@ -61,7 +63,7 @@ Pause
 
 # This computes the cumulative, and so has scaled the t_dist by the bin width...
 # We undo that here
-VSMul tdist tdist 1/$bin_width
+VSMul tdist tdist 1/$_t_bin_width
 
 # x values in domain, y values in tdist
 advise "Finding first sample..."

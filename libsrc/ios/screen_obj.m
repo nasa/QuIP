@@ -63,7 +63,7 @@ static IOS_Item_Type *scrnobj_itp=NULL;
 	selectorTbl[idx] = string_arr;
 }
 
--(const char **) getSelectorsAtIdx:(int)idx
+-(const char **) getSelectorsAtIdx:(long)idx
 {
 	return selectorTbl[idx];
 }
@@ -78,7 +78,7 @@ static IOS_Item_Type *scrnobj_itp=NULL;
 	countTbl[idx] = n;
 }
 
--(const char *) getSelectorAtIdx:(int)idx fromTbl:(int)tbl
+-(const char *) getSelectorAtIdx:(long)idx fromTbl:(int)tbl
 {
 	return selectorTbl[tbl][idx];
 }

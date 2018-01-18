@@ -115,10 +115,10 @@ typedef enum {
 #endif // BUILD_FOR_MACOS
 
 -(void) setSelectorsAtIdx: (int) idx withValue: (const char **) string_arr;
--(const char **) getSelectorsAtIdx: (int) idx;
+-(const char **) getSelectorsAtIdx: (long) idx;
 -(void) setSelectorInTbl: (int) tbl atIdx: (int) idx withValue: (const char *) string;
 -(void) setCount:(int) n atIdx: (int) idx ;
--(const char *) getSelectorAtIdx:(int) idx fromTbl: (int) tbl ;
+-(const char *) getSelectorAtIdx:(long) idx fromTbl: (int) tbl ;
 
 @end
 

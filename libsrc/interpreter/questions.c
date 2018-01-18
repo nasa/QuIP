@@ -16,7 +16,8 @@
 ITEM_PICK_FUNC(Item_Type,ittyp)
 ITEM_PICK_FUNC(Macro,macro)
 
-long _how_many(QSP_ARG_DECL  const char *prompt)
+// used to be long...
+int64_t _how_many(QSP_ARG_DECL  const char *prompt)
 {
 	const char *s;
 	const char *pline;

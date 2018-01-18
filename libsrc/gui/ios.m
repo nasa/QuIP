@@ -496,10 +496,10 @@ void _get_choice(QSP_ARG_DECL  Screen_Obj *sop)
 		}
 
 		UIPickerView *p;
-		int idx;
+		long idx;
 		p=(UIPickerView *)SOB_CONTROL(sop);
 		idx = [p selectedRowInComponent:0];
-fprintf(stderr,"get_choice:  idx = %d\n",idx);
+        fprintf(stderr,"get_choice:  idx = %ld\n",idx);
 		assert( idx>=0 && idx < SOB_N_SELECTORS_AT_IDX(sop,0) );
 		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTOR_AT_IDX(sop,0,idx) );
 		return;

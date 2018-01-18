@@ -195,7 +195,7 @@ repeat $n_isamps
   Increment i
   end
 # Now inv_idx is set, we have to scale...
-Map inv_cum inv_idx domain
+Map_S inv_cum inv_idx domain
 ## # Print some values to check against published table...
 # This is a two-tailed test?
 # bin center is 0.005 - bin width is 0.01?
@@ -280,6 +280,10 @@ If file_exists('$tcrit_cache_file')
   "Get_Ascii tcrit_tbl $tcrit_cache_file"
 advise "Init_Tcrit_Tbl DONE"
 .
+
+# Get_Tcrit returns the critical t value in $tcrit
+# We only compute values if we do not have the value in the cache.
+# We update the cache file when we compute a new value.
 
 Define Get_Tcrit 1 n_dof
 If $signif_idx<0 "error_exit 'Get_Tcrit:  need to set significance level for t-test (with Set_Significance)!?'"

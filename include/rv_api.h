@@ -74,8 +74,11 @@ extern void _play_rawvol_frame(QSP_ARG_DECL  Image_File *ifp, uint32_t frame);
 #define play_rawvol_frame(ifp, frame) _play_rawvol_frame(QSP_ARG  ifp, frame)
 extern void _init_rawvol_viewer(QSP_ARG_DECL  int width, int height, int depth);
 #define init_rawvol_viewer(width, height, depth) _init_rawvol_viewer(QSP_ARG  width, height, depth)
-extern Viewer *rawvol_viewer(void);
 extern void display_to_rawvol_viewer(Data_Obj *dp);
+
+#ifndef BUILD_FOR_OBJC
+extern Viewer *rawvol_viewer(void);
+#endif // BUILD_FOR_OBJC
 
 
 #endif /* undef _RV_API_H_ */
