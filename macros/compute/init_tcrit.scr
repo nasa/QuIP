@@ -1,0 +1,7 @@
+# run this script to initialize the t test cache file
+
+< $macro_dir/compute/tdist.mac
+
+Init_Tcrit_Tbl
+exit
+
