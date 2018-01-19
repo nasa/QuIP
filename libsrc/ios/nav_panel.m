@@ -2,6 +2,7 @@
 #include "quip_config.h"
 
 #import "quip_prot.h"
+#import "quipView.h"
 #include "nav_panel.h"
 #include "ios_gui.h"
 
@@ -194,11 +195,15 @@ void init_nav_panel(Nav_Panel *nav_p)
 	// we make this be a panel also so that we can use it generally...
 
 	Panel_Obj *po = panel_obj_of(DEFAULT_QSP_ARG  nav_p.name.UTF8String );
+	// When else can this have been created???
 	if( po == NULL ){
+fprintf(stderr,"init_nav_panel:  calling new_panel %s...\n",nav_p.name.UTF8String);
 		po = new_panel(DEFAULT_QSP_ARG  nav_p.name.UTF8String, 
 			(int)globalAppDelegate.dev_size.width,
 			(int)globalAppDelegate.dev_size.height );
 	}
+	SET_PO_CURR_Y(po,56);	// BUG - we don't know how many pixels are in the nav bar,
+				// it probably depends on screen resolution!?
 	// We have to reset the view controller
 	// to nav_p.qnc...
 #ifdef BUILD_FOR_IOS

@@ -339,6 +339,8 @@ Panel_Obj *new_panel(QSP_ARG_DECL  const char *name,int dx,int dy)
 	 * pass the hide_back_button flag...
 	 */
 	// for IOS, typically we use the whole screen
+	// BUG - for nav_panels, we need to push down to clear
+	// the nav bar!
 	SET_PO_X(po, 0);
 	SET_PO_Y(po, 0);
 	SET_PO_FLAGS(po, 0);

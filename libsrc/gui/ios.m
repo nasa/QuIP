@@ -650,6 +650,8 @@ void make_text_field(QSP_ARG_DECL  Screen_Obj *sop)
 	// BUG should set width based on width of device!
 	// We should be able to get that from the View...
 
+fprintf(stderr,"make_text_field %s (panel %s):  current position is %d, %d\n",
+SOB_NAME(sop),PO_NAME(curr_panel),PO_CURR_X(curr_panel),PO_CURR_Y(curr_panel));
 	UITextField *textField = [[UITextField alloc]
 		initWithFrame:CGRectMake(PO_CURR_X(curr_panel), PO_CURR_Y(curr_panel),
 		SOB_WIDTH(sop), SOB_HEIGHT(sop) ) ];
@@ -667,6 +669,10 @@ void make_text_field(QSP_ARG_DECL  Screen_Obj *sop)
 	textField.clearsOnBeginEditing = YES;
 	textField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
 	textField.delegate = globalAppDelegate;	// what methods are delegated???
+
+	// added to get rid of debugger error messages
+	// But this makes the text fields not appear!?
+	//[textField setTranslatesAutoresizingMaskIntoConstraints:FALSE];
 
 	if( SOB_TYPE(sop) == SOT_PASSWORD )
 		textField.secureTextEntry = YES;
