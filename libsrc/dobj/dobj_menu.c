@@ -59,8 +59,8 @@ static COMMAND_FUNC( do_create_area )
 	long siz;
 
 	area_name = NAMEOF("name for this area");
-	siz = HOW_MANY("size of data area in bytes");
-	n = HOW_MANY("maximum number of data objects for this area");
+	siz = (long) how_many("size of data area in bytes");
+	n = (long) how_many("maximum number of data objects for this area");
 
 	INSIST_POSITIVE_NUM(siz,"number of bytes","create_area");
 	INSIST_POSITIVE_NUM(n,"maximum number of objects","create_area");
@@ -217,11 +217,11 @@ static COMMAND_FUNC( new_hyperseq )
 
 	obj_name=NAMEOF("object name");
 
-	ns = HOW_MANY("number of sequences");
-	nf = HOW_MANY("number of frames");
-	nr = HOW_MANY("number of rows");
-	nc = HOW_MANY("number of columns");
-	ncomps = HOW_MANY("number of components");
+	ns = (long) how_many("number of sequences");
+	nf = (long) how_many("number of frames");
+	nr = (long) how_many("number of rows");
+	nc = (long) how_many("number of columns");
+	ncomps = (long) how_many("number of components");
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
 	if( prec_p == NULL ) return;
@@ -246,10 +246,10 @@ static COMMAND_FUNC( new_seq )
 
 	obj_name=NAMEOF("object name");
 
-	nf = HOW_MANY("number of frames");
-	nr = HOW_MANY("number of rows");
-	nc = HOW_MANY("number of columns");
-	ncomps = HOW_MANY("number of components");
+	nf = (long) how_many("number of frames");
+	nr = (long) how_many("number of rows");
+	nc = (long) how_many("number of columns");
+	ncomps = (long) how_many("number of components");
 
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
@@ -278,9 +278,9 @@ static COMMAND_FUNC( new_frame )
 
 	obj_name=NAMEOF("object name");
 
-	nr = HOW_MANY("number of rows");
-	nc = HOW_MANY("number of columns");
-	ncomps = HOW_MANY("number of components");
+	nr = (long) how_many("number of rows");
+	nc = (long) how_many("number of columns");
+	ncomps = (long) how_many("number of components");
 
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
@@ -307,11 +307,11 @@ static COMMAND_FUNC( new_gen_obj )
 
 	obj_name=NAMEOF("object name");
 
-	ns = HOW_MANY("number of sequences");
-	nf = HOW_MANY("number of frames");
-	nr = HOW_MANY("number of rows");
-	nc = HOW_MANY("number of columns");
-	ncomps = HOW_MANY("number of components");
+	ns = (long) how_many("number of sequences");
+	nf = (long) how_many("number of frames");
+	nr = (long) how_many("number of rows");
+	nc = (long) how_many("number of columns");
+	ncomps = (long) how_many("number of components");
 
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
@@ -347,7 +347,7 @@ static COMMAND_FUNC( new_obj_list )
 
 	s=NAMEOF("object name");
 
-	n=HOW_MANY("number of objects in this list");
+	n=how_many("number of objects in this list");
 	lp=new_list();
 	while(n--){
 		Data_Obj *dp;
@@ -375,8 +375,8 @@ static COMMAND_FUNC( new_row )
 
 	obj_name=NAMEOF("object name");
 
-	nc = HOW_MANY("number of elements");
-	ncomps = HOW_MANY("number of components");
+	nc = (long) how_many("number of elements");
+	ncomps = (long) how_many("number of components");
 
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
@@ -402,8 +402,8 @@ static COMMAND_FUNC( new_col )
 
 	obj_name=NAMEOF("object name");
 
-	nr = HOW_MANY("number of elements");
-	ncomps = HOW_MANY("number of components");
+	nr = (long) how_many("number of elements");
+	ncomps = (long) how_many("number of components");
 
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
@@ -430,7 +430,7 @@ static COMMAND_FUNC( new_scalar )
 
 	obj_name=NAMEOF("object name");
 
-	ncomps = HOW_MANY("number of components");
+	ncomps = (long) how_many("number of components");
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
 	if( prec_p == NULL ) return;
@@ -475,11 +475,11 @@ static COMMAND_FUNC( mksubimg )
 
 	dp=pick_obj(PARENT_PROMPT);
 
-	cols=HOW_MANY("number of columns");
-	rows=HOW_MANY("number of rows");
+	cols=(long) how_many("number of columns");
+	rows=(long) how_many("number of rows");
 
-	xos=HOW_MANY("x offset");
-	yos=HOW_MANY("y offset");
+	xos=(long) how_many("x offset");
+	yos=(long) how_many("y offset");
 
 	if( dp==NULL ) return;
 	INSIST_POSITIVE_DIM(rows,"row","mksubimg")
@@ -506,13 +506,13 @@ static COMMAND_FUNC( mksubsequence )
 
 	dp=pick_obj(PARENT_PROMPT);
 
-	nc = HOW_MANY("number of columns");
-	nr = HOW_MANY("number of rows");
-	nf = HOW_MANY("number of frames");
+	nc = (long) how_many("number of columns");
+	nr = (long) how_many("number of rows");
+	nf = (long) how_many("number of frames");
 
-	x_offset=HOW_MANY("x offset");
-	y_offset=HOW_MANY("y offset");
-	t_offset=HOW_MANY("t offset");
+	x_offset=(long) how_many("x offset");
+	y_offset=(long) how_many("y offset");
+	t_offset=(long) how_many("t offset");
 
 	if( dp==NULL ) return;
 
@@ -554,10 +554,10 @@ static COMMAND_FUNC( mksubvector )
 
 	dp=pick_obj(PARENT_PROMPT);
 
-	cols=HOW_MANY("number of elements");
+	cols=(long) how_many("number of elements");
 	rows=1;
 
-	xos=(index_t)HOW_MANY("offset");
+	xos=(index_t)how_many("offset");
 	yos=0;
 
 	if( dp==NULL ) return;
@@ -582,8 +582,8 @@ static COMMAND_FUNC( mksubscalar )
 
 	dp=pick_obj(PARENT_PROMPT);
 
-	ncomps = HOW_MANY("number of components");
-	comp_offset = HOW_MANY("component offset");
+	ncomps = (long) how_many("number of components");
+	comp_offset = (long) how_many("component offset");
 
 	if( dp==NULL ) return;
 
@@ -638,11 +638,11 @@ static COMMAND_FUNC( mkcast )
 	dp=pick_obj(PARENT_PROMPT);
 	if( dp==NULL ) return;
 
-	cols=HOW_MANY("number of columns");
-	rows=HOW_MANY("number of rows");
-	xos=HOW_MANY("x offset");
-	yos=HOW_MANY("y offset");
-	tdim=HOW_MANY("type dimension");
+	cols=(long) how_many("number of columns");
+	rows=(long) how_many("number of rows");
+	xos=(long) how_many("x offset");
+	yos=(long) how_many("y offset");
+	tdim=(long) how_many("type dimension");
 
 	INSIST_POSITIVE_DIM(cols,"column","mkcast")
 	INSIST_POSITIVE_DIM(rows,"row","mkcast")
@@ -668,11 +668,11 @@ static COMMAND_FUNC( equivalence )
 
 	dp=pick_obj(PARENT_PROMPT);
 
-	ns=HOW_MANY("number of sequences");
-	nf=HOW_MANY("number of frames");
-	nr=HOW_MANY("number of rows");
-	nc=HOW_MANY("number of columns");
-	nd=HOW_MANY("number of components");
+	ns=(long) how_many("number of sequences");
+	nf=(long) how_many("number of frames");
+	nr=(long) how_many("number of rows");
+	nc=(long) how_many("number of columns");
+	nd=(long) how_many("number of components");
 
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
@@ -753,12 +753,12 @@ static COMMAND_FUNC( mk_subsample )
 			else
 				sprintf(pmpt,"number of %ss",dimension_name[i]);
 
-			size[i]=HOW_MANY(pmpt);
+			size[i]=(long) how_many(pmpt);
 
 			sprintf(pmpt,"%s offset",dimension_name[i]);
-			l_offset[i] = HOW_MANY(pmpt);
+			l_offset[i] = (long) how_many(pmpt);
 			sprintf(pmpt,"%s increment",dimension_name[i]);
-			incrs[i] =(incr_t)HOW_MANY(pmpt);	// this can be negative...
+			incrs[i] =(incr_t)how_many(pmpt);	// this can be negative...
 		} else {
 			size[i] = 1;
 			l_offset[i]=0;
@@ -789,9 +789,9 @@ static COMMAND_FUNC( do_relocate )
 	const char *obj_name;
 
 	dp=pick_obj("subimage");
-	x=HOW_MANY("x offset");
-	y=HOW_MANY("y offset");
-	t=HOW_MANY("t offset");
+	x=(long) how_many("x offset");
+	y=(long) how_many("y offset");
+	t=(long) how_many("t offset");
 
 	if( dp==NULL ) return;
 	obj_name = OBJ_NAME(dp);
@@ -815,8 +815,8 @@ static COMMAND_FUNC( do_gen_xpose )
 	int d1,d2;
 
 	dp = pick_obj("");
-	d1=(int)HOW_MANY("dimension index #1");
-	d2=(int)HOW_MANY("dimension index #2");
+	d1=(int)how_many("dimension index #1");
+	d2=(int)how_many("dimension index #2");
 
 	if( dp == NULL ) return;
 
@@ -868,7 +868,7 @@ static COMMAND_FUNC( do_get_align )
 {
 	int a;
 
-	a=(int)HOW_MANY("alignment (in bytes, negative to disable)");
+	a=(int)how_many("alignment (in bytes, negative to disable)");
 	set_dp_alignment(a);
 }
 

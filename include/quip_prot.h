@@ -150,7 +150,8 @@ extern void _simulate_typing(QSP_ARG_DECL  const char *str);
 // query_stack.h
 extern Query_Stack *init_first_query_stack(void);
 extern const char *_nameof( QSP_ARG_DECL  const char *pmpt);
-extern /* long */ int64_t _how_many(QSP_ARG_DECL  const char *);
+#define howmany_type	int64_t	// previously long...
+extern howmany_type _how_many(QSP_ARG_DECL  const char *);
 extern double _how_much(QSP_ARG_DECL  const char *);
 // gradually phase these all-caps versions out...
 #define NAMEOF(s)		_nameof(QSP_ARG  s)

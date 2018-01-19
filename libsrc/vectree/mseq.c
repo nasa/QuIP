@@ -76,7 +76,7 @@ static COMMAND_FUNC( do_packed_mseq )
 	dp = pick_obj("mseq vector");
 	n = (int) HOW_MANY("register length");
 	t = (int) HOW_MANY("tap bit index");
-	start_val = HOW_MANY("start value");
+	start_val = (u_long)HOW_MANY("start value");
 
 	if( dp == NULL ) return;
 
@@ -105,7 +105,7 @@ static COMMAND_FUNC( do_mseq )
 	dp = pick_obj("mseq vector");
 	n = (int) HOW_MANY("register length");
 	t = (int) HOW_MANY("tap bit index");
-	start_val = HOW_MANY("start value");
+	start_val = (u_long) HOW_MANY("start value");
 
 	if( dp == NULL ) return;
 

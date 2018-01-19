@@ -2,7 +2,7 @@
 #define _DOBJ_PRIVATE_H_
 
 // ascii.c
-extern long next_input_int_with_format(QSP_ARG_DECL   const char *pmpt);
+extern int64_t next_input_int_with_format(QSP_ARG_DECL   const char *pmpt);
 extern double next_input_flt_with_format(QSP_ARG_DECL  const char *pmpt);
 
 extern Data_Obj * _temp_scalar(QSP_ARG_DECL  const char *s, Precision *prec_p);

@@ -20,23 +20,23 @@ Item_Type *prec_itp=NULL;
 
 #define new_prec(name)	_new_prec(QSP_ARG  name)
 
-#define INIT_GENERIC_PREC(name,type,code)		\
-	prec_p = new_prec(#name);		\
-	SET_PREC_CODE(prec_p, code);			\
-	SET_PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p,name##_set_value_from_input);	\
-	SET_PREC_INDEXED_DATA_FUNC(prec_p,name##_indexed_data);	\
-	SET_PREC_IS_NUMERIC_FUNC(prec_p,name##_is_numeric);	\
-	SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,name##_assign_scalar_obj);	\
-	SET_PREC_EXTRACT_SCALAR_FUNC(prec_p,_##name##_extract_scalar);	\
-	SET_PREC_CAST_TO_DOUBLE_FUNC(prec_p,_cast_##name##_to_double);	\
-	SET_PREC_CAST_FROM_DOUBLE_FUNC(prec_p,_cast_##name##_from_double);	\
-	SET_PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p,_cast_indexed_##name##_from_double);	\
-	SET_PREC_COPY_VALUE_FUNC(prec_p,copy_##name##_value);	\
-	if( (code & PSEUDO_PREC_MASK) == 0 )		\
-		SET_PREC_MACH_PREC_PTR(prec_p, prec_p);	\
-	else {						\
-		SET_PREC_MACH_PREC_PTR(prec_p,		\
-		prec_for_code( code & MACH_PREC_MASK ) ); \
+#define INIT_GENERIC_PREC(quip_prec_name,type,code)					\
+	prec_p = new_prec(#quip_prec_name);						\
+	SET_PREC_CODE(prec_p, code);							\
+	SET_PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p,quip_prec_name##_set_value_from_input);	\
+	SET_PREC_INDEXED_DATA_FUNC(prec_p,quip_prec_name##_indexed_data);		\
+	SET_PREC_IS_NUMERIC_FUNC(prec_p,quip_prec_name##_is_numeric);			\
+	SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,quip_prec_name##_assign_scalar_obj);		\
+	SET_PREC_EXTRACT_SCALAR_FUNC(prec_p,_##quip_prec_name##_extract_scalar);	\
+	SET_PREC_CAST_TO_DOUBLE_FUNC(prec_p,_cast_##quip_prec_name##_to_double);	\
+	SET_PREC_CAST_FROM_DOUBLE_FUNC(prec_p,_cast_##quip_prec_name##_from_double);	\
+	SET_PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p,_cast_indexed_##quip_prec_name##_from_double);	\
+	SET_PREC_COPY_VALUE_FUNC(prec_p,copy_##quip_prec_name##_value);			\
+	if( (code & PSEUDO_PREC_MASK) == 0 )						\
+		SET_PREC_MACH_PREC_PTR(prec_p, prec_p);					\
+	else {										\
+		SET_PREC_MACH_PREC_PTR(prec_p,						\
+		prec_for_code( code & MACH_PREC_MASK ) );				\
 	}
 
 static Precision *_new_prec(QSP_ARG_DECL  const char *name)
@@ -56,19 +56,19 @@ Precision *_get_prec(QSP_ARG_DECL  const char *name)
 
 /////////////////////////////////
 
-#define DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)						\
+#define DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(quip_type_name)						\
 												\
-static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
+static void quip_type_name##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
 {												\
-assert( AERROR(#stem"_set_value_from_input should never be called, not a machine precision!?") );\
+assert( AERROR(#quip_type_name"_set_value_from_input should never be called, not a machine precision!?") );\
 }
 
 // BUG need special case for bitmap!
 // Floating point values aren't signed...
 
-#define DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,next_input_func,type_min,type_max)	\
+#define DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(quip_type_name,mem_type,read_type,query_func,next_input_func,type_min,type_max)	\
 												\
-static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
+static void quip_type_name##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
 {												\
 	read_type val;										\
 												\
@@ -80,7 +80,7 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prom
 	if( val < type_min || val > type_max ){							\
 		sprintf(ERROR_STRING,								\
 			"%s_set_value_from_input:  Truncation error converting %s to %s (%s)",	\
-			#stem,#read_type,#stem,#type);						\
+			#quip_type_name,#read_type,#quip_type_name,#mem_type);						\
 		warn(ERROR_STRING);								\
 		sprintf(ERROR_STRING,"val = %ld, type_min = %ld, type_max = %ld",		\
 			(long)val,(long)type_min,(long)type_max);				\
@@ -88,12 +88,12 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prom
 	}											\
 												\
 	if( vp != NULL )									\
-		* ((type *)vp) = (type) val;							\
+		* ((mem_type *)vp) = (mem_type) val;							\
 }
 
-#define DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,next_input_func,type_min,type_max)	\
+#define DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(quip_type_name,type,read_type,query_func,next_input_func,type_min,type_max)	\
 												\
-static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
+static void quip_type_name##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
 {												\
 	read_type val;										\
 												\
@@ -103,12 +103,12 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prom
 		val = next_input_func(QSP_ARG  prompt);						\
 												\
 	if( val < (-type_max) || val > type_max ){						\
-		sprintf(ERROR_STRING,"%s_set_value_from_input:  Truncation error converting %s to %s (%s)",#stem,#read_type,#stem,#type);		\
+		sprintf(ERROR_STRING,"%s_set_value_from_input:  Truncation error converting %s to %s (%s)",#quip_type_name,#read_type,#quip_type_name,#type);		\
 		warn(ERROR_STRING);								\
 	}											\
 												\
 	if( (val < (type_min) && val > 0) || (val > (-type_min) && val < 0) ){			\
-		sprintf(ERROR_STRING,"Rounding error converting %s to %s (%s)",#read_type,#stem,#type);			\
+		sprintf(ERROR_STRING,"Rounding error converting %s to %s (%s)",#read_type,#quip_type_name,#type);			\
 		warn(ERROR_STRING);								\
 	}											\
 												\
@@ -119,22 +119,22 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prom
 DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(float,float,double,how_much,next_input_flt_with_format,__FLT_MIN__,__FLT_MAX__)
 DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(double,double,double,how_much,next_input_flt_with_format,__DBL_MIN__,__DBL_MAX__)
 
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(byte,char,long,how_many,next_input_int_with_format,MIN_BYTE,MAX_BYTE)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(short,short,long,how_many,next_input_int_with_format,MIN_SHORT,MAX_SHORT)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(int,int32_t,long,how_many,next_input_int_with_format,MIN_INT32,MAX_INT32)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(byte,char,howmany_type,how_many,next_input_int_with_format,MIN_BYTE,MAX_BYTE)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(short,short,howmany_type,how_many,next_input_int_with_format,MIN_SHORT,MAX_SHORT)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(int,int32_t,howmany_type,how_many,next_input_int_with_format,MIN_INT32,MAX_INT32)
 // This one generates warnings when building for iOS?
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(long,int64_t,long,how_many,next_input_int_with_format,MIN_INT64,MAX_INT64)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(long,int64_t,howmany_type,how_many,next_input_int_with_format,MIN_INT64,MAX_INT64)
 
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_byte,u_char,long,how_many,next_input_int_with_format,MIN_UBYTE,MAX_UBYTE)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_short,u_short,long,how_many,next_input_int_with_format,MIN_USHORT,MAX_USHORT)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_int,int32_t,long,how_many,next_input_int_with_format,MIN_UINT32,MAX_UINT32)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_long,int64_t,long,how_many,next_input_int_with_format,MIN_UINT64,MAX_UINT64)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_byte,u_char,howmany_type,how_many,next_input_int_with_format,MIN_UBYTE,MAX_UBYTE)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_short,u_short,howmany_type,how_many,next_input_int_with_format,MIN_USHORT,MAX_USHORT)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_int,int32_t,howmany_type,how_many,next_input_int_with_format,MIN_UINT32,MAX_UINT32)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_long,int64_t,howmany_type,how_many,next_input_int_with_format,MIN_UINT64,MAX_UINT64)
 
 /////////////////////////////////
 
-#define DECLARE_INDEXED_DATA_FUNC(stem,type)				\
+#define DECLARE_INDEXED_DATA_FUNC(quip_type_name,type)				\
 									\
-static double stem##_indexed_data(Data_Obj *dp, int index)		\
+static double quip_type_name##_indexed_data(Data_Obj *dp, int index)		\
 {									\
 	return (double) (* (((type *)OBJ_DATA_PTR(dp))+index) );	\
 }
@@ -154,9 +154,9 @@ static inline double fetch_bit(Data_Obj *dp, bitnum_t bitnum)
 		return 0.0;
 }
 
-#define DECLARE_POSSIBLY_BITMAP_INDEXED_DATA_FUNC(stem,type)			\
+#define DECLARE_POSSIBLY_BITMAP_INDEXED_DATA_FUNC(quip_type_name,type)			\
 										\
-static double stem##_indexed_data(Data_Obj *dp, int index)			\
+static double quip_type_name##_indexed_data(Data_Obj *dp, int index)			\
 {										\
 	if( IS_BITMAP(dp) ){							\
 		return fetch_bit( dp, OBJ_BIT0(dp)+index );			\
@@ -166,52 +166,52 @@ static double stem##_indexed_data(Data_Obj *dp, int index)			\
 }
 
 
-#define DECLARE_BAD_INDEXED_DATA_FUNC(stem)				\
+#define DECLARE_BAD_INDEXED_DATA_FUNC(quip_type_name)				\
 									\
-static double stem##_indexed_data(Data_Obj *dp, int index)		\
+static double quip_type_name##_indexed_data(Data_Obj *dp, int index)		\
 {									\
-	assert( AERROR(#stem" indexed data function does not exist (not a machine precision)!?") );	\
+	assert( AERROR(#quip_type_name" indexed data function does not exist (not a machine precision)!?") );	\
 }
 
 
 /////////////////////////////////
 
-#define DECLARE_IS_NUMERIC_FUNC(stem)		\
+#define DECLARE_IS_NUMERIC_FUNC(quip_type_name)		\
 						\
-static int stem##_is_numeric(void)		\
+static int quip_type_name##_is_numeric(void)		\
 {						\
 	return 1;				\
 }
 
-#define DECLARE_NOT_NUMERIC_FUNC(stem)		\
+#define DECLARE_NOT_NUMERIC_FUNC(quip_type_name)		\
 						\
-static int stem##_is_numeric(void)		\
+static int quip_type_name##_is_numeric(void)		\
 {						\
 	return 0;				\
 }
 
 /////////////////////////////////
 
-#define DECLARE_ASSIGN_REAL_SCALAR_FUNC(stem,type,member)		\
+#define DECLARE_ASSIGN_REAL_SCALAR_FUNC(quip_type_name,type,member)		\
 									\
-static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
+static int quip_type_name##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*((type *)OBJ_DATA_PTR(dp)) = svp->member ;					\
 	return 0;							\
 }
 
-#define DECLARE_ASSIGN_CPX_SCALAR_FUNC(stem,type,member)		\
+#define DECLARE_ASSIGN_CPX_SCALAR_FUNC(quip_type_name,type,member)		\
 									\
-static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
+static int quip_type_name##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*( (type *)(OBJ_DATA_PTR(dp))  ) = svp->member[0];				\
 	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
 	return 0;							\
 }
 
-#define DECLARE_ASSIGN_QUAT_SCALAR_FUNC(stem,type,member)		\
+#define DECLARE_ASSIGN_QUAT_SCALAR_FUNC(quip_type_name,type,member)		\
 									\
-static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
+static int quip_type_name##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*( (type *)(OBJ_DATA_PTR(dp))  ) = svp->member[0];				\
 	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
@@ -220,9 +220,9 @@ static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 	return 0;							\
 }
 
-#define DECLARE_ASSIGN_COLOR_SCALAR_FUNC(stem,type,member)		\
+#define DECLARE_ASSIGN_COLOR_SCALAR_FUNC(quip_type_name,type,member)		\
 									\
-static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
+static int quip_type_name##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*( (type *)(OBJ_DATA_PTR(dp))   ) = svp->member[0];				\
 	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
@@ -230,33 +230,33 @@ static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 	return 0;							\
 }
 
-#define DECLARE_BAD_ASSIGN_SCALAR_FUNC(stem)				\
+#define DECLARE_BAD_ASSIGN_SCALAR_FUNC(quip_type_name)				\
 									\
-static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
+static int quip_type_name##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	return -1;							\
 }
 
 //////////////////////////////////////////////
 
-#define DECLARE_EXTRACT_REAL_SCALAR_FUNC(stem,type,member)		\
+#define DECLARE_EXTRACT_REAL_SCALAR_FUNC(quip_type_name,type,member)		\
 									\
-static void _##stem##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)		\
+static void _##quip_type_name##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)		\
 {									\
 	svp->member = *((type     *)OBJ_DATA_PTR(dp));				\
 }
 
-#define DECLARE_EXTRACT_CPX_SCALAR_FUNC(stem,type,member)		\
+#define DECLARE_EXTRACT_CPX_SCALAR_FUNC(quip_type_name,type,member)		\
 									\
-static void _##stem##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)		\
+static void _##quip_type_name##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)		\
 {									\
 	svp->member[0] = *(((type *)OBJ_DATA_PTR(dp)));				\
 	svp->member[1] = *(((type *)OBJ_DATA_PTR(dp))+1);				\
 }
 
-#define DECLARE_EXTRACT_QUAT_SCALAR_FUNC(stem,type,member)		\
+#define DECLARE_EXTRACT_QUAT_SCALAR_FUNC(quip_type_name,type,member)		\
 									\
-static void _##stem##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)		\
+static void _##quip_type_name##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)		\
 {									\
 	svp->member[0] = *(((type *)OBJ_DATA_PTR(dp)));				\
 	svp->member[1] = *(((type *)OBJ_DATA_PTR(dp))+1);				\
@@ -264,65 +264,65 @@ static void _##stem##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *
 	svp->member[3] = *(((type *)OBJ_DATA_PTR(dp))+3);				\
 }
 
-#define DECLARE_EXTRACT_COLOR_SCALAR_FUNC(stem,type,member)		\
+#define DECLARE_EXTRACT_COLOR_SCALAR_FUNC(quip_type_name,type,member)		\
 									\
-static void _##stem##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)	\
+static void _##quip_type_name##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)	\
 {									\
 	svp->member[0] = *(((type *)OBJ_DATA_PTR(dp)));			\
 	svp->member[1] = *(((type *)OBJ_DATA_PTR(dp))+1);		\
 	svp->member[2] = *(((type *)OBJ_DATA_PTR(dp))+2);		\
 }
 
-#define DECLARE_BAD_EXTRACT_SCALAR_FUNC(stem)				\
+#define DECLARE_BAD_EXTRACT_SCALAR_FUNC(quip_type_name)				\
 									\
-static void _##stem##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)	\
+static void _##quip_type_name##_extract_scalar(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)	\
 {									\
-	sprintf(ERROR_STRING,"Nonsensical call to %s_extract_scalar!?", #stem);\
+	sprintf(ERROR_STRING,"Nonsensical call to %s_extract_scalar!?", #quip_type_name);\
 	warn(ERROR_STRING);						\
 }
 
 ////////////////////////////
 
-#define DECLARE_CAST_TO_DOUBLE_FUNC(stem,member)			\
+#define DECLARE_CAST_TO_DOUBLE_FUNC(quip_type_name,member)			\
 									\
-static double _cast_##stem##_to_double(QSP_ARG_DECL  Scalar_Value *svp)	\
+static double _cast_##quip_type_name##_to_double(QSP_ARG_DECL  Scalar_Value *svp)	\
 {									\
 	return (double) svp->member;					\
 }
 
-#define DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)				\
+#define DECLARE_BAD_CAST_TO_DOUBLE_FUNC(quip_type_name)				\
 									\
-static double _cast_##stem##_to_double(QSP_ARG_DECL  Scalar_Value *svp)	\
+static double _cast_##quip_type_name##_to_double(QSP_ARG_DECL  Scalar_Value *svp)	\
 {									\
 	sprintf(ERROR_STRING,						\
-		"Can't cast %s to double!?",#stem);			\
+		"Can't cast %s to double!?",#quip_type_name);			\
 	warn(ERROR_STRING);						\
 	return 0.0;							\
 }
 
 ////////////////////////////////
 
-#define DECLARE_CAST_FROM_DOUBLE_FUNC(stem,type,member)			\
+#define DECLARE_CAST_FROM_DOUBLE_FUNC(quip_type_name,type,member)			\
 									\
-static void _cast_##stem##_from_double(QSP_ARG_DECL  Scalar_Value *svp, double val)	\
+static void _cast_##quip_type_name##_from_double(QSP_ARG_DECL  Scalar_Value *svp, double val)	\
 {									\
 	svp->member = (type) val;					\
 }
 
-#define DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)				\
+#define DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(quip_type_name)				\
 									\
-static void _cast_##stem##_from_double(QSP_ARG_DECL  Scalar_Value *svp, double val)	\
+static void _cast_##quip_type_name##_from_double(QSP_ARG_DECL  Scalar_Value *svp, double val)	\
 {									\
 	sprintf(ERROR_STRING,						\
-		"Can't cast %s from double!?",#stem);			\
+		"Can't cast %s from double!?",#quip_type_name);			\
 	warn(ERROR_STRING);						\
 }
 
 ////////////////////////////
 
-#define DECLARE_COPY_VALUE_FUNC(stem,member)				\
+#define DECLARE_COPY_VALUE_FUNC(quip_type_name,member)				\
 									\
-static void copy_##stem##_value						\
+static void copy_##quip_type_name##_value						\
 			(Scalar_Value *dst_svp, Scalar_Value *src_svp)	\
 {									\
 	dst_svp->member = src_svp->member;				\
@@ -334,85 +334,85 @@ DECLARE_COPY_VALUE_FUNC(bit,u_bit)
 static void copy_void_value(Scalar_Value *dst_svp, Scalar_Value *src_svp) {}
 
 
-#define DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,member)	\
+#define DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(quip_type_name,type,member)	\
 									\
-static void _cast_indexed_##stem##_from_double				\
+static void _cast_indexed_##quip_type_name##_from_double				\
 			(QSP_ARG_DECL  Scalar_Value *svp, int idx, double val)	\
 {									\
 	svp->member[idx] = (type) val;					\
 }
 
 
-#define DECLARE_BAD_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem)		\
+#define DECLARE_BAD_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(quip_type_name)		\
 									\
-static void _cast_indexed_##stem##_from_double				\
+static void _cast_indexed_##quip_type_name##_from_double				\
 			(QSP_ARG_DECL  Scalar_Value *svp, int idx, double val)	\
 {									\
 	sprintf(ERROR_STRING,						\
-		"cast_indexed_%s_from_double:  Can't cast to %s with an index (%d)!?",#stem,#stem,idx);		\
+		"cast_indexed_%s_from_double:  Can't cast to %s with an index (%d)!?",#quip_type_name,#quip_type_name,idx);		\
 	warn(ERROR_STRING);						\
 }
 
 /////////////////////////////
 
-#define DECLARE_REAL_SCALAR_FUNCS(stem,type,member)			\
+#define DECLARE_REAL_SCALAR_FUNCS(quip_type_name,type,member)			\
 									\
-DECLARE_ALMOST_REAL_SCALAR_FUNCS(stem,type,member)			\
-DECLARE_INDEXED_DATA_FUNC(stem,type)
+DECLARE_ALMOST_REAL_SCALAR_FUNCS(quip_type_name,type,member)			\
+DECLARE_INDEXED_DATA_FUNC(quip_type_name,type)
 
-#define DECLARE_BITMAP_REAL_SCALAR_FUNCS(stem,type,member)		\
+#define DECLARE_BITMAP_REAL_SCALAR_FUNCS(quip_type_name,type,member)		\
 									\
-DECLARE_ALMOST_REAL_SCALAR_FUNCS(stem,type,member)			\
-DECLARE_POSSIBLY_BITMAP_INDEXED_DATA_FUNC(stem,type)
+DECLARE_ALMOST_REAL_SCALAR_FUNCS(quip_type_name,type,member)			\
+DECLARE_POSSIBLY_BITMAP_INDEXED_DATA_FUNC(quip_type_name,type)
 
-#define DECLARE_ALMOST_REAL_SCALAR_FUNCS(stem,type,member)		\
+#define DECLARE_ALMOST_REAL_SCALAR_FUNCS(quip_type_name,type,member)		\
 									\
-DECLARE_IS_NUMERIC_FUNC(stem)						\
-DECLARE_COPY_VALUE_FUNC(stem,member)					\
-DECLARE_CAST_FROM_DOUBLE_FUNC(stem,type,member)				\
-DECLARE_CAST_TO_DOUBLE_FUNC(stem,member)				\
-DECLARE_BAD_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem)			\
-DECLARE_ASSIGN_REAL_SCALAR_FUNC(stem,type,member)			\
-DECLARE_EXTRACT_REAL_SCALAR_FUNC(stem,type,member)
+DECLARE_IS_NUMERIC_FUNC(quip_type_name)						\
+DECLARE_COPY_VALUE_FUNC(quip_type_name,member)					\
+DECLARE_CAST_FROM_DOUBLE_FUNC(quip_type_name,type,member)				\
+DECLARE_CAST_TO_DOUBLE_FUNC(quip_type_name,member)				\
+DECLARE_BAD_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(quip_type_name)			\
+DECLARE_ASSIGN_REAL_SCALAR_FUNC(quip_type_name,type,member)			\
+DECLARE_EXTRACT_REAL_SCALAR_FUNC(quip_type_name,type,member)
 
 
-#define DECLARE_CPX_SCALAR_FUNCS(stem,type,indexable_member,copyable_member) \
+#define DECLARE_CPX_SCALAR_FUNCS(quip_type_name,type,indexable_member,copyable_member) \
 									\
-DECLARE_COPY_VALUE_FUNC(stem,copyable_member)				\
-DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)				\
-DECLARE_BAD_INDEXED_DATA_FUNC(stem)					\
-DECLARE_IS_NUMERIC_FUNC(stem)						\
-DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)					\
-DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)					\
-DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,indexable_member)	\
-DECLARE_ASSIGN_CPX_SCALAR_FUNC(stem,type,indexable_member)		\
-DECLARE_EXTRACT_CPX_SCALAR_FUNC(stem,type,indexable_member)
+DECLARE_COPY_VALUE_FUNC(quip_type_name,copyable_member)				\
+DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(quip_type_name)				\
+DECLARE_BAD_INDEXED_DATA_FUNC(quip_type_name)					\
+DECLARE_IS_NUMERIC_FUNC(quip_type_name)						\
+DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(quip_type_name)					\
+DECLARE_BAD_CAST_TO_DOUBLE_FUNC(quip_type_name)					\
+DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(quip_type_name,type,indexable_member)	\
+DECLARE_ASSIGN_CPX_SCALAR_FUNC(quip_type_name,type,indexable_member)		\
+DECLARE_EXTRACT_CPX_SCALAR_FUNC(quip_type_name,type,indexable_member)
 
 
-#define DECLARE_QUAT_SCALAR_FUNCS(stem,type,indexable_member,copyable_member) \
+#define DECLARE_QUAT_SCALAR_FUNCS(quip_type_name,type,indexable_member,copyable_member) \
 									\
-DECLARE_COPY_VALUE_FUNC(stem,copyable_member)				\
-DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)				\
-DECLARE_BAD_INDEXED_DATA_FUNC(stem)					\
-DECLARE_IS_NUMERIC_FUNC(stem)						\
-DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)					\
-DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)					\
-DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,indexable_member)	\
-DECLARE_ASSIGN_QUAT_SCALAR_FUNC(stem,type,indexable_member)		\
-DECLARE_EXTRACT_QUAT_SCALAR_FUNC(stem,type,indexable_member)
+DECLARE_COPY_VALUE_FUNC(quip_type_name,copyable_member)				\
+DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(quip_type_name)				\
+DECLARE_BAD_INDEXED_DATA_FUNC(quip_type_name)					\
+DECLARE_IS_NUMERIC_FUNC(quip_type_name)						\
+DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(quip_type_name)					\
+DECLARE_BAD_CAST_TO_DOUBLE_FUNC(quip_type_name)					\
+DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(quip_type_name,type,indexable_member)	\
+DECLARE_ASSIGN_QUAT_SCALAR_FUNC(quip_type_name,type,indexable_member)		\
+DECLARE_EXTRACT_QUAT_SCALAR_FUNC(quip_type_name,type,indexable_member)
 
 
-#define DECLARE_COLOR_SCALAR_FUNCS(stem,type,indexable_member,copyable_member) \
+#define DECLARE_COLOR_SCALAR_FUNCS(quip_type_name,type,indexable_member,copyable_member) \
 									\
-DECLARE_COPY_VALUE_FUNC(stem,copyable_member)				\
-DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)				\
-DECLARE_BAD_INDEXED_DATA_FUNC(stem)					\
-DECLARE_IS_NUMERIC_FUNC(stem)						\
-DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)					\
-DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)					\
-DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,indexable_member)	\
-DECLARE_ASSIGN_COLOR_SCALAR_FUNC(stem,type,indexable_member)		\
-DECLARE_EXTRACT_COLOR_SCALAR_FUNC(stem,type,indexable_member)
+DECLARE_COPY_VALUE_FUNC(quip_type_name,copyable_member)				\
+DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(quip_type_name)				\
+DECLARE_BAD_INDEXED_DATA_FUNC(quip_type_name)					\
+DECLARE_IS_NUMERIC_FUNC(quip_type_name)						\
+DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(quip_type_name)					\
+DECLARE_BAD_CAST_TO_DOUBLE_FUNC(quip_type_name)					\
+DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(quip_type_name,type,indexable_member)	\
+DECLARE_ASSIGN_COLOR_SCALAR_FUNC(quip_type_name,type,indexable_member)		\
+DECLARE_EXTRACT_COLOR_SCALAR_FUNC(quip_type_name,type,indexable_member)
 
 ////////////////////////////////
 

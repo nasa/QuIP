@@ -1558,7 +1558,7 @@ static COMMAND_FUNC( do_seed )
 {
 	u_long n;
 
-	n=how_many("value for random number seed");
+	n=(u_long)how_many("value for random number seed");
 
 	sprintf(msg_str,"Using user-supplied seed of %ld (0x%lx)",n,n);
 	advise(msg_str);

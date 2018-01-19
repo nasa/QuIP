@@ -293,7 +293,7 @@ static void literal_format_release(Input_Format_Spec *fmt_p)
 static void default_format_release(Input_Format_Spec *fmt_p)
 { /* nop */ }
 
-static int float_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, Input_Format_Spec *fmt_p)
+static int float_format_read_long(QSP_ARG_DECL  int64_t *result, const char *pmpt, Input_Format_Spec *fmt_p)
 {
 	if( !ascii_warned ){
 		sprintf(ERROR_STRING,
@@ -303,13 +303,13 @@ static int float_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, 
 		ascii_warned=1;
 	}
 
-	*result = (long) HOW_MUCH(pmpt);
+	*result = (int64_t) how_much(pmpt);
 	return 1;
 }
 
-static int int_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, Input_Format_Spec *fmt_p)
+static int int_format_read_long(QSP_ARG_DECL  int64_t *result, const char *pmpt, Input_Format_Spec *fmt_p)
 {
-	*result = HOW_MANY(pmpt);
+	*result = how_many(pmpt);
 	return 1;
 }
 
@@ -371,9 +371,9 @@ static inline void _advance_format(SINGLE_QSP_ARG_DECL)
  * 
  */
 
-long next_input_int_with_format(QSP_ARG_DECL   const char *pmpt)
+int64_t next_input_int_with_format(QSP_ARG_DECL   const char *pmpt)
 {
-	long l=0;
+	int64_t l=0;
 	int done=0;
 
 	do {
@@ -415,8 +415,8 @@ static void int_format_consume(QSP_ARG_DECL  Precision *prec_p)
 		RESET_INPUT_FORMAT_FIELD
 		return;
 	} else {
-		long l;
-		l=HOW_MANY("dummy integer");
+		howmany_type l;
+		l=how_many("dummy integer");
 		advance_format();
 	}
 }
@@ -428,7 +428,7 @@ static void float_format_consume(QSP_ARG_DECL  Precision *prec_p)
 		return;
 	} else {
 		double d;
-		d=HOW_MUCH("dummy float");
+		d=how_much("dummy float");
 		advance_format();
 	}
 }
@@ -457,13 +457,13 @@ static void consume_variable_string(SINGLE_QSP_ARG_DECL)
 	/*s=*/nameof("don't-care string");
 }
 
-static int string_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, Input_Format_Spec *fmt_p)
+static int string_format_read_long(QSP_ARG_DECL  int64_t *result, const char *pmpt, Input_Format_Spec *fmt_p)
 {
 	consume_variable_string(SINGLE_QSP_ARG);
 	return 0;
 }
 
-static int literal_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, Input_Format_Spec *fmt_p)
+static int literal_format_read_long(QSP_ARG_DECL  int64_t *result, const char *pmpt, Input_Format_Spec *fmt_p)
 {
 	consume_literal_string(fmt_p);
 	return 0;
@@ -471,13 +471,13 @@ static int literal_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt
 
 static int int_format_read_double(QSP_ARG_DECL  double *result, const char *pmpt, Input_Format_Spec *fmt_p)
 {
-	*result = HOW_MANY(pmpt);
+	*result = how_many(pmpt);
 	return 1;
 }
 
 static int float_format_read_double(QSP_ARG_DECL  double *result, const char *pmpt, Input_Format_Spec *fmt_p)
 {
-	*result = HOW_MUCH(pmpt);
+	*result = how_much(pmpt);
 	return 1;
 }
 
@@ -511,15 +511,15 @@ static const char * _next_input_str(QSP_ARG_DECL  const char *pmpt)
 
 static int int_format_read_string(QSP_ARG_DECL  const char **sptr, const char *pmpt, Input_Format_Spec *fmt_p)
 {
-	long l;
-	l=HOW_MANY("dummy integer value");
+	howmany_type l;
+	l=how_many("dummy integer value");
 	return 0;
 }
 
 static int float_format_read_string(QSP_ARG_DECL  const char **sptr, const char *pmpt, Input_Format_Spec *fmt_p)
 {
 	double d;
-	d=HOW_MUCH("dummy float value");
+	d=how_much("dummy float value");
 	return 0;
 }
 
@@ -656,9 +656,9 @@ static void bit_set_value_from_input(QSP_ARG_DECL  bitmap_word *wp, bitnum_t i_b
 	bitmap_word bit;
 
 	if( ! HAS_FORMAT_LIST )
-		val = how_many("bit value");
+		val = (bitmap_word) how_many("bit value");
 	else
-		val = next_input_int_with_format(QSP_ARG  "bit value");
+		val = (bitmap_word) next_input_int_with_format(QSP_ARG  "bit value");
 
 	if( /* val < 0 || */ val > 1 ){     // bitmap_word is an unsigned type
 		warn("Truncation error converting bit");

@@ -202,7 +202,7 @@ static COMMAND_FUNC( do_set_fg )
 {
 	u_long val;
 
-	val = HOW_MANY("foreground");
+	val = (u_long) HOW_MANY("foreground");
 
 	DRAW_CHECK(do_set_fg)
 
@@ -213,7 +213,7 @@ static COMMAND_FUNC( do_set_bg )
 {
 	u_long val;
 
-	val = HOW_MANY("background");
+	val = (u_long) HOW_MANY("background");
 
 	DRAW_CHECK(do_set_bg)
 
