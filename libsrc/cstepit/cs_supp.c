@@ -38,6 +38,8 @@ static void init_cstepit_params(SINGLE_QSP_ARG_DECL)
 	int i,n;
 	int nfmax;		/* max. # function calls */
 
+	cs_qsp = THIS_QSP;
+
 	lp = opt_param_list();
 	if( lp == NULL ) return;
 
