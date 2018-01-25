@@ -211,7 +211,6 @@
 		71CE760317E5AD4100D93DE7 /* perr.c in Sources */ = {isa = PBXBuildFile; fileRef = 71CE760217E5AD4100D93DE7 /* perr.c */; };
 		71CE760517E5AD4C00D93DE7 /* hsizepix.c in Sources */ = {isa = PBXBuildFile; fileRef = 71CE760417E5AD4C00D93DE7 /* hsizepix.c */; };
 		71CE760717E5AD6500D93DE7 /* herrs.c in Sources */ = {isa = PBXBuildFile; fileRef = 71CE760617E5AD6500D93DE7 /* herrs.c */; };
-		71CE760B17E5ADC300D93DE7 /* bitmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 71CE760A17E5ADC300D93DE7 /* bitmap.c */; };
 		7934D54119DB5CBE003FA1FF /* polh_dev.c in Sources */ = {isa = PBXBuildFile; fileRef = 7934D54019DB5CBE003FA1FF /* polh_dev.c */; };
 		7934D54319DB5CD0003FA1FF /* acquire.c in Sources */ = {isa = PBXBuildFile; fileRef = 7934D54219DB5CD0003FA1FF /* acquire.c */; };
 		7934D54519DB5CF5003FA1FF /* polh_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7934D54419DB5CF5003FA1FF /* polh_menu.c */; };
@@ -283,15 +282,15 @@
 		7C6CDBFD1CBF759A001AC12F /* ocl_veclib.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDBFC1CBF759A001AC12F /* ocl_veclib.c */; };
 		7C6CDBFF1CBF75E2001AC12F /* ocl_utils.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDBFE1CBF75E2001AC12F /* ocl_utils.c */; };
 		7C6CDC011CBF7619001AC12F /* ocl_rand.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDC001CBF7619001AC12F /* ocl_rand.c */; };
-		7C6CDC031CBF763E001AC12F /* ocl_fft.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDC021CBF763E001AC12F /* ocl_fft.c */; };
 		7C6CDC051CBF76BD001AC12F /* slow_len.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDC041CBF76BD001AC12F /* slow_len.c */; };
+		7CCFF3562019471700E8C860 /* stereo.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CCFF3552019471700E8C860 /* stereo.m */; };
+		7CCFF3582019491700E8C860 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCFF3572019491700E8C860 /* fusion.c */; };
 		7CDCA7101CC16F84004AD95C /* glmenu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA70F1CC16F84004AD95C /* glmenu.m */; };
 		7CDCA7141CC18CAB004AD95C /* dl.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7131CC18CAB004AD95C /* dl.m */; };
 		7CDCA7151CC18D9D004AD95C /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C6CDBFA1CBF7553001AC12F /* OpenGL.framework */; };
 		7CDCA7171CC18FB3004AD95C /* gl_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7161CC18FB3004AD95C /* gl_util.c */; };
 		7CDCA7191CC1905D004AD95C /* glfb.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7181CC1905D004AD95C /* glfb.c */; };
 		7CDCA71D1CC190C1004AD95C /* glx_supp.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA71C1CC190C1004AD95C /* glx_supp.m */; };
-		7CDCA71F1CC191B9004AD95C /* stereo.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA71E1CC191B9004AD95C /* stereo.c */; };
 		7CDCA7211CC19235004AD95C /* tilemenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7201CC19235004AD95C /* tilemenu.c */; };
 		7CDCA7231CC19255004AD95C /* tile.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7221CC19255004AD95C /* tile.c */; };
 		7CDCA7251CC1941F004AD95C /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CDCA7241CC1941F004AD95C /* GLUT.framework */; };
@@ -299,7 +298,6 @@
 		7CDCA7291CC1A9F0004AD95C /* quipView.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7281CC1A9F0004AD95C /* quipView.m */; };
 		7CE62D091DCC0A3A000FED59 /* container.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CE62D081DCC0A3A000FED59 /* container.c */; };
 		7CE62D0B1DCC0A64000FED59 /* rbtree.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CE62D0A1DCC0A64000FED59 /* rbtree.c */; };
-		7CE62D171DCD0892000FED59 /* ocl_fft.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDC021CBF763E001AC12F /* ocl_fft.c */; };
 		7CE62D181DCD0897000FED59 /* ocl_rand.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDC001CBF7619001AC12F /* ocl_rand.c */; };
 		7CE62D191DCD089B000FED59 /* ocl_utils.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDBFE1CBF75E2001AC12F /* ocl_utils.c */; };
 		7CE62D1A1DCD089F000FED59 /* ocl_veclib.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDBFC1CBF759A001AC12F /* ocl_veclib.c */; };
@@ -388,7 +386,6 @@
 		7CE62D6E1DCD3039000FED59 /* dplist.c in Sources */ = {isa = PBXBuildFile; fileRef = 71AC4A4B17E0100000AABB78 /* dplist.c */; };
 		7CE62D6F1DCD3054000FED59 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C2B12031CA7087D0089B27A /* platform_menu.m */; };
 		7CE62D701DCD3058000FED59 /* platform.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C2B11FF1CA707C60089B27A /* platform.m */; };
-		7CE62D711DCD305B000FED59 /* bitmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 71CE760A17E5ADC300D93DE7 /* bitmap.c */; };
 		7CE62D721DCD3060000FED59 /* dispatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 71CE75CB17E5A80C00D93DE7 /* dispatch.c */; };
 		7CE62D731DCD3063000FED59 /* vec_func.c in Sources */ = {isa = PBXBuildFile; fileRef = 71CE75C917E5A7CB00D93DE7 /* vec_func.c */; };
 		7CE62D741DCD3067000FED59 /* vectbl.c in Sources */ = {isa = PBXBuildFile; fileRef = 71CE75B917E5A6EF00D93DE7 /* vectbl.c */; };
@@ -512,7 +509,6 @@
 		7CE62DEA1DCD394F000FED59 /* vl2_veclib.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C2B12181CA70D650089B27A /* vl2_veclib.c */; };
 		7CE62DEB1DCD397B000FED59 /* tile.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7221CC19255004AD95C /* tile.c */; };
 		7CE62DEC1DCD397F000FED59 /* tilemenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7201CC19235004AD95C /* tilemenu.c */; };
-		7CE62DED1DCD3982000FED59 /* stereo.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA71E1CC191B9004AD95C /* stereo.c */; };
 		7CE62DEE1DCD3985000FED59 /* glx_supp.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA71C1CC190C1004AD95C /* glx_supp.m */; };
 		7CE62DEF1DCD3989000FED59 /* glfb.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7181CC1905D004AD95C /* glfb.c */; };
 		7CE62DF01DCD398D000FED59 /* gl_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7161CC18FB3004AD95C /* gl_util.c */; };
@@ -801,7 +797,6 @@
 		71CE760217E5AD4100D93DE7 /* perr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = perr.c; sourceTree = "<group>"; };
 		71CE760417E5AD4C00D93DE7 /* hsizepix.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = hsizepix.c; sourceTree = "<group>"; };
 		71CE760617E5AD6500D93DE7 /* herrs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = herrs.c; sourceTree = "<group>"; };
-		71CE760A17E5ADC300D93DE7 /* bitmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bitmap.c; sourceTree = "<group>"; };
 		7934D54019DB5CBE003FA1FF /* polh_dev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = polh_dev.c; sourceTree = "<group>"; };
 		7934D54219DB5CD0003FA1FF /* acquire.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = acquire.c; sourceTree = "<group>"; };
 		7934D54419DB5CF5003FA1FF /* polh_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = polh_menu.c; sourceTree = "<group>"; };
@@ -874,14 +869,14 @@
 		7C6CDBFC1CBF759A001AC12F /* ocl_veclib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ocl_veclib.c; sourceTree = "<group>"; };
 		7C6CDBFE1CBF75E2001AC12F /* ocl_utils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ocl_utils.c; sourceTree = "<group>"; };
 		7C6CDC001CBF7619001AC12F /* ocl_rand.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ocl_rand.c; sourceTree = "<group>"; };
-		7C6CDC021CBF763E001AC12F /* ocl_fft.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ocl_fft.c; sourceTree = "<group>"; };
 		7C6CDC041CBF76BD001AC12F /* slow_len.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = slow_len.c; sourceTree = "<group>"; };
+		7CCFF3552019471700E8C860 /* stereo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = stereo.m; sourceTree = "<group>"; };
+		7CCFF3572019491700E8C860 /* fusion.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fusion.c; sourceTree = "<group>"; };
 		7CDCA70F1CC16F84004AD95C /* glmenu.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = glmenu.m; sourceTree = "<group>"; };
 		7CDCA7131CC18CAB004AD95C /* dl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = dl.m; sourceTree = "<group>"; };
 		7CDCA7161CC18FB3004AD95C /* gl_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gl_util.c; sourceTree = "<group>"; };
 		7CDCA7181CC1905D004AD95C /* glfb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = glfb.c; sourceTree = "<group>"; };
 		7CDCA71C1CC190C1004AD95C /* glx_supp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = glx_supp.m; sourceTree = "<group>"; };
-		7CDCA71E1CC191B9004AD95C /* stereo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stereo.c; sourceTree = "<group>"; };
 		7CDCA7201CC19235004AD95C /* tilemenu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tilemenu.c; sourceTree = "<group>"; };
 		7CDCA7221CC19255004AD95C /* tile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tile.c; sourceTree = "<group>"; };
 		7CDCA7241CC1941F004AD95C /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
@@ -1153,7 +1148,6 @@
 			children = (
 				7C2B12031CA7087D0089B27A /* platform_menu.m */,
 				7C2B11FF1CA707C60089B27A /* platform.m */,
-				71CE760A17E5ADC300D93DE7 /* bitmap.c */,
 				71CE75CB17E5A80C00D93DE7 /* dispatch.c */,
 				71CE75C917E5A7CB00D93DE7 /* vec_func.c */,
 				71CE75B917E5A6EF00D93DE7 /* vectbl.c */,
@@ -1209,6 +1203,7 @@
 		71AC4AD917E58C7B00AABB78 /* vectree */ = {
 			isa = PBXGroup;
 			children = (
+				7CCFF3572019491700E8C860 /* fusion.c */,
 				7C2B12111CA70AF80089B27A /* string_ref.c */,
 				7C2B120B1CA7098B0089B27A /* vectree.y */,
 				7C2B12091CA709810089B27A /* vt_native.c */,
@@ -1441,7 +1436,6 @@
 		7C6CDBF51CBF748D001AC12F /* opencl */ = {
 			isa = PBXGroup;
 			children = (
-				7C6CDC021CBF763E001AC12F /* ocl_fft.c */,
 				7C6CDC001CBF7619001AC12F /* ocl_rand.c */,
 				7C6CDBFE1CBF75E2001AC12F /* ocl_utils.c */,
 				7C6CDBFC1CBF759A001AC12F /* ocl_veclib.c */,
@@ -1453,9 +1447,9 @@
 		7CDCA70C1CC16D0A004AD95C /* opengl */ = {
 			isa = PBXGroup;
 			children = (
+				7CCFF3552019471700E8C860 /* stereo.m */,
 				7CDCA7221CC19255004AD95C /* tile.c */,
 				7CDCA7201CC19235004AD95C /* tilemenu.c */,
-				7CDCA71E1CC191B9004AD95C /* stereo.c */,
 				7CDCA71C1CC190C1004AD95C /* glx_supp.m */,
 				7CDCA7181CC1905D004AD95C /* glfb.c */,
 				7CDCA7161CC18FB3004AD95C /* gl_util.c */,
@@ -1517,7 +1511,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = mq;
-				LastUpgradeCheck = 0730;
+				LastUpgradeCheck = 0910;
 				ORGANIZATIONNAME = "Jeff Mulligan";
 				TargetAttributes = {
 					7CE62D0F1DCC0CB5000FED59 = {
@@ -1583,6 +1577,7 @@
 				71AC4A1817E00A7600AABB78 /* class.c in Sources */,
 				7C2B120E1CA709D80089B27A /* start_quip.c in Sources */,
 				71AC4A1917E00A7600AABB78 /* command.c in Sources */,
+				7CCFF3582019491700E8C860 /* fusion.c in Sources */,
 				71AC4A1A17E00A7600AABB78 /* complete.c in Sources */,
 				71AC4A1D17E00A9100AABB78 /* history.c in Sources */,
 				71AC4A1E17E00A9100AABB78 /* item_type.c in Sources */,
@@ -1648,7 +1643,6 @@
 				7934D54319DB5CD0003FA1FF /* acquire.c in Sources */,
 				7C63B34517E0FE2C00CBA8CA /* ios_sizable.m in Sources */,
 				7934D54519DB5CF5003FA1FF /* polh_menu.c in Sources */,
-				7C6CDC031CBF763E001AC12F /* ocl_fft.c in Sources */,
 				7C63B34617E0FE2C00CBA8CA /* ios_stack.m in Sources */,
 				7C63B34817E0FE9300CBA8CA /* ios_class.m in Sources */,
 				7C63B34A17E0FEFC00CBA8CA /* nav_panel.m in Sources */,
@@ -1672,6 +1666,7 @@
 				7C63B36917E1157E00CBA8CA /* gen_win.m in Sources */,
 				7CE62D0B1DCC0A64000FED59 /* rbtree.c in Sources */,
 				7C63B36B17E1171C00CBA8CA /* xplot.m in Sources */,
+				7CCFF3562019471700E8C860 /* stereo.m in Sources */,
 				7C63B36D17E1172900CBA8CA /* viewmenu.m in Sources */,
 				7C2B11F41CA707520089B27A /* questions.c in Sources */,
 				7C63B36F17E1173800CBA8CA /* viewer.m in Sources */,
@@ -1739,7 +1734,6 @@
 				7C2B120C1CA7098B0089B27A /* vectree.y in Sources */,
 				71AC4AEB17E58CF400AABB78 /* identifier.c in Sources */,
 				7CDCA7211CC19235004AD95C /* tilemenu.c in Sources */,
-				7CDCA71F1CC191B9004AD95C /* stereo.c in Sources */,
 				71AC4AF317E58D1C00AABB78 /* vecnodes.c in Sources */,
 				71AC4AF417E58D1C00AABB78 /* subrt_funcs.c in Sources */,
 				71AC4AF517E58D1C00AABB78 /* resolve.c in Sources */,
@@ -1835,7 +1829,6 @@
 				71CE760517E5AD4C00D93DE7 /* hsizepix.c in Sources */,
 				7177F9051A00AC1300BB5918 /* no_sound.c in Sources */,
 				71CE760717E5AD6500D93DE7 /* herrs.c in Sources */,
-				71CE760B17E5ADC300D93DE7 /* bitmap.c in Sources */,
 				7C63B38717E8DE1300CBA8CA /* quipWindowController.m in Sources */,
 				71614B3C18774639001AC360 /* fbmenu.m in Sources */,
 				71614B3E187746AF001AC360 /* genlock.c in Sources */,
@@ -1964,7 +1957,6 @@
 				7CE62D301DCD0CA9000FED59 /* encrypt_funcs.c in Sources */,
 				7CE62DEE1DCD3985000FED59 /* glx_supp.m in Sources */,
 				7CE62D331DCD0CB4000FED59 /* bi_menu.c in Sources */,
-				7CE62D711DCD305B000FED59 /* bitmap.c in Sources */,
 				7CE62DA51DCD316E000FED59 /* drag.m in Sources */,
 				7CE62DEA1DCD394F000FED59 /* vl2_veclib.c in Sources */,
 				7CE62D361DCD0CBF000FED59 /* complete.c in Sources */,
@@ -2049,7 +2041,6 @@
 				7CE62DC31DCD33A9000FED59 /* dumptree.c in Sources */,
 				7CE62E1C1DCD5CD2000FED59 /* lump.c in Sources */,
 				7CE62E151DCD5CB6000FED59 /* stc_edit.c in Sources */,
-				7CE62D171DCD0892000FED59 /* ocl_fft.c in Sources */,
 				7CE62DD11DCD37F5000FED59 /* client.c in Sources */,
 				7CE62D2F1DCD0C10000FED59 /* freel.c in Sources */,
 				7CE62DC71DCD346A000FED59 /* macos.m in Sources */,
@@ -2106,7 +2097,6 @@
 				7CE62E001DCD59C9000FED59 /* avi.c in Sources */,
 				7CE62E191DCD5CC6000FED59 /* clrdat.c in Sources */,
 				7CE62E061DCD59F8000FED59 /* herrs.c in Sources */,
-				7CE62DED1DCD3982000FED59 /* stereo.c in Sources */,
 				7CE62D191DCD089B000FED59 /* ocl_utils.c in Sources */,
 				7CE62D971DCD3112000FED59 /* dct8.c in Sources */,
 				7CE62DD41DCD382C000FED59 /* sched.c in Sources */,
@@ -2156,16 +2146,28 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -2174,7 +2176,9 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = YES;
@@ -2190,18 +2194,32 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				SDKROOT = macosx;
@@ -2236,7 +2254,7 @@
 					/sw/include,
 				);
 				INFOPLIST_FILE = "MacQuIP/MacQuIP-Info.plist";
-				"OTHER_CFLAGS[arch=*]" = "-DBUILD_FOR_MACOS";
+				"OTHER_CFLAGS[arch=*]" = "-DBUILD_FOR_MACOS_APP";
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = NO;
@@ -2272,7 +2290,7 @@
 					/sw/include,
 				);
 				INFOPLIST_FILE = "MacQuIP/MacQuIP-Info.plist";
-				"OTHER_CFLAGS[arch=*]" = "-DBUILD_FOR_MACOS";
+				"OTHER_CFLAGS[arch=*]" = "-DBUILD_FOR_MACOS_APP";
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = NO;
@@ -2366,6 +2384,7 @@
 				7CE62D161DCC0CB5000FED59 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

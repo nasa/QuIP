@@ -89,7 +89,7 @@ static COMMAND_FUNC( do_new_menu_item )
 
 	name=NAMEOF("name for menu item");
 	action=NAMEOF("action string");
-	mbi_p = new_menu_bar_item(QSP_ARG  name);
+	mbi_p = new_menu_bar_item(name);
 	if( mbi_p == NULL ) return;
 
 	mbi_p.action = savestr(action);
@@ -125,7 +125,7 @@ MENU_END(populate_menu)
 
 static COMMAND_FUNC(do_populate_menu)
 {
-	curr_menu = PICK_MENU_BAR_MENU("menu name");
+	curr_menu = pick_menu_bar_menu("menu name");
 
 	// First, pop any old context
 	int n;
@@ -164,7 +164,7 @@ static COMMAND_FUNC(do_new_menu)
 
 	// make sure this is good...
 	if( menu_bar_item_itp == NULL )
-		init_menu_bar_items(SINGLE_QSP_ARG);
+		init_menu_bar_items();
 
 	mbm_p.item_icp =
 		create_ios_item_context(QSP_ARG  menu_bar_item_itp, name);
@@ -174,7 +174,7 @@ static COMMAND_FUNC(do_add_menu)
 {
 	Menu_Bar_Menu *mbm_p;
 
-	mbm_p = PICK_MENU_BAR_MENU("menu name");
+	mbm_p = pick_menu_bar_menu("menu name");
 	if( mbm_p == NULL ) return;
 
 	[[NSApp mainMenu] setSubmenu:mbm_p.menu forItem:mbm_p.bar_item];

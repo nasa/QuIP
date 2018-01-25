@@ -1,9 +1,11 @@
+#include "quip_config.h"
 #include "quipNavController.h"
 #include "quip_prot.h"
 #include "ios_gui.h"
 #include "nav_panel.h"
 #include "screen_obj.h"
 
+#ifdef BUILD_FOR_IOS
 // global var for whole app...
 // default is all
 static UIInterfaceOrientationMask quipSupportedInterfaceOrientations=UIInterfaceOrientationMaskAll;
@@ -18,6 +20,7 @@ void set_autorotation_allowed( BOOL yesno )
 {
 	quipShouldAutorotate = yesno;
 }
+#endif // BUILD_FOR_IOS
 
 @implementation quipNavController
 

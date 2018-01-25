@@ -552,7 +552,7 @@ void mem_err(const char *whence)
 {
 	sprintf(DEFAULT_ERROR_STRING,"%s:  out of memory.",whence);
 	NERROR1(DEFAULT_ERROR_STRING);
-    while(1) ;  // to silence compiler with noreturn attribute
+    //while(1) ;  // to silence compiler with noreturn attribute
 }
 
 #endif /* ! USE_GETBUF */

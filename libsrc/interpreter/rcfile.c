@@ -105,6 +105,7 @@ static int read_global_startup(QSP_ARG_DECL const char *progname)
 {
 #ifdef BUILD_FOR_CMD_LINE
 
+fprintf(stderr,"building for command line...\n");
 	return read_traditional_startup(QSP_ARG  progname);
 
 #else // ! BUILD_FOR_CMD_LINE
@@ -115,6 +116,7 @@ static int read_global_startup(QSP_ARG_DECL const char *progname)
 #endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS_APP
+fprintf(stderr,"building Mac OSX app...\n");
 	// We do this only when building a cocoa app, but not
 	// for the native Mac command line version...
 	//

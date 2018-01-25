@@ -5,7 +5,7 @@
 //  Created by Jeff Mulligan on 7/29/12.
 //  Copyright 2012 __MyCompanyName__. All rights reserved.
 //
-
+#include "quip_config.h"
 #import "quipAppDelegate.h"
 #import "quipTableViewController.h"
 #import "quipNavController.h"
@@ -778,11 +778,8 @@ warned=1;
 //fprintf(stderr,"is_portrait:  retval = %d\n",retval);
 	return retval;
 }
-#else // ! BUILD_FOR_IOS
 
-static int is_portrait(void) { return 0; }
-
-#endif // ! BUILD_FOR_IOS
+#endif // BUILD_FOR_IOS
 
 static const char *get_display_height(SINGLE_QSP_ARG_DECL)
 {

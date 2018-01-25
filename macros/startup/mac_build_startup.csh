@@ -1,18 +1,16 @@
 #!/bin/csh
 #
-# On a fresh install, or a system where we do not build
-# the command line version, we may not be able to encrypt
-# at this stage...
+# Like build_startup_file.csh, but for the mac app...
 
 if( $#argv != 1 && $#argv != 2 ) then
-  echo 'usage:  ./build_startup_file.csh demo [test]'
+  echo 'usage:  ./mac_build_startup.csh demo [test]'
   exit
 endif
 
 set flavor=$1
 if( $flavor != demo ) then
-  echo './build_startup_file.csh:  bad flavor requested:  $flavor'
-  echo 'usage:  ./build_startup_file.csh <flavor> [test]'
+  echo './mac_build_startup.csh:  bad flavor requested:  $flavor'
+  echo 'usage:  ./mac_build_startup.csh <flavor> [test]'
   echo 'known flavors:  demo'
   exit
 endif
@@ -22,7 +20,7 @@ if( $#argv == 2 ) then
   if( $2 == test ) then
     set test_mode=1
   else
-    echo 'usage:  ./build_startup_file.csh <flavor> [test]'
+    echo 'usage:  ./mac_build_startup.csh <flavor> [test]'
     echo 'Second argument must be "test" if present'
     exit
   endif
@@ -104,7 +102,7 @@ Set macro_dir /usr/local/share/quip/macros
 
 EOF
 # the max_warnings line was in the fragment above...
-echo "advise 'startup.scr: max_warnings set to -1 in build_startup_file.csh'" >> $outfile
+echo "advise 'startup.scr: max_warnings set to -1 in mac_build_startup.csh'" >> $outfile
 echo "platforms list_all show quit" >> $outfile
 
 if( $flavor == demo ) then

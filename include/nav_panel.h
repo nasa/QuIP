@@ -101,9 +101,10 @@ IOS_ITEM_LIST_PROT(Nav_Item,nav_item)
 #define GET_NAV_ITEM(s)	get_nav_item(QSP_ARG  s)
 #define PICK_NAV_ITEM(pmpt)	pick_nav_item(QSP_ARG  pmpt)
 
+#ifdef BUILD_FOR_IOS
 extern void set_supported_orientations(UIInterfaceOrientationMask m);
 extern void set_autorotation_allowed(BOOL yesno);
-
+#endif // BUILD_FOR_IOS
 
 #else // ! BUILD_FOR_OBJC
 

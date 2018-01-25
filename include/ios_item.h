@@ -151,9 +151,9 @@ type *_new_##stem(QSP_ARG_DECL  const char *name)		\
 	IOS_Item *ip;						\
 								\
 	if( stem##_itp == NULL ){				\
-		init_##stem##s();			\
+		_##init_##stem##s(SINGLE_QSP_ARG);		\
 	}							\
-	ip = stem##_of(name);				\
+    ip = _##stem##_of(QSP_ARG  name);				\
 	if( ip != NULL ){					\
 		sprintf(ERROR_STRING,"new_%s:  \"%s\" already exists!?", \
 			#stem,name);				\
@@ -212,8 +212,8 @@ type *_get_##stem(QSP_ARG_DECL  const char *name)		\
 type *_pick_##stem(QSP_ARG_DECL  const char *pmpt)		\
 {								\
 	if( stem##_itp == NULL )				\
-		init_##stem##s();			\
-	return (type *)pick_ios_item(stem##_itp, pmpt);	\
+		_##init_##stem##s(SINGLE_QSP_ARG);		\
+	return (type *)pick_ios_item(stem##_itp, pmpt);		\
 }
 
 #define IOS_ITEM_LIST_FUNC(type,stem)				\
