@@ -1,7 +1,20 @@
+Cloning:
+
+git clone mulligan@n262vcs-git:quip
+git clone https://github.com/jbmulligan/quip
+
+___________________________________
 
 To list remote repositories:
 
-git remote -v
+% git remote -v
+github	https://github.com/jbmulligan/quip.git (fetch)
+github	https://github.com/jbmulligan/quip.git (push)
+nasa	http://github.com/nasa/QuIP.git (fetch)
+nasa	http://github.com/nasa/QuIP.git (push)
+origin	mulligan@n262vcs-git:quip (fetch)
+origin	mulligan@n262vcs-git:quip (push)
+(typical output)
 
 ________________________________________
 
@@ -14,7 +27,8 @@ _______________________________________
 
 add a remote:
 
-git remote add nasa http://github.com/nasa/QuIP.git
+git remote add nasa_github http://github.com/nasa/QuIP.git
+git remote add jbm_github http://github.com/jbmulligan/quip.git
 
 ____________________
 
@@ -25,18 +39,6 @@ git checkout [revision].
 
 ("revision" should be full hash - don't forget the final period,
 so that changes are applied to the whole tree)
-____________________
-List all remotes:
-
-% git remote -v
-github	https://github.com/jbmulligan/quip.git (fetch)
-github	https://github.com/jbmulligan/quip.git (push)
-nasa	http://github.com/nasa/QuIP.git (fetch)
-nasa	http://github.com/nasa/QuIP.git (push)
-origin	mulligan@n262vcs-git:quip (fetch)
-origin	mulligan@n262vcs-git:quip (push)
-(typical output)
-
 ____________________
 
 Branching:
