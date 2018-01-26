@@ -38,8 +38,10 @@ static void init_cstepit_params(SINGLE_QSP_ARG_DECL)
 	int i,n;
 	int nfmax;		/* max. # function calls */
 
+#ifdef THREAD_SAFE_QUERY
 	cs_qsp = THIS_QSP;
-
+#endif // THREAD_SAFE_QUERY
+    
 	lp = opt_param_list();
 	if( lp == NULL ) return;
 

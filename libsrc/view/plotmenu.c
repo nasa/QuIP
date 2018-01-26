@@ -440,6 +440,7 @@ static COMMAND_FUNC( do_xyzplot )
 	for(i=0;i<OBJ_ROWS(dp);i++){
 		p = (std_type *) OBJ_DATA_PTR(dp);
 		p += i*OBJ_ROW_INC(dp);
+		pen_state=UP;
 		for(j=0;j<OBJ_COLS(dp);j++){
 			x = *p;
 			y = *(p + OBJ_COMP_INC(dp));
@@ -448,37 +449,36 @@ static COMMAND_FUNC( do_xyzplot )
 
 			/* removed else so that a single column data set will plot the pt */
 			if( z < 0 ){
-				lastx = x;
-				lasty = y;
+				if( pen_state == DOWN ){
+					// can't be first point if pen is down
+					xplot_fcont(lastx,lasty);
+				}
 				pen_state = UP;
-			}
-
-			if( z >= 0 ){	/* draw this point */
-
-				/* THis is a hack for plotting lat/long without
+			} else {	/* draw this point */
+				/* This is a hack for plotting lat/long without
 				 * wrap-around...  BUG
 				 */
 				if( pen_state == UP ){
 					xplot_fmove(x,y);
+					lastx=x;
+					lasty=y;
+					// draw from here
 				}
 				if( lat_long_hack ){
 					if( fabs(lastx-x) < 180 &&
-						fabs(lasty-y) < 180 ){
+					   fabs(lasty-y) < 180 ){
 						xplot_fcont(x,y);
-						lastx=x;
-						lasty=y;
 					} else {
 						xplot_move((int)x,(int)y);
-						lastx=x;
-						lasty=y;
 					}
 				} else {
 					xplot_fcont(x,y);
-					lastx=x;
-					lasty=y;
 				}
 				pen_state=DOWN;
 			}
+			// remember this point
+			lastx = x;
+			lasty = y;
 		}
 	}
 }
