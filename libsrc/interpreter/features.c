@@ -35,6 +35,8 @@ typedef enum {
 	SWF_OPENGL,
 	SWF_MOTIF,
 	SWF_GSL,
+	SWF_FANN,
+	SWF_SPARSELM,
 	SWF_GCRYPT,
 	SWF_FLYCAP,
 	SWF_DC1394,
@@ -90,6 +92,8 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 { UNKNOWN, SWF_OPENGL,		"OpenGL graphics"		},
 { UNKNOWN, SWF_MOTIF,		"Motif GUI widgets with libXm"	},
 { UNKNOWN, SWF_GSL,		"GNU Scientific Library"	},
+{ UNKNOWN, SWF_FANN,		"FANN neural network library"	},
+{ UNKNOWN, SWF_SPARSELM,	"sparselm sparse matrix library"	},
 { UNKNOWN, SWF_GCRYPT,		"encryption w/ libgcrypt"	},
 { UNKNOWN, SWF_FLYCAP,		"firewire cameras w/ libflycap"	},
 { UNKNOWN, SWF_DC1394,		"firewire cameras w/ libdc1394"	},
@@ -290,6 +294,18 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 	FEATURE_PRESENT(SWF_GSL);
 #else
 	FEATURE_ABSENT(SWF_GSL);
+#endif
+
+#ifdef HAVE_FANN
+	FEATURE_PRESENT(SWF_FANN);
+#else
+	FEATURE_ABSENT(SWF_FANN);
+#endif
+
+#ifdef HAVE_SPARSELM
+	FEATURE_PRESENT(SWF_SPARSELM);
+#else
+	FEATURE_ABSENT(SWF_SPARSELM);
 #endif
 
 #ifdef HAVE_LIBGCRYPT
