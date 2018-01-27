@@ -75,7 +75,7 @@ set suffix=mac
   source add_files.csh
   
   set subdir=numrec
-  set file_list=( fit_polynomial svd norm_coords )
+  set file_list=( svd norm_coords fit_polynomial )
   source add_files.csh
 
 #endif

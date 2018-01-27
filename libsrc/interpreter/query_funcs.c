@@ -1626,7 +1626,7 @@ static const char *next_word_from_level(QSP_ARG_DECL  const char *pline)
 			CLEAR_QRY_FLAG_BITS(qp,Q_HAS_SOMETHING);
 			return NULL;
 		}
-	}
+    } else return NULL;
 
 	return(buf);
 } // end next_word_from_level
