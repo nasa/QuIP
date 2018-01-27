@@ -5,6 +5,7 @@
 //  Copyright 2012 __MyCompanyName__. All rights reserved.
 //
 
+#include "quip_config.h"
 #import "quipView.h"
 #import "quip_prot.h"
 #include "viewer.h"

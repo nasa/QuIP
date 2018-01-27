@@ -81,7 +81,7 @@ typedef struct vector_parser_data {
 #define MAX_E_STRINGS	64
 
 typedef struct scalar_parser_data {
-	const char *		spd_yystrptr[MAXEDEPTH];
+	const char *		spd_yystrstk[MAXEDEPTH];	// stack of input
 	const char *		spd_original_string;
 	int			spd_edepth;	// init to -1
 	int			spd_which_str;	// init to 0
@@ -93,7 +93,7 @@ typedef struct scalar_parser_data {
 	List *			spd_free_enp_lp;
 } Scalar_Parser_Data;
 
-#define SPD_YYSTRPTR(spd_p)			(spd_p)->spd_yystrptr
+#define SPD_YYSTRSTK(spd_p)			(spd_p)->spd_yystrstk
 #define SPD_ORIGINAL_STRING(spd_p)		(spd_p)->spd_original_string
 #define SPD_EDEPTH(spd_p)			(spd_p)->spd_edepth
 #define SPD_WHICH_STR(spd_p)			(spd_p)->spd_which_str
@@ -104,7 +104,7 @@ typedef struct scalar_parser_data {
 #define SPD_FINAL_EXPR_NODE_P(spd_p)		(spd_p)->spd_final_expr_node_p
 #define SPD_FREE_EXPR_NODE_LIST(spd_p)		(spd_p)->spd_free_enp_lp
 
-#define SET_SPD_YYSTRPTR(spd_p,val)		(spd_p)->spd_yystrptr = val
+#define SET_SPD_YYSTRSTK(spd_p,val)		(spd_p)->spd_yystrstk = val
 #define SET_SPD_ORIGINAL_STRING(spd_p,val)	(spd_p)->spd_original_string = val
 #define SET_SPD_EDEPTH(spd_p,val)		(spd_p)->spd_edepth = val
 #define SET_SPD_WHICH_STR(spd_p,val)		(spd_p)->spd_which_str = val

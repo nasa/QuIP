@@ -54,6 +54,7 @@ int ios_read_global_startup(SINGLE_QSP_ARG_DECL)
 	NSBundle *main_bundle;
 	char *startup_filename;
 
+fprintf(stderr,"ios_read_global_startup BEGIN\n");
 	main_bundle = [NSBundle mainBundle];
 
 	if( main_bundle == NULL ){

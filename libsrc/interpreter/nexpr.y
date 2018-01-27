@@ -24,7 +24,7 @@ double rn_number(double);
 
 #define THIS_SPD	QS_SCALAR_PARSER_DATA_AT_IDX(THIS_QSP,QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP))
 
-#define YYSTRPTR 	SPD_YYSTRPTR(THIS_SPD)
+#define YYSTRSTK 	SPD_YYSTRSTK(THIS_SPD)
 #define EDEPTH 		SPD_EDEPTH(THIS_SPD)
 #define YY_ORIGINAL	SPD_ORIGINAL_STRING(THIS_SPD)
 #define WHICH_EXPR_STR	SPD_WHICH_STR(THIS_SPD)
@@ -60,11 +60,12 @@ static void _llerror(QSP_ARG_DECL  const char *msg)
 
 static inline int _peek_parser_input(SINGLE_QSP_ARG_DECL)
 {
-	while( *YYSTRPTR[EDEPTH] == 0 ){	// end of this line
+	while( *YYSTRSTK[EDEPTH] == 0 ){	// end of this line
 		if( EDEPTH == 0 ) return -1;
 		EDEPTH--;
 	}
-	return *YYSTRPTR[EDEPTH];
+//fprintf(stderr,"peek_parser_input:  will return first char of '%s' (depth = %d)\n",YYSTRSTK[EDEPTH],EDEPTH);
+	return *YYSTRSTK[EDEPTH];
 }
 
 #define has_parser_input() _has_parser_input(SINGLE_QSP_ARG)
@@ -79,7 +80,7 @@ static inline int _has_parser_input(SINGLE_QSP_ARG_DECL)
 
 static inline void _advance_parser_input(SINGLE_QSP_ARG_DECL)
 {
-	YYSTRPTR[EDEPTH]++;
+	YYSTRSTK[EDEPTH]++;
 }
 
 #define push_parser_input(s) _push_parser_input(QSP_ARG  s)
@@ -91,7 +92,7 @@ static inline void _push_parser_input(QSP_ARG_DECL  const char *s)
 		return;
 	}
 	EDEPTH++;
-	YYSTRPTR[EDEPTH]=s;
+	YYSTRSTK[EDEPTH]=s;
 }
 
 static Item * default_eval_szbl( QSP_ARG_DECL  Scalar_Expr_Node *enp )
@@ -2041,7 +2042,7 @@ static Typed_Scalar * _yynumber(SINGLE_QSP_ARG_DECL)
 {
 	Typed_Scalar *tsp;
 
-	tsp = parse_number((const char **)&YYSTRPTR/*[EDEPTH]*/);
+	tsp = parse_number((const char **)&YYSTRSTK[EDEPTH]);
 	return tsp;
 }
 
@@ -2085,8 +2086,9 @@ static const char * _varval(SINGLE_QSP_ARG_DECL)
 
 	if( var_valstr == NULL )
 		return("0");
-	else
+	else {
 		return( var_valstr );
+	}
 }
 
 
@@ -2153,7 +2155,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 			push_parser_input(varval());
 		} else if( IS_LEGAL_FIRST_CHAR(c) ){	/* get a name */
 			int n=1;
-			s=get_expr_stringbuf(WHICH_EXPR_STR,strlen(YYSTRPTR[EDEPTH]));
+			s=get_expr_stringbuf(WHICH_EXPR_STR,strlen(YYSTRSTK[EDEPTH]));
 			*s++ = peek_parser_input();
 			advance_parser_input();
 			while( IS_LEGAL_NAME_CHAR((c=peek_parser_input())) ){
@@ -2245,7 +2247,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 				 * like to skip escaped quotes...
 				 */
 				qchar=c;
-				s=get_expr_stringbuf(WHICH_EXPR_STR,strlen(YYSTRPTR[EDEPTH]));
+				s=get_expr_stringbuf(WHICH_EXPR_STR,strlen(YYSTRSTK[EDEPTH]));
 				/* copy string into a buffer */
 				c = peek_parser_input();
 				while( c && c != qchar ){
@@ -2285,7 +2287,6 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 			}
 			return(c);	// punctuation char
 		} else {
-fprintf(stderr,"yylex:  c = %d\n",c);
 			llerror("yylex error");
 			return(0);
 		}
@@ -2334,6 +2335,15 @@ static void initialize_estrings(SINGLE_QSP_ARG_DECL)
 	ESTRINGS_INITED=1;
 }
 
+static void scalar_parser_cleanup(SINGLE_QSP_ARG_DECL)
+{
+	if( FINAL_EXPR_NODE_P != NULL )
+		rls_tree(FINAL_EXPR_NODE_P);
+	//UNLOCK_ENODES
+	SET_QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP,QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP)-1);
+	assert( QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP) >= (-1) );
+}
+
 /*
  * OLD:
  * Yacc doesn't allow recursive calls to the parser,
@@ -2362,7 +2372,7 @@ _pexpr(QSP_ARG_DECL  const char *buf)	/** parse expression */
 	int stat;
 	Typed_Scalar *tsp;
 
-//fprintf(stderr,"pexpr('%s') BEGIN, thread %d, IN_PEXPR = %d\n",buf,QS_SERIAL,IN_PEXPR);
+//fprintf(stderr,"pexpr('%s') BEGIN, call depth = %d\n",buf,QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP));
 
 #ifdef QUIP_DEBUG
 	if( expr_debug <= 0 )
@@ -2382,10 +2392,8 @@ _pexpr(QSP_ARG_DECL  const char *buf)	/** parse expression */
 	if( ! ESTRINGS_INITED ) initialize_estrings(SINGLE_QSP_ARG);
 
 	EDEPTH=0;
-	YY_ORIGINAL=YYSTRPTR[EDEPTH]=buf;
-//fprintf(stderr,"pexpr:  input set to '%s', thread %d\n",buf,QS_SERIAL);
+	YY_ORIGINAL=YYSTRSTK[EDEPTH]=buf;
 	stat=yyparse(/*SINGLE_QSP_ARG*/ THIS_QSP );
-//fprintf(stderr,"pexpr:  back from yyparse, thread %d\n",QS_SERIAL);
 
 	if( stat != 0 ){
 		/* Need to somehow free allocated nodes... */
@@ -2394,6 +2402,7 @@ _pexpr(QSP_ARG_DECL  const char *buf)	/** parse expression */
 			advise(ERROR_STRING);
 		}
 		//return(0.0);
+		scalar_parser_cleanup(SINGLE_QSP_ARG);
 		return(&ts_dbl_zero);
 	}
 
@@ -2443,11 +2452,7 @@ advise(ERROR_STRING);
 
 	//LOCK_ENODES
 
-	rls_tree(FINAL_EXPR_NODE_P);
-
-	//UNLOCK_ENODES
-	SET_QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP,QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP)-1);
-	assert( QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP) >= (-1) );
+	scalar_parser_cleanup(SINGLE_QSP_ARG);
 
 	return( tsp );
 }
@@ -2466,7 +2471,7 @@ int yyerror(Query_Stack *qsp, char *s)
 	advise(ERROR_STRING);
 
 	if( has_parser_input() ){
-		sprintf(ERROR_STRING,"\"%s\" left to parse",YYSTRPTR[0]);
+		sprintf(ERROR_STRING,"\"%s\" left to parse",YYSTRSTK[0]);
 		advise(ERROR_STRING);
 	} else {
 		advise("No buffered text left to parse");

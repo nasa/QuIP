@@ -3,6 +3,7 @@
 //
 #import <QuartzCore/QuartzCore.h>
 
+#include "quip_config.h"
 #import "quipCanvas.h"
 #import "quip_prot.h"
 #include "viewer.h"

@@ -29,9 +29,9 @@ int main(int argc, char *argv[])
     [NSApp setDelegate:qad];
     
     NSMenu *main_menu = [NSApp mainMenu];
-    printf("mainMenu = 0x%lx\n",(long)main_menu);
+    printf("before calling run, mainMenu = 0x%lx\n",(long)main_menu);
     [NSApp run];
     main_menu = [NSApp mainMenu];
-    printf("mainMenu = 0x%lx\n",(long)main_menu);
+    printf("after calling run, mainMenu = 0x%lx\n",(long)main_menu);
     
 }

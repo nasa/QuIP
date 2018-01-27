@@ -245,6 +245,11 @@ void make_separator(QSP_ARG_DECL  Screen_Obj *so)
 {
 }
 
+void _delete_widget(QSP_ARG_DECL  Screen_Obj *sop)
+{
+	warn("delete_widget:  not implemented yet for Mac OSX!?");
+}
+
 void make_button(QSP_ARG_DECL  Screen_Obj *sop)
 {
 	/* We need the app delegate (to set event handling),
@@ -1091,12 +1096,12 @@ void give_notice(const char **msg_array)
 	NWARN("give_notice:  notices not implemented in this version\n");
 }
 
-void set_std_cursor(void)
+void my_set_std_cursor(void)
 {
 	NWARN("set_std_cursor not implemented!?");
 }
 
-void set_busy_cursor(void)
+void my_set_busy_cursor(void)
 {
 	NWARN("set_busy_cursor not implemented!?");
 }
@@ -1570,9 +1575,9 @@ static void resume_busy(void)
 }
 
 
-void check_deferred_alert(SINGLE_QSP_ARG_DECL)
+int check_deferred_alert(SINGLE_QSP_ARG_DECL)
 {
-	if( deferred_alert.type == NULL ) return;
+	if( deferred_alert.type == NULL ) return 0;
 
 	generic_alert(QSP_ARG  deferred_alert.type,deferred_alert.msg);
 
@@ -1582,6 +1587,7 @@ void check_deferred_alert(SINGLE_QSP_ARG_DECL)
 	rls_str(deferred_alert.msg);
 	deferred_alert.type=NULL;
 	deferred_alert.msg=NULL;
+    return 0;
 }
 
 void _simple_alert(QSP_ARG_DECL  const char *type, const char *msg)

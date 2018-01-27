@@ -36,7 +36,7 @@
 #include <GL/glx.h>	// jbm added for glXSwapBuffers()
 #endif
 
-#define NO_OGL_MSG	WARN("Sorry, no openGL support in this build!?");
+#define NO_OGL_MSG	warn("Sorry, no openGL support in this build!?");
 
 #include "quip_prot.h"
 #include "gl_viewer.h"		/* select_gl_viewer() */
@@ -78,7 +78,7 @@ static void update_pf_viewer(QSP_ARG_DECL  Platform_Viewer *pvp, Data_Obj *dp)
 	if( BUF_IS_MAPPED(dp) ){
 		if( (*PF_UNMAPBUF_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))
 				(QSP_ARG  dp) < 0 ) {
-			WARN("update_pf_viewer:  buffer unmap error!?");
+			warn("update_pf_viewer:  buffer unmap error!?");
 		}
 		CLEAR_OBJ_FLAG_BITS(dp, DT_BUF_MAPPED);
 		// propagate change to children and parents
@@ -115,7 +115,7 @@ static void update_pf_viewer(QSP_ARG_DECL  Platform_Viewer *pvp, Data_Obj *dp)
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	if( (*PF_MAPBUF_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(QSP_ARG  dp) < 0 ){
-		WARN("update_pf_viewer:  Error mapping buffer!?");
+		warn("update_pf_viewer:  Error mapping buffer!?");
 	}
 
 
@@ -191,7 +191,7 @@ COMMAND_FUNC( do_new_pf_vwr )
 
 	if( ! READY_FOR_GLX(vp) ) {
 		sprintf(ERROR_STRING,"do_new_pf_vwr:  Existing viewer %s must be initialized for GL before using!?",VW_NAME(vp) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -201,7 +201,7 @@ COMMAND_FUNC( do_new_pf_vwr )
 
 	if( new_pf_viewer(QSP_ARG  vp) == NULL ){
 		sprintf(ERROR_STRING,"Error making %s a cuda viewer!?",VW_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 } // do_new_pf_viewer
 
@@ -223,7 +223,7 @@ COMMAND_FUNC( do_load_pf_vwr )
 
 	if( ! IS_GL_BUFFER(dp) ){
 		sprintf(ERROR_STRING,"Object %s is not a GL buffer object.",OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -232,7 +232,7 @@ COMMAND_FUNC( do_load_pf_vwr )
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 #else // ! HAVE_OPENGL
-	WARN("do_load_pf_viewer:  Sorry, no OpenGL support in this build!?");
+	warn("do_load_pf_viewer:  Sorry, no OpenGL support in this build!?");
 #endif // ! HAVE_OPENGL
 		
 	update_pf_viewer(QSP_ARG  pvp,dp);
