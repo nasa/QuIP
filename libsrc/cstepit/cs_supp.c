@@ -16,7 +16,9 @@
 
 #ifdef THREAD_SAFE_QUERY
 // We assume that only one thread will use this at a time...
+// This variable is used in cstepit_scr_funk and evaluate_error_c...
 static Query_Stack *cs_qsp=NULL;
+
 #endif // THREAD_SAFE_QUERY
 
 static int n_prms;
@@ -37,6 +39,10 @@ static void init_cstepit_params(SINGLE_QSP_ARG_DECL)
 	Opt_Param *opp;
 	int i,n;
 	int nfmax;		/* max. # function calls */
+
+#ifdef THREAD_SAFE_QUERY
+	cs_qsp = THIS_QSP;
+#endif // THREAD_SAFE_QUERY
 
 	lp = opt_param_list();
 	if( lp == NULL ) return;
@@ -82,7 +88,7 @@ static void cstepit_scr_funk(void)
 	double ans[MAX_OPT_PARAMS];
 #ifdef THREAD_SAFE_QUERY
 	Query_Stack *qsp;
-    
+
 	assert(cs_qsp != NULL );
 	qsp = cs_qsp;
 #endif // THREAD_SAFE_QUERY
