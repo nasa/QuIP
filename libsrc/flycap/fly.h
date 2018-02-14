@@ -66,9 +66,11 @@ typedef struct fly_cam {
 
 ITEM_INTERFACE_PROTOTYPES(PGR_Cam,pgc)
 
+#define new_pgc(s)	_new_pgc(QSP_ARG  s)
 #define pgc_of(s)	_pgc_of(QSP_ARG  s)
 #define list_pgcs(fp)	_list_pgcs(QSP_ARG  fp)
 #define pick_pgc(s)	_pick_pgc(QSP_ARG  s)
+#define pgc_list()	_pgc_list(SINGLE_QSP_ARG)
 
 /* flag bits */
 
@@ -92,6 +94,9 @@ typedef struct pgr_property_type {
 ITEM_INTERFACE_PROTOTYPES(PGR_Property_Type,pgr_prop)
 
 #define pick_pgr_prop(p)	_pick_pgr_prop(QSP_ARG  p)
+#define get_pgr_prop(p)		_get_pgr_prop(QSP_ARG  p)
+#define new_pgr_prop(p)		_new_pgr_prop(QSP_ARG  p)
+#define pgr_prop_list()		_pgr_prop_list(SINGLE_QSP_ARG)
 
 typedef struct fly_frame {
 	const char *		pf_name;
@@ -276,8 +281,9 @@ extern int fly_get_async_record(void);
 extern void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames, PGR_Cam *pgcp);
 extern COMMAND_FUNC( flycap_wait_record );
 extern COMMAND_FUNC( flycap_halt_record );
-extern Image_File * get_file_for_recording(QSP_ARG_DECL  const char *name,
+extern Image_File * _get_file_for_recording(QSP_ARG_DECL  const char *name,
 		int n_frames,PGR_Cam *pgcp);
+#define get_file_for_recording(name,n_f,pgcp)	_get_file_for_recording(QSP_ARG  name,n_f,pgcp)
 
 #ifndef HAVE_LIBFLYCAP
 #endif // ! HAVE_LIBFLYCAP

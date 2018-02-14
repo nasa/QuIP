@@ -440,7 +440,7 @@ STATUS(DW_INIT)
 	pip->ppi_pid = getpid();
 #ifdef FOOBAR
 	if( assoc_pids(master_pid,pip->ppi_pid) < 0 )
-		ERROR1("disk_writer:  error associating pid");
+		error1("disk_writer:  error associating pid");
 #endif /* FOOBAR */
 
 	/* tell the parent that we're ready, and wait for siblings */
@@ -624,7 +624,7 @@ static void start_dw_threads(QSP_ARG_DECL  int32_t nf,int n_disks,int* fd_arr, P
 if( (n_disks % n_disk_writer_threads) != 0 ){
 	sprintf(ERROR_STRING,"n_disk_writer_threads (%d) must evenly divide n_disks (%d)",
 			n_disk_writer_threads,n_disks);
-	ERROR1(ERROR_STRING);
+	error1(ERROR_STRING);
 }
 
 	disks_per_thread = n_disks / n_disk_writer_threads;
@@ -677,30 +677,30 @@ show_tmrs(SGL_DEFAULT_QSP_ARG);
 
 // This should be moved to lib rawvol or libmvimenu???
 
-static void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
+/*static*/ void _make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
 {
 	Movie *mvip;
 	Image_File *ifp;
 
-	if( IS_DIRECTORY(inp) || IS_LINK(inp) ){
+	if( is_rv_directory(inp) || is_rv_link(inp) ){
 		if( verbose ){
-			sprintf(ERROR_STRING,"make_movie_from_inode:  rv inode %s is not a movie",inp->rvi_name);
+			sprintf(ERROR_STRING,"make_movie_from_inode:  rv inode %s is not a movie",rv_name(inp));
 			advise(ERROR_STRING);
 		}
 		return;
 	}
 
-	mvip = create_movie(QSP_ARG  inp->rvi_name);
+	mvip = create_movie(rv_name(inp));
 	if( mvip == NULL ){
 		sprintf(ERROR_STRING,
-			"error creating movie %s",inp->rvi_name);
-		WARN(ERROR_STRING);
+			"error creating movie %s",rv_name(inp));
+		warn(ERROR_STRING);
 	} else {
-		ifp = img_file_of(QSP_ARG  inp->rvi_name);
+		ifp = img_file_of(rv_name(inp));
 		if( ifp == NULL ){
 			sprintf(ERROR_STRING,
-	"image file struct for rv file %s does not exist!?",inp->rvi_name);
-			WARN(ERROR_STRING);
+	"image file struct for rv file %s does not exist!?",rv_name(inp));
+			warn(ERROR_STRING);
 		} else {
 			mvip->mvi_data = ifp;
 			// the object has type dimensions set, but
@@ -720,30 +720,30 @@ static void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
  * Can this be moved to librawvol or libmvimenu?
  */
 
-static void update_movie_database(QSP_ARG_DECL  RV_Inode *inp)
+/*static*/ void _update_movie_database(QSP_ARG_DECL  RV_Inode *inp)
 {
-	if( IS_DIRECTORY(inp) || IS_LINK(inp) ){
+	if( is_rv_directory(inp) || is_rv_link(inp) ){
 		if( verbose ){
-			sprintf(ERROR_STRING,"update_movie_database:  rv inode %s is not a movie",inp->rvi_name);
+			sprintf(ERROR_STRING,"update_movie_database:  rv inode %s is not a movie",rv_name(inp));
 			advise(ERROR_STRING);
 		}
 		return;
 	}
 
-	setup_rv_iofile(QSP_ARG  inp);		/* open read file	*/
-	make_movie_from_inode(QSP_ARG  inp);	/* make movie struct	*/
+	setup_rv_iofile(inp);		/* open read file	*/
+	make_movie_from_inode(inp);	/* make movie struct	*/
 }
 
 static void finish_recording(QSP_ARG_DECL  Image_File *ifp)
 {
 	RV_Inode *inp;
 
-	inp = get_rv_inode(QSP_ARG  ifp->if_name);
+	inp = get_rv_inode(ifp->if_name);
 	assert( inp != NULL );
 
-	close_image_file(QSP_ARG  ifp);		/* close write file	*/
+	close_image_file(ifp);		/* close write file	*/
 
-	update_movie_database(QSP_ARG  inp);
+	update_movie_database(inp);
 
 	// do we have error frames for PGR??
 	//note_error_frames(inp);
@@ -1031,12 +1031,12 @@ if( verbose ) advise("main thread stopping capture");
 	for(i=0;i<n_disk_writer_threads;i++){
 #ifdef FOOBAR
 		if( unassoc_pids(master_pid,ppi[i].ppi_pid) < 0 )
-			ERROR1("error unassociating disk writer process id");
+			error1("error unassociating disk writer process id");
 #endif /* FOOBAR */
 
 		if( pthread_join(dw_thr[i],NULL) != 0 ){
 			sprintf(ERROR_STRING,"Error joining disk writer thread %d",i);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 	}
 
@@ -1050,7 +1050,7 @@ if( verbose ) advise("main thread stopping capture");
 		sprintf(ERROR_STRING,
 	"Wanted %d frames, captured %d (%d-%d-1)",n_frames_wanted,
 			(ending_count-starting_count)-1,ending_count,starting_count);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	} else {
 		advise("Recording done in real time");
 	}
@@ -1082,7 +1082,7 @@ if( verbose ) advise("main thread stopping capture");
 	}
 	*/
 	if( n_hw_errors > 0 ){
-		WARN("Some frames may have corrupt data!?");
+		warn("Some frames may have corrupt data!?");
 	}
 
 	if( orig_n_frames_wanted != n_frames_wanted ){
@@ -1105,7 +1105,7 @@ if( verbose ) advise("main thread stopping capture");
 
 		/* rv_truncate corrects the size, but doesn't know about nframes... */
 
-		SET_SHP_FRAMES( RV_MOVIE_SHAPE(inp), n_frames_wanted);
+		SET_SHP_FRAMES( rv_movie_shape(inp), n_frames_wanted);
 
 		/* Have to do it in stream_ifp->if_dp too, in order to get a correct
 		 * answer from the nframes() expression function...
@@ -1131,7 +1131,7 @@ if( verbose ) advise("main thread stopping capture");
 	if( mem_locked ){
 		if( munlockall() < 0 ){
 			tell_sys_error("munlockall");
-			WARN("Failed to unlock memory!?");
+			warn("Failed to unlock memory!?");
 		}
 		mem_locked=0;
 	}
@@ -1149,7 +1149,7 @@ sprintf(ERROR_STRING,"video_reader_thread:  grabber_pid = %d",grabber_pid);
 advise(ERROR_STRING);
 
 	if( assoc_pids(master_pid,grabber_pid) < 0 )
-		ERROR1("video_reader_thread:  error associating pid");
+		error1("video_reader_thread:  error associating pid");
 #endif /* FOOBAR */
 
 	return( video_reader(argp) );
@@ -1171,6 +1171,7 @@ show_tmrs(SINGLE_QSP_ARG);
 
 }
 
+#ifdef NOT_USED
 /* write 0's to all frames */
 static void clear_buffers(SINGLE_QSP_ARG_DECL)
 {
@@ -1183,7 +1184,7 @@ static void clear_buffers(SINGLE_QSP_ARG_DECL)
 		sprintf(ERROR_STRING,
 			"clear_buffers:  meteor_bytes_per_pixel = %d (expected %d)",
 			meteor_bytes_per_pixel,DEFAULT_BYTES_PER_PIXEL);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	*/
@@ -1200,6 +1201,7 @@ static void clear_buffers(SINGLE_QSP_ARG_DECL)
 	*/
 //fprintf(stderr,"OOPS - not clearing buffers!?\n");
 } // clear_buffers
+#endif // NOT_USED
 
 static uint32_t get_blocks_per_frame(PGR_Cam *pgcp)
 {
@@ -1254,7 +1256,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 		sprintf(ERROR_STRING,
 	"stream_record:  can't record file %s until previous record completes",
 			ifp->if_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1277,7 +1279,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 
 	/*
 	if( MAX_RINGBUF_FRAMES < pgcp->pc_n_buffers ){
-		WARN("Need to recompile mcapt.c with a larger value of MAX_RINGBUF_FRAMES");
+		warn("Need to recompile mcapt.c with a larger value of MAX_RINGBUF_FRAMES");
 		return;
 	}
 	*/
@@ -1304,13 +1306,13 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 			ifp->if_name,
 			FT_NAME(IF_TYPE(ifp)),
 			FT_NAME(FILETYPE_FOR_CODE(IFT_RV)) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 
 	inp = (RV_Inode *)ifp->if_hdr_p;
-	n_disks = queue_rv_file(QSP_ARG  inp,fd_arr);
+	n_disks = queue_rv_file(inp,fd_arr);
 	assert( n_disks > 1 );
 	assert( pgcp->pc_n_buffers > 0 );
 
@@ -1318,7 +1320,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 		sprintf(ERROR_STRING,
 	"buffer frames (%d) must be >= 2 x number of disks (%d)",
 			pgcp->pc_n_buffers,n_disks);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1342,7 +1344,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 	SET_SHP_PREC_PTR(shpp,PREC_FOR_CODE(PREC_UBY) );
 	SET_SHP_FLAGS(shpp, DT_IMAGE );
 
-	rv_set_shape(QSP_ARG  ifp->if_name,shpp);
+	rv_set_shape(ifp->if_name,shpp);
 	// does this copy or point?
 	// can we free the shape?
 	// BUG memory leak
@@ -1393,7 +1395,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 
 	if( mlockall(MCL_FUTURE) < 0 ){
 		tell_sys_error("mlockall");
-		WARN("Failed to lock process memory!?");
+		warn("Failed to lock process memory!?");
 	} else {
 		mem_locked=1;
 	}
@@ -1430,12 +1432,12 @@ show_tmrs(SINGLE_QSP_ARG);
 	assert( grabber_pid != 0 );
 
 	if( unassoc_pids(master_pid,grabber_pid) < 0 )
-		ERROR1("error unassociating grabber pid");
+		error1("error unassociating grabber pid");
 #endif /* FOOBAR */
 
 advise("joining w/ grab thread...");
 	if( pthread_join(grab_thr,NULL) != 0 ){
-		WARN("Error joining video reader thread");
+		warn("Error joining video reader thread");
 	}
 advise("joined!");
 
@@ -1453,7 +1455,7 @@ COMMAND_FUNC( flycap_halt_record )
 		 */
 		if( record_state & (RECORD_HALTING|RECORD_FINISHING) ){
 			sprintf(ERROR_STRING,"flycap_halt_record:  halt already in progress!?");
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		} else {
 			record_state |= RECORD_HALTING;
 		}
@@ -1554,13 +1556,13 @@ void print_store_times()
 
 #endif /* RECORD_TIMESTAMPS */
 
-Image_File * get_file_for_recording(QSP_ARG_DECL  const char *name,
+Image_File * _get_file_for_recording(QSP_ARG_DECL  const char *name,
 		int n_frames_wanted,PGR_Cam *pgcp)
 {
 	Image_File *ifp;
 	long n_blocks;
 
-	ifp = img_file_of(QSP_ARG  name);
+	ifp = img_file_of(name);
 
 	if( ifp != NULL ){
 		RV_Inode *inp;
@@ -1569,7 +1571,7 @@ Image_File * get_file_for_recording(QSP_ARG_DECL  const char *name,
 			sprintf(ERROR_STRING,
 	"Existing file %s is not a raw volume file, not clobbering.",
 				IF_NAME(ifp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return NULL;
 		}
 
@@ -1579,7 +1581,7 @@ Image_File * get_file_for_recording(QSP_ARG_DECL  const char *name,
 			sprintf(ERROR_STRING,
 	"No permission to clobber existing raw volume file %s.",
 				IF_NAME(ifp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return NULL;
 		}
 
@@ -1590,11 +1592,11 @@ Image_File * get_file_for_recording(QSP_ARG_DECL  const char *name,
 
 		image_file_clobber(1);	/* enable clobbering - not necessary !? */
 		// Now we are pretty sure there will be no permission errors
-		delete_image_file(QSP_ARG  ifp);
+		delete_image_file(ifp);
 	}
 
-	set_filetype(QSP_ARG  FILETYPE_FOR_CODE(IFT_RV));
-	ifp = write_image_file(QSP_ARG  name,n_frames_wanted);	/* nf stored in if_frms_to_write */
+	set_filetype(FILETYPE_FOR_CODE(IFT_RV));
+	ifp = write_image_file(name,n_frames_wanted);	/* nf stored in if_frms_to_write */
 
 	// BUG?  where do we set the shape of ifp->if_dp???
 
@@ -1605,18 +1607,18 @@ Image_File * get_file_for_recording(QSP_ARG_DECL  const char *name,
 
 	if( ifp == NULL ){
 		sprintf(ERROR_STRING,"Error creating movie file %s",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return NULL;	// BUG clean up
 	}
 
-	n_blocks = FRAMES_TO_ALLOCATE(n_frames_wanted,rv_get_ndisks()) * get_blocks_per_frame(pgcp);
+	n_blocks = rv_frames_to_allocate(n_frames_wanted) * get_blocks_per_frame(pgcp);
 
 	/* n_blocks is the total number of blocks, not the number per disk(?) */
 
-	if( rv_realloc(QSP_ARG  name,n_blocks) < 0 ){
+	if( rv_realloc(name,n_blocks) < 0 ){
 		sprintf(ERROR_STRING,"error reallocating %ld blocks for rv file %s",
 			n_blocks,name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return NULL;	// BUG clean up
 	}
 	return ifp;

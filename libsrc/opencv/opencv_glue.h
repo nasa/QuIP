@@ -18,24 +18,32 @@
 #endif
 
 #ifndef CV_MAJOR_VERSION
+
 #ifdef HAVE_OPENCV2_CORE_VERSION_HPP
 #include <opencv2/core/version.hpp>
 #endif
+
 #ifdef HAVE_OPENCV2_CORE_CORE_C_H
 #include <opencv2/core/core_c.h>
 #endif
+
 #ifdef HAVE_OPENCV2_IMGPROC_IMGPROC_C_H
 #include <opencv2/imgproc/imgproc_c.h>
 #endif
+
 #ifdef HAVE_OPENCV2_OBJDETECT_OBJDETECT_HPP
 #include <opencv2/objdetect/objdetect.hpp>
 #endif
+
 #ifdef HAVE_OPENCV2_HIGHGUI_HIGHGUI_C_H
 #include <opencv2/highgui/highgui_c.h>
 #endif
 // In more recent version cvSaveImage is here, not highgui:
+#ifdef HAVE_OPENCV2_IMGCODECS_IMGCODECS_C_H
 #include <opencv2/imgcodecs/imgcodecs_c.h>
-#endif
+#endif // HAVE_OPENCV2_IMGCODECS_IMGCODECS_C_H
+
+#endif // ! CV_MAJOR_VERSION
 
 #ifndef CV_MAJOR_VERSION
 #error "Cannot determine version of OpenCV!?"

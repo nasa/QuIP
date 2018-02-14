@@ -655,7 +655,7 @@ static COMMAND_FUNC( do_record )
 	s=NAMEOF("name for raw volume recording");
 	n=HOW_MANY("number of frames");
 
-	ifp = get_file_for_recording(QSP_ARG  s,n,the_cam_p);
+	ifp = get_file_for_recording(s,n,the_cam_p);
 	if( ifp == NULL ) return;
 	
 	CHECK_CAM

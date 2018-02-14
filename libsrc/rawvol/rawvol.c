@@ -145,6 +145,11 @@ static int dir_stack_depth=0;
 // We used to do this with structure copies, but that caused problems
 // because of dynamic allocation of shape_info...
 
+int is_rv_directory(RV_Inode *inp)
+{
+	return IS_DIRECTORY(inp);
+}
+
 static void copy_rv_inode(RV_Inode *dst_inp, RV_Inode *src_inp)
 {
 	//SET_RV_MOVIE_SHAPE(dst_inp,NULL);	// take care of this later!

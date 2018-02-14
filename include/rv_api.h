@@ -2,6 +2,8 @@
 #ifndef _RV_API_H_
 #define _RV_API_H_
 
+#include "shape_bits.h"	// dimension_t
+
 #define MAX_DISKS		8
 #define BLOCK_SIZE		1024	// BUG?  get from system include?
 
@@ -15,6 +17,8 @@ ITEM_INTERFACE_PROTOTYPES(RV_Inode,rv_inode)
 #define get_rv_inode(s)	_get_rv_inode(QSP_ARG  s)
 #define del_rv_inode(s)	_del_rv_inode(QSP_ARG  s)
 
+extern int 	is_rv_directory(RV_Inode *);
+extern int 	is_rv_link(RV_Inode *);
 extern int	_rv_truncate(QSP_ARG_DECL  RV_Inode *,dimension_t);
 #define rv_truncate(inp,d) _rv_truncate(QSP_ARG  inp,d)
 extern int	legal_rv_filename(const char *);

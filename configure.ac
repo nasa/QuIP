@@ -610,7 +610,7 @@ TAR_OPTIONS+=--numeric-owner
 # Check for yacc/bison
 #AC_PROG_YACC
 # bison -y ?
-AC_CHECK_PROGS(YACC,'bison -y' byacc yacc,[AM_MISSING_PROG(yacc)])
+AC_CHECK_PROGS(YACC,'bison -y' byacc yacc,[AM_MISSING_PROG(YACC,yacc)])
 
 # these didn't work
 #: ${CFLAGS="-g -O0"}
@@ -1526,6 +1526,7 @@ if test "x${use_opencv}" = xyes; then
   AC_CHECK_HEADERS([opencv2/core/core_c.h opencv2/core/version.hpp])
   AC_CHECK_HEADERS([opencv2/imgproc/imgproc_c.h opencv2/objdetect/objdetect.hpp])
   AC_CHECK_HEADERS([opencv2/highgui/highgui_c.h])
+  AC_CHECK_HEADERS([opencv2/imgcodecs/imgcodecs_c.h])
 fi
 
 if test "x${use_fileio}" = xyes; then

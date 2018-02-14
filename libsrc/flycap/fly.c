@@ -7,6 +7,7 @@
 #include "data_obj.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -28,7 +29,7 @@ ITEM_INTERFACE_DECLARATIONS(PGR_Cam,pgc,0)
 
 #define UNIMP_FUNC(name)						\
 	sprintf(ERROR_STRING,"Function %s is not implemented!?",name);	\
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 
 #ifdef HAVE_LIBFLYCAP
 #define FC2_ENTRY(string,code)				\
@@ -234,7 +235,7 @@ static const char * get_pgc_prec_name(QSP_ARG_DECL  Item *ip )
 
 	//pgcp = (PGR_Cam *)ip;
 
-	WARN("get_pgc_prec_name:  need to implement camera-state-based value!?");
+	warn("get_pgc_prec_name:  need to implement camera-state-based value!?");
 
 	//return def_prec_name(QSP_ARG  ip);
 	return("u_byte");
@@ -344,12 +345,12 @@ static void report_fc2_error(QSP_ARG_DECL  fc2Error error, const char *whence )
 			sprintf(ERROR_STRING,
 		"report_fc2_error (%s):  unhandled error code %d!?\n",
 				whence,error);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			msg = "unhandled error code";
 			break;
 	}
 	sprintf(ERROR_STRING,"%s:  %s",whence,msg);
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 }
 
 ITEM_INTERFACE_DECLARATIONS(PGR_Property_Type,pgr_prop,0)
@@ -360,7 +361,7 @@ static void _init_one_property(QSP_ARG_DECL const char *name, fc2PropertyType t)
 {
 	PGR_Property_Type *pgpt;
 
-	pgpt = new_pgr_prop(QSP_ARG  name);
+	pgpt = new_pgr_prop(name);
 	if( pgpt == NULL ) return;
 	pgpt->info.type =
 	pgpt->prop.type =
@@ -373,14 +374,14 @@ void list_cam_properties(QSP_ARG_DECL  PGR_Cam *pgcp)
 	Node *np;
 	PGR_Property_Type *pgpt;
 
-	lp = pgr_prop_list(SINGLE_QSP_ARG);	// all properties
+	lp = pgr_prop_list();	// all properties
 	np = QLIST_HEAD(lp);
 	if( np != NULL ){
 		sprintf(MSG_STR,"\n%s properties",pgcp->pc_name);
 		prt_msg(MSG_STR);
 	} else {
 		sprintf(ERROR_STRING,"%s has no properties!?",pgcp->pc_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -403,7 +404,7 @@ void refresh_camera_properties(QSP_ARG_DECL  PGR_Cam *pgcp)
 	Node *np;
 	PGR_Property_Type *pgpt;
 
-	lp = pgr_prop_list(SINGLE_QSP_ARG);	// all properties
+	lp = pgr_prop_list();	// all properties
 	np = QLIST_HEAD(lp);
 	while(np!=NULL){
 		pgpt = (PGR_Property_Type *)NODE_DATA(np);
@@ -505,30 +506,30 @@ void show_property_info(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt )
 
 		sprintf(var_name,"%s_abs_min",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
 		sprintf(val_str,"%g",pgpt->info.absMin);
-		ASSIGN_VAR(var_name,val_str);
+		assign_var(var_name,val_str);
 
 		sprintf(var_name,"%s_abs_max",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
 		sprintf(val_str,"%g",pgpt->info.absMax);
-		ASSIGN_VAR(var_name,val_str);
+		assign_var(var_name,val_str);
 	} else {
 		sprintf(MSG_STR,"\tRange:  %d - %d",
 			pgpt->info.min,pgpt->info.max);
 		prt_msg(MSG_STR);
 
 		sprintf(var_name,"%s_abs_min",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
-		ASSIGN_VAR(var_name,"(undefined)");
+		assign_var(var_name,"(undefined)");
 
 		sprintf(var_name,"%s_abs_max",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
-		ASSIGN_VAR(var_name,"(undefined)");
+		assign_var(var_name,"(undefined)");
 	}
 
 	sprintf(var_name,"%s_min",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
 	sprintf(val_str,"%d",pgpt->info.min);
-	ASSIGN_VAR(var_name,val_str);
+	assign_var(var_name,val_str);
 
 	sprintf(var_name,"%s_max",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
 	sprintf(val_str,"%d",pgpt->info.max);
-	ASSIGN_VAR(var_name,val_str);
+	assign_var(var_name,val_str);
 
 	sprintf(MSG_STR,"\tUnits:  %s (%s)",pgpt->info.pUnits,pgpt->info.pUnitAbbr);
 	prt_msg(MSG_STR);
@@ -591,7 +592,7 @@ void show_property_value(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt )
 
 		// let a script access the value also
 		sprintf(MSG_STR,"%d",pgpt->prop.valueA);
-		ASSIGN_VAR(pgpt->name,MSG_STR);
+		assign_var(pgpt->name,MSG_STR);
 		// should this be a reserved var?  I think so!
 
 		if( pgpt->info.absValSupported ){
@@ -602,18 +603,18 @@ void show_property_value(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt )
 			// let a script access the value also
 			sprintf(MSG_STR,"%g",pgpt->prop.absValue);
 			sprintf(ERROR_STRING,"%s_abs",pgpt->name);	// using ERROR_STRING as a temporary...
-			ASSIGN_VAR(ERROR_STRING,MSG_STR);
+			assign_var(ERROR_STRING,MSG_STR);
 			// should this be a reserved var?  I think so!
 		} else {
 			sprintf(ERROR_STRING,"%s_abs",pgpt->name);	// using ERROR_STRING as a temporary...
-			ASSIGN_VAR(ERROR_STRING,"(undefined)");
+			assign_var(ERROR_STRING,"(undefined)");
 		}
 	} else {
 		prt_msg("\t(Readout not supported)");
 		sprintf(ERROR_STRING,"%s",pgpt->name);
-		ASSIGN_VAR(ERROR_STRING,"(undefined)");
+		assign_var(ERROR_STRING,"(undefined)");
 		sprintf(ERROR_STRING,"%s_abs",pgpt->name);
-		ASSIGN_VAR(ERROR_STRING,"(undefined)");
+		assign_var(ERROR_STRING,"(undefined)");
 	}
 }
 
@@ -626,7 +627,7 @@ void set_prop_value(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt, PGR_Pr
 			sprintf(ERROR_STRING,"Requested %s (%f) out of range (%f - %f)",
 				pgpt->name,
 				vp->pv_u.u_f,pgpt->info.absMin,pgpt->info.absMax);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 		pgpt->prop.absControl = TRUE;
@@ -636,7 +637,7 @@ void set_prop_value(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt, PGR_Pr
 			sprintf(ERROR_STRING,"Requested %s (%d) out of range (%d - %d)",
 				pgpt->name,
 				vp->pv_u.u_i,pgpt->info.min,pgpt->info.max);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 		pgpt->prop.absControl = FALSE;
@@ -657,7 +658,7 @@ void set_prop_auto(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt, BOOL yn
 	if( ! pgpt->info.autoSupported ){
 		sprintf(ERROR_STRING,"Sorry, auto mode not supported for %s.",
 			pgpt->name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -751,9 +752,9 @@ int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
 	PGR_Cam *pgcp;
 	int i, n;
 
-	lp = pgc_list(SINGLE_QSP_ARG);
+	lp = pgc_list();
 	if( lp == NULL ){
-		WARN("No cameras!?");
+		warn("No cameras!?");
 		return 0;
 	}
 
@@ -761,7 +762,7 @@ int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
 	if( OBJ_COLS(str_dp) < n ){
 		sprintf(ERROR_STRING,"String object %s has too few columns (%ld) to hold %d camera names",
 			OBJ_NAME(str_dp),(long)OBJ_COLS(str_dp),n);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		n = OBJ_COLS(str_dp);
 	}
 		
@@ -775,7 +776,7 @@ int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
 		if( strlen(pgcp->pc_name)+1 > OBJ_COMPS(str_dp) ){
 			sprintf(ERROR_STRING,"String object %s has too few components (%ld) to hold camera name \"%s\"",
 				OBJ_NAME(str_dp),(long)OBJ_COMPS(str_dp),pgcp->pc_name);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		} else {
 			strcpy(dst,pgcp->pc_name);
 		}
@@ -800,7 +801,7 @@ int get_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, PGR_Cam *pgcp )
 	if( OBJ_COLS(str_dp) < pgcp->pc_n_video_modes ){
 		sprintf(ERROR_STRING,"String object %s has too few columns (%ld) to hold %d modes",
 			OBJ_NAME(str_dp),(long)OBJ_COLS(str_dp),pgcp->pc_n_video_modes);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		n = OBJ_COLS(str_dp);
 	} else {
 		n=pgcp->pc_n_video_modes;
@@ -818,7 +819,7 @@ int get_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, PGR_Cam *pgcp )
 		if( strlen(src)+1 > OBJ_COMPS(str_dp) ){
 			sprintf(ERROR_STRING,"String object %s has too few components (%ld) to hold mode string \"%s\"",
 				OBJ_NAME(str_dp),(long)OBJ_COMPS(str_dp),src);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		} else {
 			strcpy(dst,src);
 		}
@@ -867,7 +868,7 @@ advise(ERROR_STRING);
 	if( n <= 0 ){
 		// this happens for the format7 video mode...
 		// Can this ever happen?  If not, should be CAUTIOUS...
-		//WARN("no framerates for this video mode!?");
+		//warn("no framerates for this video mode!?");
 		if( pgcp->pc_video_mode == FC2_VIDEOMODE_FORMAT7 ){
 			if( pgcp->pc_framerate == FC2_FRAMERATE_FORMAT7 ){
 				advise("No framerates available for format7.");
@@ -921,7 +922,7 @@ int get_framerate_strings( QSP_ARG_DECL  Data_Obj *str_dp, PGR_Cam *pgcp )
 	if( OBJ_COLS(str_dp) < n ){
 		sprintf(ERROR_STRING,"String object %s has too few columns (%ld) to hold %d framerates",
 			OBJ_NAME(str_dp),(long)OBJ_COLS(str_dp),n);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		n = OBJ_COLS(str_dp);
 	}
 
@@ -933,7 +934,7 @@ int get_framerate_strings( QSP_ARG_DECL  Data_Obj *str_dp, PGR_Cam *pgcp )
 			sprintf(ERROR_STRING,
 "String object %s has too few components (%ld) to hold framerate string \"%s\"",
 				OBJ_NAME(str_dp),(long)OBJ_COMPS(str_dp),src);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		} else {
 			strcpy(dst,src);
 		}
@@ -1063,7 +1064,7 @@ int set_std_mode(QSP_ARG_DECL  PGR_Cam *pgcp, int idx )
 
 	m = all_video_modes[ pgcp->pc_video_mode_indices[idx] ].nvm_value;
 	if( m == FC2_VIDEOMODE_FORMAT7 ){
-		WARN("set_std_mode:  use set_fmt7_mode to select format7!?");
+		warn("set_std_mode:  use set_fmt7_mode to select format7!?");
 		return -1;
 	}
 
@@ -1110,7 +1111,7 @@ static void set_highest_fmt7_framerate( QSP_ARG_DECL  PGR_Cam *pgcp )
 #endif // FOOBAR
 	PGR_Property_Type *fr_prop_p;
 
-	fr_prop_p = get_pgr_prop(QSP_ARG  "frame_rate" );	// BUG string must match table
+	fr_prop_p = get_pgr_prop("frame_rate" );	// BUG string must match table
 
 	assert( fr_prop_p != NULL );
 
@@ -1144,7 +1145,7 @@ int set_fmt7_mode(QSP_ARG_DECL  PGR_Cam *pgcp, int idx )
 	insure_stopped(QSP_ARG  pgcp,"setting format7 mode");
 
 	if( idx < 0 || idx >= pgcp->pc_n_fmt7_modes ){
-		WARN("Format 7 index out of range!?");
+		warn("Format 7 index out of range!?");
 		return -1;
 	}
 
@@ -1157,7 +1158,7 @@ int set_fmt7_mode(QSP_ARG_DECL  PGR_Cam *pgcp, int idx )
 			FC2_PIXEL_FORMAT_RAW8 )
 		settings.pixelFormat = FC2_PIXEL_FORMAT_RAW8;
 	else {
-		WARN("Camera does not support raw8!?");
+		warn("Camera does not support raw8!?");
 		return -1;
 	}
 
@@ -1222,7 +1223,7 @@ void set_eii_property(QSP_ARG_DECL  PGR_Cam *pgcp, int idx, int yesno )
 	if( ! eii_p->prop_tbl[idx].available ){
 		sprintf(ERROR_STRING,"Property %s is not available on %s",
 			eii_prop_names[idx],pgcp->pc_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	eii_p->prop_tbl[idx].onOff = yesno ? TRUE : FALSE;
@@ -1268,7 +1269,7 @@ int pick_framerate(QSP_ARG_DECL  PGR_Cam *pgcp, const char *pmpt)
 
 	if( pgcp == NULL ){
 		sprintf(ERROR_STRING,"pick_framerate:  no camera selected!?");
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 
@@ -1319,7 +1320,7 @@ int list_video_modes(QSP_ARG_DECL  PGR_Cam *pgcp)
 	const char *s;
 
 	if( pgcp->pc_n_video_modes <= 0 ){
-		WARN("no video modes!?");
+		warn("no video modes!?");
 		return -1;
 	}
 
@@ -1352,7 +1353,7 @@ static int set_default_video_mode(QSP_ARG_DECL  PGR_Cam *pgcp)
 	int _nskip;
 
 	if( get_supported_video_modes(QSP_ARG  pgcp ) < 0 ){
-		WARN("set_default_video_mode:  Can't get video modes");
+		warn("set_default_video_mode:  Can't get video modes");
 		return -1;
 	}
 
@@ -1455,15 +1456,15 @@ static PGR_Cam *unique_camera_instance( QSP_ARG_DECL  fc2Context context )
 		fix_string(cname);	// change spaces to underscores
 //sprintf(ERROR_STRING,"Checking for existence of %s",cname);
 //advise(ERROR_STRING);
-		pgcp = pgc_of( QSP_ARG  cname );
+		pgcp = pgc_of( cname );
 		if( pgcp == NULL ){	// This index is free
 //sprintf(ERROR_STRING,"%s is not in use",cname);
 //advise(ERROR_STRING);
-			pgcp = new_pgc( QSP_ARG  cname );
+			pgcp = new_pgc( cname );
 			if( pgcp == NULL ){
 				sprintf(ERROR_STRING,
 			"Failed to create camera %s!?",cname);
-				ERROR1(ERROR_STRING);
+				error1(ERROR_STRING);
 			}
 		} else {
 //sprintf(ERROR_STRING,"%s IS in use",cname);
@@ -1472,7 +1473,7 @@ static PGR_Cam *unique_camera_instance( QSP_ARG_DECL  fc2Context context )
 		}
 		i++;
 		if( i>=5 ){
-			ERROR1("Too many cameras!?"); 
+			error1("Too many cameras!?"); 
 		}
 	}
 	pgcp->pc_cam_info = camInfo;
@@ -1504,7 +1505,7 @@ static void get_fmt7_modes(QSP_ARG_DECL  PGR_Cam *pgcp)
 		sprintf(ERROR_STRING,
 	"Unexpected number of format7 modes!?  (largest index = %d, n_modes = %d)",
 			largest,pgcp->pc_n_fmt7_modes);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	nb = pgcp->pc_n_fmt7_modes * sizeof(fc2Format7Info);
@@ -1656,7 +1657,7 @@ name_for_framerate(pgcp->pc_framerate)
 	if( set_default_video_mode(QSP_ARG  pgcp) < 0 ){
 		/*
 		sprintf(ERROR_STRING,"error setting default video mode for %s",pgcp->pc_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		cleanup_cam( pgcp );
 		return(NULL);
 		*/
@@ -1695,7 +1696,7 @@ void pop_camera_context(SINGLE_QSP_ARG_DECL)
 {
 	// pop old context...
 	Item_Context *icp;
-	icp=pop_dobj_context(SINGLE_QSP_ARG);
+	icp=pop_dobj_context();
 	assert( icp != NULL );
 }
 
@@ -1703,7 +1704,7 @@ void push_camera_context(QSP_ARG_DECL  PGR_Cam *pgcp)
 {
 //fprintf(stderr,"pushing camera context for %s (icp = 0x%lx)\n",
 //pgcp->pc_name,(long)pgcp->pc_do_icp);
-	push_dobj_context(QSP_ARG  pgcp->pc_do_icp);
+	push_dobj_context(pgcp->pc_do_icp);
 }
 
 int init_firewire_system(SINGLE_QSP_ARG_DECL)
@@ -1718,7 +1719,7 @@ int init_firewire_system(SINGLE_QSP_ARG_DECL)
 	static int firewire_system_inited=0;
 
 	if( firewire_system_inited ){
-		WARN("Firewire system has already been initialized!?");
+		warn("Firewire system has already been initialized!?");
 		return -1;
 	}
 	firewire_system_inited=1;
@@ -1769,7 +1770,7 @@ int init_firewire_system(SINGLE_QSP_ARG_DECL)
 		report_fc2_error(QSP_ARG  error, "fc2DestroyContext" );
 	}
 
-	add_sizable(QSP_ARG  pgc_itp, &pgc_sf, (Item *(*)(QSP_ARG_DECL  const char *)) pgc_of );
+	add_sizable(pgc_itp, &pgc_sf, (Item *(*)(QSP_ARG_DECL  const char *)) _pgc_of );
 
 #endif // HAVE_LIBFLYCAP
 	
@@ -1819,7 +1820,7 @@ fprintf(stderr,"set_n_buffers %s %d\n",pgcp->pc_name,n);
 		sprintf(ERROR_STRING,
 "set_n_buffers:  number of buffers must be between %d and %d (%d requested)!?",
 			MIN_N_BUFFERS,MAX_N_BUFFERS,n);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 	cfg = pgcp->pc_config;
@@ -1933,9 +1934,9 @@ static void init_one_frame(QSP_ARG_DECL  PGR_Cam *pgcp, int index )
 	Dimension_Set ds1;
 
 	sprintf(fname,"frame%d",index);
-	//ASSIGN_VAR("newest",fname+5);
+	//assign_var("newest",fname+5);
 
-	dp = dobj_of(QSP_ARG  fname);
+	dp = dobj_of(fname);
 	if( dp == NULL ){
 		SET_DS_SEQS(&ds1,1);
 		SET_DS_FRAMES(&ds1,1);
@@ -1953,7 +1954,7 @@ static void init_one_frame(QSP_ARG_DECL  PGR_Cam *pgcp, int index )
 	} else {
 		sprintf(ERROR_STRING,"init_one_frame:  object %s already exists!?",
 			fname);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 } // end init_one_frame
 
@@ -2071,7 +2072,7 @@ int check_buffer_alignment(QSP_ARG_DECL  PGR_Cam *pgcp)
 		if( ((long)(pgcp->pc_base+i*pgcp->pc_buf_delta)) % RV_ALIGNMENT_REQ != 0 ){
 			sprintf(ERROR_STRING,"Buffer %d is not aligned - %d byte alignment required for raw volume I/O!?",
 				i,RV_ALIGNMENT_REQ);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return -1;
 		}
 	}
@@ -2176,7 +2177,7 @@ void start_firewire_capture(QSP_ARG_DECL  PGR_Cam *pgcp)
 	fc2Error error;
 
 	if( pgcp->pc_flags & PGR_CAM_IS_RUNNING ){
-		WARN("start_firewire_capture:  camera is already capturing!?");
+		warn("start_firewire_capture:  camera is already capturing!?");
 		return;
 	}
 
@@ -2198,7 +2199,7 @@ void stop_firewire_capture(QSP_ARG_DECL  PGR_Cam *pgcp)
 	fc2Error error;
 
 	if( (pgcp->pc_flags & PGR_CAM_IS_RUNNING) == 0 ){
-		WARN("stop_firewire_capture:  camera is not capturing!?");
+		warn("stop_firewire_capture:  camera is not capturing!?");
 		return;
 	}
 
@@ -2266,13 +2267,13 @@ void set_buffer_obj(QSP_ARG_DECL  PGR_Cam *pgcp, Data_Obj *dp)
 "set_buffer_obj:  size mismatch between %s (%dx%d) and object %s (%dx%d)",
 			pgcp->pc_name,pgcp->pc_cols,pgcp->pc_rows,
 			OBJ_NAME(dp),OBJ_COLS(dp),OBJ_ROWS(dp) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( PREC_CODE(OBJ_MACH_PREC_PTR(dp)) != PREC_UBY ){
 		sprintf(ERROR_STRING,"Object %s (%s) should have %s precision!?",
 			OBJ_NAME(dp),OBJ_PREC_NAME(dp),NAME_FOR_PREC_CODE(PREC_UBY));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	{
@@ -2301,7 +2302,7 @@ int pick_grab_mode(QSP_ARG_DECL PGR_Cam *pgcp, const char *pmpt)
 
 	if( pgcp == NULL ){
 		sprintf(ERROR_STRING,"pick_framerate:  no camera selected!?");
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 
