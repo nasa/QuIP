@@ -8,9 +8,13 @@
 #include <cuda.h>
 #include <curand.h>
 #if CUDA_VERSION >= 5000
+
 // but gone on 7.5...
+#if CUDA_VERSION < 7050
 #include <helper_cuda.h>
-#else
+#endif // CUDA_VERSION < 7050
+
+#else // CUDA_VERSION < 5000
 #include <cutil.h>
 #include <cutil_inline.h>
 #endif

@@ -40,6 +40,7 @@ typedef enum {
 	SWF_GCRYPT,
 	SWF_FLYCAP,
 	SWF_DC1394,
+	SWF_LIBDV,
 	SWF_DAS1602,
 	SWF_V4L2,
 
@@ -97,6 +98,7 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 { UNKNOWN, SWF_GCRYPT,		"encryption w/ libgcrypt"	},
 { UNKNOWN, SWF_FLYCAP,		"firewire cameras w/ libflycap"	},
 { UNKNOWN, SWF_DC1394,		"firewire cameras w/ libdc1394"	},
+{ UNKNOWN, SWF_LIBDV,		"firewire cameras w/ libdv"	},
 { UNKNOWN, SWF_DAS1602,		"analog I/O w/ Measurement Computing DAS1602"	},
 { UNKNOWN, SWF_V4L2,		"video-for-Linux II"		},
 { UNKNOWN, SWF_KNOX,		"Knox Video 8x8 switcher"	},
@@ -324,6 +326,13 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 	FEATURE_PRESENT(SWF_DC1394);
 #else
 	FEATURE_ABSENT(SWF_DC1394);
+#endif
+
+
+#ifdef HAVE_LIBDC1394
+	FEATURE_PRESENT(SWF_LIBDV);
+#else
+	FEATURE_ABSENT(SWF_LIBDV);
 #endif
 
 

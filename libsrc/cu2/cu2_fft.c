@@ -18,8 +18,10 @@ const char* _getCUFFTError(QSP_ARG_DECL  cufftResult status)
 	switch (status) {
 		case CUFFT_SUCCESS:
 			return "Success";
+#ifdef CUFFT_NOT_SUPPORTED
 		case CUFFT_NOT_SUPPORTED:
 			return "CuFFT not supported";
+#endif // CUFFT_NOT_SUPPORTED
 		case CUFFT_INVALID_PLAN:
 			return "Invalid Plan";
 		case CUFFT_ALLOC_FAILED:

@@ -94,7 +94,7 @@ typedef struct {
 #ifdef THREAD_SAFE_QUERY
 	Query_Stack *	vr_qsp;		// needed for thread-safe-query
 #endif // THREAD_SAFE_QUERY
-	PGR_Cam *	vr_cam_p;
+	Fly_Cam *	vr_cam_p;
 } vr_args;
 
 struct itimerval tmr1;
@@ -335,7 +335,7 @@ typedef struct per_proc_info {
 #ifdef TRACE_FLOW
 	int	ppi_status;		/* holds disk_writer state */
 #endif /* TRACE_FLOW */
-	PGR_Cam *	ppi_cam_p;
+	Fly_Cam *	ppi_cam_p;
 } Proc_Info;
 
 //#define ppi_next_to_write	ppi_next_frm
@@ -490,7 +490,7 @@ STATUS(DW_WAIT)
 		buf_idx = pip->ppi_queue[ queue_idx ];
 
 
-		buf = OBJ_DATA_PTR( pip->ppi_cam_p->pc_frm_dp_tbl[buf_idx] );
+		buf = OBJ_DATA_PTR( pip->ppi_cam_p->fc_frm_dp_tbl[buf_idx] );
 
 		/* write out the next frame */
 
@@ -575,8 +575,8 @@ STATUS(DW_DONE)
 		pip->ppi_n_dequeued ++;
 		//pip->ppi_next_to_write += n_disk_writer_threads;
 
-		//if( pip->ppi_next_to_write >= pip->ppi_cam_p->pc_n_buffers )	/* wrap around */
-			//pip->ppi_next_to_write -= pip->ppi_cam_p->pc_n_buffers;
+		//if( pip->ppi_next_to_write >= pip->ppi_cam_p->fc_n_buffers )	/* wrap around */
+			//pip->ppi_next_to_write -= pip->ppi_cam_p->fc_n_buffers;
 
 #ifdef RECORD_CAPTURE_COUNT
 		/* record # frames caputured while writing. */
@@ -605,7 +605,7 @@ void fly_set_async_record(int flag)
 int fly_get_async_record(void)
 { return async_capture; }
 
-static void start_dw_threads(QSP_ARG_DECL  int32_t nf,int n_disks,int* fd_arr, PGR_Cam *pgcp)
+static void start_dw_threads(QSP_ARG_DECL  int32_t nf,int n_disks,int* fd_arr, Fly_Cam *fcp)
 {
 	int i;
 	pthread_attr_t attr1;
@@ -648,7 +648,7 @@ if( (n_disks % n_disk_writer_threads) != 0 ){
 		ppi[i].ppi_tot_disks = n_disks;
 		ppi[i].ppi_my_disks = disks_per_thread;
 
-		ppi[i].ppi_cam_p = pgcp;
+		ppi[i].ppi_cam_p = fcp;
 
 		pthread_create(&dw_thr[i],&attr1,disk_writer,&ppi[i]);
 		/* pthread_create(&dw_thr[i],NULL,disk_writer,&ppi[i]); */
@@ -674,6 +674,8 @@ show_tmrs(SGL_DEFAULT_QSP_ARG);
 
 	exit(1);
 }
+
+#ifdef MOVED
 
 // This should be moved to lib rawvol or libmvimenu???
 
@@ -734,6 +736,8 @@ show_tmrs(SGL_DEFAULT_QSP_ARG);
 	make_movie_from_inode(inp);	/* make movie struct	*/
 }
 
+#endif // MOVED
+
 static void finish_recording(QSP_ARG_DECL  Image_File *ifp)
 {
 	RV_Inode *inp;
@@ -766,7 +770,7 @@ static void *video_reader(void *argp)
 //int expected_newest;
 	//struct meteor_counts cnt;
 	vr_args *vrap;
-	PGR_Cam *pgcp;
+	Fly_Cam *fcp;
 	int32_t n_frames_wanted, orig_n_frames_wanted;
 	uint32_t final_size;
 	//struct drop_info di;
@@ -785,7 +789,7 @@ static void *video_reader(void *argp)
 	STATUS_HELP(column_doc);
 
 	vrap = (vr_args*) argp;
-	pgcp = vrap->vr_cam_p;
+	fcp = vrap->vr_cam_p;
 
 	orig_n_frames_wanted = n_frames_wanted = vrap->vr_n_frames;
 	n_disks = vrap->vr_n_disks;
@@ -862,7 +866,7 @@ show_tmrs(SINGLE_QSP_ARG);
 		int queue_idx;
 
 		// get the next frame
-		dp = grab_firewire_frame(QSP_ARG  pgcp);
+		dp = grab_fly_cam_frame(QSP_ARG  fcp);
 n_frames_read++;
 
 		assert( dp != NULL );
@@ -914,15 +918,15 @@ fprintf(stderr,"video_reader %d:  Disk writer %d not keeping up, %d written, max
 n_frames_read,min_i,min_frames_written,max_frames_written);
 		}
 		if( n_frames_read-total_frames_written >
-				(pgcp->pc_n_buffers-n_disks) ){
+				(fcp->fc_n_buffers-n_disks) ){
 fprintf(stderr,"Disk writers not keeping up:  %d frames read, %d written, %d buffers\n",
-n_frames_read,total_frames_written,pgcp->pc_n_buffers);
+n_frames_read,total_frames_written,fcp->fc_n_buffers);
 		}
 
 //expected_newest=newest+1;
-//if( expected_newest >= pgcp->pc_n_buffers ) expected_newest=0;
+//if( expected_newest >= fcp->fc_n_buffers ) expected_newest=0;
 
-		newest = pgcp->pc_newest;
+		newest = fcp->fc_newest;
 
 //if( newest != expected_newest )
 //fprintf(stderr,"newest = %d, expected %d!? (n_frames_read = %d)\n",
@@ -933,7 +937,7 @@ n_frames_read,total_frames_written,pgcp->pc_n_buffers);
 		dw_idx = (n_frames_read-1) % n_disk_writer_threads;
 
 if( (ppi[dw_idx].ppi_n_enqueued - ppi[dw_idx].ppi_n_dequeued) >
-					(pgcp->pc_n_buffers/n_disk_writer_threads) )
+					(fcp->fc_n_buffers/n_disk_writer_threads) )
 fprintf(stderr,"video_reader %d:  dw_idx = %d, %d enqueued   %d dequeued\n",
 n_frames_read,dw_idx,ppi[dw_idx].ppi_n_enqueued,ppi[dw_idx].ppi_n_dequeued);
 
@@ -1020,7 +1024,7 @@ advise(ERROR_STRING);
 
 if( verbose ) advise("main thread stopping capture");
 	//meteor_stop_capture(SINGLE_QSP_ARG);
-	stop_firewire_capture(QSP_ARG  pgcp);
+	stop_firewire_capture(QSP_ARG  fcp);
 
 	/* check the total number of dropped frames */
 	//ending_count = _mm->frames_captured;
@@ -1088,7 +1092,7 @@ if( verbose ) advise("main thread stopping capture");
 	if( orig_n_frames_wanted != n_frames_wanted ){
 		/* recompute the size of the file in case we were halted */
 
-		final_size = pgcp->pc_rows * pgcp->pc_cols * pgcp->pc_depth ;
+		final_size = fcp->fc_rows * fcp->fc_cols * fcp->fc_depth ;
 
 		/* we used to divide size by 2 here if in field mode,
 		 * but that was a bug, because field mode reduces meteor_rows...
@@ -1192,7 +1196,7 @@ static void clear_buffers(SINGLE_QSP_ARG_DECL)
 
 	/*
 	npix = meteor_columns * meteor_rows ;
-	for(i=0;i<pgcp->pc_n_buffers;i++){
+	for(i=0;i<fcp->fc_n_buffers;i++){
 		p = (uint32_t *)(mmbuf + meteor_off.frame_offset[i]);
 		for(j=0;j<npix;j++){
 			*p++ = 0;
@@ -1203,11 +1207,11 @@ static void clear_buffers(SINGLE_QSP_ARG_DECL)
 } // clear_buffers
 #endif // NOT_USED
 
-static uint32_t get_blocks_per_frame(PGR_Cam *pgcp)
+static uint32_t get_blocks_per_frame(Fly_Cam *fcp)
 {
 	uint32_t blocks_per_frame, bytes_per_frame;
 
-	bytes_per_frame = pgcp->pc_cols * pgcp->pc_rows * pgcp->pc_depth;
+	bytes_per_frame = fcp->fc_cols * fcp->fc_rows * fcp->fc_depth;
 //fprintf(stderr,"bytes_per_frame = %d\n",bytes_per_frame);
 
 
@@ -1241,7 +1245,7 @@ static uint32_t get_blocks_per_frame(PGR_Cam *pgcp)
  * This complicates the "exceeds"...
  */
 
-void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam *pgcp)
+void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,Fly_Cam *fcp)
 {
 	//int32_t npix;
 	int fd_arr[MAX_DISKS];
@@ -1263,12 +1267,12 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 	// Before starting, make sure that all of the buffers are aligned
 	// for writing with O_DIRECT
 
-	if( check_buffer_alignment(QSP_ARG  pgcp) < 0 ) return;
+	if( check_buffer_alignment(QSP_ARG  fcp) < 0 ) return;
 
 	// We need to start the camera to get the number of buffers
 	// and their addresses...
 //advise("calling start_firewire_capture...");
-	start_firewire_capture(QSP_ARG  pgcp);
+	start_firewire_capture(QSP_ARG  fcp);
 //advise("Back from start_firewire_capture.");
 
 // meteor stuff??
@@ -1278,7 +1282,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 	/* set_rt(); */
 
 	/*
-	if( MAX_RINGBUF_FRAMES < pgcp->pc_n_buffers ){
+	if( MAX_RINGBUF_FRAMES < fcp->fc_n_buffers ){
 		warn("Need to recompile mcapt.c with a larger value of MAX_RINGBUF_FRAMES");
 		return;
 	}
@@ -1290,7 +1294,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 
 	/* allow space for the timestamp, if we are recording timestamps... */
 
-	blocks_per_frame = get_blocks_per_frame(pgcp);
+	blocks_per_frame = get_blocks_per_frame(fcp);
 
 	n_to_write = blocks_per_frame * BLOCK_SIZE;
 
@@ -1314,12 +1318,12 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 	inp = (RV_Inode *)ifp->if_hdr_p;
 	n_disks = queue_rv_file(inp,fd_arr);
 	assert( n_disks > 1 );
-	assert( pgcp->pc_n_buffers > 0 );
+	assert( fcp->fc_n_buffers > 0 );
 
-	if( pgcp->pc_n_buffers < (2*n_disks) ){
+	if( fcp->fc_n_buffers < (2*n_disks) ){
 		sprintf(ERROR_STRING,
 	"buffer frames (%d) must be >= 2 x number of disks (%d)",
-			pgcp->pc_n_buffers,n_disks);
+			fcp->fc_n_buffers,n_disks);
 		warn(ERROR_STRING);
 		return;
 	}
@@ -1335,9 +1339,9 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 	 * the frame?  Does this not get written to the raw volume?
 	 */
 
-	SET_SHP_ROWS(shpp, pgcp->pc_rows );
-	SET_SHP_COLS(shpp, pgcp->pc_cols );
-	SET_SHP_COMPS(shpp,pgcp->pc_depth);
+	SET_SHP_ROWS(shpp, fcp->fc_rows );
+	SET_SHP_COLS(shpp, fcp->fc_cols );
+	SET_SHP_COMPS(shpp,fcp->fc_depth);
 
 	SET_SHP_FRAMES(shpp,n_frames_wanted);
 	SET_SHP_SEQS(shpp, 1);
@@ -1352,7 +1356,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 	/* We write an entire frame to each disk in turn... */
 
 	//npix=n_to_write/meteor_bytes_per_pixel;
-	//npix=n_to_write/pgcp->pc_depth;
+	//npix=n_to_write/fcp->fc_depth;
 
 	/* For the sake of symmetry, we'll create n_disks child threads,
 	 * and have the parent wait for them.
@@ -1377,7 +1381,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 
 	// stream_record starts the disk writers first, so they
 	// will be ready...
-	start_dw_threads(QSP_ARG  n_frames_wanted,n_disks,fd_arr,pgcp);
+	start_dw_threads(QSP_ARG  n_frames_wanted,n_disks,fd_arr,fcp);
 
 	vra1.vr_n_frames = n_frames_wanted;
 	vra1.vr_n_disks = n_disks;
@@ -1385,7 +1389,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 #ifdef THREAD_SAFE_QUERY
 	vra1.vr_qsp = qsp;
 #endif
-	vra1.vr_cam_p = pgcp;
+	vra1.vr_cam_p = fcp;
 	// Have we initialized vra1 completely??
 	n_frames_read = 0;
 
@@ -1557,7 +1561,7 @@ void print_store_times()
 #endif /* RECORD_TIMESTAMPS */
 
 Image_File * _get_file_for_recording(QSP_ARG_DECL  const char *name,
-		int n_frames_wanted,PGR_Cam *pgcp)
+		int n_frames_wanted,Fly_Cam *fcp)
 {
 	Image_File *ifp;
 	long n_blocks;
@@ -1611,7 +1615,7 @@ Image_File * _get_file_for_recording(QSP_ARG_DECL  const char *name,
 		return NULL;	// BUG clean up
 	}
 
-	n_blocks = rv_frames_to_allocate(n_frames_wanted) * get_blocks_per_frame(pgcp);
+	n_blocks = rv_frames_to_allocate(n_frames_wanted) * get_blocks_per_frame(fcp);
 
 	/* n_blocks is the total number of blocks, not the number per disk(?) */
 

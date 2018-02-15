@@ -566,6 +566,12 @@ static int get_next_avi_frame(QSP_ARG_DECL  Image_File *ifp)
 		// Is this a packet from the video stream?
 		if(HDR_P->avch_packet.stream_index==HDR_P->avch_video_stream_index) {
 
+// We don't know when avcodec_send_packet went away, but it is gone in 56
+#if LIBAVCODEC_VERSION_MAJOR >= 56
+			error1("Sorry, don't know how to send a packet in avcodec v. 56!?");
+
+#else // LIBAVCODEC_VERSION_MAJOR < 56
+
 #if LIBAVCODEC_VERSION_MAJOR > 53
 			// in the new API, we send a packet then read frames.
 			if( avcodec_send_packet( HDR_P->avch_codec_ctx_p,
@@ -573,7 +579,7 @@ static int get_next_avi_frame(QSP_ARG_DECL  Image_File *ifp)
 				warn("avcodec_send_packet failed!?");
 				return -1;
 			}
-#else
+#else // LIBAVCODEC_VERSION_MAJOR <= 53
 
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(51,9,0)
 
@@ -583,16 +589,18 @@ static int get_next_avi_frame(QSP_ARG_DECL  Image_File *ifp)
 				&HDR_P->avch_packet
 				);
 
-#else
+#else // LIBAVUTIL_VERSION_INT < AV_VERSION_INT(51,9,0)
 			avcodec_decode_video(HDR_P->avch_codec_ctx_p,
 						HDR_P->avch_frame_p,
 						&HDR_P->avch_frame_finished,
 						HDR_P->avch_packet.data,
 						HDR_P->avch_packet.size);
 
-#endif
+#endif // LIBAVUTIL_VERSION_INT < AV_VERSION_INT(51,9,0)
 
-#endif
+#endif // LIBAVCODEC_VERSION_MAJOR <= 53
+
+#endif // LIBAVCODEC_VERSION_MAJOR < 56
 
 			/* decoding time stamp (dts) should be equal to pts thanks
 			 * to ffmpeg...

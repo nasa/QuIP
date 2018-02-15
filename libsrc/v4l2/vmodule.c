@@ -70,10 +70,10 @@ void v4l2_open_movie(QSP_ARG_DECL  const char *filename)
 
 void v4l2_play_movie(QSP_ARG_DECL  Movie *mvip)
 {
+#ifdef HAVE_RAWVOL
 	Image_File *ifp;
 
 	ifp= (Image_File *) mvip->mvi_data;
-#ifdef HAVE_RAWVOL
 #ifdef HAVE_X11_EXT
 	play_rawvol_movie(ifp);
 #else
@@ -95,13 +95,13 @@ void v4l2_reverse_movie(QSP_ARG_DECL  Movie *mvip)
 
 void v4l2_shuttle_movie(QSP_ARG_DECL  Movie* mvip,uint32_t frame)
 {
+#ifdef HAVE_RAWVOL
 	Image_File *ifp;
 
 sprintf(ERROR_STRING,"v4l2_shuttle_movie %s %d",MOVIE_NAME(mvip),frame);
 advise(ERROR_STRING);
 	ifp= (Image_File *) mvip->mvi_data;
 
-#ifdef HAVE_RAWVOL
 #ifdef HAVE_X11_EXT
 	play_rawvol_frame(ifp, frame);
 #else
@@ -162,6 +162,7 @@ void v4l2_movie_info(QSP_ARG_DECL  Movie *mvip)
 int v4l2_setup_movie(QSP_ARG_DECL  Movie *mvip,uint32_t n_fields)
 {
 #ifdef HAVE_V4L2
+#ifdef HAVE_RAWVOL
 	Filetype * ftp;
 	Image_File *ifp;
 	//struct v4l2_geomet _geo;
@@ -240,6 +241,9 @@ advise("v4l2_setup_movie");
 		return -1;
 	}
 
+#else // ! HAVE_RAWVOL
+	warn("Sorry, can't record movies without rawvol support!?");
+#endif // ! HAVE_RAWVOL
 #endif // HAVE_V4L2
 	return 0;
 }

@@ -5,11 +5,11 @@
 #include "data_obj.h"
 #include "query_bits.h"	// LLEN - BUG
 
-static PGR_Cam *the_cam_p=NULL;	// should this be per-thread?
+static Fly_Cam *the_cam_p=NULL;	// should this be per-thread?
 				// no need yet...
 
 // local prototypes
-static COMMAND_FUNC( do_cam_menu );
+static COMMAND_FUNC( do_fly_cam_menu );
 
 
 #define UNIMP_MSG(whence)						\
@@ -32,23 +32,23 @@ static COMMAND_FUNC( do_cam_menu );
 
 
 #define CHECK_CAM	if( the_cam_p == NULL ){ \
-		WARN("No camera selected."); \
+		WARN("No fly_cam selected."); \
 		return; }
 
-static COMMAND_FUNC(do_list_trig)
+static COMMAND_FUNC(do_list_fly_cam_trig)
 {
 #ifdef HAVE_LIBFLYCAP
 	CHECK_CAM
-	list_trig(QSP_ARG  the_cam_p);
+	list_fly_cam_trig(QSP_ARG  the_cam_p);
 #else
-	NO_LIB_MSG("do_list_trig");
+	NO_LIB_MSG("do_list_fly_cam_trig");
 #endif
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(trigger_menu,s,f,h)
 
 MENU_BEGIN(trigger)
-ADD_CMD( list,	do_list_trig,	report trigger info )
+ADD_CMD( list,	do_list_fly_cam_trig,	report trigger info )
 MENU_END(trigger)
 
 static COMMAND_FUNC( do_trigger )
@@ -64,53 +64,53 @@ static COMMAND_FUNC( do_init )
 		return;
 	}
 
-	if( init_firewire_system(SINGLE_QSP_ARG) < 0 )
+	if( init_fly_cam_system(SINGLE_QSP_ARG) < 0 )
 		WARN("Error initializing firewire system.");
 #endif
 }
 
-static COMMAND_FUNC( do_list_cams )
+static COMMAND_FUNC( do_list_fly_cams )
 {
-	list_pgcs(tell_msgfile());
+	list_fly_cams(tell_msgfile());
 }
 
 static COMMAND_FUNC( do_cam_info )
 {
-	PGR_Cam *pgcp;
+	Fly_Cam *fcp;
 
-	pgcp = pick_pgc("camera");
-	if( pgcp == NULL ) return;
+	fcp = pick_fly_cam("camera");
+	if( fcp == NULL ) return;
 
-	if( pgcp == the_cam_p ){
-		sprintf(MSG_STR,"%s is selected as current camera.",pgcp->pc_name);
+	if( fcp == the_cam_p ){
+		sprintf(MSG_STR,"%s is selected as current camera.",fcp->fc_name);
 		prt_msg(MSG_STR);
 	}
 #ifdef HAVE_LIBFLYCAP
-	print_camera_info(QSP_ARG  pgcp);
+	print_fly_cam_info(QSP_ARG  fcp);
 #else
-	NO_LIB_MSG("do_list_cam");
+	NO_LIB_MSG("do_list_fly_cam");
 #endif
 }
 
-static void select_camera(QSP_ARG_DECL  PGR_Cam *pgcp )
+static void select_fly_cam(QSP_ARG_DECL  Fly_Cam *fcp )
 {
 	if( the_cam_p != NULL )
-		pop_camera_context(SINGLE_QSP_ARG);
-	the_cam_p = pgcp;
-	push_camera_context(QSP_ARG  pgcp);
+		pop_fly_cam_context(SINGLE_QSP_ARG);
+	the_cam_p = fcp;
+	push_fly_cam_context(QSP_ARG  fcp);
 #ifdef HAVE_LIBFLYCAP
-	refresh_camera_properties(QSP_ARG  pgcp);
+	refresh_fly_cam_properties(QSP_ARG  fcp);
 #endif // HAVE_LIBFLYCAP
 }
 
 static COMMAND_FUNC( do_select_cam )
 {
-	PGR_Cam *pgcp;
+	Fly_Cam *fcp;
 
-	pgcp = pick_pgc("camera");
-	if( pgcp == NULL ) return;
+	fcp = pick_fly_cam("camera");
+	if( fcp == NULL ) return;
 
-	select_camera(QSP_ARG  pgcp);
+	select_fly_cam(QSP_ARG  fcp);
 }
 
 static COMMAND_FUNC( do_start )
@@ -125,10 +125,10 @@ static COMMAND_FUNC( do_grab )
 	Data_Obj *dp;
 
 	CHECK_CAM
-	if( (dp=grab_firewire_frame(QSP_ARG  the_cam_p )) == NULL ){
+	if( (dp=grab_fly_cam_frame(QSP_ARG  the_cam_p )) == NULL ){
 		/* any error */
 #ifdef FOOBAR
-		cleanup_cam(the_cam_p);	/* grab error */
+		cleanup_fly_cam(the_cam_p);	/* grab error */
 		the_cam_p=NULL;
 #endif // FOOBAR
 		// We might fail because we need to release a frame...
@@ -137,7 +137,7 @@ static COMMAND_FUNC( do_grab )
 	} else {
 		char num_str[32];
 
-		sprintf(num_str,"%d",the_cam_p->pc_newest);
+		sprintf(num_str,"%d",the_cam_p->fc_newest);
 		assign_var("newest",num_str);
 	}
 
@@ -164,7 +164,7 @@ static COMMAND_FUNC(do_reset)
 {
 #ifdef HAVE_LIBFLYCAP
 	CHECK_CAM
-	reset_camera(QSP_ARG  the_cam_p);
+	reset_fly_cam(QSP_ARG  the_cam_p);
 #endif
 }
 
@@ -181,7 +181,7 @@ static COMMAND_FUNC( do_close )
 {
 	CHECK_CAM
 #ifdef HAVE_LIBFLYCAP
-	cleanup_cam(the_cam_p);
+	cleanup_fly_cam(the_cam_p);
 #endif
 	the_cam_p=NULL;
 }
@@ -191,43 +191,43 @@ static COMMAND_FUNC( do_bw )
 #ifdef HAVE_LIBFLYCAP
 	CHECK_CAM
 
-	report_bandwidth(QSP_ARG  the_cam_p);
+	report_fly_cam_bandwidth(QSP_ARG  the_cam_p);
 #endif
 }
 
-static COMMAND_FUNC( do_list_modes )
+static COMMAND_FUNC( do_list_fly_cam_modes )
 {
 #ifdef HAVE_LIBFLYCAP
 	CHECK_CAM
 	prt_msg("\nAvailable video modes:");
-	list_video_modes(QSP_ARG  the_cam_p);
+	list_fly_cam_video_modes(QSP_ARG  the_cam_p);
 #endif
 }
 
-static COMMAND_FUNC( do_show_video_mode )
+static COMMAND_FUNC( do_show_fly_cam_video_mode )
 {
 #ifdef HAVE_LIBFLYCAP
 	CHECK_CAM
-	show_video_mode(QSP_ARG  the_cam_p);
+	show_fly_cam_video_mode(QSP_ARG  the_cam_p);
 #endif
 }
 
 
-static COMMAND_FUNC( do_list_framerates )
+static COMMAND_FUNC( do_list_fly_cam_framerates )
 {
 #ifdef HAVE_LIBFLYCAP
 	CHECK_CAM
 
 	prt_msg("\nAvailable framerates:");
-	list_framerates(QSP_ARG  the_cam_p);
+	list_fly_cam_framerates(QSP_ARG  the_cam_p);
 #endif
 }
 
-static COMMAND_FUNC( do_show_framerate )
+static COMMAND_FUNC( do_show_fly_cam_framerate )
 {
 #ifdef HAVE_LIBFLYCAP
 	CHECK_CAM
-	show_framerate(QSP_ARG  the_cam_p);
+	show_fly_cam_framerate(QSP_ARG  the_cam_p);
 #endif
 }
 
@@ -237,16 +237,16 @@ static COMMAND_FUNC( do_set_video_mode )
 	int i;
 
 	CHECK_CAM
-	i = WHICH_ONE("video mode",the_cam_p->pc_n_video_modes,
-					the_cam_p->pc_video_mode_names );
+	i = WHICH_ONE("video mode",the_cam_p->fc_n_video_modes,
+					the_cam_p->fc_video_mode_names );
 	if( i < 0 ) return;
 
 sprintf(ERROR_STRING,"mode %s selected...",
-name_of_indexed_video_mode( the_cam_p->pc_video_mode_indices[i] ) );
+name_of_indexed_video_mode( the_cam_p->fc_video_mode_indices[i] ) );
 advise(ERROR_STRING);
 
 	if( is_fmt7_mode(QSP_ARG  the_cam_p, i ) ){
-		set_fmt7_mode(QSP_ARG  the_cam_p, the_cam_p->pc_fmt7_index );
+		set_fmt7_mode(QSP_ARG  the_cam_p, the_cam_p->fc_fmt7_index );
 	} else {
 		set_std_mode( QSP_ARG  the_cam_p, i );
 	}
@@ -261,10 +261,10 @@ static COMMAND_FUNC( do_set_framerate )
 {
 	int i;
 
-	i = pick_framerate(QSP_ARG  the_cam_p, "frame rate");
+	i = pick_fly_cam_framerate(QSP_ARG  the_cam_p, "frame rate");
 	if( i < 0 ) return;
 
-	// CHECK_CAM - not needed: pick_framerate will handle this
+	// CHECK_CAM - not needed: pick_fly_cam_framerate will handle this
 
 }
 
@@ -279,7 +279,7 @@ static COMMAND_FUNC( do_power_on )
 {
 	CHECK_CAM
 
-	if( power_on_camera(the_cam_p) < 0 )
+	if( power_on_fly_cam(the_cam_p) < 0 )
 		WARN("Error powering on camera.");
 }
 
@@ -287,7 +287,7 @@ static COMMAND_FUNC( do_power_off )
 {
 	CHECK_CAM
 
-	if( power_off_camera(the_cam_p) < 0 )
+	if( power_off_fly_cam(the_cam_p) < 0 )
 		WARN("Error powering off camera.");
 }
 
@@ -299,7 +299,7 @@ static COMMAND_FUNC( do_set_temp )
 
 	CHECK_CAM
 
-	if( set_camera_temperature(the_cam_p, t) < 0 )
+	if( set_fly_cam_temperature(the_cam_p, t) < 0 )
 		WARN("Error setting color temperature");
 }
 
@@ -311,7 +311,7 @@ static COMMAND_FUNC( do_set_white_balance )
 
 	CHECK_CAM
 
-	if( set_camera_white_balance(the_cam_p, wb) < 0 )
+	if( set_fly_cam_white_balance(the_cam_p, wb) < 0 )
 		WARN("Error setting white balance!?");
 }
 
@@ -325,7 +325,7 @@ static COMMAND_FUNC( do_set_white_shading )
 
 	CHECK_CAM
 
-	if( set_camera_white_shading(the_cam_p, val) < 0 )
+	if( set_fly_cam_white_shading(the_cam_p, val) < 0 )
 		WARN("Error setting white shading!?");
 }
 
@@ -336,11 +336,11 @@ static COMMAND_FUNC( do_get_cams )
 	dp = pick_obj("string table");
 	if( dp == NULL ) return;
 
-	if( get_camera_names( QSP_ARG  dp ) < 0 )
+	if( get_fly_cam_names( QSP_ARG  dp ) < 0 )
 		WARN("Error getting camera names!?");
 }
 
-static COMMAND_FUNC( do_get_video_modes )
+static COMMAND_FUNC( do_get_fly_cam_video_modes )
 {
 	Data_Obj *dp;
 	int n;
@@ -351,7 +351,7 @@ static COMMAND_FUNC( do_get_video_modes )
 
 	CHECK_CAM
 
-	n = get_video_mode_strings( QSP_ARG  dp, the_cam_p );
+	n = get_fly_cam_video_mode_strings( QSP_ARG  dp, the_cam_p );
 	sprintf(s,"%d",n);
 	// BUG should make this a reserved var...
 	assign_var("n_video_modes",s);
@@ -368,7 +368,7 @@ static COMMAND_FUNC( do_get_framerates )
 
 	CHECK_CAM
 
-	n = get_framerate_strings( QSP_ARG  dp, the_cam_p );
+	n = get_fly_cam_framerate_strings( QSP_ARG  dp, the_cam_p );
 	sprintf(s,"%d",n);
 	// BUG should make this a reserved var...
 	assign_var("n_framerates",s);
@@ -411,7 +411,7 @@ static COMMAND_FUNC( do_write_reg )
 
 static COMMAND_FUNC( do_prop_info )
 {
-	PGR_Property_Type *t;
+	Fly_Cam_Property_Type *t;
 
 	t = pick_pgr_prop("property type");
 	CHECK_CAM
@@ -428,7 +428,7 @@ static COMMAND_FUNC( do_prop_info )
 
 static COMMAND_FUNC( do_show_prop )
 {
-	PGR_Property_Type *t;
+	Fly_Cam_Property_Type *t;
 
 	t = pick_pgr_prop("property type");
 	CHECK_CAM
@@ -445,7 +445,7 @@ static COMMAND_FUNC( do_show_prop )
 
 static COMMAND_FUNC( do_set_auto )
 {
-	PGR_Property_Type *t;
+	Fly_Cam_Property_Type *t;
 	int yn;
 	char pmpt[LLEN];
 
@@ -479,8 +479,8 @@ static COMMAND_FUNC( do_set_absolute )
 
 static COMMAND_FUNC( do_set_prop )
 {
-	PGR_Property_Type *t;
-	PGR_Prop_Val pv;
+	Fly_Cam_Property_Type *t;
+	Fly_Cam_Prop_Val pv;
 
 	t = pick_pgr_prop("property type");
 
@@ -519,10 +519,10 @@ static COMMAND_FUNC( do_set_fmt7 )
 	CHECK_CAM
 
 #ifdef HAVE_LIBFLYCAP
-	if( i < 0 || i >= the_cam_p->pc_n_fmt7_modes ){
+	if( i < 0 || i >= the_cam_p->fc_n_fmt7_modes ){
 		sprintf(ERROR_STRING,
 			"%s:  format7 index must be in the range 0 - %d",
-			the_cam_p->pc_name,the_cam_p->pc_n_fmt7_modes-1);
+			the_cam_p->fc_name,the_cam_p->fc_n_fmt7_modes-1);
 		WARN(ERROR_STRING);
 		return;
 	}
@@ -581,11 +581,11 @@ static COMMAND_FUNC( do_set_eii )
 #endif // HAVE_LIBFLYCAP
 }
 
-static COMMAND_FUNC( do_list_props )
+static COMMAND_FUNC( do_list_fly_cam_props )
 {
 	CHECK_CAM
 #ifdef HAVE_LIBFLYCAP
-	list_cam_properties(QSP_ARG  the_cam_p);
+	list_fly_cam_properties(QSP_ARG  the_cam_p);
 #else // ! HAVE_LIBFLYCAP
 	WARN("No support for libflycap in this build.");
 #endif // ! HAVE_LIBFLYCAP
@@ -595,7 +595,7 @@ static COMMAND_FUNC( do_list_props )
 #define ADD_CMD(s,f,h)	ADD_COMMAND(properties_menu,s,f,h)
 
 MENU_BEGIN(properties)
-ADD_CMD( list,			do_list_props,		list all properties )
+ADD_CMD( list,			do_list_fly_cam_props,		list all properties )
 ADD_CMD( info,			do_prop_info,		display property info )
 ADD_CMD( show,			do_show_prop,		display property value )
 ADD_CMD( set,			do_set_prop,		set property value )
@@ -615,35 +615,35 @@ static COMMAND_FUNC( do_set_iso_speed )
 
 
 #undef ADD_CMD
-#define ADD_CMD(s,f,h)	ADD_COMMAND(camera_menu,s,f,h)
+#define ADD_CMD(s,f,h)	ADD_COMMAND(fly_cam_menu,s,f,h)
 
-MENU_BEGIN(camera)
+MENU_BEGIN(fly_cam)
 ADD_CMD( set_n_buffers,		do_set_n_bufs,		specify number of frames in the ring buffer )
 ADD_CMD( show_n_buffers,		do_show_n_bufs,		show number of frames in the ring buffer )
 ADD_CMD( set_embedded_image_info,	do_set_eii,	enable/disable embedded image information )
 ADD_CMD( read_register,		do_read_reg,		read a camera register )
 ADD_CMD( write_register,	do_write_reg,		write a camera register )
 ADD_CMD( properties,		do_prop_menu,		camera properties submenu )
-ADD_CMD( list_video_modes,	do_list_modes,		list all video modes for this camera )
-ADD_CMD( get_video_modes,	do_get_video_modes,	copy video modes strings to an array )
+ADD_CMD( list_video_modes,	do_list_fly_cam_modes,		list all video modes for this camera )
+ADD_CMD( get_video_modes,	do_get_fly_cam_video_modes,	copy video modes strings to an array )
 ADD_CMD( set_video_mode,	do_set_video_mode,	set video mode )
 ADD_CMD( format7,		do_set_fmt7,		select a format7 mode )
-ADD_CMD( show_video_mode,	do_show_video_mode,	display current video mode )
-ADD_CMD( list_framerates,	do_list_framerates,	list all framerates for this camera )
+ADD_CMD( show_video_mode,	do_show_fly_cam_video_mode,	display current video mode )
+ADD_CMD( list_framerates,	do_list_fly_cam_framerates,	list all framerates for this camera )
 ADD_CMD( get_framerates,	do_get_framerates,	copy framerate strings to an array )
 ADD_CMD( set_framerate,		do_set_framerate,	set framerate )
-ADD_CMD( show_framerate,	do_show_framerate,	show current framerate )
+ADD_CMD( show_framerate,	do_show_fly_cam_framerate,	show current framerate )
 ADD_CMD( set_iso_speed,		do_set_iso_speed,	set ISO speed )
 ADD_CMD( power_on,		do_power_on,		power on current camera )
 ADD_CMD( power_off,		do_power_off,		power off current camera )
 ADD_CMD( temperature,		do_set_temp,		set color temperature )
 ADD_CMD( white_balance,		do_set_white_balance,	set white balance )
 ADD_CMD( white_shading,		do_set_white_shading,	set white shading )
-MENU_END(camera)
+MENU_END(fly_cam)
 
-static COMMAND_FUNC( do_cam_menu )
+static COMMAND_FUNC( do_fly_cam_menu )
 {
-	CHECK_AND_PUSH_MENU(camera);
+	CHECK_AND_PUSH_MENU(fly_cam);
 }
 
 static COMMAND_FUNC( do_record )
@@ -724,7 +724,7 @@ static COMMAND_FUNC( captmenu )
 	CHECK_AND_PUSH_MENU( capture );
 }
 
-#define CAM_P	the_cam_p->pc_cam_p
+#define CAM_P	the_cam_p->fc_cam_p
 
 static COMMAND_FUNC( do_fmt7_list )
 {
@@ -742,7 +742,7 @@ static COMMAND_FUNC( do_fmt7_setsize )
 
 	/* Don't try to set the image size if capture is running... */
 
-	if( the_cam_p->pc_flags & PGR_CAM_IS_RUNNING ){
+	if( the_cam_p->fc_flags & FLY_CAM_IS_RUNNING ){
 		WARN("can't set image size while camera is running!?");
 		return;
 	}
@@ -806,11 +806,11 @@ static COMMAND_FUNC( do_bmode )
 	CHECK_CAM
 
 	if( ASKIF("Use 1394-B mode") ){
-		the_cam_p->pc_flags |= PGR_CAM_USES_BMODE;
-		set_camera_bmode(the_cam_p,1);
+		the_cam_p->fc_flags |= FLY_CAM_USES_BMODE;
+		set_fly_cam_bmode(the_cam_p,1);
 	} else {
-		the_cam_p->pc_flags &= ~PGR_CAM_USES_BMODE;
-		set_camera_bmode(the_cam_p,0);
+		the_cam_p->fc_flags &= ~FLY_CAM_USES_BMODE;
+		set_fly_cam_bmode(the_cam_p,0);
 	}
 #endif
 }
@@ -818,7 +818,7 @@ static COMMAND_FUNC( do_bmode )
 static COMMAND_FUNC(do_quit_fly)
 {
 	if( the_cam_p != NULL )
-		pop_camera_context(SINGLE_QSP_ARG);
+		pop_fly_cam_context(SINGLE_QSP_ARG);
 
 	do_pop_menu(SINGLE_QSP_ARG);
 }
@@ -828,7 +828,7 @@ static COMMAND_FUNC(do_quit_fly)
 
 MENU_BEGIN(fly)
 ADD_CMD( init,		do_init,	initialize subsystem )
-ADD_CMD( list,		do_list_cams,	list cameras )
+ADD_CMD( list,		do_list_fly_cams,	list cameras )
 ADD_CMD( select,	do_select_cam,	select camera )
 ADD_CMD( get_cameras,	do_get_cams,	copy camera names to an array )
 ADD_CMD( capture,	captmenu,	capture submenu )
@@ -842,14 +842,14 @@ ADD_CMD( trigger,	do_trigger,	trigger submenu )
 ADD_CMD( bandwidth,	do_bw,		report bandwidth usage )
 ADD_CMD( bmode,		do_bmode,	set/clear B-mode )
 ADD_CMD( close,		do_close,	shutdown firewire subsystem )
-ADD_CMD( camera,	do_cam_menu,	camera submenu )
+ADD_CMD( camera,	do_fly_cam_menu,	camera submenu )
 ADD_CMD( quit,		do_quit_fly,	exit submenu )
 MENU_SIMPLE_END(fly)	// doesn't add quit command automatically
 
 COMMAND_FUNC( do_fly_menu )
 {
 	if( the_cam_p != NULL )
-		push_camera_context(QSP_ARG  the_cam_p);
+		push_fly_cam_context(QSP_ARG  the_cam_p);
 	CHECK_AND_PUSH_MENU( fly );
 }
 

@@ -13,7 +13,8 @@
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #else
-typedef uint32_t u_long;
+//typedef uint32_t u_long;
+typedef unsigned long u_long;
 typedef unsigned int u_int;
 #endif
 
