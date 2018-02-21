@@ -435,9 +435,9 @@ static COMMAND_FUNC( do_wrt_obj )
 	} else {
 		// If the invoking script has redirected stdout,
 		// then use that
-		if( QS_MSG_FILE(THIS_QSP)!=NULL )
+		if( QS_MSG_FILE(THIS_QSP)!=NULL ){
 			fp = QS_MSG_FILE(THIS_QSP);
-		else
+		} else
 			fp = stdout;
 	}
 

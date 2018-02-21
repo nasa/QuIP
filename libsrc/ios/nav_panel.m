@@ -197,7 +197,7 @@ void init_nav_panel(Nav_Panel *nav_p)
 	Panel_Obj *po = panel_obj_of(DEFAULT_QSP_ARG  nav_p.name.UTF8String );
 	// When else can this have been created???
 	if( po == NULL ){
-fprintf(stderr,"init_nav_panel:  calling new_panel %s...\n",nav_p.name.UTF8String);
+//fprintf(stderr,"init_nav_panel:  calling new_panel %s...\n",nav_p.name.UTF8String);
 		po = new_panel(DEFAULT_QSP_ARG  nav_p.name.UTF8String, 
 			(int)globalAppDelegate.dev_size.width,
 			(int)globalAppDelegate.dev_size.height );

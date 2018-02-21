@@ -499,7 +499,7 @@ void _get_choice(QSP_ARG_DECL  Screen_Obj *sop)
 		long idx;
 		p=(UIPickerView *)SOB_CONTROL(sop);
 		idx = [p selectedRowInComponent:0];
-        fprintf(stderr,"get_choice:  idx = %ld\n",idx);
+//fprintf(stderr,"get_choice:  idx = %ld\n",idx);
 		assert( idx>=0 && idx < SOB_N_SELECTORS_AT_IDX(sop,0) );
 		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTOR_AT_IDX(sop,0,idx) );
 		return;
@@ -650,8 +650,8 @@ void make_text_field(QSP_ARG_DECL  Screen_Obj *sop)
 	// BUG should set width based on width of device!
 	// We should be able to get that from the View...
 
-fprintf(stderr,"make_text_field %s (panel %s):  current position is %d, %d\n",
-SOB_NAME(sop),PO_NAME(curr_panel),PO_CURR_X(curr_panel),PO_CURR_Y(curr_panel));
+//fprintf(stderr,"make_text_field %s (panel %s):  current position is %d, %d\n",
+//SOB_NAME(sop),PO_NAME(curr_panel),PO_CURR_X(curr_panel),PO_CURR_Y(curr_panel));
 	UITextField *textField = [[UITextField alloc]
 		initWithFrame:CGRectMake(PO_CURR_X(curr_panel), PO_CURR_Y(curr_panel),
 		SOB_WIDTH(sop), SOB_HEIGHT(sop) ) ];
