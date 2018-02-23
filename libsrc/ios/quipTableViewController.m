@@ -1,5 +1,5 @@
 // the table view controller for the main menu
-
+#include "quip_config.h"
 #include "quipTableViewController.h"
 #include "quipView.h"
 #include "quip_prot.h"

@@ -35,20 +35,20 @@ static void note_path(QSP_ARG_DECL  const char *whence)
 	while( i>=0 && path_string[i] != '/' )
 		i--;
 	if( i <= 0 ){
-		WARN("Error finding resource directory path!?");
+		warn("Error finding resource directory path!?");
 	} else {
 		path_string[i]=0;
-		ASSIGN_RESERVED_VAR( RESOURCE_DIR_VARNAME ,path_string );
+		assign_reserved_var( RESOURCE_DIR_VARNAME ,path_string );
 	}
 
 	// Now strip another component to get the main bundle directory
 	while( i>=0 && path_string[i] != '/' )
 		i--;
 	if( i <= 0 ){
-		WARN("Error finding bundle directory path!?");
+		warn("Error finding bundle directory path!?");
 	} else {
 		path_string[i]=0;
-		ASSIGN_RESERVED_VAR( BUNDLE_DIR_VARNAME,path_string );
+		assign_reserved_var( BUNDLE_DIR_VARNAME,path_string );
 	}
 
 	rls_str(path_string);
@@ -69,69 +69,71 @@ int macos_read_global_startup(SINGLE_QSP_ARG_DECL)
 	main_bundle = [NSBundle mainBundle];
 
 	if( main_bundle == NULL ){
-		WARN("unable to locate main bundle!?");
+		warn("unable to locate main bundle!?");
 		return -1;
 	}
 
 	NSString *startup_path;
 
-
 	startup_path = [main_bundle pathForResource:@"mac_startup" ofType:@"enc"];
 	if( startup_path != NULL ){
+fprintf(stderr,"startup path is %s\n",startup_path.UTF8String);
 		// startup.enc exists!
-        // BUT if the encryption software was not present,
-        // then this could be a zero-length file!
+		// BUT if the encryption software was not present,
+		// then this could be a zero-length file!
 		FILE *fp;
-        struct stat statb;
+		struct stat statb;
 		fp = fopen(startup_path.UTF8String,"r");
 		if( fp == NULL ){
-			WARN("error opening encrypted startup file!?");
+			warn("error opening encrypted startup file!?");
 			return -1;
 		}
-        if ( fstat(fileno(fp),&statb) < 0 ){
-            tell_sys_error("fstat");
-            WARN("error determining status of encrypted startup file!?");
-            return -1;
-        }
-        //advise("startup.enc found in resource bundle...");
-        if( statb.st_size > 0 ){
-            size_t n;
-            char *s=decrypt_file_contents(QSP_ARG  fp, &n);
-            if( s == NULL ){
-            WARN("error decrypting startup file!?");
-                return -1;
-            }
-            fprintf(stderr,"macos_read_global_startup:  pushing text of encrypted file\n");
-            PUSH_TEXT(s,startup_path.UTF8String);	//
+		if ( fstat(fileno(fp),&statb) < 0 ){
+			tell_sys_error("fstat");
+			warn("error determining status of encrypted startup file!?");
+			return -1;
+		}
+		//advise("startup.enc found in resource bundle...");
+		if( statb.st_size > 0 ){
+			size_t n;
+			char *s=decrypt_file_contents(QSP_ARG  fp, &n);
+			if( s == NULL ){
+				warn("error decrypting startup file!?");
+				return -1;
+			}
+			fprintf(stderr,"macos_read_global_startup:  pushing text of encrypted file\n");
+			push_text(s,startup_path.UTF8String);	//
 
-            // BUG  We should free the file contents
-            // and the saved name eventually?
+			// BUG  We should free the file contents
+			// and the saved name eventually?
 
-            note_path(QSP_ARG  startup_path.UTF8String);
-            return 0;
-        }
+			note_path(QSP_ARG  startup_path.UTF8String);
+			return 0;
+		}
 	}
+else fprintf(stderr,"No encrypted startup resource found!?\n");
 
-    // Now we do the same thing for a plaintext file...
+	// Now we do the same thing for a plaintext file...
     
-    startup_path = [main_bundle pathForResource:@"mac_startup" ofType:@"scr"];
-    if( startup_path != NULL ){
-        FILE *fp;
-        fp = fopen(startup_path.UTF8String,"r");
-        if( fp == NULL ){
-            WARN("error opening global startup file!?");
-            return -1;
-        }
-        advise("mac_startup.scr found in resource bundle...");
-        // called from the main thread...
-        fprintf(stderr,"macos_read_global_startup:  redirecting to startup file\n");
-        redir(QSP_ARG  fp, startup_path.UTF8String );
-        
-        note_path(QSP_ARG  startup_path.UTF8String);
-        return 0;
-    }
+	startup_path = [main_bundle pathForResource:@"mac_startup" ofType:@"scr"];
+	if( startup_path != NULL ){
+		FILE *fp;
+		fp = fopen(startup_path.UTF8String,"r");
+		if( fp == NULL ){
+			warn("error opening global startup file!?");
+			return -1;
+		}
+		advise("mac_startup.scr found in resource bundle...");
+		// called from the main thread...
+		fprintf(stderr,"macos_read_global_startup:  redirecting to startup file\n");
+		redir(QSP_ARG  fp, startup_path.UTF8String );
+	
+		note_path(QSP_ARG  startup_path.UTF8String);
+		return 0;
+	}
+else fprintf(stderr,"No plain-text startup resource found!?\n");
  
-fprintf(stderr,"No startup file found!?\n");
+	fprintf(stderr,"No startup file found!?\n");
 	return 0;
 }
 

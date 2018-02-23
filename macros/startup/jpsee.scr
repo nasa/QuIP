@@ -287,6 +287,7 @@ Label_Viewer v "$jpeg_file"
 Assign vd depth('$DISPLAY')
 
 # Init Slider
+If !var_exists(n_frames) "error_exit 'variable n_frames does not exist!?'"
 If '$n_frames>1'	Init_Slider
 
 

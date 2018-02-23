@@ -81,10 +81,10 @@ void _old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 	}
 	if( IS_DRAGSCAPE(vp) ){
 		//zap_image_list(vp);
-#ifndef BUILD_FOR_IOS
+#ifndef BUILD_FOR_OBJC
 		rls_list_nodes(vp->vw_image_list);
 		add_image(vp,dp,0,0);
-#endif // BUILD_FOR_IOS
+#endif // BUILD_FOR_OBJC
 	} else {
 		/* If we are holding an image, release it */
 		if( VW_OBJ(vp) != NULL )

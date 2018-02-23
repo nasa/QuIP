@@ -244,7 +244,7 @@ void activate_panel(QSP_ARG_DECL  Panel_Obj *po, int yesno)
 
 	lp = PO_CHILDREN(po);
 	if( lp == NULL ){
-		WARN("activate_panel:  null widget list!?");
+		warn("activate_panel:  null widget list!?");
 		return;
 	}
 	np = IOS_LIST_HEAD(lp);
@@ -298,9 +298,9 @@ void make_separator(QSP_ARG_DECL  Screen_Obj *so)
 {
 }
 
-void delete_widget(QSP_ARG_DECL  Screen_Obj *sop)
+void _delete_widget(QSP_ARG_DECL  Screen_Obj *sop)
 {
-	WARN("delete_widget:  not implemented yet for IOS!?");
+	warn("delete_widget:  not implemented yet for IOS!?");
 }
 
 void make_button(QSP_ARG_DECL  Screen_Obj *sop)
@@ -499,7 +499,7 @@ void _get_choice(QSP_ARG_DECL  Screen_Obj *sop)
 		long idx;
 		p=(UIPickerView *)SOB_CONTROL(sop);
 		idx = [p selectedRowInComponent:0];
-        fprintf(stderr,"get_choice:  idx = %ld\n",idx);
+//fprintf(stderr,"get_choice:  idx = %ld\n",idx);
 		assert( idx>=0 && idx < SOB_N_SELECTORS_AT_IDX(sop,0) );
 		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTOR_AT_IDX(sop,0,idx) );
 		return;
@@ -650,8 +650,8 @@ void make_text_field(QSP_ARG_DECL  Screen_Obj *sop)
 	// BUG should set width based on width of device!
 	// We should be able to get that from the View...
 
-fprintf(stderr,"make_text_field %s (panel %s):  current position is %d, %d\n",
-SOB_NAME(sop),PO_NAME(curr_panel),PO_CURR_X(curr_panel),PO_CURR_Y(curr_panel));
+//fprintf(stderr,"make_text_field %s (panel %s):  current position is %d, %d\n",
+//SOB_NAME(sop),PO_NAME(curr_panel),PO_CURR_X(curr_panel),PO_CURR_Y(curr_panel));
 	UITextField *textField = [[UITextField alloc]
 		initWithFrame:CGRectMake(PO_CURR_X(curr_panel), PO_CURR_Y(curr_panel),
 		SOB_WIDTH(sop), SOB_HEIGHT(sop) ) ];
@@ -812,7 +812,7 @@ const char *get_text(Screen_Obj *sop)
 
 void make_gauge(QSP_ARG_DECL  Screen_Obj *sop)
 {
-	WARN("make_gauge not implemented!?");
+	warn("make_gauge not implemented!?");
 
 }
 
@@ -894,7 +894,7 @@ void make_slider(QSP_ARG_DECL  Screen_Obj *sop)
 	}
 #ifdef CAUTIOUS
 	  else {
-		WARN("CAUTIOUS:  make_slider:  unrecognized object type!?");
+		warn("CAUTIOUS:  make_slider:  unrecognized object type!?");
 		return;
 	}
 #endif /* CAUTIOUS */
@@ -1138,7 +1138,7 @@ void _set_busy_cursor(SINGLE_QSP_ARG_DECL)
 
 void make_scroller(QSP_ARG_DECL  Screen_Obj *sop)
 {
-	WARN("make_scroller not implemented!?");
+	warn("make_scroller not implemented!?");
 
 }
 
@@ -1409,7 +1409,7 @@ void pop_nav(QSP_ARG_DECL int n_levels)
 	if( n_levels > 1 ){
 	NSArray *a = [ root_view_controller viewControllers];
 	if( n_levels >= a.count ){
-			WARN("pop_nav:  too many levels requested!?");
+			warn("pop_nav:  too many levels requested!?");
 			n_levels = (int)(a.count - 1);
 		}
 		UIViewController *target_vc;
@@ -1842,12 +1842,12 @@ void dismiss_keyboard(Screen_Obj *sop)
 
 void enable_widget(QSP_ARG_DECL  Screen_Obj *sop, int yesno)
 {
-	WARN("Oops, enable_widget not implemented yet!?");
+	warn("Oops, enable_widget not implemented yet!?");
 }
 
 void hide_widget(QSP_ARG_DECL  Screen_Obj *sop, int yesno)
 {
-	WARN("Oops, hide_widget not implemented yet!?");
+	warn("Oops, hide_widget not implemented yet!?");
 }
 
 @implementation Alert_Info

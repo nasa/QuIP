@@ -637,7 +637,7 @@ void *_ocl_tmp_vec(QSP_ARG_DECL  Platform_Device *pdp, size_t size,size_t len,co
 {
 	void *ptr;
 
-	ptr = ocl_mem_alloc(pdp, len*size, 0 /* alignment arg not used? */ );
+	ptr = ocl_mem_alloc(pdp, (dimension_t)(len*size), 0 /* alignment arg not used? */ );
 	// Nice to zero it for testing???
 	return ptr;
 }

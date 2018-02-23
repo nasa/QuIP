@@ -48,6 +48,12 @@
 /* Define to 1 if you have the <alsa/asoundlib.h> header file. */
 /* #undef HAVE_ALSA_ASOUNDLIB_H */
 
+/* asctime available for date formatting */
+#define HAVE_ASCTIME 1
+
+/* asctime_r available for date formatting */
+#define HAVE_ASCTIME_R 1
+
 /* Define to 1 if you have the <asm/errno.h> header file. */
 /* #undef HAVE_ASM_ERRNO_H */
 

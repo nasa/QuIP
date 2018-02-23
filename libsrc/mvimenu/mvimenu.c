@@ -16,6 +16,8 @@
 #include "gmovie.h"
 #include "function.h"
 #include "xmvi.h"
+#include "rv_api.h"
+#include "fio_api.h"
 #include "seq.h"	// BUG - need to separate public & private
 
 //#ifdef BUILD_FOR_OBJC
@@ -97,7 +99,6 @@ static inline int _movie_ok(SINGLE_QSP_ARG_DECL)
 	}
 	return 1;
 }
-
 
 /*
  * set up a new movie structure

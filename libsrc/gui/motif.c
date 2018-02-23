@@ -109,7 +109,7 @@ static Screen_Obj *_find_object(QSP_ARG_DECL  Widget obj)
 	lp=panel_obj_list();
 	if( lp==NULL )
 {
-WARN("no panel list");
+warn("no panel list");
  return(NULL);
 }
 	np=QLIST_HEAD(lp);
@@ -120,7 +120,7 @@ WARN("no panel list");
 #endif
 		lp2=po->po_children;
 		if( lp2 == NULL )
-			WARN("null child list for panel!?");
+			warn("null child list for panel!?");
 		np2=QLIST_HEAD(lp2);
 		while(np2!=NULL ){
 			Screen_Obj *sop;
@@ -427,7 +427,7 @@ static void button_func(Widget buttonID, XtPointer app_data,
 		_chew_text(DEFAULT_QSP_ARG sop->so_action_text,
 						"(button event)");
 	}
-	else WARN("couldn't locate button");
+	else warn("couldn't locate button");
 }
 
 #endif /* HAVE_MOTIF */
@@ -536,7 +536,7 @@ static void chooser_func(Widget buttonID, XtPointer app_data,	/* app_data should
 	sop = find_object(buttonID);
 
 	if( sop == NULL ) {
-		WARN("couldn't locate chooser button");
+		warn("couldn't locate chooser button");
 		return;
 	}
 
@@ -590,14 +590,14 @@ static void toggle_func(Widget toggleID, XtPointer app_data,
 
 		if( value > 1 ){
 			sprintf(ERROR_STRING,"toggle has a value of %d, expected 0 or 1!?",value);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			value &= 1;
 		}
 		sprintf(val_str,"%d",value);
 		assign_reserved_var("toggle_state",val_str);
 		_chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(toggle event)");
 	}
-	else WARN("couldn't locate toggle button");
+	else warn("couldn't locate toggle button");
 } // toggle_func
 
 /* callback for text widgets - when is this called?  We know it is called when the window loses the focus, but
@@ -648,7 +648,7 @@ static void text_func2(Widget textID, XtPointer app_data, XtPointer widget_data 
 	sop=_find_object(DEFAULT_QSP_ARG  textID);
 #ifdef CAUTIOUS
 	if( sop == NULL ){
-		WARN("CAUTIOUS:  text_func:  couldn't locate text widget");
+		warn("CAUTIOUS:  text_func:  couldn't locate text widget");
 		return;
 	}
 #endif /* CAUTIOUS */
@@ -1182,7 +1182,7 @@ static void navp_genwin_delete(QSP_ARG_DECL  const char *s)
 	Nav_Panel *np_p;
 	np_p=get_nav_panel(s);
 	if( np_p != NULL ) {
-		WARN("sorry, don't know how to delete a nav_panel yet");
+		warn("sorry, don't know how to delete a nav_panel yet");
 	}
 	return;
 
@@ -1289,7 +1289,8 @@ void _show_panel(QSP_ARG_DECL  Panel_Obj *po)
 #ifdef HAVE_MOTIF
 	if( PANEL_MAPPED(po) ){
 		sprintf(ERROR_STRING,"show_panel:  panel %s is already mapped!?",PO_NAME(po));
-		WARN(ERROR_STRING);
+		//warn(ERROR_STRING);
+		advise(ERROR_STRING);
 		return;
 	}
 
@@ -1340,7 +1341,7 @@ void _unshow_panel(QSP_ARG_DECL  Panel_Obj *po)
 #ifdef HAVE_MOTIF
 	if( PANEL_UNMAPPED(po) ){
 		sprintf(ERROR_STRING,"unshow_panel:  panel %s is not currently mapped!?",PO_NAME(po));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1539,7 +1540,7 @@ void _make_picker(QSP_ARG_DECL  Screen_Obj *sop)
 	if( SOB_N_CYLINDERS(sop) != 1 ){
 		sprintf(ERROR_STRING,"picker %s needs %d components, but we're only implementing 1!?",
 			SOB_NAME(sop),SOB_N_CYLINDERS(sop));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	n= SOB_N_SELECTORS_AT_IDX(sop,/*component*/ 0 );
 
@@ -1829,7 +1830,7 @@ Nav_Panel *_create_nav_panel(QSP_ARG_DECL  const char *name)
 	if( np_p == NULL ){
 		sprintf(ERROR_STRING,
 "create_nav_panel:  error creating nav_panel \"%s\"!?",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return NULL;
 	}
 	SET_GW_TYPE( NAVP_GW(np_p), GW_NAV_PANEL );
@@ -1845,7 +1846,7 @@ Nav_Panel *_create_nav_panel(QSP_ARG_DECL  const char *name)
 	// new_panel is supposed to push a scrnobj context...
 	po = new_panel(QSP_ARG  name, DEFAULT_NAV_PANEL_WIDTH, DEFAULT_NAV_PANEL_HEIGHT );
 	if( po == NULL ){
-		WARN("Error creating panel for nav_panel!?");
+		warn("Error creating panel for nav_panel!?");
 		// BUG clean up (delete np_p)
 		return NULL;
 	}
@@ -1882,7 +1883,7 @@ Nav_Panel *_create_nav_panel(QSP_ARG_DECL  const char *name)
 //fprintf(stderr,"create_nav_panel adding back button...\n");
 	bo = simple_object("Back");
 	if( bo == NULL ){
-		WARN("Error creating back button for nav_panel!?");
+		warn("Error creating back button for nav_panel!?");
 		goto no_back_button;
 	}
 
@@ -1917,7 +1918,7 @@ Nav_Group *_create_nav_group(QSP_ARG_DECL  Nav_Panel *np_p, const char *name)
 	if( ng_p == NULL ){
 		sprintf(ERROR_STRING,
 "create_nav_group:  error creating nav_group \"%s\"!?",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return NULL;
 	}
 
@@ -2034,7 +2035,7 @@ void _end_busy(QSP_ARG_DECL  int final)
 
 void _get_confirmation(QSP_ARG_DECL  const char *title, const char *question)
 {
-	//WARN("get_confirmation:  not implemented!?");
+	//warn("get_confirmation:  not implemented!?");
 	assign_var("confirmed","1");
 	fprintf(stderr,"ALERT:  get_confirmation:  confirming without use input...\n");
 }
@@ -2043,13 +2044,13 @@ void _simple_alert(QSP_ARG_DECL  const char *title, const char *msg)
 {
 	// ideally this should be a popup window that keeps the focus until
 	// dismissed, but for now we just print the message to the console
-	//WARN("simple_alert:  not implemented!?");
+	//warn("simple_alert:  not implemented!?");
 	fprintf(stderr,"%s:  %s\n",title,msg);
 }
 
 void _notify_busy(QSP_ARG_DECL  const char *title, const char *msg)
 {
-	WARN("notify_busy:  not implemented!?");
+	warn("notify_busy:  not implemented!?");
 }
 
 int n_pushed_panels(void)

@@ -35,6 +35,10 @@
 #include "win_config.h"
 #else /* ! BUILD_FOR_WINDOWS && ! BUILD_FOR_IOS */
 
+#ifdef BUILD_FOR_MACOS_APP
+#define BUILD_FOR_MACOS
+#endif // BUILD_FOR_MACOS_APP
+
 #ifdef BUILD_FOR_MACOS
 
 #ifndef BUILD_FOR_MACOS_APP

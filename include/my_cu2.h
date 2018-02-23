@@ -23,7 +23,12 @@
 
 #if CUDA_VERSION >= 5000
 // CUDA 5
+#if CUDA_VERSION < 7050
 #define CUDA_ERROR_CHECK(string)	getLastCudaError(string);
+#else // CUDA_VERSION >= 7050
+#define CUDA_ERROR_CHECK(string)	fprintf(stderr,"NEED TO IMPLEMENT CUDA_ERROR_CHECK macro!!!\n");
+#endif // CUDA_VERSION >= 7050
+
 #else // CUDA_VERSION < 5000
 // CUDA 4
 #define CUDA_ERROR_CHECK(string)	cutilCheckMsg(string);

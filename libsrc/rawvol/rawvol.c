@@ -145,6 +145,11 @@ static int dir_stack_depth=0;
 // We used to do this with structure copies, but that caused problems
 // because of dynamic allocation of shape_info...
 
+int is_rv_directory(RV_Inode *inp)
+{
+	return IS_DIRECTORY(inp);
+}
+
 static void copy_rv_inode(RV_Inode *dst_inp, RV_Inode *src_inp)
 {
 	//SET_RV_MOVIE_SHAPE(dst_inp,NULL);	// take care of this later!
@@ -3122,4 +3127,141 @@ void _init_rv_movies(SINGLE_QSP_ARG_DECL)
 	traverse_rv_inodes( _update_movie_database );
 }
 
-#endif // HAVE_RAWVOL
+#else  // ! HAVE_RAWVOL
+
+#define MISSING_PTR_FUNC(name)					\
+{								\
+	NERROR1("Sorry, no rawvol support (" #name ")");	\
+	return NULL;						\
+}
+
+#define MISSING_INT_FUNC(name)					\
+{								\
+	NERROR1("Sorry, no rawvol support (" #name ")");	\
+	return 0;						\
+}
+
+#define MISSING_VOID_FUNC(name)					\
+{								\
+	NERROR1("Sorry, no rawvol support (" #name ")");	\
+}
+
+// pointer functions
+
+const char *rv_name(RV_Inode *inp)
+MISSING_PTR_FUNC(rv_name)
+
+Shape_Info *rv_movie_shape(RV_Inode *inp)
+MISSING_PTR_FUNC(rv_movie_shape)
+
+RV_Inode * rv_newfile(QSP_ARG_DECL  const char *name,uint32_t size)
+MISSING_PTR_FUNC(rv_newfile)
+
+// int functions
+
+int is_rv_directory(RV_Inode *inp)
+MISSING_INT_FUNC(is_rv_directory)
+
+int is_rv_link(RV_Inode *inp)
+MISSING_INT_FUNC(is_rv_link)
+
+int _rv_truncate(QSP_ARG_DECL  RV_Inode *inp,uint32_t new_size)
+MISSING_INT_FUNC(rv_truncate)
+
+int _queue_rv_file(QSP_ARG_DECL  RV_Inode *inp,int *fd_arr)
+MISSING_INT_FUNC(queue_rv_file)
+
+int _rv_set_shape(QSP_ARG_DECL  const char *filename,Shape_Info *shpp)
+MISSING_INT_FUNC(rv_set_shape)
+
+int rv_access_allowed(QSP_ARG_DECL  RV_Inode *inp)
+MISSING_INT_FUNC(rv_access_allowed)
+
+int rv_frames_to_allocate( int n )
+MISSING_INT_FUNC(rv_frames_to_allocate)
+
+int _rv_realloc(QSP_ARG_DECL  const char *name,uint32_t size)
+MISSING_INT_FUNC(rv_realloc)
+
+int _rv_rmfile(QSP_ARG_DECL  const char *name)
+MISSING_INT_FUNC(rv_rmfile)
+
+int rv_cd(QSP_ARG_DECL  const char *dirname)
+MISSING_INT_FUNC(rv_cd)
+
+int rv_is_open(void)
+MISSING_INT_FUNC(rv_is_open)
+
+int grant_root_access(QSP_ARG_DECL  const char *user_name)
+MISSING_INT_FUNC(grant_root_access)
+
+
+// void functions
+
+void _setup_rv_iofile(QSP_ARG_DECL  RV_Inode *inp)
+MISSING_VOID_FUNC(setup_rv_iofile)
+
+void rv_sync(SINGLE_QSP_ARG_DECL)
+MISSING_VOID_FUNC(rv_sync)
+
+void read_rv_super(QSP_ARG_DECL  const char *vol_name)
+MISSING_VOID_FUNC(read_rv_super)
+
+void rv_ls_cwd(SINGLE_QSP_ARG_DECL)
+MISSING_VOID_FUNC(rv_ls_cwd)
+
+void rv_ls_all(SINGLE_QSP_ARG_DECL)
+MISSING_VOID_FUNC(rv_ls_all)
+
+void rv_rm_cwd(SINGLE_QSP_ARG_DECL)
+MISSING_VOID_FUNC(rv_rm_cwd)
+
+void rv_ls_ctx(SINGLE_QSP_ARG_DECL)
+MISSING_VOID_FUNC(rv_ls_ctx)
+
+void rv_ls_inode(QSP_ARG_DECL  RV_Inode *inp)
+MISSING_VOID_FUNC(rv_ls_inode)
+
+void rv_pwd(SINGLE_QSP_ARG_DECL)
+MISSING_VOID_FUNC(rv_pwd)
+
+void _rv_info(QSP_ARG_DECL  RV_Inode *inp)
+MISSING_VOID_FUNC(rv_info)
+
+void rv_chmod(QSP_ARG_DECL  RV_Inode *inp,int mode)
+MISSING_VOID_FUNC(rv_chmod)
+
+void rv_mkdir(QSP_ARG_DECL  const char *dirname)
+MISSING_VOID_FUNC(rv_mkdir)
+
+void xfer_frame_info(uint32_t *lp,int index,RV_Inode *inp)
+MISSING_VOID_FUNC(xfer_frame_info)
+
+void set_use_osync(int flag)
+MISSING_VOID_FUNC(set_use_osync)
+
+void rv_mkfile(QSP_ARG_DECL  const char *pathname,long total_blocks,long blocks_per_write)
+MISSING_VOID_FUNC(rv_mkfile)
+
+void perform_write_test( QSP_ARG_DECL  int i_disk, int n_blocks, int n_reps )
+MISSING_VOID_FUNC(perform_write_test)
+
+void rawvol_info(SINGLE_QSP_ARG_DECL)
+MISSING_VOID_FUNC(rawvol_info)
+
+void dump_block(QSP_ARG_DECL  int i,uint32_t block)
+MISSING_VOID_FUNC(dump_block)
+
+void rawvol_get_usage(SINGLE_QSP_ARG_DECL)
+MISSING_VOID_FUNC(rawvol_get_usage)
+
+void rv_close(SINGLE_QSP_ARG_DECL)
+MISSING_VOID_FUNC(rv_close)
+
+int insure_default_rv(SINGLE_QSP_ARG_DECL)
+MISSING_VOID_FUNC(insure_default_rv)
+
+void rv_mkfs(QSP_ARG_DECL  int ndisks,const char **disknames,uint32_t nib,uint32_t nsb)
+MISSING_VOID_FUNC(rv_mkfs)
+
+#endif // ! HAVE_RAWVOL

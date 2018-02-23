@@ -7,6 +7,7 @@
 #include "data_obj.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -24,11 +25,11 @@
 
 #define TMPSIZE	32	// for temporary object names, e.g. _frame55
 
-ITEM_INTERFACE_DECLARATIONS(PGR_Cam,pgc,0)
+ITEM_INTERFACE_DECLARATIONS(Fly_Cam,fly_cam,0)
 
 #define UNIMP_FUNC(name)						\
 	sprintf(ERROR_STRING,"Function %s is not implemented!?",name);	\
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 
 #ifdef HAVE_LIBFLYCAP
 #define FC2_ENTRY(string,code)				\
@@ -212,13 +213,13 @@ const char *eii_prop_names[N_EII_PROPERTIES]={
 
 #ifdef HAVE_LIBFLYCAP
 
-static double get_pgc_size(QSP_ARG_DECL  Item *ip, int dim_index)
+static double get_fly_cam_size(QSP_ARG_DECL  Item *ip, int dim_index)
 {
 	switch(dim_index){
-		case 0:	return(1.0); /* BUG - not correct for color cameras! */ break;
-		case 1: return(((PGR_Cam *)ip)->pc_cols);
-		case 2: return(((PGR_Cam *)ip)->pc_rows);
-		case 3: return(((PGR_Cam *)ip)->pc_n_buffers);
+		case 0:	return(1.0); /* BUG - not correct for color fly_cams! */ break;
+		case 1: return(((Fly_Cam *)ip)->fc_cols);
+		case 2: return(((Fly_Cam *)ip)->fc_rows);
+		case 3: return(((Fly_Cam *)ip)->fc_n_buffers);
 		case 4: return(1.0);
 		default:
 			// should never happen
@@ -228,22 +229,22 @@ static double get_pgc_size(QSP_ARG_DECL  Item *ip, int dim_index)
 	return(0.0);
 }
 
-static const char * get_pgc_prec_name(QSP_ARG_DECL  Item *ip )
+static const char * get_fly_cam_prec_name(QSP_ARG_DECL  Item *ip )
 {
-	//PGR_Cam *pgcp;
+	//Fly_Cam *fcp;
 
-	//pgcp = (PGR_Cam *)ip;
+	//fcp = (Fly_Cam *)ip;
 
-	WARN("get_pgc_prec_name:  need to implement camera-state-based value!?");
+	warn("get_fly_cam_prec_name:  need to implement fly_cam-state-based value!?");
 
 	//return def_prec_name(QSP_ARG  ip);
 	return("u_byte");
 }
 
 
-static Size_Functions pgc_sf={
-	get_pgc_size,
-	get_pgc_prec_name
+static Size_Functions fly_cam_sf={
+	get_fly_cam_size,
+	get_fly_cam_prec_name
 
 };
 
@@ -272,7 +273,7 @@ static void report_fc2_error(QSP_ARG_DECL  fc2Error error, const char *whence )
 		case FC2_ERROR_INVALID_PARAMETER:
 			msg = "Invalid parameter passed to function."; break;
 		case FC2_ERROR_INVALID_SETTINGS:
-			msg = "Setting set to camera is invalid."; break;
+			msg = "Setting set to fly_cam is invalid."; break;
 		case FC2_ERROR_INVALID_BUS_MANAGER:
 			msg = "Invalid Bus Manager object."; break;
 		case FC2_ERROR_MEMORY_ALLOCATION_FAILED:
@@ -284,7 +285,7 @@ static void report_fc2_error(QSP_ARG_DECL  fc2Error error, const char *whence )
 		case FC2_ERROR_FAILED_GUID:
 			msg = "GUID failure."; break;
 		case FC2_ERROR_INVALID_PACKET_SIZE:
-			msg = "Packet size set to camera is invalid."; break;
+			msg = "Packet size set to fly_cam is invalid."; break;
 		case FC2_ERROR_INVALID_MODE:
 			msg = "Invalid mode has been passed to function."; break;
 		case FC2_ERROR_NOT_IN_FORMAT7:
@@ -344,48 +345,48 @@ static void report_fc2_error(QSP_ARG_DECL  fc2Error error, const char *whence )
 			sprintf(ERROR_STRING,
 		"report_fc2_error (%s):  unhandled error code %d!?\n",
 				whence,error);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			msg = "unhandled error code";
 			break;
 	}
 	sprintf(ERROR_STRING,"%s:  %s",whence,msg);
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 }
 
-ITEM_INTERFACE_DECLARATIONS(PGR_Property_Type,pgr_prop,0)
+ITEM_INTERFACE_DECLARATIONS(Fly_Cam_Property_Type,pgr_prop,0)
 
-//  When we change cameras, we have to refresh all properties!
+//  When we change fly_cams, we have to refresh all properties!
 
 static void _init_one_property(QSP_ARG_DECL const char *name, fc2PropertyType t)
 {
-	PGR_Property_Type *pgpt;
+	Fly_Cam_Property_Type *pgpt;
 
-	pgpt = new_pgr_prop(QSP_ARG  name);
+	pgpt = new_pgr_prop(name);
 	if( pgpt == NULL ) return;
 	pgpt->info.type =
 	pgpt->prop.type =
 	pgpt->type_code = t;
 }
 
-void list_cam_properties(QSP_ARG_DECL  PGR_Cam *pgcp)
+void list_fly_cam_properties(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	List *lp;
 	Node *np;
-	PGR_Property_Type *pgpt;
+	Fly_Cam_Property_Type *pgpt;
 
-	lp = pgr_prop_list(SINGLE_QSP_ARG);	// all properties
+	lp = pgr_prop_list();	// all properties
 	np = QLIST_HEAD(lp);
 	if( np != NULL ){
-		sprintf(MSG_STR,"\n%s properties",pgcp->pc_name);
+		sprintf(MSG_STR,"\n%s properties",fcp->fc_name);
 		prt_msg(MSG_STR);
 	} else {
-		sprintf(ERROR_STRING,"%s has no properties!?",pgcp->pc_name);
-		WARN(ERROR_STRING);
+		sprintf(ERROR_STRING,"%s has no properties!?",fcp->fc_name);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	while(np!=NULL){
-		pgpt = (PGR_Property_Type *)NODE_DATA(np);
+		pgpt = (Fly_Cam_Property_Type *)NODE_DATA(np);
 		if( pgpt->info.present ){
 			sprintf(MSG_STR,"\t%s",pgpt->name);
 			prt_msg(MSG_STR);
@@ -395,21 +396,21 @@ void list_cam_properties(QSP_ARG_DECL  PGR_Cam *pgcp)
 	prt_msg("");
 }
 
-// We call this after we select a camera
+// We call this after we select a fly_cam
 
-void refresh_camera_properties(QSP_ARG_DECL  PGR_Cam *pgcp)
+void refresh_fly_cam_properties(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	List *lp;
 	Node *np;
-	PGR_Property_Type *pgpt;
+	Fly_Cam_Property_Type *pgpt;
 
-	lp = pgr_prop_list(SINGLE_QSP_ARG);	// all properties
+	lp = pgr_prop_list();	// all properties
 	np = QLIST_HEAD(lp);
 	while(np!=NULL){
-		pgpt = (PGR_Property_Type *)NODE_DATA(np);
-		refresh_property_info(QSP_ARG  pgcp, pgpt );
+		pgpt = (Fly_Cam_Property_Type *)NODE_DATA(np);
+		refresh_property_info(QSP_ARG  fcp, pgpt );
 		if( pgpt->info.present ){
-			refresh_property_value(QSP_ARG  pgcp, pgpt );
+			refresh_property_value(QSP_ARG  fcp, pgpt );
 		}
 		np = NODE_NEXT(np);
 	}
@@ -439,22 +440,22 @@ static void init_property_types(SINGLE_QSP_ARG_DECL)
 	init_one_property( "temperature",	FC2_TEMPERATURE		);
 }
 
-void refresh_property_info(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt )
+void refresh_property_info(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt )
 {
 	fc2Error error;
 
-	error = fc2GetPropertyInfo( pgcp->pc_context, &(pgpt->info) );
+	error = fc2GetPropertyInfo( fcp->fc_context, &(pgpt->info) );
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2GetPropertyInfo" );
 		return;
 	}
 }
 
-void show_property_info(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt )
+void show_property_info(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt )
 {
 	char var_name[32],val_str[32];
 
-	sprintf(MSG_STR,"\n%s %s info:",pgcp->pc_name,pgpt->name);
+	sprintf(MSG_STR,"\n%s %s info:",fcp->fc_name,pgpt->name);
 	prt_msg(MSG_STR);
 
 	// Now print out the property info?
@@ -505,50 +506,50 @@ void show_property_info(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt )
 
 		sprintf(var_name,"%s_abs_min",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
 		sprintf(val_str,"%g",pgpt->info.absMin);
-		ASSIGN_VAR(var_name,val_str);
+		assign_var(var_name,val_str);
 
 		sprintf(var_name,"%s_abs_max",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
 		sprintf(val_str,"%g",pgpt->info.absMax);
-		ASSIGN_VAR(var_name,val_str);
+		assign_var(var_name,val_str);
 	} else {
 		sprintf(MSG_STR,"\tRange:  %d - %d",
 			pgpt->info.min,pgpt->info.max);
 		prt_msg(MSG_STR);
 
 		sprintf(var_name,"%s_abs_min",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
-		ASSIGN_VAR(var_name,"(undefined)");
+		assign_var(var_name,"(undefined)");
 
 		sprintf(var_name,"%s_abs_max",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
-		ASSIGN_VAR(var_name,"(undefined)");
+		assign_var(var_name,"(undefined)");
 	}
 
 	sprintf(var_name,"%s_min",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
 	sprintf(val_str,"%d",pgpt->info.min);
-	ASSIGN_VAR(var_name,val_str);
+	assign_var(var_name,val_str);
 
 	sprintf(var_name,"%s_max",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
 	sprintf(val_str,"%d",pgpt->info.max);
-	ASSIGN_VAR(var_name,val_str);
+	assign_var(var_name,val_str);
 
 	sprintf(MSG_STR,"\tUnits:  %s (%s)",pgpt->info.pUnits,pgpt->info.pUnitAbbr);
 	prt_msg(MSG_STR);
 }
 
-void refresh_property_value(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt )
+void refresh_property_value(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt )
 {
 	fc2Error error;
 
-	error = fc2GetProperty( pgcp->pc_context, &(pgpt->prop) );
+	error = fc2GetProperty( fcp->fc_context, &(pgpt->prop) );
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2GetProperty" );
 		return;
 	}
 }
 
-void show_property_value(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt )
+void show_property_value(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt )
 {
 	sprintf(MSG_STR,"\n%s %s:",
-		pgcp->pc_name,pgpt->name);
+		fcp->fc_name,pgpt->name);
 	prt_msg(MSG_STR);
 
 	if( pgpt->info.autoSupported ){
@@ -580,7 +581,7 @@ void show_property_value(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt )
 			prt_msg("\tOne push is false");
 	}
 	// What exactly is readOut???  does this tell us whether we can read
-	// the value back from the camera???
+	// the value back from the fly_cam???
 	if( pgpt->info.readOutSupported ){
 		// Now print out the property value itself!
 		// Can we see both???
@@ -591,7 +592,7 @@ void show_property_value(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt )
 
 		// let a script access the value also
 		sprintf(MSG_STR,"%d",pgpt->prop.valueA);
-		ASSIGN_VAR(pgpt->name,MSG_STR);
+		assign_var(pgpt->name,MSG_STR);
 		// should this be a reserved var?  I think so!
 
 		if( pgpt->info.absValSupported ){
@@ -602,22 +603,22 @@ void show_property_value(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt )
 			// let a script access the value also
 			sprintf(MSG_STR,"%g",pgpt->prop.absValue);
 			sprintf(ERROR_STRING,"%s_abs",pgpt->name);	// using ERROR_STRING as a temporary...
-			ASSIGN_VAR(ERROR_STRING,MSG_STR);
+			assign_var(ERROR_STRING,MSG_STR);
 			// should this be a reserved var?  I think so!
 		} else {
 			sprintf(ERROR_STRING,"%s_abs",pgpt->name);	// using ERROR_STRING as a temporary...
-			ASSIGN_VAR(ERROR_STRING,"(undefined)");
+			assign_var(ERROR_STRING,"(undefined)");
 		}
 	} else {
 		prt_msg("\t(Readout not supported)");
 		sprintf(ERROR_STRING,"%s",pgpt->name);
-		ASSIGN_VAR(ERROR_STRING,"(undefined)");
+		assign_var(ERROR_STRING,"(undefined)");
 		sprintf(ERROR_STRING,"%s_abs",pgpt->name);
-		ASSIGN_VAR(ERROR_STRING,"(undefined)");
+		assign_var(ERROR_STRING,"(undefined)");
 	}
 }
 
-void set_prop_value(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt, PGR_Prop_Val *vp )
+void set_prop_value(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt, Fly_Cam_Prop_Val *vp )
 {
 	fc2Error error;
 
@@ -626,7 +627,7 @@ void set_prop_value(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt, PGR_Pr
 			sprintf(ERROR_STRING,"Requested %s (%f) out of range (%f - %f)",
 				pgpt->name,
 				vp->pv_u.u_f,pgpt->info.absMin,pgpt->info.absMax);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 		pgpt->prop.absControl = TRUE;
@@ -636,62 +637,62 @@ void set_prop_value(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt, PGR_Pr
 			sprintf(ERROR_STRING,"Requested %s (%d) out of range (%d - %d)",
 				pgpt->name,
 				vp->pv_u.u_i,pgpt->info.min,pgpt->info.max);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 		pgpt->prop.absControl = FALSE;
 		pgpt->prop.valueA = vp->pv_u.u_i;
 	}
 
-	error = fc2SetProperty( pgcp->pc_context, &(pgpt->prop));
+	error = fc2SetProperty( fcp->fc_context, &(pgpt->prop));
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2SetProperty" );
 		return;
 	}
 }
 
-void set_prop_auto(QSP_ARG_DECL  PGR_Cam *pgcp, PGR_Property_Type *pgpt, BOOL yn )
+void set_prop_auto(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt, BOOL yn )
 {
 	fc2Error error;
 
 	if( ! pgpt->info.autoSupported ){
 		sprintf(ERROR_STRING,"Sorry, auto mode not supported for %s.",
 			pgpt->name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	pgpt->prop.autoManualMode = yn;
-	error = fc2SetProperty( pgcp->pc_context, &(pgpt->prop) );
+	error = fc2SetProperty( fcp->fc_context, &(pgpt->prop) );
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2SetProperty" );
 		return;
 	}
 }
 
-static void insure_stopped(QSP_ARG_DECL  PGR_Cam *pgcp, const char *op_desc)
+static void insure_stopped(QSP_ARG_DECL  Fly_Cam *fcp, const char *op_desc)
 {
-	if( (pgcp->pc_flags & PGR_CAM_IS_RUNNING) == 0 ) return;
+	if( (fcp->fc_flags & FLY_CAM_IS_RUNNING) == 0 ) return;
 
 	sprintf(ERROR_STRING,"Stopping capture on %s prior to %s",
-		pgcp->pc_name,op_desc);
+		fcp->fc_name,op_desc);
 	advise(ERROR_STRING);
 
-	stop_firewire_capture(QSP_ARG  pgcp);
+	stop_firewire_capture(QSP_ARG  fcp);
 }
 
 void
-cleanup_cam( PGR_Cam *pgcp )
+cleanup_fly_cam( Fly_Cam *fcp )
 {
-	//if( IS_CAPTURING(pgcp) )
-		 //dc1394_capture_stop( pgcp->pc_cam_p );
-		 //fly_capture_stop( pgcp->pc_cam_p );
-	//if( IS_TRANSMITTING(pgcp) )
-		//dc1394_video_set_transmission( pgcp->pc_cam_p, DC1394_OFF );
-		//fly_video_set_transmission( pgcp->pc_cam_p, DC1394_OFF );
-	/* dc1394_free_camera */
-	//dc1394_camera_free( pgcp->pc_cam_p );
-	//fly_camera_free( pgcp->pc_cam_p );
+	//if( IS_CAPTURING(fcp) )
+		 //dc1394_capture_stop( fcp->fc_cam_p );
+		 //fly_capture_stop( fcp->fc_cam_p );
+	//if( IS_TRANSMITTING(fcp) )
+		//dc1394_video_set_transmission( fcp->fc_cam_p, DC1394_OFF );
+		//fly_video_set_transmission( fcp->fc_cam_p, DC1394_OFF );
+	/* dc1394_free_fly_cam */
+	//dc1394_fly_cam_free( fcp->fc_cam_p );
+	//fly_fly_cam_free( fcp->fc_cam_p );
 }
 
 
@@ -741,27 +742,27 @@ NAME_LOOKUP_FUNC(bus_speed,fc2BusSpeed,nbs)
 NAME_LOOKUP_FUNC(bw_allocation,fc2BandwidthAllocation,nba)
 NAME_LOOKUP_FUNC(interface,fc2InterfaceType,nif)
 
-int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
+int get_fly_cam_names( QSP_ARG_DECL  Data_Obj *str_dp )
 {
 	// Could check format of object here...
 	// Should be string table with enough entries to hold the modes
 	// Should the strings be rows or multidim pixels?
 	List *lp;
 	Node *np;
-	PGR_Cam *pgcp;
+	Fly_Cam *fcp;
 	int i, n;
 
-	lp = pgc_list(SINGLE_QSP_ARG);
+	lp = fly_cam_list();
 	if( lp == NULL ){
-		WARN("No cameras!?");
+		warn("No fly_cams!?");
 		return 0;
 	}
 
 	n=eltcount(lp);
 	if( OBJ_COLS(str_dp) < n ){
-		sprintf(ERROR_STRING,"String object %s has too few columns (%ld) to hold %d camera names",
+		sprintf(ERROR_STRING,"String object %s has too few columns (%ld) to hold %d fly_cam names",
 			OBJ_NAME(str_dp),(long)OBJ_COLS(str_dp),n);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		n = OBJ_COLS(str_dp);
 	}
 		
@@ -769,15 +770,15 @@ int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
 	i=0;
 	while(np!=NULL){
 		char *dst;
-		pgcp = (PGR_Cam *) NODE_DATA(np);
+		fcp = (Fly_Cam *) NODE_DATA(np);
 		dst = OBJ_DATA_PTR(str_dp);
 		dst += i * OBJ_PXL_INC(str_dp);
-		if( strlen(pgcp->pc_name)+1 > OBJ_COMPS(str_dp) ){
-			sprintf(ERROR_STRING,"String object %s has too few components (%ld) to hold camera name \"%s\"",
-				OBJ_NAME(str_dp),(long)OBJ_COMPS(str_dp),pgcp->pc_name);
-			WARN(ERROR_STRING);
+		if( strlen(fcp->fc_name)+1 > OBJ_COMPS(str_dp) ){
+			sprintf(ERROR_STRING,"String object %s has too few components (%ld) to hold fly_cam name \"%s\"",
+				OBJ_NAME(str_dp),(long)OBJ_COMPS(str_dp),fcp->fc_name);
+			warn(ERROR_STRING);
 		} else {
-			strcpy(dst,pgcp->pc_name);
+			strcpy(dst,fcp->fc_name);
 		}
 		i++;
 		if( i>=n )
@@ -789,7 +790,7 @@ int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
 	return i;
 }
 
-int get_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, PGR_Cam *pgcp )
+int get_fly_cam_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, Fly_Cam *fcp )
 {
 	// Could check format of object here...
 	// Should be string table with enough entries to hold the modes
@@ -797,13 +798,13 @@ int get_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, PGR_Cam *pgcp )
 
 	int i, n;
 
-	if( OBJ_COLS(str_dp) < pgcp->pc_n_video_modes ){
+	if( OBJ_COLS(str_dp) < fcp->fc_n_video_modes ){
 		sprintf(ERROR_STRING,"String object %s has too few columns (%ld) to hold %d modes",
-			OBJ_NAME(str_dp),(long)OBJ_COLS(str_dp),pgcp->pc_n_video_modes);
-		WARN(ERROR_STRING);
+			OBJ_NAME(str_dp),(long)OBJ_COLS(str_dp),fcp->fc_n_video_modes);
+		warn(ERROR_STRING);
 		n = OBJ_COLS(str_dp);
 	} else {
-		n=pgcp->pc_n_video_modes;
+		n=fcp->fc_n_video_modes;
 	}
 		
 	for(i=0;i<n;i++){
@@ -811,14 +812,14 @@ int get_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, PGR_Cam *pgcp )
 		const char *src;
 		char *dst;
 
-		k=pgcp->pc_video_mode_indices[i];
+		k=fcp->fc_video_mode_indices[i];
 		src = all_video_modes[k].nvm_name;
 		dst = OBJ_DATA_PTR(str_dp);
 		dst += i * OBJ_PXL_INC(str_dp);
 		if( strlen(src)+1 > OBJ_COMPS(str_dp) ){
 			sprintf(ERROR_STRING,"String object %s has too few components (%ld) to hold mode string \"%s\"",
 				OBJ_NAME(str_dp),(long)OBJ_COMPS(str_dp),src);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		} else {
 			strcpy(dst,src);
 		}
@@ -840,26 +841,26 @@ static int bit_count(Framerate_Mask mask)
 	return c;
 }
 
-static void get_framerate_choices(QSP_ARG_DECL  PGR_Cam *pgcp)
+static void get_framerate_choices(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	unsigned int i,n,idx;
 	Framerate_Mask mask;
 
-	if( pgcp->pc_framerate_names != NULL ){
-		givbuf(pgcp->pc_framerate_names);
-		pgcp->pc_framerate_names=NULL;	// in case we have an error before finishing
+	if( fcp->fc_framerate_names != NULL ){
+		givbuf(fcp->fc_framerate_names);
+		fcp->fc_framerate_names=NULL;	// in case we have an error before finishing
 	}
 
 	// format7 doesn't have a framerate!?
 
-	mask = pgcp->pc_framerate_mask_tbl[ pgcp->pc_my_video_mode_index ];
+	mask = fcp->fc_framerate_mask_tbl[ fcp->fc_my_video_mode_index ];
 /*
 sprintf(ERROR_STRING,"%s:  video mode is %s",
-pgcp->pc_name,all_video_modes[pgcp->pc_video_mode_index].nvm_name);
+fcp->fc_name,all_video_modes[fcp->fc_video_mode_index].nvm_name);
 advise(ERROR_STRING);
 sprintf(ERROR_STRING,"%s:  my video mode %s (index = %d)",
-pgcp->pc_name,pgcp->pc_video_mode_names[pgcp->pc_my_video_mode_index],
-pgcp->pc_my_video_mode_index);
+fcp->fc_name,fcp->fc_video_mode_names[fcp->fc_my_video_mode_index],
+fcp->fc_my_video_mode_index);
 advise(ERROR_STRING);
 */
 
@@ -867,9 +868,9 @@ advise(ERROR_STRING);
 	if( n <= 0 ){
 		// this happens for the format7 video mode...
 		// Can this ever happen?  If not, should be CAUTIOUS...
-		//WARN("no framerates for this video mode!?");
-		if( pgcp->pc_video_mode == FC2_VIDEOMODE_FORMAT7 ){
-			if( pgcp->pc_framerate == FC2_FRAMERATE_FORMAT7 ){
+		//warn("no framerates for this video mode!?");
+		if( fcp->fc_video_mode == FC2_VIDEOMODE_FORMAT7 ){
+			if( fcp->fc_framerate == FC2_FRAMERATE_FORMAT7 ){
 				advise("No framerates available for format7.");
 			}
 			  else {
@@ -882,8 +883,8 @@ advise(ERROR_STRING);
 		return;
 	}
 
-	pgcp->pc_framerate_names = getbuf( n * sizeof(char *) );
-	pgcp->pc_n_framerates = n ;
+	fcp->fc_framerate_names = getbuf( n * sizeof(char *) );
+	fcp->fc_n_framerates = n ;
 
 	i=(-1);
 	idx=0;
@@ -894,7 +895,7 @@ advise(ERROR_STRING);
 			int j;
 			r = i ;
 			j = index_of_framerate( r );
-			pgcp->pc_framerate_names[idx]=all_framerates[j].nfr_name;
+			fcp->fc_framerate_names[idx]=all_framerates[j].nfr_name;
 			idx++;
 		}
 			
@@ -904,36 +905,36 @@ advise(ERROR_STRING);
 	assert( idx == n );
 }
 
-int get_framerate_strings( QSP_ARG_DECL  Data_Obj *str_dp, PGR_Cam *pgcp )
+int get_fly_cam_framerate_strings( QSP_ARG_DECL  Data_Obj *str_dp, Fly_Cam *fcp )
 {
 	int i, n;
 	const char *src;
 	char *dst;
 
-	get_framerate_choices(QSP_ARG  pgcp);
+	get_framerate_choices(QSP_ARG  fcp);
 
 	// Could check format of object here...
 	// Should be string table with enough entries to hold the modes
 	// Should the strings be rows or multidim pixels?
 
-	n = pgcp->pc_n_framerates;
+	n = fcp->fc_n_framerates;
 
 	if( OBJ_COLS(str_dp) < n ){
 		sprintf(ERROR_STRING,"String object %s has too few columns (%ld) to hold %d framerates",
 			OBJ_NAME(str_dp),(long)OBJ_COLS(str_dp),n);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		n = OBJ_COLS(str_dp);
 	}
 
-	for(i=0;i<pgcp->pc_n_framerates;i++){
-		src = pgcp->pc_framerate_names[i];
+	for(i=0;i<fcp->fc_n_framerates;i++){
+		src = fcp->fc_framerate_names[i];
 		dst = OBJ_DATA_PTR(str_dp);
 		dst += i * OBJ_PXL_INC(str_dp);
 		if( strlen(src)+1 > OBJ_COMPS(str_dp) ){
 			sprintf(ERROR_STRING,
 "String object %s has too few components (%ld) to hold framerate string \"%s\"",
 				OBJ_NAME(str_dp),(long)OBJ_COMPS(str_dp),src);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		} else {
 			strcpy(dst,src);
 		}
@@ -941,7 +942,7 @@ int get_framerate_strings( QSP_ARG_DECL  Data_Obj *str_dp, PGR_Cam *pgcp )
 	return n;
 }
 
-static void test_setup(QSP_ARG_DECL  PGR_Cam *pgcp,
+static void test_setup(QSP_ARG_DECL  Fly_Cam *fcp,
 		fc2VideoMode m, fc2FrameRate r, int *kp, int idx )
 {
 	fc2Error error;
@@ -949,10 +950,10 @@ static void test_setup(QSP_ARG_DECL  PGR_Cam *pgcp,
 
 	// punt if format 7
 	if( m == FC2_VIDEOMODE_FORMAT7 && r == FC2_FRAMERATE_FORMAT7 ){
-		// BUG?  make sure camera has format7 modes?
+		// BUG?  make sure fly_cam has format7 modes?
 		supported = TRUE;
 	} else {
-		error = fc2GetVideoModeAndFrameRateInfo( pgcp->pc_context,
+		error = fc2GetVideoModeAndFrameRateInfo( fcp->fc_context,
 			m,r,&supported );
 		if( error != FC2_ERROR_OK ){
 			report_fc2_error(QSP_ARG  error,
@@ -962,21 +963,21 @@ static void test_setup(QSP_ARG_DECL  PGR_Cam *pgcp,
 	}
 
 	if( supported ){
-		if( *kp < 0 || pgcp->pc_video_mode_indices[*kp] != idx ){
+		if( *kp < 0 || fcp->fc_video_mode_indices[*kp] != idx ){
 			*kp = (*kp)+1;
-			pgcp->pc_video_mode_indices[*kp] = idx;
-			pgcp->pc_video_mode_names[*kp] = all_video_modes[idx].nvm_name;
+			fcp->fc_video_mode_indices[*kp] = idx;
+			fcp->fc_video_mode_names[*kp] = all_video_modes[idx].nvm_name;
 //fprintf(stderr,"test_setup:  adding video mode %s to %s\n",
 //all_video_modes[idx].nvm_name,
-//pgcp->pc_name);
-			if( pgcp->pc_video_mode == m )
-				pgcp->pc_video_mode_index = *kp;
+//fcp->fc_name);
+			if( fcp->fc_video_mode == m )
+				fcp->fc_video_mode_index = *kp;
 		}
-		pgcp->pc_framerate_mask_tbl[*kp] |= 1 << r;
+		fcp->fc_framerate_mask_tbl[*kp] |= 1 << r;
 	}
 }
 
-static int get_supported_video_modes(QSP_ARG_DECL  PGR_Cam *pgcp )
+static int get_supported_video_modes(QSP_ARG_DECL  Fly_Cam *fcp )
 {
 	int i,j,n_so_far;
 
@@ -989,19 +990,19 @@ static int get_supported_video_modes(QSP_ARG_DECL  PGR_Cam *pgcp )
 		m=all_video_modes[i].nvm_value;
 		if( m == FC2_VIDEOMODE_FORMAT7 ){
 			r = FC2_FRAMERATE_FORMAT7;
-			test_setup(QSP_ARG  pgcp, m, r, &n_so_far, i );
+			test_setup(QSP_ARG  fcp, m, r, &n_so_far, i );
 		} else {
 			for(j=0;j<N_STD_FRAMERATES;j++){
 				r=all_framerates[j].nfr_value;
 //fprintf(stderr,"Testing video mode %d and frame rate %d\n",
-//m,pgcp->pc_framerate);
-				test_setup(QSP_ARG  pgcp, m, r, &n_so_far, i );
+//m,fcp->fc_framerate);
+				test_setup(QSP_ARG  fcp, m, r, &n_so_far, i );
 			}
 		}
 	}
 	n_so_far++;
 //fprintf(stderr,"get_supported_video_modes:  setting n_video_modes to %d\n",k);
-	pgcp->pc_n_video_modes = n_so_far;
+	fcp->fc_n_video_modes = n_so_far;
 	return 0;
 }
 
@@ -1019,14 +1020,14 @@ static fc2FrameRate highest_framerate( QSP_ARG_DECL  Framerate_Mask mask )
 	return (fc2FrameRate) k;
 }
 
-int is_fmt7_mode(QSP_ARG_DECL  PGR_Cam *pgcp, int idx )
+int is_fmt7_mode(QSP_ARG_DECL  Fly_Cam *fcp, int idx )
 {
 	fc2VideoMode m;
 
 //	CHECK_IDX(is_fmt7_mode)
-	assert( idx >= 0 && idx < pgcp->pc_n_video_modes );
+	assert( idx >= 0 && idx < fcp->fc_n_video_modes );
 
-	m = all_video_modes[ pgcp->pc_video_mode_indices[idx] ].nvm_value;
+	m = all_video_modes[ fcp->fc_video_mode_indices[idx] ].nvm_value;
 	if( m == FC2_VIDEOMODE_FORMAT7 ) return 1;
 	return 0;
 }
@@ -1035,61 +1036,61 @@ int is_fmt7_mode(QSP_ARG_DECL  PGR_Cam *pgcp, int idx )
 // don't know whether the library might change anything (like the
 // number of buffers, but it seems possible?
 
-static int refresh_config(QSP_ARG_DECL  PGR_Cam *pgcp)
+static int refresh_config(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	fc2Error error;
 
-	error = fc2GetConfiguration(pgcp->pc_context,&pgcp->pc_config);
+	error = fc2GetConfiguration(fcp->fc_context,&fcp->fc_config);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2GetConfiguration" );
 		// should we set a flag to indicate an invalid config?
 		return -1;
 	}
-	pgcp->pc_n_buffers = pgcp->pc_config.numBuffers;
+	fcp->fc_n_buffers = fcp->fc_config.numBuffers;
 	return 0;
 }
 
 
-int set_std_mode(QSP_ARG_DECL  PGR_Cam *pgcp, int idx )
+int set_std_mode(QSP_ARG_DECL  Fly_Cam *fcp, int idx )
 {
 	fc2FrameRate r;
 	fc2Error error;
 	fc2VideoMode m;
 
 //	CHECK_IDX(set_std_mode)
-	assert( idx >= 0 && idx < pgcp->pc_n_video_modes );
+	assert( idx >= 0 && idx < fcp->fc_n_video_modes );
 
-	insure_stopped(QSP_ARG  pgcp,"setting video mode");
+	insure_stopped(QSP_ARG  fcp,"setting video mode");
 
-	m = all_video_modes[ pgcp->pc_video_mode_indices[idx] ].nvm_value;
+	m = all_video_modes[ fcp->fc_video_mode_indices[idx] ].nvm_value;
 	if( m == FC2_VIDEOMODE_FORMAT7 ){
-		WARN("set_std_mode:  use set_fmt7_mode to select format7!?");
+		warn("set_std_mode:  use set_fmt7_mode to select format7!?");
 		return -1;
 	}
 
-	r = highest_framerate(QSP_ARG  pgcp->pc_framerate_mask_tbl[idx] );
+	r = highest_framerate(QSP_ARG  fcp->fc_framerate_mask_tbl[idx] );
 
-	error = fc2SetVideoModeAndFrameRate(pgcp->pc_context,m,r);
+	error = fc2SetVideoModeAndFrameRate(fcp->fc_context,m,r);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2SetVideoModeAndFrameRate" );
 		return -1;
 	}
 
-	pgcp->pc_my_video_mode_index = idx;
-	pgcp->pc_video_mode = m;
-	pgcp->pc_framerate = r;
-	pgcp->pc_base = NULL;	// force init_fly_base to run again
-	pgcp->pc_video_mode_index = pgcp->pc_video_mode_indices[idx];
-	pgcp->pc_framerate_index = index_of_framerate(r);
+	fcp->fc_my_video_mode_index = idx;
+	fcp->fc_video_mode = m;
+	fcp->fc_framerate = r;
+	fcp->fc_base = NULL;	// force init_fly_base to run again
+	fcp->fc_video_mode_index = fcp->fc_video_mode_indices[idx];
+	fcp->fc_framerate_index = index_of_framerate(r);
 
-	pgcp->pc_cols = all_video_modes[ pgcp->pc_video_mode_index ].nvm_width;
-	pgcp->pc_rows = all_video_modes[ pgcp->pc_video_mode_index ].nvm_height;
-	pgcp->pc_depth = all_video_modes[ pgcp->pc_video_mode_index ].nvm_depth;
+	fcp->fc_cols = all_video_modes[ fcp->fc_video_mode_index ].nvm_width;
+	fcp->fc_rows = all_video_modes[ fcp->fc_video_mode_index ].nvm_height;
+	fcp->fc_depth = all_video_modes[ fcp->fc_video_mode_index ].nvm_depth;
 
-	return refresh_config(QSP_ARG  pgcp);
+	return refresh_config(QSP_ARG  fcp);
 } // set_std_mode
 
-static void set_highest_fmt7_framerate( QSP_ARG_DECL  PGR_Cam *pgcp )
+static void set_highest_fmt7_framerate( QSP_ARG_DECL  Fly_Cam *fcp )
 {
 	/* If the frame rate has been set to 60 fps by using a default
 	 * video mode at startup, it will not be reset when we switch
@@ -1102,22 +1103,22 @@ static void set_highest_fmt7_framerate( QSP_ARG_DECL  PGR_Cam *pgcp )
 	fc2PropertyInfo propInfo;
 
 	propInfo.type = FC2_FRAME_RATE;
-	error = fc2GetPropertyInfo( pgcp->pc_context, &propInfo );
+	error = fc2GetPropertyInfo( fcp->fc_context, &propInfo );
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2GetPropertyInfo" );
 		return;
 	}
 #endif // FOOBAR
-	PGR_Property_Type *fr_prop_p;
+	Fly_Cam_Property_Type *fr_prop_p;
 
-	fr_prop_p = get_pgr_prop(QSP_ARG  "frame_rate" );	// BUG string must match table
+	fr_prop_p = get_pgr_prop("frame_rate" );	// BUG string must match table
 
 	assert( fr_prop_p != NULL );
 
 	assert( fr_prop_p->info.absValSupported );
 
 	prop.type = FC2_FRAME_RATE;
-	error = fc2GetProperty( pgcp->pc_context, &prop);
+	error = fc2GetProperty( fcp->fc_context, &prop);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2GetProperty" );
 		return;
@@ -1125,14 +1126,14 @@ static void set_highest_fmt7_framerate( QSP_ARG_DECL  PGR_Cam *pgcp )
 	prop.absControl = TRUE;
 	prop.absValue = fr_prop_p->info.absMax;
 
-	error = fc2SetProperty( pgcp->pc_context, &prop);
+	error = fc2SetProperty( fcp->fc_context, &prop);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2SetProperty" );
 		return;
 	}
 }
 
-int set_fmt7_mode(QSP_ARG_DECL  PGR_Cam *pgcp, int idx )
+int set_fmt7_mode(QSP_ARG_DECL  Fly_Cam *fcp, int idx )
 {
 	fc2Format7ImageSettings settings;
 //	fc2Format7PacketInfo pinfo;
@@ -1141,40 +1142,40 @@ int set_fmt7_mode(QSP_ARG_DECL  PGR_Cam *pgcp, int idx )
 	unsigned int packetSize;
 	float percentage;
 
-	insure_stopped(QSP_ARG  pgcp,"setting format7 mode");
+	insure_stopped(QSP_ARG  fcp,"setting format7 mode");
 
-	if( idx < 0 || idx >= pgcp->pc_n_fmt7_modes ){
-		WARN("Format 7 index out of range!?");
+	if( idx < 0 || idx >= fcp->fc_n_fmt7_modes ){
+		warn("Format 7 index out of range!?");
 		return -1;
 	}
 
 	settings.mode = idx;
 	settings.offsetX = 0;
 	settings.offsetY = 0;
-	settings.width = pgcp->pc_fmt7_info_tbl[idx].maxWidth;
-	settings.height = pgcp->pc_fmt7_info_tbl[idx].maxHeight;
-	if( pgcp->pc_fmt7_info_tbl[idx].pixelFormatBitField &
+	settings.width = fcp->fc_fmt7_info_tbl[idx].maxWidth;
+	settings.height = fcp->fc_fmt7_info_tbl[idx].maxHeight;
+	if( fcp->fc_fmt7_info_tbl[idx].pixelFormatBitField &
 			FC2_PIXEL_FORMAT_RAW8 )
 		settings.pixelFormat = FC2_PIXEL_FORMAT_RAW8;
 	else {
-		WARN("Camera does not support raw8!?");
+		warn("Camera does not support raw8!?");
 		return -1;
 	}
 
 fprintf(stderr,"Using size %d x %d\n",settings.width,settings.height);
 
 	percentage = 100.0;
-	error = fc2SetFormat7Configuration(pgcp->pc_context,&settings,
+	error = fc2SetFormat7Configuration(fcp->fc_context,&settings,
 			percentage);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2SetFormat7Configuration" );
 		return -1;
 	}
 
-	set_highest_fmt7_framerate(QSP_ARG  pgcp);
+	set_highest_fmt7_framerate(QSP_ARG  fcp);
 
 	// This fails if we are not in format 7 already.
-	error = fc2GetFormat7Configuration(pgcp->pc_context,&settings,
+	error = fc2GetFormat7Configuration(fcp->fc_context,&settings,
 			&packetSize,&percentage);
 
 	if( error != FC2_ERROR_OK ){
@@ -1185,18 +1186,18 @@ fprintf(stderr,"Using size %d x %d\n",settings.width,settings.height);
 	fprintf(stderr,"Percentage = %g (packet size = %d)\n",
 		percentage,packetSize);
 
-	pgcp->pc_video_mode = FC2_VIDEOMODE_FORMAT7;
-	pgcp->pc_framerate = FC2_FRAMERATE_FORMAT7;
-	pgcp->pc_framerate_index = index_of_framerate(FC2_FRAMERATE_FORMAT7);
-	pgcp->pc_video_mode_index = index_of_video_mode(FC2_VIDEOMODE_FORMAT7);
-	pgcp->pc_my_video_mode_index = (-1);
-	pgcp->pc_fmt7_index = idx;
-	pgcp->pc_base = NULL;	// force init_fly_base to run again
+	fcp->fc_video_mode = FC2_VIDEOMODE_FORMAT7;
+	fcp->fc_framerate = FC2_FRAMERATE_FORMAT7;
+	fcp->fc_framerate_index = index_of_framerate(FC2_FRAMERATE_FORMAT7);
+	fcp->fc_video_mode_index = index_of_video_mode(FC2_VIDEOMODE_FORMAT7);
+	fcp->fc_my_video_mode_index = (-1);
+	fcp->fc_fmt7_index = idx;
+	fcp->fc_base = NULL;	// force init_fly_base to run again
 
 	// Do we have to set the framerate to FC2_FRAMERATE_FORMAT7???
 
-	pgcp->pc_rows = settings.height;
-	pgcp->pc_cols = settings.width;
+	fcp->fc_rows = settings.height;
+	fcp->fc_cols = settings.width;
 
 	{
 		long bytes_per_image;
@@ -1210,30 +1211,30 @@ fprintf(stderr,"Using size %d x %d\n",settings.width,settings.height);
 	}
 
 	// refresh_config reads the config from the library...
-	return refresh_config(QSP_ARG  pgcp);
+	return refresh_config(QSP_ARG  fcp);
 } // set_fmt7_mode
 
-void set_eii_property(QSP_ARG_DECL  PGR_Cam *pgcp, int idx, int yesno )
+void set_eii_property(QSP_ARG_DECL  Fly_Cam *fcp, int idx, int yesno )
 {
 	myEmbeddedImageInfo *eii_p;
 	fc2Error error;
 
-	eii_p = (myEmbeddedImageInfo *) (&pgcp->pc_ei_info);
+	eii_p = (myEmbeddedImageInfo *) (&fcp->fc_ei_info);
 	if( ! eii_p->prop_tbl[idx].available ){
 		sprintf(ERROR_STRING,"Property %s is not available on %s",
-			eii_prop_names[idx],pgcp->pc_name);
-		WARN(ERROR_STRING);
+			eii_prop_names[idx],fcp->fc_name);
+		warn(ERROR_STRING);
 		return;
 	}
 	eii_p->prop_tbl[idx].onOff = yesno ? TRUE : FALSE;
 
-	error = fc2SetEmbeddedImageInfo(pgcp->pc_context,&pgcp->pc_ei_info);
+	error = fc2SetEmbeddedImageInfo(fcp->fc_context,&fcp->fc_ei_info);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2SetEmbeddedImageInfo" );
 	}
 }
 
-void set_grab_mode(QSP_ARG_DECL  PGR_Cam *pgcp, int grabmode_idx )
+void set_grab_mode(QSP_ARG_DECL  Fly_Cam *fcp, int grabmode_idx )
 {
 	fc2Error error;
 	fc2Config cfg;
@@ -1241,109 +1242,109 @@ void set_grab_mode(QSP_ARG_DECL  PGR_Cam *pgcp, int grabmode_idx )
 	assert( grabmode_idx >= 0 && grabmode_idx < N_NAMED_GRAB_MODES );
 
 	// grab mode is part of the config struct
-	cfg = pgcp->pc_config;
+	cfg = fcp->fc_config;
 	cfg.grabMode = all_grab_modes[grabmode_idx].ngm_value;
-	error = fc2SetConfiguration(pgcp->pc_context,&cfg);
+	error = fc2SetConfiguration(fcp->fc_context,&cfg);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2SetConfiguration" );
 		// should we set a flag to indicate an invalid config?
 		return;
 	}
-	pgcp->pc_config.grabMode = cfg.grabMode;
+	fcp->fc_config.grabMode = cfg.grabMode;
 }
 
-void show_grab_mode(QSP_ARG_DECL  PGR_Cam *pgcp)
+void show_grab_mode(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	int idx;
 
-	idx = index_of_grab_mode(pgcp->pc_config.grabMode);
+	idx = index_of_grab_mode(fcp->fc_config.grabMode);
 	if( idx < 0 ) return;
 	sprintf(MSG_STR,"Current grab mode:  %s",all_grab_modes[idx].ngm_name);
 	prt_msg(MSG_STR);
 }
 
-int pick_framerate(QSP_ARG_DECL  PGR_Cam *pgcp, const char *pmpt)
+int pick_fly_cam_framerate(QSP_ARG_DECL  Fly_Cam *fcp, const char *pmpt)
 {
 	int i;
 
-	if( pgcp == NULL ){
-		sprintf(ERROR_STRING,"pick_framerate:  no camera selected!?");
-		WARN(ERROR_STRING);
+	if( fcp == NULL ){
+		sprintf(ERROR_STRING,"pick_fly_cam_framerate:  no fly_cam selected!?");
+		warn(ERROR_STRING);
 		return -1;
 	}
 
-	get_framerate_choices(QSP_ARG  pgcp);
-	i=WHICH_ONE(pmpt,pgcp->pc_n_framerates,pgcp->pc_framerate_names);
+	get_framerate_choices(QSP_ARG  fcp);
+	i=WHICH_ONE(pmpt,fcp->fc_n_framerates,fcp->fc_framerate_names);
 	return i;
 }
 
-int set_framerate(QSP_ARG_DECL  PGR_Cam *pgcp, int framerate_index)
+int set_framerate(QSP_ARG_DECL  Fly_Cam *fcp, int framerate_index)
 {
 	fc2FrameRate rate;
 	fc2Error error;
 
-	if( pgcp == NULL ) return -1;
+	if( fcp == NULL ) return -1;
 
-	insure_stopped(QSP_ARG  pgcp,"setting frame rate");
+	insure_stopped(QSP_ARG  fcp,"setting frame rate");
 
 	rate = all_framerates[framerate_index].nfr_value;
-	error = fc2SetVideoModeAndFrameRate(pgcp->pc_context,
-			pgcp->pc_video_mode,rate);
+	error = fc2SetVideoModeAndFrameRate(fcp->fc_context,
+			fcp->fc_video_mode,rate);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2SetVideoModeAndFrameRate" );
 		return -1;
 	}
 
-	pgcp->pc_framerate = rate;
+	fcp->fc_framerate = rate;
 
-	return refresh_config(QSP_ARG  pgcp);
+	return refresh_config(QSP_ARG  fcp);
 }
 
-void show_framerate(QSP_ARG_DECL  PGR_Cam *pgcp)
+void show_fly_cam_framerate(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	sprintf(MSG_STR,"%s framerate:  %s",
-		pgcp->pc_name,all_framerates[pgcp->pc_framerate_index].nfr_name);
+		fcp->fc_name,all_framerates[fcp->fc_framerate_index].nfr_name);
 	advise(MSG_STR);
 }
 
-void show_video_mode(QSP_ARG_DECL  PGR_Cam *pgcp)
+void show_fly_cam_video_mode(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	sprintf(MSG_STR,"%s video mode:  %s",
-		pgcp->pc_name,name_for_video_mode(pgcp->pc_video_mode));
+		fcp->fc_name,name_for_video_mode(fcp->fc_video_mode));
 	advise(MSG_STR);
 }
 
-int list_video_modes(QSP_ARG_DECL  PGR_Cam *pgcp)
+int list_fly_cam_video_modes(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	unsigned int i;
 	const char *s;
 
-	if( pgcp->pc_n_video_modes <= 0 ){
-		WARN("no video modes!?");
+	if( fcp->fc_n_video_modes <= 0 ){
+		warn("no video modes!?");
 		return -1;
 	}
 
-	for(i=0;i<pgcp->pc_n_video_modes; i++){
-		s=pgcp->pc_video_mode_names[i];
+	for(i=0;i<fcp->fc_n_video_modes; i++){
+		s=fcp->fc_video_mode_names[i];
 		prt_msg_frag("\t");
 		prt_msg(s);
 	}
 	return 0;
 }
 
-void list_framerates(QSP_ARG_DECL  PGR_Cam *pgcp)
+void list_fly_cam_framerates(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	int i;
 
-	get_framerate_choices(QSP_ARG  pgcp);
+	get_framerate_choices(QSP_ARG  fcp);
 
-	for(i=0;i<pgcp->pc_n_framerates;i++){
+	for(i=0;i<fcp->fc_n_framerates;i++){
 		prt_msg_frag("\t");
-		prt_msg(pgcp->pc_framerate_names[i]);
+		prt_msg(fcp->fc_framerate_names[i]);
 	}
 }
 
-static int set_default_video_mode(QSP_ARG_DECL  PGR_Cam *pgcp)
+static int set_default_video_mode(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	fc2VideoMode m;
 	fc2FrameRate r;
@@ -1351,26 +1352,26 @@ static int set_default_video_mode(QSP_ARG_DECL  PGR_Cam *pgcp)
 	fc2Error error;
 	int _nskip;
 
-	if( get_supported_video_modes(QSP_ARG  pgcp ) < 0 ){
-		WARN("set_default_video_mode:  Can't get video modes");
+	if( get_supported_video_modes(QSP_ARG  fcp ) < 0 ){
+		warn("set_default_video_mode:  Can't get video modes");
 		return -1;
 	}
 
-//fprintf(stderr,"get_supported_video_modes found %d modes\n",pgcp->pc_n_video_modes);
+//fprintf(stderr,"get_supported_video_modes found %d modes\n",fcp->fc_n_video_modes);
 	_nskip=0;
 	do {
 		_nskip++;
-		i = pgcp->pc_n_video_modes-(_nskip);	// order the table so that mono8 is last?
-		pgcp->pc_my_video_mode_index = i;
-		j = pgcp->pc_video_mode_indices[i];
+		i = fcp->fc_n_video_modes-(_nskip);	// order the table so that mono8 is last?
+		fcp->fc_my_video_mode_index = i;
+		j = fcp->fc_video_mode_indices[i];
 		m = all_video_modes[j].nvm_value;
 		// BUG we don't check that nskip is in-bounds, but should be OK
-	} while( m == FC2_VIDEOMODE_FORMAT7  && _nskip < pgcp->pc_n_video_modes );
+	} while( m == FC2_VIDEOMODE_FORMAT7  && _nskip < fcp->fc_n_video_modes );
 
 	if( m == FC2_VIDEOMODE_FORMAT7 ){
 		/*
 		sprintf(ERROR_STRING,"set_default_video_mode:  %s has only format7 modes!?",
-			pgcp->pc_name);
+			fcp->fc_name);
 		advise(ERROR_STRING);
 		*/
 		return -1;
@@ -1382,28 +1383,28 @@ static int set_default_video_mode(QSP_ARG_DECL  PGR_Cam *pgcp)
 
 	// if this is format7, don't use it!?
 
-	pgcp->pc_video_mode = m;
-	pgcp->pc_video_mode_index = j;
+	fcp->fc_video_mode = m;
+	fcp->fc_video_mode_index = j;
 
-	pgcp->pc_cols = all_video_modes[ j ].nvm_width;
-	pgcp->pc_rows = all_video_modes[ j ].nvm_height;
-	pgcp->pc_depth = all_video_modes[ j ].nvm_depth;
+	fcp->fc_cols = all_video_modes[ j ].nvm_width;
+	fcp->fc_rows = all_video_modes[ j ].nvm_height;
+	fcp->fc_depth = all_video_modes[ j ].nvm_depth;
 
 	// Get the hightest frame rate associated with this video mode...
-	r = highest_framerate( QSP_ARG  pgcp->pc_framerate_mask_tbl[i] );
+	r = highest_framerate( QSP_ARG  fcp->fc_framerate_mask_tbl[i] );
 
 //fprintf(stderr,"mode %s, highest supported frame rate is %s\n",
 //name_for_video_mode(m),
 //name_for_framerate(r));
-	pgcp->pc_framerate = r;
-	pgcp->pc_framerate_index = index_of_framerate(r);
+	fcp->fc_framerate = r;
+	fcp->fc_framerate_index = index_of_framerate(r);
 
 //sprintf(ERROR_STRING,"set_default_video_mode:  setting to %s", name_for_video_mode(m));
 //advise(ERROR_STRING);
 
 
-	error = fc2SetVideoModeAndFrameRate( pgcp->pc_context,
-			pgcp->pc_video_mode, pgcp->pc_framerate );
+	error = fc2SetVideoModeAndFrameRate( fcp->fc_context,
+			fcp->fc_video_mode, fcp->fc_framerate );
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2SetVideoModeAndFrameRate" );
 		return -1;
@@ -1415,9 +1416,9 @@ static int set_default_video_mode(QSP_ARG_DECL  PGR_Cam *pgcp)
 	// in case the user wants to fetch the strings...
 	// BUG DO THIS WHEN CAM IS SELECTED!
 	//set_script_var_from_int(QSP_ARG
-	//		"n_framerates",pgcp->pc_framerates.num);
+	//		"n_framerates",fcp->fc_framerates.num);
 
-sprintf(ERROR_STRING,"%s:  %s, %s fps",pgcp->pc_name,name_for_video_mode(m),
+sprintf(ERROR_STRING,"%s:  %s, %s fps",fcp->fc_name,name_for_video_mode(m),
 						name_for_framerate(r) );
 advise(ERROR_STRING);
 
@@ -1433,11 +1434,11 @@ static void fix_string( char *s )
 	}
 }
 
-static PGR_Cam *unique_camera_instance( QSP_ARG_DECL  fc2Context context )
+static Fly_Cam *unique_fly_cam_instance( QSP_ARG_DECL  fc2Context context )
 {
 	int i;
 	char cname[80];	// How many chars is enough?
-	PGR_Cam *pgcp;
+	Fly_Cam *fcp;
 	fc2Error error;
 	fc2CameraInfo camInfo;
 
@@ -1448,38 +1449,38 @@ static PGR_Cam *unique_camera_instance( QSP_ARG_DECL  fc2Context context )
 	}
 
 	i=1;
-	pgcp=NULL;
-	while(pgcp==NULL){
+	fcp=NULL;
+	while(fcp==NULL){
 		//sprintf(cname,"%s_%d",cam_p->model,i);
 		sprintf(cname,"%s_%d",camInfo.modelName,i);
 		fix_string(cname);	// change spaces to underscores
 //sprintf(ERROR_STRING,"Checking for existence of %s",cname);
 //advise(ERROR_STRING);
-		pgcp = pgc_of( QSP_ARG  cname );
-		if( pgcp == NULL ){	// This index is free
+		fcp = fly_cam_of( cname );
+		if( fcp == NULL ){	// This index is free
 //sprintf(ERROR_STRING,"%s is not in use",cname);
 //advise(ERROR_STRING);
-			pgcp = new_pgc( QSP_ARG  cname );
-			if( pgcp == NULL ){
+			fcp = new_fly_cam( cname );
+			if( fcp == NULL ){
 				sprintf(ERROR_STRING,
-			"Failed to create camera %s!?",cname);
-				ERROR1(ERROR_STRING);
+			"Failed to create fly_cam %s!?",cname);
+				error1(ERROR_STRING);
 			}
 		} else {
 //sprintf(ERROR_STRING,"%s IS in use",cname);
 //advise(ERROR_STRING);
-			pgcp = NULL;
+			fcp = NULL;
 		}
 		i++;
 		if( i>=5 ){
-			ERROR1("Too many cameras!?"); 
+			error1("Too many fly_cams!?"); 
 		}
 	}
-	pgcp->pc_cam_info = camInfo;
-	return pgcp;
+	fcp->fc_cam_info = camInfo;
+	return fcp;
 }
 
-static void get_fmt7_modes(QSP_ARG_DECL  PGR_Cam *pgcp)
+static void get_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	fc2Error error;
 	BOOL supported;
@@ -1487,44 +1488,44 @@ static void get_fmt7_modes(QSP_ARG_DECL  PGR_Cam *pgcp)
 	fc2Format7Info fmt7_info_tbl[N_FMT7_MODES];
 	size_t nb;
 
-	pgcp->pc_n_fmt7_modes = 0;
+	fcp->fc_n_fmt7_modes = 0;
 	for(i=0;i<N_FMT7_MODES;i++){
 		fmt7_info_tbl[i].mode = i;
-		error = fc2GetFormat7Info(pgcp->pc_context,
+		error = fc2GetFormat7Info(fcp->fc_context,
 				&fmt7_info_tbl[i],&supported);
 		if( error != FC2_ERROR_OK ){
 			report_fc2_error(QSP_ARG  error, "fc2GetFormat7Info" );
 		}
 		if( supported ){
-			pgcp->pc_n_fmt7_modes ++ ;
+			fcp->fc_n_fmt7_modes ++ ;
 			largest = i;
 		}
 	}
-	if( (largest+1) != pgcp->pc_n_fmt7_modes ){
+	if( (largest+1) != fcp->fc_n_fmt7_modes ){
 		sprintf(ERROR_STRING,
 	"Unexpected number of format7 modes!?  (largest index = %d, n_modes = %d)",
-			largest,pgcp->pc_n_fmt7_modes);
-		WARN(ERROR_STRING);
+			largest,fcp->fc_n_fmt7_modes);
+		warn(ERROR_STRING);
 	}
 
-	nb = pgcp->pc_n_fmt7_modes * sizeof(fc2Format7Info);
-	pgcp->pc_fmt7_info_tbl = getbuf( nb );
-	memcpy(pgcp->pc_fmt7_info_tbl,fmt7_info_tbl,nb);
+	nb = fcp->fc_n_fmt7_modes * sizeof(fc2Format7Info);
+	fcp->fc_fmt7_info_tbl = getbuf( nb );
+	memcpy(fcp->fc_fmt7_info_tbl,fmt7_info_tbl,nb);
 
-	pgcp->pc_fmt7_index = 0;
+	fcp->fc_fmt7_index = 0;
 }
 
 #define SHOW_FIELD(desc_str,value)					\
 									\
-sprintf(MSG_STR,"\t%s:  %d",#desc_str,pgcp->pc_fmt7_info_tbl[mode].value);	\
+sprintf(MSG_STR,"\t%s:  %d",#desc_str,fcp->fc_fmt7_info_tbl[mode].value);	\
 prt_msg(MSG_STR);
 
 #define SHOW_FIELD_HEX(desc_str,value)					\
 									\
-sprintf(MSG_STR,"\t%s:  0x%x",#desc_str,pgcp->pc_fmt7_info_tbl[mode].value); \
+sprintf(MSG_STR,"\t%s:  0x%x",#desc_str,fcp->fc_fmt7_info_tbl[mode].value); \
 prt_msg(MSG_STR);
 
-static void show_fmt7_info(QSP_ARG_DECL  PGR_Cam *pgcp, fc2Mode mode )
+static void show_fmt7_info(QSP_ARG_DECL  Fly_Cam *fcp, fc2Mode mode )
 {
 	sprintf(MSG_STR,"Format 7 mode %d:",mode);
 	prt_msg(MSG_STR);
@@ -1544,24 +1545,24 @@ static void show_fmt7_info(QSP_ARG_DECL  PGR_Cam *pgcp, fc2Mode mode )
 	prt_msg("");
 }
 
-void show_fmt7_modes(QSP_ARG_DECL  PGR_Cam *pgcp)
+void show_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp)
 {
-	if( pgcp->pc_n_fmt7_modes <= 0 ){
+	if( fcp->fc_n_fmt7_modes <= 0 ){
 		prt_msg("\tNo format7 modes available.");
 	} else {
 		int i;
-		for(i=0;i<pgcp->pc_n_fmt7_modes;i++)
-			show_fmt7_info( QSP_ARG  pgcp, i );
+		for(i=0;i<fcp->fc_n_fmt7_modes;i++)
+			show_fmt7_info( QSP_ARG  fcp, i );
 	}
 }
 
 // This should only be called once...
 
-static PGR_Cam *setup_my_camera( QSP_ARG_DECL
+static Fly_Cam *setup_my_fly_cam( QSP_ARG_DECL
 				fc2Context context, fc2PGRGuid *guid_p,
 				int index )
 {
-	PGR_Cam *pgcp;
+	Fly_Cam *fcp;
 	fc2Error error;
 	int i;
 
@@ -1572,54 +1573,54 @@ static PGR_Cam *setup_my_camera( QSP_ARG_DECL
 	}
 
 	// We could have multiple instances of the same model...
-	pgcp = unique_camera_instance(QSP_ARG  context);
+	fcp = unique_fly_cam_instance(QSP_ARG  context);
 
 	error = fc2Disconnect(context);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2Disconnect" );
 		// BUG should clean up and return NULL?
-		return pgcp;
+		return fcp;
 	}
 
-	//pgcp->pc_cam_p = cam_p;
-	error = fc2CreateContext(&pgcp->pc_context);
+	//fcp->fc_cam_p = cam_p;
+	error = fc2CreateContext(&fcp->fc_context);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2CreateContext" );
 		// BUG clean up first
 		return NULL;
 	}
-	error=fc2GetCameraFromIndex(pgcp->pc_context,index,&pgcp->pc_guid);
+	error=fc2GetCameraFromIndex(fcp->fc_context,index,&fcp->fc_guid);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2GetCameraFromIndex" );
 	}
 
-	error = fc2Connect(pgcp->pc_context,&pgcp->pc_guid);
+	error = fc2Connect(fcp->fc_context,&fcp->fc_guid);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2Connect" );
 		// BUG clean up first
 		return NULL;
 	}
 
-	if( refresh_config(QSP_ARG  pgcp) < 0 )
+	if( refresh_config(QSP_ARG  fcp) < 0 )
 		// BUG clean up first
 		return NULL;
 
-	error = fc2GetEmbeddedImageInfo(pgcp->pc_context,&pgcp->pc_ei_info);
+	error = fc2GetEmbeddedImageInfo(fcp->fc_context,&fcp->fc_ei_info);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2GetEmbeddedImageInfo" );
 		// BUG clean up first
 		return NULL;
 	}
 
-	pgcp->pc_feat_lp=NULL;
-	pgcp->pc_in_use_lp=NULL;
-	pgcp->pc_flags = 0;		/* assume no B-mode unless we are told otherwise... */
-	pgcp->pc_base = NULL;
+	fcp->fc_feat_lp=NULL;
+	fcp->fc_in_use_lp=NULL;
+	fcp->fc_flags = 0;		/* assume no B-mode unless we are told otherwise... */
+	fcp->fc_base = NULL;
 
-	get_fmt7_modes(QSP_ARG  pgcp);
+	get_fmt7_modes(QSP_ARG  fcp);
 
-	error = fc2GetVideoModeAndFrameRate( pgcp->pc_context,
-			&pgcp->pc_video_mode, &pgcp->pc_framerate );
+	error = fc2GetVideoModeAndFrameRate( fcp->fc_context,
+			&fcp->fc_video_mode, &fcp->fc_framerate );
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2GetVideoModeAndFrameRate" );
 		// BUG clean up first
@@ -1627,22 +1628,22 @@ static PGR_Cam *setup_my_camera( QSP_ARG_DECL
 	}
 /*
 fprintf(stderr,"after fetching, video mode = %d (%s), frame rate = %d (%s)\n",
-pgcp->pc_video_mode,
-name_for_video_mode(pgcp->pc_video_mode),
-pgcp->pc_framerate,
-name_for_framerate(pgcp->pc_framerate)
+fcp->fc_video_mode,
+name_for_video_mode(fcp->fc_video_mode),
+fcp->fc_framerate,
+name_for_framerate(fcp->fc_framerate)
 );
 */
 
 	// BUG?  could be N_STD_VIDEO_MODES?
-	pgcp->pc_video_mode_indices = getbuf( sizeof(int) * N_NAMED_VIDEO_MODES );
-	pgcp->pc_video_mode_names = getbuf( sizeof(char *) * N_NAMED_VIDEO_MODES );
-	pgcp->pc_framerate_mask_tbl = getbuf( sizeof(Framerate_Mask) * N_NAMED_VIDEO_MODES );
-	pgcp->pc_framerate_names = NULL;
-	pgcp->pc_n_framerates = 0;
+	fcp->fc_video_mode_indices = getbuf( sizeof(int) * N_NAMED_VIDEO_MODES );
+	fcp->fc_video_mode_names = getbuf( sizeof(char *) * N_NAMED_VIDEO_MODES );
+	fcp->fc_framerate_mask_tbl = getbuf( sizeof(Framerate_Mask) * N_NAMED_VIDEO_MODES );
+	fcp->fc_framerate_names = NULL;
+	fcp->fc_n_framerates = 0;
 
 	for(i=0;i<N_NAMED_VIDEO_MODES;i++){
-		pgcp->pc_framerate_mask_tbl[i] = 0;
+		fcp->fc_framerate_mask_tbl[i] = 0;
 	}
 
 	/* Originally, we set the default video mode here to be
@@ -1653,28 +1654,28 @@ name_for_framerate(pgcp->pc_framerate)
 	 */
 
 //#ifdef NOT_GOOD
-	if( set_default_video_mode(QSP_ARG  pgcp) < 0 ){
+	if( set_default_video_mode(QSP_ARG  fcp) < 0 ){
 		/*
-		sprintf(ERROR_STRING,"error setting default video mode for %s",pgcp->pc_name);
-		WARN(ERROR_STRING);
-		cleanup_cam( pgcp );
+		sprintf(ERROR_STRING,"error setting default video mode for %s",fcp->fc_name);
+		warn(ERROR_STRING);
+		cleanup_fly_cam( fcp );
 		return(NULL);
 		*/
-		// This can fail for cameras that only support format7...
+		// This can fail for fly_cams that only support format7...
 		// Deal with this better later
 		sprintf(ERROR_STRING,"error setting default video mode for %s, only format7?",
-			pgcp->pc_name);
+			fcp->fc_name);
 		advise(ERROR_STRING);
 	}
 //#endif // NOT_GOOD
 
 	/* used to set B-mode stuff here... */
-	// What if the camera is a usb cam???
+	// What if the fly_cam is a usb cam???
 	//dc1394_video_set_iso_speed( cam_p, DC1394_ISO_SPEED_400 );
 
-	pgcp->pc_img_p = getbuf( sizeof(*pgcp->pc_img_p) );
+	fcp->fc_img_p = getbuf( sizeof(*fcp->fc_img_p) );
 
-        error = fc2CreateImage( pgcp->pc_img_p );
+        error = fc2CreateImage( fcp->fc_img_p );
         if ( error != FC2_ERROR_OK ) {
 		report_fc2_error(QSP_ARG  error, "fc2CreateImage" );
 		// BUG clean up?
@@ -1683,42 +1684,42 @@ name_for_framerate(pgcp->pc_framerate)
 
 
 	// Make a data_obj context for the frames...
-	pgcp->pc_do_icp = create_dobj_context( QSP_ARG  pgcp->pc_name );
+	fcp->fc_do_icp = create_dobj_context( QSP_ARG  fcp->fc_name );
 
-	pgcp->pc_frm_dp_tbl = NULL;
-	pgcp->pc_newest = (-1);
+	fcp->fc_frm_dp_tbl = NULL;
+	fcp->fc_newest = (-1);
 
-	return(pgcp);
+	return(fcp);
 }
 
-void pop_camera_context(SINGLE_QSP_ARG_DECL)
+void pop_fly_cam_context(SINGLE_QSP_ARG_DECL)
 {
 	// pop old context...
 	Item_Context *icp;
-	icp=pop_dobj_context(SINGLE_QSP_ARG);
+	icp=pop_dobj_context();
 	assert( icp != NULL );
 }
 
-void push_camera_context(QSP_ARG_DECL  PGR_Cam *pgcp)
+void push_fly_cam_context(QSP_ARG_DECL  Fly_Cam *fcp)
 {
-//fprintf(stderr,"pushing camera context for %s (icp = 0x%lx)\n",
-//pgcp->pc_name,(long)pgcp->pc_do_icp);
-	push_dobj_context(QSP_ARG  pgcp->pc_do_icp);
+//fprintf(stderr,"pushing fly_cam context for %s (icp = 0x%lx)\n",
+//fcp->fc_name,(long)fcp->fc_do_icp);
+	push_dobj_context(fcp->fc_do_icp);
 }
 
-int init_firewire_system(SINGLE_QSP_ARG_DECL)
+int init_fly_cam_system(SINGLE_QSP_ARG_DECL)
 {
 #ifdef HAVE_LIBFLYCAP
 	fc2Version version;
 	fc2Context context;
 	fc2Error error;
-	fc2PGRGuid guid;	// BUG should be associated with one camera?
+	fc2PGRGuid guid;	// BUG should be associated with one fly_cam?
 	unsigned int numCameras=0;
 	int i;
 	static int firewire_system_inited=0;
 
 	if( firewire_system_inited ){
-		WARN("Firewire system has already been initialized!?");
+		warn("Firewire system has already been initialized!?");
 		return -1;
 	}
 	firewire_system_inited=1;
@@ -1747,11 +1748,11 @@ int init_firewire_system(SINGLE_QSP_ARG_DECL)
 	}
 
 	if( numCameras == 0 ){
-		advise("No cameras detected.");
+		advise("No fly_cams detected.");
 		return 0;
 	}
 	sprintf(ERROR_STRING,
-		"%d camera%s found.", numCameras, numCameras==1?"":"s" );
+		"%d fly_cam%s found.", numCameras, numCameras==1?"":"s" );
 	advise(ERROR_STRING);
 
 
@@ -1761,7 +1762,7 @@ int init_firewire_system(SINGLE_QSP_ARG_DECL)
 		if( error != FC2_ERROR_OK ){
 			report_fc2_error(QSP_ARG  error, "fc2GetCameraFromIndex" );
 		} else {
-			setup_my_camera(QSP_ARG   context, &guid, i );
+			setup_my_fly_cam(QSP_ARG   context, &guid, i );
 		}
 	}
 	error = fc2DestroyContext( context );
@@ -1769,7 +1770,7 @@ int init_firewire_system(SINGLE_QSP_ARG_DECL)
 		report_fc2_error(QSP_ARG  error, "fc2DestroyContext" );
 	}
 
-	add_sizable(QSP_ARG  pgc_itp, &pgc_sf, (Item *(*)(QSP_ARG_DECL  const char *)) pgc_of );
+	add_sizable(fly_cam_itp, &fly_cam_sf, (Item *(*)(QSP_ARG_DECL  const char *)) _fly_cam_of );
 
 #endif // HAVE_LIBFLYCAP
 	
@@ -1803,39 +1804,39 @@ static void show_cam_info(QSP_ARG_DECL  fc2CameraInfo *cip)
 	prt_msg(MSG_STR);
 }
 
-void show_n_buffers(QSP_ARG_DECL  PGR_Cam *pgcp)
+void show_n_buffers(QSP_ARG_DECL  Fly_Cam *fcp)
 {
-	sprintf(MSG_STR,"%s:  %d buffers",pgcp->pc_name,pgcp->pc_n_buffers);
+	sprintf(MSG_STR,"%s:  %d buffers",fcp->fc_name,fcp->fc_n_buffers);
 	prt_msg(MSG_STR);
 }
 
-int set_n_buffers(QSP_ARG_DECL  PGR_Cam *pgcp, int n )
+int set_n_buffers(QSP_ARG_DECL  Fly_Cam *fcp, int n )
 {
 	fc2Config cfg;
 	fc2Error error;
 
-fprintf(stderr,"set_n_buffers %s %d\n",pgcp->pc_name,n);
+fprintf(stderr,"set_n_buffers %s %d\n",fcp->fc_name,n);
 	if( n < MIN_N_BUFFERS || n > MAX_N_BUFFERS ){
 		sprintf(ERROR_STRING,
 "set_n_buffers:  number of buffers must be between %d and %d (%d requested)!?",
 			MIN_N_BUFFERS,MAX_N_BUFFERS,n);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
-	cfg = pgcp->pc_config;
+	cfg = fcp->fc_config;
 	cfg.numBuffers = n;
 
-	error = fc2SetConfiguration(pgcp->pc_context,&cfg);
+	error = fc2SetConfiguration(fcp->fc_context,&cfg);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2SetConfiguration" );
 		// should we set a flag to indicate an invalid config?
 		return -1;
 	}
-	pgcp->pc_n_buffers =
-	pgcp->pc_config.numBuffers = n;
-	pgcp->pc_base = NULL;	// force init_fly_base to run again
+	fcp->fc_n_buffers =
+	fcp->fc_config.numBuffers = n;
+	fcp->fc_base = NULL;	// force init_fly_base to run again
 
-show_n_buffers(QSP_ARG  pgcp);
+show_n_buffers(QSP_ARG  fcp);
 	return 0;
 }
 
@@ -1891,82 +1892,82 @@ static void show_ei_info(QSP_ARG_DECL  fc2EmbeddedImageInfo *eip)
 
 #endif // HAVE_LIBFLYCAP
 
-void print_camera_info(QSP_ARG_DECL  PGR_Cam *pgcp)
+void print_fly_cam_info(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 #ifdef HAVE_LIBFLYCAP
-	show_cam_info(QSP_ARG  &pgcp->pc_cam_info);
-	show_cam_cfg(QSP_ARG  &pgcp->pc_config);
-	show_ei_info(QSP_ARG  &pgcp->pc_ei_info);
+	show_cam_info(QSP_ARG  &fcp->fc_cam_info);
+	show_cam_cfg(QSP_ARG  &fcp->fc_config);
+	show_ei_info(QSP_ARG  &fcp->fc_ei_info);
 #endif // HAVE_LIBFLYCAP
 
 	/*
-	i=index_of_framerate(pgcp->pc_framerate);
+	i=index_of_framerate(fcp->fc_framerate);
 	sprintf(msg_str,"\tframe rate:  %s",all_framerates[i].nfr_name);
 	prt_msg(msg_str);
 	*/
 
-	//report_camera_features(pgcp);
+	//report_fly_cam_features(fcp);
 
-	// show_fmt7_modes(QSP_ARG  pgcp);
+	// show_fmt7_modes(QSP_ARG  fcp);
 	// Show the current video mode
 
 	sprintf(MSG_STR,"Current video mode:  %s%s",
-		pgcp->pc_my_video_mode_index >= 0 ?
-		pgcp->pc_video_mode_names[ pgcp->pc_my_video_mode_index ] :
+		fcp->fc_my_video_mode_index >= 0 ?
+		fcp->fc_video_mode_names[ fcp->fc_my_video_mode_index ] :
 		"format7 mode ",
-		pgcp->pc_my_video_mode_index >= 0 ? "": (
-			pgcp->pc_fmt7_index == 0 ? "0" : (
-			pgcp->pc_fmt7_index == 1 ? "1" : (
-			pgcp->pc_fmt7_index == 2 ? "2" : "(>2)" )))
+		fcp->fc_my_video_mode_index >= 0 ? "": (
+			fcp->fc_fmt7_index == 0 ? "0" : (
+			fcp->fc_fmt7_index == 1 ? "1" : (
+			fcp->fc_fmt7_index == 2 ? "2" : "(>2)" )))
 			);
 	prt_msg(MSG_STR);
 
 	sprintf(MSG_STR,"Current frame rate:  %s",
-		all_framerates[ pgcp->pc_framerate_index ].nfr_name );
+		all_framerates[ fcp->fc_framerate_index ].nfr_name );
 	prt_msg(MSG_STR);
 }
 
-static void init_one_frame(QSP_ARG_DECL  PGR_Cam *pgcp, int index )
+static void init_one_frame(QSP_ARG_DECL  Fly_Cam *fcp, int index )
 {
 	Data_Obj *dp;
 	char fname[32];
 	Dimension_Set ds1;
 
 	sprintf(fname,"frame%d",index);
-	//ASSIGN_VAR("newest",fname+5);
+	//assign_var("newest",fname+5);
 
-	dp = dobj_of(QSP_ARG  fname);
+	dp = dobj_of(fname);
 	if( dp == NULL ){
 		SET_DS_SEQS(&ds1,1);
 		SET_DS_FRAMES(&ds1,1);
-		SET_DS_ROWS(&ds1,pgcp->pc_img_p->rows);
-		SET_DS_COLS(&ds1,pgcp->pc_img_p->cols);
+		SET_DS_ROWS(&ds1,fcp->fc_img_p->rows);
+		SET_DS_COLS(&ds1,fcp->fc_img_p->cols);
 		SET_DS_COMPS(&ds1,1);
 		dp = _make_dp(QSP_ARG  fname,&ds1,PREC_FOR_CODE(PREC_UBY));
 		assert( dp != NULL );
 
-		SET_OBJ_DATA_PTR( dp, pgcp->pc_base+index*pgcp->pc_buf_delta );
-		pgcp->pc_frm_dp_tbl[index] = dp;
+		SET_OBJ_DATA_PTR( dp, fcp->fc_base+index*fcp->fc_buf_delta );
+		fcp->fc_frm_dp_tbl[index] = dp;
 
 //fprintf(stderr,"init_one_frame %d:  %s, data at 0x%lx\n",index,OBJ_NAME(dp),(long)OBJ_DATA_PTR(dp));
 //		}
 	} else {
 		sprintf(ERROR_STRING,"init_one_frame:  object %s already exists!?",
 			fname);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 } // end init_one_frame
 
-static void init_cam_frames(QSP_ARG_DECL  PGR_Cam *pgcp)
+static void init_cam_frames(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	int index;
 
-	assert( pgcp->pc_n_buffers > 0 );
-	assert( pgcp->pc_frm_dp_tbl == NULL );
+	assert( fcp->fc_n_buffers > 0 );
+	assert( fcp->fc_frm_dp_tbl == NULL );
 
-	pgcp->pc_frm_dp_tbl = getbuf( sizeof(Data_Obj) * pgcp->pc_n_buffers );
-	for(index=0;index<pgcp->pc_n_buffers;index++)
-		init_one_frame(QSP_ARG  pgcp, index);
+	fcp->fc_frm_dp_tbl = getbuf( sizeof(Data_Obj) * fcp->fc_n_buffers );
+	for(index=0;index<fcp->fc_n_buffers;index++)
+		init_one_frame(QSP_ARG  fcp, index);
 } // init_cam_frames
 
 // init_fly_base   -   grab frames to get the address
@@ -1977,7 +1978,7 @@ static void init_cam_frames(QSP_ARG_DECL  PGR_Cam *pgcp)
 // We keep track of the largest and smallest address, we save
 // those so we can figure out the index of an arbitrary frame...
 
-static void init_fly_base(QSP_ARG_DECL  PGR_Cam *pgcp)
+static void init_fly_base(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	// initialize all the pointers
 	int n_buffers_seen=0;
@@ -1986,33 +1987,33 @@ static void init_fly_base(QSP_ARG_DECL  PGR_Cam *pgcp)
 	void *first_addr=NULL;
 	void **addr_tbl;
 
-	// pc_base is our flag, reset to NULL when number of buffers
+	// fc_base is our flag, reset to NULL when number of buffers
 	// is changed, or video mode is changed.
-	if( pgcp->pc_base != NULL ){
+	if( fcp->fc_base != NULL ){
 		return;
 	}
 
 	n_buffers_seen = 0;
-	addr_tbl = getbuf(sizeof(void *)*pgcp->pc_n_buffers);
+	addr_tbl = getbuf(sizeof(void *)*fcp->fc_n_buffers);
 
 	// silence compiler warnings
 	largest_addr = NULL;
 	smallest_addr = NULL;
 
-	while( n_buffers_seen < pgcp->pc_n_buffers ){
+	while( n_buffers_seen < fcp->fc_n_buffers ){
 		fc2Error error;
 		void *buf_addr;
 
-		error = fc2RetrieveBuffer( pgcp->pc_context, pgcp->pc_img_p );
+		error = fc2RetrieveBuffer( fcp->fc_context, fcp->fc_img_p );
 		if( error != FC2_ERROR_OK ){
 			report_fc2_error(QSP_ARG  error, "fc2RetrieveBuffer" );
 			return;
 		}
 /*
-sprintf(ERROR_STRING,"pData = 0x%lx",(long)pgcp->pc_img_p->pData);
+sprintf(ERROR_STRING,"pData = 0x%lx",(long)fcp->fc_img_p->pData);
 advise(ERROR_STRING);
 */
-		buf_addr = pgcp->pc_img_p->pData;
+		buf_addr = fcp->fc_img_p->pData;
 
 		if( first_addr == NULL ){
 			first_addr = buf_addr;
@@ -2036,9 +2037,9 @@ advise(ERROR_STRING);
 		}
 	}
 
-	pgcp->pc_base = smallest_addr;
-	pgcp->pc_buf_delta = (largest_addr - smallest_addr) / (n_buffers_seen-1);
-	//pgcp->pc_buf_delta = (largest - smallest) / 30;
+	fcp->fc_base = smallest_addr;
+	fcp->fc_buf_delta = (largest_addr - smallest_addr) / (n_buffers_seen-1);
+	//fcp->fc_buf_delta = (largest - smallest) / 30;
 
 	if( verbose ){
 		sprintf(ERROR_STRING,"%d distinct buffers seen.",
@@ -2052,14 +2053,14 @@ advise(ERROR_STRING);
 		advise(ERROR_STRING);
 
 		sprintf(ERROR_STRING,"buf_delta = 0x%lx",
-			(long)pgcp->pc_buf_delta);
+			(long)fcp->fc_buf_delta);
 		advise(ERROR_STRING);
 	}
 
-	init_cam_frames(QSP_ARG  pgcp);
+	init_cam_frames(QSP_ARG  fcp);
 }
 
-int check_buffer_alignment(QSP_ARG_DECL  PGR_Cam *pgcp)
+int check_buffer_alignment(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	int i;
 
@@ -2067,30 +2068,30 @@ int check_buffer_alignment(QSP_ARG_DECL  PGR_Cam *pgcp)
 	// BUG this should be a parameter...
 #define RV_ALIGNMENT_REQ	1024
 
-	for(i=0;i<pgcp->pc_n_buffers;i++){
-		if( ((long)(pgcp->pc_base+i*pgcp->pc_buf_delta)) % RV_ALIGNMENT_REQ != 0 ){
+	for(i=0;i<fcp->fc_n_buffers;i++){
+		if( ((long)(fcp->fc_base+i*fcp->fc_buf_delta)) % RV_ALIGNMENT_REQ != 0 ){
 			sprintf(ERROR_STRING,"Buffer %d is not aligned - %d byte alignment required for raw volume I/O!?",
 				i,RV_ALIGNMENT_REQ);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return -1;
 		}
 	}
 	return 0;
 }
 
-static int index_of_buffer(QSP_ARG_DECL  PGR_Cam *pgcp,fc2Image *ip)
+static int index_of_buffer(QSP_ARG_DECL  Fly_Cam *fcp,fc2Image *ip)
 {
 	int idx;
 
-	idx = ( ip->pData - pgcp->pc_base ) / pgcp->pc_buf_delta;
+	idx = ( ip->pData - fcp->fc_base ) / fcp->fc_buf_delta;
 	/*
 sprintf(ERROR_STRING,
 "index_of_buffer:  data at 0x%lx, base = 0x%lx, idx = %d",
-(long)ip->pData,(long)pgcp->pc_base,idx);
+(long)ip->pData,(long)fcp->fc_base,idx);
 advise(ERROR_STRING);
 */
 
-	assert( idx >= 0 && idx < pgcp->pc_n_buffers );
+	assert( idx >= 0 && idx < fcp->fc_n_buffers );
 	return idx;
 }
 
@@ -2110,15 +2111,15 @@ static const char *name_for_pixel_format(fc2PixelFormat f)
 // libflycap doesn't have a queue mechanism like libdc1394...
 // do we get the newest frame???
 
-Data_Obj * grab_firewire_frame(QSP_ARG_DECL  PGR_Cam * pgcp )
+Data_Obj * grab_fly_cam_frame(QSP_ARG_DECL  Fly_Cam * fcp )
 {
 	fc2Error error;
 	int index;
 
-	if( pgcp->pc_base == NULL )
-		init_fly_base(QSP_ARG  pgcp);
+	if( fcp->fc_base == NULL )
+		init_fly_base(QSP_ARG  fcp);
 
-	error = fc2RetrieveBuffer( pgcp->pc_context, pgcp->pc_img_p );
+	error = fc2RetrieveBuffer( fcp->fc_context, fcp->fc_img_p );
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2RetrieveBuffer" );
 		return NULL;
@@ -2126,17 +2127,17 @@ Data_Obj * grab_firewire_frame(QSP_ARG_DECL  PGR_Cam * pgcp )
 //fprintf(stderr,"pixel format of retrieved images is %s (0x%x)\n",
 //name_for_pixel_format(img.format),img.format);
 
-	index = index_of_buffer(QSP_ARG  pgcp, pgcp->pc_img_p );
-	pgcp->pc_newest = index;
+	index = index_of_buffer(QSP_ARG  fcp, fcp->fc_img_p );
+	fcp->fc_newest = index;
 
-	return( pgcp->pc_frm_dp_tbl[index] );
+	return( fcp->fc_frm_dp_tbl[index] );
 }
 
-int reset_camera(QSP_ARG_DECL  PGR_Cam *pgcp)
+int reset_fly_cam(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	fc2Error error;
 
-	error=fc2FireBusReset(pgcp->pc_context,&pgcp->pc_guid);
+	error=fc2FireBusReset(fcp->fc_context,&fcp->fc_guid);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2FireBusReset" );
 	}
@@ -2144,89 +2145,89 @@ int reset_camera(QSP_ARG_DECL  PGR_Cam *pgcp)
 	return 0;
 }
 
-void report_bandwidth(QSP_ARG_DECL  PGR_Cam *pgcp )
+void report_fly_cam_bandwidth(QSP_ARG_DECL  Fly_Cam *fcp )
 {
-	UNIMP_FUNC("report_bandwidth");
+	UNIMP_FUNC("report_fly_cam_bandwidth");
 }
 
-unsigned int read_register( QSP_ARG_DECL  PGR_Cam *pgcp, unsigned int addr )
+unsigned int read_register( QSP_ARG_DECL  Fly_Cam *fcp, unsigned int addr )
 {
 	fc2Error error;
 	unsigned int val;
 
-	error = fc2ReadRegister(pgcp->pc_context,addr,&val);
+	error = fc2ReadRegister(fcp->fc_context,addr,&val);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2ReadRegister" );
 	}
 	return val;
 }
 
-void write_register( QSP_ARG_DECL  PGR_Cam *pgcp, unsigned int addr, unsigned int val )
+void write_register( QSP_ARG_DECL  Fly_Cam *fcp, unsigned int addr, unsigned int val )
 {
 	fc2Error error;
 
-	error = fc2WriteRegister(pgcp->pc_context,addr,val);
+	error = fc2WriteRegister(fcp->fc_context,addr,val);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2WriteRegister" );
 	}
 }
 
-void start_firewire_capture(QSP_ARG_DECL  PGR_Cam *pgcp)
+void start_firewire_capture(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	fc2Error error;
 
-	if( pgcp->pc_flags & PGR_CAM_IS_RUNNING ){
-		WARN("start_firewire_capture:  camera is already capturing!?");
+	if( fcp->fc_flags & FLY_CAM_IS_RUNNING ){
+		warn("start_firewire_capture:  fly_cam is already capturing!?");
 		return;
 	}
 
-	error = fc2StartCapture(pgcp->pc_context);
+	error = fc2StartCapture(fcp->fc_context);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2StartCapture" );
 	} else {
-		pgcp->pc_flags |= PGR_CAM_IS_RUNNING;
+		fcp->fc_flags |= FLY_CAM_IS_RUNNING;
 
 		// BUG - we should undo this when we stop capturing, because
 		// we might change the video format or something else.
 		// Perhaps more efficiently we could only do it when needed?
-		init_fly_base(QSP_ARG  pgcp);
+		init_fly_base(QSP_ARG  fcp);
 	}
 }
 
-void stop_firewire_capture(QSP_ARG_DECL  PGR_Cam *pgcp)
+void stop_firewire_capture(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	fc2Error error;
 
-	if( (pgcp->pc_flags & PGR_CAM_IS_RUNNING) == 0 ){
-		WARN("stop_firewire_capture:  camera is not capturing!?");
+	if( (fcp->fc_flags & FLY_CAM_IS_RUNNING) == 0 ){
+		warn("stop_firewire_capture:  fly_cam is not capturing!?");
 		return;
 	}
 
-	error = fc2StopCapture(pgcp->pc_context);
+	error = fc2StopCapture(fcp->fc_context);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2StopCapture" );
 	} else {
-		pgcp->pc_flags &= ~PGR_CAM_IS_RUNNING;
+		fcp->fc_flags &= ~FLY_CAM_IS_RUNNING;
 	}
 }
 
-void set_fmt7_size(QSP_ARG_DECL  PGR_Cam *pgcp, int w, int h)
+void set_fmt7_size(QSP_ARG_DECL  Fly_Cam *fcp, int w, int h)
 {
 	UNIMP_FUNC("set_fmt7_size");
 }
 
-void release_oldest_frame(QSP_ARG_DECL  PGR_Cam *pgcp)
+void release_oldest_frame(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	UNIMP_FUNC("release_oldest_frame");
 }
 
-void list_trig(QSP_ARG_DECL  PGR_Cam *pgcp)
+void list_fly_cam_trig(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	fc2Error error;
 	fc2TriggerModeInfo tinfo;
 	fc2TriggerMode tmode;
 
-	error = fc2GetTriggerModeInfo(pgcp->pc_context,&tinfo);
+	error = fc2GetTriggerModeInfo(fcp->fc_context,&tinfo);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2GetTriggerModeInfo" );
 		return;
@@ -2242,7 +2243,7 @@ void list_trig(QSP_ARG_DECL  PGR_Cam *pgcp)
 	fprintf(stderr,"\tsoftwareTriggerSupported:  %s\n",BOOL_STR(tinfo.softwareTriggerSupported));
 	fprintf(stderr,"\tmodeMask:  0x%x\n",tinfo.modeMask);
 
-	error = fc2GetTriggerMode(pgcp->pc_context,&tmode);
+	error = fc2GetTriggerMode(fcp->fc_context,&tmode);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2GetTriggerMode" );
 		return;
@@ -2258,36 +2259,36 @@ void list_trig(QSP_ARG_DECL  PGR_Cam *pgcp)
 	SHOW_INT_PARAM(parameter)
 }
 
-void set_buffer_obj(QSP_ARG_DECL  PGR_Cam *pgcp, Data_Obj *dp)
+void set_buffer_obj(QSP_ARG_DECL  Fly_Cam *fcp, Data_Obj *dp)
 {
 	// make sure sizes match
-	if( OBJ_COLS(dp) != pgcp->pc_cols || OBJ_ROWS(dp) != pgcp->pc_rows ){
+	if( OBJ_COLS(dp) != fcp->fc_cols || OBJ_ROWS(dp) != fcp->fc_rows ){
 		sprintf(ERROR_STRING,
 "set_buffer_obj:  size mismatch between %s (%dx%d) and object %s (%dx%d)",
-			pgcp->pc_name,pgcp->pc_cols,pgcp->pc_rows,
+			fcp->fc_name,fcp->fc_cols,fcp->fc_rows,
 			OBJ_NAME(dp),OBJ_COLS(dp),OBJ_ROWS(dp) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( PREC_CODE(OBJ_MACH_PREC_PTR(dp)) != PREC_UBY ){
 		sprintf(ERROR_STRING,"Object %s (%s) should have %s precision!?",
 			OBJ_NAME(dp),OBJ_PREC_NAME(dp),NAME_FOR_PREC_CODE(PREC_UBY));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	{
 		fc2Error error;
 
-		error = fc2SetUserBuffers(pgcp->pc_context, OBJ_DATA_PTR(dp),
+		error = fc2SetUserBuffers(fcp->fc_context, OBJ_DATA_PTR(dp),
 				OBJ_COLS(dp)*OBJ_ROWS(dp)*OBJ_COMPS(dp),OBJ_FRAMES(dp));
 		if( error != FC2_ERROR_OK ){
 			report_fc2_error(QSP_ARG  error, "fc2SetUserBuffers" );
 			return;
 		}
 		// refresh the configuration
-		refresh_config(QSP_ARG  pgcp);
+		refresh_config(QSP_ARG  fcp);
 	}
-	pgcp->pc_base = NULL;	// force init_fly_base to run again
+	fcp->fc_base = NULL;	// force init_fly_base to run again
 }
 
 #endif /* HAVE_LIBFLYCAP */
@@ -2295,13 +2296,13 @@ void set_buffer_obj(QSP_ARG_DECL  PGR_Cam *pgcp, Data_Obj *dp)
 
 static const char **grab_mode_names=NULL;
 
-int pick_grab_mode(QSP_ARG_DECL PGR_Cam *pgcp, const char *pmpt)
+int pick_grab_mode(QSP_ARG_DECL Fly_Cam *fcp, const char *pmpt)
 {
 	int idx;
 
-	if( pgcp == NULL ){
-		sprintf(ERROR_STRING,"pick_framerate:  no camera selected!?");
-		WARN(ERROR_STRING);
+	if( fcp == NULL ){
+		sprintf(ERROR_STRING,"pick_fly_cam_grab_mode:  no fly_cam selected!?");
+		warn(ERROR_STRING);
 		return -1;
 	}
 

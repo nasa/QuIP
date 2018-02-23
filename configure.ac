@@ -610,7 +610,7 @@ TAR_OPTIONS+=--numeric-owner
 # Check for yacc/bison
 #AC_PROG_YACC
 # bison -y ?
-AC_CHECK_PROGS(YACC,'bison -y' byacc yacc,[AM_MISSING_PROG(yacc)])
+AC_CHECK_PROGS(YACC,'bison -y' byacc yacc,[AM_MISSING_PROG(YACC,yacc)])
 
 # these didn't work
 #: ${CFLAGS="-g -O0"}
@@ -1205,9 +1205,14 @@ fi
 if test "x${use_flycap}" = xyes; then
   AC_SEARCH_LIBS([fc2CreateContext],[flycapture-c],[have_libflycap=yes],[have_libflycap=no])
   # we also need to include our interface library???
-  if test "x${have_libflycap}" = xyes; then
-    use_dc1394=no
-  fi
+#  if test "x${have_libflycap}" = xyes; then
+#    AC_MSG_WARN([
+#---------------------------------
+#NOT checking for libdc1394,
+#because libflycap is present.
+#---------------------------------])
+#    use_dc1394=no
+#  fi
 fi
 
 if test "x${use_dc1394}" = xyes; then
@@ -1422,6 +1427,7 @@ fi
 # BUG if this header is not present, shouldn't try to use /dev/fb
 AC_CHECK_HEADERS([linux/fb.h],[have_linux_fb_h=yes],[have_linux_fb_h=no])
 
+AC_CHECK_HEADERS([linux/types.h])
 AC_CHECK_HEADERS([asm/types.h])
 AC_CHECK_HEADERS([sys/types.h])
 AC_CHECK_HEADERS([sys/wait.h])
@@ -1526,6 +1532,7 @@ if test "x${use_opencv}" = xyes; then
   AC_CHECK_HEADERS([opencv2/core/core_c.h opencv2/core/version.hpp])
   AC_CHECK_HEADERS([opencv2/imgproc/imgproc_c.h opencv2/objdetect/objdetect.hpp])
   AC_CHECK_HEADERS([opencv2/highgui/highgui_c.h])
+  AC_CHECK_HEADERS([opencv2/imgcodecs/imgcodecs_c.h])
 fi
 
 if test "x${use_fileio}" = xyes; then
