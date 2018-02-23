@@ -141,6 +141,10 @@ Define Subsample_Vector 5 name parent nx x0 xinc
 data subsample $1 $2 $3 $4 $5 quit
 .
 
+Define Substring 4 name parent len offset
+data substring $1 $2 $3 $4 quit
+.
+
 Define Subvector 4 name parent len offset
 data subvector $1 $2 $3 $4 quit
 .

@@ -327,6 +327,7 @@ extern Data_Obj *_mk_ilace(QSP_ARG_DECL  Data_Obj *parent, const char *name, int
 extern int _relocate_with_offsets(QSP_ARG_DECL  Data_Obj *dp,index_t *offsets);
 extern int _relocate(QSP_ARG_DECL  Data_Obj *dp,index_t xos,index_t yos,index_t tos);
 extern Data_Obj *_mk_subimg(QSP_ARG_DECL  Data_Obj *parent, index_t xos, index_t yos, const char *name, dimension_t rows, dimension_t cols);
+extern Data_Obj *_mk_substring(QSP_ARG_DECL  Data_Obj *parent, index_t sos, const char *name, dimension_t len );
 extern Data_Obj *_nmk_subimg(QSP_ARG_DECL  Data_Obj *parent, index_t xos, index_t yos, const char *name, dimension_t rows, dimension_t cols, dimension_t tdim);
 extern Data_Obj *_make_equivalence(QSP_ARG_DECL  const char *name, Data_Obj *dp, Dimension_Set *dsp, Precision * prec_p);
 extern Data_Obj *_make_subsamp(QSP_ARG_DECL  const char *name, Data_Obj *dp, Dimension_Set *sizes, index_t *offsets, incr_t *incrs );
@@ -335,6 +336,7 @@ extern Data_Obj *_make_subsamp(QSP_ARG_DECL  const char *name, Data_Obj *dp, Dim
 #define mk_ilace(parent,name,parity)			_mk_ilace(QSP_ARG  parent,name,parity)
 #define relocate_with_offsets(dp,offsets)		_relocate_with_offsets(QSP_ARG  dp,offsets)
 #define relocate(dp,xos,yos,tos)			_relocate(QSP_ARG  dp,xos,yos,tos)
+#define mk_substring(parent,sos,name,len)		_mk_substring(QSP_ARG  parent,sos,name,len)
 #define mk_subimg(parent,xos,yos,name,rows,cols)	_mk_subimg(QSP_ARG  parent,xos,yos,name,rows,cols)
 #define nmk_subimg(parent,xos,yos,name,rows,cols,tdim)	_nmk_subimg(QSP_ARG  parent,xos,yos,name,rows,cols,tdim)
 #define make_equivalence(name,dp,dsp,prec_p)		_make_equivalence(QSP_ARG  name,dp,dsp,prec_p)
