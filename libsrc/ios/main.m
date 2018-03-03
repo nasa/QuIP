@@ -134,6 +134,7 @@ fprintf(stderr,"ios_read_global_startup:  STARTUP_FILE = %s\n",STRINGIFY(STARTUP
 	return 0;
 }
 
+
 #include "quip_start_menu.c"
 
 int main(int argc,char *argv[])
