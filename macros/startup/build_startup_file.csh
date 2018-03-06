@@ -291,7 +291,8 @@ echo "Set startup_file_read 1" >> $outfile
 
 echo File $outfile complete, encrypting...
 
-setenv QUIP ~/bin/quip
+#setenv QUIP ~/bin/quip
+setenv QUIP quip
 $QUIP $outfile $encfile < encrypt_file.scr >& /tmp/enc_errors
 if( $status != 0 ) then
   echo Problem encrypting: `cat /tmp/enc_errors`

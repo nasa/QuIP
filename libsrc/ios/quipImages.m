@@ -21,8 +21,8 @@ uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 
 	if( timebase_info.denom == 0 ){	// relies on bss initialized to 0?
 		mach_timebase_info(&timebase_info);
-fprintf(stderr,"timebase_info:  numer = %u, denom = %u\n",timebase_info.numer,
-timebase_info.denom);
+//fprintf(stderr,"timebase_info:  numer = %u, denom = %u\n",timebase_info.numer,
+//timebase_info.denom);
 	}
 	uint64_t ns = (*t) * timebase_info.numer / timebase_info.denom;
 	return ns;
@@ -298,7 +298,7 @@ fprintf(stderr,"reveal:  bringing subview to front...\n");
 
 	// What does _updateTimer do???
 
-fprintf(stderr,"enableUpdates:  adding updateTimer to run loop?\n");
+//fprintf(stderr,"enableUpdates:  adding updateTimer to run loop?\n");
 	[_updateTimer addToRunLoop:[NSRunLoop currentRunLoop]
 			forMode:NSDefaultRunLoopMode];
 #endif // BUILD_FOR_IOS
@@ -361,11 +361,12 @@ fprintf(stderr,"set_refresh(%d):  enabling updates\n",duration);
 	// initialize the timer here,
 	// but we don't add it to the run queue
 	// until there is an explicit request
+	// wasteful?
 
 	_updateTimer = [CADisplayLink
 			displayLinkWithTarget:self
 			selector:@selector(_refresh)];
-fprintf(stderr,"initWithSize:  created updateTimer\n");
+//fprintf(stderr,"initWithSize:  created updateTimer\n");
 #endif // BUILD_FOR_IOS
 
 	return self;

@@ -541,6 +541,31 @@ static COMMAND_FUNC( mksubsequence )
 		warn("couldn't create subimage");
 }
 
+static COMMAND_FUNC( mksubstring )
+{
+	const char *obj_name;
+	Data_Obj *dp, *newdp;
+	long len;
+	long sos;
+
+	obj_name=NAMEOF("name for substring");
+
+	dp=pick_obj(PARENT_PROMPT);
+
+	len=(long) how_many("number of characters");
+
+	sos=(index_t)how_many("offset");
+
+	if( dp==NULL ) return;
+
+	INSIST_POSITIVE_DIM(len,"character","mksubstring")
+	INSIST_NONNEGATIVE(sos,"x offset","mksubstring")
+
+	newdp=mk_substring(dp,(index_t)sos,obj_name,(dimension_t)len);
+	if( newdp == NULL )
+		warn("couldn't create substring");
+}
+
 static COMMAND_FUNC( mksubvector )
 {
 	const char *obj_name;
@@ -567,7 +592,7 @@ static COMMAND_FUNC( mksubvector )
 
 	newdp=mk_subimg(dp,(index_t)xos,yos,obj_name,rows,(dimension_t)cols);
 	if( newdp == NULL )
-		warn("couldn't create subimage");
+		warn("couldn't create subvector");
 }
 
 static COMMAND_FUNC( mksubscalar )
@@ -925,6 +950,7 @@ ADD_CMD( obj_list,	new_obj_list,	create new list object	)
 ADD_CMD( delete,	do_delvec,	delete object	)
 ADD_CMD( subsample,	mk_subsample,	sub- or resample a data object	)
 ADD_CMD( subimage,	mksubimg,	create a subimage	)
+ADD_CMD( substring,	mksubstring,	create a substring	)
 ADD_CMD( subvector,	mksubvector,	create a subvector	)
 ADD_CMD( subscalar,	mksubscalar,	create a subscalar	)
 ADD_CMD( subsequence,	mksubsequence,	create a subsequence	)

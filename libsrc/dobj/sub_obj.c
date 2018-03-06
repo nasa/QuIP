@@ -500,7 +500,22 @@ _mk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char 
 	offsets[4]=0L;	SET_DIMENSION(dsp,4,OBJ_TYPE_DIM(parent,4));
 
 	return(mk_subseq(name,parent,offsets,dsp));
-	// release dimension set or not?
+}
+
+
+Data_Obj *
+_mk_substring( QSP_ARG_DECL  Data_Obj *parent, index_t sos,const char *name, dimension_t len )
+{
+	index_t offsets[N_DIMENSIONS];
+	Dimension_Set ds1, *dsp=(&ds1);
+
+	offsets[0]=sos;	SET_DIMENSION(dsp,0,len);
+	offsets[1]=0L;	SET_DIMENSION(dsp,1,OBJ_TYPE_DIM(parent,1));
+	offsets[2]=0L;	SET_DIMENSION(dsp,2,OBJ_TYPE_DIM(parent,2));
+	offsets[3]=0L;	SET_DIMENSION(dsp,3,OBJ_TYPE_DIM(parent,3));
+	offsets[4]=0L;	SET_DIMENSION(dsp,4,OBJ_TYPE_DIM(parent,4));
+
+	return(mk_subseq(name,parent,offsets,dsp));
 }
 
 Data_Obj * _nmk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *name, dimension_t rows,dimension_t cols,dimension_t tdim )

@@ -215,10 +215,14 @@ AC_ARG_ENABLE([use_cuda],
 	[AS_HELP_STRING([--disable-cuda],[disable GPU operations with CUDA @<:@default: no@:>@])],
 	[ use_cuda=${enableval}], [use_cuda=yes])
 
-# Enable opencl by default:
+# Enable opencl by default - but only for Mac!:
 AC_ARG_ENABLE([use_opencl],
 	[AS_HELP_STRING([--disable-opencl],[disable GPU operations with OpenCL @<:@default: no@:>@])],
 	[ use_opencl=${enableval}], [use_opencl=yes])
+if test "x$os_is_darwin" == xno; then
+  use_opencl=no
+fi
+
 
 # Metal seems to only work with objective C, so we can't test for it
 # with a regular C program...
@@ -1330,16 +1334,24 @@ if test "x${use_cuda}" = xyes; then
   AC_SEARCH_LIBS([cublasGetError],[cublas],[have_libcublas=yes],[have_libcublas=no])
   AC_SEARCH_LIBS([curandCreateGenerator],[curand],[have_libcurand=yes],[have_libcurand=no])
 
-  AC_SEARCH_LIBS([nppiErode_8u_C1R],[nppi],[have_libnppi=yes],[have_libnppi=no])
-  # older versions have libnpp
-  # if that is satisfied by libnppi, then we may need other npp libs too!
-  # BUG should check more carefully the status of this...
-  if test "x${have_libnppi}" = xyes; then
-    AC_SEARCH_LIBS([nppsFree],[npps])
+  AC_SEARCH_LIBS([nppGetStream],[nppc nppc_static],[have_libnppc=yes],[have_libnppc=no])
+  if test "x${have_libnppc}" = xyes; then
+    AC_SEARCH_LIBS([nppiAdd_32f_C1R],[nppial_static])
+    AC_SEARCH_LIBS([nppiMalloc_8u_C1],[nppisu_static])
+    AC_SEARCH_LIBS([nppiFilter_8u_C1R],[nppif_static])
+    AC_SEARCH_LIBS([nppiErode_8u_C1R],[nppi nppim_static],[have_libnppi=yes],[have_libnppi=no])
+    # older versions have libnpp
+    # if that is satisfied by libnppi, then we may need other npp libs too!
+    # BUG should check more carefully the status of this...
+    if test "x${have_libnppi}" = xyes; then
+      AC_SEARCH_LIBS([nppsFree],[npps])
+    else
+      # need to look for a different subroutine to avoid cached value???
+      #AC_SEARCH_LIBS([nppiErode_8u_C1R],[npp],[have_libnpp=yes],[have_libnpp=no])
+      AC_SEARCH_LIBS([nppiDilate_8u_C1R],[npp],[have_libnpp=yes],[have_libnpp=no])
+    fi
   else
-    # need to look for a different subroutine to avoid cached value???
-    #AC_SEARCH_LIBS([nppiErode_8u_C1R],[npp],[have_libnpp=yes],[have_libnpp=no])
-    AC_SEARCH_LIBS([nppiDilate_8u_C1R],[npp],[have_libnpp=yes],[have_libnpp=no])
+    have_libnpp=no
   fi
 
   # BUG need to determine whether we're compiling for 64 bit!

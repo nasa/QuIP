@@ -323,25 +323,16 @@ If $have_ptz_gui Update_PTZ_Sliders
 Switch_To_Cam $1
 .
 
-
-Set ptz_cam none		# initial default
-
-# Why do we have 2 macros, Select_PTZ_By_Index and Select_PTZ_By_Name???
-# Select_PTZ_By_Index puts the camera-specific parameters into the global
-# params used by the gui.
-
-Define Select_PTZ_By_Index 1 index
-#advise "Select_PTZ_By_Index $1"
-If strcmp($ptz_cam,none) "Remember_Params $ptz_cam"
-Set pan_name	cam${1}_pan
-Set tilt_name	cam${1}_tilt
-Set zoom_name	cam${1}_zoom
-Set focus_pos_name	cam${1}_focus_pos
-Set gain_name	cam${1}_gain
-Set shutter_name	cam${1}_shutter
-Set af_name	cam${1}_af
-Set ir_name	cam${1}_ir
-Set ae_name	cam${1}_ae
+Define Load_Cam_Params 1 cam_name
+Set pan_name		${1}_pan
+Set tilt_name		${1}_tilt
+Set zoom_name		${1}_zoom
+Set focus_pos_name	${1}_focus_pos
+Set gain_name		${1}_gain
+Set shutter_name	${1}_shutter
+Set af_name		${1}_af
+Set ir_name		${1}_ir
+Set ae_name		${1}_ae
 
 Set pan $$pan_name
 Set tilt $$tilt_name
@@ -352,10 +343,27 @@ Set shutter $$shutter_name
 Set af $$af_name
 Set ir $$ir_name
 Set ae $$ae_name
-
-Set ptz_cam cam$1
-Select_PTZ_By_Name $ptz_cam
 Update_Zoom_Scale
+.
+
+
+Set ptz_cam none		# initial default
+
+# Why do we have 2 macros, Select_PTZ_By_Index and Select_PTZ_By_Name???
+# Select_PTZ_By_Index puts the camera-specific parameters into the global
+# params used by the gui.
+
+Define Select_PTZ_By_Index 1 index
+#advise "Select_PTZ_By_Index $1"
+Set new_cam cam$1
+Select_PTZ_By_Name $new_cam
+.
+
+Define Select_PTZ_By_Name 1 cam_name
+If strcmp($ptz_cam,none) "Remember_Params $ptz_cam"
+Set ptz_cam $1
+Load_Cam_Params $1
+Select_PTZ $ptz_cam	# tell visca lib which cam to talk to
 .
 
 Define Update_PTZ_Sliders 0

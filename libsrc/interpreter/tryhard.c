@@ -262,5 +262,5 @@ FILE *_try_nice(QSP_ARG_DECL  const char *fnam, const char *mode)
     
         fp=try_open(fnam, mode);
 	return(fp);
-}
+} // _try_nice
 
