@@ -277,6 +277,11 @@ AC_ARG_ENABLE([use_flycap],
 	[AS_HELP_STRING([--disable-flycap],[disable support for PGR cameras with libflycap@<:@default: no@:>@])],
 	[ use_flycap=${enableval}], [use_flycap=yes])
 
+# Enable spinnaker by default:
+AC_ARG_ENABLE([use_spinnaker],
+	[AS_HELP_STRING([--disable-spinnaker],[disable support for PGR cameras with libspinnaker@<:@default: no@:>@])],
+	[ use_spinnaker=${enableval}], [use_spinnaker=yes])
+
 # Enable dc1394 by default:
 AC_ARG_ENABLE([dc1394],
 	[AS_HELP_STRING([--disable-dc1394],[disable support terminal control w/ dc1394@<:@default: no@:>@])],
@@ -342,6 +347,7 @@ if test "x${minimal_build}" = xyes; then
 	use_ncurses=no
 	use_dc1394=no
 	use_flycap=no
+	use_spinnaker=no
 	use_opengl=no
 	use_dv=no
 fi
@@ -1215,6 +1221,10 @@ if test "x${use_flycap}" = xyes; then
 #  fi
 fi
 
+if test "x${use_flycap}" = xyes; then
+  AC_SEARCH_LIBS([fc2CreateContext],[flycapture-c],[have_libspinnaker=yes],[have_libspinnaker=no])
+fi
+
 if test "x${use_dc1394}" = xyes; then
   AC_CHECK_HEADERS([dc1394/dc1394.h])
   #echo ac_cv_header_dc1394_dc1394_h = $ac_cv_header_dc1394_dc1394_h
@@ -1674,6 +1684,7 @@ AC_CONFIG_FILES([Makefile
 		 libsrc/polhemus/Makefile
 		 libsrc/ieee1394/Makefile
 		 libsrc/flycap/Makefile
+		 libsrc/spinnaker/Makefile
 		 libsrc/ptgrey/Makefile
 		 libsrc/cuda/Makefile
 		 libsrc/dither/Makefile
@@ -2337,6 +2348,10 @@ if test "x${have_libflycap}" = xyes; then
   AC_DEFINE([HAVE_LIBFLYCAP], 1, [Support for Point Grey Research cameras w/ libflycap])
 fi
 
+if test "x${have_libspinnaker}" = xyes; then
+  AC_DEFINE([HAVE_LIBSPINNAKER], 1, [Support for Point Grey Research cameras w/ libspinnaker])
+fi
+
 if test "x${have_libdc1394}" = xyes; then
   if test "x${have_dc1394_header}" = xno; then
     AC_MSG_WARN([
@@ -2520,6 +2535,16 @@ if test "x${have_libflycap}" != xyes; then
     AC_MSG_WARN([
 ------------------------------------------
 Unable to find libflycap.
+Building without support for Point Grey digital cameras.
+------------------------------------------])
+  fi
+fi
+
+if test "x${have_libspinnaker}" != xyes; then
+  if test "x${use_spinnaker}" = xyes; then
+    AC_MSG_WARN([
+------------------------------------------
+Unable to find libspinnaker.
 Building without support for Point Grey digital cameras.
 ------------------------------------------])
   fi

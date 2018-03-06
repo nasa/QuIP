@@ -1,0 +1,3 @@
+Support for FLIR Imaging (formerly Point Grey Research) spinnaker camera library.
+This library supercedes the flycapture2 library for USB3 and GigE cameras.
+
