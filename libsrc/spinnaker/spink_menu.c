@@ -20,7 +20,7 @@ static COMMAND_FUNC( do_spink_cam_menu );
 #define NO_LIB_MSG(whence)						\
 									\
 	sprintf(ERROR_STRING,						\
-		"%s:  program built without libflycap support!?",whence);	\
+		"%s:  program built without libspinnaker support!?",whence);	\
 	error1(ERROR_STRING);
 
 #define EAT_ONE_DUMMY(whence)						\
@@ -75,41 +75,41 @@ static COMMAND_FUNC( do_list_spink_cams )
 
 static COMMAND_FUNC( do_cam_info )
 {
-	Fly_Cam *fcp;
+	Spink_Cam *scp;
 
-	fcp = pick_spink_cam("camera");
-	if( fcp == NULL ) return;
+	scp = pick_spink_cam("camera");
+	if( scp == NULL ) return;
 
-	if( fcp == the_cam_p ){
-		sprintf(MSG_STR,"%s is selected as current camera.",fcp->fc_name);
+	if( scp == the_cam_p ){
+		sprintf(MSG_STR,"%s is selected as current camera.",scp->sk_name);
 		prt_msg(MSG_STR);
 	}
 #ifdef HAVE_LIBSPINNAKER
-	print_spink_cam_info(QSP_ARG  fcp);
+	print_spink_cam_info(QSP_ARG  scp);
 #else
 	NO_LIB_MSG("do_list_spink_cam");
 #endif
 }
 
-static void select_spink_cam(QSP_ARG_DECL  Fly_Cam *fcp )
+static void select_spink_cam(QSP_ARG_DECL  Spink_Cam *scp )
 {
 	if( the_cam_p != NULL )
 		pop_spink_cam_context(SINGLE_QSP_ARG);
-	the_cam_p = fcp;
-	push_spink_cam_context(QSP_ARG  fcp);
+	the_cam_p = scp;
+	push_spink_cam_context(QSP_ARG  scp);
 #ifdef HAVE_LIBSPINNAKER
-	refresh_spink_cam_properties(QSP_ARG  fcp);
+	refresh_spink_cam_properties(QSP_ARG  scp);
 #endif // HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_select_cam )
 {
-	Fly_Cam *fcp;
+	Spink_Cam *scp;
 
-	fcp = pick_spink_cam("camera");
-	if( fcp == NULL ) return;
+	scp = pick_spink_cam("camera");
+	if( scp == NULL ) return;
 
-	select_spink_cam(QSP_ARG  fcp);
+	select_spink_cam(QSP_ARG  scp);
 }
 
 static COMMAND_FUNC( do_start )
@@ -139,7 +139,7 @@ static COMMAND_FUNC( do_grab )
 	} else {
 		char num_str[32];
 
-		sprintf(num_str,"%d",the_cam_p->fc_newest);
+		sprintf(num_str,"%d",the_cam_p->sk_newest);
 		assign_var("newest",num_str);
 	}
 
@@ -239,16 +239,16 @@ static COMMAND_FUNC( do_set_video_mode )
 	int i;
 
 	CHECK_CAM
-	i = WHICH_ONE("video mode",the_cam_p->fc_n_video_modes,
-					the_cam_p->fc_video_mode_names );
+	i = WHICH_ONE("video mode",the_cam_p->sk_n_video_modes,
+					the_cam_p->sk_video_mode_names );
 	if( i < 0 ) return;
 
 sprintf(ERROR_STRING,"mode %s selected...",
-name_of_indexed_video_mode( the_cam_p->fc_video_mode_indices[i] ) );
+name_of_indexed_video_mode( the_cam_p->sk_video_mode_indices[i] ) );
 advise(ERROR_STRING);
 
 	if( is_fmt7_mode(QSP_ARG  the_cam_p, i ) ){
-		set_fmt7_mode(QSP_ARG  the_cam_p, the_cam_p->fc_fmt7_index );
+		set_fmt7_mode(QSP_ARG  the_cam_p, the_cam_p->sk_fmt7_index );
 	} else {
 		set_std_mode( QSP_ARG  the_cam_p, i );
 	}
@@ -413,7 +413,7 @@ static COMMAND_FUNC( do_write_reg )
 
 static COMMAND_FUNC( do_prop_info )
 {
-	Fly_Cam_Property_Type *t;
+	Spink_Cam_Property_Type *t;
 
 	t = pick_pgr_prop("property type");
 	CHECK_CAM
@@ -430,7 +430,7 @@ static COMMAND_FUNC( do_prop_info )
 
 static COMMAND_FUNC( do_show_prop )
 {
-	Fly_Cam_Property_Type *t;
+	Spink_Cam_Property_Type *t;
 
 	t = pick_pgr_prop("property type");
 	CHECK_CAM
@@ -447,7 +447,7 @@ static COMMAND_FUNC( do_show_prop )
 
 static COMMAND_FUNC( do_set_auto )
 {
-	Fly_Cam_Property_Type *t;
+	Spink_Cam_Property_Type *t;
 	int yn;
 	char pmpt[LLEN];
 
@@ -481,8 +481,8 @@ static COMMAND_FUNC( do_set_absolute )
 
 static COMMAND_FUNC( do_set_prop )
 {
-	Fly_Cam_Property_Type *t;
-	Fly_Cam_Prop_Val pv;
+	Spink_Cam_Property_Type *t;
+	Spink_Cam_Prop_Val pv;
 
 	t = pick_pgr_prop("property type");
 
@@ -491,11 +491,14 @@ static COMMAND_FUNC( do_set_prop )
 		char pmpt[LLEN];
 
 #ifdef HAVE_LIBSPINNAKER
+		/*
 		if( t != NULL ){
 			sprintf(pmpt,"%s in %ss",t->name,t->info.pUnits);
 		} else {
 			sprintf(pmpt,"value (integer)");
 		}
+		*/
+			sprintf(pmpt,"value (integer)");
 #else // ! HAVE_LIBSPINNAKER
 		sprintf(pmpt,"value (integer)");
 #endif // ! HAVE_LIBSPINNAKER
@@ -521,10 +524,10 @@ static COMMAND_FUNC( do_set_fmt7 )
 	CHECK_CAM
 
 #ifdef HAVE_LIBSPINNAKER
-	if( i < 0 || i >= the_cam_p->fc_n_fmt7_modes ){
+	if( i < 0 || i >= the_cam_p->sk_n_fmt7_modes ){
 		sprintf(ERROR_STRING,
 			"%s:  format7 index must be in the range 0 - %d",
-			the_cam_p->fc_name,the_cam_p->fc_n_fmt7_modes-1);
+			the_cam_p->sk_name,the_cam_p->sk_n_fmt7_modes-1);
 		WARN(ERROR_STRING);
 		return;
 	}
@@ -589,7 +592,7 @@ static COMMAND_FUNC( do_list_spink_cam_props )
 #ifdef HAVE_LIBSPINNAKER
 	list_spink_cam_properties(QSP_ARG  the_cam_p);
 #else // ! HAVE_LIBSPINNAKER
-	WARN("No support for libflycap in this build.");
+	WARN("No support for libspinnaker in this build.");
 #endif // ! HAVE_LIBSPINNAKER
 }
 
@@ -726,7 +729,7 @@ static COMMAND_FUNC( captmenu )
 	CHECK_AND_PUSH_MENU( capture );
 }
 
-#define CAM_P	the_cam_p->fc_cam_p
+#define CAM_P	the_cam_p->sk_cam_p
 
 static COMMAND_FUNC( do_fmt7_list )
 {
@@ -744,7 +747,7 @@ static COMMAND_FUNC( do_fmt7_setsize )
 
 	/* Don't try to set the image size if capture is running... */
 
-	if( the_cam_p->fc_flags & FLY_CAM_IS_RUNNING ){
+	if( the_cam_p->sk_flags & FLY_CAM_IS_RUNNING ){
 		WARN("can't set image size while camera is running!?");
 		return;
 	}
@@ -802,7 +805,7 @@ static COMMAND_FUNC( fmt7menu )
 	CHECK_AND_PUSH_MENU( format7 );
 }
 
-static COMMAND_FUNC(do_quit_fly)
+static COMMAND_FUNC(do_quit_spinnaker)
 {
 	if( the_cam_p != NULL )
 		pop_spink_cam_context(SINGLE_QSP_ARG);
@@ -811,9 +814,9 @@ static COMMAND_FUNC(do_quit_fly)
 }
 
 #undef ADD_CMD
-#define ADD_CMD(s,f,h)	ADD_COMMAND(fly_menu,s,f,h)
+#define ADD_CMD(s,f,h)	ADD_COMMAND(spinnaker_menu,s,f,h)
 
-MENU_BEGIN(fly)
+MENU_BEGIN(spinnaker)
 ADD_CMD( init,		do_init,	initialize subsystem )
 ADD_CMD( list,		do_list_spink_cams,	list cameras )
 ADD_CMD( select,	do_select_cam,	select camera )
@@ -829,13 +832,13 @@ ADD_CMD( trigger,	do_trigger,	trigger submenu )
 ADD_CMD( bandwidth,	do_bw,		report bandwidth usage )
 ADD_CMD( close,		do_close,	shutdown firewire subsystem )
 ADD_CMD( camera,	do_spink_cam_menu,	camera submenu )
-ADD_CMD( quit,		do_quit_fly,	exit submenu )
-MENU_SIMPLE_END(fly)	// doesn't add quit command automatically
+ADD_CMD( quit,		do_quit_spinnaker,	exit submenu )
+MENU_SIMPLE_END(spinnaker)	// doesn't add quit command automatically
 
-COMMAND_FUNC( do_fly_menu )
+COMMAND_FUNC( do_spink_menu )
 {
 	if( the_cam_p != NULL )
 		push_spink_cam_context(QSP_ARG  the_cam_p);
-	CHECK_AND_PUSH_MENU( fly );
+	CHECK_AND_PUSH_MENU( spinnaker );
 }
 

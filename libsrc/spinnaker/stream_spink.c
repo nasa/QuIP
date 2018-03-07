@@ -59,7 +59,7 @@
 
 #include "quip_prot.h"
 #include "rv_api.h"
-#include "fly.h"
+#include "spink.h"
 #include "gmovie.h"
 
 //#include "debug.h"
@@ -866,7 +866,7 @@ show_tmrs(SINGLE_QSP_ARG);
 		int queue_idx;
 
 		// get the next frame
-		dp = grab_fly_cam_frame(QSP_ARG  scp);
+		dp = grab_spink_cam_frame(QSP_ARG  scp);
 n_frames_read++;
 
 		assert( dp != NULL );

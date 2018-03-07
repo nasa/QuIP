@@ -434,6 +434,7 @@ extern COMMAND_FUNC( do_gsl_menu );
 extern COMMAND_FUNC( do_atc_menu );
 extern COMMAND_FUNC( do_pgr_menu );
 extern COMMAND_FUNC( do_fly_menu );
+extern COMMAND_FUNC( do_spink_menu );
 extern COMMAND_FUNC( do_seq_menu );
 extern COMMAND_FUNC( do_meteor_menu );
 extern COMMAND_FUNC( do_pic_menu );
