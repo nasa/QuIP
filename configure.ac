@@ -475,6 +475,10 @@ if test "x${use_x11}" = xyes; then
   AC_CHECK_FILE([/opt/X11/include],[CPPFLAGS="$CPPFLAGS -I/opt/X11/include"])
 fi
 
+if test "x${use_spinnaker}" = xyes; then
+  AC_CHECK_FILE([/usr/include/spinnaker/spinc],[CPPFLAGS="$CPPFLAGS -I/usr/include/spinnaker/spinc"])
+fi
+
 # must come before compiler stuff
 # This allows us to use GNU stuff, e.g. O_DIRECT...
 
@@ -1225,8 +1229,8 @@ if test "x${use_flycap}" = xyes; then
 #  fi
 fi
 
-if test "x${use_flycap}" = xyes; then
-  AC_SEARCH_LIBS([fc2CreateContext],[flycapture-c],[have_libspinnaker=yes],[have_libspinnaker=no])
+if test "x${use_spinnaker}" = xyes; then
+  AC_SEARCH_LIBS([spinSystemGetInstance],[Spinnaker_C],[have_libspinnaker=yes],[have_libspinnaker=no])
 fi
 
 if test "x${use_dc1394}" = xyes; then
