@@ -68,6 +68,11 @@ static COMMAND_FUNC( do_init )
 #endif
 }
 
+static COMMAND_FUNC( do_list_spink_interfaces )
+{
+	list_spink_interfaces(tell_msgfile());
+}
+
 static COMMAND_FUNC( do_list_spink_cams )
 {
 	list_spink_cams(tell_msgfile());
@@ -818,7 +823,8 @@ static COMMAND_FUNC(do_quit_spinnaker)
 
 MENU_BEGIN(spinnaker)
 ADD_CMD( init,		do_init,	initialize subsystem )
-ADD_CMD( list,		do_list_spink_cams,	list cameras )
+ADD_CMD( list_interfaces,	do_list_spink_interfaces,	list interfaces )
+ADD_CMD( list_cams,	do_list_spink_cams,	list cameras )
 ADD_CMD( select,	do_select_cam,	select camera )
 ADD_CMD( get_cameras,	do_get_cams,	copy camera names to an array )
 ADD_CMD( capture,	captmenu,	capture submenu )

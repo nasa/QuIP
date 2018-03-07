@@ -25,6 +25,7 @@
 
 #define TMPSIZE	32	// for temporary object names, e.g. _frame55
 
+ITEM_INTERFACE_DECLARATIONS(Spink_Interface,spink_interface,0)
 ITEM_INTERFACE_DECLARATIONS(Spink_Cam,spink_cam,0)
 
 #define UNIMP_FUNC(name)						\
@@ -166,6 +167,7 @@ SPINK_ENTRY(	format7,	SPINK_FRAMERATE_FORMAT7	)
 #define N_NAMED_FRAMERATES	(sizeof(all_framerates)/sizeof(Named_Frame_Rate))
 #define N_STD_FRAMERATES	(N_NAMED_FRAMERATES-1)
 
+#ifdef FOOBAR
 static Named_Bus_Speed all_bus_speeds[]={
 /*
 SPINK_ENTRY(	100,		SPINK_BUSSPEED_S100		),
@@ -207,6 +209,7 @@ SPINK_ENTRY(	gigE,		SPINK_INTERFACE_GIGE	)
 };
 
 #define N_NAMED_INTERFACES	(sizeof(all_interfaces)/sizeof(Named_Interface))
+#endif // FOOBAR
 
 #endif // HAVE_LIBSPINNAKER
 
@@ -255,106 +258,106 @@ static const char * get_spink_cam_prec_name(QSP_ARG_DECL  Item *ip )
 }
 
 
+#ifdef FOOBAR
 static Size_Functions spink_cam_sf={
 	get_spink_cam_size,
 	get_spink_cam_prec_name
 
 };
+#endif // FOOBAR
 
 
-static void report_spink_error(QSP_ARG_DECL  spinkError error, const char *whence )
+void _report_spink_error(QSP_ARG_DECL  spinError error, const char *whence )
 {
 	const char *msg;
 
 	switch(error){
-	/*
-		case SPINK_ERROR_UNDEFINED:
-			msg = "Undefined flycap error."; break;
-		case SPINK_ERROR_OK:
-			msg = "Function returned with no errors."; break;
-		case SPINK_ERROR_FAILED:
-			msg = "General failure."; break;
-		case SPINK_ERROR_NOT_IMPLEMENTED:
-			msg = "Function has not been implemented."; break;
-		case SPINK_ERROR_FAILED_BUS_MASTER_CONNECTION:
-			msg = "Could not connect to Bus Master."; break;
-		case SPINK_ERROR_NOT_CONNECTED:
-			msg = "Camera has not been connected."; break;
-		case SPINK_ERROR_INIT_FAILED:
-			msg = "Initialization failed."; break;
-		case SPINK_ERROR_NOT_INTITIALIZED:
-			msg = "Camera has not been initialized."; break;
-		case SPINK_ERROR_INVALID_PARAMETER:
-			msg = "Invalid parameter passed to function."; break;
-		case SPINK_ERROR_INVALID_SETTINGS:
-			msg = "Setting set to spink_cam is invalid."; break;
-		case SPINK_ERROR_INVALID_BUS_MANAGER:
-			msg = "Invalid Bus Manager object."; break;
-		case SPINK_ERROR_MEMORY_ALLOCATION_FAILED:
-			msg = "Could not allocate memory."; break;
-		case SPINK_ERROR_LOW_LEVEL_FAILURE:
-			msg = "Low level error."; break;
-		case SPINK_ERROR_NOT_FOUND:
-			msg = "Device not found."; break;
-		case SPINK_ERROR_FAILED_GUID:
-			msg = "GUID failure."; break;
-		case SPINK_ERROR_INVALID_PACKET_SIZE:
-			msg = "Packet size set to spink_cam is invalid."; break;
-		case SPINK_ERROR_INVALID_MODE:
-			msg = "Invalid mode has been passed to function."; break;
-		case SPINK_ERROR_NOT_IN_FORMAT7:
-			msg = "Error due to not being in Format7."; break;
-		case SPINK_ERROR_NOT_SUPPORTED:
-			msg = "This feature is unsupported."; break;
-		case SPINK_ERROR_TIMEOUT:
-			msg = "Timeout error."; break;
-		case SPINK_ERROR_BUS_MASTER_FAILED:
-			msg = "Bus Master Failure."; break;
-		case SPINK_ERROR_INVALID_GENERATION:
-			msg = "Generation Count Mismatch."; break;
-		case SPINK_ERROR_LUT_FAILED:
-			msg = "Look Up Table failure."; break;
-		case SPINK_ERROR_IIDC_FAILED:
-			msg = "IIDC failure."; break;
-		case SPINK_ERROR_STROBE_FAILED:
-			msg = "Strobe failure."; break;
-		case SPINK_ERROR_TRIGGER_FAILED:
-			msg = "Trigger failure."; break;
-		case SPINK_ERROR_PROPERTY_FAILED:
-			msg = "Property failure."; break;
-		case SPINK_ERROR_PROPERTY_NOT_PRESENT:
-			msg = "Property is not present."; break;
-		case SPINK_ERROR_REGISTER_FAILED:
-			msg = "Register access failed."; break;
-		case SPINK_ERROR_READ_REGISTER_FAILED:
-			msg = "Register read failed."; break;
-		case SPINK_ERROR_WRITE_REGISTER_FAILED:
-			msg = "Register write failed."; break;
-		case SPINK_ERROR_ISOCH_FAILED:
-			msg = "Isochronous failure."; break;
-		case SPINK_ERROR_ISOCH_ALREADY_STARTED:
-			msg = "Isochronous transfer has already been started."; break;
-		case SPINK_ERROR_ISOCH_NOT_STARTED:
-			msg = "Isochronous transfer has not been started."; break;
-		case SPINK_ERROR_ISOCH_START_FAILED:
-			msg = "Isochronous start failed."; break;
-		case SPINK_ERROR_ISOCH_RETRIEVE_BUFFER_FAILED:
-			msg = "Isochronous retrieve buffer failed."; break;
-		case SPINK_ERROR_ISOCH_STOP_FAILED:
-			msg = "Isochronous stop failed."; break;
-		case SPINK_ERROR_ISOCH_SYNC_FAILED:
-			msg = "Isochronous image synchronization failed."; break;
-		case SPINK_ERROR_ISOCH_BANDWIDTH_EXCEEDED:
-			msg = "Isochronous bandwidth exceeded."; break;
-		case SPINK_ERROR_IMAGE_CONVERSION_FAILED:
-			msg = "Image conversion failed."; break;
-		case SPINK_ERROR_IMAGE_LIBRARY_FAILURE:
-			msg = "Image library failure."; break;
-		case SPINK_ERROR_BUFFER_TOO_SMALL:
-			msg = "Buffer is too small."; break;
-		case SPINK_ERROR_IMAGE_CONSISTENCY_ERROR:
-			msg = "There is an image consistency error."; break;
-			*/
+		case SPINNAKER_ERR_SUCCESS:
+			msg = "Success"; break;
+		case SPINNAKER_ERR_ERROR:
+			msg = "Error"; break;
+		case SPINNAKER_ERR_NOT_INITIALIZED:
+			msg = "Not initialized"; break;
+		case SPINNAKER_ERR_NOT_IMPLEMENTED:
+			msg = "Not implemented"; break;
+		case SPINNAKER_ERR_RESOURCE_IN_USE:
+			msg = "Resource in use"; break;
+		case SPINNAKER_ERR_ACCESS_DENIED:
+			msg = "Access denied"; break;
+		case SPINNAKER_ERR_INVALID_HANDLE:
+			msg = "Invalid handle"; break;
+		case SPINNAKER_ERR_INVALID_ID:
+			msg = "Invalid ID"; break;
+		case SPINNAKER_ERR_NO_DATA:
+			msg = "No data"; break;
+		case SPINNAKER_ERR_INVALID_PARAMETER:
+			msg = "Invalid parameter"; break;
+		case SPINNAKER_ERR_IO:
+			msg = "I/O error"; break;
+		case SPINNAKER_ERR_TIMEOUT:
+			msg = "Timeout"; break;
+		case SPINNAKER_ERR_ABORT:
+			msg = "Abort"; break;
+		case SPINNAKER_ERR_INVALID_BUFFER:
+			msg = "Invalid buffer"; break;
+		case SPINNAKER_ERR_NOT_AVAILABLE:
+			msg = "Not available"; break;
+		case SPINNAKER_ERR_INVALID_ADDRESS:
+			msg = "Invalid address"; break;
+		case SPINNAKER_ERR_BUFFER_TOO_SMALL:
+			msg = "Buffer too small"; break;
+		case SPINNAKER_ERR_INVALID_INDEX:
+			msg = "Invalid index"; break;
+		case SPINNAKER_ERR_PARSING_CHUNK_DATA:
+			msg = "Chunk data parsing error"; break;
+		case SPINNAKER_ERR_INVALID_VALUE:
+			msg = "Invalid value"; break;
+		case SPINNAKER_ERR_RESOURCE_EXHAUSTED:
+			msg = "Resource exhausted"; break;
+		case SPINNAKER_ERR_OUT_OF_MEMORY:
+			msg = "Out of memory"; break;
+		case SPINNAKER_ERR_BUSY:
+			msg = "Busy"; break;
+
+		case GENICAM_ERR_INVALID_ARGUMENT:
+			msg = "genicam invalid argument"; break;
+		case GENICAM_ERR_OUT_OF_RANGE:
+			msg = "genicam range error"; break;
+		case GENICAM_ERR_PROPERTY:
+			msg = "genicam property error"; break;
+		case GENICAM_ERR_RUN_TIME:
+			msg = "genicam run time error"; break;
+		case GENICAM_ERR_LOGICAL:
+			msg = "genicam logical error"; break;
+		case GENICAM_ERR_ACCESS:
+			msg = "genicam access error"; break;
+		case GENICAM_ERR_TIMEOUT:
+			msg = "genicam timeout error"; break;
+		case GENICAM_ERR_DYNAMIC_CAST:
+			msg = "genicam dynamic cast error"; break;
+		case GENICAM_ERR_GENERIC:
+			msg = "genicam generic error"; break;
+		case GENICAM_ERR_BAD_ALLOCATION:
+			msg = "genicam bad allocation"; break;
+
+		case SPINNAKER_ERR_IM_CONVERT:
+			msg = "image conversion error"; break;
+		case SPINNAKER_ERR_IM_COPY:
+			msg = "image copy error"; break;
+		case SPINNAKER_ERR_IM_MALLOC:
+			msg = "image malloc error"; break;
+		case SPINNAKER_ERR_IM_NOT_SUPPORTED:
+			msg = "image operation not supported"; break;
+		case SPINNAKER_ERR_IM_HISTOGRAM_RANGE:
+			msg = "image histogram range error"; break;
+		case SPINNAKER_ERR_IM_HISTOGRAM_MEAN:
+			msg = "image histogram mean error"; break;
+		case SPINNAKER_ERR_IM_MIN_MAX:
+			msg = "image min/max error"; break;
+		case SPINNAKER_ERR_IM_COLOR_CONVERSION:
+			msg = "image color conversion error"; break;
+
+//		case SPINNAKER_ERR_CUSTOM_ID = -10000
 
 		default:
 			sprintf(ERROR_STRING,
@@ -387,7 +390,7 @@ void list_spink_cam_properties(QSP_ARG_DECL  Spink_Cam *scp)
 {
 	List *lp;
 	Node *np;
-	Spink_Cam_Property_Type *pgpt;
+	//Spink_Cam_Property_Type *pgpt;
 
 	lp = pgr_prop_list();	// all properties
 	np = QLIST_HEAD(lp);
@@ -401,7 +404,7 @@ void list_spink_cam_properties(QSP_ARG_DECL  Spink_Cam *scp)
 	}
 
 	while(np!=NULL){
-		pgpt = (Spink_Cam_Property_Type *)NODE_DATA(np);
+	//	pgpt = (Spink_Cam_Property_Type *)NODE_DATA(np);
 		/*
 		if( pgpt->info.present ){
 			sprintf(MSG_STR,"\t%s",pgpt->name);
@@ -476,7 +479,7 @@ void refresh_property_info(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type
 
 void show_property_info(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *pgpt )
 {
-	char var_name[32],val_str[32];
+	//char var_name[32],val_str[32];
 
 	sprintf(MSG_STR,"\n%s %s info:",scp->sk_name,pgpt->name);
 	prt_msg(MSG_STR);
@@ -1020,7 +1023,7 @@ static void test_setup(QSP_ARG_DECL  Spink_Cam *scp,
 
 static int get_supported_video_modes(QSP_ARG_DECL  Spink_Cam *scp )
 {
-	int i,j,n_so_far;
+	int i, /*j,*/ n_so_far;
 
 	n_so_far=(-1);
 	//for( i=0;i<N_STD_VIDEO_MODES;i++){
@@ -1085,9 +1088,9 @@ int is_fmt7_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx )
 
 static int refresh_config(QSP_ARG_DECL  Spink_Cam *scp)
 {
+#ifdef FOOBAR
 	spinkError error;
 
-#ifdef FOOBAR
 	error = spinkGetConfiguration(scp->sk_context,&scp->sk_config);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkGetConfiguration" );
@@ -1269,10 +1272,11 @@ fprintf(stderr,"Using size %d x %d\n",settings.width,settings.height);
 
 void set_eii_property(QSP_ARG_DECL  Spink_Cam *scp, int idx, int yesno )
 {
-	myEmbeddedImageInfo *eii_p;
-	spinkError error;
-
 #ifdef FOOBAR
+	spinkError error;
+	myEmbeddedImageInfo *eii_p;
+
+
 	eii_p = (myEmbeddedImageInfo *) (&scp->sk_ei_info);
 	if( ! eii_p->prop_tbl[idx].available ){
 		sprintf(ERROR_STRING,"Property %s is not available on %s",
@@ -1786,10 +1790,162 @@ void push_spink_cam_context(QSP_ARG_DECL  Spink_Cam *scp)
 	push_dobj_context(scp->sk_do_icp);
 }
 
+static spinSystem hSystem = NULL;
+static spinInterfaceList hInterfaceList = NULL;
+static spinCameraList hCameraList = NULL;
+static size_t numCameras = 0;
+static size_t numInterfaces = 0;
+
+#define release_spink_interface_structs()	_release_spink_interface_structs(SINGLE_QSP_ARG)
+
+static int _release_spink_interface_structs(SINGLE_QSP_ARG_DECL)
+{
+	// iterate through the list
+	Node *np;
+	List *lp;
+	Spink_Interface *ski_p;
+
+	lp = spink_interface_list();
+	if( lp == NULL ) return 0;
+	np = QLIST_HEAD(lp);
+	while(np!=NULL){
+		ski_p = (Spink_Interface *) NODE_DATA(np);
+		if( release_spink_interface(ski_p->ski_handle) < 0 )
+			return -1;
+		// could delete the struct here too!?!?
+		np = NODE_NEXT(np);
+	}
+	return 0;
+}
+
+#define release_spink_cam_structs()	_release_spink_cam_structs(SINGLE_QSP_ARG)
+
+static int _release_spink_cam_structs(SINGLE_QSP_ARG_DECL)
+{
+	// iterate through the list
+	Node *np;
+	List *lp;
+	Spink_Cam *skc_p;
+
+	lp = spink_cam_list();
+	if( lp == NULL ) return 0;
+	np = QLIST_HEAD(lp);
+	while(np!=NULL){
+		skc_p = (Spink_Cam *) NODE_DATA(np);
+		if( release_spink_cam(skc_p->skc_handle) < 0 )
+			return -1;
+		// could delete the struct here too!?!?
+		np = NODE_NEXT(np);
+	}
+	return 0;
+}
+
+void _release_spink_cam_system(SINGLE_QSP_ARG_DECL)
+{
+	assert( hSystem != NULL );
+DEBUG_MSG(releast_spink_cam_system BEGIN)
+	if( release_spink_interface_structs() < 0 ) return;
+	if( release_spink_cam_structs() < 0 ) return;
+
+	if( release_spink_cam_list(&hCameraList) < 0 ) return;
+	if( release_spink_interface_list(&hInterfaceList) < 0 ) return;
+	if( release_spink_system(hSystem) < 0 ) return;
+DEBUG_MSG(releast_spink_cam_system DONE)
+}
+
+// Don't we already have this???
+
+static void substitute_char(char *buf,char find, char replace)
+{
+	char *s;
+
+	s=buf;
+	while( *s ){
+		if( *s == find )
+			*s = replace;
+		s++;
+	}
+}
+
+#define create_spink_camera_structs() _create_spink_camera_structs(SINGLE_QSP_ARG)
+
+static int _create_spink_camera_structs(SINGLE_QSP_ARG_DECL)
+{
+	int i;
+	Spink_Cam *skc_p;
+	char buf[MAX_BUFF_LEN];
+	size_t len = MAX_BUFF_LEN;
+
+
+	for(i=0;i<numCameras;i++){
+		spinCamera hCamera;
+		if( get_spink_cam_from_list(&hCamera,hCameraList,i) < 0 )
+			return -1;
+
+		get_camera_model_name(buf,len,hCamera);
+		substitute_char(buf,' ','_');
+		skc_p = new_spink_cam(buf);
+
+		skc_p->skc_handle = hCamera;
+
+		/*
+		if( release_spink_interface(hInterface) < 0 )
+			return -1;
+			*/
+	}
+	return 0;
+}
+
+#define create_spink_interface_structs() _create_spink_interface_structs(SINGLE_QSP_ARG)
+
+static int _create_spink_interface_structs(SINGLE_QSP_ARG_DECL)
+{
+	int i;
+	Spink_Interface *ski_p;
+	char buf[MAX_BUFF_LEN];
+	size_t len = MAX_BUFF_LEN;
+
+
+	for(i=0;i<numInterfaces;i++){
+		spinInterface hInterface;
+		// This call causes releaseSystem to crash!?
+		if( get_spink_interface_from_list(&hInterface,hInterfaceList,i) < 0 )
+			return -1;
+
+		get_interface_name(buf,len,hInterface);
+		substitute_char(buf,' ','_');
+		ski_p = new_spink_interface(buf);
+
+		ski_p->ski_handle = hInterface;
+
+		/*
+		if( release_spink_interface(hInterface) < 0 )
+			return -1;
+			*/
+	}
+	return 0;
+}
+
 int init_spink_cam_system(SINGLE_QSP_ARG_DECL)
 {
-#ifdef FOOBAR
 #ifdef HAVE_LIBSPINNAKER
+	assert( hSystem == NULL );
+
+	if( get_spink_system(&hSystem) < 0 )
+		return -1;
+
+	if( get_spink_interfaces(hSystem,&hInterfaceList,&numInterfaces) < 0 ) return -1;
+	if( create_spink_interface_structs() < 0 ) return -1;
+
+	if( get_spink_cameras(hSystem,&hCameraList,&numCameras) < 0 ) return -1;
+	if( create_spink_camera_structs() < 0 ) return -1;
+
+	do_on_exit(_release_spink_cam_system);
+
+#endif // HAVE_LIBSPINNAKER
+	return 0;
+
+#ifdef FOOBAR
 	spinkVersion version;
 	spinkContext context;
 	spinkError error;
@@ -1853,10 +2009,8 @@ fprintf(stderr,"Calling setup_my_spink_cam for camera %d\n",i);
 
 	add_sizable(spink_cam_itp, &spink_cam_sf, (Item *(*)(QSP_ARG_DECL  const char *)) _spink_cam_of );
 
-#endif // HAVE_LIBSPINNAKER
-#endif // FOOBAR
-	
 	return 0;
+#endif // FOOBAR
 }
 
 #ifdef HAVE_LIBSPINNAKER
@@ -2212,10 +2366,11 @@ static const char *name_for_pixel_format(spinkPixelFormat f)
 
 Data_Obj * grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * scp )
 {
-	spinkError error;
 	int index;
 
 #ifdef FOOBAR
+	spinkError error;
+
 	if( scp->sk_base == NULL )
 		init_spink_base(QSP_ARG  scp);
 

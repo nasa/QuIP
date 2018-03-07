@@ -15,38 +15,38 @@
 //
 
 #ifdef HAVE_LIBSPINNAKER
-int get_spink_map( spinInterface hInterface, spinNodeMapHandle *hMap_p)
+int _get_spink_map(QSP_ARG_DECL  spinInterface hInterface, spinNodeMapHandle *hMap_p)
 {
 	spinError err = SPINNAKER_ERR_SUCCESS;
 
 	err = spinInterfaceGetTLNodeMap(hInterface, hMap_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to retrieve interface nodemap. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinInterfaceGetTLNodeMap");
 		return -1;
 	}
 	return 0;
 }
 
-int get_spink_node( spinNodeMapHandle hMap, const char *tag, spinNodeHandle *hdl_p)
+int _get_spink_node(QSP_ARG_DECL  spinNodeMapHandle hMap, const char *tag, spinNodeHandle *hdl_p)
 {
 	spinError err;
 
 	err = spinNodeMapGetNode(hMap, tag, hdl_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to retrieve node (%s). Aborting with error %d...\n\n",tag,err);
+		report_spink_error(err,"spinNodeMapGetNode");
 		return -1;
 	}
 	return 0;
 }
 
-int spink_node_is_available(spinNodeHandle hdl)
+int _spink_node_is_available(QSP_ARG_DECL  spinNodeHandle hdl)
 {
 	spinError err;
 	bool8_t isAvailable = False;
 
 	err = spinNodeIsAvailable(hdl, &isAvailable);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to check node availability (interface display name). Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinNodeIsAvailable");
 		return 0;
 	}
 	if( isAvailable )
@@ -54,14 +54,14 @@ int spink_node_is_available(spinNodeHandle hdl)
 	return 0;
 }
 
-int spink_node_is_readable(spinNodeHandle hdl)
+int _spink_node_is_readable(QSP_ARG_DECL spinNodeHandle hdl)
 {
 	spinError err;
 	bool8_t isReadable = False;
 
 	err = spinNodeIsReadable(hdl, &isReadable);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to check node readability (interface display name). Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinNodeIsReadable");
 		return 0;
 	}
 	if( isReadable )
@@ -69,13 +69,13 @@ int spink_node_is_readable(spinNodeHandle hdl)
 	return 0;
 }
 
-int spink_get_string(spinNodeHandle hdl, char *buf, size_t *len_p)
+int _spink_get_string(QSP_ARG_DECL spinNodeHandle hdl, char *buf, size_t *len_p)
 {
 	spinError err;
 
 	err = spinStringGetValue(hdl, buf, len_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to retrieve node string value. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinStringGetValue");
 		return -1;
 	}
 	return 0;
@@ -85,7 +85,23 @@ int spink_get_string(spinNodeHandle hdl, char *buf, size_t *len_p)
 // Print interface display name
 //
 
-void print_interface_name(spinNodeHandle hInterfaceDisplayName)
+int _get_interface_name(QSP_ARG_DECL  char *buf, size_t buflen, spinInterface hInterface)
+{
+	spinNodeMapHandle hNodeMapInterface = NULL;
+	spinNodeHandle hInterfaceDisplayName = NULL;
+
+	if( get_spink_map(hInterface,&hNodeMapInterface) < 0 ) return -1;
+
+	if( get_spink_node(hNodeMapInterface,"InterfaceDisplayName",&hInterfaceDisplayName) < 0 ) return -1;
+
+	if( ! spink_node_is_available(hInterfaceDisplayName) ) return -1;
+	if( ! spink_node_is_readable(hInterfaceDisplayName) ) return -1;
+
+	if( spink_get_string(hInterfaceDisplayName,buf,&buflen) < 0 ) return -1;
+	return 0;
+}
+
+void _print_interface_name(QSP_ARG_DECL  spinNodeHandle hInterfaceDisplayName)
 {
 	// Print
 	char buf[MAX_BUFF_LEN];
@@ -113,28 +129,28 @@ void print_interface_name(spinNodeHandle hInterfaceDisplayName)
 // releasing the system and while the camera list is still in scope.
 //
 
-int get_spink_cam_list(spinInterface hInterface, spinCameraList *hCamList_p, size_t *num_p)
+int _get_spink_cam_list(QSP_ARG_DECL spinInterface hInterface, spinCameraList *hCamList_p, size_t *num_p)
 {
 	spinError err;
 
 	// Create empty camera list
 	err = spinCameraListCreateEmpty(hCamList_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to create camera list. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinCameraListCreateEmpty");
 		return -1;
 	}
 
 	// Retrieve cameras
 	err = spinInterfaceGetCameras(hInterface, *hCamList_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to retrieve camera list. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinInterfaceGetCameras");
 		return -1;
 	}
 
 	// Retrieve number of cameras
 	err = spinCameraListGetSize(*hCamList_p, num_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to retrieve number of cameras. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinCameraListGetSize");
 		return -1;
 	}
 
@@ -154,10 +170,11 @@ int get_spink_cam_list(spinInterface hInterface, spinCameraList *hCamList_p, siz
 // manually. The same is true of interface lists.
 //
 
-int release_spink_cam_list( spinCameraList *hCamList_p )
+int _release_spink_cam_list(QSP_ARG_DECL  spinCameraList *hCamList_p )
 {
 	spinError err;
 
+DEBUG_MSG(release_spin_cam_list BEGIN)
 	if( *hCamList_p == NULL ){
 		fprintf(stderr,"release_spink_cam_list:  null list!?\n");
 		return -1;
@@ -165,47 +182,56 @@ int release_spink_cam_list( spinCameraList *hCamList_p )
 
 	err = spinCameraListClear(*hCamList_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to clear camera list. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinCameraListClear");
 		return -1;
 	}
 
 	err = spinCameraListDestroy(*hCamList_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to destroy camera list. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinCameraListDestroy");
 		return -1;
 	}
 
 	*hCamList_p = NULL;
+DEBUG_MSG(release_spin_cam_list DONE)
 	return 0;
 }
 
-int release_spink_interface_list( spinInterfaceList hInterfaceList )
+int _release_spink_interface_list(QSP_ARG_DECL  spinInterfaceList *hInterfaceList_p )
 {
 	spinError err;
 
-	// Clear and destroy interface list before releasing system
-	err = spinInterfaceListClear(hInterfaceList);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to clear interface list. Aborting with error %d...\n\n", err);
+DEBUG_MSG(release_spink_interfacelist BEGIN)
+	if( *hInterfaceList_p == NULL ){
+		fprintf(stderr,"release_spink_interface_list:  null list!?\n");
 		return -1;
 	}
 
-	err = spinInterfaceListDestroy(hInterfaceList);
+	// Clear and destroy interface list before releasing system
+	err = spinInterfaceListClear(*hInterfaceList_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to destroy interface list. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinInterfaceListClear");
 		return -1;
 	}
+
+	err = spinInterfaceListDestroy(*hInterfaceList_p);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinInterfaceListDestroy");
+		return -1;
+	}
+	*hInterfaceList_p = NULL;
+DEBUG_MSG(release_spink_interfacelist DONE)
 	return 0;
 }
 
-int release_spink_interface(spinInterface hInterface)
+int _release_spink_interface(QSP_ARG_DECL spinInterface hInterface)
 {
 	spinError err;
 
 	// Release interface
 	err = spinInterfaceRelease(hInterface);
 	if (err != SPINNAKER_ERR_SUCCESS){
-		fprintf(stderr,"Error releasing spink interface!?\n");
+		report_spink_error(err,"spinInterfaceRelease");
 		return -1;
 	}
 	return 0;
@@ -223,25 +249,25 @@ int release_spink_interface(spinInterface hInterface)
 // system is released.
 //
 
-int get_spink_cam_from_list(spinCamera *hCam_p, spinCameraList hCameraList, int idx )
+int _get_spink_cam_from_list(QSP_ARG_DECL  spinCamera *hCam_p, spinCameraList hCameraList, int idx )
 {
 	spinError err;
 
 	err = spinCameraListGet(hCameraList, idx, hCam_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to retrieve camera. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinCameraListGet");
 		return -1;
 	}
 	return 0;
 }
 
-int get_spink_interface_from_list(spinInterface *hInterface_p, spinInterfaceList hInterfaceList, int idx )
+int _get_spink_interface_from_list(QSP_ARG_DECL spinInterface *hInterface_p, spinInterfaceList hInterfaceList, int idx )
 {
 	spinError err;
 
 	err = spinInterfaceListGet(hInterfaceList, idx, hInterface_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to retrieve camera. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinInterfaceListGet");
 		return -1;
 	}
 	return 0;
@@ -250,13 +276,13 @@ int get_spink_interface_from_list(spinInterface *hInterface_p, spinInterfaceList
 // Retrieve TL device nodemap; please see NodeMapInfo_C example for
 // additional comments on transport layer nodemaps.
 
-int get_spink_transport_level_map( spinNodeMapHandle *mapHdl_p, spinCamera hCam )
+int _get_spink_transport_level_map(QSP_ARG_DECL  spinNodeMapHandle *mapHdl_p, spinCamera hCam )
 {
 	spinError err;
 
 	err = spinCameraGetTLDeviceNodeMap(hCam, mapHdl_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to retrieve TL device nodemap. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinCameraGetTLDeviceNodeMap");
 		return -1;
 	}
 	return 0;
@@ -274,7 +300,7 @@ int get_spink_transport_level_map( spinNodeMapHandle *mapHdl_p, spinCamera hCam 
 // attempt to read from or write to the node.
 //
 
-int get_spink_vendor_name( spinNodeMapHandle hNodeMapTLDevice, char *buf, size_t *len_p )
+int _get_spink_vendor_name( QSP_ARG_DECL  spinNodeMapHandle hNodeMapTLDevice, char *buf, size_t *len_p )
 {
 	spinNodeHandle hDeviceVendorName = NULL;
 
@@ -301,7 +327,7 @@ int get_spink_vendor_name( spinNodeMapHandle hNodeMapTLDevice, char *buf, size_t
 // handle errors with error codes alone.
 //
 
-int get_spink_model_name( spinNodeMapHandle hNodeMapTLDevice, char *buf, size_t *len_p )
+int _get_spink_model_name( QSP_ARG_DECL  spinNodeMapHandle hNodeMapTLDevice, char *buf, size_t *len_p )
 {
 	spinNodeHandle hDeviceModelName = NULL;
 
@@ -312,10 +338,40 @@ int get_spink_model_name( spinNodeMapHandle hNodeMapTLDevice, char *buf, size_t 
 	return 0;
 }
 
-int print_indexed_spink_cam_info( spinCameraList hCameraList, int idx )
+int _get_camera_model_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera hCam)
+{
+	spinNodeMapHandle hNodeMapTLDevice = NULL;
+	spinNodeHandle hDeviceModelName = NULL;
+
+	if( get_spink_transport_level_map(&hNodeMapTLDevice,hCam) < 0 ) return -1;
+
+	if( get_spink_node(hNodeMapTLDevice,"DeviceModelName",&hDeviceModelName) < 0 ) return -1;
+	if( ! spink_node_is_available(hDeviceModelName) ) return -1;
+	if( ! spink_node_is_readable(hDeviceModelName) ) return -1;
+	if( spink_get_string(hDeviceModelName,buf,&buflen) < 0 ) return -1;
+
+	return 0;
+}
+
+int _get_camera_vendor_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera hCam)
+{
+	spinNodeMapHandle hNodeMapTLDevice = NULL;
+	spinNodeHandle hDeviceVendorName = NULL;
+
+	if( get_spink_transport_level_map(&hNodeMapTLDevice,hCam) < 0 ) return -1;
+
+	if( get_spink_node(hNodeMapTLDevice,"DeviceVendorName",&hDeviceVendorName) < 0 ) return -1;
+	if( ! spink_node_is_available(hDeviceVendorName) ) return -1;
+	if( ! spink_node_is_readable(hDeviceVendorName) ) return -1;
+	if( spink_get_string(hDeviceVendorName,buf,&buflen) < 0 ) return -1;
+
+	return 0;
+}
+
+int _print_indexed_spink_cam_info( QSP_ARG_DECL  spinCameraList hCameraList, int idx )
 {
 	spinCamera hCam = NULL;
-	spinNodeMapHandle hNodeMapTLDevice = NULL;
+	//spinNodeMapHandle hNodeMapTLDevice = NULL;
 	char deviceVendorName[MAX_BUFF_LEN];
 	char deviceModelName[MAX_BUFF_LEN];
 	size_t vendor_len = MAX_BUFF_LEN;
@@ -323,10 +379,15 @@ int print_indexed_spink_cam_info( spinCameraList hCameraList, int idx )
 
 	if( get_spink_cam_from_list(&hCam,hCameraList,idx) < 0 ) return -1;
 
+	if( get_camera_vendor_name(deviceVendorName,vendor_len,hCam) < 0 ) return -1;
+	if( get_camera_model_name(deviceModelName,model_len,hCam) < 0 ) return -1;
+
+	/*
 	if( get_spink_transport_level_map(&hNodeMapTLDevice,hCam) < 0 ) return -1;
 
 	if( get_spink_vendor_name(hNodeMapTLDevice,deviceVendorName,&vendor_len) < 0 ) return -1;
 	if( get_spink_model_name(hNodeMapTLDevice,deviceModelName,&model_len) < 0 ) return -1;
+	*/
 
 	printf("\tDevice %d %s %s\n\n", idx, deviceVendorName, deviceModelName);
 
@@ -344,47 +405,62 @@ int print_indexed_spink_cam_info( spinCameraList hCameraList, int idx )
 // the system is released or an exception will be thrown.
 //
 
-int release_spink_cam(spinCamera hCam)
+int _release_spink_cam(QSP_ARG_DECL spinCamera hCam)
 {
 	spinError err;
 
 	err = spinCameraRelease(hCam);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to release camera. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinCameraRelease");
 		return -1;
 	}
 	return 0;
 }
 
-int release_spink_system(spinSystem hSystem)
+int _release_spink_system(QSP_ARG_DECL spinSystem hSystem)
 {
 	spinError err;
 
+DEBUG_MSG(release_spink_system BEGIN)
 	err = spinSystemReleaseInstance(hSystem);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to release system instance. Aborting with  error %d...\n\n", err);
+		report_spink_error(err,"spinSystemReleaseInstance");
 		return -1;
 	}
+DEBUG_MSG(release_spink_system DONE)
 	return 0;
 }
 
 // This function queries an interface for its cameras and then prints out
 // device information.
 
-int query_spink_interface(spinInterface hInterface)
+int _query_spink_interface(QSP_ARG_DECL  spinInterface hInterface)
 {
+	char buf[MAX_BUFF_LEN];
+	size_t len = MAX_BUFF_LEN;
+
+	if( get_interface_name(buf,len,hInterface) < 0 ) return -1;
+
+	/*
 	spinNodeMapHandle hNodeMapInterface = NULL;
 	spinNodeHandle hInterfaceDisplayName = NULL;
-	spinCameraList hCameraList = NULL;
-	size_t numCameras = 0;
-	spinError err = SPINNAKER_ERR_SUCCESS;
-	unsigned int i = 0;
 
 	if( get_spink_map(hInterface,&hNodeMapInterface) < 0 ) return -1;
 
 	if( get_spink_node(hNodeMapInterface,"InterfaceDisplayName",&hInterfaceDisplayName) < 0 ) return -1;
 
 	print_interface_name(hInterfaceDisplayName);
+	*/
+
+	return 0;
+}
+
+int _get_spink_interface_cameras(QSP_ARG_DECL  spinInterface hInterface)
+{
+	unsigned int i = 0;
+
+	spinCameraList hCameraList = NULL;
+	size_t numCameras = 0;
 
 	if( get_spink_cam_list(hInterface, &hCameraList, &numCameras) < 0 )
 		return -1;
@@ -415,15 +491,14 @@ int query_spink_interface(spinInterface hInterface)
 // released explicitly, it will be released automatically.
 //
 
-int get_spink_system(spinSystem *hSystem_p)
+int _get_spink_system(QSP_ARG_DECL spinSystem *hSystem_p)
 {
 	spinError err;
-	spinSystem hSystem = NULL;
 
 	err = spinSystemGetInstance(hSystem_p);
 	if (err != SPINNAKER_ERR_SUCCESS)
 	{
-		printf("Unable to retrieve system instance. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinSystemGetInstance");
 		return -1;
 	}
 	return 0;
@@ -441,7 +516,7 @@ int get_spink_system(spinSystem *hSystem_p)
 // in scope.
 //
 
-int get_spink_interfaces(spinSystem hSystem, spinInterfaceList *hInterfaceList_p, size_t *numInterfaces_p)
+int _get_spink_interfaces(QSP_ARG_DECL spinSystem hSystem, spinInterfaceList *hInterfaceList_p, size_t *numInterfaces_p)
 {
 	spinError err;
 
@@ -451,26 +526,23 @@ int get_spink_interfaces(spinSystem hSystem, spinInterfaceList *hInterfaceList_p
 	// Create empty interface list
 	err = spinInterfaceListCreateEmpty(hInterfaceList_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to create empty interface list. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinInterfaceListCreateEmpty");
 		return -1;
 	}
 
 	// Retrieve interfaces from system
 	err = spinSystemGetInterfaces(hSystem, *hInterfaceList_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to retrieve interface list. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinSystemGetInterfaces");
 		return -1;
 	}
 
 	// Retrieve number of interfaces
 	err = spinInterfaceListGetSize(*hInterfaceList_p, numInterfaces_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to retrieve number of interfaces. Aborting with err %d...\n\n", err);
+		report_spink_error(err,"spinInterfaceListGetSize");
 		return -1;
 	}
-
-	printf("Number of interfaces detected: %u\n\n", (unsigned int)*numInterfaces_p);
-
 	return 0;
 }
 
@@ -488,7 +560,7 @@ int get_spink_interfaces(spinSystem hSystem, spinInterfaceList *hInterfaceList_p
 // scope.
 //
 
-int get_spink_cameras(spinSystem hSystem, spinCameraList *hCameraList_p, size_t *num_p )
+int _get_spink_cameras(QSP_ARG_DECL spinSystem hSystem, spinCameraList *hCameraList_p, size_t *num_p )
 {
 	spinError err;
 
@@ -496,14 +568,14 @@ int get_spink_cameras(spinSystem hSystem, spinCameraList *hCameraList_p, size_t 
 	// Create empty camera list
 	err = spinCameraListCreateEmpty(hCameraList_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to create camera list. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinCameraListCreateEmpty");
 		return -1;
 	}
 
 	// Retrieve cameras from system
 	err = spinSystemGetCameras(hSystem, *hCameraList_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		printf("Unable to retrieve camera list. Aborting with error %d...\n\n", err);
+		report_spink_error(err,"spinSystemGetCameras");
 		return -1;
 	}
 
@@ -511,7 +583,7 @@ int get_spink_cameras(spinSystem hSystem, spinCameraList *hCameraList_p, size_t 
 	err = spinCameraListGetSize(*hCameraList_p, num_p);
 	if (err != SPINNAKER_ERR_SUCCESS)
 	{
-		printf("Unable to retrieve number of cameras. Aborting with  error %d...\n\n", err);
+		report_spink_error(err,"spinCameraListGetSize");
 		return -1;
 	}
 	return 0;

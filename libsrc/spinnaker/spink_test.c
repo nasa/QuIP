@@ -26,7 +26,6 @@ int main(int argc, char** argv)
 
 	if( get_spink_system(&hSystem) < 0 )
 		exit(1);
-
 	if( get_spink_interfaces(hSystem,&hInterfaceList,&numInterfaces) < 0 ) exit(1);
 	if( get_spink_cameras(hSystem,&hCameraList,&numCameras) < 0 ) exit(1);
 
