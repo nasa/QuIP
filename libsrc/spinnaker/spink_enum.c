@@ -14,6 +14,7 @@
 // addressing information if applicable.
 //
 
+#ifdef HAVE_LIBSPINNAKER
 int get_spink_map( spinInterface hInterface, spinNodeMapHandle *hMap_p)
 {
 	spinError err = SPINNAKER_ERR_SUCCESS;
@@ -516,3 +517,4 @@ int get_spink_cameras(spinSystem hSystem, spinCameraList *hCameraList_p, size_t 
 	return 0;
 }
 
+#endif // HAVE_LIBSPINNAKER

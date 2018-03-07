@@ -84,6 +84,7 @@ ITEM_INTERFACE_PROTOTYPES(Spink_Cam,spink_cam)
 #define IS_TRANSMITTING(fcp)	(fcp->sk_flags & FLY_CAM_IS_TRANSMITTING)
 
 // spink_enum.c
+#ifdef HAVE_LIBSPINNAKER
 extern int get_spink_node( spinNodeMapHandle hMap, const char *tag, spinNodeHandle *hdl_p);
 extern int spink_get_string(spinNodeHandle hdl, char *buf, size_t *len_p);
 extern void print_interface_name(spinNodeHandle hInterfaceDisplayName);
@@ -108,6 +109,7 @@ extern int release_spink_system(spinSystem hSystem);
 extern int query_spink_interface(spinInterface hInterface);
 extern int get_spink_interfaces(spinSystem hSystem, spinInterfaceList *hInterfaceList_p, size_t *numInterfaces_p);
 extern int get_spink_cameras(spinSystem hSystem, spinCameraList *hCameraList_p, size_t *num_p );
+#endif // HAVE_LIBSPINNAKER
 
 // spink_util.c
 extern int is_fmt7_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx );
