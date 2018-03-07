@@ -86,7 +86,9 @@ ITEM_INTERFACE_PROTOTYPES(Spink_Cam,spink_cam)
 
 typedef struct spink_interface {
 	const char *		ski_name;
+#ifdef HAVE_LIBSPINNAKER
 	spinInterface		ski_handle;
+#endif // HAVE_LIBSPINNAKER
 } Spink_Interface;
 
 ITEM_INTERFACE_PROTOTYPES(Spink_Interface,spink_interface)
@@ -157,14 +159,15 @@ extern int _get_spink_cameras(QSP_ARG_DECL  spinSystem hSystem, spinCameraList *
 extern int _get_spink_interface_cameras(QSP_ARG_DECL  spinInterface hInterface);
 #define get_spink_interface_cameras(hInterface)	_get_spink_interface_cameras(QSP_ARG  hInterface)
 
+extern void _report_spink_error(QSP_ARG_DECL  spinError error, const char *whence );
+#define report_spink_error(error,whence)	_report_spink_error(QSP_ARG  error, whence )
+
 #endif // HAVE_LIBSPINNAKER
 
 // spink_util.c
 extern void _release_spink_cam_system(SINGLE_QSP_ARG_DECL);
 #define release_spink_cam_system() _release_spink_cam_system(SINGLE_QSP_ARG)
 
-extern void _report_spink_error(QSP_ARG_DECL  spinError error, const char *whence );
-#define report_spink_error(error,whence)	_report_spink_error(QSP_ARG  error, whence )
 extern int is_fmt7_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx );
 extern int set_fmt7_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx );
 extern int set_std_mode(QSP_ARG_DECL  Spink_Cam *fcp, int idx);
