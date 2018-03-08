@@ -8,8 +8,7 @@ int _get_enumeration_entry_by_name(QSP_ARG_DECL  spinNodeHandle hEnum, const cha
 	err = spinEnumerationGetEntryByName(hEnum, tag, hdl_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
 		report_spink_error(err,"spinEnumerationGetEntryByName");
-			return -1;
-		}
+		return -1;
 	}
 	return 0;
 }
@@ -18,7 +17,7 @@ int _get_enumeration_int_val(QSP_ARG_DECL  spinNodeHandle hNode, int64_t *int_pt
 {
 	spinError err;
 
-	err = spinEnumerationEntryGetIntValue(hAcquisitionModeContinuous, &acquisitionModeContinuous);
+	err = spinEnumerationEntryGetIntValue(hNode, int_ptr);
 	if (err != SPINNAKER_ERR_SUCCESS) {
 		report_spink_error(err,"spinEnumerationEntryGetIntValue");
 		return -1;
@@ -29,7 +28,7 @@ int _set_enumeration_int_val(QSP_ARG_DECL  spinNodeHandle hNode, int64_t v)
 {
 	spinError err;
 
-	err = spinEnumerationSetIntValue(hAcquisitionMode, acquisitionModeContinuous);
+	err = spinEnumerationSetIntValue(hNode, v);
 	if (err != SPINNAKER_ERR_SUCCESS) {
 		report_spink_error(err,"spinEnumerationSetIntValue");
 		return -1;
@@ -46,7 +45,7 @@ int _set_enumeration_int_val(QSP_ARG_DECL  spinNodeHandle hNode, int64_t v)
 // buffer.
 //
 
-int _release_spink_image(QSP_ARG_DECL  hResultImage hImage)
+int _release_spink_image(QSP_ARG_DECL  spinImage hImage)
 {
 	spinError err;
 
@@ -74,7 +73,9 @@ int _release_spink_image(QSP_ARG_DECL  hResultImage hImage)
 
 int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 {
-	err = spinCameraGetNextImage(hCam, img_p);
+	spinError err;
+
+	err = spinCameraGetNextImage(skc_p->skc_handle, img_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
 		report_spink_error(err,"spinCameraGetNextImage");
 		return -1;
@@ -90,7 +91,6 @@ int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 	// incomplete.
 	//
 	bool8_t isIncomplete = False;
-	bool8_t hasFailed = False;
 
 	err = spinImageIsIncomplete(*img_p, &isIncomplete);
 	if (err != SPINNAKER_ERR_SUCCESS) {
@@ -124,13 +124,15 @@ int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 // as CRC, image status, and offset values, to name a few.
 //
 
-int _print_image_info(QSP_ARG_DECL  spinImage hImg)
+static int _print_image_info(QSP_ARG_DECL  spinImage hImg)
 {
 	size_t width = 0;
 	size_t height = 0;
+	spinError err;
+
 
 	// Retrieve image width
-	err = spinImageGetWidth(hResultImage, &width);
+	err = spinImageGetWidth(hImg, &width);
 	if (err != SPINNAKER_ERR_SUCCESS) {
 		report_spink_error(err,"spinImageGetWidth");
 		return -1;
@@ -139,7 +141,7 @@ int _print_image_info(QSP_ARG_DECL  spinImage hImg)
 	}
 
 	// Retrieve image height
-	err = spinImageGetHeight(hResultImage, &height);
+	err = spinImageGetHeight(hImg, &height);
 	if (err != SPINNAKER_ERR_SUCCESS) {
 		report_spink_error(err,"spinImageGetHeight");
 		return -1;
@@ -152,6 +154,7 @@ int _print_image_info(QSP_ARG_DECL  spinImage hImg)
 
 int _create_empty_image(QSP_ARG_DECL  spinImage *hImg_p)
 {
+	spinError err;
 
 	err = spinImageCreateEmpty(hImg_p);
 	if (err != SPINNAKER_ERR_SUCCESS) {
@@ -185,9 +188,11 @@ int _create_empty_image(QSP_ARG_DECL  spinImage *hImg_p)
 
 // BUG mode should be an arg, but not sure what type???
 
-int _convert_spink_image(QSP_ARG_DECL  spinImage *hDestImg_p, spinImage hSrcImg )
+int _convert_spink_image(QSP_ARG_DECL  spinImage hDestImg, spinImage hSrcImg )
 {
-	err = spinImageConvert(hResultImage, PixelFormat_Mono8, hConvertedImage);
+	spinError err;
+
+	err = spinImageConvert(hSrcImg, PixelFormat_Mono8, hDestImg);
 	if (err != SPINNAKER_ERR_SUCCESS) {
 		report_spink_error(err,"spinImageConvert");
 		return -1;
@@ -205,6 +210,8 @@ int _convert_spink_image(QSP_ARG_DECL  spinImage *hDestImg_p, spinImage hSrcImg 
 
 int _destroy_spink_image(QSP_ARG_DECL  spinImage hImg)
 {
+	spinError err;
+
 	err = spinImageDestroy(hImg);
 	if (err != SPINNAKER_ERR_SUCCESS) {
 		report_spink_error(err,"spinImageDestroy");
@@ -227,7 +234,7 @@ int _destroy_spink_image(QSP_ARG_DECL  spinImage hImg)
 // Image acquisition must be ended when no more images are needed.
 //
 
-int spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
+int _spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	spinCamera hCam;
 	spinError err;
@@ -290,13 +297,15 @@ int _spink_stop_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 // different from another.
 //
 
-int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
+#define set_acquisition_continuous(skc_p) _set_acquisition_continuous(QSP_ARG  skc_p)
+
+static int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	spinNodeHandle hAcquisitionMode = NULL;
 	spinNodeHandle hAcquisitionModeContinuous = NULL;
 	int64_t acquisitionModeContinuous = 0;
 
-	if( spink_get_node(skc_p->skc_genicam_node_map, "AcquisitionMode", &hAcquisitionMode) < 0 )
+	if( get_spink_node(skc_p->skc_genicam_node_map, "AcquisitionMode", &hAcquisitionMode) < 0 )
 		return -1;
 
 	if( ! spink_node_is_available(hAcquisitionMode) ) return -1;

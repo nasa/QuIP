@@ -756,7 +756,7 @@ static COMMAND_FUNC( do_fmt7_setsize )
 
 	/* Don't try to set the image size if capture is running... */
 
-	if( the_cam_p->skc_flags & FLY_CAM_IS_RUNNING ){
+	if( IS_RUNNING(the_cam_p) ){
 		WARN("can't set image size while camera is running!?");
 		return;
 	}
@@ -822,6 +822,15 @@ static COMMAND_FUNC(do_quit_spinnaker)
 	do_pop_menu(SINGLE_QSP_ARG);
 }
 
+static COMMAND_FUNC(do_test_cam)
+{
+	if( the_cam_p == NULL ){
+		warn("no camera selected!?");
+		return;
+	}
+	spink_test_acq(the_cam_p);
+}
+
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(spinnaker_menu,s,f,h)
 
@@ -829,12 +838,13 @@ MENU_BEGIN(spinnaker)
 ADD_CMD( init,		do_init,	initialize subsystem )
 ADD_CMD( list_interfaces,	do_list_spink_interfaces,	list interfaces )
 ADD_CMD( list_cams,	do_list_spink_cams,	list cameras )
+ADD_CMD( info,		do_cam_info,	print camera info )
+ADD_CMD( test,		do_test_cam,	test camera acquisition)
 ADD_CMD( select,	do_select_cam,	select camera )
 ADD_CMD( get_cameras,	do_get_cams,	copy camera names to an array )
 ADD_CMD( capture,	captmenu,	capture submenu )
 ADD_CMD( format7,	fmt7menu,	format7 submenu )
 ADD_CMD( select,	do_select_cam,	select camera )
-ADD_CMD( info,		do_cam_info,	print camera info )
 ADD_CMD( power,		do_power,	power camera on/off )
 ADD_CMD( reset,		do_reset,	reset camera )
 /* ADD_CMD( frame,	do_frame,	create a data object alias for a capture buffer frame ) */

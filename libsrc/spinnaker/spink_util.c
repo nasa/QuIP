@@ -708,7 +708,7 @@ void set_prop_auto(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *pgpt, 
 
 static void insure_stopped(QSP_ARG_DECL  Spink_Cam *scp, const char *op_desc)
 {
-	if( (scp->skc_flags & FLY_CAM_IS_RUNNING) == 0 ) return;
+	if( ! IS_RUNNING(scp) ) return;
 
 	sprintf(ERROR_STRING,"Stopping capture on %s prior to %s",
 		scp->skc_name,op_desc);
@@ -1883,6 +1883,8 @@ static void substitute_char(char *buf,char find, char replace)
 
 static int _connect_spink_cam(QSP_ARG_DECL  spinCamera hCam)
 {
+	spinkError err;
+
 	err = spinCameraInit(hCam);
 	if (err != SPINNAKER_ERR_SUCCESS) {
 		report_spink_error(err,"spinCameraInit");

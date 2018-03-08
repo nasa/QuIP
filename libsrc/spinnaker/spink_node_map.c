@@ -394,18 +394,7 @@ int _get_display_name(QSP_ARG_DECL  char *buf, size_t *len_p, spinNodeHandle hdl
 
 static int _display_spink_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 {
-	// Retrieve display name
-	char displayName[MAX_BUFF_LEN];
-	size_t displayNameLength = MAX_BUFF_LEN;
 	spinNodeType type;
-
-/*
-	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return -1;
-
-	// Print display name
-	indent(level);
-	printf("%s\n", displayName);
-	*/
 
 	if (chosenRead == VALUE) {
 		if( print_value_node(hNode,level) < 0 ) return -1;
@@ -535,9 +524,12 @@ int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 	spinCamera hCam;
 	spinNodeHandle hTLDeviceRoot = NULL;
 	spinNodeMapHandle hNodeMapTLDevice = NULL;
+	spinNodeMapHandle hNodeMap = NULL;
 	spinNodeMapHandle hNodeMapStream = NULL;
 	spinError err = SPINNAKER_ERR_SUCCESS;
 	spinNodeHandle hStreamRoot = NULL;
+	spinNodeHandle hRoot = NULL;
+
 
 
 	assert(skc_p!=NULL);
@@ -593,9 +585,6 @@ int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 	// sequencer are found on this nodemap.
 	//
 	printf("*** PRINTING GENICAM NODEMAP ***\n\n");
-
-	spinNodeMapHandle hNodeMap = NULL;
-	spinNodeHandle hRoot = NULL;
 
 	hNodeMap = skc_p->skc_genicam_node_map;
 

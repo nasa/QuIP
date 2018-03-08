@@ -189,6 +189,25 @@ extern int _get_string_node_string(QSP_ARG_DECL  char *buf, size_t *buflen_p, sp
 extern int _print_string_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level);
 #define print_string_node(hNode, level) _print_string_node(QSP_ARG  hNode, level)
 
+// spink_acq.c
+
+extern int _get_enumeration_entry_by_name(QSP_ARG_DECL  spinNodeHandle hEnum, const char *tag, spinNodeHandle *hdl_p);
+#define get_enumeration_entry_by_name(hEnum, tag, hdl_p) _get_enumeration_entry_by_name(QSP_ARG  hEnum, tag, hdl_p)
+extern int _get_enumeration_int_val(QSP_ARG_DECL  spinNodeHandle hNode, int64_t *int_ptr);
+#define get_enumeration_int_val(hNode, int_ptr) _get_enumeration_int_val(QSP_ARG  hNode, int_ptr)
+extern int _set_enumeration_int_val(QSP_ARG_DECL  spinNodeHandle hNode, int64_t v);
+extern int _release_spink_image(QSP_ARG_DECL  spinImage hImage);
+extern int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p);
+#define set_enumeration_int_val(hNode, v) _set_enumeration_int_val(QSP_ARG  hNode, v)
+#define release_spink_image(hImage) _release_spink_image(QSP_ARG  hImage)
+#define next_spink_image(img_p, skc_p) _next_spink_image(QSP_ARG  img_p, skc_p)
+extern int _create_empty_image(QSP_ARG_DECL  spinImage *hImg_p);
+extern int _convert_spink_image(QSP_ARG_DECL  spinImage hDestImg, spinImage hSrcImg );
+extern int _destroy_spink_image(QSP_ARG_DECL  spinImage hImg);
+extern int _spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p);
+extern int _spink_test_acq(QSP_ARG_DECL  Spink_Cam *skc_p);
+#define spink_test_acq(skc_p) _spink_test_acq(QSP_ARG  skc_p)
+
 #endif // HAVE_LIBSPINNAKER
 
 
