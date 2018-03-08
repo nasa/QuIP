@@ -1,3 +1,6 @@
+#ifndef _SPINK_H_
+#define _SPINK_H_
+
 #include "quip_config.h"
 #include "data_obj.h"
 #include "fio_api.h"
@@ -438,3 +441,4 @@ typedef int spinkContext;
 #ifndef HAVE_LIBSPINNAKER
 #endif // ! HAVE_LIBSPINNAKER
 
+#endif // _SPINK_H_

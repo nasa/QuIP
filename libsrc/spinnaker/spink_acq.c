@@ -1,6 +1,8 @@
 #include "quip_config.h"
 #include "spink.h"
 
+#ifdef HAVE_LIBSPINNAKER
+
 int _get_enumeration_entry_by_name(QSP_ARG_DECL  spinNodeHandle hEnum, const char *tag, spinNodeHandle *hdl_p)
 {
 	spinError err;
@@ -351,4 +353,6 @@ int _spink_test_acq(QSP_ARG_DECL  Spink_Cam *skc_p)
 
 	if( spink_stop_capture(skc_p) < 0 ) return -1;
 }
+
+#endif // HAVE_LIBSPINNAKER
 

@@ -4,6 +4,8 @@
 #include "quip_prot.h"
 #include "spink.h"
 
+#ifdef HAVE_LIBSPINNAKER
+
 // Use the following enum and global constant to select whether nodes are read
 // as 'value' nodes or their individual types.
 typedef enum _readType {
@@ -37,7 +39,6 @@ static int _get_node_type(QSP_ARG_DECL  spinNodeType *type_p, spinNodeHandle hNo
 	}
 	return 0;
 }
-
 
 //
 // Retrieve value of any node type as string
@@ -609,4 +610,7 @@ int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 
 	return 0;
 }
+
+#endif // HAVE_LIBSPINNAKER
+
 
