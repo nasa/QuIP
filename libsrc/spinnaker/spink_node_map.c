@@ -24,6 +24,21 @@ static void indent(unsigned int level)
 	}
 }
 
+#define get_node_type(type_p, hNode) _get_node_type(QSP_ARG  type_p, hNode)
+
+static int _get_node_type(QSP_ARG_DECL  spinNodeType *type_p, spinNodeHandle hNode)
+{
+	spinError err;
+
+	err = spinNodeGetType(hNode, type_p);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinNodeGetType");
+		return -1;
+	}
+	return 0;
+}
+
+
 //
 // Retrieve value of any node type as string
 //
@@ -106,13 +121,19 @@ int _print_value_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level)
 	size_t displayNameLength = MAX_BUFF_LEN;
 	char value[MAX_BUFF_LEN];
 	size_t valueLength = MAX_BUFF_LEN;
+	spinNodeType type;
+
+	if( get_node_type(&type,hNode) < 0 ) return -1;
 
 	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return -1;
-	if( get_node_value_string(value,&valueLength,hNode) < 0 ) return -1;
 
-	// Print value
 	indent(level);
-	printf("%s:  %s\n", displayName,value);
+	if( type == CategoryNode ){
+		printf("%s\n", displayName);
+	} else {
+		if( get_node_value_string(value,&valueLength,hNode) < 0 ) return -1;
+		printf("%s:  %s\n", displayName,value);
+	}
 
 	return 0;
 }
@@ -371,20 +392,6 @@ int _get_display_name(QSP_ARG_DECL  char *buf, size_t *len_p, spinNodeHandle hdl
 	return 0;
 }
 
-#define get_node_type(type_p, hNode) _get_node_type(QSP_ARG  type_p, hNode)
-
-static int _get_node_type(QSP_ARG_DECL  spinNodeType *type_p, spinNodeHandle hNode)
-{
-	spinError err;
-
-	err = spinNodeGetType(hNode, type_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinNodeGetType");
-		return -1;
-	}
-	return 0;
-}
-
 static int _display_spink_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 {
 	// Retrieve display name
@@ -392,14 +399,16 @@ static int _display_spink_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 	size_t displayNameLength = MAX_BUFF_LEN;
 	spinNodeType type;
 
+/*
 	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return -1;
 
 	// Print display name
 	indent(level);
 	printf("%s\n", displayName);
+	*/
 
 	if (chosenRead == VALUE) {
-		if( print_value_node(hNode,level+1) < 0 ) return -1;
+		if( print_value_node(hNode,level) < 0 ) return -1;
 	} else if (chosenRead == INDIVIDUAL) {
 		if( get_node_type(&type,hNode) < 0 ) return -1;
 		switch (type) {
@@ -412,7 +421,7 @@ static int _display_spink_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 				warn("OOPS - unahndled node type!?");
 				break;
 			case ValueNode:
-				if( print_value_node(hNode,level+1) < 0 ) return -1;
+				if( print_value_node(hNode,level) < 0 ) return -1;
 				break;
 			case StringNode:
 				if( print_string_node(hNode, level + 1) < 0 ) return -1;
@@ -477,10 +486,10 @@ static int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode,
 
 		if (type == CategoryNode) {
 			if( traverse_spink_node_tree(hFeatureNode,level+1,func) < 0 ) return -1;
+		} else {
+			if( (*func)(QSP_ARG  hFeatureNode,level+1) < 0 )
+				return -1;
 		}
-		
-		if( (*func)(QSP_ARG  hFeatureNode,level+1) < 0 )
-			return -1;
 	}
 	return 0;
 }
