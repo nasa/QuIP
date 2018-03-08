@@ -27,7 +27,9 @@ typedef struct spink_cam {
 	const char *		skc_name;
 #ifdef HAVE_LIBSPINNAKER
 	spinCamera		skc_handle;
-	spinNodeMapHandle	skc_node_map_TL_dev;	// hNodeMapTLDevice
+	spinNodeMapHandle	skc_TL_dev_node_map;	// hNodeMapTLDevice
+	spinNodeMapHandle	skc_genicam_node_map;	// hNodeMapTLDevice
+
 	/*
 	fc2Context		skc_context;
 	fc2PGRGuid		skc_guid;
@@ -78,13 +80,15 @@ ITEM_INTERFACE_PROTOTYPES(Spink_Cam,spink_cam)
 
 /* flag bits */
 
-#define FLY_CAM_USES_BMODE	1
-#define FLY_CAM_IS_RUNNING	2
-#define FLY_CAM_IS_CAPTURING	4
-#define FLY_CAM_IS_TRANSMITTING	8
+#define SPINK_CAM_CONNECTED		1
+#define SPINK_CAM_RUNNING		2
+#define SPINK_CAM_CAPTURING		4
+#define SPINK_CAM_TRANSMITTING		8
 
-#define IS_CAPTURING(fcp)	(fcp->sk_flags & FLY_CAM_IS_CAPTURING)
-#define IS_TRANSMITTING(fcp)	(fcp->sk_flags & FLY_CAM_IS_TRANSMITTING)
+#define IS_CONNECTED(skc_p)	(skc_p->skc_flags & SPINK_CAM_CONNECTED)
+#define IS_RUNNING(skc_p)	(skc_p->skc_flags & SPINK_CAM_RUNNING)
+#define IS_CAPTURING(skc_p)	(skc_p->skc_flags & SPINK_CAM_CAPTURING)
+#define IS_TRANSMITTING(skc_p)	(skc_p->skc_flags & SPINK_CAM_TRANSMITTING)
 
 typedef struct spink_interface {
 	const char *		ski_name;
@@ -167,6 +171,9 @@ extern void _report_spink_error(QSP_ARG_DECL  spinError error, const char *whenc
 #define report_spink_error(error,whence)	_report_spink_error(QSP_ARG  error, whence )
 
 // spink_node_map.c
+
+extern int _get_camera_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCamera hCam );
+#define get_camera_node_map(map_p, hCam ) _get_camera_node_map(QSP_ARG  map_p, hCam )
 
 extern int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p);
 #define get_camera_nodes(skc_p) _get_camera_nodes(QSP_ARG  skc_p)

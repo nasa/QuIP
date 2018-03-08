@@ -1867,6 +1867,30 @@ static void substitute_char(char *buf,char find, char replace)
 	}
 }
 
+//
+// Initialize camera
+//
+// *** NOTES ***
+// The camera becomes connected upon initialization. This provides
+// access to configurable options and additional information, accessible
+// through the GenICam nodemap.
+//
+// *** LATER ***
+// Cameras should be deinitialized when no longer needed.
+//
+
+#define connect_spink_cam(hCam) _connect_spink_cam(QSP_ARG  hCam)
+
+static int _connect_spink_cam(QSP_ARG_DECL  spinCamera hCam)
+{
+	err = spinCameraInit(hCam);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinCameraInit");
+		return -1;
+	}
+	return 0;
+}
+
 #define create_spink_camera_structs() _create_spink_camera_structs(SINGLE_QSP_ARG)
 
 static int _create_spink_camera_structs(SINGLE_QSP_ARG_DECL)
@@ -1880,6 +1904,7 @@ static int _create_spink_camera_structs(SINGLE_QSP_ARG_DECL)
 	for(i=0;i<numCameras;i++){
 		spinCamera hCam;
 		spinNodeMapHandle hNodeMapTLDevice;
+		spinNodeMapHandle hNodeMap;
 
 		if( get_spink_cam_from_list(&hCam,hCameraList,i) < 0 )
 			return -1;
@@ -1887,12 +1912,20 @@ static int _create_spink_camera_structs(SINGLE_QSP_ARG_DECL)
 		if( get_spink_transport_level_map(&hNodeMapTLDevice,hCam) < 0 )
 			return -1;
 
+		if( connect_spink_cam(hCam) < 0 ) return -1;
+
+		// camera must be connected before fetching these...
+		if( get_camera_node_map(&hNodeMap,hCam) < 0 )
+			return -1;
+
 		get_camera_model_name(buf,len,hNodeMapTLDevice);
 		substitute_char(buf,' ','_');
 		skc_p = new_spink_cam(buf);
 
 		skc_p->skc_handle = hCam;
-		skc_p->skc_node_map_TL_dev = hNodeMapTLDevice;
+		skc_p->skc_TL_dev_node_map = hNodeMapTLDevice;
+		skc_p->skc_genicam_node_map = hNodeMap;
+		skc_p->skc_flags = SPINK_CAM_CONNECTED;
 
 		/*
 		if( release_spink_interface(hInterface) < 0 )

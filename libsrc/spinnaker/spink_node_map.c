@@ -512,7 +512,7 @@ static int _get_stream_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCame
 
 #define get_camera_node_map(map_p, hCam ) _get_camera_node_map(QSP_ARG  map_p, hCam )
 
-static int _get_camera_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCamera hCam )
+int _get_camera_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCamera hCam )
 {
 	spinError err;
 
@@ -542,7 +542,8 @@ int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 
 	assert(skc_p!=NULL);
 	hCam = skc_p->skc_handle;
-	hNodeMapTLDevice = skc_p->skc_node_map_TL_dev;
+	hNodeMapTLDevice = skc_p->skc_TL_dev_node_map;
+	hNodeMap = skc_p->skc_genicam_node_map;
 
 	//
 	// Retrieve TL device nodemap
@@ -583,23 +584,6 @@ int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 	if( traverse_spink_node_tree(hStreamRoot,0,_display_spink_node) < 0 ) return -1;
 
 	//
-	// Initialize camera
-	//
-	// *** NOTES ***
-	// The camera becomes connected upon initialization. This provides
-	// access to configurable options and additional information, accessible
-	// through the GenICam nodemap.
-	//
-	// *** LATER ***
-	// Cameras should be deinitialized when no longer needed.
-	//
-	err = spinCameraInit(hCam);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraInit");
-		return -1;
-	}
-
-	//
 	// Retrieve GenICam nodemap
 	//
 	// *** NOTES ***
@@ -613,7 +597,7 @@ int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 	spinNodeMapHandle hNodeMap = NULL;
 	spinNodeHandle hRoot = NULL;
 
-	if( get_camera_node_map(&hNodeMap,hCam) < 0 ) return -1;
+	hNodeMap = skc_p->skc_genicam_node_map;
 
 	// Retrieve root node from nodemap
 	if( get_spink_node(hNodeMap, "Root", &hRoot) < 0 ) return -1;
