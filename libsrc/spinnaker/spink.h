@@ -135,6 +135,8 @@ extern int _print_indexed_spink_cam_info(QSP_ARG_DECL   spinCameraList hCameraLi
 
 extern int _spink_node_is_readable(QSP_ARG_DECL  spinNodeHandle hdl);
 #define spink_node_is_readable(hdl)	_spink_node_is_readable(QSP_ARG  hdl)
+extern int _spink_node_is_writable(QSP_ARG_DECL  spinNodeHandle hdl);
+#define spink_node_is_writable(hdl)	_spink_node_is_writable(QSP_ARG  hdl)
 extern int _spink_node_is_available(QSP_ARG_DECL  spinNodeHandle hdl);
 #define spink_node_is_available(hdl)	_spink_node_is_available(QSP_ARG  hdl)
 extern int _release_spink_cam_list(QSP_ARG_DECL   spinCameraList *hCamList_p );

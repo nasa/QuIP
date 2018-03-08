@@ -69,6 +69,21 @@ int _spink_node_is_readable(QSP_ARG_DECL spinNodeHandle hdl)
 	return 0;
 }
 
+int _spink_node_is_writable(QSP_ARG_DECL spinNodeHandle hdl)
+{
+	spinError err;
+	bool8_t pbWritable = False;
+
+	err = spinNodeIsWritable(hNode, &pbWritable);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinNodeIsWritable");
+		return 0;
+	}
+	if( isWritable )
+		return 1;
+	return 0;
+}
+
 int _spink_get_string(QSP_ARG_DECL spinNodeHandle hdl, char *buf, size_t *len_p)
 {
 	spinError err;
