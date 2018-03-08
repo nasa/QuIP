@@ -4,7 +4,7 @@ noinst_LIBRARIES = libspink.a
 
 libspink_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
 
-libspink_a_SOURCES = spink_menu.c stream_spink.c spink_util.c spink_enum.c spink_cam_ctl.c
+libspink_a_SOURCES = spink_menu.c stream_spink.c spink_util.c spink_enum.c spink_cam_ctl.c spink_node_map.c
 
 noinst_HEADERS = spink.h
 

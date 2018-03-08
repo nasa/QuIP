@@ -490,7 +490,7 @@ STATUS(DW_WAIT)
 		buf_idx = pip->ppi_queue[ queue_idx ];
 
 
-		buf = OBJ_DATA_PTR( pip->ppi_cam_p->sk_frm_dp_tbl[buf_idx] );
+		buf = OBJ_DATA_PTR( pip->ppi_cam_p->skc_frm_dp_tbl[buf_idx] );
 
 		/* write out the next frame */
 
@@ -575,8 +575,8 @@ STATUS(DW_DONE)
 		pip->ppi_n_dequeued ++;
 		//pip->ppi_next_to_write += n_disk_writer_threads;
 
-		//if( pip->ppi_next_to_write >= pip->ppi_cam_p->sk_n_buffers )	/* wrap around */
-			//pip->ppi_next_to_write -= pip->ppi_cam_p->sk_n_buffers;
+		//if( pip->ppi_next_to_write >= pip->ppi_cam_p->skc_n_buffers )	/* wrap around */
+			//pip->ppi_next_to_write -= pip->ppi_cam_p->skc_n_buffers;
 
 #ifdef RECORD_CAPTURE_COUNT
 		/* record # frames caputured while writing. */
@@ -918,15 +918,15 @@ fprintf(stderr,"video_reader %d:  Disk writer %d not keeping up, %d written, max
 n_frames_read,min_i,min_frames_written,max_frames_written);
 		}
 		if( n_frames_read-total_frames_written >
-				(scp->sk_n_buffers-n_disks) ){
+				(scp->skc_n_buffers-n_disks) ){
 fprintf(stderr,"Disk writers not keeping up:  %d frames read, %d written, %d buffers\n",
-n_frames_read,total_frames_written,scp->sk_n_buffers);
+n_frames_read,total_frames_written,scp->skc_n_buffers);
 		}
 
 //expected_newest=newest+1;
-//if( expected_newest >= scp->sk_n_buffers ) expected_newest=0;
+//if( expected_newest >= scp->skc_n_buffers ) expected_newest=0;
 
-		newest = scp->sk_newest;
+		newest = scp->skc_newest;
 
 //if( newest != expected_newest )
 //fprintf(stderr,"newest = %d, expected %d!? (n_frames_read = %d)\n",
@@ -937,7 +937,7 @@ n_frames_read,total_frames_written,scp->sk_n_buffers);
 		dw_idx = (n_frames_read-1) % n_disk_writer_threads;
 
 if( (ppi[dw_idx].ppi_n_enqueued - ppi[dw_idx].ppi_n_dequeued) >
-					(scp->sk_n_buffers/n_disk_writer_threads) )
+					(scp->skc_n_buffers/n_disk_writer_threads) )
 fprintf(stderr,"video_reader %d:  dw_idx = %d, %d enqueued   %d dequeued\n",
 n_frames_read,dw_idx,ppi[dw_idx].ppi_n_enqueued,ppi[dw_idx].ppi_n_dequeued);
 
@@ -1092,7 +1092,7 @@ if( verbose ) advise("main thread stopping capture");
 	if( orig_n_frames_wanted != n_frames_wanted ){
 		/* recompute the size of the file in case we were halted */
 
-		final_size = scp->sk_rows * scp->sk_cols * scp->sk_depth ;
+		final_size = scp->skc_rows * scp->skc_cols * scp->skc_depth ;
 
 		/* we used to divide size by 2 here if in field mode,
 		 * but that was a bug, because field mode reduces meteor_rows...
@@ -1196,7 +1196,7 @@ static void clear_buffers(SINGLE_QSP_ARG_DECL)
 
 	/*
 	npix = meteor_columns * meteor_rows ;
-	for(i=0;i<scp->sk_n_buffers;i++){
+	for(i=0;i<scp->skc_n_buffers;i++){
 		p = (uint32_t *)(mmbuf + meteor_off.frame_offset[i]);
 		for(j=0;j<npix;j++){
 			*p++ = 0;
@@ -1211,7 +1211,7 @@ static uint32_t get_blocks_per_frame(Spink_Cam *scp)
 {
 	uint32_t blocks_per_frame, bytes_per_frame;
 
-	bytes_per_frame = scp->sk_cols * scp->sk_rows * scp->sk_depth;
+	bytes_per_frame = scp->skc_cols * scp->skc_rows * scp->skc_depth;
 //fprintf(stderr,"bytes_per_frame = %d\n",bytes_per_frame);
 
 
@@ -1282,7 +1282,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,Spink_C
 	/* set_rt(); */
 
 	/*
-	if( MAX_RINGBUF_FRAMES < scp->sk_n_buffers ){
+	if( MAX_RINGBUF_FRAMES < scp->skc_n_buffers ){
 		warn("Need to recompile mcapt.c with a larger value of MAX_RINGBUF_FRAMES");
 		return;
 	}
@@ -1318,12 +1318,12 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,Spink_C
 	inp = (RV_Inode *)ifp->if_hdr_p;
 	n_disks = queue_rv_file(inp,fd_arr);
 	assert( n_disks > 1 );
-	assert( scp->sk_n_buffers > 0 );
+	assert( scp->skc_n_buffers > 0 );
 
-	if( scp->sk_n_buffers < (2*n_disks) ){
+	if( scp->skc_n_buffers < (2*n_disks) ){
 		sprintf(ERROR_STRING,
 	"buffer frames (%d) must be >= 2 x number of disks (%d)",
-			scp->sk_n_buffers,n_disks);
+			scp->skc_n_buffers,n_disks);
 		warn(ERROR_STRING);
 		return;
 	}
@@ -1339,9 +1339,9 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,Spink_C
 	 * the frame?  Does this not get written to the raw volume?
 	 */
 
-	SET_SHP_ROWS(shpp, scp->sk_rows );
-	SET_SHP_COLS(shpp, scp->sk_cols );
-	SET_SHP_COMPS(shpp,scp->sk_depth);
+	SET_SHP_ROWS(shpp, scp->skc_rows );
+	SET_SHP_COLS(shpp, scp->skc_cols );
+	SET_SHP_COMPS(shpp,scp->skc_depth);
 
 	SET_SHP_FRAMES(shpp,n_frames_wanted);
 	SET_SHP_SEQS(shpp, 1);
@@ -1356,7 +1356,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,Spink_C
 	/* We write an entire frame to each disk in turn... */
 
 	//npix=n_to_write/meteor_bytes_per_pixel;
-	//npix=n_to_write/scp->sk_depth;
+	//npix=n_to_write/scp->skc_depth;
 
 	/* For the sake of symmetry, we'll create n_disks child threads,
 	 * and have the parent wait for them.

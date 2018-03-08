@@ -70,12 +70,16 @@ static COMMAND_FUNC( do_init )
 
 static COMMAND_FUNC( do_list_spink_interfaces )
 {
+	prt_msg("Spinnaker interfaces:");
 	list_spink_interfaces(tell_msgfile());
+	prt_msg("");
 }
 
 static COMMAND_FUNC( do_list_spink_cams )
 {
+	prt_msg("Spinnaker cameras:");
 	list_spink_cams(tell_msgfile());
+	prt_msg("");
 }
 
 static COMMAND_FUNC( do_cam_info )
@@ -86,7 +90,7 @@ static COMMAND_FUNC( do_cam_info )
 	if( scp == NULL ) return;
 
 	if( scp == the_cam_p ){
-		sprintf(MSG_STR,"%s is selected as current camera.",scp->sk_name);
+		sprintf(MSG_STR,"%s is selected as current camera.",scp->skc_name);
 		prt_msg(MSG_STR);
 	}
 #ifdef HAVE_LIBSPINNAKER
@@ -144,7 +148,7 @@ static COMMAND_FUNC( do_grab )
 	} else {
 		char num_str[32];
 
-		sprintf(num_str,"%d",the_cam_p->sk_newest);
+		sprintf(num_str,"%d",the_cam_p->skc_newest);
 		assign_var("newest",num_str);
 	}
 
@@ -244,16 +248,16 @@ static COMMAND_FUNC( do_set_video_mode )
 	int i;
 
 	CHECK_CAM
-	i = WHICH_ONE("video mode",the_cam_p->sk_n_video_modes,
-					the_cam_p->sk_video_mode_names );
+	i = WHICH_ONE("video mode",the_cam_p->skc_n_video_modes,
+					the_cam_p->skc_video_mode_names );
 	if( i < 0 ) return;
 
 sprintf(ERROR_STRING,"mode %s selected...",
-name_of_indexed_video_mode( the_cam_p->sk_video_mode_indices[i] ) );
+name_of_indexed_video_mode( the_cam_p->skc_video_mode_indices[i] ) );
 advise(ERROR_STRING);
 
 	if( is_fmt7_mode(QSP_ARG  the_cam_p, i ) ){
-		set_fmt7_mode(QSP_ARG  the_cam_p, the_cam_p->sk_fmt7_index );
+		set_fmt7_mode(QSP_ARG  the_cam_p, the_cam_p->skc_fmt7_index );
 	} else {
 		set_std_mode( QSP_ARG  the_cam_p, i );
 	}
@@ -529,10 +533,10 @@ static COMMAND_FUNC( do_set_fmt7 )
 	CHECK_CAM
 
 #ifdef HAVE_LIBSPINNAKER
-	if( i < 0 || i >= the_cam_p->sk_n_fmt7_modes ){
+	if( i < 0 || i >= the_cam_p->skc_n_fmt7_modes ){
 		sprintf(ERROR_STRING,
 			"%s:  format7 index must be in the range 0 - %d",
-			the_cam_p->sk_name,the_cam_p->sk_n_fmt7_modes-1);
+			the_cam_p->skc_name,the_cam_p->skc_n_fmt7_modes-1);
 		WARN(ERROR_STRING);
 		return;
 	}
@@ -734,7 +738,7 @@ static COMMAND_FUNC( captmenu )
 	CHECK_AND_PUSH_MENU( capture );
 }
 
-#define CAM_P	the_cam_p->sk_cam_p
+#define CAM_P	the_cam_p->skc_cam_p
 
 static COMMAND_FUNC( do_fmt7_list )
 {
@@ -752,7 +756,7 @@ static COMMAND_FUNC( do_fmt7_setsize )
 
 	/* Don't try to set the image size if capture is running... */
 
-	if( the_cam_p->sk_flags & FLY_CAM_IS_RUNNING ){
+	if( the_cam_p->skc_flags & FLY_CAM_IS_RUNNING ){
 		WARN("can't set image size while camera is running!?");
 		return;
 	}

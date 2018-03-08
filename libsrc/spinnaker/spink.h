@@ -16,6 +16,7 @@
 
 // This macro helps with C-strings.
 #define MAX_BUFF_LEN 256
+#define MAX_NODE_CHARS 35
 
 
 #define N_FMT7_MODES	5	// PGR has 32, but why bother?
@@ -23,47 +24,48 @@
 typedef int Framerate_Mask;
 
 typedef struct spink_cam {
-	const char *		sk_name;
+	const char *		skc_name;
 #ifdef HAVE_LIBSPINNAKER
 	spinCamera		skc_handle;
+	spinNodeMapHandle	skc_node_map_TL_dev;	// hNodeMapTLDevice
 	/*
-	fc2Context		sk_context;
-	fc2PGRGuid		sk_guid;
-	fc2CameraInfo		sk_cam_info;
-	fc2EmbeddedImageInfo	sk_ei_info;
-	fc2VideoMode		sk_video_mode;	// current
-	fc2FrameRate 		sk_framerate;	// current
-	fc2Config		sk_config;
-	fc2Format7Info *	sk_fmt7_info_tbl;
-	fc2Image *		sk_img_p;
+	fc2Context		skc_context;
+	fc2PGRGuid		skc_guid;
+	fc2CameraInfo		skc_cam_info;
+	fc2EmbeddedImageInfo	skc_ei_info;
+	fc2VideoMode		skc_video_mode;	// current
+	fc2FrameRate 		skc_framerate;	// current
+	fc2Config		skc_config;
+	fc2Format7Info *	skc_fmt7_info_tbl;
+	fc2Image *		skc_img_p;
 	*/
 
-	unsigned char *		sk_base;	// for captured frames...
-	long			sk_buf_delta;
-	int	 		sk_framerate_index;	// into all_framerates
-	int	 		sk_video_mode_index;	// into all_video_modes
-	int	 		sk_fmt7_index;		// of available...
+	unsigned char *		skc_base;	// for captured frames...
+	long			skc_buf_delta;
+	int	 		skc_framerate_index;	// into all_framerates
+	int	 		skc_video_mode_index;	// into all_video_modes
+	int	 		skc_fmt7_index;		// of available...
 
-	int	 		sk_my_video_mode_index;	// into private tbl
-	int			sk_n_video_modes;
-	int			sk_n_fmt7_modes;
-	int *			sk_video_mode_indices;
-	const char **		sk_video_mode_names;
-	Framerate_Mask *	sk_framerate_mask_tbl;	// one for every video mode
-	int			sk_n_framerates;
-	const char **		sk_framerate_names;
+	int	 		skc_my_video_mode_index;	// into private tbl
+	int			skc_n_video_modes;
+	int			skc_n_fmt7_modes;
+	int *			skc_video_mode_indices;
+	const char **		skc_video_mode_names;
+	Framerate_Mask *	skc_framerate_mask_tbl;	// one for every video mode
+	int			skc_n_framerates;
+	const char **		skc_framerate_names;
 #endif /* HAVE_LIBSPINNAKER */
 
-	unsigned int		sk_cols;
-	unsigned int		sk_rows;
-	unsigned int		sk_depth;	// bytes per pixel
-	int			sk_n_buffers;
-	int			sk_newest;
-	Data_Obj **		sk_frm_dp_tbl;
-	Item_Context *		sk_do_icp;	// data_obj context
-	List *			sk_in_use_lp;	// list of frames...
-	List *			sk_feat_lp;
-	u_long			sk_flags;
+	unsigned int		skc_cols;
+	unsigned int		skc_rows;
+	unsigned int		skc_depth;	// bytes per pixel
+	int			skc_n_buffers;
+	int			skc_newest;
+	Data_Obj **		skc_frm_dp_tbl;
+	Item_Context *		skc_do_icp;	// data_obj context
+	List *			skc_in_use_lp;	// list of frames...
+	List *			skc_feat_lp;
+	u_long			skc_flags;
 } Spink_Cam;
 
 ITEM_INTERFACE_PROTOTYPES(Spink_Cam,spink_cam)
@@ -100,8 +102,8 @@ ITEM_INTERFACE_PROTOTYPES(Spink_Interface,spink_interface)
 
 // spink_enum.c
 #ifdef HAVE_LIBSPINNAKER
-extern int _get_camera_model_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera hCam);
-#define get_camera_model_name(buf, buflen, hCam) _get_camera_model_name(QSP_ARG  buf, buflen, hCam)
+extern int _get_camera_model_name(QSP_ARG_DECL  char *buf, size_t buflen, spinNodeMapHandle hNodeMapTLDevice);
+#define get_camera_model_name(buf, buflen, map) _get_camera_model_name(QSP_ARG  buf, buflen, map)
 extern int _get_camera_vendor_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera hCam);
 #define get_camera_vendor_name(buf, buflen, hCam) _get_camera_vendor_name(QSP_ARG  buf, buflen, hCam)
 
@@ -164,7 +166,24 @@ extern int _get_spink_interface_cameras(QSP_ARG_DECL  spinInterface hInterface);
 extern void _report_spink_error(QSP_ARG_DECL  spinError error, const char *whence );
 #define report_spink_error(error,whence)	_report_spink_error(QSP_ARG  error, whence )
 
+// spink_node_map.c
+
+extern int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p);
+#define get_camera_nodes(skc_p) _get_camera_nodes(QSP_ARG  skc_p)
+
+extern int _get_node_value_string(QSP_ARG_DECL  char *buf, size_t *buflen_p, spinNodeHandle hNode );
+#define get_node_value_string(buf, buflen_p, hNode ) _get_node_value_string(QSP_ARG  buf, buflen_p, hNode )
+extern int _print_value_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level);
+#define print_value_node(hNode, level) _print_value_node(QSP_ARG  hNode, level)
+extern int _get_display_name(QSP_ARG_DECL  char *buf, size_t *len_p, spinNodeHandle hdl);
+#define get_display_name(buf, len_p, hdl) _get_display_name(QSP_ARG  buf, len_p, hdl)
+extern int _get_string_node_string(QSP_ARG_DECL  char *buf, size_t *buflen_p, spinNodeHandle hNode );
+#define get_string_node_string(buf, buflen_p, hNode ) _get_string_node_string(QSP_ARG  buf, buflen_p, hNode )
+extern int _print_string_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level);
+#define print_string_node(hNode, level) _print_string_node(QSP_ARG  hNode, level)
+
 #endif // HAVE_LIBSPINNAKER
+
 
 // spink_util.c
 extern void _release_spink_cam_system(SINGLE_QSP_ARG_DECL);
