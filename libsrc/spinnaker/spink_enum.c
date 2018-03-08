@@ -338,12 +338,9 @@ int _get_spink_model_name( QSP_ARG_DECL  spinNodeMapHandle hNodeMapTLDevice, cha
 	return 0;
 }
 
-int _get_camera_model_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera hCam)
+int _get_camera_model_name(QSP_ARG_DECL  char *buf, size_t buflen, spinNodeMapHandle hNodeMapTLDevice)
 {
-	spinNodeMapHandle hNodeMapTLDevice = NULL;
 	spinNodeHandle hDeviceModelName = NULL;
-
-	if( get_spink_transport_level_map(&hNodeMapTLDevice,hCam) < 0 ) return -1;
 
 	if( get_spink_node(hNodeMapTLDevice,"DeviceModelName",&hDeviceModelName) < 0 ) return -1;
 	if( ! spink_node_is_available(hDeviceModelName) ) return -1;

@@ -16,6 +16,7 @@
 
 // This macro helps with C-strings.
 #define MAX_BUFF_LEN 256
+#define MAX_NODE_CHARS 35
 
 
 #define N_FMT7_MODES	5	// PGR has 32, but why bother?
@@ -26,6 +27,7 @@ typedef struct spink_cam {
 	const char *		sk_name;
 #ifdef HAVE_LIBSPINNAKER
 	spinCamera		skc_handle;
+	spinNodeMapHandle	skc_node_map_TL_dev;	// hNodeMapTLDevice
 	/*
 	fc2Context		sk_context;
 	fc2PGRGuid		sk_guid;
@@ -100,8 +102,8 @@ ITEM_INTERFACE_PROTOTYPES(Spink_Interface,spink_interface)
 
 // spink_enum.c
 #ifdef HAVE_LIBSPINNAKER
-extern int _get_camera_model_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera hCam);
-#define get_camera_model_name(buf, buflen, hCam) _get_camera_model_name(QSP_ARG  buf, buflen, hCam)
+extern int _get_camera_model_name(QSP_ARG_DECL  char *buf, size_t buflen, spinNodeMapHandle hNodeMapTLDevice);
+#define get_camera_model_name(buf, buflen, map) _get_camera_model_name(QSP_ARG  buf, buflen, map)
 extern int _get_camera_vendor_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera hCam);
 #define get_camera_vendor_name(buf, buflen, hCam) _get_camera_vendor_name(QSP_ARG  buf, buflen, hCam)
 
@@ -162,7 +164,21 @@ extern int _get_spink_interface_cameras(QSP_ARG_DECL  spinInterface hInterface);
 extern void _report_spink_error(QSP_ARG_DECL  spinError error, const char *whence );
 #define report_spink_error(error,whence)	_report_spink_error(QSP_ARG  error, whence )
 
+// spink_node_map.c
+
+extern int _get_node_value_string(QSP_ARG_DECL  char *buf, size_t *buflen_p, spinNodeHandle hNode );
+#define get_node_value_string(buf, buflen_p, hNode ) _get_node_value_string(QSP_ARG  buf, buflen_p, hNode )
+extern int _print_value_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level);
+#define print_value_node(hNode, level) _print_value_node(QSP_ARG  hNode, level)
+extern int _get_display_name(QSP_ARG_DECL  char *buf, size_t *len_p, spinNodeHandle hdl);
+#define get_display_name(buf, len_p, hdl) _get_display_name(QSP_ARG  buf, len_p, hdl)
+extern int _get_string_node_string(QSP_ARG_DECL  char *buf, size_t *buflen_p, spinNodeHandle hNode );
+#define get_string_node_string(buf, buflen_p, hNode ) _get_string_node_string(QSP_ARG  buf, buflen_p, hNode )
+extern int _print_string_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level);
+#define print_string_node(hNode, level) _print_string_node(QSP_ARG  hNode, level)
+
 #endif // HAVE_LIBSPINNAKER
+
 
 // spink_util.c
 extern void _release_spink_cam_system(SINGLE_QSP_ARG_DECL);

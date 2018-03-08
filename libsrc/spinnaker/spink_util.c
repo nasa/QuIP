@@ -1878,15 +1878,21 @@ static int _create_spink_camera_structs(SINGLE_QSP_ARG_DECL)
 
 
 	for(i=0;i<numCameras;i++){
-		spinCamera hCamera;
-		if( get_spink_cam_from_list(&hCamera,hCameraList,i) < 0 )
+		spinCamera hCam;
+		spinNodeMapHandle hNodeMapTLDevice;
+
+		if( get_spink_cam_from_list(&hCam,hCameraList,i) < 0 )
 			return -1;
 
-		get_camera_model_name(buf,len,hCamera);
+		if( get_spink_transport_level_map(&hNodeMapTLDevice,hCam) < 0 )
+			return -1;
+
+		get_camera_model_name(buf,len,hNodeMapTLDevice);
 		substitute_char(buf,' ','_');
 		skc_p = new_spink_cam(buf);
 
-		skc_p->skc_handle = hCamera;
+		skc_p->skc_handle = hCam;
+		skc_p->skc_node_map_TL_dev = hNodeMapTLDevice;
 
 		/*
 		if( release_spink_interface(hInterface) < 0 )
@@ -2158,6 +2164,7 @@ void print_spink_cam_info(QSP_ARG_DECL  Spink_Cam *scp)
 	// show_fmt7_modes(QSP_ARG  scp);
 	// Show the current video mode
 
+	/*
 	sprintf(MSG_STR,"Current video mode:  %s%s",
 		scp->sk_my_video_mode_index >= 0 ?
 		scp->sk_video_mode_names[ scp->sk_my_video_mode_index ] :
@@ -2172,6 +2179,7 @@ void print_spink_cam_info(QSP_ARG_DECL  Spink_Cam *scp)
 	sprintf(MSG_STR,"Current frame rate:  %s",
 		all_framerates[ scp->sk_framerate_index ].nfr_name );
 	prt_msg(MSG_STR);
+	*/
 }
 
 static void init_one_frame(QSP_ARG_DECL  Spink_Cam *scp, int index )

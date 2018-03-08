@@ -70,12 +70,16 @@ static COMMAND_FUNC( do_init )
 
 static COMMAND_FUNC( do_list_spink_interfaces )
 {
+	prt_msg("Spinnaker interfaces:");
 	list_spink_interfaces(tell_msgfile());
+	prt_msg("");
 }
 
 static COMMAND_FUNC( do_list_spink_cams )
 {
+	prt_msg("Spinnaker cameras:");
 	list_spink_cams(tell_msgfile());
+	prt_msg("");
 }
 
 static COMMAND_FUNC( do_cam_info )
