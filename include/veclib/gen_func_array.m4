@@ -79,12 +79,13 @@ RFLT_ARR(vceil,FVCEIL),
 RFLT_ARR(vrint,FVRINT),
 
 ifdef(`BUILD_FOR_GPU',`
-dnl // put null entries here for these funcs with no GPU implementation
-ifdef(`BUILD_FOR_CUDA',`
-NULL_ARR(vuni,FVUNI),
-',`
+dnl	dnl // put null entries here for these funcs with no GPU implementation
+dnl	ifdef(`BUILD_FOR_CUDA',`
+dnl	NULL_ARR(vuni,FVUNI),
+dnl	',`
+dnl	RFLT_SAME_PREC_ARR(vuni,FVUNI),
+dnl	')
 RFLT_SAME_PREC_ARR(vuni,FVUNI),
-')
 NULL_ARR(vj0,FVJ0),
 NULL_ARR(vj1,FVJ1),
 NULL_ARR(vgamma,FVGAMMA),

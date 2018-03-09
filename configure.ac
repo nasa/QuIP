@@ -215,10 +215,14 @@ AC_ARG_ENABLE([use_cuda],
 	[AS_HELP_STRING([--disable-cuda],[disable GPU operations with CUDA @<:@default: no@:>@])],
 	[ use_cuda=${enableval}], [use_cuda=yes])
 
-# Enable opencl by default:
+# Enable opencl by default - but only for Mac!:
 AC_ARG_ENABLE([use_opencl],
 	[AS_HELP_STRING([--disable-opencl],[disable GPU operations with OpenCL @<:@default: no@:>@])],
 	[ use_opencl=${enableval}], [use_opencl=yes])
+if test "x$os_is_darwin" == xno; then
+  use_opencl=no
+fi
+
 
 # Metal seems to only work with objective C, so we can't test for it
 # with a regular C program...
@@ -276,6 +280,11 @@ AC_ARG_ENABLE([use_ncurses],
 AC_ARG_ENABLE([use_flycap],
 	[AS_HELP_STRING([--disable-flycap],[disable support for PGR cameras with libflycap@<:@default: no@:>@])],
 	[ use_flycap=${enableval}], [use_flycap=yes])
+
+# Enable spinnaker by default:
+AC_ARG_ENABLE([use_spinnaker],
+	[AS_HELP_STRING([--disable-spinnaker],[disable support for PGR cameras with libspinnaker@<:@default: no@:>@])],
+	[ use_spinnaker=${enableval}], [use_spinnaker=yes])
 
 # Enable dc1394 by default:
 AC_ARG_ENABLE([dc1394],
@@ -342,6 +351,7 @@ if test "x${minimal_build}" = xyes; then
 	use_ncurses=no
 	use_dc1394=no
 	use_flycap=no
+	use_spinnaker=no
 	use_opengl=no
 	use_dv=no
 fi
@@ -463,6 +473,10 @@ fi
 if test "x${use_x11}" = xyes; then
   AC_CHECK_FILE([/usr/X11/include],[CPPFLAGS="$CPPFLAGS -I/usr/X11/include"])
   AC_CHECK_FILE([/opt/X11/include],[CPPFLAGS="$CPPFLAGS -I/opt/X11/include"])
+fi
+
+if test "x${use_spinnaker}" = xyes; then
+  AC_CHECK_FILE([/usr/include/spinnaker/spinc],[CPPFLAGS="$CPPFLAGS -I/usr/include/spinnaker/spinc"])
 fi
 
 # must come before compiler stuff
@@ -1215,6 +1229,10 @@ if test "x${use_flycap}" = xyes; then
 #  fi
 fi
 
+if test "x${use_spinnaker}" = xyes; then
+  AC_SEARCH_LIBS([spinSystemGetInstance],[Spinnaker_C],[have_libspinnaker=yes],[have_libspinnaker=no])
+fi
+
 if test "x${use_dc1394}" = xyes; then
   AC_CHECK_HEADERS([dc1394/dc1394.h])
   #echo ac_cv_header_dc1394_dc1394_h = $ac_cv_header_dc1394_dc1394_h
@@ -1320,16 +1338,24 @@ if test "x${use_cuda}" = xyes; then
   AC_SEARCH_LIBS([cublasGetError],[cublas],[have_libcublas=yes],[have_libcublas=no])
   AC_SEARCH_LIBS([curandCreateGenerator],[curand],[have_libcurand=yes],[have_libcurand=no])
 
-  AC_SEARCH_LIBS([nppiErode_8u_C1R],[nppi],[have_libnppi=yes],[have_libnppi=no])
-  # older versions have libnpp
-  # if that is satisfied by libnppi, then we may need other npp libs too!
-  # BUG should check more carefully the status of this...
-  if test "x${have_libnppi}" = xyes; then
-    AC_SEARCH_LIBS([nppsFree],[npps])
+  AC_SEARCH_LIBS([nppGetStream],[nppc nppc_static],[have_libnppc=yes],[have_libnppc=no])
+  if test "x${have_libnppc}" = xyes; then
+    AC_SEARCH_LIBS([nppiAdd_32f_C1R],[nppial_static])
+    AC_SEARCH_LIBS([nppiMalloc_8u_C1],[nppisu_static])
+    AC_SEARCH_LIBS([nppiFilter_8u_C1R],[nppif_static])
+    AC_SEARCH_LIBS([nppiErode_8u_C1R],[nppi nppim_static],[have_libnppi=yes],[have_libnppi=no])
+    # older versions have libnpp
+    # if that is satisfied by libnppi, then we may need other npp libs too!
+    # BUG should check more carefully the status of this...
+    if test "x${have_libnppi}" = xyes; then
+      AC_SEARCH_LIBS([nppsFree],[npps])
+    else
+      # need to look for a different subroutine to avoid cached value???
+      #AC_SEARCH_LIBS([nppiErode_8u_C1R],[npp],[have_libnpp=yes],[have_libnpp=no])
+      AC_SEARCH_LIBS([nppiDilate_8u_C1R],[npp],[have_libnpp=yes],[have_libnpp=no])
+    fi
   else
-    # need to look for a different subroutine to avoid cached value???
-    #AC_SEARCH_LIBS([nppiErode_8u_C1R],[npp],[have_libnpp=yes],[have_libnpp=no])
-    AC_SEARCH_LIBS([nppiDilate_8u_C1R],[npp],[have_libnpp=yes],[have_libnpp=no])
+    have_libnpp=no
   fi
 
   # BUG need to determine whether we're compiling for 64 bit!
@@ -1674,6 +1700,7 @@ AC_CONFIG_FILES([Makefile
 		 libsrc/polhemus/Makefile
 		 libsrc/ieee1394/Makefile
 		 libsrc/flycap/Makefile
+		 libsrc/spinnaker/Makefile
 		 libsrc/ptgrey/Makefile
 		 libsrc/cuda/Makefile
 		 libsrc/dither/Makefile
@@ -2337,6 +2364,10 @@ if test "x${have_libflycap}" = xyes; then
   AC_DEFINE([HAVE_LIBFLYCAP], 1, [Support for Point Grey Research cameras w/ libflycap])
 fi
 
+if test "x${have_libspinnaker}" = xyes; then
+  AC_DEFINE([HAVE_LIBSPINNAKER], 1, [Support for Point Grey Research cameras w/ libspinnaker])
+fi
+
 if test "x${have_libdc1394}" = xyes; then
   if test "x${have_dc1394_header}" = xno; then
     AC_MSG_WARN([
@@ -2520,6 +2551,16 @@ if test "x${have_libflycap}" != xyes; then
     AC_MSG_WARN([
 ------------------------------------------
 Unable to find libflycap.
+Building without support for Point Grey digital cameras.
+------------------------------------------])
+  fi
+fi
+
+if test "x${have_libspinnaker}" != xyes; then
+  if test "x${use_spinnaker}" = xyes; then
+    AC_MSG_WARN([
+------------------------------------------
+Unable to find libspinnaker.
 Building without support for Point Grey digital cameras.
 ------------------------------------------])
   fi

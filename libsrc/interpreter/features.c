@@ -39,6 +39,7 @@ typedef enum {
 	SWF_SPARSELM,
 	SWF_GCRYPT,
 	SWF_FLYCAP,
+	SWF_SPINNAKER,
 	SWF_DC1394,
 	SWF_LIBDV,
 	SWF_DAS1602,
@@ -97,6 +98,7 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 { UNKNOWN, SWF_SPARSELM,	"sparselm sparse matrix library"	},
 { UNKNOWN, SWF_GCRYPT,		"encryption w/ libgcrypt"	},
 { UNKNOWN, SWF_FLYCAP,		"firewire cameras w/ libflycap"	},
+{ UNKNOWN, SWF_SPINNAKER,	"digital cameras w/ libspinnaker"	},
 { UNKNOWN, SWF_DC1394,		"firewire cameras w/ libdc1394"	},
 { UNKNOWN, SWF_LIBDV,		"firewire cameras w/ libdv"	},
 { UNKNOWN, SWF_DAS1602,		"analog I/O w/ Measurement Computing DAS1602"	},
@@ -320,6 +322,12 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 	FEATURE_PRESENT(SWF_FLYCAP);
 #else
 	FEATURE_ABSENT(SWF_FLYCAP);
+#endif
+
+#ifdef HAVE_LIBSPINNAKER
+	FEATURE_PRESENT(SWF_SPINNAKER);
+#else
+	FEATURE_ABSENT(SWF_SPINNAKER);
 #endif
 
 #ifdef HAVE_LIBDC1394

@@ -1,15 +1,14 @@
 #include "quip_config.h"
-
 #include "quip_prot.h"
-#include "fly.h"
+#include "spink.h"
 #include "data_obj.h"
 #include "query_bits.h"	// LLEN - BUG
 
-static Fly_Cam *the_cam_p=NULL;	// should this be per-thread?
+static Spink_Cam *the_cam_p=NULL;	// should this be per-thread?
 				// no need yet...
 
 // local prototypes
-static COMMAND_FUNC( do_fly_cam_menu );
+static COMMAND_FUNC( do_spink_cam_menu );
 
 
 #define UNIMP_MSG(whence)						\
@@ -21,7 +20,7 @@ static COMMAND_FUNC( do_fly_cam_menu );
 #define NO_LIB_MSG(whence)						\
 									\
 	sprintf(ERROR_STRING,						\
-		"%s:  program built without libflycap support!?",whence);	\
+		"%s:  program built without libspinnaker support!?",whence);	\
 	error1(ERROR_STRING);
 
 #define EAT_ONE_DUMMY(whence)						\
@@ -32,23 +31,98 @@ static COMMAND_FUNC( do_fly_cam_menu );
 
 
 #define CHECK_CAM	if( the_cam_p == NULL ){ \
-		WARN("No fly_cam selected."); \
+		WARN("No spink_cam selected."); \
 		return; }
 
-static COMMAND_FUNC(do_list_fly_cam_trig)
+static Spink_Map *curr_map_p=NULL;
+
+static COMMAND_FUNC(do_list_spink_maps)
 {
-#ifdef HAVE_LIBFLYCAP
+	list_spink_maps( tell_msgfile() );
+}
+
+static COMMAND_FUNC(do_select_spink_map)
+{
+	Spink_Map *skm_p;
+
+	skm_p = pick_spink_map("");
+	if( skm_p == NULL ) return;
+
+	if( curr_map_p != NULL ) pop_spink_node_context();
+	push_spink_node_context(skm_p->skm_icp);
+
+	curr_map_p = skm_p;
+}
+
+#define CHECK_CURRENT_MAP			\
+	if( curr_map_p == NULL ){		\
+		warn("No map selected!?");	\
+		return;				\
+	}
+
+static COMMAND_FUNC(do_list_spink_nodes)
+{
+	CHECK_CURRENT_MAP
+
+	sprintf(MSG_STR,"\nNodes from %s:\n",curr_map_p->skm_name);
+	list_nodes_from_map(curr_map_p);
+}
+
+static COMMAND_FUNC(do_spink_node_info)
+{
+	Spink_Node *skn_p;
+
+	CHECK_CURRENT_MAP
+
+	skn_p = pick_spink_node("");
+	if( skn_p == NULL ) return;
+
+	sprintf(MSG_STR,"\nMap %s, Node %s:\n",curr_map_p->skm_name,skn_p->skn_name);
+	prt_msg(MSG_STR);
+
+	{
+	spinNodeHandle hNode;
+refresh_node_map_handle(curr_map_p,"do_spink_node_info #1");
+refresh_node_map_handle(curr_map_p,"do_spink_node_info #2");
+	if( fetch_spink_node(curr_map_p->skm_handle, skn_p->skn_name, &hNode) < 0 )
+		return;
+	if( hNode != skn_p->skn_handle ){
+		warn("do_spink_node_info:  old node handle does not match!?");
+		skn_p->skn_handle = hNode;
+	}
+	}
+
+	print_spink_node_info(skn_p);
+}
+
+#define ADD_CMD(s,f,h)	ADD_COMMAND(node_menu,s,f,h)
+MENU_BEGIN(node)
+ADD_CMD(list_maps,do_list_spink_maps, list all node maps)
+ADD_CMD(select_map,do_select_spink_map, select default map for node operations)
+ADD_CMD(list_nodes,do_list_spink_nodes, list all nodes from current map)
+ADD_CMD(info,do_spink_node_info, print information about a node)
+MENU_END(node)
+#undef ADD_CMD
+
+static COMMAND_FUNC(do_node_menu)
+{
+	CHECK_AND_PUSH_MENU(node);
+}
+
+static COMMAND_FUNC(do_list_spink_cam_trig)
+{
+#ifdef HAVE_LIBSPINNAKER
 	CHECK_CAM
-	list_fly_cam_trig(QSP_ARG  the_cam_p);
+	list_spink_cam_trig(QSP_ARG  the_cam_p);
 #else
-	NO_LIB_MSG("do_list_fly_cam_trig");
+	NO_LIB_MSG("do_list_spink_cam_trig");
 #endif
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(trigger_menu,s,f,h)
 
 MENU_BEGIN(trigger)
-ADD_CMD( list,	do_list_fly_cam_trig,	report trigger info )
+ADD_CMD( list,	do_list_spink_cam_trig,	report trigger info )
 MENU_END(trigger)
 
 static COMMAND_FUNC( do_trigger )
@@ -58,59 +132,68 @@ static COMMAND_FUNC( do_trigger )
 
 static COMMAND_FUNC( do_init )
 {
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	if( the_cam_p != NULL ){
 		WARN("Firewire system already initialized!?");
 		return;
 	}
 
-	if( init_fly_cam_system(SINGLE_QSP_ARG) < 0 )
+	if( init_spink_cam_system(SINGLE_QSP_ARG) < 0 )
 		WARN("Error initializing firewire system.");
 #endif
 }
 
-static COMMAND_FUNC( do_list_fly_cams )
+static COMMAND_FUNC( do_list_spink_interfaces )
 {
-	list_fly_cams(tell_msgfile());
+	prt_msg("Spinnaker interfaces:");
+	list_spink_interfaces(tell_msgfile());
+	prt_msg("");
+}
+
+static COMMAND_FUNC( do_list_spink_cams )
+{
+	prt_msg("Spinnaker cameras:");
+	list_spink_cams(tell_msgfile());
+	prt_msg("");
 }
 
 static COMMAND_FUNC( do_cam_info )
 {
-	Fly_Cam *fcp;
+	Spink_Cam *scp;
 
-	fcp = pick_fly_cam("camera");
-	if( fcp == NULL ) return;
+	scp = pick_spink_cam("camera");
+	if( scp == NULL ) return;
 
-	if( fcp == the_cam_p ){
-		sprintf(MSG_STR,"%s is selected as current camera.",fcp->fc_name);
+	if( scp == the_cam_p ){
+		sprintf(MSG_STR,"%s is selected as current camera.",scp->skc_name);
 		prt_msg(MSG_STR);
 	}
-#ifdef HAVE_LIBFLYCAP
-	print_fly_cam_info(QSP_ARG  fcp);
+#ifdef HAVE_LIBSPINNAKER
+	print_spink_cam_info(QSP_ARG  scp);
 #else
-	NO_LIB_MSG("do_list_fly_cam");
+	NO_LIB_MSG("do_list_spink_cam");
 #endif
 }
 
-static void select_fly_cam(QSP_ARG_DECL  Fly_Cam *fcp )
+static void select_spink_cam(QSP_ARG_DECL  Spink_Cam *scp )
 {
 	if( the_cam_p != NULL )
-		pop_fly_cam_context(SINGLE_QSP_ARG);
-	the_cam_p = fcp;
-	push_fly_cam_context(QSP_ARG  fcp);
-#ifdef HAVE_LIBFLYCAP
-	refresh_fly_cam_properties(QSP_ARG  fcp);
-#endif // HAVE_LIBFLYCAP
+		pop_spink_cam_context(SINGLE_QSP_ARG);
+	the_cam_p = scp;
+	push_spink_cam_context(QSP_ARG  scp);
+#ifdef HAVE_LIBSPINNAKER
+	refresh_spink_cam_properties(QSP_ARG  scp);
+#endif // HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_select_cam )
 {
-	Fly_Cam *fcp;
+	Spink_Cam *scp;
 
-	fcp = pick_fly_cam("camera");
-	if( fcp == NULL ) return;
+	scp = pick_spink_cam("camera");
+	if( scp == NULL ) return;
 
-	select_fly_cam(QSP_ARG  fcp);
+	select_spink_cam(QSP_ARG  scp);
 }
 
 static COMMAND_FUNC( do_start )
@@ -128,10 +211,10 @@ static COMMAND_FUNC( do_grab )
 	Data_Obj *dp;
 
 	CHECK_CAM
-	if( (dp=grab_fly_cam_frame(QSP_ARG  the_cam_p )) == NULL ){
+	if( (dp=grab_spink_cam_frame(QSP_ARG  the_cam_p )) == NULL ){
 		/* any error */
 #ifdef FOOBAR
-		cleanup_fly_cam(the_cam_p);	/* grab error */
+		cleanup_spink_cam(the_cam_p);	/* grab error */
 		the_cam_p=NULL;
 #endif // FOOBAR
 		// We might fail because we need to release a frame...
@@ -140,7 +223,7 @@ static COMMAND_FUNC( do_grab )
 	} else {
 		char num_str[32];
 
-		sprintf(num_str,"%d",the_cam_p->fc_newest);
+		sprintf(num_str,"%d",the_cam_p->skc_newest);
 		assign_var("newest",num_str);
 	}
 
@@ -165,16 +248,16 @@ static COMMAND_FUNC(do_power)
 
 static COMMAND_FUNC(do_reset)
 {
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	CHECK_CAM
-	reset_fly_cam(QSP_ARG  the_cam_p);
+	reset_spink_cam(QSP_ARG  the_cam_p);
 #endif
 }
 
 // conflict started here???
 static COMMAND_FUNC( do_release )
 {
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	CHECK_CAM
 	release_oldest_frame(QSP_ARG  the_cam_p);
 #endif
@@ -183,106 +266,106 @@ static COMMAND_FUNC( do_release )
 static COMMAND_FUNC( do_close )
 {
 	CHECK_CAM
-#ifdef HAVE_LIBFLYCAP
-	cleanup_fly_cam(the_cam_p);
+#ifdef HAVE_LIBSPINNAKER
+	cleanup_spink_cam(the_cam_p);
 #endif
 	the_cam_p=NULL;
 }
 
 static COMMAND_FUNC( do_bw )
 {
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	CHECK_CAM
 
-	report_fly_cam_bandwidth(QSP_ARG  the_cam_p);
+	report_spink_cam_bandwidth(QSP_ARG  the_cam_p);
 #endif
 }
 
-static COMMAND_FUNC( do_list_fly_cam_modes )
+static COMMAND_FUNC( do_list_spink_cam_modes )
 {
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	CHECK_CAM
 	prt_msg("\nAvailable video modes:");
-	list_fly_cam_video_modes(QSP_ARG  the_cam_p);
+	list_spink_cam_video_modes(QSP_ARG  the_cam_p);
 #endif
 }
 
-static COMMAND_FUNC( do_show_fly_cam_video_mode )
+static COMMAND_FUNC( do_show_spink_cam_video_mode )
 {
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	CHECK_CAM
-	show_fly_cam_video_mode(QSP_ARG  the_cam_p);
+	show_spink_cam_video_mode(QSP_ARG  the_cam_p);
 #endif
 }
 
 
-static COMMAND_FUNC( do_list_fly_cam_framerates )
+static COMMAND_FUNC( do_list_spink_cam_framerates )
 {
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	CHECK_CAM
 
 	prt_msg("\nAvailable framerates:");
-	list_fly_cam_framerates(QSP_ARG  the_cam_p);
+	list_spink_cam_framerates(QSP_ARG  the_cam_p);
 #endif
 }
 
-static COMMAND_FUNC( do_show_fly_cam_framerate )
+static COMMAND_FUNC( do_show_spink_cam_framerate )
 {
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	CHECK_CAM
-	show_fly_cam_framerate(QSP_ARG  the_cam_p);
+	show_spink_cam_framerate(QSP_ARG  the_cam_p);
 #endif
 }
 
 static COMMAND_FUNC( do_set_video_mode )
 {
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	int i;
 
 	CHECK_CAM
-	i = WHICH_ONE("video mode",the_cam_p->fc_n_video_modes,
-					the_cam_p->fc_video_mode_names );
+	i = WHICH_ONE("video mode",the_cam_p->skc_n_video_modes,
+					the_cam_p->skc_video_mode_names );
 	if( i < 0 ) return;
 
 sprintf(ERROR_STRING,"mode %s selected...",
-name_of_indexed_video_mode( the_cam_p->fc_video_mode_indices[i] ) );
+name_of_indexed_video_mode( the_cam_p->skc_video_mode_indices[i] ) );
 advise(ERROR_STRING);
 
 	if( is_fmt7_mode(QSP_ARG  the_cam_p, i ) ){
-		set_fmt7_mode(QSP_ARG  the_cam_p, the_cam_p->fc_fmt7_index );
+		set_fmt7_mode(QSP_ARG  the_cam_p, the_cam_p->skc_fmt7_index );
 	} else {
 		set_std_mode( QSP_ARG  the_cam_p, i );
 	}
 
-#else // ! HAVE_LIBFLYCAP
+#else // ! HAVE_LIBSPINNAKER
 	EAT_ONE_DUMMY("do_set_video_mode");
 	UNIMP_MSG("set_video_mode");
-#endif // ! HAVE_LIBFLYCAP
+#endif // ! HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_set_framerate )
 {
 	int i;
 
-	i = pick_fly_cam_framerate(QSP_ARG  the_cam_p, "frame rate");
+	i = pick_spink_cam_framerate(QSP_ARG  the_cam_p, "frame rate");
 	if( i < 0 ) return;
 
-	// CHECK_CAM - not needed: pick_fly_cam_framerate will handle this
+	// CHECK_CAM - not needed: pick_spink_cam_framerate will handle this
 
 }
 
 
 
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 //#define N_SPEED_CHOICES	2
 //static const char *speed_choices[N_SPEED_CHOICES]={"400","800"};
-#endif /* HAVE_LIBFLYCAP */
+#endif /* HAVE_LIBSPINNAKER */
 
 static COMMAND_FUNC( do_power_on )
 {
 	CHECK_CAM
 
-	if( power_on_fly_cam(the_cam_p) < 0 )
+	if( power_on_spink_cam(the_cam_p) < 0 )
 		WARN("Error powering on camera.");
 }
 
@@ -290,7 +373,7 @@ static COMMAND_FUNC( do_power_off )
 {
 	CHECK_CAM
 
-	if( power_off_fly_cam(the_cam_p) < 0 )
+	if( power_off_spink_cam(the_cam_p) < 0 )
 		WARN("Error powering off camera.");
 }
 
@@ -302,7 +385,7 @@ static COMMAND_FUNC( do_set_temp )
 
 	CHECK_CAM
 
-	if( set_fly_cam_temperature(the_cam_p, t) < 0 )
+	if( set_spink_cam_temperature(the_cam_p, t) < 0 )
 		WARN("Error setting color temperature");
 }
 
@@ -314,7 +397,7 @@ static COMMAND_FUNC( do_set_white_balance )
 
 	CHECK_CAM
 
-	if( set_fly_cam_white_balance(the_cam_p, wb) < 0 )
+	if( set_spink_cam_white_balance(the_cam_p, wb) < 0 )
 		WARN("Error setting white balance!?");
 }
 
@@ -328,7 +411,7 @@ static COMMAND_FUNC( do_set_white_shading )
 
 	CHECK_CAM
 
-	if( set_fly_cam_white_shading(the_cam_p, val) < 0 )
+	if( set_spink_cam_white_shading(the_cam_p, val) < 0 )
 		WARN("Error setting white shading!?");
 }
 
@@ -339,11 +422,11 @@ static COMMAND_FUNC( do_get_cams )
 	dp = pick_obj("string table");
 	if( dp == NULL ) return;
 
-	if( get_fly_cam_names( QSP_ARG  dp ) < 0 )
+	if( get_spink_cam_names( QSP_ARG  dp ) < 0 )
 		WARN("Error getting camera names!?");
 }
 
-static COMMAND_FUNC( do_get_fly_cam_video_modes )
+static COMMAND_FUNC( do_get_spink_cam_video_modes )
 {
 	Data_Obj *dp;
 	int n;
@@ -354,7 +437,7 @@ static COMMAND_FUNC( do_get_fly_cam_video_modes )
 
 	CHECK_CAM
 
-	n = get_fly_cam_video_mode_strings( QSP_ARG  dp, the_cam_p );
+	n = get_spink_cam_video_mode_strings( QSP_ARG  dp, the_cam_p );
 	sprintf(s,"%d",n);
 	// BUG should make this a reserved var...
 	assign_var("n_video_modes",s);
@@ -371,7 +454,7 @@ static COMMAND_FUNC( do_get_framerates )
 
 	CHECK_CAM
 
-	n = get_fly_cam_framerate_strings( QSP_ARG  dp, the_cam_p );
+	n = get_spink_cam_framerate_strings( QSP_ARG  dp, the_cam_p );
 	sprintf(s,"%d",n);
 	// BUG should make this a reserved var...
 	assign_var("n_framerates",s);
@@ -384,16 +467,16 @@ static COMMAND_FUNC( do_read_reg )
 	addr = HOW_MANY("register address");
 	CHECK_CAM
 
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	{
 	unsigned int val;
 	val = read_register(QSP_ARG  the_cam_p, addr);
 	sprintf(MSG_STR,"0x%x:  0x%x",addr,val);
 	prt_msg(MSG_STR);
 	}
-#else // ! HAVE_LIBFLYCAP
+#else // ! HAVE_LIBSPINNAKER
 	UNIMP_MSG("read_register");
-#endif // ! HAVE_LIBFLYCAP
+#endif // ! HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_write_reg )
@@ -405,50 +488,50 @@ static COMMAND_FUNC( do_write_reg )
 	val = HOW_MANY("value");
 	CHECK_CAM
 
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	write_register(QSP_ARG  the_cam_p, addr, val);
-#else // ! HAVE_LIBFLYCAP
+#else // ! HAVE_LIBSPINNAKER
 	UNIMP_MSG("write_register");
-#endif // ! HAVE_LIBFLYCAP
+#endif // ! HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_prop_info )
 {
-	Fly_Cam_Property_Type *t;
+	Spink_Cam_Property_Type *t;
 
 	t = pick_pgr_prop("property type");
 	CHECK_CAM
 
 	if( t == NULL ) return;
 
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	refresh_property_info(QSP_ARG  the_cam_p, t );
 	show_property_info(QSP_ARG  the_cam_p, t );
-#else // ! HAVE_LIBFLYCAP
+#else // ! HAVE_LIBSPINNAKER
 	UNIMP_MSG("get_property_info");
-#endif // ! HAVE_LIBFLYCAP
+#endif // ! HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_show_prop )
 {
-	Fly_Cam_Property_Type *t;
+	Spink_Cam_Property_Type *t;
 
 	t = pick_pgr_prop("property type");
 	CHECK_CAM
 
 	if( t == NULL ) return;
 
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	refresh_property_value(QSP_ARG  the_cam_p, t );
 	show_property_value(QSP_ARG  the_cam_p, t );
-#else // ! HAVE_LIBFLYCAP
+#else // ! HAVE_LIBSPINNAKER
 	UNIMP_MSG("show_property");
-#endif // ! HAVE_LIBFLYCAP
+#endif // ! HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_set_auto )
 {
-	Fly_Cam_Property_Type *t;
+	Spink_Cam_Property_Type *t;
 	int yn;
 	char pmpt[LLEN];
 
@@ -464,11 +547,11 @@ static COMMAND_FUNC( do_set_auto )
 
 	if( t == NULL ) return;
 
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	set_prop_auto(QSP_ARG   the_cam_p, t, yn );
-#else // ! HAVE_LIBFLYCAP
+#else // ! HAVE_LIBSPINNAKER
 	UNIMP_MSG("set_prop_auto");
-#endif // ! HAVE_LIBFLYCAP
+#endif // ! HAVE_LIBSPINNAKER
 }
 
 static int use_absolute=1;		// BUG not thread-safe
@@ -482,8 +565,8 @@ static COMMAND_FUNC( do_set_absolute )
 
 static COMMAND_FUNC( do_set_prop )
 {
-	Fly_Cam_Property_Type *t;
-	Fly_Cam_Prop_Val pv;
+	Spink_Cam_Property_Type *t;
+	Spink_Cam_Prop_Val pv;
 
 	t = pick_pgr_prop("property type");
 
@@ -491,15 +574,18 @@ static COMMAND_FUNC( do_set_prop )
 	if( use_absolute ){
 		char pmpt[LLEN];
 
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
+		/*
 		if( t != NULL ){
 			sprintf(pmpt,"%s in %ss",t->name,t->info.pUnits);
 		} else {
 			sprintf(pmpt,"value (integer)");
 		}
-#else // ! HAVE_LIBFLYCAP
+		*/
+			sprintf(pmpt,"value (integer)");
+#else // ! HAVE_LIBSPINNAKER
 		sprintf(pmpt,"value (integer)");
-#endif // ! HAVE_LIBFLYCAP
+#endif // ! HAVE_LIBSPINNAKER
 		pv.pv_u.u_f = HOW_MUCH(pmpt);
 	} else {
 		pv.pv_u.u_i = HOW_MANY("value (integer)");
@@ -507,11 +593,11 @@ static COMMAND_FUNC( do_set_prop )
 	CHECK_CAM
 	if( t == NULL ) return;
 
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	set_prop_value(QSP_ARG  the_cam_p, t, &pv );
-#else // ! HAVE_LIBFLYCAP
+#else // ! HAVE_LIBSPINNAKER
 	UNIMP_MSG("set_prop_value");
-#endif // ! HAVE_LIBFLYCAP
+#endif // ! HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_set_fmt7 )
@@ -521,19 +607,19 @@ static COMMAND_FUNC( do_set_fmt7 )
 	i = HOW_MANY("index of format7 mode");
 	CHECK_CAM
 
-#ifdef HAVE_LIBFLYCAP
-	if( i < 0 || i >= the_cam_p->fc_n_fmt7_modes ){
+#ifdef HAVE_LIBSPINNAKER
+	if( i < 0 || i >= the_cam_p->skc_n_fmt7_modes ){
 		sprintf(ERROR_STRING,
 			"%s:  format7 index must be in the range 0 - %d",
-			the_cam_p->fc_name,the_cam_p->fc_n_fmt7_modes-1);
+			the_cam_p->skc_name,the_cam_p->skc_n_fmt7_modes-1);
 		WARN(ERROR_STRING);
 		return;
 	}
 
 	set_fmt7_mode(QSP_ARG  the_cam_p, i );
-#else // ! HAVE_LIBFLYCAP
+#else // ! HAVE_LIBSPINNAKER
 	UNIMP_MSG("set_fmt7_mode");
-#endif // ! HAVE_LIBFLYCAP
+#endif // ! HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_show_n_bufs )
@@ -558,9 +644,9 @@ static COMMAND_FUNC( do_set_n_bufs )
 		sprintf(ERROR_STRING,"do_set_n_bufs:  n (%d) must be <= %d",n,MAX_N_BUFFERS);
 		WARN(ERROR_STRING);
 	} else {
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 		set_n_buffers(QSP_ARG  the_cam_p, n);
-#endif // HAVE_LIBFLYCAP
+#endif // HAVE_LIBSPINNAKER
 	}
 }
 
@@ -579,26 +665,26 @@ static COMMAND_FUNC( do_set_eii )
 
 	CHECK_CAM
 
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	set_eii_property(QSP_ARG  the_cam_p,i,yesno);
-#endif // HAVE_LIBFLYCAP
+#endif // HAVE_LIBSPINNAKER
 }
 
-static COMMAND_FUNC( do_list_fly_cam_props )
+static COMMAND_FUNC( do_list_spink_cam_props )
 {
 	CHECK_CAM
-#ifdef HAVE_LIBFLYCAP
-	list_fly_cam_properties(QSP_ARG  the_cam_p);
-#else // ! HAVE_LIBFLYCAP
-	WARN("No support for libflycap in this build.");
-#endif // ! HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
+	list_spink_cam_properties(QSP_ARG  the_cam_p);
+#else // ! HAVE_LIBSPINNAKER
+	WARN("No support for libspinnaker in this build.");
+#endif // ! HAVE_LIBSPINNAKER
 }
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(properties_menu,s,f,h)
 
 MENU_BEGIN(properties)
-ADD_CMD( list,			do_list_fly_cam_props,		list all properties )
+ADD_CMD( list,			do_list_spink_cam_props,		list all properties )
 ADD_CMD( info,			do_prop_info,		display property info )
 ADD_CMD( show,			do_show_prop,		display property value )
 ADD_CMD( set,			do_set_prop,		set property value )
@@ -618,35 +704,35 @@ static COMMAND_FUNC( do_set_iso_speed )
 
 
 #undef ADD_CMD
-#define ADD_CMD(s,f,h)	ADD_COMMAND(fly_cam_menu,s,f,h)
+#define ADD_CMD(s,f,h)	ADD_COMMAND(spink_cam_menu,s,f,h)
 
-MENU_BEGIN(fly_cam)
+MENU_BEGIN(spink_cam)
 ADD_CMD( set_n_buffers,		do_set_n_bufs,		specify number of frames in the ring buffer )
 ADD_CMD( show_n_buffers,		do_show_n_bufs,		show number of frames in the ring buffer )
 ADD_CMD( set_embedded_image_info,	do_set_eii,	enable/disable embedded image information )
 ADD_CMD( read_register,		do_read_reg,		read a camera register )
 ADD_CMD( write_register,	do_write_reg,		write a camera register )
 ADD_CMD( properties,		do_prop_menu,		camera properties submenu )
-ADD_CMD( list_video_modes,	do_list_fly_cam_modes,		list all video modes for this camera )
-ADD_CMD( get_video_modes,	do_get_fly_cam_video_modes,	copy video modes strings to an array )
+ADD_CMD( list_video_modes,	do_list_spink_cam_modes,		list all video modes for this camera )
+ADD_CMD( get_video_modes,	do_get_spink_cam_video_modes,	copy video modes strings to an array )
 ADD_CMD( set_video_mode,	do_set_video_mode,	set video mode )
 ADD_CMD( format7,		do_set_fmt7,		select a format7 mode )
-ADD_CMD( show_video_mode,	do_show_fly_cam_video_mode,	display current video mode )
-ADD_CMD( list_framerates,	do_list_fly_cam_framerates,	list all framerates for this camera )
+ADD_CMD( show_video_mode,	do_show_spink_cam_video_mode,	display current video mode )
+ADD_CMD( list_framerates,	do_list_spink_cam_framerates,	list all framerates for this camera )
 ADD_CMD( get_framerates,	do_get_framerates,	copy framerate strings to an array )
 ADD_CMD( set_framerate,		do_set_framerate,	set framerate )
-ADD_CMD( show_framerate,	do_show_fly_cam_framerate,	show current framerate )
+ADD_CMD( show_framerate,	do_show_spink_cam_framerate,	show current framerate )
 ADD_CMD( set_iso_speed,		do_set_iso_speed,	set ISO speed )
 ADD_CMD( power_on,		do_power_on,		power on current camera )
 ADD_CMD( power_off,		do_power_off,		power off current camera )
 ADD_CMD( temperature,		do_set_temp,		set color temperature )
 ADD_CMD( white_balance,		do_set_white_balance,	set white balance )
 ADD_CMD( white_shading,		do_set_white_shading,	set white shading )
-MENU_END(fly_cam)
+MENU_END(spink_cam)
 
-static COMMAND_FUNC( do_fly_cam_menu )
+static COMMAND_FUNC( do_spink_cam_menu )
 {
-	CHECK_AND_PUSH_MENU(fly_cam);
+	CHECK_AND_PUSH_MENU(spink_cam);
 }
 
 static COMMAND_FUNC( do_record )
@@ -663,11 +749,11 @@ static COMMAND_FUNC( do_record )
 	
 	CHECK_CAM
 
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	stream_record(QSP_ARG  ifp, n, the_cam_p );
-#else // ! HAVE_LIBFLYCAP
+#else // ! HAVE_LIBSPINNAKER
 	UNIMP_MSG("stream_record");
-#endif // ! HAVE_LIBFLYCAP
+#endif // ! HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_set_bufs )
@@ -678,10 +764,10 @@ static COMMAND_FUNC( do_set_bufs )
 	if( dp == NULL ) return;
 
 	CHECK_CAM
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	// make sure the object dimensions match the camera!
 	set_buffer_obj(QSP_ARG  the_cam_p, dp);
-#endif // HAVE_LIBFLYCAP
+#endif // HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_set_grab_mode )
@@ -693,18 +779,18 @@ static COMMAND_FUNC( do_set_grab_mode )
 	idx = pick_grab_mode(QSP_ARG  the_cam_p, "capture mode");
 	if( idx < 0 ) return;
 
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	set_grab_mode(QSP_ARG  the_cam_p, idx );
-#endif // HAVE_LIBFLYCAP
+#endif // HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_show_grab_mode )
 {
 	CHECK_CAM
 
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	show_grab_mode(QSP_ARG  the_cam_p);
-#endif // HAVE_LIBFLYCAP
+#endif // HAVE_LIBSPINNAKER
 }
 
 #undef ADD_CMD
@@ -727,7 +813,7 @@ static COMMAND_FUNC( captmenu )
 	CHECK_AND_PUSH_MENU( capture );
 }
 
-#define CAM_P	the_cam_p->fc_cam_p
+#define CAM_P	the_cam_p->skc_cam_p
 
 static COMMAND_FUNC( do_fmt7_list )
 {
@@ -745,15 +831,15 @@ static COMMAND_FUNC( do_fmt7_setsize )
 
 	/* Don't try to set the image size if capture is running... */
 
-	if( the_cam_p->fc_flags & FLY_CAM_IS_RUNNING ){
+	if( IS_RUNNING(the_cam_p) ){
 		WARN("can't set image size while camera is running!?");
 		return;
 	}
-#ifdef HAVE_LIBFLYCAP
+#ifdef HAVE_LIBSPINNAKER
 	set_fmt7_size(QSP_ARG  the_cam_p, w, h );
-#else // ! HAVE_LIBFLYCAP
+#else // ! HAVE_LIBSPINNAKER
 	UNIMP_MSG("set_fmt7_size");
-#endif // ! HAVE_LIBFLYCAP
+#endif // ! HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_fmt7_setposn )
@@ -803,56 +889,54 @@ static COMMAND_FUNC( fmt7menu )
 	CHECK_AND_PUSH_MENU( format7 );
 }
 
-static COMMAND_FUNC( do_bmode )
-{
-#ifdef HAVE_LIBFLYCAP
-	CHECK_CAM
-
-	if( ASKIF("Use 1394-B mode") ){
-		the_cam_p->fc_flags |= FLY_CAM_USES_BMODE;
-		set_fly_cam_bmode(the_cam_p,1);
-	} else {
-		the_cam_p->fc_flags &= ~FLY_CAM_USES_BMODE;
-		set_fly_cam_bmode(the_cam_p,0);
-	}
-#endif
-}
-
-static COMMAND_FUNC(do_quit_fly)
+static COMMAND_FUNC(do_quit_spinnaker)
 {
 	if( the_cam_p != NULL )
-		pop_fly_cam_context(SINGLE_QSP_ARG);
+		pop_spink_cam_context(SINGLE_QSP_ARG);
 
 	do_pop_menu(SINGLE_QSP_ARG);
 }
 
-#undef ADD_CMD
-#define ADD_CMD(s,f,h)	ADD_COMMAND(fly_menu,s,f,h)
+static COMMAND_FUNC(do_test_cam)
+{
+	if( the_cam_p == NULL ){
+		warn("no camera selected!?");
+		return;
+	}
+#ifdef HAVE_LIBSPINNAKER
+	spink_test_acq(the_cam_p);
+#endif // HAVE_LIBSPINNAKER
+}
 
-MENU_BEGIN(fly)
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(spinnaker_menu,s,f,h)
+
+MENU_BEGIN(spinnaker)
 ADD_CMD( init,		do_init,	initialize subsystem )
-ADD_CMD( list,		do_list_fly_cams,	list cameras )
+ADD_CMD( list_interfaces,	do_list_spink_interfaces,	list interfaces )
+ADD_CMD( list_cams,	do_list_spink_cams,	list cameras )
+ADD_CMD( info,		do_cam_info,	print camera info )
+ADD_CMD( nodes,		do_node_menu,	node submenu )
+ADD_CMD( test,		do_test_cam,	test camera acquisition)
 ADD_CMD( select,	do_select_cam,	select camera )
 ADD_CMD( get_cameras,	do_get_cams,	copy camera names to an array )
 ADD_CMD( capture,	captmenu,	capture submenu )
 ADD_CMD( format7,	fmt7menu,	format7 submenu )
 ADD_CMD( select,	do_select_cam,	select camera )
-ADD_CMD( info,		do_cam_info,	print camera info )
 ADD_CMD( power,		do_power,	power camera on/off )
 ADD_CMD( reset,		do_reset,	reset camera )
 /* ADD_CMD( frame,	do_frame,	create a data object alias for a capture buffer frame ) */
 ADD_CMD( trigger,	do_trigger,	trigger submenu )
 ADD_CMD( bandwidth,	do_bw,		report bandwidth usage )
-ADD_CMD( bmode,		do_bmode,	set/clear B-mode )
 ADD_CMD( close,		do_close,	shutdown firewire subsystem )
-ADD_CMD( camera,	do_fly_cam_menu,	camera submenu )
-ADD_CMD( quit,		do_quit_fly,	exit submenu )
-MENU_SIMPLE_END(fly)	// doesn't add quit command automatically
+ADD_CMD( camera,	do_spink_cam_menu,	camera submenu )
+ADD_CMD( quit,		do_quit_spinnaker,	exit submenu )
+MENU_SIMPLE_END(spinnaker)	// doesn't add quit command automatically
 
-COMMAND_FUNC( do_fly_menu )
+COMMAND_FUNC( do_spink_menu )
 {
 	if( the_cam_p != NULL )
-		push_fly_cam_context(QSP_ARG  the_cam_p);
-	CHECK_AND_PUSH_MENU( fly );
+		push_spink_cam_context(QSP_ARG  the_cam_p);
+	CHECK_AND_PUSH_MENU( spinnaker );
 }
 
