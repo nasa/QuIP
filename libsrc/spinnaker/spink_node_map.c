@@ -14,13 +14,15 @@ typedef enum _readType {
 const readType chosenRead = VALUE;
 
 // This helper function deals with output indentation, of which there is a lot.
-static void indent(unsigned int level)
+
+#define indent(level) _indent(QSP_ARG  level)
+
+static void _indent(QSP_ARG_DECL  unsigned int level)
 {
 	unsigned int i = 0;
 
-	for (i = 0; i < level; i++)
-	{
-		printf("   ");
+	for (i = 0; i < level; i++) {
+		prt_msg_frag("   ");
 	}
 }
 
@@ -129,11 +131,12 @@ int _print_value_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level)
 
 	indent(level);
 	if( type == CategoryNode ){
-		printf("%s\n", displayName);
+		sprintf(MSG_STR,"%s", displayName);
 	} else {
 		if( get_node_value_string(value,&valueLength,hNode) < 0 ) return -1;
-		printf("%s:  %s\n", displayName,value);
+		sprintf(MSG_STR,"%s:  %s", displayName,value);
 	}
+	prt_msg(MSG_STR);
 
 	return 0;
 }
@@ -154,7 +157,8 @@ int _print_string_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level)
 
 	// Print value
 	indent(level);
-	printf("%s:  %s\n", displayName,stringValue);
+	sprintf(MSG_STR,"%s:  %s", displayName,stringValue);
+	prt_msg(MSG_STR);
 	return 0;
 }
 
@@ -182,7 +186,6 @@ static int _print_int_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int leve
 
 	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return -1;
 
-
 	err = spinIntegerGetValue(hNode, &integerValue);
 	if (err != SPINNAKER_ERR_SUCCESS) {
 		report_spink_error(err,"spinIntegerGetValue");
@@ -191,7 +194,8 @@ static int _print_int_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int leve
 
 	// Print value
 	indent(level);
-	printf("%s: %ld\n", displayName, integerValue);
+	sprintf(MSG_STR,"%s: %ld", displayName, integerValue);
+	prt_msg(MSG_STR);
 
 	return 0;
 }
@@ -225,7 +229,8 @@ static int _print_float_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int le
 
 	// Print value
 	indent(level);
-	printf("%s:  %f\n", displayName, floatValue);
+	sprintf(MSG_STR,"%s:  %f\n", displayName, floatValue);
+	prt_msg(MSG_STR);
 
 	return 0;
 }
@@ -260,7 +265,8 @@ static int _print_bool_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int lev
 	}
 
 	indent(level);
-	printf("%s: %s\n", displayName, (booleanValue ? "true" : "false"));
+	sprintf(MSG_STR,"%s: %s\n", displayName, (booleanValue ? "true" : "false"));
+	prt_msg(MSG_STR);
 
 	return 0;
 }
@@ -300,7 +306,8 @@ static int _print_cmd_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int leve
 
 	// Print tooltip
 	indent(level);
-	printf("%s: ", displayName);
+	sprintf(MSG_STR,"%s: ", displayName);
+	prt_msg_frag(MSG_STR);
 
 	// Ensure that the value length is not excessive for printing
 
@@ -308,9 +315,10 @@ static int _print_cmd_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int leve
 		for (i = 0; i < k_maxChars; i++) {
 			printf("%c", toolTip[i]);
 		}
-		printf("...\n");
+		prt_msg("...");
 	} else {
-		printf("%s\n", toolTip);
+		sprintf(MSG_STR,"%s", toolTip);
+		prt_msg(MSG_STR);
 	}
 
 	return err;
@@ -363,7 +371,8 @@ static int _print_enum_node(QSP_ARG_DECL  spinNodeHandle hEnumerationNode, unsig
 
 	// Print current entry symbolic
 	indent(level);
-	printf("%s: %s\n", displayName, currentEntrySymbolic);
+	sprintf(MSG_STR,"%s: %s", displayName, currentEntrySymbolic);
+	prt_msg(MSG_STR);
 
 	return 0;
 }
@@ -438,6 +447,19 @@ static int _display_spink_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 	return 0;
 }
 
+#define report_node_access_error(hNode, w) _report_node_access_error(QSP_ARG  hNode, w)
+
+static void _report_node_access_error(QSP_ARG_DECL  spinNodeHandle hNode, const char *w)
+{
+	char dname[256];
+	size_t len=256;
+	if( get_display_name(dname,&len,hNode) < 0 ){
+		strcpy(dname,"(unable to get display name)");
+	}
+	sprintf(ERROR_STRING,"feature node '%s' not %s!?",dname,w);
+	advise(ERROR_STRING);
+}
+
 #define traverse_spink_node_tree(hCategoryNode, level, func ) _traverse_spink_node_tree(QSP_ARG  hCategoryNode, level, func )
 
 static int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode, int level, int (*func)(QSP_ARG_DECL spinNodeHandle hNode, int level) )
@@ -468,8 +490,15 @@ static int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode,
 			return err;
 		}
 
-		if( ! spink_node_is_available(hFeatureNode) ) continue;
-		if( ! spink_node_is_readable(hFeatureNode) ) continue;
+		if( ! spink_node_is_available(hFeatureNode) ){
+			report_node_access_error(hFeatureNode,"available");
+			continue;
+		}
+
+		if( ! spink_node_is_readable(hFeatureNode) ){
+			report_node_access_error(hFeatureNode,"readable");
+			continue;
+		}
 
 		if( get_node_type(&type,hFeatureNode) < 0 ) return -1;
 
@@ -546,7 +575,7 @@ int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 	// information fundamental to the camera such as the serial number,
 	// vendor, and model.
 	//
-	printf("\n*** PRINTING TL DEVICE NODEMAP ***\n\n");
+	prt_msg("\n*** PRINTING TL DEVICE NODEMAP ***\n");
 
 	// Retrieve root node from nodemap
 	if( get_spink_node(hNodeMapTLDevice, "Root", &hTLDeviceRoot) < 0 ) return -1;
@@ -566,7 +595,7 @@ int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 	// layer allows the information to be retrieved without affecting camera
 	// performance.
 	//
-	printf("*** PRINTING TL STREAM NODEMAP ***\n\n");
+	prt_msg("*** PRINTING TL STREAM NODEMAP ***\n");
 
 	if( get_stream_node_map(&hNodeMapStream,hCam) < 0 ) return -1;
 
@@ -584,7 +613,7 @@ int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 	// as image height and width, trigger mode enabling and disabling, and the
 	// sequencer are found on this nodemap.
 	//
-	printf("*** PRINTING GENICAM NODEMAP ***\n\n");
+	prt_msg("*** PRINTING GENICAM NODEMAP ***\n");
 
 	hNodeMap = skc_p->skc_genicam_node_map;
 

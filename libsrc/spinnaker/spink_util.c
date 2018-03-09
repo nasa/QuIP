@@ -247,9 +247,9 @@ static double get_spink_cam_size(QSP_ARG_DECL  Item *ip, int dim_index)
 
 static const char * get_spink_cam_prec_name(QSP_ARG_DECL  Item *ip )
 {
-	//Spink_Cam *scp;
+	//Spink_Cam *skc_p;
 
-	//scp = (Spink_Cam *)ip;
+	//skc_p = (Spink_Cam *)ip;
 
 	warn("get_spink_cam_prec_name:  need to implement spink_cam-state-based value!?");
 
@@ -386,7 +386,7 @@ static void _init_one_property(QSP_ARG_DECL const char *name, spinkPropertyType 
 //	pgpt->type_code = t;
 }
 
-void list_spink_cam_properties(QSP_ARG_DECL  Spink_Cam *scp)
+void list_spink_cam_properties(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	List *lp;
 	Node *np;
@@ -395,10 +395,10 @@ void list_spink_cam_properties(QSP_ARG_DECL  Spink_Cam *scp)
 	lp = pgr_prop_list();	// all properties
 	np = QLIST_HEAD(lp);
 	if( np != NULL ){
-		sprintf(MSG_STR,"\n%s properties",scp->skc_name);
+		sprintf(MSG_STR,"\n%s properties",skc_p->skc_name);
 		prt_msg(MSG_STR);
 	} else {
-		sprintf(ERROR_STRING,"%s has no properties!?",scp->skc_name);
+		sprintf(ERROR_STRING,"%s has no properties!?",skc_p->skc_name);
 		warn(ERROR_STRING);
 		return;
 	}
@@ -418,7 +418,7 @@ void list_spink_cam_properties(QSP_ARG_DECL  Spink_Cam *scp)
 
 // We call this after we select a spink_cam
 
-void refresh_spink_cam_properties(QSP_ARG_DECL  Spink_Cam *scp)
+void refresh_spink_cam_properties(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	List *lp;
 	Node *np;
@@ -428,10 +428,10 @@ void refresh_spink_cam_properties(QSP_ARG_DECL  Spink_Cam *scp)
 	np = QLIST_HEAD(lp);
 	while(np!=NULL){
 		pgpt = (Spink_Cam_Property_Type *)NODE_DATA(np);
-		refresh_property_info(QSP_ARG  scp, pgpt );
+		refresh_property_info(QSP_ARG  skc_p, pgpt );
 		/*
 		if( pgpt->info.present ){
-			refresh_property_value(QSP_ARG  scp, pgpt );
+			refresh_property_value(QSP_ARG  skc_p, pgpt );
 		}
 		*/
 		np = NODE_NEXT(np);
@@ -464,12 +464,12 @@ static void init_property_types(SINGLE_QSP_ARG_DECL)
 	*/
 }
 
-void refresh_property_info(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *pgpt )
+void refresh_property_info(QSP_ARG_DECL  Spink_Cam *skc_p, Spink_Cam_Property_Type *pgpt )
 {
 	//spinkError error;
 
 	/*
-	error = spinkGetPropertyInfo( scp->sk_context, &(pgpt->info) );
+	error = spinkGetPropertyInfo( skc_p->sk_context, &(pgpt->info) );
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkGetPropertyInfo" );
 		return;
@@ -477,11 +477,11 @@ void refresh_property_info(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type
 	*/
 }
 
-void show_property_info(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *pgpt )
+void show_property_info(QSP_ARG_DECL  Spink_Cam *skc_p, Spink_Cam_Property_Type *pgpt )
 {
 	//char var_name[32],val_str[32];
 
-	sprintf(MSG_STR,"\n%s %s info:",scp->skc_name,pgpt->name);
+	sprintf(MSG_STR,"\n%s %s info:",skc_p->skc_name,pgpt->name);
 	prt_msg(MSG_STR);
 
 #ifdef FOOBAR
@@ -563,12 +563,12 @@ void show_property_info(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *p
 #endif // FOOBAR
 }
 
-void refresh_property_value(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *pgpt )
+void refresh_property_value(QSP_ARG_DECL  Spink_Cam *skc_p, Spink_Cam_Property_Type *pgpt )
 {
 	/*
 	spinkError error;
 
-	error = spinkGetProperty( scp->sk_context, &(pgpt->prop) );
+	error = spinkGetProperty( skc_p->sk_context, &(pgpt->prop) );
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkGetProperty" );
 		return;
@@ -576,10 +576,10 @@ void refresh_property_value(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Typ
 	*/
 }
 
-void show_property_value(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *pgpt )
+void show_property_value(QSP_ARG_DECL  Spink_Cam *skc_p, Spink_Cam_Property_Type *pgpt )
 {
 	sprintf(MSG_STR,"\n%s %s:",
-		scp->skc_name,pgpt->name);
+		skc_p->skc_name,pgpt->name);
 	prt_msg(MSG_STR);
 
 #ifdef FOOBAR
@@ -650,7 +650,7 @@ void show_property_value(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *
 #endif // FOOBAR
 }
 
-void set_prop_value(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *pgpt, Spink_Cam_Prop_Val *vp )
+void set_prop_value(QSP_ARG_DECL  Spink_Cam *skc_p, Spink_Cam_Property_Type *pgpt, Spink_Cam_Prop_Val *vp )
 {
 #ifdef FOOBAR
 	spinkError error;
@@ -677,7 +677,7 @@ void set_prop_value(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *pgpt,
 		pgpt->prop.valueA = vp->pv_u.u_i;
 	}
 
-	error = spinkSetProperty( scp->sk_context, &(pgpt->prop));
+	error = spinkSetProperty( skc_p->sk_context, &(pgpt->prop));
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkSetProperty" );
 		return;
@@ -685,7 +685,7 @@ void set_prop_value(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *pgpt,
 #endif // FOOBAR
 }
 
-void set_prop_auto(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *pgpt, BOOL yn )
+void set_prop_auto(QSP_ARG_DECL  Spink_Cam *skc_p, Spink_Cam_Property_Type *pgpt, BOOL yn )
 {
 #ifdef FOOBAR
 	spinkError error;
@@ -698,7 +698,7 @@ void set_prop_auto(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *pgpt, 
 	}
 
 	pgpt->prop.autoManualMode = yn;
-	error = spinkSetProperty( scp->sk_context, &(pgpt->prop) );
+	error = spinkSetProperty( skc_p->sk_context, &(pgpt->prop) );
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkSetProperty" );
 		return;
@@ -706,29 +706,29 @@ void set_prop_auto(QSP_ARG_DECL  Spink_Cam *scp, Spink_Cam_Property_Type *pgpt, 
 #endif // FOOBAR
 }
 
-static void insure_stopped(QSP_ARG_DECL  Spink_Cam *scp, const char *op_desc)
+static void insure_stopped(QSP_ARG_DECL  Spink_Cam *skc_p, const char *op_desc)
 {
-	if( ! IS_RUNNING(scp) ) return;
+	if( ! IS_RUNNING(skc_p) ) return;
 
 	sprintf(ERROR_STRING,"Stopping capture on %s prior to %s",
-		scp->skc_name,op_desc);
+		skc_p->skc_name,op_desc);
 	advise(ERROR_STRING);
 
-	stop_firewire_capture(QSP_ARG  scp);
+	stop_firewire_capture(QSP_ARG  skc_p);
 }
 
 void
-cleanup_spink_cam( Spink_Cam *scp )
+cleanup_spink_cam( Spink_Cam *skc_p )
 {
-	//if( IS_CAPTURING(scp) )
-		 //dc1394_capture_stop( scp->sk_cam_p );
-		 //fly_capture_stop( scp->sk_cam_p );
-	//if( IS_TRANSMITTING(scp) )
-		//dc1394_video_set_transmission( scp->sk_cam_p, DC1394_OFF );
-		//fly_video_set_transmission( scp->sk_cam_p, DC1394_OFF );
+	//if( IS_CAPTURING(skc_p) )
+		 //dc1394_capture_stop( skc_p->sk_cam_p );
+		 //fly_capture_stop( skc_p->sk_cam_p );
+	//if( IS_TRANSMITTING(skc_p) )
+		//dc1394_video_set_transmission( skc_p->sk_cam_p, DC1394_OFF );
+		//fly_video_set_transmission( skc_p->sk_cam_p, DC1394_OFF );
 	/* dc1394_free_spink_cam */
-	//dc1394_spink_cam_free( scp->sk_cam_p );
-	//fly_spink_cam_free( scp->sk_cam_p );
+	//dc1394_spink_cam_free( skc_p->sk_cam_p );
+	//fly_spink_cam_free( skc_p->sk_cam_p );
 }
 
 
@@ -787,7 +787,7 @@ int get_spink_cam_names( QSP_ARG_DECL  Data_Obj *str_dp )
 	// Should the strings be rows or multidim pixels?
 	List *lp;
 	Node *np;
-	Spink_Cam *scp;
+	Spink_Cam *skc_p;
 	int i, n;
 
 	lp = spink_cam_list();
@@ -808,15 +808,15 @@ int get_spink_cam_names( QSP_ARG_DECL  Data_Obj *str_dp )
 	i=0;
 	while(np!=NULL){
 		char *dst;
-		scp = (Spink_Cam *) NODE_DATA(np);
+		skc_p = (Spink_Cam *) NODE_DATA(np);
 		dst = OBJ_DATA_PTR(str_dp);
 		dst += i * OBJ_PXL_INC(str_dp);
-		if( strlen(scp->skc_name)+1 > OBJ_COMPS(str_dp) ){
+		if( strlen(skc_p->skc_name)+1 > OBJ_COMPS(str_dp) ){
 			sprintf(ERROR_STRING,"String object %s has too few components (%ld) to hold spink_cam name \"%s\"",
-				OBJ_NAME(str_dp),(long)OBJ_COMPS(str_dp),scp->skc_name);
+				OBJ_NAME(str_dp),(long)OBJ_COMPS(str_dp),skc_p->skc_name);
 			warn(ERROR_STRING);
 		} else {
-			strcpy(dst,scp->skc_name);
+			strcpy(dst,skc_p->skc_name);
 		}
 		i++;
 		if( i>=n )
@@ -828,7 +828,7 @@ int get_spink_cam_names( QSP_ARG_DECL  Data_Obj *str_dp )
 	return i;
 }
 
-int get_spink_cam_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, Spink_Cam *scp )
+int get_spink_cam_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, Spink_Cam *skc_p )
 {
 	// Could check format of object here...
 	// Should be string table with enough entries to hold the modes
@@ -836,13 +836,13 @@ int get_spink_cam_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, Spink_Cam 
 
 	int i, n;
 
-	if( OBJ_COLS(str_dp) < scp->skc_n_video_modes ){
+	if( OBJ_COLS(str_dp) < skc_p->skc_n_video_modes ){
 		sprintf(ERROR_STRING,"String object %s has too few columns (%ld) to hold %d modes",
-			OBJ_NAME(str_dp),(long)OBJ_COLS(str_dp),scp->skc_n_video_modes);
+			OBJ_NAME(str_dp),(long)OBJ_COLS(str_dp),skc_p->skc_n_video_modes);
 		warn(ERROR_STRING);
 		n = OBJ_COLS(str_dp);
 	} else {
-		n=scp->skc_n_video_modes;
+		n=skc_p->skc_n_video_modes;
 	}
 		
 	for(i=0;i<n;i++){
@@ -850,7 +850,7 @@ int get_spink_cam_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, Spink_Cam 
 		const char *src;
 		char *dst;
 
-		k=scp->skc_video_mode_indices[i];
+		k=skc_p->skc_video_mode_indices[i];
 		src = all_video_modes[k].nvm_name;
 		dst = OBJ_DATA_PTR(str_dp);
 		dst += i * OBJ_PXL_INC(str_dp);
@@ -879,26 +879,26 @@ static int bit_count(Framerate_Mask mask)
 	return c;
 }
 
-static void get_framerate_choices(QSP_ARG_DECL  Spink_Cam *scp)
+static void get_framerate_choices(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	unsigned int i,n,idx;
 	Framerate_Mask mask;
 
-	if( scp->skc_framerate_names != NULL ){
-		givbuf(scp->skc_framerate_names);
-		scp->skc_framerate_names=NULL;	// in case we have an error before finishing
+	if( skc_p->skc_framerate_names != NULL ){
+		givbuf(skc_p->skc_framerate_names);
+		skc_p->skc_framerate_names=NULL;	// in case we have an error before finishing
 	}
 
 	// format7 doesn't have a framerate!?
 
-	mask = scp->skc_framerate_mask_tbl[ scp->skc_my_video_mode_index ];
+	mask = skc_p->skc_framerate_mask_tbl[ skc_p->skc_my_video_mode_index ];
 /*
 sprintf(ERROR_STRING,"%s:  video mode is %s",
-scp->skc_name,all_video_modes[scp->skc_video_mode_index].nvm_name);
+skc_p->skc_name,all_video_modes[skc_p->skc_video_mode_index].nvm_name);
 advise(ERROR_STRING);
 sprintf(ERROR_STRING,"%s:  my video mode %s (index = %d)",
-scp->skc_name,scp->skc_video_mode_names[scp->skc_my_video_mode_index],
-scp->skc_my_video_mode_index);
+skc_p->skc_name,skc_p->skc_video_mode_names[skc_p->skc_my_video_mode_index],
+skc_p->skc_my_video_mode_index);
 advise(ERROR_STRING);
 */
 
@@ -908,8 +908,8 @@ advise(ERROR_STRING);
 		// Can this ever happen?  If not, should be CAUTIOUS...
 		//warn("no framerates for this video mode!?");
 #ifdef FOOBAR
-		if( scp->skc_video_mode == SPINK_VIDEOMODE_FORMAT7 ){
-			if( scp->skc_framerate == SPINK_FRAMERATE_FORMAT7 ){
+		if( skc_p->skc_video_mode == SPINK_VIDEOMODE_FORMAT7 ){
+			if( skc_p->skc_framerate == SPINK_FRAMERATE_FORMAT7 ){
 				advise("No framerates available for format7.");
 			}
 			  else {
@@ -923,8 +923,8 @@ advise(ERROR_STRING);
 		return;
 	}
 
-	scp->skc_framerate_names = getbuf( n * sizeof(char *) );
-	scp->skc_n_framerates = n ;
+	skc_p->skc_framerate_names = getbuf( n * sizeof(char *) );
+	skc_p->skc_n_framerates = n ;
 
 	i=(-1);
 	idx=0;
@@ -936,7 +936,7 @@ advise(ERROR_STRING);
 			int j;
 			r = i ;
 			j = index_of_framerate( r );
-			scp->skc_framerate_names[idx]=all_framerates[j].nfr_name;
+			skc_p->skc_framerate_names[idx]=all_framerates[j].nfr_name;
 #endif // FOOBAR
 			idx++;
 		}
@@ -947,19 +947,19 @@ advise(ERROR_STRING);
 	assert( idx == n );
 }
 
-int get_spink_cam_framerate_strings( QSP_ARG_DECL  Data_Obj *str_dp, Spink_Cam *scp )
+int get_spink_cam_framerate_strings( QSP_ARG_DECL  Data_Obj *str_dp, Spink_Cam *skc_p )
 {
 	int i, n;
 	const char *src;
 	char *dst;
 
-	get_framerate_choices(QSP_ARG  scp);
+	get_framerate_choices(QSP_ARG  skc_p);
 
 	// Could check format of object here...
 	// Should be string table with enough entries to hold the modes
 	// Should the strings be rows or multidim pixels?
 
-	n = scp->skc_n_framerates;
+	n = skc_p->skc_n_framerates;
 
 	if( OBJ_COLS(str_dp) < n ){
 		sprintf(ERROR_STRING,"String object %s has too few columns (%ld) to hold %d framerates",
@@ -968,8 +968,8 @@ int get_spink_cam_framerate_strings( QSP_ARG_DECL  Data_Obj *str_dp, Spink_Cam *
 		n = OBJ_COLS(str_dp);
 	}
 
-	for(i=0;i<scp->skc_n_framerates;i++){
-		src = scp->skc_framerate_names[i];
+	for(i=0;i<skc_p->skc_n_framerates;i++){
+		src = skc_p->skc_framerate_names[i];
 		dst = OBJ_DATA_PTR(str_dp);
 		dst += i * OBJ_PXL_INC(str_dp);
 		if( strlen(src)+1 > OBJ_COMPS(str_dp) ){
@@ -985,7 +985,7 @@ int get_spink_cam_framerate_strings( QSP_ARG_DECL  Data_Obj *str_dp, Spink_Cam *
 }
 
 #ifdef FOOBAR
-static void test_setup(QSP_ARG_DECL  Spink_Cam *scp,
+static void test_setup(QSP_ARG_DECL  Spink_Cam *skc_p,
 		spinkVideoMode m, spinkFrameRate r, int *kp, int idx )
 {
 	spinkError error;
@@ -996,7 +996,7 @@ static void test_setup(QSP_ARG_DECL  Spink_Cam *scp,
 		// BUG?  make sure spink_cam has format7 modes?
 		supported = TRUE;
 	} else {
-		error = spinkGetVideoModeAndFrameRateInfo( scp->sk_context,
+		error = spinkGetVideoModeAndFrameRateInfo( skc_p->sk_context,
 			m,r,&supported );
 		if( error != SPINK_ERROR_OK ){
 			report_spink_error(QSP_ARG  error,
@@ -1006,22 +1006,22 @@ static void test_setup(QSP_ARG_DECL  Spink_Cam *scp,
 	}
 
 	if( supported ){
-		if( *kp < 0 || scp->skc_video_mode_indices[*kp] != idx ){
+		if( *kp < 0 || skc_p->skc_video_mode_indices[*kp] != idx ){
 			*kp = (*kp)+1;
-			scp->skc_video_mode_indices[*kp] = idx;
-			scp->skc_video_mode_names[*kp] = all_video_modes[idx].nvm_name;
+			skc_p->skc_video_mode_indices[*kp] = idx;
+			skc_p->skc_video_mode_names[*kp] = all_video_modes[idx].nvm_name;
 //fprintf(stderr,"test_setup:  adding video mode %s to %s\n",
 //all_video_modes[idx].nvm_name,
-//scp->skc_name);
-			if( scp->skc_video_mode == m )
-				scp->skc_video_mode_index = *kp;
+//skc_p->skc_name);
+			if( skc_p->skc_video_mode == m )
+				skc_p->skc_video_mode_index = *kp;
 		}
-		scp->skc_framerate_mask_tbl[*kp] |= 1 << r;
+		skc_p->skc_framerate_mask_tbl[*kp] |= 1 << r;
 	}
 }
 #endif // FOOBAR
 
-static int get_supported_video_modes(QSP_ARG_DECL  Spink_Cam *scp )
+static int get_supported_video_modes(QSP_ARG_DECL  Spink_Cam *skc_p )
 {
 	int i, /*j,*/ n_so_far;
 
@@ -1035,20 +1035,20 @@ static int get_supported_video_modes(QSP_ARG_DECL  Spink_Cam *scp )
 		m=all_video_modes[i].nvm_value;
 		if( m == SPINK_VIDEOMODE_FORMAT7 ){
 			r = SPINK_FRAMERATE_FORMAT7;
-			test_setup(QSP_ARG  scp, m, r, &n_so_far, i );
+			test_setup(QSP_ARG  skc_p, m, r, &n_so_far, i );
 		} else {
 			for(j=0;j<N_STD_FRAMERATES;j++){
 				r=all_framerates[j].nfr_value;
 //fprintf(stderr,"Testing video mode %d and frame rate %d\n",
-//m,scp->skc_framerate);
-				test_setup(QSP_ARG  scp, m, r, &n_so_far, i );
+//m,skc_p->skc_framerate);
+				test_setup(QSP_ARG  skc_p, m, r, &n_so_far, i );
 			}
 		}
 #endif // FOOBAR
 	}
 	n_so_far++;
 //fprintf(stderr,"get_supported_video_modes:  setting n_video_modes to %d\n",k);
-	scp->skc_n_video_modes = n_so_far;
+	skc_p->skc_n_video_modes = n_so_far;
 	return 0;
 }
 
@@ -1068,15 +1068,15 @@ static spinkFrameRate highest_framerate( QSP_ARG_DECL  Framerate_Mask mask )
 }
 #endif // FOOBAR
 
-int is_fmt7_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx )
+int is_fmt7_mode(QSP_ARG_DECL  Spink_Cam *skc_p, int idx )
 {
 #ifdef FOOBAR
 	spinkVideoMode m;
 
 //	CHECK_IDX(is_fmt7_mode)
-	assert( idx >= 0 && idx < scp->skc_n_video_modes );
+	assert( idx >= 0 && idx < skc_p->skc_n_video_modes );
 
-	m = all_video_modes[ scp->skc_video_mode_indices[idx] ].nvm_value;
+	m = all_video_modes[ skc_p->skc_video_mode_indices[idx] ].nvm_value;
 	if( m == SPINK_VIDEOMODE_FORMAT7 ) return 1;
 #endif // FOOBAR
 	return 0;
@@ -1086,24 +1086,24 @@ int is_fmt7_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx )
 // don't know whether the library might change anything (like the
 // number of buffers, but it seems possible?
 
-static int refresh_config(QSP_ARG_DECL  Spink_Cam *scp)
+static int refresh_config(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef FOOBAR
 	spinkError error;
 
-	error = spinkGetConfiguration(scp->sk_context,&scp->sk_config);
+	error = spinkGetConfiguration(skc_p->sk_context,&skc_p->sk_config);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkGetConfiguration" );
 		// should we set a flag to indicate an invalid config?
 		return -1;
 	}
-	scp->skc_n_buffers = scp->sk_config.numBuffers;
+	skc_p->skc_n_buffers = skc_p->sk_config.numBuffers;
 #endif // FOOBAR
 	return 0;
 }
 
 
-int set_std_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx )
+int set_std_mode(QSP_ARG_DECL  Spink_Cam *skc_p, int idx )
 {
 #ifdef FOOBAR
 	spinkFrameRate r;
@@ -1111,40 +1111,40 @@ int set_std_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx )
 	spinkVideoMode m;
 
 //	CHECK_IDX(set_std_mode)
-	assert( idx >= 0 && idx < scp->skc_n_video_modes );
+	assert( idx >= 0 && idx < skc_p->skc_n_video_modes );
 
-	insure_stopped(QSP_ARG  scp,"setting video mode");
+	insure_stopped(QSP_ARG  skc_p,"setting video mode");
 
-	m = all_video_modes[ scp->skc_video_mode_indices[idx] ].nvm_value;
+	m = all_video_modes[ skc_p->skc_video_mode_indices[idx] ].nvm_value;
 	if( m == SPINK_VIDEOMODE_FORMAT7 ){
 		warn("set_std_mode:  use set_fmt7_mode to select format7!?");
 		return -1;
 	}
 
-	r = highest_framerate(QSP_ARG  scp->skc_framerate_mask_tbl[idx] );
+	r = highest_framerate(QSP_ARG  skc_p->skc_framerate_mask_tbl[idx] );
 
-	error = spinkSetVideoModeAndFrameRate(scp->sk_context,m,r);
+	error = spinkSetVideoModeAndFrameRate(skc_p->sk_context,m,r);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkSetVideoModeAndFrameRate" );
 		return -1;
 	}
 
-	scp->skc_my_video_mode_index = idx;
-	scp->skc_video_mode = m;
-	scp->skc_framerate = r;
-	scp->skc_base = NULL;	// force init_spink_base to run again
-	scp->skc_video_mode_index = scp->skc_video_mode_indices[idx];
-	scp->skc_framerate_index = index_of_framerate(r);
+	skc_p->skc_my_video_mode_index = idx;
+	skc_p->skc_video_mode = m;
+	skc_p->skc_framerate = r;
+	skc_p->skc_base = NULL;	// force init_spink_base to run again
+	skc_p->skc_video_mode_index = skc_p->skc_video_mode_indices[idx];
+	skc_p->skc_framerate_index = index_of_framerate(r);
 
-	scp->skc_cols = all_video_modes[ scp->skc_video_mode_index ].nvm_width;
-	scp->skc_rows = all_video_modes[ scp->skc_video_mode_index ].nvm_height;
-	scp->skc_depth = all_video_modes[ scp->skc_video_mode_index ].nvm_depth;
+	skc_p->skc_cols = all_video_modes[ skc_p->skc_video_mode_index ].nvm_width;
+	skc_p->skc_rows = all_video_modes[ skc_p->skc_video_mode_index ].nvm_height;
+	skc_p->skc_depth = all_video_modes[ skc_p->skc_video_mode_index ].nvm_depth;
 
 #endif // FOOBAR
-	return refresh_config(QSP_ARG  scp);
+	return refresh_config(QSP_ARG  skc_p);
 } // set_std_mode
 
-static void set_highest_fmt7_framerate( QSP_ARG_DECL  Spink_Cam *scp )
+static void set_highest_fmt7_framerate( QSP_ARG_DECL  Spink_Cam *skc_p )
 {
 	/* If the frame rate has been set to 60 fps by using a default
 	 * video mode at startup, it will not be reset when we switch
@@ -1157,7 +1157,7 @@ static void set_highest_fmt7_framerate( QSP_ARG_DECL  Spink_Cam *scp )
 	spinkPropertyInfo propInfo;
 
 	propInfo.type = SPINK_FRAME_RATE;
-	error = spinkGetPropertyInfo( scp->sk_context, &propInfo );
+	error = spinkGetPropertyInfo( skc_p->sk_context, &propInfo );
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkGetPropertyInfo" );
 		return;
@@ -1171,7 +1171,7 @@ static void set_highest_fmt7_framerate( QSP_ARG_DECL  Spink_Cam *scp )
 	assert( fr_prop_p->info.absValSupported );
 
 	prop.type = SPINK_FRAME_RATE;
-	error = spinkGetProperty( scp->sk_context, &prop);
+	error = spinkGetProperty( skc_p->sk_context, &prop);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkGetProperty" );
 		return;
@@ -1179,7 +1179,7 @@ static void set_highest_fmt7_framerate( QSP_ARG_DECL  Spink_Cam *scp )
 	prop.absControl = TRUE;
 	prop.absValue = fr_prop_p->info.absMax;
 
-	error = spinkSetProperty( scp->sk_context, &prop);
+	error = spinkSetProperty( skc_p->sk_context, &prop);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkSetProperty" );
 		return;
@@ -1187,7 +1187,7 @@ static void set_highest_fmt7_framerate( QSP_ARG_DECL  Spink_Cam *scp )
 #endif // FOOBAR
 }
 
-int set_fmt7_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx )
+int set_fmt7_mode(QSP_ARG_DECL  Spink_Cam *skc_p, int idx )
 {
 #ifdef FOOBAR
 	spinkFormat7ImageSettings settings;
@@ -1197,9 +1197,9 @@ int set_fmt7_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx )
 	unsigned int packetSize;
 	float percentage;
 
-	insure_stopped(QSP_ARG  scp,"setting format7 mode");
+	insure_stopped(QSP_ARG  skc_p,"setting format7 mode");
 
-	if( idx < 0 || idx >= scp->skc_n_fmt7_modes ){
+	if( idx < 0 || idx >= skc_p->skc_n_fmt7_modes ){
 		warn("Format 7 index out of range!?");
 		return -1;
 	}
@@ -1207,9 +1207,9 @@ int set_fmt7_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx )
 	settings.mode = idx;
 	settings.offsetX = 0;
 	settings.offsetY = 0;
-	settings.width = scp->skc_fmt7_info_tbl[idx].maxWidth;
-	settings.height = scp->skc_fmt7_info_tbl[idx].maxHeight;
-	if( scp->skc_fmt7_info_tbl[idx].pixelFormatBitField &
+	settings.width = skc_p->skc_fmt7_info_tbl[idx].maxWidth;
+	settings.height = skc_p->skc_fmt7_info_tbl[idx].maxHeight;
+	if( skc_p->skc_fmt7_info_tbl[idx].pixelFormatBitField &
 			SPINK_PIXEL_FORMAT_RAW8 )
 		settings.pixelFormat = SPINK_PIXEL_FORMAT_RAW8;
 	else {
@@ -1220,17 +1220,17 @@ int set_fmt7_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx )
 fprintf(stderr,"Using size %d x %d\n",settings.width,settings.height);
 
 	percentage = 100.0;
-	error = spinkSetFormat7Configuration(scp->sk_context,&settings,
+	error = spinkSetFormat7Configuration(skc_p->sk_context,&settings,
 			percentage);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkSetFormat7Configuration" );
 		return -1;
 	}
 
-	set_highest_fmt7_framerate(QSP_ARG  scp);
+	set_highest_fmt7_framerate(QSP_ARG  skc_p);
 
 	// This fails if we are not in format 7 already.
-	error = spinkGetFormat7Configuration(scp->sk_context,&settings,
+	error = spinkGetFormat7Configuration(skc_p->sk_context,&settings,
 			&packetSize,&percentage);
 
 	if( error != SPINK_ERROR_OK ){
@@ -1241,18 +1241,18 @@ fprintf(stderr,"Using size %d x %d\n",settings.width,settings.height);
 	fprintf(stderr,"Percentage = %g (packet size = %d)\n",
 		percentage,packetSize);
 
-	scp->skc_video_mode = SPINK_VIDEOMODE_FORMAT7;
-	scp->skc_framerate = SPINK_FRAMERATE_FORMAT7;
-	scp->skc_framerate_index = index_of_framerate(SPINK_FRAMERATE_FORMAT7);
-	scp->skc_video_mode_index = index_of_video_mode(SPINK_VIDEOMODE_FORMAT7);
-	scp->skc_my_video_mode_index = (-1);
-	scp->skc_fmt7_index = idx;
-	scp->skc_base = NULL;	// force init_spink_base to run again
+	skc_p->skc_video_mode = SPINK_VIDEOMODE_FORMAT7;
+	skc_p->skc_framerate = SPINK_FRAMERATE_FORMAT7;
+	skc_p->skc_framerate_index = index_of_framerate(SPINK_FRAMERATE_FORMAT7);
+	skc_p->skc_video_mode_index = index_of_video_mode(SPINK_VIDEOMODE_FORMAT7);
+	skc_p->skc_my_video_mode_index = (-1);
+	skc_p->skc_fmt7_index = idx;
+	skc_p->skc_base = NULL;	// force init_spink_base to run again
 
 	// Do we have to set the framerate to SPINK_FRAMERATE_FORMAT7???
 
-	scp->skc_rows = settings.height;
-	scp->skc_cols = settings.width;
+	skc_p->skc_rows = settings.height;
+	skc_p->skc_cols = settings.width;
 
 	{
 		long bytes_per_image;
@@ -1267,33 +1267,33 @@ fprintf(stderr,"Using size %d x %d\n",settings.width,settings.height);
 
 	// refresh_config reads the config from the library...
 #endif // FOOBAR
-	return refresh_config(QSP_ARG  scp);
+	return refresh_config(QSP_ARG  skc_p);
 } // set_fmt7_mode
 
-void set_eii_property(QSP_ARG_DECL  Spink_Cam *scp, int idx, int yesno )
+void set_eii_property(QSP_ARG_DECL  Spink_Cam *skc_p, int idx, int yesno )
 {
 #ifdef FOOBAR
 	spinkError error;
 	myEmbeddedImageInfo *eii_p;
 
 
-	eii_p = (myEmbeddedImageInfo *) (&scp->sk_ei_info);
+	eii_p = (myEmbeddedImageInfo *) (&skc_p->sk_ei_info);
 	if( ! eii_p->prop_tbl[idx].available ){
 		sprintf(ERROR_STRING,"Property %s is not available on %s",
-			eii_prop_names[idx],scp->skc_name);
+			eii_prop_names[idx],skc_p->skc_name);
 		warn(ERROR_STRING);
 		return;
 	}
 	eii_p->prop_tbl[idx].onOff = yesno ? TRUE : FALSE;
 
-	error = spinkSetEmbeddedImageInfo(scp->sk_context,&scp->sk_ei_info);
+	error = spinkSetEmbeddedImageInfo(skc_p->sk_context,&skc_p->sk_ei_info);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkSetEmbeddedImageInfo" );
 	}
 #endif // FOOBAR
 }
 
-void set_grab_mode(QSP_ARG_DECL  Spink_Cam *scp, int grabmode_idx )
+void set_grab_mode(QSP_ARG_DECL  Spink_Cam *skc_p, int grabmode_idx )
 {
 #ifdef FOOBAR
 	spinkError error;
@@ -1302,118 +1302,118 @@ void set_grab_mode(QSP_ARG_DECL  Spink_Cam *scp, int grabmode_idx )
 	assert( grabmode_idx >= 0 && grabmode_idx < N_NAMED_GRAB_MODES );
 
 	// grab mode is part of the config struct
-	cfg = scp->sk_config;
+	cfg = skc_p->sk_config;
 	cfg.grabMode = all_grab_modes[grabmode_idx].ngm_value;
-	error = spinkSetConfiguration(scp->sk_context,&cfg);
+	error = spinkSetConfiguration(skc_p->sk_context,&cfg);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkSetConfiguration" );
 		// should we set a flag to indicate an invalid config?
 		return;
 	}
-	scp->sk_config.grabMode = cfg.grabMode;
+	skc_p->sk_config.grabMode = cfg.grabMode;
 #endif // FOOBAR
 }
 
-void show_grab_mode(QSP_ARG_DECL  Spink_Cam *scp)
+void show_grab_mode(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef FOOBAR
 	int idx;
 
-	idx = index_of_grab_mode(scp->sk_config.grabMode);
+	idx = index_of_grab_mode(skc_p->sk_config.grabMode);
 	if( idx < 0 ) return;
 	sprintf(MSG_STR,"Current grab mode:  %s",all_grab_modes[idx].ngm_name);
 	prt_msg(MSG_STR);
 #endif // FOOBAR
 }
 
-int pick_spink_cam_framerate(QSP_ARG_DECL  Spink_Cam *scp, const char *pmpt)
+int pick_spink_cam_framerate(QSP_ARG_DECL  Spink_Cam *skc_p, const char *pmpt)
 {
 	int i;
 
-	if( scp == NULL ){
+	if( skc_p == NULL ){
 		sprintf(ERROR_STRING,"pick_spink_cam_framerate:  no spink_cam selected!?");
 		warn(ERROR_STRING);
 		return -1;
 	}
 
-	get_framerate_choices(QSP_ARG  scp);
-	i=WHICH_ONE(pmpt,scp->skc_n_framerates,scp->skc_framerate_names);
+	get_framerate_choices(QSP_ARG  skc_p);
+	i=WHICH_ONE(pmpt,skc_p->skc_n_framerates,skc_p->skc_framerate_names);
 	return i;
 }
 
-int set_framerate(QSP_ARG_DECL  Spink_Cam *scp, int framerate_index)
+int set_framerate(QSP_ARG_DECL  Spink_Cam *skc_p, int framerate_index)
 {
 #ifdef FOOBAR
 	spinkFrameRate rate;
 	spinkError error;
 
-	if( scp == NULL ) return -1;
+	if( skc_p == NULL ) return -1;
 
-	insure_stopped(QSP_ARG  scp,"setting frame rate");
+	insure_stopped(QSP_ARG  skc_p,"setting frame rate");
 
 	rate = all_framerates[framerate_index].nfr_value;
-	error = spinkSetVideoModeAndFrameRate(scp->sk_context,
-			scp->skc_video_mode,rate);
+	error = spinkSetVideoModeAndFrameRate(skc_p->sk_context,
+			skc_p->skc_video_mode,rate);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkSetVideoModeAndFrameRate" );
 		return -1;
 	}
 
-	scp->skc_framerate = rate;
+	skc_p->skc_framerate = rate;
 
 #endif // FOOBAR
-	return refresh_config(QSP_ARG  scp);
+	return refresh_config(QSP_ARG  skc_p);
 }
 
-void show_spink_cam_framerate(QSP_ARG_DECL  Spink_Cam *scp)
+void show_spink_cam_framerate(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	sprintf(MSG_STR,"%s framerate:  %s",
-		scp->skc_name,all_framerates[scp->skc_framerate_index].nfr_name);
+		skc_p->skc_name,all_framerates[skc_p->skc_framerate_index].nfr_name);
 	advise(MSG_STR);
 }
 
-void show_spink_cam_video_mode(QSP_ARG_DECL  Spink_Cam *scp)
+void show_spink_cam_video_mode(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef FOOBAR
 	sprintf(MSG_STR,"%s video mode:  %s",
-		scp->skc_name,name_for_video_mode(scp->skc_video_mode));
+		skc_p->skc_name,name_for_video_mode(skc_p->skc_video_mode));
 	advise(MSG_STR);
 #endif // FOOBAR
 }
 
-int list_spink_cam_video_modes(QSP_ARG_DECL  Spink_Cam *scp)
+int list_spink_cam_video_modes(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	unsigned int i;
 	const char *s;
 
-	if( scp->skc_n_video_modes <= 0 ){
+	if( skc_p->skc_n_video_modes <= 0 ){
 		warn("no video modes!?");
 		return -1;
 	}
 
-	for(i=0;i<scp->skc_n_video_modes; i++){
-		s=scp->skc_video_mode_names[i];
+	for(i=0;i<skc_p->skc_n_video_modes; i++){
+		s=skc_p->skc_video_mode_names[i];
 		prt_msg_frag("\t");
 		prt_msg(s);
 	}
 	return 0;
 }
 
-void list_spink_cam_framerates(QSP_ARG_DECL  Spink_Cam *scp)
+void list_spink_cam_framerates(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef FOOBAR
 	int i;
 
-	get_framerate_choices(QSP_ARG  scp);
+	get_framerate_choices(QSP_ARG  skc_p);
 
-	for(i=0;i<scp->skc_n_framerates;i++){
+	for(i=0;i<skc_p->skc_n_framerates;i++){
 		prt_msg_frag("\t");
-		prt_msg(scp->skc_framerate_names[i]);
+		prt_msg(skc_p->skc_framerate_names[i]);
 	}
 #endif // FOOBAR
 }
 
-static int set_default_video_mode(QSP_ARG_DECL  Spink_Cam *scp)
+static int set_default_video_mode(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef FOOBAR
 	spinkVideoMode m;
@@ -1422,26 +1422,26 @@ static int set_default_video_mode(QSP_ARG_DECL  Spink_Cam *scp)
 	spinkError error;
 	int _nskip;
 
-	if( get_supported_video_modes(QSP_ARG  scp ) < 0 ){
+	if( get_supported_video_modes(QSP_ARG  skc_p ) < 0 ){
 		warn("set_default_video_mode:  Can't get video modes");
 		return -1;
 	}
 
-//fprintf(stderr,"get_supported_video_modes found %d modes\n",scp->skc_n_video_modes);
+//fprintf(stderr,"get_supported_video_modes found %d modes\n",skc_p->skc_n_video_modes);
 	_nskip=0;
 	do {
 		_nskip++;
-		i = scp->skc_n_video_modes-(_nskip);	// order the table so that mono8 is last?
-		scp->skc_my_video_mode_index = i;
-		j = scp->skc_video_mode_indices[i];
+		i = skc_p->skc_n_video_modes-(_nskip);	// order the table so that mono8 is last?
+		skc_p->skc_my_video_mode_index = i;
+		j = skc_p->skc_video_mode_indices[i];
 		m = all_video_modes[j].nvm_value;
 		// BUG we don't check that nskip is in-bounds, but should be OK
-	} while( m == SPINK_VIDEOMODE_FORMAT7  && _nskip < scp->skc_n_video_modes );
+	} while( m == SPINK_VIDEOMODE_FORMAT7  && _nskip < skc_p->skc_n_video_modes );
 
 	if( m == SPINK_VIDEOMODE_FORMAT7 ){
 		/*
 		sprintf(ERROR_STRING,"set_default_video_mode:  %s has only format7 modes!?",
-			scp->skc_name);
+			skc_p->skc_name);
 		advise(ERROR_STRING);
 		*/
 		return -1;
@@ -1453,28 +1453,28 @@ static int set_default_video_mode(QSP_ARG_DECL  Spink_Cam *scp)
 
 	// if this is format7, don't use it!?
 
-	scp->skc_video_mode = m;
-	scp->skc_video_mode_index = j;
+	skc_p->skc_video_mode = m;
+	skc_p->skc_video_mode_index = j;
 
-	scp->skc_cols = all_video_modes[ j ].nvm_width;
-	scp->skc_rows = all_video_modes[ j ].nvm_height;
-	scp->skc_depth = all_video_modes[ j ].nvm_depth;
+	skc_p->skc_cols = all_video_modes[ j ].nvm_width;
+	skc_p->skc_rows = all_video_modes[ j ].nvm_height;
+	skc_p->skc_depth = all_video_modes[ j ].nvm_depth;
 
 	// Get the hightest frame rate associated with this video mode...
-	r = highest_framerate( QSP_ARG  scp->skc_framerate_mask_tbl[i] );
+	r = highest_framerate( QSP_ARG  skc_p->skc_framerate_mask_tbl[i] );
 
 //fprintf(stderr,"mode %s, highest supported frame rate is %s\n",
 //name_for_video_mode(m),
 //name_for_framerate(r));
-	scp->skc_framerate = r;
-	scp->skc_framerate_index = index_of_framerate(r);
+	skc_p->skc_framerate = r;
+	skc_p->skc_framerate_index = index_of_framerate(r);
 
 //sprintf(ERROR_STRING,"set_default_video_mode:  setting to %s", name_for_video_mode(m));
 //advise(ERROR_STRING);
 
 
-	error = spinkSetVideoModeAndFrameRate( scp->sk_context,
-			scp->skc_video_mode, scp->skc_framerate );
+	error = spinkSetVideoModeAndFrameRate( skc_p->sk_context,
+			skc_p->skc_video_mode, skc_p->skc_framerate );
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkSetVideoModeAndFrameRate" );
 		return -1;
@@ -1486,9 +1486,9 @@ static int set_default_video_mode(QSP_ARG_DECL  Spink_Cam *scp)
 	// in case the user wants to fetch the strings...
 	// BUG DO THIS WHEN CAM IS SELECTED!
 	//set_script_var_from_int(QSP_ARG
-	//		"n_framerates",scp->skc_framerates.num);
+	//		"n_framerates",skc_p->skc_framerates.num);
 
-sprintf(ERROR_STRING,"%s:  %s, %s fps",scp->skc_name,name_for_video_mode(m),
+sprintf(ERROR_STRING,"%s:  %s, %s fps",skc_p->skc_name,name_for_video_mode(m),
 						name_for_framerate(r) );
 advise(ERROR_STRING);
 
@@ -1510,7 +1510,7 @@ static Spink_Cam *unique_spink_cam_instance( QSP_ARG_DECL  spinkContext context 
 #ifdef FOOBAR
 	int i;
 	char cname[80];	// How many chars is enough?
-	Spink_Cam *scp;
+	Spink_Cam *skc_p;
 	spinkError error;
 	spinkCameraInfo camInfo;
 
@@ -1521,19 +1521,19 @@ static Spink_Cam *unique_spink_cam_instance( QSP_ARG_DECL  spinkContext context 
 	}
 
 	i=1;
-	scp=NULL;
-	while(scp==NULL){
+	skc_p=NULL;
+	while(skc_p==NULL){
 		//sprintf(cname,"%s_%d",cam_p->model,i);
 		sprintf(cname,"%s_%d",camInfo.modelName,i);
 		fix_string(cname);	// change spaces to underscores
 //sprintf(ERROR_STRING,"Checking for existence of %s",cname);
 //advise(ERROR_STRING);
-		scp = spink_cam_of( cname );
-		if( scp == NULL ){	// This index is free
+		skc_p = spink_cam_of( cname );
+		if( skc_p == NULL ){	// This index is free
 //sprintf(ERROR_STRING,"%s is not in use",cname);
 //advise(ERROR_STRING);
-			scp = new_spink_cam( cname );
-			if( scp == NULL ){
+			skc_p = new_spink_cam( cname );
+			if( skc_p == NULL ){
 				sprintf(ERROR_STRING,
 			"Failed to create spink_cam %s!?",cname);
 				error1(ERROR_STRING);
@@ -1541,21 +1541,21 @@ static Spink_Cam *unique_spink_cam_instance( QSP_ARG_DECL  spinkContext context 
 		} else {
 //sprintf(ERROR_STRING,"%s IS in use",cname);
 //advise(ERROR_STRING);
-			scp = NULL;
+			skc_p = NULL;
 		}
 		i++;
 		if( i>=5 ){
 			error1("Too many spink_cams!?"); 
 		}
 	}
-	scp->sk_cam_info = camInfo;
-	return scp;
+	skc_p->sk_cam_info = camInfo;
+	return skc_p;
 #else // FOOBAR
 	return NULL;
 #endif // FOOBAR
 }
 
-static void get_fmt7_modes(QSP_ARG_DECL  Spink_Cam *scp)
+static void get_fmt7_modes(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef FOOBAR
 	spinkError error;
@@ -1564,46 +1564,46 @@ static void get_fmt7_modes(QSP_ARG_DECL  Spink_Cam *scp)
 	spinkFormat7Info fmt7_info_tbl[N_FMT7_MODES];
 	size_t nb;
 
-	scp->skc_n_fmt7_modes = 0;
+	skc_p->skc_n_fmt7_modes = 0;
 	for(i=0;i<N_FMT7_MODES;i++){
 		fmt7_info_tbl[i].mode = i;
-		error = spinkGetFormat7Info(scp->sk_context,
+		error = spinkGetFormat7Info(skc_p->sk_context,
 				&fmt7_info_tbl[i],&supported);
 		if( error != SPINK_ERROR_OK ){
 			report_spink_error(QSP_ARG  error, "spinkGetFormat7Info" );
 		}
 		if( supported ){
-			scp->skc_n_fmt7_modes ++ ;
+			skc_p->skc_n_fmt7_modes ++ ;
 			largest = i;
 		}
 	}
-	if( (largest+1) != scp->skc_n_fmt7_modes ){
+	if( (largest+1) != skc_p->skc_n_fmt7_modes ){
 		sprintf(ERROR_STRING,
 	"Unexpected number of format7 modes!?  (largest index = %d, n_modes = %d)",
-			largest,scp->skc_n_fmt7_modes);
+			largest,skc_p->skc_n_fmt7_modes);
 		warn(ERROR_STRING);
 	}
 
-	nb = scp->skc_n_fmt7_modes * sizeof(spinkFormat7Info);
-	scp->skc_fmt7_info_tbl = getbuf( nb );
-	memcpy(scp->skc_fmt7_info_tbl,fmt7_info_tbl,nb);
+	nb = skc_p->skc_n_fmt7_modes * sizeof(spinkFormat7Info);
+	skc_p->skc_fmt7_info_tbl = getbuf( nb );
+	memcpy(skc_p->skc_fmt7_info_tbl,fmt7_info_tbl,nb);
 
-	scp->skc_fmt7_index = 0;
+	skc_p->skc_fmt7_index = 0;
 
 #endif // FOOBAR
 }
 
 #define SHOW_FIELD(desc_str,value)					\
 									\
-/*sprintf(MSG_STR,"\t%s:  %d",#desc_str,scp->skc_fmt7_info_tbl[mode].value);	\
+/*sprintf(MSG_STR,"\t%s:  %d",#desc_str,skc_p->skc_fmt7_info_tbl[mode].value);	\
 prt_msg(MSG_STR);*/
 
 #define SHOW_FIELD_HEX(desc_str,value)					\
 									\
-/*sprintf(MSG_STR,"\t%s:  0x%x",#desc_str,scp->skc_fmt7_info_tbl[mode].value); \
+/*sprintf(MSG_STR,"\t%s:  0x%x",#desc_str,skc_p->skc_fmt7_info_tbl[mode].value); \
 prt_msg(MSG_STR);*/
 
-static void show_fmt7_info(QSP_ARG_DECL  Spink_Cam *scp, spinkMode mode )
+static void show_fmt7_info(QSP_ARG_DECL  Spink_Cam *skc_p, spinkMode mode )
 {
 	sprintf(MSG_STR,"Format 7 mode %d:",mode);
 	prt_msg(MSG_STR);
@@ -1623,157 +1623,17 @@ static void show_fmt7_info(QSP_ARG_DECL  Spink_Cam *scp, spinkMode mode )
 	prt_msg("");
 }
 
-void show_fmt7_modes(QSP_ARG_DECL  Spink_Cam *scp)
+void show_fmt7_modes(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
-	if( scp->skc_n_fmt7_modes <= 0 ){
+	if( skc_p->skc_n_fmt7_modes <= 0 ){
 		prt_msg("\tNo format7 modes available.");
 	} else {
 		int i;
-		for(i=0;i<scp->skc_n_fmt7_modes;i++)
-			show_fmt7_info( QSP_ARG  scp, i );
+		for(i=0;i<skc_p->skc_n_fmt7_modes;i++)
+			show_fmt7_info( QSP_ARG  skc_p, i );
 	}
 }
 
-#ifdef FOOBAR
-// This should only be called once...
-
-static Spink_Cam *setup_my_spink_cam( QSP_ARG_DECL
-				spinkContext context, spinkPGRGuid *guid_p,
-				int index )
-{
-	Spink_Cam *scp;
-	spinkError error;
-	int i;
-
-	error = spinkConnect(context,guid_p);
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkConnect" );
-		return NULL;
-	}
-
-	// We could have multiple instances of the same model...
-	scp = unique_spink_cam_instance(QSP_ARG  context);
-
-	// Why do we disconnect from the context we were called with -
-	// subsequent cameras will still use it...
-	// Maybe this just undoes the connection directly above?
-	error = spinkDisconnect(context);
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkDisconnect" );
-		// BUG should clean up and return NULL?
-		return scp;
-	}
-
-	//scp->sk_cam_p = cam_p;
-	error = spinkCreateContext(&scp->sk_context);
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkCreateContext" );
-		// BUG clean up first
-		return NULL;
-	}
-	error=spinkGetCameraFromIndex(scp->sk_context,index,&scp->sk_guid);
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkGetCameraFromIndex" );
-	}
-
-	error = spinkConnect(scp->sk_context,&scp->sk_guid);
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkConnect" );
-		// BUG clean up first
-		return NULL;
-	}
-
-	if( refresh_config(QSP_ARG  scp) < 0 )
-		// BUG clean up first
-		return NULL;
-
-	error = spinkGetEmbeddedImageInfo(scp->sk_context,&scp->sk_ei_info);
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkGetEmbeddedImageInfo" );
-		// BUG clean up first
-		return NULL;
-	}
-
-	scp->skc_feat_lp=NULL;
-	scp->skc_in_use_lp=NULL;
-	scp->skc_flags = 0;		/* assume no B-mode unless we are told otherwise... */
-	scp->skc_base = NULL;
-
-	get_fmt7_modes(QSP_ARG  scp);
-
-	error = spinkGetVideoModeAndFrameRate( scp->sk_context,
-			&scp->skc_video_mode, &scp->skc_framerate );
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkGetVideoModeAndFrameRate" );
-		// BUG clean up first
-		return NULL;
-	}
-/*
-fprintf(stderr,"after fetching, video mode = %d (%s), frame rate = %d (%s)\n",
-scp->skc_video_mode,
-name_for_video_mode(scp->skc_video_mode),
-scp->skc_framerate,
-name_for_framerate(scp->skc_framerate)
-);
-*/
-
-	// BUG?  could be N_STD_VIDEO_MODES?
-	scp->skc_video_mode_indices = getbuf( sizeof(int) * N_NAMED_VIDEO_MODES );
-	scp->skc_video_mode_names = getbuf( sizeof(char *) * N_NAMED_VIDEO_MODES );
-	scp->skc_framerate_mask_tbl = getbuf( sizeof(Framerate_Mask) * N_NAMED_VIDEO_MODES );
-	scp->skc_framerate_names = NULL;
-	scp->skc_n_framerates = 0;
-
-	for(i=0;i<N_NAMED_VIDEO_MODES;i++){
-		scp->skc_framerate_mask_tbl[i] = 0;
-	}
-
-	/* Originally, we set the default video mode here to be
-	 * the highest standard video mode...  But for the flea3,
-	 * which has an odd-shaped sensor, the good modes are format7
-	 * and for no good reason when we change back to format7
-	 * under program control the high frame rate is not restored???
-	 */
-
-//#ifdef NOT_GOOD
-	if( set_default_video_mode(QSP_ARG  scp) < 0 ){
-		/*
-		sprintf(ERROR_STRING,"error setting default video mode for %s",scp->skc_name);
-		warn(ERROR_STRING);
-		cleanup_spink_cam( scp );
-		return(NULL);
-		*/
-		// This can fail for spink_cams that only support format7...
-		// Deal with this better later
-		sprintf(ERROR_STRING,"error setting default video mode for %s, only format7?",
-			scp->skc_name);
-		advise(ERROR_STRING);
-	}
-//#endif // NOT_GOOD
-
-	/* used to set B-mode stuff here... */
-	// What if the spink_cam is a usb cam???
-	//dc1394_video_set_iso_speed( cam_p, DC1394_ISO_SPEED_400 );
-
-	scp->sk_img_p = getbuf( sizeof(*scp->sk_img_p) );
-
-        error = spinkCreateImage( scp->sk_img_p );
-        if ( error != SPINK_ERROR_OK ) {
-		report_spink_error(QSP_ARG  error, "spinkCreateImage" );
-		// BUG clean up?
-		//return NULL;
-	}
-
-
-	// Make a data_obj context for the frames...
-	scp->skc_do_icp = create_dobj_context( QSP_ARG  scp->skc_name );
-
-	scp->skc_frm_dp_tbl = NULL;
-	scp->skc_newest = (-1);
-
-	return(scp);
-}
-#endif // FOOBAR
 
 void pop_spink_cam_context(SINGLE_QSP_ARG_DECL)
 {
@@ -1783,11 +1643,11 @@ void pop_spink_cam_context(SINGLE_QSP_ARG_DECL)
 	assert( icp != NULL );
 }
 
-void push_spink_cam_context(QSP_ARG_DECL  Spink_Cam *scp)
+void push_spink_cam_context(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
-//fprintf(stderr,"pushing spink_cam context for %s (icp = 0x%lx)\n",
-//scp->skc_name,(long)scp->skc_do_icp);
-	push_dobj_context(scp->skc_do_icp);
+fprintf(stderr,"pushing spink_cam context for %s (icp = 0x%lx)\n",
+skc_p->skc_name,(long)skc_p->skc_do_icp);
+	push_dobj_context(skc_p->skc_do_icp);
 }
 
 static spinSystem hSystem = NULL;
@@ -1893,49 +1753,224 @@ static int _connect_spink_cam(QSP_ARG_DECL  spinCamera hCam)
 	return 0;
 }
 
+#define get_unique_cam_name(buf, buflen) _get_unique_cam_name(QSP_ARG  buf, buflen)
+
+static int _get_unique_cam_name(QSP_ARG_DECL  char *buf, int buflen)
+{
+	int i=2;
+	int orig_len;
+	Spink_Cam *skc_p;
+
+	orig_len = strlen(buf);
+	if( orig_len+3 > buflen ){
+		sprintf(ERROR_STRING,
+			"Camera name buffer needs to be enlarged to accomodate multiple instances of '%s'!?",
+			buf);
+		error1(ERROR_STRING);
+	}
+	buf[orig_len]='_';
+	buf[orig_len+2]=0;
+	while(i<10){
+		buf[orig_len+1]='0'+i;	// 2-9
+		skc_p = spink_cam_of(buf);
+		if( skc_p == NULL ) return 0;
+	}
+	return -1;
+}
+
+#define init_one_spink_cam(idx) _init_one_spink_cam(QSP_ARG  idx)
+
+static int _init_one_spink_cam(QSP_ARG_DECL  int idx)
+{
+	spinCamera hCam;
+	spinNodeMapHandle hNodeMapTLDevice;
+	spinNodeMapHandle hNodeMap;
+	Spink_Cam *skc_p;
+	char buf[MAX_BUFF_LEN];
+	size_t len = MAX_BUFF_LEN;
+
+	if( get_spink_cam_from_list(&hCam,hCameraList,idx) < 0 )
+		return -1;
+
+	if( get_spink_transport_level_map(&hNodeMapTLDevice,hCam) < 0 )
+		return -1;
+
+	if( connect_spink_cam(hCam) < 0 ) return -1;
+
+	// camera must be connected before fetching these...
+	if( get_camera_node_map(&hNodeMap,hCam) < 0 )
+		return -1;
+
+	get_camera_model_name(buf,len,hNodeMapTLDevice);
+	substitute_char(buf,' ','_');
+	// Check and see if another camera of this type has already
+	// been detected...
+	skc_p = spink_cam_of(buf);
+	if( skc_p != NULL ){
+		if( get_unique_cam_name(buf,MAX_BUFF_LEN) < 0 )
+			return -1;
+	}
+	skc_p = new_spink_cam(buf);
+	if( skc_p == NULL ) return -1;
+
+	skc_p->skc_handle = hCam;
+	skc_p->skc_TL_dev_node_map = hNodeMapTLDevice;
+	skc_p->skc_genicam_node_map = hNodeMap;
+	skc_p->skc_flags = SPINK_CAM_CONNECTED;
+
+	// Make a data_obj context for the frames...
+	skc_p->skc_do_icp = create_dobj_context( QSP_ARG  skc_p->skc_name );
+}
+
+// old initialization from flycap...
+#ifdef FOOBAR
+{
+	Spink_Cam *skc_p;
+	spinkError error;
+	int i;
+
+	error = spinkConnect(context,guid_p);
+	if( error != SPINK_ERROR_OK ){
+		report_spink_error(QSP_ARG  error, "spinkConnect" );
+		return NULL;
+	}
+
+	// We could have multiple instances of the same model...
+	skc_p = unique_spink_cam_instance(QSP_ARG  context);
+
+	// Why do we disconnect from the context we were called with -
+	// subsequent cameras will still use it...
+	// Maybe this just undoes the connection directly above?
+	error = spinkDisconnect(context);
+	if( error != SPINK_ERROR_OK ){
+		report_spink_error(QSP_ARG  error, "spinkDisconnect" );
+		// BUG should clean up and return NULL?
+		return skc_p;
+	}
+
+	//skc_p->sk_cam_p = cam_p;
+	error = spinkCreateContext(&skc_p->sk_context);
+	if( error != SPINK_ERROR_OK ){
+		report_spink_error(QSP_ARG  error, "spinkCreateContext" );
+		// BUG clean up first
+		return NULL;
+	}
+	error=spinkGetCameraFromIndex(skc_p->sk_context,index,&skc_p->sk_guid);
+	if( error != SPINK_ERROR_OK ){
+		report_spink_error(QSP_ARG  error, "spinkGetCameraFromIndex" );
+	}
+
+	error = spinkConnect(skc_p->sk_context,&skc_p->sk_guid);
+	if( error != SPINK_ERROR_OK ){
+		report_spink_error(QSP_ARG  error, "spinkConnect" );
+		// BUG clean up first
+		return NULL;
+	}
+
+	if( refresh_config(QSP_ARG  skc_p) < 0 )
+		// BUG clean up first
+		return NULL;
+
+	error = spinkGetEmbeddedImageInfo(skc_p->sk_context,&skc_p->sk_ei_info);
+	if( error != SPINK_ERROR_OK ){
+		report_spink_error(QSP_ARG  error, "spinkGetEmbeddedImageInfo" );
+		// BUG clean up first
+		return NULL;
+	}
+
+	skc_p->skc_feat_lp=NULL;
+	skc_p->skc_in_use_lp=NULL;
+	skc_p->skc_flags = 0;		/* assume no B-mode unless we are told otherwise... */
+	skc_p->skc_base = NULL;
+
+	get_fmt7_modes(QSP_ARG  skc_p);
+
+	error = spinkGetVideoModeAndFrameRate( skc_p->sk_context,
+			&skc_p->skc_video_mode, &skc_p->skc_framerate );
+	if( error != SPINK_ERROR_OK ){
+		report_spink_error(QSP_ARG  error, "spinkGetVideoModeAndFrameRate" );
+		// BUG clean up first
+		return NULL;
+	}
+/*
+fprintf(stderr,"after fetching, video mode = %d (%s), frame rate = %d (%s)\n",
+skc_p->skc_video_mode,
+name_for_video_mode(skc_p->skc_video_mode),
+skc_p->skc_framerate,
+name_for_framerate(skc_p->skc_framerate)
+);
+*/
+
+	// BUG?  could be N_STD_VIDEO_MODES?
+	skc_p->skc_video_mode_indices = getbuf( sizeof(int) * N_NAMED_VIDEO_MODES );
+	skc_p->skc_video_mode_names = getbuf( sizeof(char *) * N_NAMED_VIDEO_MODES );
+	skc_p->skc_framerate_mask_tbl = getbuf( sizeof(Framerate_Mask) * N_NAMED_VIDEO_MODES );
+	skc_p->skc_framerate_names = NULL;
+	skc_p->skc_n_framerates = 0;
+
+	for(i=0;i<N_NAMED_VIDEO_MODES;i++){
+		skc_p->skc_framerate_mask_tbl[i] = 0;
+	}
+
+	/* Originally, we set the default video mode here to be
+	 * the highest standard video mode...  But for the flea3,
+	 * which has an odd-shaped sensor, the good modes are format7
+	 * and for no good reason when we change back to format7
+	 * under program control the high frame rate is not restored???
+	 */
+
+//#ifdef NOT_GOOD
+	if( set_default_video_mode(QSP_ARG  skc_p) < 0 ){
+		/*
+		sprintf(ERROR_STRING,"error setting default video mode for %s",skc_p->skc_name);
+		warn(ERROR_STRING);
+		cleanup_spink_cam( skc_p );
+		return(NULL);
+		*/
+		// This can fail for spink_cams that only support format7...
+		// Deal with this better later
+		sprintf(ERROR_STRING,"error setting default video mode for %s, only format7?",
+			skc_p->skc_name);
+		advise(ERROR_STRING);
+	}
+//#endif // NOT_GOOD
+
+	/* used to set B-mode stuff here... */
+	// What if the spink_cam is a usb cam???
+	//dc1394_video_set_iso_speed( cam_p, DC1394_ISO_SPEED_400 );
+
+	skc_p->sk_img_p = getbuf( sizeof(*skc_p->sk_img_p) );
+
+        error = spinkCreateImage( skc_p->sk_img_p );
+        if ( error != SPINK_ERROR_OK ) {
+		report_spink_error(QSP_ARG  error, "spinkCreateImage" );
+		// BUG clean up?
+		//return NULL;
+	}
+
+
+	// Make a data_obj context for the frames...
+	skc_p->skc_do_icp = create_dobj_context( QSP_ARG  skc_p->skc_name );
+
+	skc_p->skc_frm_dp_tbl = NULL;
+	skc_p->skc_newest = (-1);
+
+	return(skc_p);
+}
+#endif // FOOBAR
+
 #define create_spink_camera_structs() _create_spink_camera_structs(SINGLE_QSP_ARG)
 
 static int _create_spink_camera_structs(SINGLE_QSP_ARG_DECL)
 {
 	int i;
-	Spink_Cam *skc_p;
-	char buf[MAX_BUFF_LEN];
-	size_t len = MAX_BUFF_LEN;
-
 
 	for(i=0;i<numCameras;i++){
-		spinCamera hCam;
-		spinNodeMapHandle hNodeMapTLDevice;
-		spinNodeMapHandle hNodeMap;
-
-		if( get_spink_cam_from_list(&hCam,hCameraList,i) < 0 )
+		if( init_one_spink_cam(i) < 0 )
 			return -1;
-
-		if( get_spink_transport_level_map(&hNodeMapTLDevice,hCam) < 0 )
-			return -1;
-
-		if( connect_spink_cam(hCam) < 0 ) return -1;
-
-		// camera must be connected before fetching these...
-		if( get_camera_node_map(&hNodeMap,hCam) < 0 )
-			return -1;
-
-		get_camera_model_name(buf,len,hNodeMapTLDevice);
-		substitute_char(buf,' ','_');
-		skc_p = new_spink_cam(buf);
-
-		skc_p->skc_handle = hCam;
-		skc_p->skc_TL_dev_node_map = hNodeMapTLDevice;
-		skc_p->skc_genicam_node_map = hNodeMap;
-		skc_p->skc_flags = SPINK_CAM_CONNECTED;
-
-		/*
-		if( release_spink_interface(hInterface) < 0 )
-			return -1;
-			*/
 	}
 	return 0;
-}
+} // end create_spink_camera_structs
 
 #define create_spink_interface_structs() _create_spink_interface_structs(SINGLE_QSP_ARG)
 
@@ -2084,19 +2119,19 @@ static void show_cam_info(QSP_ARG_DECL  spinkCameraInfo *cip)
 }
 #endif // FOOBAR
 
-void show_n_buffers(QSP_ARG_DECL  Spink_Cam *scp)
+void show_n_buffers(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
-	sprintf(MSG_STR,"%s:  %d buffers",scp->skc_name,scp->skc_n_buffers);
+	sprintf(MSG_STR,"%s:  %d buffers",skc_p->skc_name,skc_p->skc_n_buffers);
 	prt_msg(MSG_STR);
 }
 
-int set_n_buffers(QSP_ARG_DECL  Spink_Cam *scp, int n )
+int set_n_buffers(QSP_ARG_DECL  Spink_Cam *skc_p, int n )
 {
 #ifdef FOOBAR
 	spinkConfig cfg;
 	spinkError error;
 
-fprintf(stderr,"set_n_buffers %s %d\n",scp->skc_name,n);
+fprintf(stderr,"set_n_buffers %s %d\n",skc_p->skc_name,n);
 	if( n < MIN_N_BUFFERS || n > MAX_N_BUFFERS ){
 		sprintf(ERROR_STRING,
 "set_n_buffers:  number of buffers must be between %d and %d (%d requested)!?",
@@ -2104,20 +2139,20 @@ fprintf(stderr,"set_n_buffers %s %d\n",scp->skc_name,n);
 		warn(ERROR_STRING);
 		return -1;
 	}
-	cfg = scp->sk_config;
+	cfg = skc_p->sk_config;
 	cfg.numBuffers = n;
 
-	error = spinkSetConfiguration(scp->sk_context,&cfg);
+	error = spinkSetConfiguration(skc_p->sk_context,&cfg);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkSetConfiguration" );
 		// should we set a flag to indicate an invalid config?
 		return -1;
 	}
-	scp->skc_n_buffers =
-	scp->sk_config.numBuffers = n;
-	scp->skc_base = NULL;	// force init_spink_base to run again
+	skc_p->skc_n_buffers =
+	skc_p->sk_config.numBuffers = n;
+	skc_p->skc_base = NULL;	// force init_spink_base to run again
 
-show_n_buffers(QSP_ARG  scp);
+show_n_buffers(QSP_ARG  skc_p);
 #endif // FOOBAR
 	return 0;
 }
@@ -2178,49 +2213,49 @@ static void show_ei_info(QSP_ARG_DECL  spinkEmbeddedImageInfo *eip)
 
 #endif // HAVE_LIBSPINNAKER
 
-void print_spink_cam_info(QSP_ARG_DECL  Spink_Cam *scp)
+void print_spink_cam_info(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef HAVE_LIBSPINNAKER
-fprintf(stderr,"calling get_camera_nodes for %s\n",scp->skc_name);
-	get_camera_nodes(scp);
+fprintf(stderr,"calling get_camera_nodes for %s\n",skc_p->skc_name);
+	get_camera_nodes(skc_p);
 
 #ifdef FOOBAR
-	show_cam_info(QSP_ARG  &scp->sk_cam_info);
-	show_cam_cfg(QSP_ARG  &scp->sk_config);
-	show_ei_info(QSP_ARG  &scp->sk_ei_info);
+	show_cam_info(QSP_ARG  &skc_p->sk_cam_info);
+	show_cam_cfg(QSP_ARG  &skc_p->sk_config);
+	show_ei_info(QSP_ARG  &skc_p->sk_ei_info);
 #endif // FOOBAR
 #endif // HAVE_LIBSPINNAKER
 
 	/*
-	i=index_of_framerate(scp->skc_framerate);
+	i=index_of_framerate(skc_p->skc_framerate);
 	sprintf(msg_str,"\tframe rate:  %s",all_framerates[i].nfr_name);
 	prt_msg(msg_str);
 	*/
 
-	//report_spink_cam_features(scp);
+	//report_spink_cam_features(skc_p);
 
-	// show_fmt7_modes(QSP_ARG  scp);
+	// show_fmt7_modes(QSP_ARG  skc_p);
 	// Show the current video mode
 
 	/*
 	sprintf(MSG_STR,"Current video mode:  %s%s",
-		scp->skc_my_video_mode_index >= 0 ?
-		scp->skc_video_mode_names[ scp->skc_my_video_mode_index ] :
+		skc_p->skc_my_video_mode_index >= 0 ?
+		skc_p->skc_video_mode_names[ skc_p->skc_my_video_mode_index ] :
 		"format7 mode ",
-		scp->skc_my_video_mode_index >= 0 ? "": (
-			scp->skc_fmt7_index == 0 ? "0" : (
-			scp->skc_fmt7_index == 1 ? "1" : (
-			scp->skc_fmt7_index == 2 ? "2" : "(>2)" )))
+		skc_p->skc_my_video_mode_index >= 0 ? "": (
+			skc_p->skc_fmt7_index == 0 ? "0" : (
+			skc_p->skc_fmt7_index == 1 ? "1" : (
+			skc_p->skc_fmt7_index == 2 ? "2" : "(>2)" )))
 			);
 	prt_msg(MSG_STR);
 
 	sprintf(MSG_STR,"Current frame rate:  %s",
-		all_framerates[ scp->skc_framerate_index ].nfr_name );
+		all_framerates[ skc_p->skc_framerate_index ].nfr_name );
 	prt_msg(MSG_STR);
 	*/
 }
 
-static void init_one_frame(QSP_ARG_DECL  Spink_Cam *scp, int index )
+static void init_one_frame(QSP_ARG_DECL  Spink_Cam *skc_p, int index )
 {
 	Data_Obj *dp;
 	char fname[32];
@@ -2234,15 +2269,15 @@ static void init_one_frame(QSP_ARG_DECL  Spink_Cam *scp, int index )
 		SET_DS_SEQS(&ds1,1);
 		SET_DS_FRAMES(&ds1,1);
 #ifdef FOOBAR
-		SET_DS_ROWS(&ds1,scp->sk_img_p->rows);
-		SET_DS_COLS(&ds1,scp->sk_img_p->cols);
+		SET_DS_ROWS(&ds1,skc_p->sk_img_p->rows);
+		SET_DS_COLS(&ds1,skc_p->sk_img_p->cols);
 #endif // FOOBAR
 		SET_DS_COMPS(&ds1,1);
 		dp = _make_dp(QSP_ARG  fname,&ds1,PREC_FOR_CODE(PREC_UBY));
 		assert( dp != NULL );
 
-		SET_OBJ_DATA_PTR( dp, scp->skc_base+index*scp->skc_buf_delta );
-		scp->skc_frm_dp_tbl[index] = dp;
+		SET_OBJ_DATA_PTR( dp, skc_p->skc_base+index*skc_p->skc_buf_delta );
+		skc_p->skc_frm_dp_tbl[index] = dp;
 
 //fprintf(stderr,"init_one_frame %d:  %s, data at 0x%lx\n",index,OBJ_NAME(dp),(long)OBJ_DATA_PTR(dp));
 //		}
@@ -2253,16 +2288,16 @@ static void init_one_frame(QSP_ARG_DECL  Spink_Cam *scp, int index )
 	}
 } // end init_one_frame
 
-static void init_cam_frames(QSP_ARG_DECL  Spink_Cam *scp)
+static void init_cam_frames(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	int index;
 
-	assert( scp->skc_n_buffers > 0 );
-	assert( scp->skc_frm_dp_tbl == NULL );
+	assert( skc_p->skc_n_buffers > 0 );
+	assert( skc_p->skc_frm_dp_tbl == NULL );
 
-	scp->skc_frm_dp_tbl = getbuf( sizeof(Data_Obj) * scp->skc_n_buffers );
-	for(index=0;index<scp->skc_n_buffers;index++)
-		init_one_frame(QSP_ARG  scp, index);
+	skc_p->skc_frm_dp_tbl = getbuf( sizeof(Data_Obj) * skc_p->skc_n_buffers );
+	for(index=0;index<skc_p->skc_n_buffers;index++)
+		init_one_frame(QSP_ARG  skc_p, index);
 } // init_cam_frames
 
 // init_spink_base   -   grab frames to get the address
@@ -2273,7 +2308,7 @@ static void init_cam_frames(QSP_ARG_DECL  Spink_Cam *scp)
 // We keep track of the largest and smallest address, we save
 // those so we can figure out the index of an arbitrary frame...
 
-static void init_spink_base(QSP_ARG_DECL  Spink_Cam *scp)
+static void init_spink_base(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef FOOBAR
 	// initialize all the pointers
@@ -2285,31 +2320,31 @@ static void init_spink_base(QSP_ARG_DECL  Spink_Cam *scp)
 
 	// skc_base is our flag, reset to NULL when number of buffers
 	// is changed, or video mode is changed.
-	if( scp->skc_base != NULL ){
+	if( skc_p->skc_base != NULL ){
 		return;
 	}
 
 	n_buffers_seen = 0;
-	addr_tbl = getbuf(sizeof(void *)*scp->skc_n_buffers);
+	addr_tbl = getbuf(sizeof(void *)*skc_p->skc_n_buffers);
 
 	// silence compiler warnings
 	largest_addr = NULL;
 	smallest_addr = NULL;
 
-	while( n_buffers_seen < scp->skc_n_buffers ){
+	while( n_buffers_seen < skc_p->skc_n_buffers ){
 		spinkError error;
 		void *buf_addr;
 
-		error = spinkRetrieveBuffer( scp->sk_context, scp->sk_img_p );
+		error = spinkRetrieveBuffer( skc_p->sk_context, skc_p->sk_img_p );
 		if( error != SPINK_ERROR_OK ){
 			report_spink_error(QSP_ARG  error, "spinkRetrieveBuffer" );
 			return;
 		}
 /*
-sprintf(ERROR_STRING,"pData = 0x%lx",(long)scp->sk_img_p->pData);
+sprintf(ERROR_STRING,"pData = 0x%lx",(long)skc_p->sk_img_p->pData);
 advise(ERROR_STRING);
 */
-		buf_addr = scp->sk_img_p->pData;
+		buf_addr = skc_p->sk_img_p->pData;
 
 		if( first_addr == NULL ){
 			first_addr = buf_addr;
@@ -2333,9 +2368,9 @@ advise(ERROR_STRING);
 		}
 	}
 
-	scp->skc_base = smallest_addr;
-	scp->skc_buf_delta = (largest_addr - smallest_addr) / (n_buffers_seen-1);
-	//scp->skc_buf_delta = (largest - smallest) / 30;
+	skc_p->skc_base = smallest_addr;
+	skc_p->skc_buf_delta = (largest_addr - smallest_addr) / (n_buffers_seen-1);
+	//skc_p->skc_buf_delta = (largest - smallest) / 30;
 
 	if( verbose ){
 		sprintf(ERROR_STRING,"%d distinct buffers seen.",
@@ -2349,15 +2384,15 @@ advise(ERROR_STRING);
 		advise(ERROR_STRING);
 
 		sprintf(ERROR_STRING,"buf_delta = 0x%lx",
-			(long)scp->skc_buf_delta);
+			(long)skc_p->skc_buf_delta);
 		advise(ERROR_STRING);
 	}
 
-	init_cam_frames(QSP_ARG  scp);
+	init_cam_frames(QSP_ARG  skc_p);
 #endif // FOOBAR
 }
 
-int check_buffer_alignment(QSP_ARG_DECL  Spink_Cam *scp)
+int check_buffer_alignment(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	int i;
 
@@ -2365,8 +2400,8 @@ int check_buffer_alignment(QSP_ARG_DECL  Spink_Cam *scp)
 	// BUG this should be a parameter...
 #define RV_ALIGNMENT_REQ	1024
 
-	for(i=0;i<scp->skc_n_buffers;i++){
-		if( ((long)(scp->skc_base+i*scp->skc_buf_delta)) % RV_ALIGNMENT_REQ != 0 ){
+	for(i=0;i<skc_p->skc_n_buffers;i++){
+		if( ((long)(skc_p->skc_base+i*skc_p->skc_buf_delta)) % RV_ALIGNMENT_REQ != 0 ){
 			sprintf(ERROR_STRING,"Buffer %d is not aligned - %d byte alignment required for raw volume I/O!?",
 				i,RV_ALIGNMENT_REQ);
 			warn(ERROR_STRING);
@@ -2377,19 +2412,19 @@ int check_buffer_alignment(QSP_ARG_DECL  Spink_Cam *scp)
 }
 
 #ifdef FOOBAR
-static int index_of_buffer(QSP_ARG_DECL  Spink_Cam *scp,spinkImage *ip)
+static int index_of_buffer(QSP_ARG_DECL  Spink_Cam *skc_p,spinkImage *ip)
 {
 	int idx;
 
-	idx = ( ip->pData - scp->skc_base ) / scp->skc_buf_delta;
+	idx = ( ip->pData - skc_p->skc_base ) / skc_p->skc_buf_delta;
 	/*
 sprintf(ERROR_STRING,
 "index_of_buffer:  data at 0x%lx, base = 0x%lx, idx = %d",
-(long)ip->pData,(long)scp->skc_base,idx);
+(long)ip->pData,(long)skc_p->skc_base,idx);
 advise(ERROR_STRING);
 */
 
-	assert( idx >= 0 && idx < scp->skc_n_buffers );
+	assert( idx >= 0 && idx < skc_p->skc_n_buffers );
 	return idx;
 }
 #endif // FOOBAR
@@ -2410,17 +2445,17 @@ static const char *name_for_pixel_format(spinkPixelFormat f)
 // libflycap doesn't have a queue mechanism like libdc1394...
 // do we get the newest frame???
 
-Data_Obj * grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * scp )
+Data_Obj * grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * skc_p )
 {
 	int index;
 
 #ifdef FOOBAR
 	spinkError error;
 
-	if( scp->skc_base == NULL )
-		init_spink_base(QSP_ARG  scp);
+	if( skc_p->skc_base == NULL )
+		init_spink_base(QSP_ARG  skc_p);
 
-	error = spinkRetrieveBuffer( scp->sk_context, scp->sk_img_p );
+	error = spinkRetrieveBuffer( skc_p->sk_context, skc_p->sk_img_p );
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkRetrieveBuffer" );
 		return NULL;
@@ -2428,19 +2463,19 @@ Data_Obj * grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * scp )
 //fprintf(stderr,"pixel format of retrieved images is %s (0x%x)\n",
 //name_for_pixel_format(img.format),img.format);
 
-	index = index_of_buffer(QSP_ARG  scp, scp->sk_img_p );
-	scp->skc_newest = index;
+	index = index_of_buffer(QSP_ARG  skc_p, skc_p->sk_img_p );
+	skc_p->skc_newest = index;
 #endif // FOOBAR
 
-	return( scp->skc_frm_dp_tbl[index] );
+	return( skc_p->skc_frm_dp_tbl[index] );
 }
 
-int reset_spink_cam(QSP_ARG_DECL  Spink_Cam *scp)
+int reset_spink_cam(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef FOOBAR
 	spinkError error;
 
-	error=spinkFireBusReset(scp->sk_context,&scp->sk_guid);
+	error=spinkFireBusReset(skc_p->sk_context,&skc_p->sk_guid);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkFireBusReset" );
 	}
@@ -2449,18 +2484,18 @@ int reset_spink_cam(QSP_ARG_DECL  Spink_Cam *scp)
 	return 0;
 }
 
-void report_spink_cam_bandwidth(QSP_ARG_DECL  Spink_Cam *scp )
+void report_spink_cam_bandwidth(QSP_ARG_DECL  Spink_Cam *skc_p )
 {
 	UNIMP_FUNC("report_spink_cam_bandwidth");
 }
 
-unsigned int read_register( QSP_ARG_DECL  Spink_Cam *scp, unsigned int addr )
+unsigned int read_register( QSP_ARG_DECL  Spink_Cam *skc_p, unsigned int addr )
 {
 #ifdef FOOBAR
 	spinkError error;
 	unsigned int val;
 
-	error = spinkReadRegister(scp->sk_context,addr,&val);
+	error = spinkReadRegister(skc_p->sk_context,addr,&val);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkReadRegister" );
 	}
@@ -2470,85 +2505,85 @@ unsigned int read_register( QSP_ARG_DECL  Spink_Cam *scp, unsigned int addr )
 #endif // FOOBAR
 }
 
-void write_register( QSP_ARG_DECL  Spink_Cam *scp, unsigned int addr, unsigned int val )
+void write_register( QSP_ARG_DECL  Spink_Cam *skc_p, unsigned int addr, unsigned int val )
 {
 #ifdef FOOBAR
 	spinkError error;
 
-	error = spinkWriteRegister(scp->sk_context,addr,val);
+	error = spinkWriteRegister(skc_p->sk_context,addr,val);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkWriteRegister" );
 	}
 #endif // FOOBAR
 }
 
-void start_firewire_capture(QSP_ARG_DECL  Spink_Cam *scp)
+void start_firewire_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef FOOBAR
 	spinkError error;
 
 advise("start_firewire_capture BEGIN");
-	if( scp->skc_flags & FLY_CAM_IS_RUNNING ){
+	if( skc_p->skc_flags & FLY_CAM_IS_RUNNING ){
 		warn("start_firewire_capture:  spink_cam is already capturing!?");
 		return;
 	}
 advise("start_firewire_capture cam is not already running");
 advise("start_firewire_capture calling spinkStartCapture");
 
-fprintf(stderr,"context = 0x%lx\n",(long)scp->sk_context);
-	error = spinkStartCapture(scp->sk_context);
+fprintf(stderr,"context = 0x%lx\n",(long)skc_p->sk_context);
+	error = spinkStartCapture(skc_p->sk_context);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkStartCapture" );
 	} else {
-		scp->skc_flags |= FLY_CAM_IS_RUNNING;
+		skc_p->skc_flags |= FLY_CAM_IS_RUNNING;
 
 		// BUG - we should undo this when we stop capturing, because
 		// we might change the video format or something else.
 		// Perhaps more efficiently we could only do it when needed?
 advise("start_firewire_capture calling init_spink_base");
-		init_spink_base(QSP_ARG  scp);
+		init_spink_base(QSP_ARG  skc_p);
 	}
 advise("start_firewire_capture DONE");
 #endif // FOOBAR
 }
 
-void stop_firewire_capture(QSP_ARG_DECL  Spink_Cam *scp)
+void stop_firewire_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef FOOBAR
 	spinkError error;
 
-	if( (scp->skc_flags & FLY_CAM_IS_RUNNING) == 0 ){
+	if( (skc_p->skc_flags & FLY_CAM_IS_RUNNING) == 0 ){
 		warn("stop_firewire_capture:  spink_cam is not capturing!?");
 		return;
 	}
 
-	error = spinkStopCapture(scp->sk_context);
+	error = spinkStopCapture(skc_p->sk_context);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkStopCapture" );
 	} else {
-		scp->skc_flags &= ~FLY_CAM_IS_RUNNING;
+		skc_p->skc_flags &= ~FLY_CAM_IS_RUNNING;
 	}
 #endif // FOOBAR
 }
 
-void set_fmt7_size(QSP_ARG_DECL  Spink_Cam *scp, int w, int h)
+void set_fmt7_size(QSP_ARG_DECL  Spink_Cam *skc_p, int w, int h)
 {
 	UNIMP_FUNC("set_fmt7_size");
 }
 
-void release_oldest_frame(QSP_ARG_DECL  Spink_Cam *scp)
+void release_oldest_frame(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	UNIMP_FUNC("release_oldest_frame");
 }
 
-void list_spink_cam_trig(QSP_ARG_DECL  Spink_Cam *scp)
+void list_spink_cam_trig(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef FOOBAR
 	spinkError error;
 	spinkTriggerModeInfo tinfo;
 	spinkTriggerMode tmode;
 
-	error = spinkGetTriggerModeInfo(scp->sk_context,&tinfo);
+	error = spinkGetTriggerModeInfo(skc_p->sk_context,&tinfo);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkGetTriggerModeInfo" );
 		return;
@@ -2564,7 +2599,7 @@ void list_spink_cam_trig(QSP_ARG_DECL  Spink_Cam *scp)
 	fprintf(stderr,"\tsoftwareTriggerSupported:  %s\n",BOOL_STR(tinfo.softwareTriggerSupported));
 	fprintf(stderr,"\tmodeMask:  0x%x\n",tinfo.modeMask);
 
-	error = spinkGetTriggerMode(scp->sk_context,&tmode);
+	error = spinkGetTriggerMode(skc_p->sk_context,&tmode);
 	if( error != SPINK_ERROR_OK ){
 		report_spink_error(QSP_ARG  error, "spinkGetTriggerMode" );
 		return;
@@ -2581,13 +2616,13 @@ void list_spink_cam_trig(QSP_ARG_DECL  Spink_Cam *scp)
 #endif // FOOBAR
 }
 
-void set_buffer_obj(QSP_ARG_DECL  Spink_Cam *scp, Data_Obj *dp)
+void set_buffer_obj(QSP_ARG_DECL  Spink_Cam *skc_p, Data_Obj *dp)
 {
 	// make sure sizes match
-	if( OBJ_COLS(dp) != scp->skc_cols || OBJ_ROWS(dp) != scp->skc_rows ){
+	if( OBJ_COLS(dp) != skc_p->skc_cols || OBJ_ROWS(dp) != skc_p->skc_rows ){
 		sprintf(ERROR_STRING,
 "set_buffer_obj:  size mismatch between %s (%dx%d) and object %s (%dx%d)",
-			scp->skc_name,scp->skc_cols,scp->skc_rows,
+			skc_p->skc_name,skc_p->skc_cols,skc_p->skc_rows,
 			OBJ_NAME(dp),OBJ_COLS(dp),OBJ_ROWS(dp) );
 		warn(ERROR_STRING);
 		return;
@@ -2602,7 +2637,7 @@ void set_buffer_obj(QSP_ARG_DECL  Spink_Cam *scp, Data_Obj *dp)
 #ifdef FOOBAR
 		spinkError error;
 
-		error = spinkSetUserBuffers(scp->sk_context, OBJ_DATA_PTR(dp),
+		error = spinkSetUserBuffers(skc_p->sk_context, OBJ_DATA_PTR(dp),
 				OBJ_COLS(dp)*OBJ_ROWS(dp)*OBJ_COMPS(dp),OBJ_FRAMES(dp));
 		if( error != SPINK_ERROR_OK ){
 			report_spink_error(QSP_ARG  error, "spinkSetUserBuffers" );
@@ -2610,9 +2645,9 @@ void set_buffer_obj(QSP_ARG_DECL  Spink_Cam *scp, Data_Obj *dp)
 		}
 		// refresh the configuration
 #endif // FOOBAR
-		refresh_config(QSP_ARG  scp);
+		refresh_config(QSP_ARG  skc_p);
 	}
-	scp->skc_base = NULL;	// force init_spink_base to run again
+	skc_p->skc_base = NULL;	// force init_spink_base to run again
 }
 
 #endif /* HAVE_LIBSPINNAKER */
@@ -2620,11 +2655,11 @@ void set_buffer_obj(QSP_ARG_DECL  Spink_Cam *scp, Data_Obj *dp)
 
 static const char **grab_mode_names=NULL;
 
-int pick_grab_mode(QSP_ARG_DECL Spink_Cam *scp, const char *pmpt)
+int pick_grab_mode(QSP_ARG_DECL Spink_Cam *skc_p, const char *pmpt)
 {
 	int idx;
 
-	if( scp == NULL ){
+	if( skc_p == NULL ){
 		sprintf(ERROR_STRING,"pick_spink_cam_grab_mode:  no spink_cam selected!?");
 		warn(ERROR_STRING);
 		return -1;

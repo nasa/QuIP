@@ -1,5 +1,6 @@
 #include "quip_config.h"
 #include "spink.h"
+#include "quip_prot.h"
 
 int _get_enumeration_entry_by_name(QSP_ARG_DECL  spinNodeHandle hEnum, const char *tag, spinNodeHandle *hdl_p)
 {
@@ -22,6 +23,7 @@ int _get_enumeration_int_val(QSP_ARG_DECL  spinNodeHandle hNode, int64_t *int_pt
 		report_spink_error(err,"spinEnumerationEntryGetIntValue");
 		return -1;
 	}
+	return 0;
 }
 
 int _set_enumeration_int_val(QSP_ARG_DECL  spinNodeHandle hNode, int64_t v)
@@ -114,6 +116,7 @@ int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 		if( release_spink_image(*img_p) < 0 ) return -1;
 		return 0;
 	}
+	return 0;
 }
 
 //
@@ -123,6 +126,8 @@ int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 // Images have quite a bit of available metadata including things such
 // as CRC, image status, and offset values, to name a few.
 //
+
+#define print_image_info(hImg) _print_image_info(QSP_ARG  hImg)
 
 static int _print_image_info(QSP_ARG_DECL  spinImage hImg)
 {
@@ -305,27 +310,52 @@ static int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
 	spinNodeHandle hAcquisitionModeContinuous = NULL;
 	int64_t acquisitionModeContinuous = 0;
 
-	if( get_spink_node(skc_p->skc_genicam_node_map, "AcquisitionMode", &hAcquisitionMode) < 0 )
+	if( get_spink_node(skc_p->skc_genicam_node_map, "AcquisitionMode", &hAcquisitionMode) < 0 ){
+		warn("set_acquisition_continuous:  error getting AcquisitionMode node!?");
 		return -1;
+	}
 
-	if( ! spink_node_is_available(hAcquisitionMode) ) return -1;
-	if( ! spink_node_is_readable(hAcquisitionMode) ) return -1;
-
-	if( get_enumeration_entry_by_name(hAcquisitionMode,"Continuous", &hAcquisitionModeContinuous) < 0 )
+	if( ! spink_node_is_available(hAcquisitionMode) ){
+		warn("set_acquisition_continuous:  AcquisitionMode node is not available!?");
 		return -1;
-
-	if( ! spink_node_is_available(hAcquisitionModeContinuous) ) return -1;
-	if( ! spink_node_is_readable(hAcquisitionModeContinuous) ) return -1;
-
-	if( get_enumeration_int_val(hAcquisitionModeContinuous,&acquisitionModeContinuous) < 0 )
+	}
+	if( ! spink_node_is_readable(hAcquisitionMode) ){
+		warn("set_acquisition_continuous:  AcquisitionMode node is not readable!?");
 		return -1;
+	}
 
-	if( ! spink_node_is_writable(hAcquisitionMode) ) return -1;
+	if( get_enumeration_entry_by_name(hAcquisitionMode,"Continuous", &hAcquisitionModeContinuous) < 0 ){
+		warn("set_acquisition_continuous:  error getting enumeration entry by name!?");
+		return -1;
+	}
+
+	if( ! spink_node_is_available(hAcquisitionModeContinuous) ){
+		warn("set_acquisition_continuous:  AcquisitionModeContinuous node is not available!?");
+		return -1;
+	}
+	if( ! spink_node_is_readable(hAcquisitionModeContinuous) ){
+		warn("set_acquisition_continuous:  AcquisitionModeContinuous node is not readable!?");
+		return -1;
+	}
+
+	if( get_enumeration_int_val(hAcquisitionModeContinuous,&acquisitionModeContinuous) < 0 ){
+		warn("set_acquisition_continuous:  error getting enumeration int val!?");
+		return -1;
+	}
+
+	if( ! spink_node_is_writable(hAcquisitionMode) ){
+		warn("set_acquisition_continuous:  AcquisitionMode node is not writable!?");
+		return -1;
+	}
 
 	// Set integer as new value of enumeration node
-	if( set_enumeration_int_val(hAcquisitionMode,acquisitionModeContinuous) < 0 ) return -1;
+	if( set_enumeration_int_val(hAcquisitionMode,acquisitionModeContinuous) < 0 ) {
+		warn("set_acquisition_continuous:  error setting enumeration int val!?");
+		return -1;
+	}
 
 	printf("Acquisition mode set to continuous...\n");
+	return 0;
 }
 
 int _spink_test_acq(QSP_ARG_DECL  Spink_Cam *skc_p)
@@ -335,12 +365,21 @@ int _spink_test_acq(QSP_ARG_DECL  Spink_Cam *skc_p)
 	unsigned int imageCnt = 0;
 	spinImage hConvertedImage = NULL;
 
-	if( set_acquisition_continuous(skc_p) < 0 ) return -1;
-	if( spink_start_capture(skc_p) < 0 ) return -1;
+printf("spink_test_acq BEGIN\n");
+	if( set_acquisition_continuous(skc_p) < 0 ){
+		warn("spink_test_acq:  unable to set continuous acquisition!?");
+		return -1;
+	}
+	if( spink_start_capture(skc_p) < 0 ){
+		warn("spink_test_acq:  unable to start capture!?");
+		return -1;
+	}
 
 	for (imageCnt = 0; imageCnt < k_numImages; imageCnt++) {
-		if( next_spink_image(&hResultImage,skc_p) < 0 )
+		if( next_spink_image(&hResultImage,skc_p) < 0 ){
+			warn("spink_test_acq:  unable to get next image!?");
 			return -1;	// cleanup???
+		}
 		printf("Grabbed image %d, ", imageCnt);
 		if( print_image_info(hResultImage) < 0 ) return -1;
 		if( create_empty_image(&hConvertedImage) < 0 ) return -1;
@@ -350,5 +389,7 @@ int _spink_test_acq(QSP_ARG_DECL  Spink_Cam *skc_p)
 	}
 
 	if( spink_stop_capture(skc_p) < 0 ) return -1;
+printf("spink_test_acq DONE\n");
+	return 0;
 }
 

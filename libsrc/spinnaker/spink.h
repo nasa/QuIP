@@ -154,13 +154,11 @@ extern int _get_spink_map(QSP_ARG_DECL  spinInterface hInterface, spinNodeMapHan
 
 extern int _get_spink_system(QSP_ARG_DECL  spinSystem *hSystem_p);
 extern int _release_spink_system(QSP_ARG_DECL  spinSystem hSystem);
-extern int _query_spink_interface(QSP_ARG_DECL  spinInterface hInterface);
 extern int _get_spink_interfaces(QSP_ARG_DECL  spinSystem hSystem, spinInterfaceList *hInterfaceList_p, size_t *numInterfaces_p);
 extern int _get_spink_cameras(QSP_ARG_DECL  spinSystem hSystem, spinCameraList *hCameraList_p, size_t *num_p );
 
 #define get_spink_system(hSystem_p) _get_spink_system(QSP_ARG  hSystem_p)
 #define release_spink_system(hSystem) _release_spink_system(QSP_ARG  hSystem)
-#define query_spink_interface(hInterface) _query_spink_interface(QSP_ARG  hInterface)
 #define get_spink_interfaces(hSystem, hInterfaceList_p, numInterfaces_p) _get_spink_interfaces(QSP_ARG  hSystem, hInterfaceList_p, numInterfaces_p)
 #define get_spink_cameras(hSystem, hCameraList_p, num_p ) _get_spink_cameras(QSP_ARG  hSystem, hCameraList_p, num_p )
 
@@ -205,6 +203,14 @@ extern int _create_empty_image(QSP_ARG_DECL  spinImage *hImg_p);
 extern int _convert_spink_image(QSP_ARG_DECL  spinImage hDestImg, spinImage hSrcImg );
 extern int _destroy_spink_image(QSP_ARG_DECL  spinImage hImg);
 extern int _spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p);
+extern int _spink_stop_capture(QSP_ARG_DECL  Spink_Cam *skc_p);
+
+#define create_empty_image(hImg_p) _create_empty_image(QSP_ARG  hImg_p)
+#define convert_spink_image(hDestImg, hSrcImg ) _convert_spink_image(QSP_ARG  hDestImg, hSrcImg )
+#define destroy_spink_image(hImg) _destroy_spink_image(QSP_ARG  hImg)
+#define spink_start_capture(skc_p) _spink_start_capture(QSP_ARG  skc_p)
+#define spink_stop_capture(skc_p) _spink_stop_capture(QSP_ARG  skc_p)
+
 extern int _spink_test_acq(QSP_ARG_DECL  Spink_Cam *skc_p);
 #define spink_test_acq(skc_p) _spink_test_acq(QSP_ARG  skc_p)
 

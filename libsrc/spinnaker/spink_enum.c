@@ -443,30 +443,6 @@ DEBUG_MSG(release_spink_system DONE)
 	return 0;
 }
 
-// This function queries an interface for its cameras and then prints out
-// device information.
-
-int _query_spink_interface(QSP_ARG_DECL  spinInterface hInterface)
-{
-	char buf[MAX_BUFF_LEN];
-	size_t len = MAX_BUFF_LEN;
-
-	if( get_interface_name(buf,len,hInterface) < 0 ) return -1;
-
-	/*
-	spinNodeMapHandle hNodeMapInterface = NULL;
-	spinNodeHandle hInterfaceDisplayName = NULL;
-
-	if( get_spink_map(hInterface,&hNodeMapInterface) < 0 ) return -1;
-
-	if( get_spink_node(hNodeMapInterface,"InterfaceDisplayName",&hInterfaceDisplayName) < 0 ) return -1;
-
-	print_interface_name(hInterfaceDisplayName);
-	*/
-
-	return 0;
-}
-
 int _get_spink_interface_cameras(QSP_ARG_DECL  spinInterface hInterface)
 {
 	unsigned int i = 0;
