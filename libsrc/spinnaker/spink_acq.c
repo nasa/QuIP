@@ -2,6 +2,8 @@
 #include "spink.h"
 #include "quip_prot.h"
 
+#ifdef HAVE_LIBSPINNAKER
+
 int _get_enumeration_entry_by_name(QSP_ARG_DECL  spinNodeHandle hEnum, const char *tag, spinNodeHandle *hdl_p)
 {
 	spinError err;
@@ -392,4 +394,6 @@ printf("spink_test_acq BEGIN\n");
 printf("spink_test_acq DONE\n");
 	return 0;
 }
+
+#endif // HAVE_LIBSPINNAKER
 

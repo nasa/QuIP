@@ -828,7 +828,9 @@ static COMMAND_FUNC(do_test_cam)
 		warn("no camera selected!?");
 		return;
 	}
+#ifdef HAVE_LIBSPINNAKER
 	spink_test_acq(the_cam_p);
+#endif // HAVE_LIBSPINNAKER
 }
 
 #undef ADD_CMD
