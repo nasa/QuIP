@@ -34,6 +34,81 @@ static COMMAND_FUNC( do_spink_cam_menu );
 		WARN("No spink_cam selected."); \
 		return; }
 
+static Spink_Map *curr_map_p=NULL;
+
+static COMMAND_FUNC(do_list_spink_maps)
+{
+	list_spink_maps( tell_msgfile() );
+}
+
+static COMMAND_FUNC(do_select_spink_map)
+{
+	Spink_Map *skm_p;
+
+	skm_p = pick_spink_map("");
+	if( skm_p == NULL ) return;
+
+	if( curr_map_p != NULL ) pop_spink_node_context();
+	push_spink_node_context(skm_p->skm_icp);
+
+	curr_map_p = skm_p;
+}
+
+#define CHECK_CURRENT_MAP			\
+	if( curr_map_p == NULL ){		\
+		warn("No map selected!?");	\
+		return;				\
+	}
+
+static COMMAND_FUNC(do_list_spink_nodes)
+{
+	CHECK_CURRENT_MAP
+
+	sprintf(MSG_STR,"\nNodes from %s:\n",curr_map_p->skm_name);
+	list_nodes_from_map(curr_map_p);
+}
+
+static COMMAND_FUNC(do_spink_node_info)
+{
+	Spink_Node *skn_p;
+
+	CHECK_CURRENT_MAP
+
+	skn_p = pick_spink_node("");
+	if( skn_p == NULL ) return;
+
+	sprintf(MSG_STR,"\nMap %s, Node %s:\n",curr_map_p->skm_name,skn_p->skn_name);
+	prt_msg(MSG_STR);
+
+	{
+	spinNodeHandle hNode;
+refresh_node_map_handle(curr_map_p,"do_spink_node_info #1");
+refresh_node_map_handle(curr_map_p,"do_spink_node_info #2");
+	if( fetch_spink_node(curr_map_p->skm_handle, skn_p->skn_name, &hNode) < 0 )
+		return;
+	if( hNode != skn_p->skn_handle ){
+		warn("do_spink_node_info:  old node handle does not match!?");
+		skn_p->skn_handle = hNode;
+	}
+	}
+
+	print_spink_node_info(skn_p);
+}
+
+#define ADD_CMD(s,f,h)	ADD_COMMAND(node_menu,s,f,h)
+MENU_BEGIN(node)
+ADD_CMD(list_maps,do_list_spink_maps, list all node maps)
+ADD_CMD(select_map,do_select_spink_map, select default map for node operations)
+ADD_CMD(list_nodes,do_list_spink_nodes, list all nodes from current map)
+ADD_CMD(info,do_spink_node_info, print information about a node)
+MENU_END(node)
+#undef ADD_CMD
+
+static COMMAND_FUNC(do_node_menu)
+{
+	CHECK_AND_PUSH_MENU(node);
+}
+
 static COMMAND_FUNC(do_list_spink_cam_trig)
 {
 #ifdef HAVE_LIBSPINNAKER
@@ -841,6 +916,7 @@ ADD_CMD( init,		do_init,	initialize subsystem )
 ADD_CMD( list_interfaces,	do_list_spink_interfaces,	list interfaces )
 ADD_CMD( list_cams,	do_list_spink_cams,	list cameras )
 ADD_CMD( info,		do_cam_info,	print camera info )
+ADD_CMD( nodes,		do_node_menu,	node submenu )
 ADD_CMD( test,		do_test_cam,	test camera acquisition)
 ADD_CMD( select,	do_select_cam,	select camera )
 ADD_CMD( get_cameras,	do_get_cams,	copy camera names to an array )

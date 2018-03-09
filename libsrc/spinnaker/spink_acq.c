@@ -312,7 +312,7 @@ static int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
 	spinNodeHandle hAcquisitionModeContinuous = NULL;
 	int64_t acquisitionModeContinuous = 0;
 
-	if( get_spink_node(skc_p->skc_genicam_node_map, "AcquisitionMode", &hAcquisitionMode) < 0 ){
+	if( fetch_spink_node(skc_p->skc_genicam_node_map, "AcquisitionMode", &hAcquisitionMode) < 0 ){
 		warn("set_acquisition_continuous:  error getting AcquisitionMode node!?");
 		return -1;
 	}

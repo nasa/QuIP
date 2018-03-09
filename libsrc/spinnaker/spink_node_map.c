@@ -60,13 +60,13 @@ int _get_node_value_string(QSP_ARG_DECL  char *buf, size_t *buflen_p, spinNodeHa
 	// Ensure allocated buffer is large enough for storing the string
 	err = spinNodeToString(hNode, NULL, &n_need);
 	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinNodeToString");
+		report_spink_error(err,"spinNodeToString (get_node_value_string, getting required size)");
 		return -1;
 	}
 	if( n_need <= *buflen_p ) {	// does this cound the terminating null???
 		err = spinNodeToString(hNode, buf, buflen_p);
 		if (err != SPINNAKER_ERR_SUCCESS) {
-			report_spink_error(err,"spinNodeToString");
+			report_spink_error(err,"spinNodeToString (get_node_value_string, getting string value)");
 			return -1;
 		}
 	} else {
@@ -105,7 +105,7 @@ int _get_string_node_string(QSP_ARG_DECL  char *buf, size_t *buflen_p, spinNodeH
 	if(n_need <= *buflen_p) {
 		err = spinNodeToString(hNode, buf, buflen_p);
 		if (err != SPINNAKER_ERR_SUCCESS) {
-			report_spink_error(err,"spinNodeToString");
+			report_spink_error(err,"spinNodeToString (get_string_node_string)");
 			return -1;
 		}
 	} else {
@@ -402,10 +402,25 @@ int _get_display_name(QSP_ARG_DECL  char *buf, size_t *len_p, spinNodeHandle hdl
 	return 0;
 }
 
+int _get_node_name(QSP_ARG_DECL  char *buf, size_t *len_p, spinNodeHandle hdl)
+{
+	spinError err;
+
+	err = spinNodeGetName(hdl, buf, len_p);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinNodeGetName");
+		return -1;
+	}
+	return 0;
+}
+
+#define display_spink_node(hNode, level) _display_spink_node(QSP_ARG  hNode, level)
+
 static int _display_spink_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 {
 	spinNodeType type;
 
+fprintf(stderr,"display_spink_node:  chosenRead = %d\n",chosenRead);
 	if (chosenRead == VALUE) {
 		if( print_value_node(hNode,level) < 0 ) return -1;
 	} else if (chosenRead == INDIVIDUAL) {
@@ -461,13 +476,21 @@ static void _report_node_access_error(QSP_ARG_DECL  spinNodeHandle hNode, const 
 	advise(ERROR_STRING);
 }
 
-#define traverse_spink_node_tree(hCategoryNode, level, func ) _traverse_spink_node_tree(QSP_ARG  hCategoryNode, level, func )
-
-static int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode, int level, int (*func)(QSP_ARG_DECL spinNodeHandle hNode, int level) )
+int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode, int level, int (*func)(QSP_ARG_DECL spinNodeHandle hNode, int level) )
 {
 	size_t numberOfFeatures = 0;
 	unsigned int i = 0;
 	spinError err = SPINNAKER_ERR_SUCCESS;
+
+	if( ! spink_node_is_implemented(hCategoryNode) ){
+		report_node_access_error(hCategoryNode,"implemented");
+		return 0;
+	}
+
+	if( ! spink_node_is_available(hCategoryNode) ){
+		report_node_access_error(hCategoryNode,"available");
+		return 0;
+	}
 
 	if( (*func)(QSP_ARG  hCategoryNode,level) < 0 )
 		return -1;
@@ -488,7 +511,12 @@ static int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode,
 		err = spinCategoryGetFeatureByIndex(hCategoryNode, i, &hFeatureNode);
 		if (err != SPINNAKER_ERR_SUCCESS) {
 			report_spink_error(err,"spinCategoryGetFeatureByIndex");
-			return err;
+			return -1;
+		}
+
+		if( ! spink_node_is_implemented(hCategoryNode) ){
+			report_node_access_error(hCategoryNode,"implemented");
+			continue;
 		}
 
 		if( ! spink_node_is_available(hFeatureNode) ){
@@ -513,9 +541,20 @@ static int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode,
 	return 0;
 }
 
-#define get_stream_node_map(map_p, hCam ) _get_stream_node_map(QSP_ARG  map_p, hCam )
+int _get_device_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCamera hCam )
+{
+	spinError err;
 
-static int _get_stream_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCamera hCam )
+	// Retrieve nodemap from camera
+	err = spinCameraGetTLDeviceNodeMap(hCam, map_p);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinCameraGetTLDeviceNodeMap");
+		return -1;
+	}
+	return 0;
+}
+
+int _get_stream_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCamera hCam )
 {
 	spinError err;
 
@@ -527,9 +566,6 @@ static int _get_stream_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCame
 	}
 	return 0;
 }
-
-
-#define get_camera_node_map(map_p, hCam ) _get_camera_node_map(QSP_ARG  map_p, hCam )
 
 int _get_camera_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCamera hCam )
 {
@@ -544,6 +580,52 @@ int _get_camera_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCamera hCam
 	return 0;
 }
 
+int _refresh_node_map_handle(QSP_ARG_DECL  Spink_Map *skm_p, const char *whence)
+{
+	spinNodeMapHandle hMap=NULL;
+
+	switch( skm_p->skm_type ){
+		case INVALID_NODE_MAP:
+		case N_NODE_MAP_TYPES:
+			sprintf(ERROR_STRING,"refresh_node_map_handle (%s):  invalid type code!?",whence);
+			warn(ERROR_STRING);
+			break;
+		case CAM_NODE_MAP:
+			if( get_camera_node_map(&hMap, skm_p->skm_skc_p->skc_handle ) < 0 ){
+				sprintf(ERROR_STRING,
+			"refresh_node_map_handle (%s):  error getting camera node map!?",whence);
+				error1(ERROR_STRING);
+			}
+			break;
+		case DEV_NODE_MAP:
+			if( get_device_node_map(&hMap, skm_p->skm_skc_p->skc_handle ) < 0 ){
+				sprintf(ERROR_STRING,
+			"refresh_node_map_handle (%s):  error getting device node map!?",whence);
+				error1(ERROR_STRING);
+			}
+			break;
+		case STREAM_NODE_MAP:
+			if( get_stream_node_map(&hMap, skm_p->skm_skc_p->skc_handle ) < 0 ){
+				sprintf(ERROR_STRING,
+			"refresh_node_map_handle (%s):  error getting stream node map!?",whence);
+				error1(ERROR_STRING);
+			}
+			break;
+	}
+	if( skm_p->skm_handle != NULL ){
+		if( hMap != skm_p->skm_handle ){
+			sprintf(ERROR_STRING,"refresh_node_map_handle (%s):  handle value changed!?",whence);
+			advise(ERROR_STRING);
+fprintf(stderr,"\tnew_hdl = 0x%lx,   old_hdl = 0x%lx\n",(u_long)hMap,(u_long)skm_p->skm_handle);
+fflush(stderr);
+fprintf(stderr,"\t*new_hdl = 0x%lx,   *old_hdl = 0x%lx\n",(u_long)(*((void **)hMap)),(u_long)(*((void **)skm_p->skm_handle)));
+fflush(stderr);
+		}
+	}
+	skm_p->skm_handle = hMap;
+	return 0;
+}
+
 // This function acts as the body of the example. First the TL device and
 // TL stream nodemaps are retrieved and their nodes printed. Following this,
 // the camera is initialized and then the GenICam node is retrieved
@@ -551,7 +633,7 @@ int _get_camera_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCamera hCam
 
 int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
-	spinCamera hCam;
+	spinCamera hCam=NULL;
 	spinNodeHandle hTLDeviceRoot = NULL;
 	spinNodeMapHandle hNodeMapTLDevice = NULL;
 	spinNodeMapHandle hNodeMap = NULL;
@@ -579,7 +661,7 @@ int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 	prt_msg("\n*** PRINTING TL DEVICE NODEMAP ***\n");
 
 	// Retrieve root node from nodemap
-	if( get_spink_node(hNodeMapTLDevice, "Root", &hTLDeviceRoot) < 0 ) return -1;
+	if( fetch_spink_node(hNodeMapTLDevice, "Root", &hTLDeviceRoot) < 0 ) return -1;
 
 	// Print values recursively
 	if( traverse_spink_node_tree(hTLDeviceRoot,0,_display_spink_node) < 0 ) return -1;
@@ -600,7 +682,7 @@ int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 
 	if( get_stream_node_map(&hNodeMapStream,hCam) < 0 ) return -1;
 
-	if( get_spink_node(hNodeMapStream, "Root", &hStreamRoot) < 0 ) return -1;
+	if( fetch_spink_node(hNodeMapStream, "Root", &hStreamRoot) < 0 ) return -1;
 
 	// Print values recursively
 	if( traverse_spink_node_tree(hStreamRoot,0,_display_spink_node) < 0 ) return -1;
@@ -619,7 +701,7 @@ int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 	hNodeMap = skc_p->skc_genicam_node_map;
 
 	// Retrieve root node from nodemap
-	if( get_spink_node(hNodeMap, "Root", &hRoot) < 0 ) return -1;
+	if( fetch_spink_node(hNodeMap, "Root", &hRoot) < 0 ) return -1;
 
 	// Print values recursively
 	if( traverse_spink_node_tree(hRoot,0,_display_spink_node) < 0 ) return -1;
@@ -638,6 +720,22 @@ int _get_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 	}
 
 	return 0;
+}
+
+void _list_nodes_from_map(QSP_ARG_DECL  Spink_Map *skm_p)
+{
+	list_spink_nodes( tell_msgfile() );
+}
+
+void _print_spink_node_info(QSP_ARG_DECL /*Spink_Map *skm_p,*/ Spink_Node *skn_p)
+{
+	// The saved handles seem to go stale!?
+	if( ! spink_node_is_available(skn_p->skn_handle) ){
+		report_node_access_error(skn_p->skn_handle,"available");
+		return;
+	}
+
+	display_spink_node(skn_p->skn_handle, 1);
 }
 
 #endif // HAVE_LIBSPINNAKER

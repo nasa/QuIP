@@ -15,7 +15,7 @@
 //
 
 #ifdef HAVE_LIBSPINNAKER
-int _get_spink_map(QSP_ARG_DECL  spinInterface hInterface, spinNodeMapHandle *hMap_p)
+int _fetch_spink_map(QSP_ARG_DECL  spinInterface hInterface, spinNodeMapHandle *hMap_p)
 {
 	spinError err = SPINNAKER_ERR_SUCCESS;
 
@@ -27,7 +27,7 @@ int _get_spink_map(QSP_ARG_DECL  spinInterface hInterface, spinNodeMapHandle *hM
 	return 0;
 }
 
-int _get_spink_node(QSP_ARG_DECL  spinNodeMapHandle hMap, const char *tag, spinNodeHandle *hdl_p)
+int _fetch_spink_node(QSP_ARG_DECL  spinNodeMapHandle hMap, const char *tag, spinNodeHandle *hdl_p)
 {
 	spinError err;
 
@@ -36,6 +36,21 @@ int _get_spink_node(QSP_ARG_DECL  spinNodeMapHandle hMap, const char *tag, spinN
 		report_spink_error(err,"spinNodeMapGetNode");
 		return -1;
 	}
+	return 0;
+}
+
+int _spink_node_is_implemented(QSP_ARG_DECL  spinNodeHandle hdl)
+{
+	spinError err;
+	bool8_t isImplemented = False;
+
+	err = spinNodeIsImplemented(hdl, &isImplemented);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinNodeIsImplemented");
+		return 0;
+	}
+	if( isImplemented )
+		return 1;
 	return 0;
 }
 
@@ -105,9 +120,9 @@ int _get_interface_name(QSP_ARG_DECL  char *buf, size_t buflen, spinInterface hI
 	spinNodeMapHandle hNodeMapInterface = NULL;
 	spinNodeHandle hInterfaceDisplayName = NULL;
 
-	if( get_spink_map(hInterface,&hNodeMapInterface) < 0 ) return -1;
+	if( fetch_spink_map(hInterface,&hNodeMapInterface) < 0 ) return -1;
 
-	if( get_spink_node(hNodeMapInterface,"InterfaceDisplayName",&hInterfaceDisplayName) < 0 ) return -1;
+	if( fetch_spink_node(hNodeMapInterface,"InterfaceDisplayName",&hInterfaceDisplayName) < 0 ) return -1;
 
 	if( ! spink_node_is_available(hInterfaceDisplayName) ) return -1;
 	if( ! spink_node_is_readable(hInterfaceDisplayName) ) return -1;
@@ -319,7 +334,7 @@ int _get_spink_vendor_name( QSP_ARG_DECL  spinNodeMapHandle hNodeMapTLDevice, ch
 {
 	spinNodeHandle hDeviceVendorName = NULL;
 
-	if( get_spink_node(hNodeMapTLDevice,"DeviceVendorName",&hDeviceVendorName) < 0 ) return -1;
+	if( fetch_spink_node(hNodeMapTLDevice,"DeviceVendorName",&hDeviceVendorName) < 0 ) return -1;
 	if( ! spink_node_is_available(hDeviceVendorName) ) return -1;
 	if( ! spink_node_is_readable(hDeviceVendorName) ) return -1;
 
@@ -346,7 +361,7 @@ int _get_spink_model_name( QSP_ARG_DECL  spinNodeMapHandle hNodeMapTLDevice, cha
 {
 	spinNodeHandle hDeviceModelName = NULL;
 
-	if( get_spink_node(hNodeMapTLDevice,"DeviceModelName",&hDeviceModelName) < 0 ) return -1;
+	if( fetch_spink_node(hNodeMapTLDevice,"DeviceModelName",&hDeviceModelName) < 0 ) return -1;
 	if( ! spink_node_is_available(hDeviceModelName) ) return -1;
 	if( ! spink_node_is_readable(hDeviceModelName) ) return -1;
 	if( spink_get_string(hDeviceModelName,buf,len_p) < 0 ) return -1;
@@ -357,7 +372,7 @@ int _get_camera_model_name(QSP_ARG_DECL  char *buf, size_t buflen, spinNodeMapHa
 {
 	spinNodeHandle hDeviceModelName = NULL;
 
-	if( get_spink_node(hNodeMapTLDevice,"DeviceModelName",&hDeviceModelName) < 0 ) return -1;
+	if( fetch_spink_node(hNodeMapTLDevice,"DeviceModelName",&hDeviceModelName) < 0 ) return -1;
 	if( ! spink_node_is_available(hDeviceModelName) ) return -1;
 	if( ! spink_node_is_readable(hDeviceModelName) ) return -1;
 	if( spink_get_string(hDeviceModelName,buf,&buflen) < 0 ) return -1;
@@ -372,7 +387,7 @@ int _get_camera_vendor_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera h
 
 	if( get_spink_transport_level_map(&hNodeMapTLDevice,hCam) < 0 ) return -1;
 
-	if( get_spink_node(hNodeMapTLDevice,"DeviceVendorName",&hDeviceVendorName) < 0 ) return -1;
+	if( fetch_spink_node(hNodeMapTLDevice,"DeviceVendorName",&hDeviceVendorName) < 0 ) return -1;
 	if( ! spink_node_is_available(hDeviceVendorName) ) return -1;
 	if( ! spink_node_is_readable(hDeviceVendorName) ) return -1;
 	if( spink_get_string(hDeviceVendorName,buf,&buflen) < 0 ) return -1;

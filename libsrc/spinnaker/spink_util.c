@@ -27,6 +27,8 @@
 
 ITEM_INTERFACE_DECLARATIONS(Spink_Interface,spink_interface,0)
 ITEM_INTERFACE_DECLARATIONS(Spink_Cam,spink_cam,0)
+ITEM_INTERFACE_DECLARATIONS(Spink_Map,spink_map,0)
+ITEM_INTERFACE_DECLARATIONS(Spink_Node,spink_node,0)
 
 #define UNIMP_FUNC(name)						\
 	sprintf(ERROR_STRING,"Function %s is not implemented!?",name);	\
@@ -1505,56 +1507,6 @@ static void fix_string( char *s )
 	}
 }
 
-static Spink_Cam *unique_spink_cam_instance( QSP_ARG_DECL  spinkContext context )
-{
-#ifdef FOOBAR
-	int i;
-	char cname[80];	// How many chars is enough?
-	Spink_Cam *skc_p;
-	spinkError error;
-	spinkCameraInfo camInfo;
-
-	error = spinkGetCameraInfo( context, &camInfo );
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkGetCameraInfo" );
-		return NULL;
-	}
-
-	i=1;
-	skc_p=NULL;
-	while(skc_p==NULL){
-		//sprintf(cname,"%s_%d",cam_p->model,i);
-		sprintf(cname,"%s_%d",camInfo.modelName,i);
-		fix_string(cname);	// change spaces to underscores
-//sprintf(ERROR_STRING,"Checking for existence of %s",cname);
-//advise(ERROR_STRING);
-		skc_p = spink_cam_of( cname );
-		if( skc_p == NULL ){	// This index is free
-//sprintf(ERROR_STRING,"%s is not in use",cname);
-//advise(ERROR_STRING);
-			skc_p = new_spink_cam( cname );
-			if( skc_p == NULL ){
-				sprintf(ERROR_STRING,
-			"Failed to create spink_cam %s!?",cname);
-				error1(ERROR_STRING);
-			}
-		} else {
-//sprintf(ERROR_STRING,"%s IS in use",cname);
-//advise(ERROR_STRING);
-			skc_p = NULL;
-		}
-		i++;
-		if( i>=5 ){
-			error1("Too many spink_cams!?"); 
-		}
-	}
-	skc_p->sk_cam_info = camInfo;
-	return skc_p;
-#else // FOOBAR
-	return NULL;
-#endif // FOOBAR
-}
-
 static void get_fmt7_modes(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef FOOBAR
@@ -1645,8 +1597,6 @@ void pop_spink_cam_context(SINGLE_QSP_ARG_DECL)
 
 void push_spink_cam_context(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
-fprintf(stderr,"pushing spink_cam context for %s (icp = 0x%lx)\n",
-skc_p->skc_name,(long)skc_p->skc_do_icp);
 	push_dobj_context(skc_p->skc_do_icp);
 }
 
@@ -1778,6 +1728,111 @@ static int _get_unique_cam_name(QSP_ARG_DECL  char *buf, int buflen)
 	return -1;
 }
 
+Item_Context * _pop_spink_node_context(SINGLE_QSP_ARG_DECL)
+{
+	Item_Context *icp;
+	if( spink_node_itp == NULL ) init_spink_nodes();
+	icp = pop_item_context(spink_node_itp);
+	return icp;
+}
+
+void _push_spink_node_context(QSP_ARG_DECL  Item_Context *icp)
+{
+	if( spink_node_itp == NULL ) init_spink_nodes();
+	push_item_context(spink_node_itp,icp);
+}
+
+static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
+{
+	char name[LLEN];
+	size_t l=LLEN;
+	Spink_Node *skn_p;
+
+	if( get_node_name(name,&l,hNode) < 0 )
+		error1("register_one_node:  error getting node name!?");
+
+	skn_p = new_spink_node(name);
+	assert(skn_p!=NULL);
+
+	skn_p->skn_handle = hNode;
+	return 0;
+}
+
+#define register_map_nodes(skm_p) _register_map_nodes(QSP_ARG  skm_p)
+
+static void _register_map_nodes(QSP_ARG_DECL  Spink_Map *skm_p)
+{
+	spinNodeHandle hRoot;
+
+	push_spink_node_context(skm_p->skm_icp);
+fprintf(stderr,"register_map_nodes:  map handle = 0x%lx\n",(u_long)skm_p->skm_handle);
+	if( fetch_spink_node(skm_p->skm_handle, "Root", &hRoot) < 0 )
+		error1("register_map_nodes:  error fetching map root node");
+	if( traverse_spink_node_tree(hRoot,0,_register_one_node) < 0 )
+		error1("error traversing node map");
+	pop_spink_node_context();
+}
+
+#ifdef FOOBAR
+#define fetch_map_handle(skm_p) _fetch_map_handle(QSP_ARG  skm_p)
+
+static void _fetch_map_handle(QSP_ARG_DECL  Spink_Map *skm_p)
+{
+	spinNodeMapHandle hMap;
+
+	switch(skm_p->skm_type){
+		case DEV_NODE_MAP:
+			if( get_device_node_map(&hMap, skm_p->skm_skc_p->skc_handle ) )
+				error1("error getting device node map!?");
+			break;
+		case CAM_NODE_MAP:
+			if( get_camera_node_map(&hMap, skm_p->skm_skc_p->skc_handle ) < 0 )
+				error1("error getting camera node map!?");
+			break;
+		case STREAM_NODE_MAP:
+			if( get_stream_node_map(&hMap, skm_p->skm_skc_p->skc_handle ) )
+				error1("error getting stream node map!?");
+			break;
+		default:
+			warn("fetch_map_handle:  invalid map type!?");
+			break;
+	}
+}
+#endif // FOOBAR
+
+#define register_one_nodemap(skc_p, code, name) _register_one_nodemap(QSP_ARG  skc_p, code, name)
+
+static void _register_one_nodemap(QSP_ARG_DECL  Spink_Cam *skc_p, Node_Map_Type type, const char *name)
+{
+	Spink_Map *skm_p;
+
+	skm_p = new_spink_map(name);
+	if( skm_p == NULL ) error1("Unable to create map struct!?");
+
+	if( spink_node_itp == NULL ) init_spink_nodes();
+	skm_p->skm_icp = create_item_context(spink_node_itp,name);
+	assert(skm_p->skm_icp!=NULL);
+
+	skm_p->skm_handle = NULL;
+	skm_p->skm_type = type;
+	skm_p->skm_skc_p = skc_p;
+
+//	fetch_map_handle(skm_p);
+	refresh_node_map_handle(skm_p,"register_one_nodemap");	// first time just sets
+
+	register_map_nodes(skm_p);
+}
+
+#define register_cam_nodemaps(skc_p) _register_cam_nodemaps(QSP_ARG  skc_p)
+
+static void _register_cam_nodemaps(QSP_ARG_DECL  Spink_Cam *skc_p)
+{
+	sprintf(MSG_STR,"%s.device_TL",skc_p->skc_name);
+	register_one_nodemap(skc_p,DEV_NODE_MAP,MSG_STR);
+	sprintf(MSG_STR,"%s.genicam",skc_p->skc_name);
+	register_one_nodemap(skc_p,CAM_NODE_MAP,MSG_STR);
+}
+
 #define init_one_spink_cam(idx) _init_one_spink_cam(QSP_ARG  idx)
 
 static int _init_one_spink_cam(QSP_ARG_DECL  int idx)
@@ -1816,10 +1871,14 @@ static int _init_one_spink_cam(QSP_ARG_DECL  int idx)
 	skc_p->skc_handle = hCam;
 	skc_p->skc_TL_dev_node_map = hNodeMapTLDevice;
 	skc_p->skc_genicam_node_map = hNodeMap;
+	register_cam_nodemaps(skc_p);
 	skc_p->skc_flags = SPINK_CAM_CONNECTED;
 
 	// Make a data_obj context for the frames...
 	skc_p->skc_do_icp = create_dobj_context( QSP_ARG  skc_p->skc_name );
+	assert(skc_p->skc_do_icp != NULL);
+
+	return 0;
 }
 
 // old initialization from flycap...
@@ -2215,6 +2274,9 @@ static void show_ei_info(QSP_ARG_DECL  spinkEmbeddedImageInfo *eip)
 
 void print_spink_cam_info(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
+	sprintf(MSG_STR,"\nCamera %s:\n",skc_p->skc_name);
+	prt_msg(MSG_STR);
+
 #ifdef HAVE_LIBSPINNAKER
 fprintf(stderr,"calling get_camera_nodes for %s\n",skc_p->skc_name);
 	get_camera_nodes(skc_p);
@@ -2447,9 +2509,9 @@ static const char *name_for_pixel_format(spinkPixelFormat f)
 
 Data_Obj * grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * skc_p )
 {
+#ifdef FOOBAR
 	int index;
 
-#ifdef FOOBAR
 	spinkError error;
 
 	if( skc_p->skc_base == NULL )
@@ -2465,9 +2527,10 @@ Data_Obj * grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * skc_p )
 
 	index = index_of_buffer(QSP_ARG  skc_p, skc_p->sk_img_p );
 	skc_p->skc_newest = index;
-#endif // FOOBAR
 
 	return( skc_p->skc_frm_dp_tbl[index] );
+#endif // FOOBAR
+	return NULL;
 }
 
 int reset_spink_cam(QSP_ARG_DECL  Spink_Cam *skc_p)

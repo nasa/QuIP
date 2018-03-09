@@ -21,6 +21,49 @@
 #define MAX_BUFF_LEN 256
 #define MAX_NODE_CHARS 35
 
+typedef struct spink_node {
+	const char *		skn_name;
+#ifdef HAVE_LIBSPINNAKER
+	spinNodeHandle		skn_handle;
+#endif // HAVE_LIBSPINNAKER
+} Spink_Node;
+
+ITEM_INTERFACE_PROTOTYPES(Spink_Node,spink_node)
+
+#define new_spink_node(s)	_new_spink_node(QSP_ARG  s)
+#define spink_node_of(s)	_spink_node_of(QSP_ARG  s)
+#define init_spink_nodes()	_init_spink_nodes(SINGLE_QSP_ARG)
+#define list_spink_nodes(fp)	_list_spink_nodes(QSP_ARG  fp)
+#define pick_spink_node(s)	_pick_spink_node(QSP_ARG  s)
+#define spink_node_list()	_spink_node_list(SINGLE_QSP_ARG)
+
+typedef enum {
+	INVALID_NODE_MAP,
+	CAM_NODE_MAP,
+	DEV_NODE_MAP,
+	STREAM_NODE_MAP,
+	N_NODE_MAP_TYPES
+} Node_Map_Type;
+
+struct spink_cam;
+
+typedef struct spink_map {
+	const char *		skm_name;
+	struct spink_cam *	skm_skc_p;
+	Node_Map_Type		skm_type;
+#ifdef HAVE_LIBSPINNAKER
+	spinNodeMapHandle	skm_handle;
+#endif // HAVE_LIBSPINNAKER
+	Item_Context *		skm_icp;
+} Spink_Map;
+
+ITEM_INTERFACE_PROTOTYPES(Spink_Map,spink_map)
+
+#define new_spink_map(s)	_new_spink_map(QSP_ARG  s)
+#define spink_map_of(s)		_spink_map_of(QSP_ARG  s)
+#define list_spink_maps(fp)	_list_spink_maps(QSP_ARG  fp)
+#define pick_spink_map(s)	_pick_spink_map(QSP_ARG  s)
+#define spink_map_list()	_spink_map_list(SINGLE_QSP_ARG)
 
 #define N_FMT7_MODES	5	// PGR has 32, but why bother?
 
@@ -117,8 +160,8 @@ extern int _get_camera_vendor_name(QSP_ARG_DECL  char *buf, size_t buflen, spinC
 extern int _get_interface_name(QSP_ARG_DECL  char *buf, size_t buflen, spinInterface hInterface);
 #define get_interface_name(buf, buflen, hInterface)	_get_interface_name(QSP_ARG  buf, buflen, hInterface)
 
-extern int _get_spink_node(QSP_ARG_DECL spinNodeMapHandle hMap, const char *tag, spinNodeHandle *hdl_p);
-#define get_spink_node(hMap, tag, hdl_p)	_get_spink_node(QSP_ARG hMap, tag, hdl_p)
+extern int _fetch_spink_node(QSP_ARG_DECL spinNodeMapHandle hMap, const char *tag, spinNodeHandle *hdl_p);
+#define fetch_spink_node(hMap, tag, hdl_p)	_fetch_spink_node(QSP_ARG hMap, tag, hdl_p)
 extern int _spink_get_string(QSP_ARG_DECL  spinNodeHandle hdl, char *buf, size_t *len_p);
 #define spink_get_string(hdl, buf, len_p)	_spink_get_string(QSP_ARG  hdl, buf, len_p)
 extern void _print_interface_name(QSP_ARG_DECL  spinNodeHandle hInterfaceDisplayName);
@@ -148,12 +191,14 @@ extern int _spink_node_is_writable(QSP_ARG_DECL  spinNodeHandle hdl);
 #define spink_node_is_writable(hdl)	_spink_node_is_writable(QSP_ARG  hdl)
 extern int _spink_node_is_available(QSP_ARG_DECL  spinNodeHandle hdl);
 #define spink_node_is_available(hdl)	_spink_node_is_available(QSP_ARG  hdl)
+extern int _spink_node_is_implemented(QSP_ARG_DECL  spinNodeHandle hdl);
+#define spink_node_is_implemented(hdl)	_spink_node_is_implemented(QSP_ARG  hdl)
 extern int _release_spink_cam_list(QSP_ARG_DECL   spinCameraList *hCamList_p );
 #define release_spink_cam_list(hCamList_p )	_release_spink_cam_list(QSP_ARG   hCamList_p )
 extern int _release_spink_cam(QSP_ARG_DECL  spinCamera hCam);
 #define release_spink_cam(hCam)	_release_spink_cam(QSP_ARG  hCam)
-extern int _get_spink_map(QSP_ARG_DECL  spinInterface hInterface, spinNodeMapHandle *hMap_p);
-#define get_spink_map(hInterface, hMap_p) _get_spink_map(QSP_ARG  hInterface, hMap_p)
+extern int _fetch_spink_map(QSP_ARG_DECL  spinInterface hInterface, spinNodeMapHandle *hMap_p);
+#define fetch_spink_map(hInterface, hMap_p) _fetch_spink_map(QSP_ARG  hInterface, hMap_p)
 
 extern int _get_spink_system(QSP_ARG_DECL  spinSystem *hSystem_p);
 extern int _release_spink_system(QSP_ARG_DECL  spinSystem hSystem);
@@ -173,6 +218,19 @@ extern void _report_spink_error(QSP_ARG_DECL  spinError error, const char *whenc
 
 // spink_node_map.c
 
+extern int _get_stream_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCamera hCam );
+extern int _get_camera_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCamera hCam );
+extern int _get_device_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCamera hCam );
+#define get_stream_node_map(map_p, hCam ) _get_stream_node_map(QSP_ARG  map_p, hCam )
+#define get_camera_node_map(map_p, hCam ) _get_camera_node_map(QSP_ARG  map_p, hCam )
+#define get_device_node_map(map_p, hCam ) _get_device_node_map(QSP_ARG  map_p, hCam )
+
+extern int _refresh_node_map_handle(QSP_ARG_DECL  Spink_Map *skm_p, const char *whence);
+#define refresh_node_map_handle(skm_p,w) _refresh_node_map_handle(QSP_ARG  skm_p,w)
+
+extern int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode, int level, int (*func)(QSP_ARG_DECL spinNodeHandle hNode, int level) );
+#define traverse_spink_node_tree(hCategoryNode, level, func ) _traverse_spink_node_tree(QSP_ARG  hCategoryNode, level, func )
+
 extern int _get_camera_node_map(QSP_ARG_DECL  spinNodeMapHandle *map_p, spinCamera hCam );
 #define get_camera_node_map(map_p, hCam ) _get_camera_node_map(QSP_ARG  map_p, hCam )
 
@@ -185,10 +243,17 @@ extern int _print_value_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int le
 #define print_value_node(hNode, level) _print_value_node(QSP_ARG  hNode, level)
 extern int _get_display_name(QSP_ARG_DECL  char *buf, size_t *len_p, spinNodeHandle hdl);
 #define get_display_name(buf, len_p, hdl) _get_display_name(QSP_ARG  buf, len_p, hdl)
+extern int _get_node_name(QSP_ARG_DECL  char *buf, size_t *len_p, spinNodeHandle hdl);
+#define get_node_name(buf, len_p, hdl) _get_node_name(QSP_ARG  buf, len_p, hdl)
 extern int _get_string_node_string(QSP_ARG_DECL  char *buf, size_t *buflen_p, spinNodeHandle hNode );
 #define get_string_node_string(buf, buflen_p, hNode ) _get_string_node_string(QSP_ARG  buf, buflen_p, hNode )
 extern int _print_string_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level);
 #define print_string_node(hNode, level) _print_string_node(QSP_ARG  hNode, level)
+
+extern void _list_nodes_from_map(QSP_ARG_DECL  Spink_Map *skm_p);
+#define list_nodes_from_map(skm_p) _list_nodes_from_map(QSP_ARG  skm_p)
+extern void _print_spink_node_info(QSP_ARG_DECL Spink_Node *skn_p);
+#define print_spink_node_info(skn_p) _print_spink_node_info(QSP_ARG skn_p)
 
 // spink_acq.c
 
@@ -221,6 +286,11 @@ extern int _spink_test_acq(QSP_ARG_DECL  Spink_Cam *skc_p);
 
 
 // spink_util.c
+extern Item_Context * _pop_spink_node_context(SINGLE_QSP_ARG_DECL);
+extern void _push_spink_node_context(QSP_ARG_DECL  Item_Context *icp);
+#define pop_spink_node_context() _pop_spink_node_context(SINGLE_QSP_ARG)
+#define push_spink_node_context(icp) _push_spink_node_context(QSP_ARG  icp)
+
 extern void _release_spink_cam_system(SINGLE_QSP_ARG_DECL);
 #define release_spink_cam_system() _release_spink_cam_system(SINGLE_QSP_ARG)
 
