@@ -132,7 +132,7 @@ static int get_spink_system(spinSystem *hSystem_p)
 	return 0;
 }
 
-static int get_spink_cameras(spinSystem hSystem, spinCameraList *hCameraList_p, size_t *num_p )
+static int get_spink_camera_list(spinSystem hSystem, spinCameraList *hCameraList_p, size_t *num_p )
 {
 	spinError err;
 
@@ -221,11 +221,23 @@ static int get_camera_node_map(spinNodeMapHandle *map_p, spinCamera hCam )
 	return 0;
 }
 
+static int release_one_spink_cam(spinCamera hCam)
+{
+	spinError err;
+
+	err = spinCameraRelease(hCam);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinCameraRelease");
+		return -1;
+	}
+	return 0;
+}
+
 static int init_one_spink_cam(int idx)
 {
 	spinCamera hCam = NULL;
 	spinNodeMapHandle hNodeMapTLDevice = NULL;
-	spinNodeMapHandle hNodeMap = NULL;
+	//spinNodeMapHandle hNodeMap = NULL;
 
 	if( get_spink_cam_from_list(&hCam,hCameraList,idx) < 0 )
 		return -1;
@@ -235,6 +247,8 @@ static int init_one_spink_cam(int idx)
 
 	if( connect_spink_cam(hCam) < 0 ) return -1;
 fprintf(stderr,"Camera %d is connected...\n",idx+1);
+
+	release_one_spink_cam(hCam);	// release does not disconnect???
 
 	// camera must be connected before fetching these...
 //	if( get_camera_node_map(&hNodeMap,hCam) < 0 )
@@ -254,41 +268,17 @@ static int init_spink_cameras()
 	return 0;
 }
 
-static int release_one_spink_cam(int idx)
+static int release_spink_cameras(spinCameraList hCamList)
 {
-	spinCamera hCam = NULL;
-	spinError err;
+	int idx;
 
-	if( get_spink_cam_from_list(&hCam,hCameraList,idx) < 0 )
-		return -1;
+	for(idx=0;idx<numCameras;idx++){
+		spinCamera hCam;
 
-fprintf(stderr,"Releasing camera %d\n",idx+1);
-	err = spinCameraRelease(hCam);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraRelease");
-		return -1;
-	}
-	return 0;
-}
-
-static int disconnect_one_spink_cam(int idx)
-{
-	spinCamera hCam = NULL;
-
-	if( get_spink_cam_from_list(&hCam,hCameraList,idx) < 0 )
-		return -1;
-
-	if( disconnect_spink_cam(hCam) < 0 ) return -1;
-	return 0;
-}
-
-static int release_spink_cameras(spinCameraList hCameraList)
-{
-	int i;
-
-	for(i=0;i<numCameras;i++){
-		if( disconnect_one_spink_cam(i) < 0 ) return -1;
-		if( release_one_spink_cam(i) < 0 ) return -1;
+		if( get_spink_cam_from_list(&hCam,hCamList,idx) < 0 )
+			return -1;
+		if( disconnect_spink_cam(hCam) < 0 ) return -1;
+		if( release_one_spink_cam(hCam) < 0 ) return -1;
 	}
 	return 0;
 }
@@ -340,13 +330,234 @@ static void release_spink_cam_system(void)
 	if( release_spink_system(hSystem) < 0 ) return;
 }
 
+static int fetch_spink_node(spinNodeMapHandle hMap, const char *tag, spinNodeHandle *hdl_p)
+{
+	spinError err;
+
+	err = spinNodeMapGetNode(hMap, tag, hdl_p);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinNodeMapGetNode");
+		return -1;
+	}
+	return 0;
+}
+
+static int spink_node_is_available(spinNodeHandle hdl)
+{
+	spinError err;
+	bool8_t isAvailable = False;
+
+	err = spinNodeIsAvailable(hdl, &isAvailable);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinNodeIsAvailable");
+		return 0;
+	}
+	if( isAvailable )
+		return 1;
+	return 0;
+}
+
+static int spink_node_is_readable(spinNodeHandle hdl)
+{
+	spinError err;
+	bool8_t isReadable = False;
+
+	err = spinNodeIsReadable(hdl, &isReadable);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinNodeIsReadable");
+		return 0;
+	}
+	if( isReadable )
+		return 1;
+	return 0;
+}
+
+//		err = spinEnumerationGetEntryByName(hAcquisitionMode, "Continuous", &hAcquisitionModeContinuous);
+//		if (err != SPINNAKER_ERR_SUCCESS) {
+//			printf("Unable to set acquisition mode to continuous (enum entry retrieval). Aborting with error %d...\n\n", err);
+//			return err;
+//		}
+
+static int get_node_type(spinNodeType *type_p, spinNodeHandle hNode)
+{
+	spinError err;
+
+	err = spinNodeGetType(hNode, type_p);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinNodeGetType");
+		return -1;
+	}
+	return 0;
+}
+
+/*
+static int display_spink_node(spinNodeHandle hNode, int level)
+{
+	spinNodeType type;
+
+fprintf(stderr,"display_spink_node:  chosenRead = %d\n",chosenRead);
+	if (chosenRead == VALUE) {
+		if( print_value_node(hNode,level) < 0 ) return -1;
+	} else if (chosenRead == INDIVIDUAL) {
+		if( get_node_type(&type,hNode) < 0 ) return -1;
+		switch (type) {
+			case RegisterNode:
+			case EnumEntryNode:
+			case CategoryNode:
+			case PortNode:
+			case BaseNode:
+			case UnknownNode:
+				warn("OOPS - unahndled node type!?");
+				break;
+			case ValueNode:
+				if( print_value_node(hNode,level) < 0 ) return -1;
+				break;
+			case StringNode:
+				if( print_string_node(hNode, level + 1) < 0 ) return -1;
+				break;
+			case IntegerNode:
+				if( print_int_node(hNode, level + 1) < 0 ) return -1;
+				break;
+			case FloatNode:
+				if( print_float_node(hNode, level + 1) < 0 ) return -1;
+				break;
+			case BooleanNode:
+				if( print_bool_node(hNode, level + 1) < 0 ) return -1;
+				break;
+			case CommandNode:
+				if( print_cmd_node(hNode, level + 1) < 0 ) return -1;
+				break;
+			case EnumerationNode:
+				if( print_enum_node(hNode, level + 1) < 0 ) return -1;
+				break;
+		}
+	} else {
+		// assert
+		error1("Unexpected value for chosenRead!?");
+	}
+	return 0;
+}
+*/
+
+static int get_node_value_string(char *buf, size_t *buflen_p, spinNodeHandle hNode )
+{
+	spinError err;
+	//const unsigned int k_maxChars = MAX_NODE_CHARS;
+	size_t n_need;
+
+	// Ensure allocated buffer is large enough for storing the string
+	err = spinNodeToString(hNode, NULL, &n_need);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinNodeToString (get_node_value_string, getting required size)");
+		return -1;
+	}
+	if( n_need <= *buflen_p ) {	// does this cound the terminating null???
+		err = spinNodeToString(hNode, buf, buflen_p);
+		if (err != SPINNAKER_ERR_SUCCESS) {
+			report_spink_error(err,"spinNodeToString (get_node_value_string, getting string value)");
+			return -1;
+		}
+	} else {
+		strcpy(buf,"(too many chars)");
+	}
+
+	return 0;
+}
+
+static int get_display_name(char *buf, size_t *len_p, spinNodeHandle hdl)
+{
+	spinError err;
+
+	err = spinNodeGetDisplayName(hdl, buf, len_p);
+	if (err != SPINNAKER_ERR_SUCCESS) {
+		report_spink_error(err,"spinNodeGetDisplayName");
+		return -1;
+	}
+	return 0;
+}
+
+static int print_node_value(spinNodeHandle hNode )
+{
+	char displayName[MAX_BUFF_LEN];
+	size_t displayNameLength = MAX_BUFF_LEN;
+	char value[MAX_BUFF_LEN];
+	size_t valueLength = MAX_BUFF_LEN;
+	spinNodeType type;
+	char out_string[256];
+
+	if( get_node_type(&type,hNode) < 0 ) return -1;
+
+	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return -1;
+
+	if( type == CategoryNode ){
+		sprintf(out_string,"%s", displayName);
+	} else {
+		if( get_node_value_string(value,&valueLength,hNode) < 0 ) return -1;
+		sprintf(out_string,"%s:  %s", displayName,value);
+	}
+	printf("%s\n",out_string);
+
+	return 0;
+}
+
+static int display_one_node(spinNodeMapHandle hMap, const char *tag)
+{
+	spinNodeHandle hNode = NULL;
+
+	if( fetch_spink_node(hMap,tag,&hNode) < 0 ) return -1;
+
+	if( ! spink_node_is_available(hNode) )
+		fprintf(stderr,"Node not available!?\n");
+	if( ! spink_node_is_readable(hNode) )
+		fprintf(stderr,"Node not readable!?\n");
+
+	if( print_node_value(hNode) < 0 ) return -1;
+	return 0;
+}
+
+static int show_some_features(spinCamera hCam)
+{
+	spinNodeMapHandle hMap;
+	spinNodeHandle hAcquisitionMode = NULL;
+	spinNodeHandle hAcquisitionModeContinuous = NULL;
+	int64_t acquisitionModeContinuous = 0;
+
+	if( get_camera_node_map(&hMap, hCam ) < 0 ) return -1;
+
+	if( display_one_node(hMap,"AcquisitionMode") < 0 ) return -1;
+	if( display_one_node(hMap,"AcquisitionMode") < 0 ) return -1;
+	if( display_one_node(hMap,"AcquisitionMode") < 0 ) return -1;
+}
+
+static int examine_one_camera(int idx)
+{
+	spinCamera hCam;
+
+	if( get_spink_cam_from_list(&hCam,hCameraList,idx) < 0 ) return -1;
+	if( show_some_features(hCam) < 0 ) return -1;
+	if( release_one_spink_cam(hCam) < 0 ) return -1;
+	return 0;
+}
+
+static int examine_spink_cameras(void)
+{
+	int idx;
+
+	for(idx=0;idx<numCameras;idx++)
+		if(examine_one_camera(idx) < 0 )
+			return -1;
+	return 0;
+}
+
 int main(int ac, char **av)
 {
 	if( get_spink_system(&hSystem) < 0 ) return -1;
-	if( get_spink_cameras(hSystem,&hCameraList,&numCameras) < 0 ) return -1;
+	if( get_spink_camera_list(hSystem,&hCameraList,&numCameras) < 0 ) return -1;
 	if( init_spink_cameras() < 0 ) return -1;
 
 	// Do stuff here!!!
+	if( examine_spink_cameras() < 0 ) return -1;
+
 
 	release_spink_cam_system();
 
