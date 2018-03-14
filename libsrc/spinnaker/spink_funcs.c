@@ -5,14 +5,23 @@
 #ifdef HAVE_LIBSPINNAKER
 // This file contains wrappers for all of the library functions
 
+// define this to empty to quiet debugging...
+#ifdef MAX_DEBUG
+#define WRAPPER_REPORT(my_name,spin_name)							\
+fprintf(stderr,"SPIN  %s calling spin%s\n",#my_name,#spin_name);
+#else // ! MAX_DEBUG
+#define WRAPPER_REPORT(my_name,spin_name)
+#endif // ! MAX_DEBUG
+
 #define SPINK_WRAPPER_ONE_ARG(my_name,spin_name,decl1,name1)					\
 												\
 int _##my_name(QSP_ARG_DECL  decl1 name1)							\
 {												\
 	spinError err;										\
+	WRAPPER_REPORT(my_name,spin_name)							\
 	err = spin##spin_name(name1);								\
 	if( err != SPINNAKER_ERR_SUCCESS ){							\
-		report_spink_error(err,#spin_name);					\
+		report_spink_error(err,#spin_name);						\
 		return -1;									\
 	}											\
 	return 0;										\
@@ -23,6 +32,7 @@ int _##my_name(QSP_ARG_DECL  decl1 name1)							\
 int _##my_name(QSP_ARG_DECL  decl1 name1, decl2 name2)						\
 {												\
 	spinError err;										\
+	WRAPPER_REPORT(my_name,spin_name)							\
 	err = spin##spin_name(name1,name2);							\
 	if( err != SPINNAKER_ERR_SUCCESS ){							\
 		report_spink_error(err,#spin_name);					\
@@ -36,6 +46,7 @@ int _##my_name(QSP_ARG_DECL  decl1 name1, decl2 name2)						\
 int _##my_name(QSP_ARG_DECL  decl1 name1, decl2 name2, decl3 name3)				\
 {												\
 	spinError err;										\
+	WRAPPER_REPORT(my_name,spin_name)							\
 	err = spin##spin_name(name1,name2,name3);						\
 	if( err != SPINNAKER_ERR_SUCCESS ){							\
 		report_spink_error(err,#spin_name);					\

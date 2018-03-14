@@ -23,8 +23,8 @@ int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 	spinCamera hCam;
 	bool8_t isIncomplete = False;
 
-	if( get_spink_cam_from_list(&hCam,hCameraList,skc_p->skc_sys_idx) < 0 )
-		return -1;
+	insure_current_camera(skc_p);
+	hCam = skc_p->skc_current_handle;
 
 	if( get_next_image(hCam,img_p) < 0 ) return -1;
 
@@ -55,8 +55,6 @@ int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 		if( release_spink_image(*img_p) < 0 ) return -1;
 		return 0;
 	}
-	if( release_spink_cam(hCam) < 0 )
-		return -1;
 
 	return 0;
 }
@@ -104,14 +102,10 @@ int _spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	spinCamera hCam;
 	
-	//hCam = skc_p->skc_handle;
-	if( get_spink_cam_from_list(&hCam,hCameraList,skc_p->skc_sys_idx) < 0 )
-		return -1;
+	insure_current_camera(skc_p);
+	hCam = skc_p->skc_current_handle;
 
 	if( begin_acquisition(hCam) < 0 ) return -1;
-
-	if( release_spink_cam(hCam) < 0 )
-		return -1;
 
 	return 0;
 }
@@ -128,14 +122,10 @@ int _spink_stop_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	spinCamera hCam;
 	
-	//hCam = skc_p->skc_handle;
-	if( get_spink_cam_from_list(&hCam,hCameraList,skc_p->skc_sys_idx) < 0 )
-		return -1;
+	insure_current_camera(skc_p);
+	hCam = skc_p->skc_current_handle;
 
 	if( end_acquisition(hCam) < 0 ) return -1;
-
-	if( release_spink_cam(hCam) < 0 )
-		return -1;
 
 	return 0;
 }

@@ -15,6 +15,45 @@ typedef enum _readType {
 
 const readType chosenRead = VALUE;
 
+Spink_Cam *current_skc_p = NULL;
+
+int _release_current_camera(SINGLE_QSP_ARG_DECL)
+{
+	assert(current_skc_p!=NULL);
+//fprintf(stderr,"release_current_camera:  releasing %s\n",current_skc_p->skc_name);
+	if( spink_release_cam(current_skc_p) < 0 )
+		return -1;
+	current_skc_p = NULL;
+	return 0;
+}
+
+void _insure_current_camera(QSP_ARG_DECL  Spink_Cam *skc_p)
+{
+//fprintf(stderr,"insure_current_camera %s BEGIN\n",skc_p->skc_name);
+	if( skc_p == current_skc_p ) {
+//fprintf(stderr,"insure_current_camera:  %s is already current\n",skc_p->skc_name);
+		return;
+	}
+
+	if( current_skc_p != NULL ){
+//fprintf(stderr,"insure_current_camera %s will release old camera %s\n", skc_p->skc_name,current_skc_p->skc_name);
+		if( release_current_camera() < 0 )
+			error1("insure_current_camera:  failed to release previous camera!?");
+	}
+
+	if( skc_p->skc_current_handle == NULL ){
+		spinCamera hCam;
+//fprintf(stderr,"insure_current_camera %s needs to refresh the camera handle\n", skc_p->skc_name);
+		if( get_cam_from_list(hCameraList,skc_p->skc_sys_idx,&hCam) < 0 )
+			error1("insure_current_camera:  error getting camera from list!?");
+		skc_p->skc_current_handle = hCam;
+//fprintf(stderr,"insure_current_camera %s:  new handle = 0x%lx\n", skc_p->skc_name,(u_long)hCam);
+	} else {
+//fprintf(stderr,"insure_current_camera %s:   camera already has a non-NULL handle 0x%lx\n", skc_p->skc_name,(u_long)skc_p->skc_current_handle);
+	}
+	current_skc_p = skc_p;
+}
+
 // This helper function deals with output indentation, of which there is a lot.
 
 #define indent(level) _indent(QSP_ARG  level)
@@ -307,7 +346,8 @@ int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode, int le
 	}
 
 	if( ! spink_node_is_available(hCategoryNode) ){
-		report_node_access_error(hCategoryNode,"available");
+		if( verbose )
+			report_node_access_error(hCategoryNode,"available");
 		return 0;
 	}
 
@@ -338,7 +378,7 @@ int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode, int le
 			continue;
 		}
 
-		if( get_node_type(&type,hFeatureNode) < 0 ) return -1;
+		if( get_node_type(hFeatureNode,&type) < 0 ) return -1;
 
 		if (type == CategoryNode) {
 			if( traverse_spink_node_tree(hFeatureNode,level+1,func) < 0 ) return -1;
@@ -364,7 +404,7 @@ int _print_value_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level)
 	size_t valueLength = MAX_BUFF_LEN;
 	spinNodeType type;
 
-	if( get_node_type(&type,hNode) < 0 ) return -1;
+	if( get_node_type(hNode,&type) < 0 ) return -1;
 
 	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return -1;
 
@@ -407,11 +447,11 @@ static int _display_spink_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 {
 	spinNodeType type;
 
-fprintf(stderr,"display_spink_node:  chosenRead = %d\n",chosenRead);
+//fprintf(stderr,"display_spink_node:  chosenRead = %d\n",chosenRead);
 	if (chosenRead == VALUE) {
 		if( print_value_node(hNode,level) < 0 ) return -1;
 	} else if (chosenRead == INDIVIDUAL) {
-		if( get_node_type(&type,hNode) < 0 ) return -1;
+		if( get_node_type(hNode,&type) < 0 ) return -1;
 		switch (type) {
 			case RegisterNode:
 			case EnumEntryNode:
@@ -454,10 +494,19 @@ fprintf(stderr,"display_spink_node:  chosenRead = %d\n",chosenRead);
 int _get_node_map_handle(QSP_ARG_DECL  spinNodeMapHandle *hMap_p, Spink_Map *skm_p, const char *whence)
 {
 	spinCamera hCam;
+	Spink_Cam *skc_p;
 
-	if( get_spink_cam_from_list(&hCam,hCameraList,skm_p->skm_skc_p->skc_sys_idx) < 0 )
-		return -1;
+//fprintf(stderr,"get_node_map_handle map_name = %s BEGIN\n",skm_p->skm_name);
+	skc_p = skm_p->skm_skc_p;
 
+	assert(skc_p!=NULL);
+	insure_current_camera(skc_p);
+
+	assert(skc_p->skc_current_handle!=NULL);
+//fprintf(stderr,"get_node_map_handle:  %s has current handle 0x%lx\n",skc_p->skc_name, (u_long)skc_p->skc_current_handle);
+	hCam = skc_p->skc_current_handle;
+
+//fprintf(stderr,"get_node_map_handle switching on map type %d\n",skm_p->skm_type);
 	switch( skm_p->skm_type ){
 		case INVALID_NODE_MAP:
 		case N_NODE_MAP_TYPES:
@@ -466,35 +515,36 @@ int _get_node_map_handle(QSP_ARG_DECL  spinNodeMapHandle *hMap_p, Spink_Map *skm
 			break;
 		case CAM_NODE_MAP:
 			if( ! IS_CONNECTED(skm_p->skm_skc_p) ){
-fprintf(stderr,"init_one_spink_cam:  connecting %s\n",skm_p->skm_skc_p->skc_name);
+//fprintf(stderr,"init_one_spink_cam:  connecting %s\n",skm_p->skm_skc_p->skc_name);
 				if( connect_spink_cam(hCam) < 0 ) return -1;
 			} else {
-fprintf(stderr,"init_one_spink_cam:  %s is already connected\n",skm_p->skm_skc_p->skc_name);
+//fprintf(stderr,"init_one_spink_cam:  %s is already connected\n",skm_p->skm_skc_p->skc_name);
 			}
 
-			if( get_camera_node_map(hMap_p, hCam ) < 0 ){
+			if( get_camera_node_map(hCam,hMap_p) < 0 ){
 				sprintf(ERROR_STRING,
 			"get_node_map_handle (%s):  error getting camera node map!?",whence);
 				error1(ERROR_STRING);
 			}
 			break;
 		case DEV_NODE_MAP:
-			if( get_device_node_map(hMap_p, hCam ) < 0 ){
+//fprintf(stderr,"get_node_map_handle calling get_device_node_map\n");
+			if( get_device_node_map(hCam,hMap_p) < 0 ){
 				sprintf(ERROR_STRING,
 			"get_node_map_handle (%s):  error getting device node map!?",whence);
 				error1(ERROR_STRING);
 			}
 			break;
 		case STREAM_NODE_MAP:
-			if( get_stream_node_map(hMap_p, hCam ) < 0 ){
+			if( get_stream_node_map(hCam,hMap_p) < 0 ){
 				sprintf(ERROR_STRING,
 			"get_node_map_handle (%s):  error getting stream node map!?",whence);
 				error1(ERROR_STRING);
 			}
 			break;
 	}
-	if( release_spink_cam(hCam) < 0 )
-		return -1;
+//	if( release_spink_cam(hCam) < 0 )
+//		return -1;
 	return 0;
 }
 
@@ -552,7 +602,7 @@ int _print_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 
 	assert(skc_p!=NULL);
 	//hCam = skc_p->skc_handle;
-	if( get_spink_cam_from_list(&hCam,hCameraList,skc_p->skc_sys_idx) < 0 )
+	if( get_cam_from_list(hCameraList,skc_p->skc_sys_idx,&hCam) < 0 )
 		return -1;
 
 	//
@@ -613,17 +663,17 @@ void _list_nodes_from_map(QSP_ARG_DECL  Spink_Map *skm_p)
 	list_spink_nodes( tell_msgfile() );
 }
 
-void _print_spink_node_info(QSP_ARG_DECL /*Spink_Map *skm_p,*/ Spink_Node *skn_p)
+void _print_spink_node_info(QSP_ARG_DECL  spinNodeHandle hNode)
 {
-	assert(skn_p->skn_handle != NULL);
+	assert(hNode != NULL);
 
 	// The saved handles seem to go stale!?
-	if( ! spink_node_is_available(skn_p->skn_handle) ){
-		report_node_access_error(skn_p->skn_handle,"available");
+	if( ! spink_node_is_available(hNode) ){
+		report_node_access_error(hNode,"available");
 		return;
 	}
 
-	display_spink_node(skn_p->skn_handle, 1);
+	display_spink_node(hNode, 1);
 }
 
 #endif // HAVE_LIBSPINNAKER

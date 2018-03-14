@@ -140,19 +140,14 @@ DEBUG_MSG(release_spink_interfacelist DONE)
 // system is released.
 //
 
-int _get_spink_cam_from_list(QSP_ARG_DECL  spinCamera *hCam_p, spinCameraList hCameraList, int idx )
-{
-	return get_cam_from_list(hCameraList,idx,hCam_p);
-}
+//int _get_spink_cam_from_list(QSP_ARG_DECL  spinCamera *hCam_p, spinCameraList hCameraList, int idx )
+//{
+	//return get_cam_from_list(hCameraList,idx,hCam_p);
+//}
 
 int _get_spink_interface_from_list(QSP_ARG_DECL spinInterface *hInterface_p, spinInterfaceList hInterfaceList, int idx )
 {
 	return get_iface_from_list(hInterfaceList,idx,hInterface_p);
-}
-
-int _get_spink_transport_level_map(QSP_ARG_DECL  spinNodeMapHandle *mapHdl_p, spinCamera hCam )
-{
-	return get_transport_level_map(hCam,mapHdl_p);
 }
 
 //
@@ -204,9 +199,12 @@ int _lookup_spink_node(QSP_ARG_DECL  Spink_Node *skn_p, spinNodeHandle *hdl_p)
 {
 	spinNodeMapHandle hMap;
 
+//fprintf(stderr,"lookup_spink_node node = %s calling get_node_map_handle\n",skn_p->skn_name);
+//fprintf(stderr,"lookup_spink_node:  node %s belongs to map %s\n",skn_p->skn_name,skn_p->skn_skm_p->skm_name);
 	if( get_node_map_handle(&hMap,skn_p->skn_skm_p,"lookup_spink_node") < 0 )
 		return -1;
 
+//fprintf(stderr,"lookup_spink_node %s calling fetch_spink_node\n",skn_p->skn_name);
 	if( fetch_spink_node(hMap,skn_p->skn_name,hdl_p) < 0 )
 		return -1;
 
@@ -260,15 +258,21 @@ void _print_interface_name(QSP_ARG_DECL  spinNodeHandle hInterfaceDisplayName)
 // attempt to read from or write to the node.
 //
 
-int _get_spink_vendor_name( QSP_ARG_DECL  spinNodeMapHandle hNodeMapTLDevice, char *buf, size_t *len_p )
+int _get_camera_vendor_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera hCam)
 {
+	spinNodeMapHandle hNodeMapTLDevice = NULL;
 	spinNodeHandle hDeviceVendorName = NULL;
+
+//fprintf(stderr,"get_camera_vendor_name calling get_device_node_map\n");
+	if( get_device_node_map(hCam,&hNodeMapTLDevice) < 0 ) return -1;
+//fprintf(stderr,"get_camera_vendor_name:  map = 0x%lx  *map = 0x%lx\n", (u_long)hNodeMapTLDevice,(u_long)*((void **)hNodeMapTLDevice));
 
 	if( fetch_spink_node(hNodeMapTLDevice,"DeviceVendorName",&hDeviceVendorName) < 0 ) return -1;
 	if( ! spink_node_is_available(hDeviceVendorName) ) return -1;
 	if( ! spink_node_is_readable(hDeviceVendorName) ) return -1;
+	if( spink_get_string(hDeviceVendorName,buf,&buflen) < 0 ) return -1;
+//fprintf(stderr,"get_camera_vendor_name: vendor name is \"%s\"\n",buf);
 
-	if( spink_get_string(hDeviceVendorName,buf,len_p) < 0 ) return -1;
 	return 0;
 }
 
@@ -298,30 +302,22 @@ int _get_spink_model_name( QSP_ARG_DECL  spinNodeMapHandle hNodeMapTLDevice, cha
 	return 0;
 }
 
-int _get_camera_model_name(QSP_ARG_DECL  char *buf, size_t buflen, spinNodeMapHandle hNodeMapTLDevice)
+int _get_camera_model_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera hCam)
 {
 	spinNodeHandle hDeviceModelName = NULL;
+	spinNodeMapHandle hNodeMapTLDevice;
 
+	if( get_device_node_map(hCam,&hNodeMapTLDevice) < 0 )
+		return -1;
+//fprintf(stderr,"get_camera_model_name: device node map = 0x%lx, *map = 0x%lx\n", (u_long)hNodeMapTLDevice,(u_long)*((void **)hNodeMapTLDevice));
+
+//fprintf(stderr,"get_camera_model_name calling fetch_spink_node, map = 0x%lx (*map = 0x%lx)\n", (u_long)hNodeMapTLDevice, (u_long) *((void **)hNodeMapTLDevice));
 	if( fetch_spink_node(hNodeMapTLDevice,"DeviceModelName",&hDeviceModelName) < 0 ) return -1;
 	if( ! spink_node_is_available(hDeviceModelName) ) return -1;
 	if( ! spink_node_is_readable(hDeviceModelName) ) return -1;
 	if( spink_get_string(hDeviceModelName,buf,&buflen) < 0 ) return -1;
 
-	return 0;
-}
-
-int _get_camera_vendor_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera hCam)
-{
-	spinNodeMapHandle hNodeMapTLDevice = NULL;
-	spinNodeHandle hDeviceVendorName = NULL;
-
-	if( get_spink_transport_level_map(&hNodeMapTLDevice,hCam) < 0 ) return -1;
-
-	if( fetch_spink_node(hNodeMapTLDevice,"DeviceVendorName",&hDeviceVendorName) < 0 ) return -1;
-	if( ! spink_node_is_available(hDeviceVendorName) ) return -1;
-	if( ! spink_node_is_readable(hDeviceVendorName) ) return -1;
-	if( spink_get_string(hDeviceVendorName,buf,&buflen) < 0 ) return -1;
-
+//fprintf(stderr,"get_camera_model_name obtained \"%s\"\n",buf);
 	return 0;
 }
 
@@ -334,17 +330,10 @@ int _print_indexed_spink_cam_info( QSP_ARG_DECL  spinCameraList hCameraList, int
 	size_t vendor_len = MAX_BUFF_LEN;
 	size_t model_len = MAX_BUFF_LEN;
 
-	if( get_spink_cam_from_list(&hCam,hCameraList,idx) < 0 ) return -1;
+	if( get_cam_from_list(hCameraList,idx,&hCam) < 0 ) return -1;
 
 	if( get_camera_vendor_name(deviceVendorName,vendor_len,hCam) < 0 ) return -1;
 	if( get_camera_model_name(deviceModelName,model_len,hCam) < 0 ) return -1;
-
-	/*
-	if( get_spink_transport_level_map(&hNodeMapTLDevice,hCam) < 0 ) return -1;
-
-	if( get_spink_vendor_name(hNodeMapTLDevice,deviceVendorName,&vendor_len) < 0 ) return -1;
-	if( get_spink_model_name(hNodeMapTLDevice,deviceModelName,&model_len) < 0 ) return -1;
-	*/
 
 	printf("\tDevice %d %s %s\n\n", idx, deviceVendorName, deviceModelName);
 

@@ -71,24 +71,22 @@ static COMMAND_FUNC(do_list_spink_nodes)
 static COMMAND_FUNC(do_spink_node_info)
 {
 	Spink_Node *skn_p;
+	spinNodeHandle hNode;
 
 	CHECK_CURRENT_MAP
 
 	skn_p = pick_spink_node("");
 	if( skn_p == NULL ) return;
-
+//fprintf(stderr,"do_spink_node_info %s BEGIN\n",skn_p->skn_name);
 	sprintf(MSG_STR,"\nMap %s, Node %s:\n",curr_map_p->skm_name,skn_p->skn_name);
 	prt_msg(MSG_STR);
 
-	{
-	spinNodeHandle hNode;
-//refresh_node_map_handle(curr_map_p,"do_spink_node_info #1");
-//refresh_node_map_handle(curr_map_p,"do_spink_node_info #2");
+//fprintf(stderr,"do_spink_node_info %s calling lookup_spink_node\n",skn_p->skn_name);
 	if( lookup_spink_node(skn_p, &hNode) < 0 )
 		return;
-	}
 
-	print_spink_node_info(skn_p);
+//fprintf(stderr,"do_spink_node_info %s calling print_spink_node_info\n",skn_p->skn_name);
+	print_spink_node_info(hNode);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(node_menu,s,f,h)
@@ -165,7 +163,7 @@ static COMMAND_FUNC( do_cam_info )
 		prt_msg(MSG_STR);
 	}
 #ifdef HAVE_LIBSPINNAKER
-	print_spink_cam_info(QSP_ARG  scp);
+	//print_spink_cam_info(QSP_ARG  scp);
 #else
 	NO_LIB_MSG("do_list_spink_cam");
 #endif
@@ -282,7 +280,7 @@ static COMMAND_FUNC( do_list_spink_cam_modes )
 #ifdef HAVE_LIBSPINNAKER
 	CHECK_CAM
 	prt_msg("\nAvailable video modes:");
-	list_spink_cam_video_modes(QSP_ARG  the_cam_p);
+	//list_spink_cam_video_modes(QSP_ARG  the_cam_p);
 #endif
 }
 
@@ -290,7 +288,7 @@ static COMMAND_FUNC( do_show_spink_cam_video_mode )
 {
 #ifdef HAVE_LIBSPINNAKER
 	CHECK_CAM
-	show_spink_cam_video_mode(QSP_ARG  the_cam_p);
+	//show_spink_cam_video_mode(QSP_ARG  the_cam_p);
 #endif
 }
 
@@ -301,7 +299,7 @@ static COMMAND_FUNC( do_list_spink_cam_framerates )
 	CHECK_CAM
 
 	prt_msg("\nAvailable framerates:");
-	list_spink_cam_framerates(QSP_ARG  the_cam_p);
+	//list_spink_cam_framerates(QSP_ARG  the_cam_p);
 #endif
 }
 
@@ -309,7 +307,7 @@ static COMMAND_FUNC( do_show_spink_cam_framerate )
 {
 #ifdef HAVE_LIBSPINNAKER
 	CHECK_CAM
-	show_spink_cam_framerate(QSP_ARG  the_cam_p);
+	//show_spink_cam_framerate(QSP_ARG  the_cam_p);
 #endif
 }
 
@@ -327,11 +325,13 @@ sprintf(ERROR_STRING,"mode %s selected...",
 name_of_indexed_video_mode( the_cam_p->skc_video_mode_indices[i] ) );
 advise(ERROR_STRING);
 
+#ifdef FOOBAR
 	if( is_fmt7_mode(QSP_ARG  the_cam_p, i ) ){
 		set_fmt7_mode(QSP_ARG  the_cam_p, the_cam_p->skc_fmt7_index );
 	} else {
 		set_std_mode( QSP_ARG  the_cam_p, i );
 	}
+#endif // FOOBAR
 
 #else // ! HAVE_LIBSPINNAKER
 	EAT_ONE_DUMMY("do_set_video_mode");
@@ -341,10 +341,10 @@ advise(ERROR_STRING);
 
 static COMMAND_FUNC( do_set_framerate )
 {
-	int i;
+	//int i;
 
-	i = pick_spink_cam_framerate(QSP_ARG  the_cam_p, "frame rate");
-	if( i < 0 ) return;
+	//i = pick_spink_cam_framerate(QSP_ARG  the_cam_p, "frame rate");
+	//if( i < 0 ) return;
 
 	// CHECK_CAM - not needed: pick_spink_cam_framerate will handle this
 
@@ -612,7 +612,7 @@ static COMMAND_FUNC( do_set_fmt7 )
 		return;
 	}
 
-	set_fmt7_mode(QSP_ARG  the_cam_p, i );
+	//set_fmt7_mode(QSP_ARG  the_cam_p, i );
 #else // ! HAVE_LIBSPINNAKER
 	UNIMP_MSG("set_fmt7_mode");
 #endif // ! HAVE_LIBSPINNAKER
@@ -622,7 +622,7 @@ static COMMAND_FUNC( do_show_n_bufs )
 {
 	CHECK_CAM
 
-	show_n_buffers(QSP_ARG  the_cam_p);
+	//show_n_buffers(QSP_ARG  the_cam_p);
 }
 
 static COMMAND_FUNC( do_set_n_bufs )
@@ -641,11 +641,12 @@ static COMMAND_FUNC( do_set_n_bufs )
 		WARN(ERROR_STRING);
 	} else {
 #ifdef HAVE_LIBSPINNAKER
-		set_n_buffers(QSP_ARG  the_cam_p, n);
+		//set_n_buffers(QSP_ARG  the_cam_p, n);
 #endif // HAVE_LIBSPINNAKER
 	}
 }
 
+#ifdef FOOBAR
 static COMMAND_FUNC( do_set_eii )
 {
 	int i;
@@ -665,6 +666,7 @@ static COMMAND_FUNC( do_set_eii )
 	set_eii_property(QSP_ARG  the_cam_p,i,yesno);
 #endif // HAVE_LIBSPINNAKER
 }
+#endif // FOOBAR
 
 static COMMAND_FUNC( do_list_spink_cam_props )
 {
@@ -705,7 +707,7 @@ static COMMAND_FUNC( do_set_iso_speed )
 MENU_BEGIN(spink_cam)
 ADD_CMD( set_n_buffers,		do_set_n_bufs,		specify number of frames in the ring buffer )
 ADD_CMD( show_n_buffers,		do_show_n_bufs,		show number of frames in the ring buffer )
-ADD_CMD( set_embedded_image_info,	do_set_eii,	enable/disable embedded image information )
+//ADD_CMD( set_embedded_image_info,	do_set_eii,	enable/disable embedded image information )
 ADD_CMD( read_register,		do_read_reg,		read a camera register )
 ADD_CMD( write_register,	do_write_reg,		write a camera register )
 ADD_CMD( properties,		do_prop_menu,		camera properties submenu )
@@ -776,7 +778,7 @@ static COMMAND_FUNC( do_set_grab_mode )
 	if( idx < 0 ) return;
 
 #ifdef HAVE_LIBSPINNAKER
-	set_grab_mode(QSP_ARG  the_cam_p, idx );
+	//set_grab_mode(QSP_ARG  the_cam_p, idx );
 #endif // HAVE_LIBSPINNAKER
 }
 
@@ -785,7 +787,7 @@ static COMMAND_FUNC( do_show_grab_mode )
 	CHECK_CAM
 
 #ifdef HAVE_LIBSPINNAKER
-	show_grab_mode(QSP_ARG  the_cam_p);
+	//show_grab_mode(QSP_ARG  the_cam_p);
 #endif // HAVE_LIBSPINNAKER
 }
 

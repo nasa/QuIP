@@ -19,8 +19,10 @@
 static void set_root_node(qrb_tree *tree_p, qrb_node *np)
 {
 	tree_p->root = np;
-	np->parent = NULL;
-	MAKE_BLACK(np);
+	if( np != NULL ){
+		np->parent = NULL;
+		MAKE_BLACK(np);
+	}
 }
 
 qrb_tree* _create_rb_tree( SINGLE_QSP_ARG_DECL )

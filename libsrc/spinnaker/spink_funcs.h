@@ -67,6 +67,7 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #define destroy_iface_list(a) _destroy_iface_list(QSP_ARG  a)
 #define release_spink_interface(a) _release_spink_interface(QSP_ARG  a)
 #define release_spink_cam(a) _release_spink_cam(QSP_ARG  a)
+#define release_interface(a) _release_interface(QSP_ARG  a)
 #define release_spink_system(a) _release_spink_system(QSP_ARG  a)
 #define get_spink_system(a) _get_spink_system(QSP_ARG  a)
 #define create_empty_iface_list(a) _create_empty_iface_list(QSP_ARG  a)
