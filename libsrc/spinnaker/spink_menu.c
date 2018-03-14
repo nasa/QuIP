@@ -82,14 +82,10 @@ static COMMAND_FUNC(do_spink_node_info)
 
 	{
 	spinNodeHandle hNode;
-refresh_node_map_handle(curr_map_p,"do_spink_node_info #1");
-refresh_node_map_handle(curr_map_p,"do_spink_node_info #2");
-	if( fetch_spink_node(curr_map_p->skm_handle, skn_p->skn_name, &hNode) < 0 )
+//refresh_node_map_handle(curr_map_p,"do_spink_node_info #1");
+//refresh_node_map_handle(curr_map_p,"do_spink_node_info #2");
+	if( lookup_spink_node(skn_p, &hNode) < 0 )
 		return;
-	if( hNode != skn_p->skn_handle ){
-		warn("do_spink_node_info:  old node handle does not match!?");
-		skn_p->skn_handle = hNode;
-	}
 	}
 
 	print_spink_node_info(skn_p);

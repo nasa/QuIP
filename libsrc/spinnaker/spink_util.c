@@ -269,110 +269,6 @@ static Size_Functions spink_cam_sf={
 #endif // FOOBAR
 
 
-void _report_spink_error(QSP_ARG_DECL  spinError error, const char *whence )
-{
-	const char *msg;
-
-	switch(error){
-		case SPINNAKER_ERR_SUCCESS:
-			msg = "Success"; break;
-		case SPINNAKER_ERR_ERROR:
-			msg = "Error"; break;
-		case SPINNAKER_ERR_NOT_INITIALIZED:
-			msg = "Not initialized"; break;
-		case SPINNAKER_ERR_NOT_IMPLEMENTED:
-			msg = "Not implemented"; break;
-		case SPINNAKER_ERR_RESOURCE_IN_USE:
-			msg = "Resource in use"; break;
-		case SPINNAKER_ERR_ACCESS_DENIED:
-			msg = "Access denied"; break;
-		case SPINNAKER_ERR_INVALID_HANDLE:
-			msg = "Invalid handle"; break;
-		case SPINNAKER_ERR_INVALID_ID:
-			msg = "Invalid ID"; break;
-		case SPINNAKER_ERR_NO_DATA:
-			msg = "No data"; break;
-		case SPINNAKER_ERR_INVALID_PARAMETER:
-			msg = "Invalid parameter"; break;
-		case SPINNAKER_ERR_IO:
-			msg = "I/O error"; break;
-		case SPINNAKER_ERR_TIMEOUT:
-			msg = "Timeout"; break;
-		case SPINNAKER_ERR_ABORT:
-			msg = "Abort"; break;
-		case SPINNAKER_ERR_INVALID_BUFFER:
-			msg = "Invalid buffer"; break;
-		case SPINNAKER_ERR_NOT_AVAILABLE:
-			msg = "Not available"; break;
-		case SPINNAKER_ERR_INVALID_ADDRESS:
-			msg = "Invalid address"; break;
-		case SPINNAKER_ERR_BUFFER_TOO_SMALL:
-			msg = "Buffer too small"; break;
-		case SPINNAKER_ERR_INVALID_INDEX:
-			msg = "Invalid index"; break;
-		case SPINNAKER_ERR_PARSING_CHUNK_DATA:
-			msg = "Chunk data parsing error"; break;
-		case SPINNAKER_ERR_INVALID_VALUE:
-			msg = "Invalid value"; break;
-		case SPINNAKER_ERR_RESOURCE_EXHAUSTED:
-			msg = "Resource exhausted"; break;
-		case SPINNAKER_ERR_OUT_OF_MEMORY:
-			msg = "Out of memory"; break;
-		case SPINNAKER_ERR_BUSY:
-			msg = "Busy"; break;
-
-		case GENICAM_ERR_INVALID_ARGUMENT:
-			msg = "genicam invalid argument"; break;
-		case GENICAM_ERR_OUT_OF_RANGE:
-			msg = "genicam range error"; break;
-		case GENICAM_ERR_PROPERTY:
-			msg = "genicam property error"; break;
-		case GENICAM_ERR_RUN_TIME:
-			msg = "genicam run time error"; break;
-		case GENICAM_ERR_LOGICAL:
-			msg = "genicam logical error"; break;
-		case GENICAM_ERR_ACCESS:
-			msg = "genicam access error"; break;
-		case GENICAM_ERR_TIMEOUT:
-			msg = "genicam timeout error"; break;
-		case GENICAM_ERR_DYNAMIC_CAST:
-			msg = "genicam dynamic cast error"; break;
-		case GENICAM_ERR_GENERIC:
-			msg = "genicam generic error"; break;
-		case GENICAM_ERR_BAD_ALLOCATION:
-			msg = "genicam bad allocation"; break;
-
-		case SPINNAKER_ERR_IM_CONVERT:
-			msg = "image conversion error"; break;
-		case SPINNAKER_ERR_IM_COPY:
-			msg = "image copy error"; break;
-		case SPINNAKER_ERR_IM_MALLOC:
-			msg = "image malloc error"; break;
-		case SPINNAKER_ERR_IM_NOT_SUPPORTED:
-			msg = "image operation not supported"; break;
-		case SPINNAKER_ERR_IM_HISTOGRAM_RANGE:
-			msg = "image histogram range error"; break;
-		case SPINNAKER_ERR_IM_HISTOGRAM_MEAN:
-			msg = "image histogram mean error"; break;
-		case SPINNAKER_ERR_IM_MIN_MAX:
-			msg = "image min/max error"; break;
-		case SPINNAKER_ERR_IM_COLOR_CONVERSION:
-			msg = "image color conversion error"; break;
-
-//		case SPINNAKER_ERR_CUSTOM_ID = -10000
-
-		default:
-			sprintf(ERROR_STRING,
-		"report_spink_error (%s):  unhandled error code %d!?\n",
-				whence,error);
-			warn(ERROR_STRING);
-			msg = "unhandled error code";
-			break;
-	}
-	sprintf(ERROR_STRING,"%s:  %s",whence,msg);
-	warn(ERROR_STRING);
-}
-
 ITEM_INTERFACE_DECLARATIONS(Spink_Cam_Property_Type,pgr_prop,0)
 
 //  When we change spink_cams, we have to refresh all properties!
@@ -1602,8 +1498,8 @@ void push_spink_cam_context(QSP_ARG_DECL  Spink_Cam *skc_p)
 
 static spinSystem hSystem = NULL;
 static spinInterfaceList hInterfaceList = NULL;
-static spinCameraList hCameraList = NULL;
-static size_t numCameras = 0;
+spinCameraList hCameraList = NULL;
+size_t numCameras = 0;
 static size_t numInterfaces = 0;
 
 #define release_spink_interface_structs()	_release_spink_interface_structs(SINGLE_QSP_ARG)
@@ -1617,17 +1513,21 @@ static int _release_spink_interface_structs(SINGLE_QSP_ARG_DECL)
 
 	lp = spink_interface_list();
 	if( lp == NULL ) return 0;
-	np = QLIST_HEAD(lp);
-	while(np!=NULL){
+
+	while( (np=remHead(lp)) != NULL ){
 		ski_p = (Spink_Interface *) NODE_DATA(np);
+		/*
 		if( release_spink_interface(ski_p->ski_handle) < 0 )
 			return -1;
+			*/
 		// could delete the struct here too!?!?
+		del_spink_interface(ski_p);
 		np = NODE_NEXT(np);
 	}
 	return 0;
 }
 
+#ifdef FOOBAR
 #define release_spink_cam_structs()	_release_spink_cam_structs(SINGLE_QSP_ARG)
 
 static int _release_spink_cam_structs(SINGLE_QSP_ARG_DECL)
@@ -1649,13 +1549,14 @@ static int _release_spink_cam_structs(SINGLE_QSP_ARG_DECL)
 	}
 	return 0;
 }
+#endif // FOOBAR
 
 void _release_spink_cam_system(SINGLE_QSP_ARG_DECL)
 {
 	assert( hSystem != NULL );
 DEBUG_MSG(releast_spink_cam_system BEGIN)
 	if( release_spink_interface_structs() < 0 ) return;
-	if( release_spink_cam_structs() < 0 ) return;
+	//if( release_spink_cam_structs() < 0 ) return;
 
 	if( release_spink_cam_list(&hCameraList) < 0 ) return;
 	if( release_spink_interface_list(&hInterfaceList) < 0 ) return;
@@ -1675,32 +1576,6 @@ static void substitute_char(char *buf,char find, char replace)
 			*s = replace;
 		s++;
 	}
-}
-
-//
-// Initialize camera
-//
-// *** NOTES ***
-// The camera becomes connected upon initialization. This provides
-// access to configurable options and additional information, accessible
-// through the GenICam nodemap.
-//
-// *** LATER ***
-// Cameras should be deinitialized when no longer needed.
-//
-
-#define connect_spink_cam(hCam) _connect_spink_cam(QSP_ARG  hCam)
-
-static int _connect_spink_cam(QSP_ARG_DECL  spinCamera hCam)
-{
-	spinkError err;
-
-	err = spinCameraInit(hCam);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraInit");
-		return -1;
-	}
-	return 0;
 }
 
 #define get_unique_cam_name(buf, buflen) _get_unique_cam_name(QSP_ARG  buf, buflen)
@@ -1758,16 +1633,18 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 	return 0;
 }
 
-#define register_map_nodes(skm_p) _register_map_nodes(QSP_ARG  skm_p)
+#define register_map_nodes(hMap,skm_p) _register_map_nodes(QSP_ARG  hMap,skm_p)
 
-static void _register_map_nodes(QSP_ARG_DECL  Spink_Map *skm_p)
+static void _register_map_nodes(QSP_ARG_DECL  spinNodeMapHandle hMap, Spink_Map *skm_p)
 {
 	spinNodeHandle hRoot;
 
+fprintf(stderr,"register_map_nodes BEGIN   hMap = 0x%lx\n",(u_long)hMap);
+
 	push_spink_node_context(skm_p->skm_icp);
-fprintf(stderr,"register_map_nodes:  map handle = 0x%lx\n",(u_long)skm_p->skm_handle);
-	if( fetch_spink_node(skm_p->skm_handle, "Root", &hRoot) < 0 )
+	if( fetch_spink_node(hMap, "Root", &hRoot) < 0 )
 		error1("register_map_nodes:  error fetching map root node");
+fprintf(stderr,"register_map_nodes:  root node fetched\n");
 	if( traverse_spink_node_tree(hRoot,0,_register_one_node) < 0 )
 		error1("error traversing node map");
 	pop_spink_node_context();
@@ -1805,6 +1682,9 @@ static void _fetch_map_handle(QSP_ARG_DECL  Spink_Map *skm_p)
 static void _register_one_nodemap(QSP_ARG_DECL  Spink_Cam *skc_p, Node_Map_Type type, const char *name)
 {
 	Spink_Map *skm_p;
+	spinNodeMapHandle hMap = NULL;
+
+fprintf(stderr,"register_one_nodemap %s BEGIN\n",name);
 
 	skm_p = new_spink_map(name);
 	if( skm_p == NULL ) error1("Unable to create map struct!?");
@@ -1813,20 +1693,23 @@ static void _register_one_nodemap(QSP_ARG_DECL  Spink_Cam *skc_p, Node_Map_Type 
 	skm_p->skm_icp = create_item_context(spink_node_itp,name);
 	assert(skm_p->skm_icp!=NULL);
 
-	skm_p->skm_handle = NULL;
+	//skm_p->skm_handle = NULL;
 	skm_p->skm_type = type;
 	skm_p->skm_skc_p = skc_p;
 
 //	fetch_map_handle(skm_p);
-	refresh_node_map_handle(skm_p,"register_one_nodemap");	// first time just sets
+fprintf(stderr,"register_one_nodemap calling get_node_map_handle...\n");
+	get_node_map_handle(&hMap,skm_p,"register_one_nodemap");	// first time just sets
+fprintf(stderr,"register_one_nodemap:  hMap = 0x%lx ...\n",(u_long)hMap);
 
-	register_map_nodes(skm_p);
+	register_map_nodes(hMap,skm_p);
 }
 
 #define register_cam_nodemaps(skc_p) _register_cam_nodemaps(QSP_ARG  skc_p)
 
 static void _register_cam_nodemaps(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
+fprintf(stderr,"register_cam_nodemaps BEGIN\n");
 	sprintf(MSG_STR,"%s.device_TL",skc_p->skc_name);
 	register_one_nodemap(skc_p,DEV_NODE_MAP,MSG_STR);
 	sprintf(MSG_STR,"%s.genicam",skc_p->skc_name);
@@ -1839,7 +1722,7 @@ static int _init_one_spink_cam(QSP_ARG_DECL  int idx)
 {
 	spinCamera hCam;
 	spinNodeMapHandle hNodeMapTLDevice;
-	spinNodeMapHandle hNodeMap;
+//	spinNodeMapHandle hNodeMap;
 	Spink_Cam *skc_p;
 	char buf[MAX_BUFF_LEN];
 	size_t len = MAX_BUFF_LEN;
@@ -1848,12 +1731,6 @@ static int _init_one_spink_cam(QSP_ARG_DECL  int idx)
 		return -1;
 
 	if( get_spink_transport_level_map(&hNodeMapTLDevice,hCam) < 0 )
-		return -1;
-
-	if( connect_spink_cam(hCam) < 0 ) return -1;
-
-	// camera must be connected before fetching these...
-	if( get_camera_node_map(&hNodeMap,hCam) < 0 )
 		return -1;
 
 	get_camera_model_name(buf,len,hNodeMapTLDevice);
@@ -1868,11 +1745,19 @@ static int _init_one_spink_cam(QSP_ARG_DECL  int idx)
 	skc_p = new_spink_cam(buf);
 	if( skc_p == NULL ) return -1;
 
-	skc_p->skc_handle = hCam;
-	skc_p->skc_TL_dev_node_map = hNodeMapTLDevice;
-	skc_p->skc_genicam_node_map = hNodeMap;
+	//skc_p->skc_handle = hCam;
+	skc_p->skc_sys_idx = idx;
+	skc_p->skc_iface_idx = -1;	// invalid value
+
+	// register_cam_nodemaps will get the camera handle again...
+//	if( release_spink_cam(hCam) < 0 )
+//		return -1;
+
+	//skc_p->skc_TL_dev_node_map = hNodeMapTLDevice;
+	//skc_p->skc_genicam_node_map = hNodeMap;
+
 	register_cam_nodemaps(skc_p);
-	skc_p->skc_flags = SPINK_CAM_CONNECTED;
+	//skc_p->skc_flags = SPINK_CAM_CONNECTED;
 
 	// Make a data_obj context for the frames...
 	skc_p->skc_do_icp = create_dobj_context( QSP_ARG  skc_p->skc_name );
@@ -2051,7 +1936,8 @@ static int _create_spink_interface_structs(SINGLE_QSP_ARG_DECL)
 		substitute_char(buf,' ','_');
 		ski_p = new_spink_interface(buf);
 
-		ski_p->ski_handle = hInterface;
+		//ski_p->ski_handle = hInterface;
+		ski_p->ski_idx = i;
 
 		/*
 		if( release_spink_interface(hInterface) < 0 )
@@ -2072,6 +1958,7 @@ int init_spink_cam_system(SINGLE_QSP_ARG_DECL)
 	if( get_spink_interfaces(hSystem,&hInterfaceList,&numInterfaces) < 0 ) return -1;
 	if( create_spink_interface_structs() < 0 ) return -1;
 
+	// We get the cameras from the system, not from individual interfaces...
 	if( get_spink_cameras(hSystem,&hCameraList,&numCameras) < 0 ) return -1;
 	if( create_spink_camera_structs() < 0 ) return -1;
 
@@ -2278,8 +2165,8 @@ void print_spink_cam_info(QSP_ARG_DECL  Spink_Cam *skc_p)
 	prt_msg(MSG_STR);
 
 #ifdef HAVE_LIBSPINNAKER
-fprintf(stderr,"calling get_camera_nodes for %s\n",skc_p->skc_name);
-	get_camera_nodes(skc_p);
+fprintf(stderr,"calling print_camera_nodes for %s\n",skc_p->skc_name);
+	print_camera_nodes(skc_p);
 
 #ifdef FOOBAR
 	show_cam_info(QSP_ARG  &skc_p->sk_cam_info);

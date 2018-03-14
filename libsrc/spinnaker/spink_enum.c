@@ -15,40 +15,12 @@
 //
 
 #ifdef HAVE_LIBSPINNAKER
-int _fetch_spink_map(QSP_ARG_DECL  spinInterface hInterface, spinNodeMapHandle *hMap_p)
-{
-	spinError err = SPINNAKER_ERR_SUCCESS;
-
-	err = spinInterfaceGetTLNodeMap(hInterface, hMap_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinInterfaceGetTLNodeMap");
-		return -1;
-	}
-	return 0;
-}
-
-int _fetch_spink_node(QSP_ARG_DECL  spinNodeMapHandle hMap, const char *tag, spinNodeHandle *hdl_p)
-{
-	spinError err;
-
-	err = spinNodeMapGetNode(hMap, tag, hdl_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinNodeMapGetNode");
-		return -1;
-	}
-	return 0;
-}
 
 int _spink_node_is_implemented(QSP_ARG_DECL  spinNodeHandle hdl)
 {
-	spinError err;
 	bool8_t isImplemented = False;
 
-	err = spinNodeIsImplemented(hdl, &isImplemented);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinNodeIsImplemented");
-		return 0;
-	}
+	if( node_is_implemented(hdl,&isImplemented) < 0 ) return 0;
 	if( isImplemented )
 		return 1;
 	return 0;
@@ -56,14 +28,10 @@ int _spink_node_is_implemented(QSP_ARG_DECL  spinNodeHandle hdl)
 
 int _spink_node_is_available(QSP_ARG_DECL  spinNodeHandle hdl)
 {
-	spinError err;
 	bool8_t isAvailable = False;
 
-	err = spinNodeIsAvailable(hdl, &isAvailable);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinNodeIsAvailable");
+	if( node_is_available(hdl, &isAvailable) < 0 )
 		return 0;
-	}
 	if( isAvailable )
 		return 1;
 	return 0;
@@ -71,43 +39,177 @@ int _spink_node_is_available(QSP_ARG_DECL  spinNodeHandle hdl)
 
 int _spink_node_is_readable(QSP_ARG_DECL spinNodeHandle hdl)
 {
-	spinError err;
 	bool8_t isReadable = False;
 
-	err = spinNodeIsReadable(hdl, &isReadable);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinNodeIsReadable");
-		return 0;
-	}
+	if( node_is_readable(hdl, &isReadable) < 0 ) return 0;
 	if( isReadable )
 		return 1;
 	return 0;
 }
 
-int _spink_node_is_writable(QSP_ARG_DECL spinNodeHandle hNode)
+int _spink_node_is_writeable(QSP_ARG_DECL spinNodeHandle hdl)
 {
-	spinError err;
-	bool8_t isWritable = False;
+	bool8_t isWriteable = False;
 
-	err = spinNodeIsWritable(hNode, &isWritable);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinNodeIsWritable");
-		return 0;
-	}
-	if( isWritable )
+	if( node_is_writeable(hdl, &isWriteable) < 0 ) return 0;
+	if( isWriteable )
 		return 1;
 	return 0;
 }
 
-int _spink_get_string(QSP_ARG_DECL spinNodeHandle hdl, char *buf, size_t *len_p)
-{
-	spinError err;
+//
+// Retrieve list of cameras from the interface
+//
+// *** NOTES ***
+// Camera lists can be retrieved from an interface or the system object.
+// Camera lists retrieved from an interface, such as this one, only return
+// cameras attached on that specific interface whereas camera lists
+// retrieved from the system will return all cameras on all interfaces.
+//
+// *** LATER ***
+// Camera lists must be cleared manually. This must be done prior to
+// releasing the system and while the camera list is still in scope.
+//
 
-	err = spinStringGetValue(hdl, buf, len_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinStringGetValue");
+
+int _get_spink_cam_list(QSP_ARG_DECL spinInterface hInterface, spinCameraList *hCamList_p, size_t *num_p)
+{
+	if( create_empty_cam_list(hCamList_p) < 0 ) return -1;
+	if( get_iface_cameras(hInterface,hCamList_p) < 0 ) return -1;
+	if( get_n_cameras(*hCamList_p,num_p) < 0 ) return -1;
+
+	// Return if no cameras detected
+	if( *num_p == 0 ){
+		printf("\tNo devices detected.\n\n");
+		return release_spink_cam_list(hCamList_p);
+	}
+	return 0;
+}
+
+//
+// Clear and destroy camera list before losing scope
+//
+// *** NOTES ***
+// Camera lists do not automatically clean themselves up. This must be done
+// manually. The same is true of interface lists.
+//
+
+
+int _release_spink_cam_list(QSP_ARG_DECL  spinCameraList *hCamList_p )
+{
+DEBUG_MSG(release_spin_cam_list BEGIN)
+	if( *hCamList_p == NULL ){
+		fprintf(stderr,"release_spink_cam_list:  null list!?\n");
 		return -1;
 	}
+
+	if( clear_cam_list(*hCamList_p) < 0 ) return -1;
+	if( destroy_cam_list(*hCamList_p) < 0 ) return -1;
+
+	*hCamList_p = NULL;
+DEBUG_MSG(release_spin_cam_list DONE)
+	return 0;
+}
+
+int _release_spink_interface_list(QSP_ARG_DECL  spinInterfaceList *hInterfaceList_p )
+{
+DEBUG_MSG(release_spink_interfacelist BEGIN)
+	if( *hInterfaceList_p == NULL ){
+		fprintf(stderr,"release_spink_interface_list:  null list!?\n");
+		return -1;
+	}
+
+	// Clear and destroy interface list before releasing system
+	if( clear_iface_list(*hInterfaceList_p) < 0 ) return -1;
+	if( destroy_iface_list(*hInterfaceList_p) < 0 ) return -1;
+
+	*hInterfaceList_p = NULL;
+DEBUG_MSG(release_spink_interfacelist DONE)
+	return 0;
+}
+
+//
+// Select camera
+//
+// *** NOTES ***
+// Each camera is retrieved from a camera list with an index. If the
+// index is out of range, an exception is thrown.
+//
+// *** LATER ***
+// Each camera handle needs to be released before losing scope or the
+// system is released.
+//
+
+int _get_spink_cam_from_list(QSP_ARG_DECL  spinCamera *hCam_p, spinCameraList hCameraList, int idx )
+{
+	return get_cam_from_list(hCameraList,idx,hCam_p);
+}
+
+int _get_spink_interface_from_list(QSP_ARG_DECL spinInterface *hInterface_p, spinInterfaceList hInterfaceList, int idx )
+{
+	return get_iface_from_list(hInterfaceList,idx,hInterface_p);
+}
+
+int _get_spink_transport_level_map(QSP_ARG_DECL  spinNodeMapHandle *mapHdl_p, spinCamera hCam )
+{
+	return get_transport_level_map(hCam,mapHdl_p);
+}
+
+//
+// Retrieve list of interfaces from the system
+//
+// *** NOTES ***
+// Interface lists are retrieved from the system object.
+//
+// *** LATER ***
+// Interface lists must be cleared and destroyed manually. This must be
+// done prior to releasing the system and while the interface list is still
+// in scope.
+//
+
+
+int _get_spink_interfaces(QSP_ARG_DECL spinSystem hSystem, spinInterfaceList *hInterfaceList_p, size_t *numInterfaces_p)
+{
+	if( create_empty_iface_list(hInterfaceList_p) < 0 ) return -1;
+	if( get_iface_list(hSystem,*hInterfaceList_p) < 0 ) return -1;
+	if( get_n_interfaces(*hInterfaceList_p, numInterfaces_p) < 0 ) return -1;
+	return 0;
+}
+
+//
+// Retrieve list of cameras from the system
+//
+// *** NOTES ***
+// Camera lists can be retrieved from an interface or the system object.
+// Camera lists retrieved from the system, such as this one, return all
+// cameras available on the system.
+//
+// *** LATER ***
+// Camera lists must be cleared and destroyed manually. This must be done
+// prior to releasing the system and while the camera list is still in
+// scope.
+//
+
+int _get_spink_cameras(QSP_ARG_DECL spinSystem hSystem, spinCameraList *hCameraList_p, size_t *num_p )
+{
+	if( create_empty_cam_list(hCameraList_p) < 0 ) return -1;
+	if( get_cameras_from_system(hSystem,*hCameraList_p) < 0 ) return -1;
+	if( get_n_cameras(*hCameraList_p,num_p) < 0 ) return -1;
+	return 0;
+}
+
+/////////////////////////////////////////////////////////////
+
+int _lookup_spink_node(QSP_ARG_DECL  Spink_Node *skn_p, spinNodeHandle *hdl_p)
+{
+	spinNodeMapHandle hMap;
+
+	if( get_node_map_handle(&hMap,skn_p->skn_skm_p,"lookup_spink_node") < 0 )
+		return -1;
+
+	if( fetch_spink_node(hMap,skn_p->skn_name,hdl_p) < 0 )
+		return -1;
+
 	return 0;
 }
 
@@ -120,7 +222,7 @@ int _get_interface_name(QSP_ARG_DECL  char *buf, size_t buflen, spinInterface hI
 	spinNodeMapHandle hNodeMapInterface = NULL;
 	spinNodeHandle hInterfaceDisplayName = NULL;
 
-	if( fetch_spink_map(hInterface,&hNodeMapInterface) < 0 ) return -1;
+	if( get_iface_map(hInterface,&hNodeMapInterface) < 0 ) return -1;
 
 	if( fetch_spink_node(hNodeMapInterface,"InterfaceDisplayName",&hInterfaceDisplayName) < 0 ) return -1;
 
@@ -145,178 +247,6 @@ void _print_interface_name(QSP_ARG_DECL  spinNodeHandle hInterfaceDisplayName)
 	printf("Interface Display Name:  %s\n", buf);
 }
 
-//
-// Retrieve list of cameras from the interface
-//
-// *** NOTES ***
-// Camera lists can be retrieved from an interface or the system object.
-// Camera lists retrieved from an interface, such as this one, only return
-// cameras attached on that specific interface whereas camera lists
-// retrieved from the system will return all cameras on all interfaces.
-//
-// *** LATER ***
-// Camera lists must be cleared manually. This must be done prior to
-// releasing the system and while the camera list is still in scope.
-//
-
-int _get_spink_cam_list(QSP_ARG_DECL spinInterface hInterface, spinCameraList *hCamList_p, size_t *num_p)
-{
-	spinError err;
-
-	// Create empty camera list
-	err = spinCameraListCreateEmpty(hCamList_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraListCreateEmpty");
-		return -1;
-	}
-
-	// Retrieve cameras
-	err = spinInterfaceGetCameras(hInterface, *hCamList_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinInterfaceGetCameras");
-		return -1;
-	}
-
-	// Retrieve number of cameras
-	err = spinCameraListGetSize(*hCamList_p, num_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraListGetSize");
-		return -1;
-	}
-
-	// Return if no cameras detected
-	if( *num_p == 0 ){
-		printf("\tNo devices detected.\n\n");
-		return release_spink_cam_list(hCamList_p);
-	}
-	return 0;
-}
-
-//
-// Clear and destroy camera list before losing scope
-//
-// *** NOTES ***
-// Camera lists do not automatically clean themselves up. This must be done
-// manually. The same is true of interface lists.
-//
-
-int _release_spink_cam_list(QSP_ARG_DECL  spinCameraList *hCamList_p )
-{
-	spinError err;
-
-DEBUG_MSG(release_spin_cam_list BEGIN)
-	if( *hCamList_p == NULL ){
-		fprintf(stderr,"release_spink_cam_list:  null list!?\n");
-		return -1;
-	}
-
-	err = spinCameraListClear(*hCamList_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraListClear");
-		return -1;
-	}
-
-	err = spinCameraListDestroy(*hCamList_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraListDestroy");
-		return -1;
-	}
-
-	*hCamList_p = NULL;
-DEBUG_MSG(release_spin_cam_list DONE)
-	return 0;
-}
-
-int _release_spink_interface_list(QSP_ARG_DECL  spinInterfaceList *hInterfaceList_p )
-{
-	spinError err;
-
-DEBUG_MSG(release_spink_interfacelist BEGIN)
-	if( *hInterfaceList_p == NULL ){
-		fprintf(stderr,"release_spink_interface_list:  null list!?\n");
-		return -1;
-	}
-
-	// Clear and destroy interface list before releasing system
-	err = spinInterfaceListClear(*hInterfaceList_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinInterfaceListClear");
-		return -1;
-	}
-
-	err = spinInterfaceListDestroy(*hInterfaceList_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinInterfaceListDestroy");
-		return -1;
-	}
-	*hInterfaceList_p = NULL;
-DEBUG_MSG(release_spink_interfacelist DONE)
-	return 0;
-}
-
-int _release_spink_interface(QSP_ARG_DECL spinInterface hInterface)
-{
-	spinError err;
-
-	// Release interface
-	err = spinInterfaceRelease(hInterface);
-	if (err != SPINNAKER_ERR_SUCCESS){
-		report_spink_error(err,"spinInterfaceRelease");
-		return -1;
-	}
-	return 0;
-}
-
-//
-// Select camera
-//
-// *** NOTES ***
-// Each camera is retrieved from a camera list with an index. If the
-// index is out of range, an exception is thrown.
-//
-// *** LATER ***
-// Each camera handle needs to be released before losing scope or the
-// system is released.
-//
-
-int _get_spink_cam_from_list(QSP_ARG_DECL  spinCamera *hCam_p, spinCameraList hCameraList, int idx )
-{
-	spinError err;
-
-	err = spinCameraListGet(hCameraList, idx, hCam_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraListGet");
-		return -1;
-	}
-	return 0;
-}
-
-int _get_spink_interface_from_list(QSP_ARG_DECL spinInterface *hInterface_p, spinInterfaceList hInterfaceList, int idx )
-{
-	spinError err;
-
-	err = spinInterfaceListGet(hInterfaceList, idx, hInterface_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinInterfaceListGet");
-		return -1;
-	}
-	return 0;
-}
-
-// Retrieve TL device nodemap; please see NodeMapInfo_C example for
-// additional comments on transport layer nodemaps.
-
-int _get_spink_transport_level_map(QSP_ARG_DECL  spinNodeMapHandle *mapHdl_p, spinCamera hCam )
-{
-	spinError err;
-
-	err = spinCameraGetTLDeviceNodeMap(hCam, mapHdl_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraGetTLDeviceNodeMap");
-		return -1;
-	}
-	return 0;
-}
 
 //
 // Retrieve device vendor name
@@ -418,43 +348,9 @@ int _print_indexed_spink_cam_info( QSP_ARG_DECL  spinCameraList hCameraList, int
 
 	printf("\tDevice %d %s %s\n\n", idx, deviceVendorName, deviceModelName);
 
-	// release the camera?
+	// release the camera
 	if( release_spink_cam(hCam) < 0 ) return -1;
 
-	return 0;
-}
-
-//
-// Release camera before losing scope
-//
-// *** NOTES ***
-// Every handle that is created for a camera must be released before
-// the system is released or an exception will be thrown.
-//
-
-int _release_spink_cam(QSP_ARG_DECL spinCamera hCam)
-{
-	spinError err;
-
-	err = spinCameraRelease(hCam);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraRelease");
-		return -1;
-	}
-	return 0;
-}
-
-int _release_spink_system(QSP_ARG_DECL spinSystem hSystem)
-{
-	spinError err;
-
-DEBUG_MSG(release_spink_system BEGIN)
-	err = spinSystemReleaseInstance(hSystem);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinSystemReleaseInstance");
-		return -1;
-	}
-DEBUG_MSG(release_spink_system DONE)
 	return 0;
 }
 
@@ -481,115 +377,5 @@ int _get_spink_interface_cameras(QSP_ARG_DECL  spinInterface hInterface)
 	return 0;
 }
 
-//
-// Retrieve singleton reference to system object
-//
-// *** NOTES ***
-// Everything originates with the system object. It is important to notice
-// that it has a singleton implementation, so it is impossible to have
-// multiple system objects at the same time.
-//
-// *** LATER ***
-// The system object should be cleared prior to program completion.  If not
-// released explicitly, it will be released automatically.
-//
-
-int _get_spink_system(QSP_ARG_DECL spinSystem *hSystem_p)
-{
-	spinError err;
-
-	err = spinSystemGetInstance(hSystem_p);
-	if (err != SPINNAKER_ERR_SUCCESS)
-	{
-		report_spink_error(err,"spinSystemGetInstance");
-		return -1;
-	}
-	return 0;
-}
-
-//
-// Retrieve list of interfaces from the system
-//
-// *** NOTES ***
-// Interface lists are retrieved from the system object.
-//
-// *** LATER ***
-// Interface lists must be cleared and destroyed manually. This must be
-// done prior to releasing the system and while the interface list is still
-// in scope.
-//
-
-int _get_spink_interfaces(QSP_ARG_DECL spinSystem hSystem, spinInterfaceList *hInterfaceList_p, size_t *numInterfaces_p)
-{
-	spinError err;
-
-	//spinInterfaceList hInterfaceList = NULL;
-	//size_t numInterfaces = 0;
-
-	// Create empty interface list
-	err = spinInterfaceListCreateEmpty(hInterfaceList_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinInterfaceListCreateEmpty");
-		return -1;
-	}
-
-	// Retrieve interfaces from system
-	err = spinSystemGetInterfaces(hSystem, *hInterfaceList_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinSystemGetInterfaces");
-		return -1;
-	}
-
-	// Retrieve number of interfaces
-	err = spinInterfaceListGetSize(*hInterfaceList_p, numInterfaces_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinInterfaceListGetSize");
-		return -1;
-	}
-	return 0;
-}
-
-//
-// Retrieve list of cameras from the system
-//
-// *** NOTES ***
-// Camera lists can be retrieved from an interface or the system object.
-// Camera lists retrieved from the system, such as this one, return all
-// cameras available on the system.
-//
-// *** LATER ***
-// Camera lists must be cleared and destroyed manually. This must be done
-// prior to releasing the system and while the camera list is still in
-// scope.
-//
-
-int _get_spink_cameras(QSP_ARG_DECL spinSystem hSystem, spinCameraList *hCameraList_p, size_t *num_p )
-{
-	spinError err;
-
-
-	// Create empty camera list
-	err = spinCameraListCreateEmpty(hCameraList_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraListCreateEmpty");
-		return -1;
-	}
-
-	// Retrieve cameras from system
-	err = spinSystemGetCameras(hSystem, *hCameraList_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinSystemGetCameras");
-		return -1;
-	}
-
-	// Retrieve number of cameras
-	err = spinCameraListGetSize(*hCameraList_p, num_p);
-	if (err != SPINNAKER_ERR_SUCCESS)
-	{
-		report_spink_error(err,"spinCameraListGetSize");
-		return -1;
-	}
-	return 0;
-}
 
 #endif // HAVE_LIBSPINNAKER

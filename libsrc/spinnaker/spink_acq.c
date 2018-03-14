@@ -4,62 +4,6 @@
 
 #ifdef HAVE_LIBSPINNAKER
 
-int _get_enumeration_entry_by_name(QSP_ARG_DECL  spinNodeHandle hEnum, const char *tag, spinNodeHandle *hdl_p)
-{
-	spinError err;
-
-	err = spinEnumerationGetEntryByName(hEnum, tag, hdl_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinEnumerationGetEntryByName");
-		return -1;
-	}
-	return 0;
-}
-
-int _get_enumeration_int_val(QSP_ARG_DECL  spinNodeHandle hNode, int64_t *int_ptr)
-{
-	spinError err;
-
-	err = spinEnumerationEntryGetIntValue(hNode, int_ptr);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinEnumerationEntryGetIntValue");
-		return -1;
-	}
-	return 0;
-}
-
-int _set_enumeration_int_val(QSP_ARG_DECL  spinNodeHandle hNode, int64_t v)
-{
-	spinError err;
-
-	err = spinEnumerationSetIntValue(hNode, v);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinEnumerationSetIntValue");
-		return -1;
-	}
-	return 0;
-}
-
-//
-// Release image from camera
-//
-// *** NOTES ***
-// Images retrieved directly from the camera (i.e. non-converted
-// images) need to be released in order to keep from filling the
-// buffer.
-//
-
-int _release_spink_image(QSP_ARG_DECL  spinImage hImage)
-{
-	spinError err;
-
-	err = spinImageRelease(hImage);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinImageRelease");
-		return -1;
-	}
-	return 0;
-}
 
 //
 // Retrieve next received image
@@ -74,16 +18,15 @@ int _release_spink_image(QSP_ARG_DECL  spinImage hImage)
 //
 
 
-
 int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 {
-	spinError err;
+	spinCamera hCam;
+	bool8_t isIncomplete = False;
 
-	err = spinCameraGetNextImage(skc_p->skc_handle, img_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraGetNextImage");
+	if( get_spink_cam_from_list(&hCam,hCameraList,skc_p->skc_sys_idx) < 0 )
 		return -1;
-	}
+
+	if( get_next_image(hCam,img_p) < 0 ) return -1;
 
 	//
 	// Ensure image completion
@@ -94,22 +37,16 @@ int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 	// image status for a little more insight into why an image is
 	// incomplete.
 	//
-	bool8_t isIncomplete = False;
-
-	err = spinImageIsIncomplete(*img_p, &isIncomplete);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinImageIsIncomplete");
+	if( image_is_incomplete(*img_p,&isIncomplete) < 0 ){
 		// non-fatal error
 		if( release_spink_image(*img_p) < 0 ) return -1;
 		return 0;
 	}
+
 	// Check image for completion
 	if (isIncomplete) {
 		spinImageStatus imageStatus = IMAGE_NO_ERROR;
-
-		err = spinImageGetStatus(*img_p, &imageStatus);
-		if (err != SPINNAKER_ERR_SUCCESS) {
-			report_spink_error(err,"spinImageGetStatus");
+		if( get_image_status(*img_p,&imageStatus) < 0 ){
 			// non-fatal error
 			if( release_spink_image(*img_p) < 0 ) return -1;
 			return 0;
@@ -118,8 +55,12 @@ int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 		if( release_spink_image(*img_p) < 0 ) return -1;
 		return 0;
 	}
+	if( release_spink_cam(hCam) < 0 )
+		return -1;
+
 	return 0;
 }
+
 
 //
 // Print image information; height and width recorded in pixels
@@ -135,97 +76,15 @@ static int _print_image_info(QSP_ARG_DECL  spinImage hImg)
 {
 	size_t width = 0;
 	size_t height = 0;
-	spinError err;
-
 
 	// Retrieve image width
-	err = spinImageGetWidth(hImg, &width);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinImageGetWidth");
-		return -1;
-	} else {
-		printf("width = %u, ", (unsigned int)width);
-	}
-
-	// Retrieve image height
-	err = spinImageGetHeight(hImg, &height);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinImageGetHeight");
-		return -1;
-	} else {
-		printf("height = %u\n", (unsigned int)height);
-	}
+	if( get_image_width(hImg,&width) < 0 ) return -1;
+	if( get_image_height(hImg,&height) < 0 ) return -1;
+	printf("width = %u, ", (unsigned int)width);
+	printf("height = %u\n", (unsigned int)height);
 	return 0;
 }
 
-
-int _create_empty_image(QSP_ARG_DECL  spinImage *hImg_p)
-{
-	spinError err;
-
-	err = spinImageCreateEmpty(hImg_p);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinImageCreateEmpty");
-		return -1;
-	}
-	return 0;
-}
-
-//
-// Convert image to mono 8
-//
-// *** NOTES ***
-// Images not gotten from a camera directly must be created and
-// destroyed. This includes any image copies, conversions, or
-// otherwise. Basically, if the image was gotten, it should be
-// released, if it was created, it needs to be destroyed.
-//
-// Images can be converted between pixel formats by using the
-// appropriate enumeration value. Unlike the original image, the
-// converted one does not need to be released as it does not affect the
-// camera buffer.
-//
-// Optionally, the color processing algorithm can also be set using
-// the alternate spinImageConvertEx() function.
-//
-// *** LATER ***
-// The converted image was created, so it must be destroyed to avoid
-// memory leaks.
-//
-
-// BUG mode should be an arg, but not sure what type???
-
-int _convert_spink_image(QSP_ARG_DECL  spinImage hDestImg, spinImage hSrcImg )
-{
-	spinError err;
-
-	err = spinImageConvert(hSrcImg, PixelFormat_Mono8, hDestImg);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinImageConvert");
-		return -1;
-	}
-	return 0;
-}
-
-//
-// Destroy converted image
-//
-// *** NOTES ***
-// Images that are created must be destroyed in order to avoid memory
-// leaks.
-//
-
-int _destroy_spink_image(QSP_ARG_DECL  spinImage hImg)
-{
-	spinError err;
-
-	err = spinImageDestroy(hImg);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinImageDestroy");
-		return -1;
-	}
-	return 0;
-}
 
 //
 // Begin acquiring images
@@ -244,14 +103,16 @@ int _destroy_spink_image(QSP_ARG_DECL  spinImage hImg)
 int _spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	spinCamera hCam;
-	spinError err;
 	
-	hCam = skc_p->skc_handle;
-	err = spinCameraBeginAcquisition(hCam);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraBeginAcquisition");
+	//hCam = skc_p->skc_handle;
+	if( get_spink_cam_from_list(&hCam,hCameraList,skc_p->skc_sys_idx) < 0 )
 		return -1;
-	}
+
+	if( begin_acquisition(hCam) < 0 ) return -1;
+
+	if( release_spink_cam(hCam) < 0 )
+		return -1;
+
 	return 0;
 }
 
@@ -266,16 +127,19 @@ int _spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 int _spink_stop_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	spinCamera hCam;
-	spinError err;
 	
-	hCam = skc_p->skc_handle;
-	err = spinCameraEndAcquisition(hCam);
-	if (err != SPINNAKER_ERR_SUCCESS) {
-		report_spink_error(err,"spinCameraEndAcquisition");
+	//hCam = skc_p->skc_handle;
+	if( get_spink_cam_from_list(&hCam,hCameraList,skc_p->skc_sys_idx) < 0 )
 		return -1;
-	}
+
+	if( end_acquisition(hCam) < 0 ) return -1;
+
+	if( release_spink_cam(hCam) < 0 )
+		return -1;
+
 	return 0;
 }
+
 //
 // Set acquisition mode to continuous
 //
@@ -311,8 +175,12 @@ static int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
 	spinNodeHandle hAcquisitionMode = NULL;
 	spinNodeHandle hAcquisitionModeContinuous = NULL;
 	int64_t acquisitionModeContinuous = 0;
+	spinNodeMapHandle hMap;
 
-	if( fetch_spink_node(skc_p->skc_genicam_node_map, "AcquisitionMode", &hAcquisitionMode) < 0 ){
+	if( get_node_map_handle(&hMap,skc_p->skc_cam_map,"set_acquisition_cont") < 0 )
+		return -1;
+
+	if( fetch_spink_node(hMap, "AcquisitionMode", &hAcquisitionMode) < 0 ){
 		warn("set_acquisition_continuous:  error getting AcquisitionMode node!?");
 		return -1;
 	}
@@ -345,8 +213,8 @@ static int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
 		return -1;
 	}
 
-	if( ! spink_node_is_writable(hAcquisitionMode) ){
-		warn("set_acquisition_continuous:  AcquisitionMode node is not writable!?");
+	if( ! spink_node_is_writeable(hAcquisitionMode) ){
+		warn("set_acquisition_continuous:  AcquisitionMode node is not writeable!?");
 		return -1;
 	}
 
@@ -385,7 +253,7 @@ printf("spink_test_acq BEGIN\n");
 		printf("Grabbed image %d, ", imageCnt);
 		if( print_image_info(hResultImage) < 0 ) return -1;
 		if( create_empty_image(&hConvertedImage) < 0 ) return -1;
-		if( convert_spink_image(hConvertedImage,hResultImage) < 0 ) return -1;
+		if( convert_spink_image(hResultImage,PixelFormat_Mono8,hConvertedImage) < 0 ) return -1;
 		if( destroy_spink_image(hConvertedImage) < 0 ) return -1;
 		if( release_spink_image(hResultImage) < 0 ) return -1;
 	}
