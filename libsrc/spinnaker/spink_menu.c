@@ -52,6 +52,7 @@ static COMMAND_FUNC(do_select_spink_map)
 	push_spink_node_context(skm_p->skm_icp);
 
 	curr_map_p = skm_p;
+	insure_current_camera(skm_p->skm_skc_p);
 }
 
 #define CHECK_CURRENT_MAP			\
@@ -68,25 +69,70 @@ static COMMAND_FUNC(do_list_spink_nodes)
 	list_nodes_from_map(curr_map_p);
 }
 
+#define print_special_node(hNode, str) _print_special_node(QSP_ARG  hNode, str)
+
+static void _print_special_node(QSP_ARG_DECL  spinNodeHandle hNode, const char *str)
+{
+	char displayName[256];
+	size_t displayNameLength=256;
+
+	if( get_display_name(displayName,&displayNameLength,hNode) < 0 )
+		error1("failed to get node display name!?");
+
+	sprintf(MSG_STR,"   %s:  (%s)",displayName,str);
+	prt_msg(MSG_STR);
+}
+
+#define spink_node_info(skn_p) _spink_node_info(QSP_ARG  skn_p)
+
+static void _spink_node_info(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	spinNodeHandle hNode;
+//fprintf(stderr,"do_spink_node_info %s BEGIN\n",skn_p->skn_name);
+
+	if( lookup_spink_node(skn_p, &hNode) < 0 )
+		return;
+
+	if( NODE_IS_READABLE(skn_p) ){
+		if( skn_p->skn_type != CategoryNode )
+			print_spink_node_info(hNode);
+		else
+			print_special_node(hNode,"category");
+	} else if( NODE_IS_WRITABLE(skn_p) ){
+		print_special_node(hNode,"write-only");
+	} else {
+		print_special_node(hNode,"neither readable nor writable!?");
+	}
+}
+
+static COMMAND_FUNC(do_all_nodes_info)
+{
+	List *lp;
+	Node *np;
+
+	lp = spink_node_list();
+	np = QLIST_HEAD(lp);
+	while(np!=NULL){
+		Spink_Node *skn_p;
+		skn_p = (Spink_Node *) NODE_DATA(np);
+		spink_node_info(skn_p);
+		np = NODE_NEXT(np);
+	}
+}
+
 static COMMAND_FUNC(do_spink_node_info)
 {
 	Spink_Node *skn_p;
-	spinNodeHandle hNode;
 
 	CHECK_CURRENT_MAP
 
 	skn_p = pick_spink_node("");
 	if( skn_p == NULL ) return;
-//fprintf(stderr,"do_spink_node_info %s BEGIN\n",skn_p->skn_name);
-	sprintf(MSG_STR,"\nMap %s, Node %s:\n",curr_map_p->skm_name,skn_p->skn_name);
+
+	sprintf(MSG_STR,"Map %s, Node %s:",skn_p->skn_skm_p->skm_name,skn_p->skn_name);
 	prt_msg(MSG_STR);
 
-//fprintf(stderr,"do_spink_node_info %s calling lookup_spink_node\n",skn_p->skn_name);
-	if( lookup_spink_node(skn_p, &hNode) < 0 )
-		return;
-
-//fprintf(stderr,"do_spink_node_info %s calling print_spink_node_info\n",skn_p->skn_name);
-	print_spink_node_info(hNode);
+	spink_node_info(skn_p);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(node_menu,s,f,h)
@@ -95,6 +141,7 @@ ADD_CMD(list_maps,do_list_spink_maps, list all node maps)
 ADD_CMD(select_map,do_select_spink_map, select default map for node operations)
 ADD_CMD(list_nodes,do_list_spink_nodes, list all nodes from current map)
 ADD_CMD(info,do_spink_node_info, print information about a node)
+ADD_CMD(info_all,do_all_nodes_info, print information about a all nodes in current map)
 MENU_END(node)
 #undef ADD_CMD
 

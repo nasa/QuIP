@@ -43,7 +43,7 @@ SPINK_WRAPPER_TWO_ARG(image_is_incomplete,ImageIsIncomplete,spinImage,hImg,bool8
 SPINK_WRAPPER_TWO_ARG(node_is_available,NodeIsAvailable,spinNodeHandle,hNode,bool8_t *,flag_p)
 SPINK_WRAPPER_TWO_ARG(node_is_implemented,NodeIsImplemented,spinNodeHandle,hNode,bool8_t *,flag_p)
 SPINK_WRAPPER_TWO_ARG(node_is_readable,NodeIsReadable,spinNodeHandle,hNode,bool8_t *,flag_p)
-SPINK_WRAPPER_TWO_ARG(node_is_writeable,NodeIsWritable,spinNodeHandle,hNode,bool8_t *,flag_p)
+SPINK_WRAPPER_TWO_ARG(node_is_writable,NodeIsWritable,spinNodeHandle,hNode,bool8_t *,flag_p)
 SPINK_WRAPPER_TWO_ARG(set_enumeration_int_val,EnumerationSetIntValue,spinNodeHandle,hNode,int64_t , v)
 
 SPINK_WRAPPER_THREE_ARG(convert_spink_image,ImageConvert,spinImage,hSrcImg,spinPixelFormatEnums,fmt,spinImage,hDestImg)

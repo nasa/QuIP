@@ -369,14 +369,15 @@ int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode, int le
 		}
 
 		if( ! spink_node_is_available(hFeatureNode) ){
-			report_node_access_error(hFeatureNode,"available");
+			if( verbose )
+				report_node_access_error(hFeatureNode,"available");
 			continue;
 		}
 
-		if( ! spink_node_is_readable(hFeatureNode) ){
-			report_node_access_error(hFeatureNode,"readable");
-			continue;
-		}
+//		if( ! spink_node_is_readable(hFeatureNode) ){
+//			report_node_access_error(hFeatureNode,"readable");
+//			continue;
+//		}
 
 		if( get_node_type(hFeatureNode,&type) < 0 ) return -1;
 

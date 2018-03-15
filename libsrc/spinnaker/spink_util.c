@@ -1187,6 +1187,7 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 	char name[LLEN];
 	size_t l=LLEN;
 	Spink_Node *skn_p;
+	spinNodeType type;
 
 	if( get_node_name(name,&l,hNode) < 0 )
 		error1("register_one_node:  error getting node name!?");
@@ -1196,6 +1197,19 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 
 	assert(current_map!=NULL);
 	skn_p->skn_skm_p = current_map;
+
+	skn_p->skn_flags = 0;
+	if( spink_node_is_readable(hNode) ){
+		skn_p->skn_flags |= NODE_READABLE;
+	}
+	if( spink_node_is_writable(hNode) ){
+		skn_p->skn_flags |= NODE_WRITABLE;
+	}
+
+	if( get_node_type(hNode,&type) < 0 ) return -1;
+	skn_p->skn_type = type;
+//fprintf(stderr,"register_one_node:  %s   flags = %d\n",skn_p->skn_name,skn_p->skn_flags);
+
 	//skn_p->skn_handle = hNode;
 	return 0;
 }

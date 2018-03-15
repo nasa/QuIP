@@ -32,11 +32,20 @@ struct spink_map;
 typedef struct spink_node {
 	const char *		skn_name;
 	struct spink_map *	skn_skm_p;
+	int			skn_flags;
 #ifdef HAVE_LIBSPINNAKER
+	spinNodeType		skn_type;
 	// do the handles persist???
 	//spinNodeHandle	skn_handle;
 #endif // HAVE_LIBSPINNAKER
 } Spink_Node;
+
+// flag bits
+#define NODE_READABLE	1
+#define NODE_WRITABLE	2
+
+#define NODE_IS_READABLE(skn_p)	((skn_p)->skn_flags & NODE_READABLE)
+#define NODE_IS_WRITABLE(skn_p)	((skn_p)->skn_flags & NODE_WRITABLE)
 
 ITEM_INTERFACE_PROTOTYPES(Spink_Node,spink_node)
 
@@ -196,8 +205,8 @@ extern int _print_indexed_spink_cam_info(QSP_ARG_DECL   spinCameraList hCameraLi
 
 extern int _spink_node_is_readable(QSP_ARG_DECL  spinNodeHandle hdl);
 #define spink_node_is_readable(hdl)	_spink_node_is_readable(QSP_ARG  hdl)
-extern int _spink_node_is_writeable(QSP_ARG_DECL  spinNodeHandle hdl);
-#define spink_node_is_writeable(hdl)	_spink_node_is_writeable(QSP_ARG  hdl)
+extern int _spink_node_is_writable(QSP_ARG_DECL  spinNodeHandle hdl);
+#define spink_node_is_writable(hdl)	_spink_node_is_writable(QSP_ARG  hdl)
 extern int _spink_node_is_available(QSP_ARG_DECL  spinNodeHandle hdl);
 #define spink_node_is_available(hdl)	_spink_node_is_available(QSP_ARG  hdl)
 extern int _spink_node_is_implemented(QSP_ARG_DECL  spinNodeHandle hdl);

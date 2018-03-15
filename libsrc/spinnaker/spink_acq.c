@@ -203,8 +203,8 @@ static int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
 		return -1;
 	}
 
-	if( ! spink_node_is_writeable(hAcquisitionMode) ){
-		warn("set_acquisition_continuous:  AcquisitionMode node is not writeable!?");
+	if( ! spink_node_is_writable(hAcquisitionMode) ){
+		warn("set_acquisition_continuous:  AcquisitionMode node is not writable!?");
 		return -1;
 	}
 

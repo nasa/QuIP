@@ -47,12 +47,12 @@ int _spink_node_is_readable(QSP_ARG_DECL spinNodeHandle hdl)
 	return 0;
 }
 
-int _spink_node_is_writeable(QSP_ARG_DECL spinNodeHandle hdl)
+int _spink_node_is_writable(QSP_ARG_DECL spinNodeHandle hdl)
 {
-	bool8_t isWriteable = False;
+	bool8_t isWritable = False;
 
-	if( node_is_writeable(hdl, &isWriteable) < 0 ) return 0;
-	if( isWriteable )
+	if( node_is_writable(hdl, &isWritable) < 0 ) return 0;
+	if( isWritable )
 		return 1;
 	return 0;
 }

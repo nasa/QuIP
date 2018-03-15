@@ -37,7 +37,7 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #define node_is_implemented(a,b) _node_is_implemented(QSP_ARG  a,b)
 #define node_is_available(a,b) _node_is_available(QSP_ARG  a,b)
 #define node_is_readable(a,b) _node_is_readable(QSP_ARG  a,b)
-#define node_is_writeable(a,b) _node_is_writeable(QSP_ARG  a,b)
+#define node_is_writable(a,b) _node_is_writable(QSP_ARG  a,b)
 #define get_iface_cameras(a,b) _get_iface_cameras(QSP_ARG  a,b)
 #define get_n_cameras(a,b) _get_n_cameras(QSP_ARG  a,b)
 #define get_n_interfaces(a,b) _get_n_interfaces(QSP_ARG  a,b)
