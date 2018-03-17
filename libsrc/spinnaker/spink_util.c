@@ -40,6 +40,7 @@ ITEM_INTERFACE_DECLARATIONS(Spink_Interface,spink_interface,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Cam,spink_cam,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Map,spink_map,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Node,spink_node,RB_TREE_CONTAINER)
+ITEM_INTERFACE_DECLARATIONS(Spink_Node_Type,spink_node_type,RB_TREE_CONTAINER)
 
 #define UNIMP_FUNC(name)						\
 	sprintf(ERROR_STRING,"Function %s is not implemented!?",name);	\
@@ -1184,6 +1185,260 @@ static int _get_unique_cam_name(QSP_ARG_DECL  char *buf, int buflen)
 	return -1;
 }
 
+#define INVALID_SET_FUNC(name)									\
+static void _set_##name##_node(QSP_ARG_DECL  Spink_Node *skn_p)					\
+{												\
+	sprintf(ERROR_STRING,"set_%s_node:  %s nodes should never be set!?",#name,#name);	\
+	error1(ERROR_STRING);									\
+}
+
+INVALID_SET_FUNC(category)
+INVALID_SET_FUNC(register)
+INVALID_SET_FUNC(port)
+INVALID_SET_FUNC(base)
+INVALID_SET_FUNC(unknown)
+INVALID_SET_FUNC(command)
+INVALID_SET_FUNC(enumeration)
+INVALID_SET_FUNC(enum_entry)
+
+// These need to be implemented...
+INVALID_SET_FUNC(value)
+INVALID_SET_FUNC(string)
+INVALID_SET_FUNC(integer)
+INVALID_SET_FUNC(float)
+INVALID_SET_FUNC(boolean)
+
+
+#define INVALID_PRINT_VALUE_FUNC(name)								\
+static void _print_##name##_node_value(QSP_ARG_DECL  Spink_Node *skn_p)				\
+{												\
+	sprintf(ERROR_STRING,"print_%s_node_value:  %s nodes cannot be printed!?",#name,#name);	\
+	error1(ERROR_STRING);									\
+}
+
+
+INVALID_PRINT_VALUE_FUNC(register)
+INVALID_PRINT_VALUE_FUNC(enum_entry)
+INVALID_PRINT_VALUE_FUNC(port)
+INVALID_PRINT_VALUE_FUNC(base)
+INVALID_PRINT_VALUE_FUNC(unknown)
+
+static void _print_category_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	sprintf(MSG_STR,STRING_NODE_FMT_STR,"");
+	prt_msg_frag(MSG_STR);
+}
+
+static void _print_value_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	char val_buf[MAX_BUFF_LEN];
+	size_t buf_len = MAX_BUFF_LEN;
+	spinNodeHandle hNode;
+	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
+	if( get_node_value_string(val_buf,&buf_len,hNode) < 0 ) return;
+	sprintf(MSG_STR,STRING_NODE_FMT_STR,val_buf);
+	prt_msg_frag(MSG_STR);
+}
+
+static void _print_string_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	char val_buf[MAX_BUFF_LEN];
+	size_t buf_len = MAX_BUFF_LEN;
+	spinNodeHandle hNode;
+	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
+	if( get_string_node_string(val_buf,&buf_len,hNode) < 0 ) return;
+	sprintf(MSG_STR,STRING_NODE_FMT_STR,val_buf);
+	prt_msg_frag(MSG_STR);
+}
+
+static void _print_integer_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	int64_t integerValue = 0;
+	spinNodeHandle hNode;
+	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
+	if( get_int_value(hNode, &integerValue) < 0 ) return;
+	sprintf(MSG_STR,INT_NODE_FMT_STR, integerValue);
+	prt_msg_frag(MSG_STR);
+}
+
+static void _print_float_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	double floatValue = 0.0;
+	spinNodeHandle hNode;
+	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
+	if( get_float_value(hNode,&floatValue) < 0 ) return;
+	sprintf(MSG_STR,FLT_NODE_FMT_STR, floatValue);
+	prt_msg_frag(MSG_STR);
+}
+
+static void _print_boolean_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	bool8_t booleanValue = False;
+	spinNodeHandle hNode;
+	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
+	if( get_bool_value(hNode,&booleanValue) < 0 ) return;
+	sprintf(MSG_STR,STRING_NODE_FMT_STR, (booleanValue ? "true" : "false"));
+	prt_msg_frag(MSG_STR);
+}
+
+static void _print_command_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	char val_buf[MAX_BUFF_LEN];
+	size_t buf_len = MAX_BUFF_LEN;
+	spinNodeHandle hNode;
+	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
+	if( get_tip_value(hNode,val_buf,&buf_len) < 0 ) return;
+	if( buf_len > MAX_NODE_VALUE_CHARS_TO_PRINT) {
+		int i;
+		for (i = 0; i < MAX_NODE_VALUE_CHARS_TO_PRINT-3; i++) {
+			MSG_STR[i] = val_buf[i];
+		}
+		MSG_STR[i++]='.';
+		MSG_STR[i++]='.';
+		MSG_STR[i++]='.';
+		MSG_STR[i++]=0;
+	} else {
+		sprintf(MSG_STR,STRING_NODE_FMT_STR, val_buf);
+	}
+	prt_msg_frag(MSG_STR);
+}
+
+static void _print_enumeration_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	char val_buf[MAX_BUFF_LEN];
+	size_t buf_len = MAX_BUFF_LEN;
+	spinNodeHandle hCurrentEntryNode = NULL;
+	spinNodeHandle hNode;
+	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
+	if( get_current_entry(hNode,&hCurrentEntryNode) < 0 ) return;
+	if( get_entry_symbolic(hCurrentEntryNode, val_buf, &buf_len) < 0 ) return;
+	sprintf(MSG_STR,STRING_NODE_FMT_STR,val_buf);
+	prt_msg_frag(MSG_STR);
+}
+
+#define INIT_NODE_TYPE(name,code)					\
+	snt_p = new_spink_node_type(#name);				\
+	snt_p->snt_type = code;						\
+	snt_p->snt_set_func = _set_##name##_node;			\
+	snt_p->snt_print_value_func = _print_##name##_node_value;	\
+
+
+#define init_default_node_types() _init_default_node_types(SINGLE_QSP_ARG)
+
+static void _init_default_node_types(SINGLE_QSP_ARG_DECL)
+{
+	Spink_Node_Type *snt_p;
+
+	INIT_NODE_TYPE(category,CategoryNode)
+	INIT_NODE_TYPE(register,RegisterNode)
+	INIT_NODE_TYPE(port,PortNode)
+	INIT_NODE_TYPE(base,BaseNode)
+	INIT_NODE_TYPE(unknown,UnknownNode)
+	INIT_NODE_TYPE(value,ValueNode)
+	INIT_NODE_TYPE(string,StringNode)
+	INIT_NODE_TYPE(integer,IntegerNode)
+	INIT_NODE_TYPE(float,FloatNode)
+	INIT_NODE_TYPE(boolean,BooleanNode)
+	INIT_NODE_TYPE(command,CommandNode)
+	INIT_NODE_TYPE(enumeration,EnumerationNode)
+	INIT_NODE_TYPE(enum_entry,EnumEntryNode)
+}
+
+Spink_Node_Type *_find_type_by_code(QSP_ARG_DECL  spinNodeType type)
+{
+	List *lp;
+	Node *np;
+
+	if( spink_node_type_itp == NULL )
+		init_spink_node_types();
+
+	lp = spink_node_type_list();
+	if( lp == NULL || eltcount(lp) == 0 ){
+		init_default_node_types();
+		lp = spink_node_type_list();
+	}
+	assert( lp != NULL && eltcount(lp) != 0 );
+
+	np = QLIST_HEAD(lp);
+	while( np != NULL ){
+		Spink_Node_Type *snt_p;
+		snt_p = NODE_DATA(np);
+		if( snt_p->snt_type == type ) return snt_p;
+		np = NODE_NEXT(np);
+	}
+	// Should we create the new type here???
+	warn("Node type not found!?");
+	return NULL;
+}
+
+// This helper function deals with output indentation, of which there is a lot.
+
+#define indent(level) _indent(QSP_ARG  level)
+
+static void _indent(QSP_ARG_DECL  unsigned int level)
+{
+	unsigned int i = 0;
+
+	for (i = 0; i < level; i++) {
+		prt_msg_frag("   ");
+	}
+}
+
+#define print_display_name(hNode) _print_display_name(QSP_ARG  hNode)
+
+static void _print_display_name(QSP_ARG_DECL  Spink_Node * skn_p)
+{
+	char fmt_str[16];
+	char displayName[MAX_BUFF_LEN];
+	size_t displayNameLength = MAX_BUFF_LEN;
+	spinNodeHandle hNode;
+
+	assert(max_display_name_len>0);
+	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
+	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return;
+	sprintf(fmt_str,"%%-%ds",max_display_name_len+3);
+	sprintf(MSG_STR,fmt_str,displayName);
+	prt_msg_frag(MSG_STR);
+}
+
+#define print_node_type(snt_p) _print_node_type(QSP_ARG  snt_p)
+
+static void _print_node_type(QSP_ARG_DECL  Spink_Node_Type * snt_p)
+{
+	sprintf(MSG_STR,"%-16s",snt_p->snt_name);
+	prt_msg_frag(MSG_STR);
+}
+
+#define show_rw_status(hNode) _show_rw_status(QSP_ARG  hNode)
+
+static void _show_rw_status(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	if( NODE_IS_READABLE(skn_p) ){
+		if( NODE_IS_WRITABLE(skn_p) ){
+			prt_msg("   (read/write)");
+		} else {
+			prt_msg("   (read-only)");
+		}
+	} else if( NODE_IS_WRITABLE(skn_p) ){
+			prt_msg("   (write-only)");
+	} else {
+		prt_msg("   (no read or write access!?)");
+	}
+}
+
+void _print_spink_node_info(QSP_ARG_DECL  Spink_Node *skn_p, int level)
+{
+	Spink_Node_Type *snt_p;
+
+	indent(level);
+	print_display_name(skn_p);
+	snt_p = skn_p->skn_type_p;
+	assert(snt_p!=NULL);
+	print_node_type(snt_p);
+	(*(snt_p->snt_print_value_func))(QSP_ARG  skn_p);
+	show_rw_status(skn_p);
+}
+
 static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 {
 	char name[LLEN];
@@ -1227,7 +1482,9 @@ fprintf(stderr,"register_one_node  level = %d\n",level);
 		max_display_name_len = n;
 
 	if( get_node_type(hNode,&type) < 0 ) return -1;
-	skn_p->skn_type = type;
+	skn_p->skn_type_p = find_type_by_code(type);
+	assert(skn_p->skn_type_p!=NULL);
+
 //fprintf(stderr,"register_one_node:  %s   flags = %d\n",skn_p->skn_name,skn_p->skn_flags);
 
 	//skn_p->skn_handle = hNode;

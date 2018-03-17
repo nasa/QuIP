@@ -22,14 +22,40 @@
 // This macro helps with C-strings.
 #define MAX_BUFF_LEN 256
 
+#define MAX_NODE_VALUE_CHARS_TO_PRINT	24	// must be less than LLEN !!
+
+// BUG - if the constant above is changed, these definitions should be changed
+// to match...   We could generate them programmatically, but that's extra work
+// that we will skip for now.
+
+#define INT_NODE_FMT_STR	"%-24ld"
+#define FLT_NODE_FMT_STR	"%-24f"
+#define STRING_NODE_FMT_STR	"%-24s"
+
 // a couple of globals...
 extern spinCameraList hCameraList;
 extern size_t numCameras;
 
+// forward declarations
 struct spink_map;
+struct spink_node;
 
 // a global - used for formatting the print-out of nodes
 extern int max_display_name_len;
+
+typedef struct spink_node_type {
+	const char *		snt_name;
+#ifdef HAVE_LIBSPINNAKER
+	spinNodeType		snt_type;
+#endif // HAVE_LIBSPINNAKER
+	void (*snt_set_func)(QSP_ARG_DECL  struct spink_node *skn_p);
+	void (*snt_print_value_func)(QSP_ARG_DECL  struct spink_node *skn_p);
+} Spink_Node_Type;
+
+ITEM_INTERFACE_PROTOTYPES(Spink_Node_Type,spink_node_type)
+#define init_spink_node_types()	_init_spink_node_types(SINGLE_QSP_ARG)
+#define spink_node_type_list()	_spink_node_type_list(SINGLE_QSP_ARG)
+#define new_spink_node_type(name)	_new_spink_node_type(QSP_ARG  name)
 
 // It's kind of wasteful to duplicate information that is present
 // in the SDK node structure...  but it's not a lot of storage so
@@ -40,11 +66,12 @@ typedef struct spink_node {
 	struct spink_map *	skn_skm_p;
 	struct spink_node *	skn_parent;
 	int			skn_flags;
-#ifdef HAVE_LIBSPINNAKER
-	spinNodeType		skn_type;
-	// do the handles persist???
-	//spinNodeHandle	skn_handle;
-#endif // HAVE_LIBSPINNAKER
+	Spink_Node_Type *	skn_type_p;
+//#ifdef HAVE_LIBSPINNAKER
+//	spinNodeType		skn_type;
+//	// do the handles persist???
+//	//spinNodeHandle	skn_handle;
+//#endif // HAVE_LIBSPINNAKER
 } Spink_Node;
 
 // flag bits
@@ -275,8 +302,8 @@ extern int _print_string_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int l
 
 extern void _list_nodes_from_map(QSP_ARG_DECL  Spink_Map *skm_p);
 #define list_nodes_from_map(skm_p) _list_nodes_from_map(QSP_ARG  skm_p)
-extern void _print_spink_node_info(QSP_ARG_DECL spinNodeHandle hNode);
-#define print_spink_node_info(hNode) _print_spink_node_info(QSP_ARG hNode)
+extern void _print_spink_node_info(QSP_ARG_DECL Spink_Node *skn_p, int level);
+#define print_spink_node_info(skn_p,level) _print_spink_node_info(QSP_ARG skn_p,level)
 
 // spink_acq.c
 
@@ -295,6 +322,10 @@ extern int _spink_test_acq(QSP_ARG_DECL  Spink_Cam *skc_p);
 
 
 // spink_util.c
+
+
+extern Spink_Node_Type *_find_type_by_code(QSP_ARG_DECL  spinNodeType type);
+#define find_type_by_code(type) _find_type_by_code(QSP_ARG  type)
 
 extern Item_Context * _pop_spink_node_context(SINGLE_QSP_ARG_DECL);
 extern void _push_spink_node_context(QSP_ARG_DECL  Item_Context *icp);

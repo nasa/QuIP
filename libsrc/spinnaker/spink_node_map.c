@@ -9,16 +9,6 @@
 Spink_Cam *current_skc_p = NULL;
 int max_display_name_len=0;
 
-#define MAX_NODE_VALUE_CHARS_TO_PRINT	24	// must be less than LLEN !!
-
-// BUG - if the constant above is changed, these definitions should be changed
-// to match...   We could generate them programmatically, but that's extra work
-// that we will skip for now.
-
-#define INT_NODE_FMT_STR	"%-24ld"
-#define FLT_NODE_FMT_STR	"%-24f"
-#define STRING_NODE_FMT_STR	"%-24s"
-
 int _release_current_camera(SINGLE_QSP_ARG_DECL)
 {
 	assert(current_skc_p!=NULL);
@@ -54,19 +44,6 @@ void _insure_current_camera(QSP_ARG_DECL  Spink_Cam *skc_p)
 //fprintf(stderr,"insure_current_camera %s:   camera already has a non-NULL handle 0x%lx\n", skc_p->skc_name,(u_long)skc_p->skc_current_handle);
 	}
 	current_skc_p = skc_p;
-}
-
-// This helper function deals with output indentation, of which there is a lot.
-
-#define indent(level) _indent(QSP_ARG  level)
-
-static void _indent(QSP_ARG_DECL  unsigned int level)
-{
-	unsigned int i = 0;
-
-	for (i = 0; i < level; i++) {
-		prt_msg_frag("   ");
-	}
 }
 
 #define report_node_access_error(hNode, w) _report_node_access_error(QSP_ARG  hNode, w)
@@ -106,75 +83,6 @@ int _get_node_value_string(QSP_ARG_DECL  char *buf, size_t *buflen_p, spinNodeHa
 	return 0;
 }
 
-#define print_node_value(hNode, type) _print_node_value(QSP_ARG  hNode, type)
-
-static void _print_node_value(QSP_ARG_DECL  spinNodeHandle hNode, spinNodeType type)
-{
-	char val_buf[MAX_BUFF_LEN];
-	size_t buf_len = MAX_BUFF_LEN;
-	int64_t integerValue = 0;
-	double floatValue = 0.0;
-	bool8_t booleanValue = False;
-	spinNodeHandle hCurrentEntryNode = NULL;
-
-	switch (type) {
-		case RegisterNode:
-		case EnumEntryNode:
-		case PortNode:
-		case BaseNode:
-		case UnknownNode:
-			sprintf(MSG_STR,STRING_NODE_FMT_STR,"OOPS!?");
-			break;
-		case CategoryNode:
-			sprintf(MSG_STR,STRING_NODE_FMT_STR,"");
-			break;
-		case ValueNode:
-			if( get_node_value_string(val_buf,&buf_len,hNode) < 0 ) return;
-			sprintf(MSG_STR,STRING_NODE_FMT_STR,val_buf);
-			break;
-		case StringNode:
-			if( get_string_node_string(val_buf,&buf_len,hNode) < 0 ) return;
-			sprintf(MSG_STR,STRING_NODE_FMT_STR,val_buf);
-			break;
-		case IntegerNode:
-			if( get_int_value(hNode, &integerValue) < 0 ) return;
-			sprintf(MSG_STR,INT_NODE_FMT_STR, integerValue);
-			break;
-		case FloatNode:
-			if( get_float_value(hNode,&floatValue) < 0 ) return;
-			sprintf(MSG_STR,FLT_NODE_FMT_STR, floatValue);
-			break;
-		case BooleanNode:
-			if( get_bool_value(hNode,&booleanValue) < 0 ) return;
-			sprintf(MSG_STR,STRING_NODE_FMT_STR, (booleanValue ? "true" : "false"));
-			break;
-		case CommandNode:
-			if( get_tip_value(hNode,val_buf,&buf_len) < 0 ) return;
-			if( buf_len > MAX_NODE_VALUE_CHARS_TO_PRINT) {
-				int i;
-				for (i = 0; i < MAX_NODE_VALUE_CHARS_TO_PRINT-3; i++) {
-					MSG_STR[i] = val_buf[i];
-				}
-				MSG_STR[i++]='.';
-				MSG_STR[i++]='.';
-				MSG_STR[i++]='.';
-				MSG_STR[i++]=0;
-			} else {
-				sprintf(MSG_STR,STRING_NODE_FMT_STR, val_buf);
-			}
-			break;
-		case EnumerationNode:
-			if( get_current_entry(hNode,&hCurrentEntryNode) < 0 ) return;
-			if( get_entry_symbolic(hCurrentEntryNode, val_buf, &buf_len) < 0 ) return;
-			sprintf(MSG_STR,STRING_NODE_FMT_STR,val_buf);
-			break;
-		default:
-			sprintf(MSG_STR,STRING_NODE_FMT_STR,"Whoa!?");
-			break;
-	}
-	prt_msg_frag(MSG_STR);
-}
-
 //
 // Retrieve string node value
 //
@@ -201,69 +109,6 @@ int _get_string_node_string(QSP_ARG_DECL  char *buf, size_t *buflen_p, spinNodeH
 		strcpy(buf,"(...)");
 	}
 	return 0;
-}
-
-// Helper functions for displaying node info
-
-#define print_display_name(hNode) _print_display_name(QSP_ARG  hNode)
-
-static void _print_display_name(QSP_ARG_DECL  spinNodeHandle hNode)
-{
-	char fmt_str[16];
-	char displayName[MAX_BUFF_LEN];
-	size_t displayNameLength = MAX_BUFF_LEN;
-
-	assert(max_display_name_len>0);
-
-	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return;
-
-	sprintf(fmt_str,"%%-%ds",max_display_name_len+3);
-	sprintf(MSG_STR,fmt_str,displayName);
-	prt_msg_frag(MSG_STR);
-}
-
-#define print_node_type(type) _print_node_type(QSP_ARG  type)
-
-static void _print_node_type(QSP_ARG_DECL  spinNodeType type)
-{
-	const char *s;
-
-	switch (type) {
-		case RegisterNode:	s="register"; break;
-		case EnumEntryNode:	s="enum_entry"; break;
-		case PortNode:		s="port"; break;
-		case BaseNode:		s="base"; break;
-		case UnknownNode:	s="unknown"; break;
-		case CategoryNode:	s="category"; break;
-		case ValueNode:		s="value"; break;
-		case StringNode:	s="string"; break;
-		case IntegerNode:	s="integer"; break;
-		case FloatNode:		s="float"; break;
-		case BooleanNode:	s="boolean"; break;
-		case CommandNode:	s="command"; break;
-		case EnumerationNode:	s="enumeration"; break;
-		default:		s="unrecognized!?"; break;
-	}
-	
-	sprintf(MSG_STR,"%-16s",s);
-	prt_msg_frag(MSG_STR);
-}
-
-#define show_rw_status(hNode) _show_rw_status(QSP_ARG  hNode)
-
-static void _show_rw_status(QSP_ARG_DECL  spinNodeHandle hNode)
-{
-	if( spink_node_is_readable(hNode) ){
-		if( spink_node_is_writable(hNode) ){
-			prt_msg("   (read/write)");
-		} else {
-			prt_msg("   (read-only)");
-		}
-	} else if( spink_node_is_writable(hNode) ){
-			prt_msg("   (write-only)");
-	} else {
-		prt_msg("   (no read or write access!?)");
-	}
 }
 
 // This function retrieves and prints the display names of an enumeration node
@@ -364,20 +209,6 @@ int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hNode, int level, int
 }
 //////////////////////////////////////////////
 
-#define display_spink_node(hNode, level) _display_spink_node(QSP_ARG  hNode, level)
-
-static int _display_spink_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
-{
-	spinNodeType type;
-
-	indent(level);
-	print_display_name(hNode);
-	if( get_node_type(hNode,&type) < 0 ) return -1;
-	print_node_type(type);
-	print_node_value(hNode,type);
-	show_rw_status(hNode);
-	return 0;
-}
 
 
 int _get_node_map_handle(QSP_ARG_DECL  spinNodeMapHandle *hMap_p, Spink_Map *skm_p, const char *whence)
@@ -437,6 +268,7 @@ int _get_node_map_handle(QSP_ARG_DECL  spinNodeMapHandle *hMap_p, Spink_Map *skm
 	return 0;
 }
 
+#ifdef NOT_USED
 #define announce_map(type) _announce_map(QSP_ARG  type)
 
 static void _announce_map(QSP_ARG_DECL  Node_Map_Type type)
@@ -457,7 +289,9 @@ static void _announce_map(QSP_ARG_DECL  Node_Map_Type type)
 			break;
 	}
 }
+#endif // NOT_USED
 
+#ifdef FOOBAR
 #define print_node_map(hCam, skm_p ) _print_node_map(QSP_ARG  hCam, skm_p )
 
 static int _print_node_map(QSP_ARG_DECL  spinCamera hCam, Spink_Map *skm_p )
@@ -546,23 +380,11 @@ int _print_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
 
 	return 0;
 }
+#endif // FOOBAR
 
 void _list_nodes_from_map(QSP_ARG_DECL  Spink_Map *skm_p)
 {
 	list_spink_nodes( tell_msgfile() );
-}
-
-void _print_spink_node_info(QSP_ARG_DECL  spinNodeHandle hNode)
-{
-	assert(hNode != NULL);
-
-	// The saved handles seem to go stale!?
-	if( ! spink_node_is_available(hNode) ){
-		report_node_access_error(hNode,"available");
-		return;
-	}
-
-	display_spink_node(hNode, 1);
 }
 
 #endif // HAVE_LIBSPINNAKER

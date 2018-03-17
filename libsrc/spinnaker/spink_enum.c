@@ -227,7 +227,7 @@ int _get_interface_name(QSP_ARG_DECL  char *buf, size_t buflen, spinInterface hI
 	if( ! spink_node_is_available(hInterfaceDisplayName) ) return -1;
 	if( ! spink_node_is_readable(hInterfaceDisplayName) ) return -1;
 
-	if( spink_get_string(hInterfaceDisplayName,buf,&buflen) < 0 ) return -1;
+	if( get_string_value(hInterfaceDisplayName,buf,&buflen) < 0 ) return -1;
 	return 0;
 }
 
@@ -240,7 +240,7 @@ void _print_interface_name(QSP_ARG_DECL  spinNodeHandle hInterfaceDisplayName)
 	if( ! spink_node_is_available(hInterfaceDisplayName) ) return;
 	if( ! spink_node_is_readable(hInterfaceDisplayName) ) return;
 
-	if( spink_get_string(hInterfaceDisplayName,buf,&len) < 0 ) return;
+	if( get_string_value(hInterfaceDisplayName,buf,&len) < 0 ) return;
 
 	printf("Interface Display Name:  %s\n", buf);
 }
@@ -270,7 +270,7 @@ int _get_camera_vendor_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera h
 	if( fetch_spink_node(hNodeMapTLDevice,"DeviceVendorName",&hDeviceVendorName) < 0 ) return -1;
 	if( ! spink_node_is_available(hDeviceVendorName) ) return -1;
 	if( ! spink_node_is_readable(hDeviceVendorName) ) return -1;
-	if( spink_get_string(hDeviceVendorName,buf,&buflen) < 0 ) return -1;
+	if( get_string_value(hDeviceVendorName,buf,&buflen) < 0 ) return -1;
 //fprintf(stderr,"get_camera_vendor_name: vendor name is \"%s\"\n",buf);
 
 	return 0;
@@ -298,7 +298,7 @@ int _get_spink_model_name( QSP_ARG_DECL  spinNodeMapHandle hNodeMapTLDevice, cha
 	if( fetch_spink_node(hNodeMapTLDevice,"DeviceModelName",&hDeviceModelName) < 0 ) return -1;
 	if( ! spink_node_is_available(hDeviceModelName) ) return -1;
 	if( ! spink_node_is_readable(hDeviceModelName) ) return -1;
-	if( spink_get_string(hDeviceModelName,buf,len_p) < 0 ) return -1;
+	if( get_string_value(hDeviceModelName,buf,len_p) < 0 ) return -1;
 	return 0;
 }
 
@@ -315,7 +315,7 @@ int _get_camera_model_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera hC
 	if( fetch_spink_node(hNodeMapTLDevice,"DeviceModelName",&hDeviceModelName) < 0 ) return -1;
 	if( ! spink_node_is_available(hDeviceModelName) ) return -1;
 	if( ! spink_node_is_readable(hDeviceModelName) ) return -1;
-	if( spink_get_string(hDeviceModelName,buf,&buflen) < 0 ) return -1;
+	if( get_string_value(hDeviceModelName,buf,&buflen) < 0 ) return -1;
 
 //fprintf(stderr,"get_camera_model_name obtained \"%s\"\n",buf);
 	return 0;

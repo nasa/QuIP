@@ -69,33 +69,6 @@ static COMMAND_FUNC(do_list_spink_nodes)
 	list_nodes_from_map(curr_map_p);
 }
 
-#define print_special_node(hNode, str) _print_special_node(QSP_ARG  hNode, str)
-
-static void _print_special_node(QSP_ARG_DECL  spinNodeHandle hNode, const char *str)
-{
-	char displayName[256];
-	size_t displayNameLength=256;
-
-	if( get_display_name(displayName,&displayNameLength,hNode) < 0 )
-		error1("failed to get node display name!?");
-
-	sprintf(MSG_STR,"   %s:  (%s)",displayName,str);
-	prt_msg(MSG_STR);
-}
-
-#define spink_node_info(skn_p) _spink_node_info(QSP_ARG  skn_p)
-
-static void _spink_node_info(QSP_ARG_DECL  Spink_Node *skn_p)
-{
-	spinNodeHandle hNode;
-//fprintf(stderr,"do_spink_node_info %s BEGIN\n",skn_p->skn_name);
-
-	if( lookup_spink_node(skn_p, &hNode) < 0 )
-		return;
-
-	print_spink_node_info(hNode);
-}
-
 static COMMAND_FUNC(do_all_nodes_info)
 {
 	List *lp;
@@ -106,7 +79,7 @@ static COMMAND_FUNC(do_all_nodes_info)
 	while(np!=NULL){
 		Spink_Node *skn_p;
 		skn_p = (Spink_Node *) NODE_DATA(np);
-		spink_node_info(skn_p);
+		print_spink_node_info(skn_p,0);
 		np = NODE_NEXT(np);
 	}
 }
@@ -123,7 +96,40 @@ static COMMAND_FUNC(do_spink_node_info)
 	sprintf(MSG_STR,"Map %s, Node %s:",skn_p->skn_skm_p->skm_name,skn_p->skn_name);
 	prt_msg(MSG_STR);
 
-	spink_node_info(skn_p);
+	print_spink_node_info(skn_p,0);
+}
+
+#define get_dummy_input() _get_dummy_input(SINGLE_QSP_ARG)
+
+static void _get_dummy_input(SINGLE_QSP_ARG_DECL)
+{
+	const char *s;
+	s = nameof("input value (will not be used)");
+}
+
+#define set_node_from_user_input(skn_p) _set_node_from_user_input(QSP_ARG  skn_p)
+
+static void _set_node_from_user_input(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	if( ! NODE_IS_WRITABLE(skn_p) ){
+		sprintf(ERROR_STRING,"Node %s is not writable!?",skn_p->skn_name);
+		warn(ERROR_STRING);
+		get_dummy_input();
+		return;
+	}
+	(*(skn_p->skn_type_p->snt_set_func))(QSP_ARG  skn_p);
+}
+
+static COMMAND_FUNC(do_set_node)
+{
+	Spink_Node *skn_p;
+
+	skn_p = pick_spink_node("");
+	if( skn_p == NULL ){
+		get_dummy_input();
+		return;
+	}
+	set_node_from_user_input(skn_p);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(node_menu,s,f,h)
@@ -132,6 +138,7 @@ ADD_CMD(list_maps,do_list_spink_maps, list all node maps)
 ADD_CMD(select_map,do_select_spink_map, select default map for node operations)
 ADD_CMD(list_nodes,do_list_spink_nodes, list all nodes from current map)
 ADD_CMD(info,do_spink_node_info, print information about a node)
+ADD_CMD(set,do_set_node, set the value of a node)
 ADD_CMD(info_all,do_all_nodes_info, print information about a all nodes in current map)
 MENU_END(node)
 #undef ADD_CMD
