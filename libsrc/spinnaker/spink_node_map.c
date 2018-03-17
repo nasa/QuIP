@@ -6,16 +6,18 @@
 
 #ifdef HAVE_LIBSPINNAKER
 
-// Use the following enum and global constant to select whether nodes are read
-// as 'value' nodes or their individual types.
-typedef enum _readType {
-	VALUE,
-	INDIVIDUAL
-} readType;
-
-const readType chosenRead = VALUE;
-
 Spink_Cam *current_skc_p = NULL;
+int max_display_name_len=0;
+
+#define MAX_NODE_VALUE_CHARS_TO_PRINT	24	// must be less than LLEN !!
+
+// BUG - if the constant above is changed, these definitions should be changed
+// to match...   We could generate them programmatically, but that's extra work
+// that we will skip for now.
+
+#define INT_NODE_FMT_STR	"%-24ld"
+#define FLT_NODE_FMT_STR	"%-24f"
+#define STRING_NODE_FMT_STR	"%-24s"
 
 int _release_current_camera(SINGLE_QSP_ARG_DECL)
 {
@@ -91,7 +93,6 @@ static void _report_node_access_error(QSP_ARG_DECL  spinNodeHandle hNode, const 
 
 int _get_node_value_string(QSP_ARG_DECL  char *buf, size_t *buflen_p, spinNodeHandle hNode )
 {
-	//const unsigned int k_maxChars = MAX_NODE_CHARS;
 	size_t n_need;
 
 	// Ensure allocated buffer is large enough for storing the string
@@ -105,6 +106,74 @@ int _get_node_value_string(QSP_ARG_DECL  char *buf, size_t *buflen_p, spinNodeHa
 	return 0;
 }
 
+#define print_node_value(hNode, type) _print_node_value(QSP_ARG  hNode, type)
+
+static void _print_node_value(QSP_ARG_DECL  spinNodeHandle hNode, spinNodeType type)
+{
+	char val_buf[MAX_BUFF_LEN];
+	size_t buf_len = MAX_BUFF_LEN;
+	int64_t integerValue = 0;
+	double floatValue = 0.0;
+	bool8_t booleanValue = False;
+	spinNodeHandle hCurrentEntryNode = NULL;
+
+	switch (type) {
+		case RegisterNode:
+		case EnumEntryNode:
+		case PortNode:
+		case BaseNode:
+		case UnknownNode:
+			sprintf(MSG_STR,STRING_NODE_FMT_STR,"OOPS!?");
+			break;
+		case CategoryNode:
+			sprintf(MSG_STR,STRING_NODE_FMT_STR,"");
+			break;
+		case ValueNode:
+			if( get_node_value_string(val_buf,&buf_len,hNode) < 0 ) return;
+			sprintf(MSG_STR,STRING_NODE_FMT_STR,val_buf);
+			break;
+		case StringNode:
+			if( get_string_node_string(val_buf,&buf_len,hNode) < 0 ) return;
+			sprintf(MSG_STR,STRING_NODE_FMT_STR,val_buf);
+			break;
+		case IntegerNode:
+			if( get_int_value(hNode, &integerValue) < 0 ) return;
+			sprintf(MSG_STR,INT_NODE_FMT_STR, integerValue);
+			break;
+		case FloatNode:
+			if( get_float_value(hNode,&floatValue) < 0 ) return;
+			sprintf(MSG_STR,FLT_NODE_FMT_STR, floatValue);
+			break;
+		case BooleanNode:
+			if( get_bool_value(hNode,&booleanValue) < 0 ) return;
+			sprintf(MSG_STR,STRING_NODE_FMT_STR, (booleanValue ? "true" : "false"));
+			break;
+		case CommandNode:
+			if( get_tip_value(hNode,val_buf,&buf_len) < 0 ) return;
+			if( buf_len > MAX_NODE_VALUE_CHARS_TO_PRINT) {
+				int i;
+				for (i = 0; i < MAX_NODE_VALUE_CHARS_TO_PRINT-3; i++) {
+					MSG_STR[i] = val_buf[i];
+				}
+				MSG_STR[i++]='.';
+				MSG_STR[i++]='.';
+				MSG_STR[i++]='.';
+				MSG_STR[i++]=0;
+			} else {
+				sprintf(MSG_STR,STRING_NODE_FMT_STR, val_buf);
+			}
+			break;
+		case EnumerationNode:
+			if( get_current_entry(hNode,&hCurrentEntryNode) < 0 ) return;
+			if( get_entry_symbolic(hCurrentEntryNode, val_buf, &buf_len) < 0 ) return;
+			sprintf(MSG_STR,STRING_NODE_FMT_STR,val_buf);
+			break;
+		default:
+			sprintf(MSG_STR,STRING_NODE_FMT_STR,"Whoa!?");
+			break;
+	}
+	prt_msg_frag(MSG_STR);
+}
 
 //
 // Retrieve string node value
@@ -134,141 +203,67 @@ int _get_string_node_string(QSP_ARG_DECL  char *buf, size_t *buflen_p, spinNodeH
 	return 0;
 }
 
-// This function retrieves and prints the display name and value of an integer
-// node.
-//
-// Retrieve integer node value
-//
-// *** NOTES ***
-// Keep in mind that the data type of an integer node value is an
-// int64_t as opposed to a standard int. While it is true that the two
-// are often interchangeable, it is recommended to use the int64_t
-// to avoid the introduction of bugs into software built with the
-// Spinnaker SDK.
-//
+// Helper functions for displaying node info
 
-#define print_int_node(hNode, level) _print_int_node(QSP_ARG  hNode, level)
+#define print_display_name(hNode) _print_display_name(QSP_ARG  hNode)
 
-static int _print_int_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level)
+static void _print_display_name(QSP_ARG_DECL  spinNodeHandle hNode)
 {
+	char fmt_str[16];
 	char displayName[MAX_BUFF_LEN];
 	size_t displayNameLength = MAX_BUFF_LEN;
-	int64_t integerValue = 0;
 
-	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return -1;
-	if( get_int_value(hNode, &integerValue) < 0 ) return -1;
+	assert(max_display_name_len>0);
 
-	// Print value
-	indent(level);
-	sprintf(MSG_STR,"%s: %ld", displayName, integerValue);
-	prt_msg(MSG_STR);
+	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return;
 
-	return 0;
-}
-
-// This function retrieves and prints the display name and value of a float node.
-//
-// Retrieve float node value
-//
-// *** NOTES ***
-// Please take note that floating point numbers in the Spinnaker SDK are
-// almost always represented by the larger data type double rather than
-// float.
-//
-
-#define print_float_node(hNode, level) _print_float_node(QSP_ARG  hNode, level)
-
-static int _print_float_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level)
-{
-	char displayName[MAX_BUFF_LEN];
-	size_t displayNameLength = MAX_BUFF_LEN;
-	double floatValue = 0.0;
-
-	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return -1;
-	if( get_float_value(hNode,&floatValue) < 0 ) return -1;
-
-	// Print value
-	indent(level);
-	sprintf(MSG_STR,"%s:  %f\n", displayName, floatValue);
-	prt_msg(MSG_STR);
-
-	return 0;
-}
-
-// This function retrieves and prints the display name and value of a boolean,
-// printing "true" for true and "false" for false rather than the corresponding
-// integer value ('1' and '0', respectively).
-//
-// Retrieve value as a string representation
-//
-// *** NOTES ***
-// Boolean node type values are represented by the standard bool data
-// type. The boolean ToString() method returns either a '1' or '0' as a
-// a string rather than a more descriptive word like 'true' or 'false'.
-//
-
-#define print_bool_node(hNode, level) _print_bool_node(QSP_ARG  hNode, level)
-
-static int _print_bool_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level)
-{
-	char displayName[MAX_BUFF_LEN];
-	size_t displayNameLength = MAX_BUFF_LEN;
-	bool8_t booleanValue = False;
-
-	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return -1;
-	if( get_bool_value(hNode,&booleanValue) < 0 ) return -1;
-
-	indent(level);
-	sprintf(MSG_STR,"%s: %s\n", displayName, (booleanValue ? "true" : "false"));
-	prt_msg(MSG_STR);
-
-	return 0;
-}
-
-// This function retrieves and prints the display name and tooltip of a command
-// node, limiting the number of printed characters to a macro-defined maximum.
-// The tooltip is printed below as command nodes do not have an intelligible
-// value.
-//
-// Retrieve tooltip
-//
-// *** NOTES ***
-// All node types have a tooltip available. Tooltips provide useful
-// information about nodes. Command nodes do not have a method to
-// retrieve values as their is no intelligible value to retrieve.
-//
-
-#define print_cmd_node(hNode, level) _print_cmd_node(QSP_ARG  hNode, level)
-
-static int _print_cmd_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level)
-{
-	char displayName[MAX_BUFF_LEN];
-	size_t displayNameLength = MAX_BUFF_LEN;
-	unsigned int i = 0;
-	char toolTip[MAX_BUFF_LEN];
-	size_t toolTipLength = MAX_BUFF_LEN;
-	const unsigned int k_maxChars = MAX_NODE_CHARS;
-
-	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return -1;
-	if( get_tip_value(hNode,toolTip,&toolTipLength) < 0 ) return -1;
-
-	// Print tooltip
-	indent(level);
-	sprintf(MSG_STR,"%s: ", displayName);
+	sprintf(fmt_str,"%%-%ds",max_display_name_len+3);
+	sprintf(MSG_STR,fmt_str,displayName);
 	prt_msg_frag(MSG_STR);
+}
 
-	// Ensure that the value length is not excessive for printing
+#define print_node_type(type) _print_node_type(QSP_ARG  type)
 
-	if (toolTipLength > k_maxChars) {
-		for (i = 0; i < k_maxChars; i++) {
-			printf("%c", toolTip[i]);
-		}
-		prt_msg("...");
-	} else {
-		sprintf(MSG_STR,"%s", toolTip);
-		prt_msg(MSG_STR);
+static void _print_node_type(QSP_ARG_DECL  spinNodeType type)
+{
+	const char *s;
+
+	switch (type) {
+		case RegisterNode:	s="register"; break;
+		case EnumEntryNode:	s="enum_entry"; break;
+		case PortNode:		s="port"; break;
+		case BaseNode:		s="base"; break;
+		case UnknownNode:	s="unknown"; break;
+		case CategoryNode:	s="category"; break;
+		case ValueNode:		s="value"; break;
+		case StringNode:	s="string"; break;
+		case IntegerNode:	s="integer"; break;
+		case FloatNode:		s="float"; break;
+		case BooleanNode:	s="boolean"; break;
+		case CommandNode:	s="command"; break;
+		case EnumerationNode:	s="enumeration"; break;
+		default:		s="unrecognized!?"; break;
 	}
-	return 0;
+	
+	sprintf(MSG_STR,"%-16s",s);
+	prt_msg_frag(MSG_STR);
+}
+
+#define show_rw_status(hNode) _show_rw_status(QSP_ARG  hNode)
+
+static void _show_rw_status(QSP_ARG_DECL  spinNodeHandle hNode)
+{
+	if( spink_node_is_readable(hNode) ){
+		if( spink_node_is_writable(hNode) ){
+			prt_msg("   (read/write)");
+		} else {
+			prt_msg("   (read-only)");
+		}
+	} else if( spink_node_is_writable(hNode) ){
+			prt_msg("   (write-only)");
+	} else {
+		prt_msg("   (no read or write access!?)");
+	}
 }
 
 // This function retrieves and prints the display names of an enumeration node
@@ -291,26 +286,12 @@ static int _print_cmd_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int leve
 // enumeration node's ToString() method.
 //
 
-#define print_enum_node(hEnumerationNode, level) _print_enum_node(QSP_ARG  hEnumerationNode, level)
-
-static int _print_enum_node(QSP_ARG_DECL  spinNodeHandle hEnumerationNode, unsigned int level)
+int _get_display_name_len(QSP_ARG_DECL  spinNodeHandle hdl)
 {
-	char displayName[MAX_BUFF_LEN];
-	size_t displayNameLength = MAX_BUFF_LEN;
-	spinNodeHandle hCurrentEntryNode = NULL;
-	char currentEntrySymbolic[MAX_BUFF_LEN];
-	size_t currentEntrySymbolicLength = MAX_BUFF_LEN;
+	size_t len;
 
-	if( get_display_name(displayName,&displayNameLength,hEnumerationNode) < 0 ) return -1;
-	if( get_current_entry(hEnumerationNode,&hCurrentEntryNode) < 0 ) return -1;
-	if( get_entry_symbolic(hCurrentEntryNode, currentEntrySymbolic, &currentEntrySymbolicLength) < 0 ) return -1;
-
-	// Print current entry symbolic
-	indent(level);
-	sprintf(MSG_STR,"%s: %s", displayName, currentEntrySymbolic);
-	prt_msg(MSG_STR);
-
-	return 0;
+	if( get_node_display_name(hdl,NULL,&len) < 0 ) return 0;
+	return (int) len;
 }
 
 //
@@ -335,36 +316,40 @@ int _get_node_name(QSP_ARG_DECL  char *buf, size_t *len_p, spinNodeHandle hdl)
 	return get_node_short_name(hdl, buf, len_p);
 }
 
-int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode, int level, int (*func)(QSP_ARG_DECL spinNodeHandle hNode, int level) )
+int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hNode, int level, int (*func)(QSP_ARG_DECL spinNodeHandle hNode, int level) )
 {
 	size_t numberOfFeatures = 0;
 	unsigned int i = 0;
+	spinNodeType type;
 
-	if( ! spink_node_is_implemented(hCategoryNode) ){
-		report_node_access_error(hCategoryNode,"implemented");
+	if( ! spink_node_is_implemented(hNode) ){
+		report_node_access_error(hNode,"implemented");
 		return 0;
 	}
 
-	if( ! spink_node_is_available(hCategoryNode) ){
+	if( ! spink_node_is_available(hNode) ){
 		if( verbose )
-			report_node_access_error(hCategoryNode,"available");
+			report_node_access_error(hNode,"available");
 		return 0;
 	}
 
-	if( (*func)(QSP_ARG  hCategoryNode,level) < 0 )
+	if( (*func)(QSP_ARG  hNode,level) < 0 )
 		return -1;
 
-	// recurse
-	if( get_n_features(hCategoryNode,&numberOfFeatures) < 0 ) return -1;
+	if( get_node_type(hNode,&type) < 0 ) return -1;
+
+	if( type != CategoryNode ) return 0;
+
+	// recurse - assumes a category node
+	if( get_n_features(hNode,&numberOfFeatures) < 0 ) return -1;
 
 	for (i = 0; i < numberOfFeatures; i++) {
 		spinNodeHandle hFeatureNode = NULL;
-		spinNodeType type = UnknownNode;
 
-		if( get_feature_by_index(hCategoryNode, i, &hFeatureNode) < 0 ) return -1;
+		if( get_feature_by_index(hNode, i, &hFeatureNode) < 0 ) return -1;
 
-		if( ! spink_node_is_implemented(hCategoryNode) ){
-			report_node_access_error(hCategoryNode,"implemented");
+		if( ! spink_node_is_implemented(hNode) ){
+			report_node_access_error(hNode,"implemented");
 			continue;
 		}
 
@@ -373,74 +358,11 @@ int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode, int le
 				report_node_access_error(hFeatureNode,"available");
 			continue;
 		}
-
-//		if( ! spink_node_is_readable(hFeatureNode) ){
-//			report_node_access_error(hFeatureNode,"readable");
-//			continue;
-//		}
-
-		if( get_node_type(hFeatureNode,&type) < 0 ) return -1;
-
-		if (type == CategoryNode) {
-			if( traverse_spink_node_tree(hFeatureNode,level+1,func) < 0 ) return -1;
-		} else {
-			if( (*func)(QSP_ARG  hFeatureNode,level+1) < 0 )
-				return -1;
-		}
+		if( traverse_spink_node_tree(hFeatureNode,level+1,func) < 0 ) return -1;
 	}
 	return 0;
 }
 //////////////////////////////////////////////
-
-
-// This function retrieves and prints the display name and value of all node
-// types as value nodes. A value node is a general node type that allows for
-// the reading and writing of any node type as a string.
-
-int _print_value_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level)
-{
-	char displayName[MAX_BUFF_LEN];
-	size_t displayNameLength = MAX_BUFF_LEN;
-	char value[MAX_BUFF_LEN];
-	size_t valueLength = MAX_BUFF_LEN;
-	spinNodeType type;
-
-	if( get_node_type(hNode,&type) < 0 ) return -1;
-
-	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return -1;
-
-	indent(level);
-	if( type == CategoryNode ){
-		sprintf(MSG_STR,"%s", displayName);
-	} else {
-		if( get_node_value_string(value,&valueLength,hNode) < 0 ) return -1;
-		sprintf(MSG_STR,"%s:  %s", displayName,value);
-	}
-	prt_msg(MSG_STR);
-
-	return 0;
-}
-
-// This function retrieves and prints the display name and value of a string
-// node, limiting the number of printed characters to a maximum defined
-// by MAX_NODE_CHARS macro.
-int _print_string_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int level)
-{
-	// Retrieve display name
-	char displayName[MAX_BUFF_LEN];
-	size_t displayNameLength = MAX_BUFF_LEN;
-	char stringValue[MAX_BUFF_LEN];
-	size_t stringValueLength = MAX_BUFF_LEN;
-
-	if( get_display_name(displayName,&displayNameLength,hNode) < 0 ) return -1;
-	if( get_string_node_string(stringValue,&stringValueLength,hNode) < 0 ) return -1;
-
-	// Print value
-	indent(level);
-	sprintf(MSG_STR,"%s:  %s", displayName,stringValue);
-	prt_msg(MSG_STR);
-	return 0;
-}
 
 #define display_spink_node(hNode, level) _display_spink_node(QSP_ARG  hNode, level)
 
@@ -448,46 +370,12 @@ static int _display_spink_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 {
 	spinNodeType type;
 
-//fprintf(stderr,"display_spink_node:  chosenRead = %d\n",chosenRead);
-	if (chosenRead == VALUE) {
-		if( print_value_node(hNode,level) < 0 ) return -1;
-	} else if (chosenRead == INDIVIDUAL) {
-		if( get_node_type(hNode,&type) < 0 ) return -1;
-		switch (type) {
-			case RegisterNode:
-			case EnumEntryNode:
-			case CategoryNode:
-			case PortNode:
-			case BaseNode:
-			case UnknownNode:
-				warn("OOPS - unahndled node type!?");
-				break;
-			case ValueNode:
-				if( print_value_node(hNode,level) < 0 ) return -1;
-				break;
-			case StringNode:
-				if( print_string_node(hNode, level + 1) < 0 ) return -1;
-				break;
-			case IntegerNode:
-				if( print_int_node(hNode, level + 1) < 0 ) return -1;
-				break;
-			case FloatNode:
-				if( print_float_node(hNode, level + 1) < 0 ) return -1;
-				break;
-			case BooleanNode:
-				if( print_bool_node(hNode, level + 1) < 0 ) return -1;
-				break;
-			case CommandNode:
-				if( print_cmd_node(hNode, level + 1) < 0 ) return -1;
-				break;
-			case EnumerationNode:
-				if( print_enum_node(hNode, level + 1) < 0 ) return -1;
-				break;
-		}
-	} else {
-		// assert
-		error1("Unexpected value for chosenRead!?");
-	}
+	indent(level);
+	print_display_name(hNode);
+	if( get_node_type(hNode,&type) < 0 ) return -1;
+	print_node_type(type);
+	print_node_value(hNode,type);
+	show_rw_status(hNode);
 	return 0;
 }
 

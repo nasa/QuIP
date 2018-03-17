@@ -93,16 +93,7 @@ static void _spink_node_info(QSP_ARG_DECL  Spink_Node *skn_p)
 	if( lookup_spink_node(skn_p, &hNode) < 0 )
 		return;
 
-	if( NODE_IS_READABLE(skn_p) ){
-		if( skn_p->skn_type != CategoryNode )
-			print_spink_node_info(hNode);
-		else
-			print_special_node(hNode,"category");
-	} else if( NODE_IS_WRITABLE(skn_p) ){
-		print_special_node(hNode,"write-only");
-	} else {
-		print_special_node(hNode,"neither readable nor writable!?");
-	}
+	print_spink_node_info(hNode);
 }
 
 static COMMAND_FUNC(do_all_nodes_info)

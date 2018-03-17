@@ -21,7 +21,6 @@
 
 // This macro helps with C-strings.
 #define MAX_BUFF_LEN 256
-#define MAX_NODE_CHARS 35
 
 // a couple of globals...
 extern spinCameraList hCameraList;
@@ -29,9 +28,17 @@ extern size_t numCameras;
 
 struct spink_map;
 
+// a global - used for formatting the print-out of nodes
+extern int max_display_name_len;
+
+// It's kind of wasteful to duplicate information that is present
+// in the SDK node structure...  but it's not a lot of storage so
+// for now we won't worry about it.
+
 typedef struct spink_node {
 	const char *		skn_name;
 	struct spink_map *	skn_skm_p;
+	struct spink_node *	skn_parent;
 	int			skn_flags;
 #ifdef HAVE_LIBSPINNAKER
 	spinNodeType		skn_type;
@@ -70,6 +77,7 @@ typedef struct spink_map {
 	const char *		skm_name;
 	struct spink_cam *	skm_skc_p;
 	Node_Map_Type		skm_type;
+	Spink_Node *		skm_root_p;
 #ifdef HAVE_LIBSPINNAKER
 	// do the maps persist?
 	// spinNodeMapHandle	skm_handle;
@@ -233,6 +241,9 @@ extern void _report_spink_error(QSP_ARG_DECL  spinError error, const char *whenc
 #define report_spink_error(error,whence)	_report_spink_error(QSP_ARG  error, whence )
 
 // spink_node_map.c
+
+extern int _get_display_name_len(QSP_ARG_DECL  spinNodeHandle hdl);
+#define get_display_name_len(hdl) _get_display_name_len(QSP_ARG  hdl)
 
 extern void _insure_current_camera(QSP_ARG_DECL  Spink_Cam *skc_p);
 extern int _release_current_camera(SINGLE_QSP_ARG_DECL);

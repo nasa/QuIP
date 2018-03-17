@@ -25,6 +25,8 @@
 
 // some globals...
 static Spink_Map *current_map=NULL;
+#define MAX_TREE_DEPTH	4
+static Spink_Node *current_parent_p[MAX_TREE_DEPTH]={NULL,NULL,NULL,NULL};
 
 static spinSystem hSystem = NULL;
 static spinInterfaceList hInterfaceList = NULL;
@@ -1188,7 +1190,8 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 	size_t l=LLEN;
 	Spink_Node *skn_p;
 	spinNodeType type;
-
+	int n;
+fprintf(stderr,"register_one_node  level = %d\n",level);
 	if( get_node_name(name,&l,hNode) < 0 )
 		error1("register_one_node:  error getting node name!?");
 
@@ -1197,6 +1200,19 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 
 	assert(current_map!=NULL);
 	skn_p->skn_skm_p = current_map;
+	if( level == 0 ){
+		assert(current_map->skm_root_p == NULL);
+		assert(!strcmp(name,"Root"));
+		current_map->skm_root_p = skn_p;
+		skn_p->skn_parent = NULL;
+		//assert(current_parent_p==NULL);
+	} else {
+		int idx;
+		idx=level-1;
+		assert(idx<MAX_TREE_DEPTH);
+		skn_p->skn_parent = current_parent_p[idx];
+	}
+	current_parent_p[level] = skn_p;
 
 	skn_p->skn_flags = 0;
 	if( spink_node_is_readable(hNode) ){
@@ -1205,6 +1221,10 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 	if( spink_node_is_writable(hNode) ){
 		skn_p->skn_flags |= NODE_WRITABLE;
 	}
+
+	n = get_display_name_len(hNode);
+	if( n > max_display_name_len )
+		max_display_name_len = n;
 
 	if( get_node_type(hNode,&type) < 0 ) return -1;
 	skn_p->skn_type = type;
@@ -1230,6 +1250,8 @@ fprintf(stderr,"register_map_nodes %s BEGIN\n",skm_p->skm_name);
 
 //fprintf(stderr,"register_map_nodes:  root node fetched, traversing...\n");
 	current_map = skm_p;
+	//current_parent_p = NULL;
+	skm_p->skm_root_p = NULL;
 	if( traverse_spink_node_tree(hRoot,0,_register_one_node) < 0 )
 		error1("error traversing node map");
 	current_map = NULL;
