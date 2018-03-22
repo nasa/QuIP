@@ -161,9 +161,8 @@ int _get_node_name(QSP_ARG_DECL  char *buf, size_t *len_p, spinNodeHandle hdl)
 	return get_node_short_name(hdl, buf, len_p);
 }
 
-int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hNode, int level, int (*func)(QSP_ARG_DECL spinNodeHandle hNode, int level) )
+int _traverse_by_node_handle(QSP_ARG_DECL  spinNodeHandle hNode, int level, int (*func)(QSP_ARG_DECL spinNodeHandle hNode, int level) )
 {
-	size_t numberOfFeatures = 0;
 	unsigned int i = 0;
 	spinNodeType type;
 
@@ -178,32 +177,64 @@ int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hNode, int level, int
 		return 0;
 	}
 
+	if( level == 0 ){	// Root node
+		// set global index?
+	}
+
 	if( (*func)(QSP_ARG  hNode,level) < 0 )
 		return -1;
 
 	if( get_node_type(hNode,&type) < 0 ) return -1;
 
-	if( type != CategoryNode ) return 0;
+	if( type == CategoryNode ){
+		size_t numberOfFeatures = 0;
 
-	// recurse - assumes a category node
-	if( get_n_features(hNode,&numberOfFeatures) < 0 ) return -1;
+		if( get_n_features(hNode,&numberOfFeatures) < 0 ) return -1;
 
-	for (i = 0; i < numberOfFeatures; i++) {
-		spinNodeHandle hFeatureNode = NULL;
+		for (i = 0; i < numberOfFeatures; i++) {
+			spinNodeHandle hFeatureNode = NULL;
 
-		if( get_feature_by_index(hNode, i, &hFeatureNode) < 0 ) return -1;
+			if( get_feature_by_index(hNode, i, &hFeatureNode) < 0 ) return -1;
 
-		if( ! spink_node_is_implemented(hNode) ){
-			report_node_access_error(hNode,"implemented");
-			continue;
+			if( ! spink_node_is_implemented(hNode) ){
+				report_node_access_error(hNode,"implemented");
+				continue;
+			}
+
+			if( ! spink_node_is_available(hFeatureNode) ){
+				if( verbose )
+					report_node_access_error(hFeatureNode,"available");
+				continue;
+			}
+			// Set global var to communicate node index.
+			// This works because func is called before recursion to sub-nodes
+			current_node_idx = i;
+			if( traverse_by_node_handle(hFeatureNode,level+1,func) < 0 ) return -1;
 		}
+	} else if( type == EnumerationNode ){
+		size_t num;
+		if( get_n_enum_entries(hNode,&num) < 0 ) return -1;
 
-		if( ! spink_node_is_available(hFeatureNode) ){
-			if( verbose )
-				report_node_access_error(hFeatureNode,"available");
-			continue;
+		for (i = 0; i < num; i++) {
+			spinNodeHandle hEnumEntryNode = NULL;
+
+			if( get_enum_entry_by_index(hNode, i, &hEnumEntryNode) < 0 ) return -1;
+
+			if( ! spink_node_is_implemented(hNode) ){
+				report_node_access_error(hNode,"implemented");
+				continue;
+			}
+
+			if( ! spink_node_is_available(hEnumEntryNode) ){
+				if( verbose )
+					report_node_access_error(hEnumEntryNode,"available");
+				continue;
+			}
+			// Set global var to communicate node index.
+			// This works because func is called before recursion to sub-nodes
+			current_node_idx = i;
+			if( traverse_by_node_handle(hEnumEntryNode,level+1,func) < 0 ) return -1;
 		}
-		if( traverse_spink_node_tree(hFeatureNode,level+1,func) < 0 ) return -1;
 	}
 	return 0;
 }
@@ -309,7 +340,7 @@ static int _print_node_map(QSP_ARG_DECL  spinCamera hCam, Spink_Map *skm_p )
 	if( fetch_spink_node(hMap, "Root", &hNode) < 0 ) return -1;
 
 	// Print values recursively
-	if( traverse_spink_node_tree(hNode,0,_display_spink_node) < 0 ) return -1;
+	if( traverse_by_node_handle(hNode,0,_display_spink_node) < 0 ) return -1;
 
 	return 0;
 }

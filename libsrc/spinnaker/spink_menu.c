@@ -48,8 +48,9 @@ static COMMAND_FUNC(do_select_spink_map)
 	skm_p = pick_spink_map("");
 	if( skm_p == NULL ) return;
 
-	if( curr_map_p != NULL ) pop_spink_node_context();
-	push_spink_node_context(skm_p->skm_icp);
+	if( curr_map_p != NULL )
+		pop_map_contexts();
+	push_map_contexts(skm_p);
 
 	curr_map_p = skm_p;
 	insure_current_camera(skm_p->skm_skc_p);
@@ -71,6 +72,7 @@ static COMMAND_FUNC(do_list_spink_nodes)
 
 static COMMAND_FUNC(do_all_nodes_info)
 {
+#ifdef FOOBAR
 	List *lp;
 	Node *np;
 
@@ -82,6 +84,10 @@ static COMMAND_FUNC(do_all_nodes_info)
 		print_spink_node_info(skn_p,0);
 		np = NODE_NEXT(np);
 	}
+#endif // FOOBAR
+	CHECK_CURRENT_MAP
+
+	print_map_tree(curr_map_p);
 }
 
 static COMMAND_FUNC(do_spink_node_info)
@@ -132,6 +138,23 @@ static COMMAND_FUNC(do_set_node)
 	set_node_from_user_input(skn_p);
 }
 
+static COMMAND_FUNC(do_list_cats)
+{
+	list_spink_cats( tell_msgfile() );
+}
+
+static COMMAND_FUNC(do_print_cat)
+{
+	Spink_Category *sct_p;
+
+	sct_p = pick_spink_cat("");
+	if( sct_p == NULL ) return;
+
+	print_cat_tree(sct_p);
+}
+
+
+
 #define ADD_CMD(s,f,h)	ADD_COMMAND(node_menu,s,f,h)
 MENU_BEGIN(node)
 ADD_CMD(list_maps,do_list_spink_maps, list all node maps)
@@ -140,6 +163,8 @@ ADD_CMD(list_nodes,do_list_spink_nodes, list all nodes from current map)
 ADD_CMD(info,do_spink_node_info, print information about a node)
 ADD_CMD(set,do_set_node, set the value of a node)
 ADD_CMD(info_all,do_all_nodes_info, print information about a all nodes in current map)
+ADD_CMD(list_categories,do_list_cats, list node categories in current map)
+ADD_CMD(print_category,do_print_cat, print nodes in a category)
 MENU_END(node)
 #undef ADD_CMD
 

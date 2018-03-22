@@ -25,7 +25,10 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #define get_node_display_name(a,b,c) _get_node_display_name(QSP_ARG  a,b,c)
 #define get_node_short_name(a,b,c) _get_node_short_name(QSP_ARG  a,b,c)
 #define get_feature_by_index(a,b,c) _get_feature_by_index(QSP_ARG  a,b,c)
+#define get_enum_entry_by_index(a,b,c) _get_enum_entry_by_index(QSP_ARG  a,b,c)
 
+// two arg macros
+#define set_enum_enum_value(a,b) _set_enum_enum_value(QSP_ARG  a,b)
 #define get_enumeration_int_val(a,b) _get_enumeration_int_val(QSP_ARG  a,b)
 #define set_enumeration_int_val(a,b) _set_enumeration_int_val(QSP_ARG  a,b)
 #define get_next_image(a,b) _get_next_image(QSP_ARG  a,b)
@@ -50,6 +53,7 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #define get_bool_value(a,b) _get_bool_value(QSP_ARG  a,b)
 #define get_current_entry(a,b) _get_current_entry(QSP_ARG  a,b)
 #define get_n_features(a,b) _get_n_features(QSP_ARG  a,b)
+#define get_n_enum_entries(a,b) _get_n_enum_entries(QSP_ARG  a,b)
 #define get_device_node_map(a,b) _get_device_node_map(QSP_ARG  a,b)
 #define get_stream_node_map(a,b) _get_stream_node_map(QSP_ARG  a,b)
 #define get_camera_node_map(a,b) _get_camera_node_map(QSP_ARG  a,b)

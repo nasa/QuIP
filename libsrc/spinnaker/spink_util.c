@@ -27,6 +27,7 @@
 static Spink_Map *current_map=NULL;
 #define MAX_TREE_DEPTH	4
 static Spink_Node *current_parent_p[MAX_TREE_DEPTH]={NULL,NULL,NULL,NULL};
+int current_node_idx; 
 
 static spinSystem hSystem = NULL;
 static spinInterfaceList hInterfaceList = NULL;
@@ -41,6 +42,7 @@ ITEM_INTERFACE_DECLARATIONS(Spink_Cam,spink_cam,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Map,spink_map,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Node,spink_node,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Node_Type,spink_node_type,RB_TREE_CONTAINER)
+ITEM_INTERFACE_DECLARATIONS(Spink_Category,spink_cat,RB_TREE_CONTAINER)
 
 #define UNIMP_FUNC(name)						\
 	sprintf(ERROR_STRING,"Function %s is not implemented!?",name);	\
@@ -1146,6 +1148,20 @@ void _push_spink_node_context(QSP_ARG_DECL  Item_Context *icp)
 	push_item_context(spink_node_itp,icp);
 }
 
+Item_Context * _pop_spink_cat_context(SINGLE_QSP_ARG_DECL)
+{
+	Item_Context *icp;
+	if( spink_cat_itp == NULL ) init_spink_cats();
+	icp = pop_item_context(spink_cat_itp);
+	return icp;
+}
+
+void _push_spink_cat_context(QSP_ARG_DECL  Item_Context *icp)
+{
+	if( spink_cat_itp == NULL ) init_spink_cats();
+	push_item_context(spink_cat_itp,icp);
+}
+
 // Don't we already have this???
 
 static void substitute_char(char *buf,char find, char replace)
@@ -1198,7 +1214,6 @@ INVALID_SET_FUNC(port)
 INVALID_SET_FUNC(base)
 INVALID_SET_FUNC(unknown)
 INVALID_SET_FUNC(command)
-INVALID_SET_FUNC(enumeration)
 INVALID_SET_FUNC(enum_entry)
 
 // These need to be implemented...
@@ -1207,6 +1222,118 @@ INVALID_SET_FUNC(string)
 INVALID_SET_FUNC(integer)
 INVALID_SET_FUNC(float)
 INVALID_SET_FUNC(boolean)
+//INVALID_SET_FUNC(enumeration)
+
+
+#define init_enum_val(skn_p) _init_enum_val(QSP_ARG  skn_p)
+
+static void _init_enum_val(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	char *s, *copy;
+	const char *enum_name, *entry_name;
+
+	// copy the name to break it up into components
+	s=copy=(char *)savestr(skn_p->skn_name);
+	while( *s && *s!='_' ) s++;
+	assert(*s=='_');
+	s++;
+	assert(*s!=0);
+	enum_name = s;
+	while( *s && *s!='_' ) s++;
+	assert(*s=='_');
+	*s = 0;
+	s++;
+	assert(*s!=0);
+	entry_name = s;
+fprintf(stderr,"enum = %s     entry = %s\n",enum_name,entry_name);
+	if( !strcmp(enum_name,"GainAuto") ){
+		if( !strcmp(entry_name,"Once") ){
+			skn_p->skn_enum_val = GainAuto_Once;
+		} else if( !strcmp(entry_name,"Off") ){
+			skn_p->skn_enum_val = GainAuto_Off;
+		} else if( !strcmp(entry_name,"Continuous") ){
+			skn_p->skn_enum_val = GainAuto_Continuous;
+		} else {
+			sprintf(ERROR_STRING,"init_enum_val:  Unhandled entry %s, enumeration %s",entry_name,enum_name);
+			warn(ERROR_STRING);
+		}
+	} else {
+		sprintf(ERROR_STRING,"init_enum_val:  Unhandled enumeration %s",enum_name);
+		warn(ERROR_STRING);
+	}
+}
+
+// The enumeration entry nodes have names like EnumerationEntry_GainAuto_Once - but we
+// want to make the choice be "Once", so we skip ahead past the second underscore...
+
+static void make_enumeration_choices(const char ***tbl_ptr, int *nc_p, Spink_Node *skn_p)
+{
+	int n;
+	Node *np;
+	const char **tbl;
+	const char *s;
+
+	assert(skn_p!=NULL);
+	assert(skn_p->skn_children!=NULL);
+	assert(skn_p->skn_type_p->snt_type == EnumerationNode);
+
+	n = eltcount(skn_p->skn_children);
+	assert(n>0);
+	*nc_p = n;
+	tbl = getbuf( n * sizeof(char *) );
+	*tbl_ptr = tbl;
+	np = QLIST_HEAD(skn_p->skn_children);
+	
+	while(np!=NULL){
+		Spink_Node *child;
+		child = NODE_DATA(np);
+		s = child->skn_name;
+		while( *s && *s != '_' ) s++;
+		assert(*s=='_');
+		s++;	// skip first
+		while( *s && *s != '_' ) s++;
+		assert(*s=='_');
+		s++;	// skip second
+		assert(*s!=0);
+		*tbl = s;
+		tbl++;
+		np = NODE_NEXT(np);
+	}
+}
+
+static void _set_enumeration_node(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	int idx;
+	const char **choices;
+	int n_choices;
+	Spink_Node *child;
+	Node *np;
+	spinNodeHandle hNode;
+
+	make_enumeration_choices(&choices,&n_choices,skn_p);
+	idx = which_one(skn_p->skn_name,n_choices,choices);
+	if( idx < 0 ){
+		givbuf(choices);
+		return;
+	}
+
+	// now find the enum node
+	np = nth_elt(skn_p->skn_children,idx);
+	assert(np!=NULL);
+	child = NODE_DATA(np);
+
+	if( child->skn_enum_val == INVALID_ENUM_VAL )
+		init_enum_val(child);
+	assert( child->skn_enum_val != INVALID_ENUM_VAL );
+
+	fprintf(stderr,"Child node is %s, enum value is %ld\n",child->skn_name,child->skn_enum_val);
+	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
+	if( set_enum_enum_value(hNode,child->skn_enum_val) < 0 )
+		warn("Error setting enum value!?");
+//SPINNAKERC_API spinEnumerationSetEnumValue(spinNodeHandle hNode, size_t value);
+	// EnumerationSetEnumValue
+}
+
 
 
 #define INVALID_PRINT_VALUE_FUNC(name)								\
@@ -1217,11 +1344,23 @@ static void _print_##name##_node_value(QSP_ARG_DECL  Spink_Node *skn_p)				\
 }
 
 
-INVALID_PRINT_VALUE_FUNC(register)
-INVALID_PRINT_VALUE_FUNC(enum_entry)
+//INVALID_PRINT_VALUE_FUNC(register)
+//INVALID_PRINT_VALUE_FUNC(enum_entry)
 INVALID_PRINT_VALUE_FUNC(port)
 INVALID_PRINT_VALUE_FUNC(base)
 INVALID_PRINT_VALUE_FUNC(unknown)
+
+static void _print_register_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	sprintf(MSG_STR,STRING_NODE_FMT_STR,"(unhandled case!?)");
+	prt_msg_frag(MSG_STR);
+}
+
+static void _print_enum_entry_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	sprintf(MSG_STR,STRING_NODE_FMT_STR,"");
+	prt_msg_frag(MSG_STR);
+}
 
 static void _print_category_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
 {
@@ -1375,9 +1514,9 @@ Spink_Node_Type *_find_type_by_code(QSP_ARG_DECL  spinNodeType type)
 
 #define indent(level) _indent(QSP_ARG  level)
 
-static void _indent(QSP_ARG_DECL  unsigned int level)
+static void _indent(QSP_ARG_DECL  int level)
 {
-	unsigned int i = 0;
+	int i = 0;
 
 	for (i = 0; i < level; i++) {
 		prt_msg_frag("   ");
@@ -1426,17 +1565,60 @@ static void _show_rw_status(QSP_ARG_DECL  Spink_Node *skn_p)
 	}
 }
 
+#define MAX_LEVEL	3
+
 void _print_spink_node_info(QSP_ARG_DECL  Spink_Node *skn_p, int level)
 {
 	Spink_Node_Type *snt_p;
 
-	indent(level);
+	//assert(level>0);	// don't print root node
+	indent(level-1);
 	print_display_name(skn_p);
+	indent(MAX_LEVEL-level);
 	snt_p = skn_p->skn_type_p;
 	assert(snt_p!=NULL);
 	print_node_type(snt_p);
 	(*(snt_p->snt_print_value_func))(QSP_ARG  skn_p);
 	show_rw_status(skn_p);
+}
+
+static void _print_node_from_tree(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	if( skn_p->skn_level == 0 ) return;	// don't print root node
+	print_spink_node_info(skn_p,skn_p->skn_level);
+}
+
+#define traverse_node_tree(skn_p, func) _traverse_node_tree(QSP_ARG  skn_p, func)
+
+static void _traverse_node_tree(QSP_ARG_DECL  Spink_Node *skn_p, void (*func)(QSP_ARG_DECL  Spink_Node *))
+{
+	Node *np;
+	Spink_Node *child_p;
+
+	assert(skn_p!=NULL);
+	(*func)(QSP_ARG  skn_p);
+	if( skn_p->skn_children == NULL ) return;
+	np = QLIST_HEAD(skn_p->skn_children);
+	if( np == NULL ) return;
+	while(np!=NULL){
+		child_p = NODE_DATA(np);
+		traverse_node_tree(child_p,func);
+		np = NODE_NEXT(np);
+	}
+}
+
+void _print_map_tree(QSP_ARG_DECL  Spink_Map *skm_p)
+{
+	assert(skm_p!=NULL);
+	assert(skm_p->skm_root_p!=NULL);
+	traverse_node_tree(skm_p->skm_root_p,_print_node_from_tree);
+}
+
+void _print_cat_tree(QSP_ARG_DECL  Spink_Category *sct_p)
+{
+	assert(sct_p!=NULL);
+	assert(sct_p->sct_root_p!=NULL);
+	traverse_node_tree(sct_p->sct_root_p,_print_node_from_tree);
 }
 
 static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
@@ -1446,7 +1628,7 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 	Spink_Node *skn_p;
 	spinNodeType type;
 	int n;
-fprintf(stderr,"register_one_node  level = %d\n",level);
+
 	if( get_node_name(name,&l,hNode) < 0 )
 		error1("register_one_node:  error getting node name!?");
 
@@ -1460,12 +1642,14 @@ fprintf(stderr,"register_one_node  level = %d\n",level);
 		assert(!strcmp(name,"Root"));
 		current_map->skm_root_p = skn_p;
 		skn_p->skn_parent = NULL;
+		skn_p->skn_idx = (-1);	// because no parent
 		//assert(current_parent_p==NULL);
 	} else {
 		int idx;
 		idx=level-1;
 		assert(idx<MAX_TREE_DEPTH);
 		skn_p->skn_parent = current_parent_p[idx];
+		skn_p->skn_idx = current_node_idx;	// set in traverse...
 	}
 	current_parent_p[level] = skn_p;
 
@@ -1485,10 +1669,76 @@ fprintf(stderr,"register_one_node  level = %d\n",level);
 	skn_p->skn_type_p = find_type_by_code(type);
 	assert(skn_p->skn_type_p!=NULL);
 
+	// don't make a category for the root node
+	if( level > 0 && type == CategoryNode ){
+		Spink_Category *sct_p;
+		sct_p = spink_cat_of(skn_p->skn_name);
+		assert(sct_p==NULL); 
+		sct_p = new_spink_cat(skn_p->skn_name);
+		assert(sct_p!=NULL); 
+		sct_p->sct_root_p = skn_p;
+	}
+
+	skn_p->skn_children = NULL;
+	skn_p->skn_level = level;
+	skn_p->skn_enum_val = INVALID_ENUM_VAL;
+
 //fprintf(stderr,"register_one_node:  %s   flags = %d\n",skn_p->skn_name,skn_p->skn_flags);
 
 	//skn_p->skn_handle = hNode;
 	return 0;
+}
+
+// We are duplicating the node tree with our own structures,
+// but it is difficult to link the structs as we build the tree,
+// so we do it after the fact using the parent pointers.
+
+static void add_child_to_parent(Spink_Node *skn_p)
+{
+	Node *np;
+
+	np = mk_node(skn_p);
+	if( skn_p->skn_parent->skn_children == NULL )
+		skn_p->skn_parent->skn_children = new_list();
+	assert( skn_p->skn_parent->skn_children != NULL );
+
+	addHead(skn_p->skn_parent->skn_children,np);
+}
+
+#define build_child_lists() _build_child_lists(SINGLE_QSP_ARG)
+
+static void _build_child_lists(SINGLE_QSP_ARG_DECL)
+{
+	List *lp;
+	Node *np;
+	
+	lp = spink_node_list();
+	assert(lp!=NULL);
+	assert(eltcount(lp)>0);
+
+	np = QLIST_HEAD(lp);
+	while(np!=NULL){
+		Spink_Node *skn_p;
+		skn_p = NODE_DATA(np);
+		if( skn_p->skn_parent != NULL ){
+			add_child_to_parent(skn_p);
+		} else {
+			assert( skn_p->skn_idx == (-1) );	// root node
+		}
+		np = NODE_NEXT(np);
+	}
+}
+
+void _pop_map_contexts(SINGLE_QSP_ARG_DECL)
+{
+	pop_spink_node_context();
+	pop_spink_cat_context();
+}
+
+void _push_map_contexts(QSP_ARG_DECL  Spink_Map *skm_p)
+{
+	push_spink_node_context(skm_p->skm_node_icp);
+	push_spink_cat_context(skm_p->skm_cat_icp);
 }
 
 #define register_map_nodes(hMap,skm_p) _register_map_nodes(QSP_ARG  hMap,skm_p)
@@ -1497,10 +1747,10 @@ static void _register_map_nodes(QSP_ARG_DECL  spinNodeMapHandle hMap, Spink_Map 
 {
 	spinNodeHandle hRoot=NULL;
 
-fprintf(stderr,"register_map_nodes %s BEGIN\n",skm_p->skm_name);
 //fprintf(stderr,"register_map_nodes BEGIN   hMap = 0x%lx\n",(u_long)hMap);
 
-	push_spink_node_context(skm_p->skm_icp);
+	//push_spink_node_context(skm_p->skm_icp);
+	push_map_contexts(skm_p);
 //fprintf(stderr,"register_map_nodes fetching root node   hMap = 0x%lx\n",(u_long)hMap);
 	if( fetch_spink_node(hMap, "Root", &hRoot) < 0 )
 		error1("register_map_nodes:  error fetching map root node");
@@ -1509,33 +1759,43 @@ fprintf(stderr,"register_map_nodes %s BEGIN\n",skm_p->skm_name);
 	current_map = skm_p;
 	//current_parent_p = NULL;
 	skm_p->skm_root_p = NULL;
-	if( traverse_spink_node_tree(hRoot,0,_register_one_node) < 0 )
+	if( traverse_by_node_handle(hRoot,0,_register_one_node) < 0 )
 		error1("error traversing node map");
 	current_map = NULL;
-	pop_spink_node_context();
-fprintf(stderr,"register_map_nodes %s DONE\n",skm_p->skm_name);
+
+	// Do this before popping the context!!!
+	build_child_lists();
+
+	pop_map_contexts();
+
 }
 
 
-#define register_one_nodemap(skc_p, code, name) _register_one_nodemap(QSP_ARG  skc_p, code, name)
+#define register_one_map(skc_p, code, name) _register_one_map(QSP_ARG  skc_p, code, name)
 
-static void _register_one_nodemap(QSP_ARG_DECL  Spink_Cam *skc_p, Node_Map_Type type, const char *name)
+static void _register_one_map(QSP_ARG_DECL  Spink_Cam *skc_p, Node_Map_Type type, const char *name)
 {
 	Spink_Map *skm_p;
 	spinNodeMapHandle hMap = NULL;
 
-//fprintf(stderr,"register_one_nodemap %s BEGIN, type = %d\n",name,type);
+//fprintf(stderr,"register_one_map %s BEGIN, type = %d\n",name,type);
 	insure_current_camera(skc_p);
 	assert( skc_p->skc_current_handle != NULL );
-//fprintf(stderr,"register_one_nodemap:  %s has current handle 0x%lx\n", skc_p->skc_name,(u_long)skc_p->skc_current_handle);
+//fprintf(stderr,"register_one_map:  %s has current handle 0x%lx\n", skc_p->skc_name,(u_long)skc_p->skc_current_handle);
 
 	skm_p = new_spink_map(name);
 	if( skm_p == NULL ) error1("Unable to create map struct!?");
 //fprintf(stderr,"Created new map struct %s at 0x%lx\n", skm_p->skm_name,(u_long)skm_p);
 
+
 	if( spink_node_itp == NULL ) init_spink_nodes();
-	skm_p->skm_icp = create_item_context(spink_node_itp,name);
-	assert(skm_p->skm_icp!=NULL);
+	skm_p->skm_node_icp = create_item_context(spink_node_itp,name);
+	assert(skm_p->skm_node_icp!=NULL);
+
+	if( spink_cat_itp == NULL ) init_spink_cats();
+	skm_p->skm_cat_icp = create_item_context(spink_cat_itp,name);
+	assert(skm_p->skm_cat_icp!=NULL);
+
 	// do we need to push the context too???
 
 	//skm_p->skm_handle = NULL;
@@ -1543,9 +1803,9 @@ static void _register_one_nodemap(QSP_ARG_DECL  Spink_Cam *skc_p, Node_Map_Type 
 	skm_p->skm_skc_p = skc_p;
 
 //	fetch_map_handle(skm_p);
-//fprintf(stderr,"register_one_nodemap calling get_node_map_handle...\n");
-	get_node_map_handle(&hMap,skm_p,"register_one_nodemap");	// first time just sets
-//fprintf(stderr,"register_one_nodemap:  hMap = 0x%lx, *hMap = 0x%lx \n",(u_long)hMap, (u_long)*((void **)hMap));
+//fprintf(stderr,"register_one_map calling get_node_map_handle...\n");
+	get_node_map_handle(&hMap,skm_p,"register_one_map");	// first time just sets
+//fprintf(stderr,"register_one_map:  hMap = 0x%lx, *hMap = 0x%lx \n",(u_long)hMap, (u_long)*((void **)hMap));
 
 	register_map_nodes(hMap,skm_p);
 }
@@ -1557,10 +1817,10 @@ static void _register_cam_nodemaps(QSP_ARG_DECL  Spink_Cam *skc_p)
 //fprintf(stderr,"register_cam_nodemaps BEGIN\n");
 //fprintf(stderr,"register_cam_nodemaps registering device map\n");
 	sprintf(MSG_STR,"%s.device_TL",skc_p->skc_name);
-	register_one_nodemap(skc_p,DEV_NODE_MAP,MSG_STR);
+	register_one_map(skc_p,DEV_NODE_MAP,MSG_STR);
 //fprintf(stderr,"register_cam_nodemaps registering camera map\n");
 	sprintf(MSG_STR,"%s.genicam",skc_p->skc_name);
-	register_one_nodemap(skc_p,CAM_NODE_MAP,MSG_STR);
+	register_one_map(skc_p,CAM_NODE_MAP,MSG_STR);
 //fprintf(stderr,"register_cam_nodemaps DONE\n");
 }
 

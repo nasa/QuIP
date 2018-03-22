@@ -35,6 +35,7 @@
 // a couple of globals...
 extern spinCameraList hCameraList;
 extern size_t numCameras;
+extern int current_node_idx;
 
 // forward declarations
 struct spink_map;
@@ -65,8 +66,14 @@ typedef struct spink_node {
 	const char *		skn_name;
 	struct spink_map *	skn_skm_p;
 	struct spink_node *	skn_parent;
+	int			skn_idx;	// within the parent
+	int			skn_level;	// tree depth
 	int			skn_flags;
 	Spink_Node_Type *	skn_type_p;
+	List *			skn_children;
+	size_t			skn_enum_val;	// only used by enum_entry nodes...
+#define INVALID_ENUM_VAL	0xfedcba
+
 //#ifdef HAVE_LIBSPINNAKER
 //	spinNodeType		skn_type;
 //	// do the handles persist???
@@ -90,6 +97,21 @@ ITEM_INTERFACE_PROTOTYPES(Spink_Node,spink_node)
 #define pick_spink_node(s)	_pick_spink_node(QSP_ARG  s)
 #define spink_node_list()	_spink_node_list(SINGLE_QSP_ARG)
 
+typedef struct spink_cat {
+	const char *	sct_name;
+	Spink_Node *	sct_root_p;
+} Spink_Category;
+
+ITEM_INTERFACE_PROTOTYPES(Spink_Category,spink_cat)
+
+#define new_spink_cat(s)	_new_spink_cat(QSP_ARG  s)
+#define spink_cat_of(s)		_spink_cat_of(QSP_ARG  s)
+#define init_spink_cats()	_init_spink_cats(SINGLE_QSP_ARG)
+#define list_spink_cats(fp)	_list_spink_cats(QSP_ARG  fp)
+#define pick_spink_cat(s)	_pick_spink_cat(QSP_ARG  s)
+#define spink_cat_list()	_spink_cat_list(SINGLE_QSP_ARG)
+
+
 typedef enum {
 	INVALID_NODE_MAP,
 	CAM_NODE_MAP,
@@ -109,7 +131,8 @@ typedef struct spink_map {
 	// do the maps persist?
 	// spinNodeMapHandle	skm_handle;
 #endif // HAVE_LIBSPINNAKER
-	Item_Context *		skm_icp;
+	Item_Context *		skm_node_icp;
+	Item_Context *		skm_cat_icp;
 } Spink_Map;
 
 ITEM_INTERFACE_PROTOTYPES(Spink_Map,spink_map)
@@ -281,8 +304,8 @@ extern int _release_current_camera(SINGLE_QSP_ARG_DECL);
 extern int _get_node_map_handle(QSP_ARG_DECL  spinNodeMapHandle *hMap_p,Spink_Map *skm_p, const char *whence);
 #define get_node_map_handle(hMap_p,skm_p,w) _get_node_map_handle(QSP_ARG  hMap_p,skm_p,w)
 
-extern int _traverse_spink_node_tree(QSP_ARG_DECL  spinNodeHandle hCategoryNode, int level, int (*func)(QSP_ARG_DECL spinNodeHandle hNode, int level) );
-#define traverse_spink_node_tree(hCategoryNode, level, func ) _traverse_spink_node_tree(QSP_ARG  hCategoryNode, level, func )
+extern int _traverse_by_node_handle(QSP_ARG_DECL  spinNodeHandle hCategoryNode, int level, int (*func)(QSP_ARG_DECL spinNodeHandle hNode, int level) );
+#define traverse_by_node_handle(hCategoryNode, level, func ) _traverse_by_node_handle(QSP_ARG  hCategoryNode, level, func )
 
 extern int _print_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p);
 #define print_camera_nodes(skc_p) _print_camera_nodes(QSP_ARG  skc_p)
@@ -323,6 +346,16 @@ extern int _spink_test_acq(QSP_ARG_DECL  Spink_Cam *skc_p);
 
 // spink_util.c
 
+extern void _pop_map_contexts(SINGLE_QSP_ARG_DECL);
+extern void _push_map_contexts(QSP_ARG_DECL  Spink_Map *skm_p);
+#define pop_map_contexts() _pop_map_contexts(SINGLE_QSP_ARG)
+#define push_map_contexts(skm_p) _push_map_contexts(QSP_ARG  skm_p)
+
+extern void _print_map_tree(QSP_ARG_DECL  Spink_Map *skm_p);
+#define print_map_tree(skm_p) _print_map_tree(QSP_ARG  skm_p)
+
+extern void _print_cat_tree(QSP_ARG_DECL  Spink_Category *sct_p);
+#define print_cat_tree(sct_p) _print_cat_tree(QSP_ARG  sct_p)
 
 extern Spink_Node_Type *_find_type_by_code(QSP_ARG_DECL  spinNodeType type);
 #define find_type_by_code(type) _find_type_by_code(QSP_ARG  type)
@@ -331,6 +364,11 @@ extern Item_Context * _pop_spink_node_context(SINGLE_QSP_ARG_DECL);
 extern void _push_spink_node_context(QSP_ARG_DECL  Item_Context *icp);
 #define pop_spink_node_context() _pop_spink_node_context(SINGLE_QSP_ARG)
 #define push_spink_node_context(icp) _push_spink_node_context(QSP_ARG  icp)
+
+extern Item_Context * _pop_spink_cat_context(SINGLE_QSP_ARG_DECL);
+extern void _push_spink_cat_context(QSP_ARG_DECL  Item_Context *icp);
+#define pop_spink_cat_context() _pop_spink_cat_context(SINGLE_QSP_ARG)
+#define push_spink_cat_context(icp) _push_spink_cat_context(QSP_ARG  icp)
 
 extern void _release_spink_cam_system(SINGLE_QSP_ARG_DECL);
 #define release_spink_cam_system() _release_spink_cam_system(SINGLE_QSP_ARG)
