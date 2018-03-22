@@ -112,6 +112,21 @@ ITEM_INTERFACE_PROTOTYPES(Spink_Category,spink_cat)
 #define spink_cat_list()	_spink_cat_list(SINGLE_QSP_ARG)
 
 
+typedef struct spink_enum_val {
+	const char *	sev_name;
+	size_t		sev_value;
+} Spink_Enum_Val;
+
+ITEM_INTERFACE_PROTOTYPES(Spink_Enum_Val,spink_enum_val)
+
+#define new_spink_enum_val(s)		_new_spink_enum_val(QSP_ARG  s)
+#define spink_enum_val_of(s)		_spink_enum_val_of(QSP_ARG  s)
+#define init_spink_enum_vals()		_init_spink_enum_vals(SINGLE_QSP_ARG)
+#define list_spink_enum_vals(fp)	_list_spink_enum_vals(QSP_ARG  fp)
+#define pick_spink_enum_val(s)		_pick_spink_enum_val(QSP_ARG  s)
+#define spink_enum_val_list()		_spink_enum_val_list(SINGLE_QSP_ARG)
+
+
 typedef enum {
 	INVALID_NODE_MAP,
 	CAM_NODE_MAP,
