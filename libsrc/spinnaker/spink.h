@@ -71,8 +71,9 @@ typedef struct spink_node {
 	int			skn_flags;
 	Spink_Node_Type *	skn_type_p;
 	List *			skn_children;
-	size_t			skn_enum_val;	// only used by enum_entry nodes...
-#define INVALID_ENUM_VAL	0xfedcba
+	// We tried using enum values instead of int values, but not all nodes support that...
+	int64_t			skn_enum_ival;	// only used by enum_entry nodes...
+#define INVALID_ENUM_INT_VALUE	(-1)
 
 //#ifdef HAVE_LIBSPINNAKER
 //	spinNodeType		skn_type;

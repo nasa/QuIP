@@ -12,7 +12,7 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #include "spink_wrappers.c"
 
 // three arg macros
-#define get_enumeration_entry_by_name(a,b,c) _get_enumeration_entry_by_name(QSP_ARG  a,b,c)
+#define get_enum_entry_by_name(a,b,c) _get_enum_entry_by_name(QSP_ARG  a,b,c)
 #define convert_spink_image(a,b,c) _convert_spink_image(QSP_ARG  a,b,c)
 #define fetch_spink_node(a,b,c) _fetch_spink_node(QSP_ARG  a,b,c)
 #define spink_get_string(a,b,c) _spink_get_string(QSP_ARG  a,b,c)
@@ -28,9 +28,20 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #define get_enum_entry_by_index(a,b,c) _get_enum_entry_by_index(QSP_ARG  a,b,c)
 
 // two arg macros
+#define command_is_done(a,b) _command_is_done(QSP_ARG  a,b)
+#define set_node_value_string(a,b) _set_node_value_string(QSP_ARG  a,b)
+#define set_node_value_int(a,b) _set_node_value_int(QSP_ARG  a,b)
+#define set_node_value_bool(a,b) _set_node_value_bool(QSP_ARG  a,b)
+#define get_node_min_value_int(a,b) _get_node_min_value_int(QSP_ARG  a,b)
+#define get_node_max_value_int(a,b) _get_node_max_value_int(QSP_ARG  a,b)
+#define get_node_min_value_float(a,b) _get_node_min_value_float(QSP_ARG  a,b)
+#define get_node_max_value_float(a,b) _get_node_max_value_float(QSP_ARG  a,b)
+#define set_node_value_float(a,b) _set_node_value_float(QSP_ARG  a,b)
+#define get_enum_enum_value(a,b) _get_enum_enum_value(QSP_ARG  a,b)
+#define get_enum_int_value(a,b) _get_enum_int_value(QSP_ARG  a,b)
 #define set_enum_enum_value(a,b) _set_enum_enum_value(QSP_ARG  a,b)
-#define get_enumeration_int_val(a,b) _get_enumeration_int_val(QSP_ARG  a,b)
-#define set_enumeration_int_val(a,b) _set_enumeration_int_val(QSP_ARG  a,b)
+#define get_enum_int_val(a,b) _get_enum_int_val(QSP_ARG  a,b)
+#define set_enum_int_val(a,b) _set_enum_int_val(QSP_ARG  a,b)
 #define get_next_image(a,b) _get_next_image(QSP_ARG  a,b)
 #define image_is_incomplete(a,b) _image_is_incomplete(QSP_ARG  a,b)
 #define get_image_status(a,b) _get_image_status(QSP_ARG  a,b)
@@ -59,6 +70,7 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #define get_camera_node_map(a,b) _get_camera_node_map(QSP_ARG  a,b)
 
 // one arg funcs
+#define exec_spink_command(a) _exec_spink_command(QSP_ARG  a)
 #define release_spink_image(a) _release_spink_image(QSP_ARG  a)
 #define create_empty_image(a) _create_empty_image(QSP_ARG  a)
 #define destroy_spink_image(a) _destroy_spink_image(QSP_ARG  a)

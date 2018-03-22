@@ -184,7 +184,7 @@ static int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
 		return -1;
 	}
 
-	if( get_enumeration_entry_by_name(hAcquisitionMode,"Continuous", &hAcquisitionModeContinuous) < 0 ){
+	if( get_enum_entry_by_name(hAcquisitionMode,"Continuous", &hAcquisitionModeContinuous) < 0 ){
 		warn("set_acquisition_continuous:  error getting enumeration entry by name!?");
 		return -1;
 	}
@@ -198,7 +198,7 @@ static int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
 		return -1;
 	}
 
-	if( get_enumeration_int_val(hAcquisitionModeContinuous,&acquisitionModeContinuous) < 0 ){
+	if( get_enum_int_val(hAcquisitionModeContinuous,&acquisitionModeContinuous) < 0 ){
 		warn("set_acquisition_continuous:  error getting enumeration int val!?");
 		return -1;
 	}
@@ -209,7 +209,7 @@ static int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
 	}
 
 	// Set integer as new value of enumeration node
-	if( set_enumeration_int_val(hAcquisitionMode,acquisitionModeContinuous) < 0 ) {
+	if( set_enum_int_val(hAcquisitionMode,acquisitionModeContinuous) < 0 ) {
 		warn("set_acquisition_continuous:  error setting enumeration int val!?");
 		return -1;
 	}

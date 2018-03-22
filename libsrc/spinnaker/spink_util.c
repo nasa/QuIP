@@ -43,7 +43,6 @@ ITEM_INTERFACE_DECLARATIONS(Spink_Map,spink_map,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Node,spink_node,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Node_Type,spink_node_type,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Category,spink_cat,RB_TREE_CONTAINER)
-ITEM_INTERFACE_DECLARATIONS(Spink_Enum_Val,spink_enum_val,RB_TREE_CONTAINER)
 
 #define UNIMP_FUNC(name)						\
 	sprintf(ERROR_STRING,"Function %s is not implemented!?",name);	\
@@ -1214,55 +1213,137 @@ INVALID_SET_FUNC(register)
 INVALID_SET_FUNC(port)
 INVALID_SET_FUNC(base)
 INVALID_SET_FUNC(unknown)
-INVALID_SET_FUNC(command)
 INVALID_SET_FUNC(enum_entry)
 
 // These need to be implemented...
 INVALID_SET_FUNC(value)
-INVALID_SET_FUNC(string)
-INVALID_SET_FUNC(integer)
-INVALID_SET_FUNC(float)
-INVALID_SET_FUNC(boolean)
-//INVALID_SET_FUNC(enumeration)
 
+//get_node_max_value_float		FloatGetMax
+//get_node_max_value_int		IntegerGetMax
+//set_node_value_float		FloatSetValue
+//set_node_value_int		IntegerSetValue
+//set_node_value_string		StringSetValue
 
-#define init_enum_val(skn_p) _init_enum_val(QSP_ARG  skn_p)
+//set_node_value_string		StringSetValue
 
-static void _init_enum_val(QSP_ARG_DECL  Spink_Node *skn_p)
+//command_is_done		CommandIsDone
+//exec_spink_command		CommandExecute
+static void _set_command_node(QSP_ARG_DECL  Spink_Node *skn_p)
 {
-	char *s, *copy;
-	const char *enum_name, *entry_name;
+	spinNodeHandle hNode;
+	bool8_t done;
 
-	// copy the name to break it up into components
-	s=copy=(char *)savestr(skn_p->skn_name);
-	while( *s && *s!='_' ) s++;
-	assert(*s=='_');
-	s++;
-	assert(*s!=0);
-	enum_name = s;
-	while( *s && *s!='_' ) s++;
-	assert(*s=='_');
-	*s = 0;
-	s++;
-	assert(*s!=0);
-	entry_name = s;
-fprintf(stderr,"enum = %s     entry = %s\n",enum_name,entry_name);
-	if( !strcmp(enum_name,"GainAuto") ){
-		if( !strcmp(entry_name,"Once") ){
-			skn_p->skn_enum_val = GainAuto_Once;
-		} else if( !strcmp(entry_name,"Off") ){
-			skn_p->skn_enum_val = GainAuto_Off;
-		} else if( !strcmp(entry_name,"Continuous") ){
-			skn_p->skn_enum_val = GainAuto_Continuous;
-		} else {
-			sprintf(ERROR_STRING,"init_enum_val:  Unhandled entry %s, enumeration %s",entry_name,enum_name);
-			warn(ERROR_STRING);
-		}
-	} else {
-		sprintf(ERROR_STRING,"init_enum_val:  Unhandled enumeration %s",enum_name);
+	assert(skn_p->skn_type_p->snt_type == CommandNode);
+
+fprintf(stderr,"executing %s\n",skn_p->skn_name);
+	if( lookup_spink_node(skn_p, &hNode) < 0 || exec_spink_command(hNode) < 0 ){
+		sprintf(ERROR_STRING,"Error executing %s",skn_p->skn_name);
+		warn(ERROR_STRING);
+	}
+	// wait here for command to finish
+	do {
+fprintf(stderr,"checking to see if %s has finished...\n",skn_p->skn_name);
+		if( command_is_done(hNode,&done) < 0 ) return;
+	} while( ! done );
+}
+
+static void _set_string_node(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	spinNodeHandle hNode;
+	const char *s;
+
+	assert(skn_p->skn_type_p->snt_type == StringNode);
+
+	s = nameof(skn_p->skn_name);
+
+	// Does StringSetValue make a deep copy???  If not, we need to save the string before passing!?
+	if( lookup_spink_node(skn_p, &hNode) < 0 || set_node_value_string(hNode,s) < 0 ){
+		sprintf(ERROR_STRING,"Error setting %s",skn_p->skn_name);
 		warn(ERROR_STRING);
 	}
 }
+
+#define get_float_range(skn_p, min_p, max_p) _get_float_range(QSP_ARG  skn_p, min_p, max_p)
+
+static void _get_float_range(QSP_ARG_DECL  Spink_Node *skn_p, double *min_p, double *max_p)
+{
+	spinNodeHandle hNode;
+
+	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
+	if( get_node_min_value_float(hNode,min_p) < 0 ) return;
+	if( get_node_max_value_float(hNode,max_p) < 0 ) return;
+}
+
+#define get_int_range(skn_p, min_p, max_p) _get_int_range(QSP_ARG  skn_p, min_p, max_p)
+
+static void _get_int_range(QSP_ARG_DECL  Spink_Node *skn_p, int64_t *min_p, int64_t *max_p)
+{
+	spinNodeHandle hNode;
+
+	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
+	if( get_node_min_value_int(hNode,min_p) < 0 ) return;
+	if( get_node_max_value_int(hNode,max_p) < 0 ) return;
+}
+
+static void _set_float_node(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	double minv, maxv;
+	double dval;
+	char pmpt[LLEN];
+	spinNodeHandle hNode;
+
+	assert(skn_p->skn_type_p->snt_type == FloatNode);
+
+	get_float_range(skn_p,&minv,&maxv);
+	sprintf(pmpt,"%s (%g-%g)",skn_p->skn_name,minv,maxv);
+	dval = how_much(pmpt);
+
+	if( lookup_spink_node(skn_p, &hNode) < 0 || set_node_value_float(hNode,dval) < 0 ){
+		sprintf(ERROR_STRING,"Error setting %s",skn_p->skn_name);
+		warn(ERROR_STRING);
+	}
+}
+
+static void _set_integer_node(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	int64_t minv, maxv;
+	int64_t ival;
+	char pmpt[LLEN];
+	spinNodeHandle hNode;
+
+	assert(skn_p->skn_type_p->snt_type == IntegerNode);
+
+	get_int_range(skn_p,&minv,&maxv);
+	sprintf(pmpt,"%s (%ld-%ld)",skn_p->skn_name,minv,maxv);
+	ival = how_many(pmpt);
+
+	if( lookup_spink_node(skn_p, &hNode) < 0 || set_node_value_int(hNode,ival) < 0 ){
+		sprintf(ERROR_STRING,"Error setting %s",skn_p->skn_name);
+		warn(ERROR_STRING);
+	}
+}
+
+// set_node_value_bool		BooleanSetValue
+static void _set_boolean_node(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	char pmpt[LLEN];
+	spinNodeHandle hNode;
+	bool8_t flag;
+
+	assert(skn_p->skn_type_p->snt_type == BooleanNode);
+	
+	sprintf(pmpt,"%s",skn_p->skn_name);
+	if( askif(pmpt) )
+		flag = TRUE;
+	else
+		flag = FALSE;
+
+	if( lookup_spink_node(skn_p, &hNode) < 0 || set_node_value_bool(hNode,flag) < 0 ){
+		sprintf(ERROR_STRING,"Error setting %s",skn_p->skn_name);
+		warn(ERROR_STRING);
+	}
+}
+
 
 // The enumeration entry nodes have names like EnumerationEntry_GainAuto_Once - but we
 // want to make the choice be "Once", so we skip ahead past the second underscore...
@@ -1323,13 +1404,10 @@ static void _set_enumeration_node(QSP_ARG_DECL  Spink_Node *skn_p)
 	assert(np!=NULL);
 	child = NODE_DATA(np);
 
-	if( child->skn_enum_val == INVALID_ENUM_VAL )
-		init_enum_val(child);
-	assert( child->skn_enum_val != INVALID_ENUM_VAL );
+	assert( child->skn_enum_ival != INVALID_ENUM_INT_VALUE );
 
-	fprintf(stderr,"Child node is %s, enum value is %ld\n",child->skn_name,child->skn_enum_val);
 	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
-	if( set_enum_enum_value(hNode,child->skn_enum_val) < 0 )
+	if( set_enum_int_val(hNode,child->skn_enum_ival) < 0 )
 		warn("Error setting enum value!?");
 //SPINNAKERC_API spinEnumerationSetEnumValue(spinNodeHandle hNode, size_t value);
 	// EnumerationSetEnumValue
@@ -1622,693 +1700,6 @@ void _print_cat_tree(QSP_ARG_DECL  Spink_Category *sct_p)
 	traverse_node_tree(sct_p->sct_root_p,_print_node_from_tree);
 }
 
-#define init_enums() _init_enums(SINGLE_QSP_ARG)
-
-#define ADD_ENUM_VAL(group,value)						\
-	sev_p = new_spink_enum_val("EnumerationEntry_" #group "_" #value);	\
-	assert(sev_p!=NULL);							\
-	sev_p->sev_value = group##_##value;
-
-static int enums_inited=0;
-
-static void _init_enums(SINGLE_QSP_ARG_DECL)
-{
-	Spink_Enum_Val *sev_p;
-
-
-//ADD_ENUM_VAL(AcquisitionFrameRateAuto,Continuous)
-//ADD_ENUM_VAL(AcquisitionFrameRateAuto,Off)
-ADD_ENUM_VAL(AcquisitionMode,Continuous)
-ADD_ENUM_VAL(AcquisitionMode,MultiFrame)
-ADD_ENUM_VAL(AcquisitionMode,SingleFrame)
-ADD_ENUM_VAL(AdcBitDepth,Bit10)
-ADD_ENUM_VAL(AutoAlgorithmSelector,Ae)
-ADD_ENUM_VAL(AutoAlgorithmSelector,Awb)
-ADD_ENUM_VAL(AutoExposureControlPriority,ExposureTime)
-ADD_ENUM_VAL(AutoExposureControlPriority,Gain)
-ADD_ENUM_VAL(AutoExposureLightingMode,Backlight)
-ADD_ENUM_VAL(AutoExposureLightingMode,Frontlight)
-ADD_ENUM_VAL(AutoExposureLightingMode,Normal)
-ADD_ENUM_VAL(AutoExposureMeteringMode,Average)
-ADD_ENUM_VAL(AutoExposureMeteringMode,Partial)
-ADD_ENUM_VAL(AutoExposureMeteringMode,Spot)
-ADD_ENUM_VAL(AutoExposureTargetGreyValueAuto,Continuous)
-ADD_ENUM_VAL(AutoExposureTargetGreyValueAuto,Off)
-ADD_ENUM_VAL(BinningHorizontalMode,Average)
-ADD_ENUM_VAL(BinningHorizontalMode,Sum)
-ADD_ENUM_VAL(BinningSelector,All)
-ADD_ENUM_VAL(BinningSelector,ISP)
-ADD_ENUM_VAL(BinningSelector,Sensor)
-ADD_ENUM_VAL(BinningVerticalMode,Average)
-ADD_ENUM_VAL(BinningVerticalMode,Sum)
-ADD_ENUM_VAL(BlackLevelSelector,All)
-ADD_ENUM_VAL(BlackLevelSelector,Analog)
-ADD_ENUM_VAL(BlackLevelSelector,Digital)
-//ADD_ENUM_VAL(ChunkBlackLevelSelector,Off)
-//ADD_ENUM_VAL(ChunkGainSelector,Counter0)
-//ADD_ENUM_VAL(ChunkGainSelector,Counter1)
-//ADD_ENUM_VAL(ChunkGainSelector,Off)
-//ADD_ENUM_VAL(ChunkGainSelector,On)
-//ADD_ENUM_VAL(ChunkSelector,All)
-ADD_ENUM_VAL(ChunkSelector,BlackLevel)
-//ADD_ENUM_VAL(ChunkSelector,Blue)
-ADD_ENUM_VAL(ChunkSelector,CRC)
-//ADD_ENUM_VAL(ChunkSelector,Error)
-//ADD_ENUM_VAL(ChunkSelector,ExposureEnd)
-ADD_ENUM_VAL(ChunkSelector,ExposureTime)
-//ADD_ENUM_VAL(ChunkSelector,FrameCounter)
-ADD_ENUM_VAL(ChunkSelector,Gain)
-//ADD_ENUM_VAL(ChunkSelector,Green)
-ADD_ENUM_VAL(ChunkSelector,Height)
-ADD_ENUM_VAL(ChunkSelector,Image)
-//ADD_ENUM_VAL(ChunkSelector,LUT1)
-ADD_ENUM_VAL(ChunkSelector,OffsetX)
-ADD_ENUM_VAL(ChunkSelector,OffsetY)
-ADD_ENUM_VAL(ChunkSelector,PixelFormat)
-//ADD_ENUM_VAL(ChunkSelector,Red)
-ADD_ENUM_VAL(ChunkSelector,SequencerSetActive)
-ADD_ENUM_VAL(ChunkSelector,Timestamp)
-ADD_ENUM_VAL(ChunkSelector,Width)
-ADD_ENUM_VAL(CounterEventSource,Counter0End)
-ADD_ENUM_VAL(CounterEventSource,Counter0Start)
-ADD_ENUM_VAL(CounterEventSource,Counter1End)
-ADD_ENUM_VAL(CounterEventSource,Counter1Start)
-ADD_ENUM_VAL(CounterEventSource,ExposureEnd)
-ADD_ENUM_VAL(CounterEventSource,ExposureStart)
-ADD_ENUM_VAL(CounterEventSource,FrameTriggerWait)
-ADD_ENUM_VAL(CounterEventSource,Line0)
-ADD_ENUM_VAL(CounterEventSource,Line2)
-ADD_ENUM_VAL(CounterEventSource,Line3)
-ADD_ENUM_VAL(CounterEventSource,LogicBlock0)
-ADD_ENUM_VAL(CounterEventSource,LogicBlock1)
-ADD_ENUM_VAL(CounterEventSource,Off)
-ADD_ENUM_VAL(CounterEventSource,UserOutput0)
-ADD_ENUM_VAL(CounterEventSource,UserOutput1)
-ADD_ENUM_VAL(CounterEventSource,UserOutput2)
-ADD_ENUM_VAL(CounterEventSource,UserOutput3)
-//ADD_ENUM_VAL(CounterSelector,UserOutput1)
-//ADD_ENUM_VAL(CounterSelector,UserOutput2)
-//ADD_ENUM_VAL(CounterStatus,Enable)
-//ADD_ENUM_VAL(CounterStatus,Input0)
-//ADD_ENUM_VAL(CounterStatus,Input1)
-//ADD_ENUM_VAL(CounterStatus,Input2)
-//ADD_ENUM_VAL(CounterStatus,Zero)
-//ADD_ENUM_VAL(CounterTriggerActivation,CounterCompleted)
-//ADD_ENUM_VAL(CounterTriggerActivation,CounterOverflow)
-//ADD_ENUM_VAL(CounterTriggerActivation,LogicBlock0)
-//ADD_ENUM_VAL(CounterTriggerActivation,LogicBlock1)
-//ADD_ENUM_VAL(CounterTriggerActivation,Value)
-//ADD_ENUM_VAL(CounterTriggerSource,AnyEdge)
-ADD_ENUM_VAL(CounterTriggerSource,Counter0End)
-ADD_ENUM_VAL(CounterTriggerSource,Counter0Start)
-ADD_ENUM_VAL(CounterTriggerSource,Counter1End)
-ADD_ENUM_VAL(CounterTriggerSource,Counter1Start)
-//ADD_ENUM_VAL(CounterTriggerSource,CounterActive)
-//ADD_ENUM_VAL(CounterTriggerSource,CounterIdle)
-//ADD_ENUM_VAL(CounterTriggerSource,CounterTriggerWait)
-ADD_ENUM_VAL(CounterTriggerSource,ExposureEnd)
-ADD_ENUM_VAL(CounterTriggerSource,ExposureStart)
-//ADD_ENUM_VAL(CounterTriggerSource,FallingEdge)
-ADD_ENUM_VAL(CounterTriggerSource,FrameTriggerWait)
-//ADD_ENUM_VAL(CounterTriggerSource,LevelHigh)
-//ADD_ENUM_VAL(CounterTriggerSource,LevelLow)
-ADD_ENUM_VAL(CounterTriggerSource,LogicBlock0)
-ADD_ENUM_VAL(CounterTriggerSource,LogicBlock1)
-//ADD_ENUM_VAL(CounterTriggerSource,RisingEdge)
-ADD_ENUM_VAL(DecimationHorizontalMode,Discard)
-ADD_ENUM_VAL(DecimationSelector,All)
-ADD_ENUM_VAL(DecimationSelector,Sensor)
-ADD_ENUM_VAL(DecimationVerticalMode,Discard)
-//ADD_ENUM_VAL(DefectCorrectionMode,Average)
-//ADD_ENUM_VAL(DefectCorrectionMode,Highlight)
-ADD_ENUM_VAL(DeviceAccessStatus,NoAccess)
-ADD_ENUM_VAL(DeviceAccessStatus,ReadOnly)
-ADD_ENUM_VAL(DeviceAccessStatus,ReadWrite)
-ADD_ENUM_VAL(DeviceAccessStatus,Unknown)
-ADD_ENUM_VAL(DeviceCurrentSpeed,FullSpeed)
-ADD_ENUM_VAL(DeviceCurrentSpeed,HighSpeed)
-ADD_ENUM_VAL(DeviceCurrentSpeed,LowSpeed)
-ADD_ENUM_VAL(DeviceCurrentSpeed,SuperSpeed)
-ADD_ENUM_VAL(DeviceCurrentSpeed,UnknownSpeed)
-ADD_ENUM_VAL(DeviceEndianessMechanism,Legacy)
-ADD_ENUM_VAL(DeviceEndianessMechanism,Standard)
-ADD_ENUM_VAL(DeviceIndicatorMode,Active)
-ADD_ENUM_VAL(DeviceIndicatorMode,ErrorStatus)
-ADD_ENUM_VAL(DeviceIndicatorMode,Inactive)
-ADD_ENUM_VAL(DevicePowerSupplySelector,External)
-ADD_ENUM_VAL(DeviceScanType,Areascan)
-ADD_ENUM_VAL(DeviceTLType,CameraLink)
-ADD_ENUM_VAL(DeviceTLType,CameraLinkHS)
-ADD_ENUM_VAL(DeviceTLType,CoaXPress)
-ADD_ENUM_VAL(DeviceTLType,Custom)
-ADD_ENUM_VAL(DeviceTLType,GigEVision)
-ADD_ENUM_VAL(DeviceTLType,USB3Vision)
-ADD_ENUM_VAL(DeviceType,CL)
-ADD_ENUM_VAL(DeviceType,CLHS)
-ADD_ENUM_VAL(DeviceType,Custom)
-ADD_ENUM_VAL(DeviceType,CXP)
-ADD_ENUM_VAL(DeviceType,ETHERNET)
-ADD_ENUM_VAL(DeviceType,GEV)
-ADD_ENUM_VAL(DeviceType,IIDC)
-ADD_ENUM_VAL(DeviceType,Mixed)
-ADD_ENUM_VAL(DeviceType,PCI)
-ADD_ENUM_VAL(DeviceType,U3V)
-ADD_ENUM_VAL(DeviceType,UVC)
-//ADD_ENUM_VAL(EventNotification,Line3)
-//ADD_ENUM_VAL(EventNotification,UserOutput0)
-//ADD_ENUM_VAL(EventSelector,Line0)
-//ADD_ENUM_VAL(EventSelector,Line2)
-ADD_ENUM_VAL(ExposureAuto,Continuous)
-ADD_ENUM_VAL(ExposureAuto,Off)
-ADD_ENUM_VAL(ExposureAuto,Once)
-ADD_ENUM_VAL(ExposureMode,Timed)
-ADD_ENUM_VAL(ExposureMode,TriggerWidth)
-//ADD_ENUM_VAL(FfcMode,Calibration)
-//ADD_ENUM_VAL(FfcMode,Factory)
-//ADD_ENUM_VAL(FfcMode,User)
-//ADD_ENUM_VAL(FileOpenMode,)
-//ADD_ENUM_VAL(FileOperationSelector,Automatic)
-//ADD_ENUM_VAL(FileOperationSelector,Basic)
-//ADD_ENUM_VAL(FileOperationSelector,Failure)
-//ADD_ENUM_VAL(FileOperationSelector,Success)
-//ADD_ENUM_VAL(FileOperationSelector,UserControlled)
-//ADD_ENUM_VAL(FileOperationStatus,)
-//ADD_ENUM_VAL(FileSelector,Delete)
-//ADD_ENUM_VAL(FileSelector,Read)
-//ADD_ENUM_VAL(FileSelector,ReadWrite)
-//ADD_ENUM_VAL(FileSelector,Write)
-ADD_ENUM_VAL(GainAuto,Continuous)
-ADD_ENUM_VAL(GainAuto,Off)
-ADD_ENUM_VAL(GainAuto,Once)
-ADD_ENUM_VAL(GainSelector,All)
-ADD_ENUM_VAL(GenICamXMLLocation,Device)
-ADD_ENUM_VAL(GenICamXMLLocation,Host)
-ADD_ENUM_VAL(GUIXMLLocation,Device)
-ADD_ENUM_VAL(GUIXMLLocation,Host)
-//ADD_ENUM_VAL(LineFormat,UserFile1)
-//ADD_ENUM_VAL(LineInputFilterSelector,UserSet0)
-//ADD_ENUM_VAL(LineInputFilterSelector,UserSetDefault)
-ADD_ENUM_VAL(LineMode,Input)
-//ADD_ENUM_VAL(LineMode,Trigger)
-//ADD_ENUM_VAL(LineMode,UserOutput3)
-ADD_ENUM_VAL(LineSelector,Line0)
-ADD_ENUM_VAL(LineSelector,Line1)
-ADD_ENUM_VAL(LineSelector,Line2)
-ADD_ENUM_VAL(LineSelector,Line3)
-//ADD_ENUM_VAL(LineSelector,OptoCoupled)
-//ADD_ENUM_VAL(LineSelector,UserOutput0)
-//ADD_ENUM_VAL(LineSelector,UserOutput1)
-//ADD_ENUM_VAL(LineSelector,UserOutput2)
-//ADD_ENUM_VAL(LineSource,UserSet1)
-//ADD_ENUM_VAL(LogicBlockLUTInputActivation,Debounce)
-//ADD_ENUM_VAL(LogicBlockLUTInputActivation,Deglitch)
-//ADD_ENUM_VAL(LogicBlockLUTInputActivation,Input)
-//ADD_ENUM_VAL(LogicBlockLUTInputActivation,Line3)
-//ADD_ENUM_VAL(LogicBlockLUTInputActivation,Off)
-//ADD_ENUM_VAL(LogicBlockLUTInputSelector,UserOutput1)
-//ADD_ENUM_VAL(LogicBlockLUTInputSelector,UserOutput2)
-//ADD_ENUM_VAL(LogicBlockLUTInputSelector,UserOutput3)
-ADD_ENUM_VAL(LogicBlockLUTInputSource,AcquisitionActive)
-//ADD_ENUM_VAL(LogicBlockLUTInputSource,AnyEdge)
-ADD_ENUM_VAL(LogicBlockLUTInputSource,Counter0End)
-ADD_ENUM_VAL(LogicBlockLUTInputSource,Counter0Start)
-ADD_ENUM_VAL(LogicBlockLUTInputSource,Counter1End)
-ADD_ENUM_VAL(LogicBlockLUTInputSource,Counter1Start)
-ADD_ENUM_VAL(LogicBlockLUTInputSource,ExposureEnd)
-ADD_ENUM_VAL(LogicBlockLUTInputSource,ExposureStart)
-//ADD_ENUM_VAL(LogicBlockLUTInputSource,FallingEdge)
-ADD_ENUM_VAL(LogicBlockLUTInputSource,FrameTriggerWait)
-//ADD_ENUM_VAL(LogicBlockLUTInputSource,LevelHigh)
-//ADD_ENUM_VAL(LogicBlockLUTInputSource,LevelLow)
-ADD_ENUM_VAL(LogicBlockLUTInputSource,Line0)
-ADD_ENUM_VAL(LogicBlockLUTInputSource,Line1)
-ADD_ENUM_VAL(LogicBlockLUTInputSource,Line2)
-ADD_ENUM_VAL(LogicBlockLUTInputSource,LogicBlock0)
-ADD_ENUM_VAL(LogicBlockLUTInputSource,LogicBlock1)
-//ADD_ENUM_VAL(LogicBlockLUTInputSource,RisingEdge)
-//ADD_ENUM_VAL(LogicBlockLUTSelector,Line3)
-//ADD_ENUM_VAL(LogicBlockLUTSelector,UserOutput0)
-//ADD_ENUM_VAL(LogicBlockSelector,Line0)
-//ADD_ENUM_VAL(LogicBlockSelector,Line2)
-//ADD_ENUM_VAL(LUTSelector,MHzTick)
-//ADD_ENUM_VAL(PixelCoding,Mono)
-//ADD_ENUM_VAL(PixelCoding,MonoSigned)
-//ADD_ENUM_VAL(PixelCoding,Raw)
-//ADD_ENUM_VAL(PixelCoding,RGBPacked)
-//ADD_ENUM_VAL(PixelCoding,YUV411Packed)
-//ADD_ENUM_VAL(PixelCoding,YUV422Packed)
-//ADD_ENUM_VAL(PixelCoding,YUV444Packed)
-ADD_ENUM_VAL(PixelColorFilter,BayerBG)
-ADD_ENUM_VAL(PixelColorFilter,BayerGB)
-ADD_ENUM_VAL(PixelColorFilter,BayerGR)
-ADD_ENUM_VAL(PixelColorFilter,BayerRG)
-ADD_ENUM_VAL(PixelColorFilter,None)
-ADD_ENUM_VAL(PixelFormat,Mono12p)
-ADD_ENUM_VAL(PixelFormat,Mono12Packed)
-ADD_ENUM_VAL(PixelFormat,Mono16)
-ADD_ENUM_VAL(PixelFormat,Mono8)
-ADD_ENUM_VAL(PixelSize,Bpp1)
-ADD_ENUM_VAL(PixelSize,Bpp10)
-ADD_ENUM_VAL(PixelSize,Bpp12)
-ADD_ENUM_VAL(PixelSize,Bpp14)
-ADD_ENUM_VAL(PixelSize,Bpp16)
-ADD_ENUM_VAL(PixelSize,Bpp2)
-ADD_ENUM_VAL(PixelSize,Bpp20)
-ADD_ENUM_VAL(PixelSize,Bpp24)
-ADD_ENUM_VAL(PixelSize,Bpp30)
-ADD_ENUM_VAL(PixelSize,Bpp32)
-ADD_ENUM_VAL(PixelSize,Bpp36)
-ADD_ENUM_VAL(PixelSize,Bpp4)
-ADD_ENUM_VAL(PixelSize,Bpp48)
-ADD_ENUM_VAL(PixelSize,Bpp64)
-ADD_ENUM_VAL(PixelSize,Bpp8)
-ADD_ENUM_VAL(PixelSize,Bpp96)
-ADD_ENUM_VAL(SensorShutterMode,Global)
-ADD_ENUM_VAL(SequencerConfigurationMode,Off)
-ADD_ENUM_VAL(SequencerConfigurationMode,On)
-ADD_ENUM_VAL(SequencerConfigurationValid,No)
-ADD_ENUM_VAL(SequencerConfigurationValid,Yes)
-ADD_ENUM_VAL(SequencerFeatureSelector,ExposureTime)
-ADD_ENUM_VAL(SequencerFeatureSelector,Gain)
-ADD_ENUM_VAL(SequencerFeatureSelector,Height)
-ADD_ENUM_VAL(SequencerFeatureSelector,OffsetX)
-ADD_ENUM_VAL(SequencerFeatureSelector,OffsetY)
-ADD_ENUM_VAL(SequencerFeatureSelector,Width)
-ADD_ENUM_VAL(SequencerMode,Off)
-ADD_ENUM_VAL(SequencerMode,On)
-ADD_ENUM_VAL(SequencerSetValid,No)
-ADD_ENUM_VAL(SequencerSetValid,Yes)
-ADD_ENUM_VAL(SequencerTriggerSource,FrameStart)
-ADD_ENUM_VAL(SequencerTriggerSource,Off)
-//ADD_ENUM_VAL(TestImageSelector,Off)
-//ADD_ENUM_VAL(TestImageSelector,TestImage1)
-//ADD_ENUM_VAL(TestImageSelector,TestImage2)
-ADD_ENUM_VAL(TestPatternGeneratorSelector,PipelineStart)
-ADD_ENUM_VAL(TestPatternGeneratorSelector,Sensor)
-ADD_ENUM_VAL(TestPattern,Off)
-ADD_ENUM_VAL(TestPattern,SensorTestPattern)
-//ADD_ENUM_VAL(TransferControlMode,)
-ADD_ENUM_VAL(TriggerActivation,FallingEdge)
-ADD_ENUM_VAL(TriggerActivation,RisingEdge)
-ADD_ENUM_VAL(TriggerMode,Off)
-ADD_ENUM_VAL(TriggerMode,On)
-ADD_ENUM_VAL(TriggerOverlap,Off)
-ADD_ENUM_VAL(TriggerOverlap,ReadOut)
-ADD_ENUM_VAL(TriggerSelector,AcquisitionStart)
-//ADD_ENUM_VAL(TriggerSelector,ExposureActive)
-ADD_ENUM_VAL(TriggerSelector,FrameBurstStart)
-ADD_ENUM_VAL(TriggerSelector,FrameStart)
-ADD_ENUM_VAL(TriggerSource,Counter0End)
-ADD_ENUM_VAL(TriggerSource,Counter0Start)
-ADD_ENUM_VAL(TriggerSource,Counter1End)
-ADD_ENUM_VAL(TriggerSource,Counter1Start)
-ADD_ENUM_VAL(TriggerSource,Line0)
-ADD_ENUM_VAL(TriggerSource,Line2)
-ADD_ENUM_VAL(TriggerSource,Line3)
-ADD_ENUM_VAL(TriggerSource,LogicBlock0)
-ADD_ENUM_VAL(TriggerSource,LogicBlock1)
-ADD_ENUM_VAL(TriggerSource,Software)
-ADD_ENUM_VAL(TriggerSource,UserOutput0)
-ADD_ENUM_VAL(TriggerSource,UserOutput1)
-ADD_ENUM_VAL(TriggerSource,UserOutput2)
-ADD_ENUM_VAL(TriggerSource,UserOutput3)
-ADD_ENUM_VAL(U3VCurrentSpeed,FullSpeed)
-ADD_ENUM_VAL(U3VCurrentSpeed,HighSpeed)
-ADD_ENUM_VAL(U3VCurrentSpeed,LowSpeed)
-ADD_ENUM_VAL(U3VCurrentSpeed,SuperSpeed)
-//ADD_ENUM_VAL(UserOutputSelector,Close)
-//ADD_ENUM_VAL(UserOutputSelector,Open)
-//ADD_ENUM_VAL(UserOutputSelector,Read)
-//ADD_ENUM_VAL(UserOutputSelector,Write)
-ADD_ENUM_VAL(UserSetDefault,Default)
-//ADD_ENUM_VAL(UserSetDefaultSelector,Default)
-//ADD_ENUM_VAL(UserSetDefaultSelector,UserSet1)
-//ADD_ENUM_VAL(UserSetDefaultSelector,UserSet2)
-ADD_ENUM_VAL(UserSetDefault,UserSet0)
-ADD_ENUM_VAL(UserSetDefault,UserSet1)
-ADD_ENUM_VAL(UserSetFeatureSelector,AasRoiEnableAe)
-ADD_ENUM_VAL(UserSetFeatureSelector,AasRoiEnableAwb)
-ADD_ENUM_VAL(UserSetFeatureSelector,AasRoiHeightAe)
-ADD_ENUM_VAL(UserSetFeatureSelector,AasRoiHeightAwb)
-ADD_ENUM_VAL(UserSetFeatureSelector,AasRoiOffsetXAe)
-ADD_ENUM_VAL(UserSetFeatureSelector,AasRoiOffsetXAwb)
-ADD_ENUM_VAL(UserSetFeatureSelector,AasRoiOffsetYAe)
-ADD_ENUM_VAL(UserSetFeatureSelector,AasRoiOffsetYAwb)
-ADD_ENUM_VAL(UserSetFeatureSelector,AasRoiWidthAe)
-ADD_ENUM_VAL(UserSetFeatureSelector,AasRoiWidthAwb)
-ADD_ENUM_VAL(UserSetFeatureSelector,AcquisitionBurstFrameCount)
-ADD_ENUM_VAL(UserSetFeatureSelector,AcquisitionFrameCount)
-ADD_ENUM_VAL(UserSetFeatureSelector,AcquisitionFrameRate)
-ADD_ENUM_VAL(UserSetFeatureSelector,AcquisitionFrameRateEnable)
-ADD_ENUM_VAL(UserSetFeatureSelector,AcquisitionLineRate)
-ADD_ENUM_VAL(UserSetFeatureSelector,AcquisitionMode)
-ADD_ENUM_VAL(UserSetFeatureSelector,AdcBitDepth)
-ADD_ENUM_VAL(UserSetFeatureSelector,AutoExposureControlLoopDamping)
-ADD_ENUM_VAL(UserSetFeatureSelector,AutoExposureControlPriority)
-ADD_ENUM_VAL(UserSetFeatureSelector,AutoExposureEVCompensation)
-ADD_ENUM_VAL(UserSetFeatureSelector,AutoExposureExposureTimeLowerLimit)
-ADD_ENUM_VAL(UserSetFeatureSelector,AutoExposureExposureTimeUpperLimit)
-ADD_ENUM_VAL(UserSetFeatureSelector,AutoExposureGainLowerLimit)
-ADD_ENUM_VAL(UserSetFeatureSelector,AutoExposureGainUpperLimit)
-ADD_ENUM_VAL(UserSetFeatureSelector,AutoExposureGreyValueLowerLimit)
-ADD_ENUM_VAL(UserSetFeatureSelector,AutoExposureGreyValueUpperLimit)
-ADD_ENUM_VAL(UserSetFeatureSelector,AutoExposureLightingMode)
-ADD_ENUM_VAL(UserSetFeatureSelector,AutoExposureMeteringMode)
-ADD_ENUM_VAL(UserSetFeatureSelector,AutoExposureTargetGreyValue)
-ADD_ENUM_VAL(UserSetFeatureSelector,AutoExposureTargetGreyValueAuto)
-ADD_ENUM_VAL(UserSetFeatureSelector,BalanceRatioBlue)
-ADD_ENUM_VAL(UserSetFeatureSelector,BalanceRatioRed)
-ADD_ENUM_VAL(UserSetFeatureSelector,BalanceWhiteAuto)
-ADD_ENUM_VAL(UserSetFeatureSelector,BalanceWhiteAutoDamping)
-ADD_ENUM_VAL(UserSetFeatureSelector,BalanceWhiteAutoLowerLimit)
-ADD_ENUM_VAL(UserSetFeatureSelector,BalanceWhiteAutoProfile)
-ADD_ENUM_VAL(UserSetFeatureSelector,BalanceWhiteAutoUpperLimit)
-ADD_ENUM_VAL(UserSetFeatureSelector,BinningHorizontalAll)
-ADD_ENUM_VAL(UserSetFeatureSelector,BinningHorizontalMode)
-ADD_ENUM_VAL(UserSetFeatureSelector,BinningVerticalAll)
-ADD_ENUM_VAL(UserSetFeatureSelector,BinningVerticalMode)
-ADD_ENUM_VAL(UserSetFeatureSelector,BlackLevelAll)
-ADD_ENUM_VAL(UserSetFeatureSelector,ChunkEnableAll)
-ADD_ENUM_VAL(UserSetFeatureSelector,ChunkModeActive)
-ADD_ENUM_VAL(UserSetFeatureSelector,ColorTransformationEnable)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterDelayCounter0)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterDelayCounter1)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterDurationCounter0)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterDurationCounter1)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterEventActivationCounter0)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterEventActivationCounter1)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterEventSourceCounter0)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterEventSourceCounter1)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterResetActivationCounter0)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterResetActivationCounter1)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterResetSourceCounter0)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterResetSourceCounter1)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterTriggerActivationCounter0)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterTriggerActivationCounter1)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterTriggerSourceCounter0)
-ADD_ENUM_VAL(UserSetFeatureSelector,CounterTriggerSourceCounter1)
-//ADD_ENUM_VAL(UserSetFeatureSelector,CRC)
-ADD_ENUM_VAL(UserSetFeatureSelector,DecimationHorizontalAll)
-ADD_ENUM_VAL(UserSetFeatureSelector,DecimationVerticalAll)
-ADD_ENUM_VAL(UserSetFeatureSelector,DefectCorrectionMode)
-ADD_ENUM_VAL(UserSetFeatureSelector,DefectCorrectStaticEnable)
-ADD_ENUM_VAL(UserSetFeatureSelector,DeviceIndicatorMode)
-ADD_ENUM_VAL(UserSetFeatureSelector,DeviceLinkBandwidthReserve)
-ADD_ENUM_VAL(UserSetFeatureSelector,DeviceLinkThroughputLimit)
-ADD_ENUM_VAL(UserSetFeatureSelector,EvCompensationRaw)
-ADD_ENUM_VAL(UserSetFeatureSelector,EventNotificationError)
-ADD_ENUM_VAL(UserSetFeatureSelector,EventNotificationExposureEnd)
-ADD_ENUM_VAL(UserSetFeatureSelector,ExposureActiveMode)
-ADD_ENUM_VAL(UserSetFeatureSelector,ExposureAuto)
-ADD_ENUM_VAL(UserSetFeatureSelector,ExposureMode)
-ADD_ENUM_VAL(UserSetFeatureSelector,ExposureTime)
-ADD_ENUM_VAL(UserSetFeatureSelector,FfcEnable)
-ADD_ENUM_VAL(UserSetFeatureSelector,FfcMode)
-ADD_ENUM_VAL(UserSetFeatureSelector,GainAll)
-ADD_ENUM_VAL(UserSetFeatureSelector,GainAuto)
-ADD_ENUM_VAL(UserSetFeatureSelector,Gamma)
-ADD_ENUM_VAL(UserSetFeatureSelector,GammaEnable)
-ADD_ENUM_VAL(UserSetFeatureSelector,Height)
-ADD_ENUM_VAL(UserSetFeatureSelector,IspEnable)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineFilterWidthLine0Debounce)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineFilterWidthLine0Deglitch)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineFilterWidthLine1Debounce)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineFilterWidthLine1Deglitch)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineFilterWidthLine2Debounce)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineFilterWidthLine2Deglitch)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineFilterWidthLine3Debounce)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineFilterWidthLine3Deglitch)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineInverterLine0)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineInverterLine1)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineInverterLine2)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineInverterLine3)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineModeLine0)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineModeLine1)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineModeLine2)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineModeLine3)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineSourceLine0)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineSourceLine1)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineSourceLine2)
-ADD_ENUM_VAL(UserSetFeatureSelector,LineSourceLine3)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputActivationLogicBlock0Input0)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputActivationLogicBlock0Input1)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputActivationLogicBlock0Input2)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputActivationLogicBlock0Input3)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputActivationLogicBlock1Input0)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputActivationLogicBlock1Input1)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputActivationLogicBlock1Input2)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputActivationLogicBlock1Input3)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputSourceLogicBlock0Input0)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputSourceLogicBlock0Input1)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputSourceLogicBlock0Input2)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputSourceLogicBlock0Input3)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputSourceLogicBlock1Input0)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputSourceLogicBlock1Input1)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputSourceLogicBlock1Input2)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTInputSourceLogicBlock1Input3)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTOutputValueAllLogicBlock0Enable)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTOutputValueAllLogicBlock0Value)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTOutputValueAllLogicBlock1Enable)
-ADD_ENUM_VAL(UserSetFeatureSelector,LogicBlockLUTOutputValueAllLogicBlock1Value)
-ADD_ENUM_VAL(UserSetFeatureSelector,LUTEnable)
-ADD_ENUM_VAL(UserSetFeatureSelector,OffsetX)
-ADD_ENUM_VAL(UserSetFeatureSelector,OffsetY)
-ADD_ENUM_VAL(UserSetFeatureSelector,PixelFormat)
-ADD_ENUM_VAL(UserSetFeatureSelector,ReverseX)
-ADD_ENUM_VAL(UserSetFeatureSelector,ReverseY)
-ADD_ENUM_VAL(UserSetFeatureSelector,RgbTransformLightSource)
-ADD_ENUM_VAL(UserSetFeatureSelector,Saturation)
-ADD_ENUM_VAL(UserSetFeatureSelector,SaturationEnable)
-ADD_ENUM_VAL(UserSetFeatureSelector,SensorShutterMode)
-ADD_ENUM_VAL(UserSetFeatureSelector,Sharpening)
-ADD_ENUM_VAL(UserSetFeatureSelector,SharpeningAuto)
-ADD_ENUM_VAL(UserSetFeatureSelector,SharpeningEnable)
-ADD_ENUM_VAL(UserSetFeatureSelector,SharpeningThreshold)
-ADD_ENUM_VAL(UserSetFeatureSelector,TestPatternPipelineStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TestPatternSensor)
-ADD_ENUM_VAL(UserSetFeatureSelector,TransferBlockCount)
-ADD_ENUM_VAL(UserSetFeatureSelector,TransferControlMode)
-ADD_ENUM_VAL(UserSetFeatureSelector,TransferOperationMode)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerActivationAcquisitionStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerActivationFrameBurstStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerActivationFrameStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerDelayAcquisitionStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerDelayFrameBurstStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerDelayFrameStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerModeAcquisitionStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerModeFrameBurstStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerModeFrameStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerOverlapAcquisitionStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerOverlapFrameBurstStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerOverlapFrameStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerSourceAcquisitionStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerSourceFrameBurstStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,TriggerSourceFrameStart)
-ADD_ENUM_VAL(UserSetFeatureSelector,UserOutputValueAll)
-ADD_ENUM_VAL(UserSetFeatureSelector,Width)
-ADD_ENUM_VAL(UserSetSelector,Default)
-ADD_ENUM_VAL(UserSetSelector,UserSet0)
-ADD_ENUM_VAL(UserSetSelector,UserSet1)
-//ADD_ENUM_VAL(UserSetSelector,UserSet2)
-//ADD_ENUM_VAL(V3,FrameID)
-//ADD_ENUM_VAL(V3,Height)
-//ADD_ENUM_VAL(V3,Image)
-//ADD_ENUM_VAL(V3,OffsetY)
-//ADD_ENUM_VAL(VideoMode,Mode0)
-//ADD_ENUM_VAL(VideoMode,Mode1)
-
-#ifdef FOOBAR
-ADD_ENUM_VAL(DeviceType,Mixed)
-ADD_ENUM_VAL(DeviceType,Custom)
-ADD_ENUM_VAL(DeviceType,GEV)
-ADD_ENUM_VAL(DeviceType,CL)
-ADD_ENUM_VAL(DeviceType,IIDC)
-ADD_ENUM_VAL(DeviceType,UVC)
-ADD_ENUM_VAL(DeviceType,CXP)
-ADD_ENUM_VAL(DeviceType,CLHS)
-ADD_ENUM_VAL(DeviceType,U3V)
-ADD_ENUM_VAL(DeviceType,ETHERNET)
-ADD_ENUM_VAL(DeviceType,PCI)
-ADD_ENUM_VAL(DeviceAccessStatus,Unknown)
-ADD_ENUM_VAL(DeviceAccessStatus,ReadWrite)
-ADD_ENUM_VAL(DeviceAccessStatus,ReadOnly)
-ADD_ENUM_VAL(DeviceAccessStatus,NoAccess)
-ADD_ENUM_VAL(GUIXMLLocation,Device)
-ADD_ENUM_VAL(GUIXMLLocation,Host)
-ADD_ENUM_VAL(GenICamXMLLocation,Device)
-ADD_ENUM_VAL(GenICamXMLLocation,Host)
-ADD_ENUM_VAL(DeviceCurrentSpeed,UnknownSpeed)
-ADD_ENUM_VAL(DeviceCurrentSpeed,LowSpeed)
-ADD_ENUM_VAL(DeviceCurrentSpeed,FullSpeed)
-ADD_ENUM_VAL(DeviceCurrentSpeed,HighSpeed)
-ADD_ENUM_VAL(DeviceCurrentSpeed,SuperSpeed)
-ADD_ENUM_VAL(DeviceEndianessMechanism,Legacy)
-ADD_ENUM_VAL(DeviceEndianessMechanism,Standard)
-ADD_ENUM_VAL(GainAuto,Off)
-ADD_ENUM_VAL(GainAuto,Once)
-ADD_ENUM_VAL(GainAuto,Continuous)
-ADD_ENUM_VAL(DeviceScanType,Areascan)
-ADD_ENUM_VAL(TriggerSelector,FrameStart)
-//ADD_ENUM_VAL(TriggerSelector,ExposureActive)
-ADD_ENUM_VAL(TriggerMode,Off)
-ADD_ENUM_VAL(TriggerMode,On)
-ADD_ENUM_VAL(TriggerSource,Software)
-ADD_ENUM_VAL(TriggerSource,Line0)
-ADD_ENUM_VAL(TriggerSource,Line2)
-ADD_ENUM_VAL(TriggerSource,Line3)
-ADD_ENUM_VAL(TriggerActivation,RisingEdge)
-ADD_ENUM_VAL(TriggerActivation,FallingEdge)
-ADD_ENUM_VAL(ExposureMode,Timed)
-ADD_ENUM_VAL(ExposureMode,TriggerWidth)
-ADD_ENUM_VAL(ExposureAuto,Off)
-ADD_ENUM_VAL(ExposureAuto,Once)
-ADD_ENUM_VAL(ExposureAuto,Continuous)
-ADD_ENUM_VAL(AcquisitionMode,Continuous)
-ADD_ENUM_VAL(AcquisitionMode,SingleFrame)
-ADD_ENUM_VAL(AcquisitionMode,MultiFrame)
-//ADD_ENUM_VAL(AcquisitionFrameRateAuto,Off)
-//ADD_ENUM_VAL(AcquisitionFrameRateAuto,Continuous)
-ADD_ENUM_VAL(PixelFormat,Mono8)
-ADD_ENUM_VAL(PixelFormat,Mono12p)
-ADD_ENUM_VAL(PixelFormat,Mono16)
-//ADD_ENUM_VAL(VideoMode,Mode0)
-//ADD_ENUM_VAL(VideoMode,Mode1)
-//ADD_ENUM_VAL(PixelCoding,Mono)
-//ADD_ENUM_VAL(PixelCoding,MonoSigned)
-//ADD_ENUM_VAL(PixelCoding,RGBPacked)
-//ADD_ENUM_VAL(PixelCoding,YUV411Packed)
-//ADD_ENUM_VAL(PixelCoding,YUV422Packed)
-//ADD_ENUM_VAL(PixelCoding,YUV444Packed)
-//ADD_ENUM_VAL(PixelCoding,Raw)
-ADD_ENUM_VAL(PixelSize,Bpp8)
-ADD_ENUM_VAL(PixelSize,Bpp10)
-ADD_ENUM_VAL(PixelSize,Bpp12)
-ADD_ENUM_VAL(PixelSize,Bpp16)
-ADD_ENUM_VAL(PixelSize,Bpp24)
-ADD_ENUM_VAL(PixelSize,Bpp32)
-ADD_ENUM_VAL(PixelColorFilter,BayerRG)
-ADD_ENUM_VAL(PixelColorFilter,BayerGB)
-ADD_ENUM_VAL(PixelColorFilter,BayerGR)
-ADD_ENUM_VAL(PixelColorFilter,BayerBG)
-ADD_ENUM_VAL(PixelColorFilter,None)
-//ADD_ENUM_VAL(TestImageSelector,Off)
-//ADD_ENUM_VAL(TestImageSelector,TestImage1)
-//ADD_ENUM_VAL(TestImageSelector,TestImage2)
-ADD_ENUM_VAL(UserSetSelector,Default)
-ADD_ENUM_VAL(UserSetSelector,UserSet1)
-//ADD_ENUM_VAL(UserSetSelector,UserSet2)
-//ADD_ENUM_VAL(UserSetDefaultSelector,Default)
-//ADD_ENUM_VAL(UserSetDefaultSelector,UserSet1)
-//ADD_ENUM_VAL(UserSetDefaultSelector,UserSet2)
-ADD_ENUM_VAL(LineSelector,Line0)
-ADD_ENUM_VAL(LineSelector,Line1)
-ADD_ENUM_VAL(LineSelector,Line2)
-ADD_ENUM_VAL(LineSelector,Line3)
-ADD_ENUM_VAL(LineMode,Input)
-//ADD_ENUM_VAL(LineMode,Trigger)
-ADD_ENUM_VAL(U3VCurrentSpeed,LowSpeed)
-ADD_ENUM_VAL(U3VCurrentSpeed,FullSpeed)
-ADD_ENUM_VAL(U3VCurrentSpeed,HighSpeed)
-ADD_ENUM_VAL(U3VCurrentSpeed,SuperSpeed)
-ADD_ENUM_VAL(ChunkSelector,Image)
-ADD_ENUM_VAL(ChunkSelector,CRC)
-//ADD_ENUM_VAL(ChunkSelector,FrameCounter)
-ADD_ENUM_VAL(ChunkSelector,OffsetX)
-ADD_ENUM_VAL(ChunkSelector,OffsetY)
-ADD_ENUM_VAL(ChunkSelector,Width)
-ADD_ENUM_VAL(ChunkSelector,Height)
-ADD_ENUM_VAL(ChunkSelector,ExposureTime)
-ADD_ENUM_VAL(ChunkSelector,Gain)
-ADD_ENUM_VAL(ChunkSelector,BlackLevel)
-#endif // FOOBAR
-
-#ifdef FOOBAR
-ADD_ENUM_VAL(GenICamXMLLocation,Device)
-ADD_ENUM_VAL(GenICamXMLLocation,Host)
-ADD_ENUM_VAL(DeviceCurrentSpeed,UnknownSpeed)
-ADD_ENUM_VAL(DeviceCurrentSpeed,LowSpeed)
-ADD_ENUM_VAL(DeviceCurrentSpeed,FullSpeed)
-ADD_ENUM_VAL(DeviceCurrentSpeed,HighSpeed)
-ADD_ENUM_VAL(DeviceCurrentSpeed,SuperSpeed)
-ADD_ENUM_VAL(DeviceEndianessMechanism,Legacy)
-ADD_ENUM_VAL(DeviceEndianessMechanism,Standard)
-ADD_ENUM_VAL(AcquisitionMode,Continuous)
-ADD_ENUM_VAL(AcquisitionMode,SingleFrame)
-ADD_ENUM_VAL(AcquisitionMode,MultiFrame)
-ADD_ENUM_VAL(ExposureMode,Timed)
-ADD_ENUM_VAL(ExposureMode,TriggerWidth)
-ADD_ENUM_VAL(ExposureAuto,Off)
-ADD_ENUM_VAL(ExposureAuto,Once)
-ADD_ENUM_VAL(ExposureAuto,Continuous)
-ADD_ENUM_VAL(TriggerSelector,AcquisitionStart)
-ADD_ENUM_VAL(TriggerSelector,FrameStart)
-ADD_ENUM_VAL(TriggerSelector,FrameBurstStart)
-ADD_ENUM_VAL(TriggerMode,Off)
-ADD_ENUM_VAL(TriggerMode,On)
-ADD_ENUM_VAL(TriggerSource,Software)
-ADD_ENUM_VAL(TriggerSource,Line0)
-ADD_ENUM_VAL(TriggerSource,Line2)
-ADD_ENUM_VAL(TriggerSource,Line3)
-ADD_ENUM_VAL(TriggerSource,UserOutput0)
-ADD_ENUM_VAL(TriggerSource,UserOutput1)
-ADD_ENUM_VAL(TriggerSource,UserOutput2)
-ADD_ENUM_VAL(TriggerSource,UserOutput3)
-ADD_ENUM_VAL(TriggerSource,Counter0Start)
-ADD_ENUM_VAL(TriggerSource,Counter1Start)
-ADD_ENUM_VAL(TriggerSource,Counter0End)
-ADD_ENUM_VAL(TriggerSource,Counter1End)
-ADD_ENUM_VAL(TriggerSource,LogicBlock0)
-ADD_ENUM_VAL(TriggerSource,LogicBlock1)
-ADD_ENUM_VAL(TriggerOverlap,Off)
-ADD_ENUM_VAL(TriggerOverlap,ReadOut)
-ADD_ENUM_VAL(SensorShutterMode,Global)
-ADD_ENUM_VAL(GainSelector,All)
-ADD_ENUM_VAL(GainAuto,Off)
-ADD_ENUM_VAL(GainAuto,Once)
-ADD_ENUM_VAL(GainAuto,Continuous)
-ADD_ENUM_VAL(BlackLevelSelector,All)
-ADD_ENUM_VAL(BlackLevelSelector,Analog)
-ADD_ENUM_VAL(BlackLevelSelector,Digital)
-ADD_ENUM_VAL(PixelFormat,Mono8)
-ADD_ENUM_VAL(PixelFormat,Mono16)
-ADD_ENUM_VAL(PixelFormat,Mono12Packed)
-ADD_ENUM_VAL(PixelFormat,Mono12p)
-ADD_ENUM_VAL(PixelSize,Bpp1)
-ADD_ENUM_VAL(PixelSize,Bpp2)
-ADD_ENUM_VAL(PixelSize,Bpp4)
-ADD_ENUM_VAL(PixelSize,Bpp8)
-ADD_ENUM_VAL(PixelSize,Bpp10)
-ADD_ENUM_VAL(PixelSize,Bpp12)
-ADD_ENUM_VAL(PixelSize,Bpp14)
-ADD_ENUM_VAL(PixelSize,Bpp16)
-ADD_ENUM_VAL(PixelSize,Bpp20)
-ADD_ENUM_VAL(PixelSize,Bpp24)
-ADD_ENUM_VAL(PixelSize,Bpp30)
-ADD_ENUM_VAL(PixelSize,Bpp32)
-ADD_ENUM_VAL(PixelSize,Bpp36)
-ADD_ENUM_VAL(PixelSize,Bpp48)
-ADD_ENUM_VAL(PixelSize,Bpp64)
-ADD_ENUM_VAL(PixelSize,Bpp96)
-ADD_ENUM_VAL(PixelColorFilter,None)
-ADD_ENUM_VAL(PixelColorFilter,BayerRG)
-ADD_ENUM_VAL(PixelColorFilter,BayerGB)
-ADD_ENUM_VAL(PixelColorFilter,BayerGR)
-ADD_ENUM_VAL(PixelColorFilter,BayerBG)
-ADD_ENUM_VAL(BinningSelector,All)
-ADD_ENUM_VAL(BinningSelector,Sensor)
-ADD_ENUM_VAL(BinningSelector,ISP)
-ADD_ENUM_VAL(BinningHorizontalMode,Sum)
-ADD_ENUM_VAL(BinningHorizontalMode,Average)
-ADD_ENUM_VAL(BinningVerticalMode,Sum)
-ADD_ENUM_VAL(BinningVerticalMode,Average)
-ADD_ENUM_VAL(DecimationSelector,All)
-ADD_ENUM_VAL(DecimationSelector,Sensor)
-ADD_ENUM_VAL(DecimationHorizontalMode,Discard)
-#endif // FOOBAR
-
-	enums_inited = 1;
-}
-
 static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 {
 	char name[LLEN];
@@ -2367,21 +1758,14 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 		sct_p->sct_root_p = skn_p;
 	}
 
-	skn_p->skn_enum_val = INVALID_ENUM_VAL;
+	skn_p->skn_enum_ival = INVALID_ENUM_INT_VALUE;
 	if( type == EnumEntryNode ){
-		Spink_Enum_Val *sev_p;
-
-		if( ! enums_inited ) init_enums();
-
-		sev_p = spink_enum_val_of(skn_p->skn_name);
-		//assert(sev_p!=NULL);
-
-		if( sev_p == NULL ){
-			sprintf(ERROR_STRING,"No enum value defined for %s!?",skn_p->skn_name);
-			warn(ERROR_STRING);
-			skn_p->skn_enum_val = INVALID_ENUM_VAL;
+		int64_t ival;
+		if( get_enum_int_value(hNode,&ival) < 0 ){
+			skn_p->skn_enum_ival = INVALID_ENUM_INT_VALUE;
 		} else {
-			skn_p->skn_enum_val = sev_p->sev_value;
+			skn_p->skn_enum_ival = ival;
+			assert(ival>=0);
 		}
 	}
 
