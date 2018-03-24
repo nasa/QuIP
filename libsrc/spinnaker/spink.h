@@ -13,6 +13,18 @@
 
 #include "spink_funcs.h"
 
+// jbm made these limits up...
+// We should do something sensible here, but it is difficult
+// because we don't necessarily know how many buffers we can
+// allocate.  USBFS has a default limit of 16MB, but on euler
+// we have increased it to 200MB (in /etc/default/grub, see PGR
+// TAN, and pointed out by Brian Cha).
+// [the above comment originally from the flycap implementation, but should apply to Spinnaker???]
+//
+#define MIN_N_BUFFERS 2
+//#define MAX_N_BUFFERS 1024
+#define MAX_N_BUFFERS 64
+
 // Compiler warning C4996 suppressed due to deprecated strcpy() and sprintf()
 // functions on Windows platform.
 #if defined WIN32 || defined _WIN32 || defined WIN64 || defined _WIN64
@@ -174,6 +186,8 @@ typedef struct spink_cam {
 	spinCamera		skc_current_handle;	// non-NULL if we are holding a handle -
 							// set to NULL when released...
 	spinNodeMapHandle	skc_TL_dev_node_map;	// hNodeMapTLDevice
+	spinImage		skc_img_tbl[MAX_N_BUFFERS];
+#endif /* HAVE_LIBSPINNAKER */
 	//spinNodeMapHandle	skc_genicam_node_map;	// hNodeMapTLDevice
 
 	/*
@@ -202,7 +216,6 @@ typedef struct spink_cam {
 	Framerate_Mask *	skc_framerate_mask_tbl;	// one for every video mode
 	int			skc_n_framerates;
 	const char **		skc_framerate_names;
-#endif /* HAVE_LIBSPINNAKER */
 
 	unsigned int		skc_cols;
 	unsigned int		skc_rows;
@@ -346,6 +359,9 @@ extern void _print_spink_node_info(QSP_ARG_DECL Spink_Node *skn_p, int level);
 
 // spink_acq.c
 
+extern void _set_n_spink_buffers(QSP_ARG_DECL  Spink_Cam *skc_p, int n);
+#define set_n_spink_buffers(skc_p, n) _set_n_spink_buffers(QSP_ARG  skc_p, n)
+
 extern int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p);
 #define next_spink_image(img_p, skc_p) _next_spink_image(QSP_ARG  img_p, skc_p)
 extern int _spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p);
@@ -488,17 +504,6 @@ typedef struct named_trigger_mode {
 	//dc1394trigger_mode_t	ntm_mode;
 #endif
 } Named_Trigger_Mode;
-
-// jbm made these limits up...
-// We should do something sensible here, but it is difficult
-// because we don't necessarily know how many buffers we can
-// allocate.  USBFS has a default limit of 16MB, but on euler
-// we have increased it to 200MB (in /etc/default/grub, see PGR
-// TAN, and pointed out by Brian Cha).
-//
-//
-#define MIN_N_BUFFERS 2
-#define MAX_N_BUFFERS 1024
 
 extern const char *eii_prop_names[];
 

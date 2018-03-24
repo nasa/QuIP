@@ -1127,10 +1127,12 @@ void pop_spink_cam_context(SINGLE_QSP_ARG_DECL)
 	Item_Context *icp;
 	icp=pop_dobj_context();
 	assert( icp != NULL );
+fprintf(stderr,"pop_spink_cam_context:  popped %s\n",CTX_NAME(icp));
 }
 
 void push_spink_cam_context(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
+fprintf(stderr,"push_spink_cam_context:  pushing %s\n",CTX_NAME(skc_p->skc_do_icp));
 	push_dobj_context(skc_p->skc_do_icp);
 }
 
@@ -1862,12 +1864,12 @@ static void _register_map_nodes(QSP_ARG_DECL  spinNodeMapHandle hMap, Spink_Map 
 
 #define register_one_map(skc_p, code, name) _register_one_map(QSP_ARG  skc_p, code, name)
 
-static void _register_one_map(QSP_ARG_DECL  Spink_Cam *skc_p, Node_Map_Type type, const char *name)
+static Spink_Map * _register_one_map(QSP_ARG_DECL  Spink_Cam *skc_p, Node_Map_Type type, const char *name)
 {
 	Spink_Map *skm_p;
 	spinNodeMapHandle hMap = NULL;
 
-//fprintf(stderr,"register_one_map %s BEGIN, type = %d\n",name,type);
+fprintf(stderr,"register_one_map %s BEGIN, type = %d\n",name,type);
 	insure_current_camera(skc_p);
 	assert( skc_p->skc_current_handle != NULL );
 //fprintf(stderr,"register_one_map:  %s has current handle 0x%lx\n", skc_p->skc_name,(u_long)skc_p->skc_current_handle);
@@ -1892,11 +1894,13 @@ static void _register_one_map(QSP_ARG_DECL  Spink_Cam *skc_p, Node_Map_Type type
 	skm_p->skm_skc_p = skc_p;
 
 //	fetch_map_handle(skm_p);
-//fprintf(stderr,"register_one_map calling get_node_map_handle...\n");
+fprintf(stderr,"register_one_map calling get_node_map_handle...\n");
 	get_node_map_handle(&hMap,skm_p,"register_one_map");	// first time just sets
 //fprintf(stderr,"register_one_map:  hMap = 0x%lx, *hMap = 0x%lx \n",(u_long)hMap, (u_long)*((void **)hMap));
 
 	register_map_nodes(hMap,skm_p);
+
+	return skm_p;
 }
 
 #define register_cam_nodemaps(skc_p) _register_cam_nodemaps(QSP_ARG  skc_p)
@@ -1905,11 +1909,15 @@ static void _register_cam_nodemaps(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 //fprintf(stderr,"register_cam_nodemaps BEGIN\n");
 //fprintf(stderr,"register_cam_nodemaps registering device map\n");
+	sprintf(MSG_STR,"%s.stream_TL",skc_p->skc_name);
+	skc_p->skc_stream_map = register_one_map(skc_p,STREAM_NODE_MAP,MSG_STR);
+
 	sprintf(MSG_STR,"%s.device_TL",skc_p->skc_name);
-	register_one_map(skc_p,DEV_NODE_MAP,MSG_STR);
+	skc_p->skc_dev_map = register_one_map(skc_p,DEV_NODE_MAP,MSG_STR);
 //fprintf(stderr,"register_cam_nodemaps registering camera map\n");
+
 	sprintf(MSG_STR,"%s.genicam",skc_p->skc_name);
-	register_one_map(skc_p,CAM_NODE_MAP,MSG_STR);
+	skc_p->skc_cam_map = register_one_map(skc_p,CAM_NODE_MAP,MSG_STR);
 //fprintf(stderr,"register_cam_nodemaps DONE\n");
 }
 
@@ -1941,9 +1949,11 @@ static int _init_one_spink_cam(QSP_ARG_DECL  int idx)
 	skc_p->skc_current_handle = hCam;
 //fprintf(stderr,"init_one_spink_cam:  setting current handle to 0x%lx\n",(u_long)hCam);
 
+	skc_p->skc_flags = 0;
 	//skc_p->skc_handle = hCam;
 	skc_p->skc_sys_idx = idx;
 	skc_p->skc_iface_idx = -1;	// invalid value
+	skc_p->skc_n_buffers = 0;
 
 	// register_cam_nodemaps will get the camera handle again...
 //	if( release_spink_cam(hCam) < 0 )
@@ -1952,8 +1962,12 @@ static int _init_one_spink_cam(QSP_ARG_DECL  int idx)
 	//skc_p->skc_TL_dev_node_map = hNodeMapTLDevice;
 	//skc_p->skc_genicam_node_map = hNodeMap;
 
+	skc_p->skc_dev_map=NULL;
+	skc_p->skc_cam_map=NULL;
+	skc_p->skc_stream_map=NULL;
+
+	// The camera has to be connected to get the genicam node map!
 	register_cam_nodemaps(skc_p);
-	//skc_p->skc_flags = SPINK_CAM_CONNECTED;
 
 	// Make a data_obj context for the frames...
 	skc_p->skc_do_icp = create_dobj_context( QSP_ARG  skc_p->skc_name );

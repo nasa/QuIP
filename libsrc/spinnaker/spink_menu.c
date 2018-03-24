@@ -711,7 +711,7 @@ static COMMAND_FUNC( do_set_n_bufs )
 		WARN(ERROR_STRING);
 	} else {
 #ifdef HAVE_LIBSPINNAKER
-		//set_n_buffers(QSP_ARG  the_cam_p, n);
+		set_n_spink_buffers(the_cam_p, n);
 #endif // HAVE_LIBSPINNAKER
 	}
 }
@@ -775,8 +775,6 @@ static COMMAND_FUNC( do_set_iso_speed )
 #define ADD_CMD(s,f,h)	ADD_COMMAND(spink_cam_menu,s,f,h)
 
 MENU_BEGIN(spink_cam)
-ADD_CMD( set_n_buffers,		do_set_n_bufs,		specify number of frames in the ring buffer )
-ADD_CMD( show_n_buffers,		do_show_n_bufs,		show number of frames in the ring buffer )
 //ADD_CMD( set_embedded_image_info,	do_set_eii,	enable/disable embedded image information )
 ADD_CMD( read_register,		do_read_reg,		read a camera register )
 ADD_CMD( write_register,	do_write_reg,		write a camera register )
@@ -824,20 +822,6 @@ static COMMAND_FUNC( do_record )
 #endif // ! HAVE_LIBSPINNAKER
 }
 
-static COMMAND_FUNC( do_set_bufs )
-{
-	Data_Obj *dp;
-
-	dp = pick_obj("sequence object to use for capture");
-	if( dp == NULL ) return;
-
-	CHECK_CAM
-#ifdef HAVE_LIBSPINNAKER
-	// make sure the object dimensions match the camera!
-	set_buffer_obj(QSP_ARG  the_cam_p, dp);
-#endif // HAVE_LIBSPINNAKER
-}
-
 static COMMAND_FUNC( do_set_grab_mode )
 {
 	int idx;
@@ -865,7 +849,9 @@ static COMMAND_FUNC( do_show_grab_mode )
 #define ADD_CMD(s,f,h)	ADD_COMMAND(capture_menu,s,f,h)
 
 MENU_BEGIN(capture)
-ADD_CMD( set_buffer_obj,	do_set_bufs,	specify sequence object to use for capture )
+//ADD_CMD( set_buffer_obj,	do_set_bufs,	specify sequence object to use for capture )
+ADD_CMD( set_n_buffers,		do_set_n_bufs,		specify number of frames in the ring buffer )
+ADD_CMD( show_n_buffers,	do_show_n_bufs,		show number of frames in the ring buffer )
 ADD_CMD( set_mode,		do_set_grab_mode,	specify grab mode )
 ADD_CMD( show_mode,		do_show_grab_mode,	display current grab mode )
 ADD_CMD( start,			do_start,	start capture )
@@ -876,7 +862,7 @@ ADD_CMD( record,		do_record,	record frames to disk )
 ADD_CMD( stop,			do_stop,	stop capture )
 MENU_END(capture)
 
-static COMMAND_FUNC( captmenu )
+static COMMAND_FUNC( do_captmenu )
 {
 	CHECK_AND_PUSH_MENU( capture );
 }
@@ -959,8 +945,10 @@ static COMMAND_FUNC( fmt7menu )
 
 static COMMAND_FUNC(do_quit_spinnaker)
 {
+	/*
 	if( the_cam_p != NULL )
 		pop_spink_cam_context(SINGLE_QSP_ARG);
+		*/
 
 	do_pop_menu(SINGLE_QSP_ARG);
 }
@@ -988,7 +976,7 @@ ADD_CMD( nodes,		do_node_menu,	node submenu )
 ADD_CMD( test,		do_test_cam,	test camera acquisition)
 ADD_CMD( select,	do_select_cam,	select camera )
 ADD_CMD( get_cameras,	do_get_cams,	copy camera names to an array )
-ADD_CMD( capture,	captmenu,	capture submenu )
+ADD_CMD( capture,	do_captmenu,	capture submenu )
 ADD_CMD( format7,	fmt7menu,	format7 submenu )
 ADD_CMD( select,	do_select_cam,	select camera )
 ADD_CMD( power,		do_power,	power camera on/off )

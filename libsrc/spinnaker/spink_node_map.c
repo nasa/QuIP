@@ -268,6 +268,7 @@ int _get_node_map_handle(QSP_ARG_DECL  spinNodeMapHandle *hMap_p, Spink_Map *skm
 			if( ! IS_CONNECTED(skm_p->skm_skc_p) ){
 //fprintf(stderr,"init_one_spink_cam:  connecting %s\n",skm_p->skm_skc_p->skc_name);
 				if( connect_spink_cam(hCam) < 0 ) return -1;
+				skm_p->skm_skc_p->skc_flags |= SPINK_CAM_CONNECTED;
 			} else {
 //fprintf(stderr,"init_one_spink_cam:  %s is already connected\n",skm_p->skm_skc_p->skc_name);
 			}
@@ -294,124 +295,8 @@ int _get_node_map_handle(QSP_ARG_DECL  spinNodeMapHandle *hMap_p, Spink_Map *skm
 			}
 			break;
 	}
-//	if( release_spink_cam(hCam) < 0 )
-//		return -1;
 	return 0;
 }
-
-#ifdef NOT_USED
-#define announce_map(type) _announce_map(QSP_ARG  type)
-
-static void _announce_map(QSP_ARG_DECL  Node_Map_Type type)
-{
-	switch(type){
-		case DEV_NODE_MAP:
-			prt_msg("\n*** PRINTING TL DEVICE NODEMAP ***\n");
-			break;
-		case STREAM_NODE_MAP:
-			prt_msg("\n*** PRINTING TL STREAM NODEMAP ***\n");
-			break;
-		case CAM_NODE_MAP:
-			prt_msg("\n*** PRINTING GENICAM NODEMAP ***\n");
-			break;
-
-		default:
-			error1("announce_map:  invalide map type!?");
-			break;
-	}
-}
-#endif // NOT_USED
-
-#ifdef FOOBAR
-#define print_node_map(hCam, skm_p ) _print_node_map(QSP_ARG  hCam, skm_p )
-
-static int _print_node_map(QSP_ARG_DECL  spinCamera hCam, Spink_Map *skm_p )
-{
-	spinNodeMapHandle hMap = NULL;
-	spinNodeHandle hNode = NULL;
-
-	announce_map(skm_p->skm_type);
-
-	// get the map
-	if( get_node_map_handle(&hMap,skm_p,"print_node_map") < 0 )
-		return -1;
-
-	// Retrieve root node from nodemap
-	if( fetch_spink_node(hMap, "Root", &hNode) < 0 ) return -1;
-
-	// Print values recursively
-	if( traverse_by_node_handle(hNode,0,_display_spink_node) < 0 ) return -1;
-
-	return 0;
-}
-
-// This function acts as the body of the example. First the TL device and
-// TL stream nodemaps are retrieved and their nodes printed. Following this,
-// the camera is initialized and then the GenICam node is retrieved
-// and its nodes printed.
-
-int _print_camera_nodes(QSP_ARG_DECL  Spink_Cam *skc_p)
-{
-	spinCamera hCam=NULL;
-
-	assert(skc_p!=NULL);
-	//hCam = skc_p->skc_handle;
-	if( get_cam_from_list(hCameraList,skc_p->skc_sys_idx,&hCam) < 0 )
-		return -1;
-
-	//
-	// Retrieve TL device nodemap
-	//
-	// *** NOTES ***
-	// The TL device nodemap is available on the transport layer. As such,
-	// camera initialization is unnecessary. It provides mostly immutable
-	// information fundamental to the camera such as the serial number,
-	// vendor, and model.
-	//
-	if( print_node_map(hCam, skc_p->skc_dev_map ) < 0 )
-		return -1;
-
-	//hNodeMapTLDevice = skc_p->skc_TL_dev_node_map;
-	//hNodeMap = skc_p->skc_genicam_node_map;
-
-	//
-	// Retrieve TL stream nodemap
-	//
-	// *** NOTES ***
-	// The TL stream nodemap is also available on the transport layer. Camera
-	// initialization is again unnecessary. As you can probably guess, it
-	// provides information on the camera's streaming performance at any
-	// given moment. Having this information available on the transport
-	// layer allows the information to be retrieved without affecting camera
-	// performance.
-	//
-	if( print_node_map(hCam, skc_p->skc_stream_map ) < 0 )
-		return -1;
-
-	//
-	// Retrieve GenICam nodemap
-	//
-	// *** NOTES ***
-	// The GenICam nodemap is the primary gateway to customizing and
-	// configuring the camera to suit your needs. Configuration options such
-	// as image height and width, trigger mode enabling and disabling, and the
-	// sequencer are found on this nodemap.
-	//
-	if( print_node_map(hCam, skc_p->skc_cam_map ) < 0 )
-		return -1;
-
-	//
-	// Deinitialize camera
-	//
-	// *** NOTES ***
-	// Camera deinitialization helps ensure that devices clean up properly
-	// and do not need to be power-cycled to maintain integrity.
-	//
-	if( camera_deinit(hCam) < 0 ) return -1;
-
-	return 0;
-}
-#endif // FOOBAR
 
 void _list_nodes_from_map(QSP_ARG_DECL  Spink_Map *skm_p)
 {

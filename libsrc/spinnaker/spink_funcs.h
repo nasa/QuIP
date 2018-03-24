@@ -28,6 +28,7 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #define get_enum_entry_by_index(a,b,c) _get_enum_entry_by_index(QSP_ARG  a,b,c)
 
 // two arg macros
+#define get_image_data(a,b) _get_image_data(QSP_ARG  a,b)
 #define command_is_done(a,b) _command_is_done(QSP_ARG  a,b)
 #define set_node_value_string(a,b) _set_node_value_string(QSP_ARG  a,b)
 #define set_node_value_int(a,b) _set_node_value_int(QSP_ARG  a,b)

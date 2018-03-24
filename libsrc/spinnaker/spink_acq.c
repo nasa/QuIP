@@ -4,6 +4,51 @@
 
 #ifdef HAVE_LIBSPINNAKER
 
+#define alloc_cam_buffers(skc_p, n) _alloc_cam_buffers(QSP_ARG  skc_p, n)
+
+static void _alloc_cam_buffers(QSP_ARG_DECL  Spink_Cam *skc_p, int n)
+{
+	spinImage hImage=NULL;
+	int i;
+
+	for(i=0;i<n;i++){
+		if( next_spink_image(&hImage,skc_p) < 0 ){
+			sprintf(ERROR_STRING,"alloc_cam_buffers:  Error getting image %d",i);
+			warn(ERROR_STRING);
+			skc_p->skc_img_tbl[i] = NULL;
+		} else {
+			skc_p->skc_img_tbl[i] = hImage;
+		}
+	}
+	skc_p->skc_n_buffers = n;
+}
+
+#define release_cam_buffers(skc_p) _release_cam_buffers(QSP_ARG  skc_p)
+
+static void _release_cam_buffers(QSP_ARG_DECL  Spink_Cam *skc_p)
+{
+	int i;
+
+	for(i=0;i<skc_p->skc_n_buffers;i++){
+		if( release_spink_image(skc_p->skc_img_tbl[i]) < 0 ){
+			sprintf(ERROR_STRING,"release_cam_buffers:  Error releasing image %d",i);
+			warn(ERROR_STRING);
+		}
+		skc_p->skc_img_tbl[i] = NULL;
+	}
+	skc_p->skc_n_buffers = 0;
+}
+
+void _set_n_spink_buffers(QSP_ARG_DECL  Spink_Cam *skc_p, int n)
+{
+	assert(skc_p!=NULL);
+	assert(n>=MIN_N_BUFFERS&&n<=MAX_N_BUFFERS);
+
+	if( skc_p->skc_n_buffers > 0 )
+		release_cam_buffers(skc_p);
+
+	alloc_cam_buffers(skc_p,n);
+}
 
 //
 // Retrieve next received image
@@ -218,6 +263,38 @@ static int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
 	return 0;
 }
 
+#define init_one_frame(index, data ) _init_one_frame(QSP_ARG  index, data )
+
+static Data_Obj * _init_one_frame(QSP_ARG_DECL  int index, void *data )
+{
+	Data_Obj *dp;
+	char fname[32];
+	Dimension_Set ds1;
+
+	sprintf(fname,"frame%d",index);
+	//assign_var("newest",fname+5);
+
+	dp = dobj_of(fname);
+	if( dp == NULL ){
+fprintf(stderr,"init_one_frame:  creating %s\n",fname);
+		SET_DS_SEQS(&ds1,1);
+		SET_DS_FRAMES(&ds1,1);
+		SET_DS_ROWS(&ds1,1024);	// BUG - get real values!!!
+		SET_DS_COLS(&ds1,1280);
+		SET_DS_COMPS(&ds1,1);
+		dp = _make_dp(QSP_ARG  fname,&ds1,PREC_FOR_CODE(PREC_UBY));
+		assert( dp != NULL );
+
+		SET_OBJ_DATA_PTR( dp, data);
+		//fcp->fc_frm_dp_tbl[index] = dp;
+	} else {
+		sprintf(ERROR_STRING,"init_one_frame:  object %s already exists!?",
+			fname);
+		warn(ERROR_STRING);
+	}
+	return dp;
+} // end init_one_frame
+
 int _spink_test_acq(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	spinImage hResultImage = NULL;
@@ -226,16 +303,21 @@ int _spink_test_acq(QSP_ARG_DECL  Spink_Cam *skc_p)
 	spinImage hConvertedImage = NULL;
 
 printf("spink_test_acq BEGIN\n");
+printf("spink_test_acq will call set_acquisition_continuous\n");
 	if( set_acquisition_continuous(skc_p) < 0 ){
 		warn("spink_test_acq:  unable to set continuous acquisition!?");
 		return -1;
 	}
+printf("spink_test_acq will call spink_start_capture\n");
 	if( spink_start_capture(skc_p) < 0 ){
 		warn("spink_test_acq:  unable to start capture!?");
 		return -1;
 	}
 
 	for (imageCnt = 0; imageCnt < k_numImages; imageCnt++) {
+		void *data_ptr;
+		Data_Obj *dp;
+
 		if( next_spink_image(&hResultImage,skc_p) < 0 ){
 			warn("spink_test_acq:  unable to get next image!?");
 			return -1;	// cleanup???
@@ -244,7 +326,13 @@ printf("spink_test_acq BEGIN\n");
 		if( print_image_info(hResultImage) < 0 ) return -1;
 		if( create_empty_image(&hConvertedImage) < 0 ) return -1;
 		if( convert_spink_image(hResultImage,PixelFormat_Mono8,hConvertedImage) < 0 ) return -1;
-		if( destroy_spink_image(hConvertedImage) < 0 ) return -1;
+// get_image_data		ImageGetData
+// SPINNAKERC_API spinImageGetData(spinImage hImage, void** ppData);
+		get_image_data(hConvertedImage,&data_ptr);
+		dp = init_one_frame(imageCnt,data_ptr);
+fprintf(stderr,"Created %s\n",OBJ_NAME(dp));
+
+		//if( destroy_spink_image(hConvertedImage) < 0 ) return -1;
 		if( release_spink_image(hResultImage) < 0 ) return -1;
 	}
 
