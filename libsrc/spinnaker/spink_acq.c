@@ -4,6 +4,30 @@
 
 #ifdef HAVE_LIBSPINNAKER
 
+//
+// Print image information; height and width recorded in pixels
+//
+// *** NOTES ***
+// Images have quite a bit of available metadata including things such
+// as CRC, image status, and offset values, to name a few.
+//
+
+#define print_image_info(hImg) _print_image_info(QSP_ARG  hImg)
+
+static int _print_image_info(QSP_ARG_DECL  spinImage hImg)
+{
+	size_t width = 0;
+	size_t height = 0;
+
+	// Retrieve image width
+	if( get_image_width(hImg,&width) < 0 ) return -1;
+	if( get_image_height(hImg,&height) < 0 ) return -1;
+	printf("width = %u, ", (unsigned int)width);
+	printf("height = %u\n", (unsigned int)height);
+	return 0;
+}
+
+
 #define alloc_cam_buffers(skc_p, n) _alloc_cam_buffers(QSP_ARG  skc_p, n)
 
 static void _alloc_cam_buffers(QSP_ARG_DECL  Spink_Cam *skc_p, int n)
@@ -23,6 +47,28 @@ static void _alloc_cam_buffers(QSP_ARG_DECL  Spink_Cam *skc_p, int n)
 	skc_p->skc_n_buffers = n;
 }
 
+Data_Obj * grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * skc_p )
+{
+	spinImage hImage=NULL;
+	void *data_ptr;
+	int index;
+
+	if( next_spink_image(&hImage,skc_p) < 0 ){
+		sprintf(ERROR_STRING,"grab_spink_cam_frame:  Error getting image!?");
+		warn(ERROR_STRING);
+		return NULL;
+	}
+if( print_image_info(hImage) < 0 ) return NULL;
+	get_image_data(hImage,&data_ptr);
+fprintf(stderr,"Image data at 0x%lx\n",(long)data_ptr);
+
+	index = 0;	// temporary - needs to be changed
+
+	skc_p->skc_newest = index;
+
+	return( skc_p->skc_frm_dp_tbl[index] );
+}
+
 #define release_cam_buffers(skc_p) _release_cam_buffers(QSP_ARG  skc_p)
 
 static void _release_cam_buffers(QSP_ARG_DECL  Spink_Cam *skc_p)
@@ -39,15 +85,92 @@ static void _release_cam_buffers(QSP_ARG_DECL  Spink_Cam *skc_p)
 	skc_p->skc_n_buffers = 0;
 }
 
+#define init_frame_by_index(skc_p, idx) _init_frame_by_index(QSP_ARG  skc_p, idx)
+
+static Data_Obj * _init_frame_by_index(QSP_ARG_DECL  Spink_Cam *skc_p, int idx)
+{
+	Data_Obj *dp;
+	char fname[64];
+	Dimension_Set ds1;
+
+	sprintf(fname,"cam%d.frame%d",skc_p->skc_sys_idx,idx);
+	//assign_var("newest",fname+5);
+
+	dp = dobj_of(fname);
+	assert(dp==NULL);
+	SET_DS_SEQS(&ds1,1);
+	SET_DS_FRAMES(&ds1,1);
+	SET_DS_ROWS(&ds1,skc_p->skc_rows);
+	SET_DS_COLS(&ds1,skc_p->skc_cols);
+	SET_DS_COMPS(&ds1,1);
+	dp = _make_dp(QSP_ARG  fname,&ds1,PREC_FOR_CODE(PREC_UBY));
+	assert( dp != NULL );
+	return dp;
+}
+
+#define init_frame_by_data(index, data ) _init_frame_by_data(QSP_ARG  index, data )
+
+static Data_Obj * _init_frame_by_data(QSP_ARG_DECL  int index, void *data )
+{
+	Data_Obj *dp;
+	char fname[32];
+	Dimension_Set ds1;
+
+	sprintf(fname,"frame%d",index);
+	//assign_var("newest",fname+5);
+
+	dp = dobj_of(fname);
+	if( dp == NULL ){
+fprintf(stderr,"init_frame_by_data:  creating %s\n",fname);
+		SET_DS_SEQS(&ds1,1);
+		SET_DS_FRAMES(&ds1,1);
+		SET_DS_ROWS(&ds1,1024);	// BUG - get real values!!!
+		SET_DS_COLS(&ds1,1280);
+		SET_DS_COMPS(&ds1,1);
+		dp = _make_dp(QSP_ARG  fname,&ds1,PREC_FOR_CODE(PREC_UBY));
+		assert( dp != NULL );
+
+		SET_OBJ_DATA_PTR( dp, data);
+		//fcp->fc_frm_dp_tbl[index] = dp;
+	} else {
+		sprintf(ERROR_STRING,"init_frame_by_data:  object %s already exists!?",
+			fname);
+		warn(ERROR_STRING);
+	}
+	return dp;
+} // end init_frame_by_data
+
 void _set_n_spink_buffers(QSP_ARG_DECL  Spink_Cam *skc_p, int n)
 {
+	int i;
+	size_t sz;
+
 	assert(skc_p!=NULL);
 	assert(n>=MIN_N_BUFFERS&&n<=MAX_N_BUFFERS);
 
-	if( skc_p->skc_n_buffers > 0 )
-		release_cam_buffers(skc_p);
 
-	alloc_cam_buffers(skc_p,n);
+	if( skc_p->skc_n_buffers > 0 ){
+		assert(skc_p->skc_frm_dp_tbl!=NULL);
+		// BUG -  We need to release resources from the dobj structs!!!
+		// MEMORY LEAK!
+		givbuf(skc_p->skc_frm_dp_tbl);
+	}
+
+	skc_p->skc_n_buffers = n;
+
+	sz = n * sizeof(Data_Obj *);
+	skc_p->skc_frm_dp_tbl = getbuf(sz);
+
+	for(i=0;i<n;i++){
+		init_frame_by_index(skc_p,i);
+	}
+	//alloc_cam_buffers(skc_p,n);
+}
+
+void _show_n_buffers(QSP_ARG_DECL  Spink_Cam *skc_p)
+{
+	sprintf(MSG_STR,"%s:  %d buffers",skc_p->skc_name,skc_p->skc_n_buffers);
+	prt_msg(MSG_STR);
 }
 
 //
@@ -101,30 +224,6 @@ int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 		return 0;
 	}
 
-	return 0;
-}
-
-
-//
-// Print image information; height and width recorded in pixels
-//
-// *** NOTES ***
-// Images have quite a bit of available metadata including things such
-// as CRC, image status, and offset values, to name a few.
-//
-
-#define print_image_info(hImg) _print_image_info(QSP_ARG  hImg)
-
-static int _print_image_info(QSP_ARG_DECL  spinImage hImg)
-{
-	size_t width = 0;
-	size_t height = 0;
-
-	// Retrieve image width
-	if( get_image_width(hImg,&width) < 0 ) return -1;
-	if( get_image_height(hImg,&height) < 0 ) return -1;
-	printf("width = %u, ", (unsigned int)width);
-	printf("height = %u\n", (unsigned int)height);
 	return 0;
 }
 
@@ -263,38 +362,6 @@ static int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
 	return 0;
 }
 
-#define init_one_frame(index, data ) _init_one_frame(QSP_ARG  index, data )
-
-static Data_Obj * _init_one_frame(QSP_ARG_DECL  int index, void *data )
-{
-	Data_Obj *dp;
-	char fname[32];
-	Dimension_Set ds1;
-
-	sprintf(fname,"frame%d",index);
-	//assign_var("newest",fname+5);
-
-	dp = dobj_of(fname);
-	if( dp == NULL ){
-fprintf(stderr,"init_one_frame:  creating %s\n",fname);
-		SET_DS_SEQS(&ds1,1);
-		SET_DS_FRAMES(&ds1,1);
-		SET_DS_ROWS(&ds1,1024);	// BUG - get real values!!!
-		SET_DS_COLS(&ds1,1280);
-		SET_DS_COMPS(&ds1,1);
-		dp = _make_dp(QSP_ARG  fname,&ds1,PREC_FOR_CODE(PREC_UBY));
-		assert( dp != NULL );
-
-		SET_OBJ_DATA_PTR( dp, data);
-		//fcp->fc_frm_dp_tbl[index] = dp;
-	} else {
-		sprintf(ERROR_STRING,"init_one_frame:  object %s already exists!?",
-			fname);
-		warn(ERROR_STRING);
-	}
-	return dp;
-} // end init_one_frame
-
 int _spink_test_acq(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	spinImage hResultImage = NULL;
@@ -329,7 +396,7 @@ printf("spink_test_acq will call spink_start_capture\n");
 // get_image_data		ImageGetData
 // SPINNAKERC_API spinImageGetData(spinImage hImage, void** ppData);
 		get_image_data(hConvertedImage,&data_ptr);
-		dp = init_one_frame(imageCnt,data_ptr);
+		dp = init_frame_by_data(imageCnt,data_ptr);
 fprintf(stderr,"Created %s\n",OBJ_NAME(dp));
 
 		//if( destroy_spink_image(hConvertedImage) < 0 ) return -1;

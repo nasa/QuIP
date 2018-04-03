@@ -9,9 +9,17 @@
 Spink_Cam *current_skc_p = NULL;
 int max_display_name_len=0;
 
-int _release_current_camera(SINGLE_QSP_ARG_DECL)
+int _release_current_camera(QSP_ARG_DECL  int strict)
 {
-	assert(current_skc_p!=NULL);
+	//assert(current_skc_p!=NULL);
+	if( current_skc_p==NULL ){
+		if( strict ){
+			sprintf(ERROR_STRING,"Unnecessary call to release_current_camera!?");
+			warn(ERROR_STRING);
+		}
+		return 0;
+	}
+
 //fprintf(stderr,"release_current_camera:  releasing %s\n",current_skc_p->skc_name);
 	if( spink_release_cam(current_skc_p) < 0 )
 		return -1;
@@ -29,7 +37,7 @@ void _insure_current_camera(QSP_ARG_DECL  Spink_Cam *skc_p)
 
 	if( current_skc_p != NULL ){
 //fprintf(stderr,"insure_current_camera %s will release old camera %s\n", skc_p->skc_name,current_skc_p->skc_name);
-		if( release_current_camera() < 0 )
+		if( release_current_camera(1) < 0 )
 			error1("insure_current_camera:  failed to release previous camera!?");
 	}
 
@@ -41,7 +49,7 @@ void _insure_current_camera(QSP_ARG_DECL  Spink_Cam *skc_p)
 		skc_p->skc_current_handle = hCam;
 //fprintf(stderr,"insure_current_camera %s:  new handle = 0x%lx\n", skc_p->skc_name,(u_long)hCam);
 	} else {
-//fprintf(stderr,"insure_current_camera %s:   camera already has a non-NULL handle 0x%lx\n", skc_p->skc_name,(u_long)skc_p->skc_current_handle);
+fprintf(stderr,"insure_current_camera %s:   camera already has a non-NULL handle 0x%lx\n", skc_p->skc_name,(u_long)skc_p->skc_current_handle);
 	}
 	current_skc_p = skc_p;
 }

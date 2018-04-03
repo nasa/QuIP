@@ -25,7 +25,7 @@
 
 // some globals...
 static Spink_Map *current_map=NULL;
-#define MAX_TREE_DEPTH	4
+#define MAX_TREE_DEPTH	5
 static Spink_Node *current_parent_p[MAX_TREE_DEPTH]={NULL,NULL,NULL,NULL};
 int current_node_idx; 
 
@@ -34,8 +34,6 @@ static spinInterfaceList hInterfaceList = NULL;
 spinCameraList hCameraList = NULL;
 size_t numCameras = 0;
 static size_t numInterfaces = 0;
-
-#define TMPSIZE	32	// for temporary object names, e.g. _frame55
 
 ITEM_INTERFACE_DECLARATIONS(Spink_Interface,spink_interface,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Cam,spink_cam,RB_TREE_CONTAINER)
@@ -637,6 +635,7 @@ int get_spink_cam_names( QSP_ARG_DECL  Data_Obj *str_dp )
 	return i;
 }
 
+#ifdef FOOBAR
 int get_spink_cam_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, Spink_Cam *skc_p )
 {
 	// Could check format of object here...
@@ -792,6 +791,7 @@ int get_spink_cam_framerate_strings( QSP_ARG_DECL  Data_Obj *str_dp, Spink_Cam *
 	}
 	return n;
 }
+#endif // FOOBAR
 
 #ifdef FOOBAR
 static void test_setup(QSP_ARG_DECL  Spink_Cam *skc_p,
@@ -838,6 +838,7 @@ static void test_setup(QSP_ARG_DECL  Spink_Cam *skc_p,
 // We keep track of the largest and smallest address, we save
 // those so we can figure out the index of an arbitrary frame...
 
+#ifdef NOT_USED
 
 int check_buffer_alignment(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
@@ -858,25 +859,6 @@ int check_buffer_alignment(QSP_ARG_DECL  Spink_Cam *skc_p)
 	return 0;
 }
 
-#ifdef FOOBAR
-static int index_of_buffer(QSP_ARG_DECL  Spink_Cam *skc_p,spinkImage *ip)
-{
-	int idx;
-
-	idx = ( ip->pData - skc_p->skc_base ) / skc_p->skc_buf_delta;
-	/*
-sprintf(ERROR_STRING,
-"index_of_buffer:  data at 0x%lx, base = 0x%lx, idx = %d",
-(long)ip->pData,(long)skc_p->skc_base,idx);
-advise(ERROR_STRING);
-*/
-
-	assert( idx >= 0 && idx < skc_p->skc_n_buffers );
-	return idx;
-}
-#endif // FOOBAR
-
-#ifdef NOT_USED
 static const char *name_for_pixel_format(spinkPixelFormat f)
 {
 	int i;
@@ -888,35 +870,6 @@ static const char *name_for_pixel_format(spinkPixelFormat f)
 	return("(unrecognixed pixel format code)");
 }
 #endif // NOT_USED
-
-// libflycap doesn't have a queue mechanism like libdc1394...
-// do we get the newest frame???
-
-Data_Obj * grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * skc_p )
-{
-#ifdef FOOBAR
-	int index;
-
-	spinkError error;
-
-	if( skc_p->skc_base == NULL )
-		init_spink_base(QSP_ARG  skc_p);
-
-	error = spinkRetrieveBuffer( skc_p->sk_context, skc_p->sk_img_p );
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkRetrieveBuffer" );
-		return NULL;
-	}
-//fprintf(stderr,"pixel format of retrieved images is %s (0x%x)\n",
-//name_for_pixel_format(img.format),img.format);
-
-	index = index_of_buffer(QSP_ARG  skc_p, skc_p->sk_img_p );
-	skc_p->skc_newest = index;
-
-	return( skc_p->skc_frm_dp_tbl[index] );
-#endif // FOOBAR
-	return NULL;
-}
 
 int reset_spink_cam(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
@@ -950,67 +903,6 @@ unsigned int read_register( QSP_ARG_DECL  Spink_Cam *skc_p, unsigned int addr )
 	return val;
 #else // FOOBAR
 	return 0;
-#endif // FOOBAR
-}
-
-void write_register( QSP_ARG_DECL  Spink_Cam *skc_p, unsigned int addr, unsigned int val )
-{
-#ifdef FOOBAR
-	spinkError error;
-
-	error = spinkWriteRegister(skc_p->sk_context,addr,val);
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkWriteRegister" );
-	}
-#endif // FOOBAR
-}
-
-void start_firewire_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
-{
-#ifdef FOOBAR
-	spinkError error;
-
-advise("start_firewire_capture BEGIN");
-	if( skc_p->skc_flags & FLY_CAM_IS_RUNNING ){
-		warn("start_firewire_capture:  spink_cam is already capturing!?");
-		return;
-	}
-advise("start_firewire_capture cam is not already running");
-advise("start_firewire_capture calling spinkStartCapture");
-
-//fprintf(stderr,"context = 0x%lx\n",(long)skc_p->sk_context);
-	error = spinkStartCapture(skc_p->sk_context);
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkStartCapture" );
-	} else {
-		skc_p->skc_flags |= FLY_CAM_IS_RUNNING;
-
-		// BUG - we should undo this when we stop capturing, because
-		// we might change the video format or something else.
-		// Perhaps more efficiently we could only do it when needed?
-advise("start_firewire_capture calling init_spink_base");
-		init_spink_base(QSP_ARG  skc_p);
-	}
-advise("start_firewire_capture DONE");
-#endif // FOOBAR
-}
-
-void stop_firewire_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
-{
-#ifdef FOOBAR
-	spinkError error;
-
-	if( (skc_p->skc_flags & FLY_CAM_IS_RUNNING) == 0 ){
-		warn("stop_firewire_capture:  spink_cam is not capturing!?");
-		return;
-	}
-
-	error = spinkStopCapture(skc_p->sk_context);
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkStopCapture" );
-	} else {
-		skc_p->skc_flags &= ~FLY_CAM_IS_RUNNING;
-	}
 #endif // FOOBAR
 }
 
@@ -1064,6 +956,7 @@ void list_spink_cam_trig(QSP_ARG_DECL  Spink_Cam *skc_p)
 #endif // FOOBAR
 }
 
+#ifdef FOOBAR
 void set_buffer_obj(QSP_ARG_DECL  Spink_Cam *skc_p, Data_Obj *dp)
 {
 	// make sure sizes match
@@ -1095,6 +988,7 @@ void set_buffer_obj(QSP_ARG_DECL  Spink_Cam *skc_p, Data_Obj *dp)
 	}
 	skc_p->skc_base = NULL;	// force init_spink_base to run again
 }
+#endif // FOOBAR
 
 #endif /* HAVE_LIBSPINNAKER */
 
@@ -1121,6 +1015,7 @@ int pick_grab_mode(QSP_ARG_DECL Spink_Cam *skc_p, const char *pmpt)
 	return idx;
 }
 
+#ifdef FOOBAR
 void pop_spink_cam_context(SINGLE_QSP_ARG_DECL)
 {
 	// pop old context...
@@ -1135,6 +1030,7 @@ void push_spink_cam_context(QSP_ARG_DECL  Spink_Cam *skc_p)
 fprintf(stderr,"push_spink_cam_context:  pushing %s\n",CTX_NAME(skc_p->skc_do_icp));
 	push_dobj_context(skc_p->skc_do_icp);
 }
+#endif // FOOBAR
 
 Item_Context * _pop_spink_node_context(SINGLE_QSP_ARG_DECL)
 {
@@ -1665,7 +1561,9 @@ void _print_spink_node_info(QSP_ARG_DECL  Spink_Node *skn_p, int level)
 
 static void _print_node_from_tree(QSP_ARG_DECL  Spink_Node *skn_p)
 {
-	if( skn_p->skn_level == 0 ) return;	// don't print root node
+	if( skn_p->skn_level == 0 ){
+		return;	// don't print root node
+	}
 	print_spink_node_info(skn_p,skn_p->skn_level);
 }
 
@@ -1712,6 +1610,7 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 
 	if( get_node_name(name,&l,hNode) < 0 )
 		error1("register_one_node:  error getting node name!?");
+	assert(strlen(name)<(LLEN-1));
 
 	skn_p = new_spink_node(name);
 	assert(skn_p!=NULL);
@@ -1728,10 +1627,11 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 	} else {
 		int idx;
 		idx=level-1;
-		assert(idx<MAX_TREE_DEPTH);
+		assert(idx>=0&&idx<MAX_TREE_DEPTH);
 		skn_p->skn_parent = current_parent_p[idx];
 		skn_p->skn_idx = current_node_idx;	// set in traverse...
 	}
+	assert(level>=0&&level<MAX_TREE_DEPTH);
 	current_parent_p[level] = skn_p;
 
 	skn_p->skn_flags = 0;
@@ -1753,6 +1653,7 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 	// don't make a category for the root node
 	if( level > 0 && type == CategoryNode ){
 		Spink_Category *sct_p;
+fprintf(stderr,"register_one_node:  checking for category %s\n",skn_p->skn_name);
 		sct_p = spink_cat_of(skn_p->skn_name);
 		assert(sct_p==NULL); 
 		sct_p = new_spink_cat(skn_p->skn_name);
@@ -1824,12 +1725,14 @@ void _pop_map_contexts(SINGLE_QSP_ARG_DECL)
 {
 	pop_spink_node_context();
 	pop_spink_cat_context();
+fprintf(stderr,"popped category context\n");
 }
 
 void _push_map_contexts(QSP_ARG_DECL  Spink_Map *skm_p)
 {
 	push_spink_node_context(skm_p->skm_node_icp);
 	push_spink_cat_context(skm_p->skm_cat_icp);
+fprintf(stderr,"push_map_contexts:  pushed context %s\n",CTX_NAME(skm_p->skm_cat_icp));
 }
 
 #define register_map_nodes(hMap,skm_p) _register_map_nodes(QSP_ARG  hMap,skm_p)
@@ -1841,7 +1744,9 @@ static void _register_map_nodes(QSP_ARG_DECL  spinNodeMapHandle hMap, Spink_Map 
 //fprintf(stderr,"register_map_nodes BEGIN   hMap = 0x%lx\n",(u_long)hMap);
 
 	//push_spink_node_context(skm_p->skm_icp);
+fprintf(stderr,"register_map_nodes:  pushing contexts for %s\n",skm_p->skm_name);
 	push_map_contexts(skm_p);
+
 //fprintf(stderr,"register_map_nodes fetching root node   hMap = 0x%lx\n",(u_long)hMap);
 	if( fetch_spink_node(hMap, "Root", &hRoot) < 0 )
 		error1("register_map_nodes:  error fetching map root node");
@@ -1869,7 +1774,6 @@ static Spink_Map * _register_one_map(QSP_ARG_DECL  Spink_Cam *skc_p, Node_Map_Ty
 	Spink_Map *skm_p;
 	spinNodeMapHandle hMap = NULL;
 
-fprintf(stderr,"register_one_map %s BEGIN, type = %d\n",name,type);
 	insure_current_camera(skc_p);
 	assert( skc_p->skc_current_handle != NULL );
 //fprintf(stderr,"register_one_map:  %s has current handle 0x%lx\n", skc_p->skc_name,(u_long)skc_p->skc_current_handle);
@@ -1886,6 +1790,7 @@ fprintf(stderr,"register_one_map %s BEGIN, type = %d\n",name,type);
 	if( spink_cat_itp == NULL ) init_spink_cats();
 	skm_p->skm_cat_icp = create_item_context(spink_cat_itp,name);
 	assert(skm_p->skm_cat_icp!=NULL);
+fprintf(stderr,"created context %s\n",CTX_NAME(skm_p->skm_cat_icp));
 
 	// do we need to push the context too???
 
@@ -1894,7 +1799,6 @@ fprintf(stderr,"register_one_map %s BEGIN, type = %d\n",name,type);
 	skm_p->skm_skc_p = skc_p;
 
 //	fetch_map_handle(skm_p);
-fprintf(stderr,"register_one_map calling get_node_map_handle...\n");
 	get_node_map_handle(&hMap,skm_p,"register_one_map");	// first time just sets
 //fprintf(stderr,"register_one_map:  hMap = 0x%lx, *hMap = 0x%lx \n",(u_long)hMap, (u_long)*((void **)hMap));
 
@@ -1918,7 +1822,49 @@ static void _register_cam_nodemaps(QSP_ARG_DECL  Spink_Cam *skc_p)
 
 	sprintf(MSG_STR,"%s.genicam",skc_p->skc_name);
 	skc_p->skc_cam_map = register_one_map(skc_p,CAM_NODE_MAP,MSG_STR);
+
+	// Now get width and height from the map...
+
 //fprintf(stderr,"register_cam_nodemaps DONE\n");
+}
+
+#define int_node_value(s) _int_node_value(QSP_ARG  s)
+
+static int64_t _int_node_value(QSP_ARG_DECL  const char *s)
+{
+	int64_t integerValue = 0;
+	spinNodeHandle hNode;
+	Spink_Node *skn_p;
+	Spink_Node_Type *snt_p;
+
+	skn_p = get_spink_node(s);
+	if( skn_p == NULL ){
+		sprintf(ERROR_STRING,"int_node_value:  Node '%s' not found!?",s);
+		warn(ERROR_STRING);
+		return 0;
+	}
+	snt_p = skn_p->skn_type_p;
+	assert(snt_p!=NULL);
+	if(snt_p->snt_type != IntegerNode){
+		sprintf(ERROR_STRING,"int_node_value:  Node '%s' is not an integer node!?",s);
+		warn(ERROR_STRING);
+		return 0;
+	}
+	if( lookup_spink_node(skn_p, &hNode) < 0 ) return 0;
+	if( get_int_value(hNode, &integerValue) < 0 ) return 0;
+
+	return integerValue;
+}
+
+
+#define get_cam_dimensions(skc_p) _get_cam_dimensions(QSP_ARG  skc_p)
+
+static void _get_cam_dimensions(QSP_ARG_DECL  Spink_Cam *skc_p)
+{
+	select_spink_map(skc_p->skc_cam_map);
+	skc_p->skc_cols = int_node_value("Width");
+	skc_p->skc_rows = int_node_value("Height");
+	select_spink_map(NULL);
 }
 
 #define init_one_spink_cam(idx) _init_one_spink_cam(QSP_ARG  idx)
@@ -1969,14 +1915,19 @@ static int _init_one_spink_cam(QSP_ARG_DECL  int idx)
 	// The camera has to be connected to get the genicam node map!
 	register_cam_nodemaps(skc_p);
 
+	get_cam_dimensions(skc_p);
+
+#ifdef FOOBAR
 	// Make a data_obj context for the frames...
 	skc_p->skc_do_icp = create_dobj_context( QSP_ARG  skc_p->skc_name );
 	assert(skc_p->skc_do_icp != NULL);
+#endif // FOOBAR
 
 	// We have to explicitly release here, as we weren't able to call
 	// insure_current_camera at the beginning...
 	//spink_release_cam(skc_p);
-	release_current_camera();
+
+	release_current_camera(1);
 
 	return 0;
 }
@@ -2074,7 +2025,7 @@ void _release_spink_cam_system(SINGLE_QSP_ARG_DECL)
 {
 	assert( hSystem != NULL );
 DEBUG_MSG(releast_spink_cam_system BEGIN)
-	release_current_camera();
+	release_current_camera(0);
 
 	if( release_spink_interface_structs() < 0 ) return;
 	//if( release_spink_cam_structs() < 0 ) return;

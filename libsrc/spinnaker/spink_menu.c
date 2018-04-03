@@ -41,6 +41,21 @@ static COMMAND_FUNC(do_list_spink_maps)
 	list_spink_maps( tell_msgfile() );
 }
 
+void _select_spink_map(QSP_ARG_DECL  Spink_Map *skm_p)
+{
+	if( curr_map_p == skm_p ) return;	// nothing to do
+
+	if( curr_map_p != NULL ) pop_map_contexts();
+fprintf(stderr,"select_spink_map:  calling push_map_contexts\n");
+
+	curr_map_p = skm_p;
+
+	if( skm_p != NULL ){
+		push_map_contexts(skm_p);
+		insure_current_camera(skm_p->skm_skc_p);
+	}
+}
+
 static COMMAND_FUNC(do_select_spink_map)
 {
 	Spink_Map *skm_p;
@@ -48,12 +63,7 @@ static COMMAND_FUNC(do_select_spink_map)
 	skm_p = pick_spink_map("");
 	if( skm_p == NULL ) return;
 
-	if( curr_map_p != NULL )
-		pop_map_contexts();
-	push_map_contexts(skm_p);
-
-	curr_map_p = skm_p;
-	insure_current_camera(skm_p->skm_skc_p);
+	select_spink_map(skm_p);
 }
 
 #define CHECK_CURRENT_MAP			\
@@ -72,19 +82,6 @@ static COMMAND_FUNC(do_list_spink_nodes)
 
 static COMMAND_FUNC(do_all_nodes_info)
 {
-#ifdef FOOBAR
-	List *lp;
-	Node *np;
-
-	lp = spink_node_list();
-	np = QLIST_HEAD(lp);
-	while(np!=NULL){
-		Spink_Node *skn_p;
-		skn_p = (Spink_Node *) NODE_DATA(np);
-		print_spink_node_info(skn_p,0);
-		np = NODE_NEXT(np);
-	}
-#endif // FOOBAR
 	CHECK_CURRENT_MAP
 
 	print_map_tree(curr_map_p);
@@ -203,7 +200,7 @@ static COMMAND_FUNC( do_init )
 	}
 
 	if( init_spink_cam_system(SINGLE_QSP_ARG) < 0 )
-		WARN("Error initializing firewire system.");
+		WARN("Error initializing Spinnaker system.");
 #endif
 }
 
@@ -241,10 +238,13 @@ static COMMAND_FUNC( do_cam_info )
 
 static void select_spink_cam(QSP_ARG_DECL  Spink_Cam *scp )
 {
+#ifdef FOOBAR
 	if( the_cam_p != NULL )
 		pop_spink_cam_context(SINGLE_QSP_ARG);
-	the_cam_p = scp;
 	push_spink_cam_context(QSP_ARG  scp);
+#endif // FOOBAR
+
+	the_cam_p = scp;
 #ifdef HAVE_LIBSPINNAKER
 	refresh_spink_cam_properties(QSP_ARG  scp);
 #endif // HAVE_LIBSPINNAKER
@@ -262,12 +262,8 @@ static COMMAND_FUNC( do_select_cam )
 
 static COMMAND_FUNC( do_start )
 {
-advise("do_start BEGIN");
 	CHECK_CAM
-advise("do_start back from CHECK_CAM, calling start_firewire_capture");
-
-	start_firewire_capture(QSP_ARG  the_cam_p);
-advise("do_start DONE");
+	spink_start_capture(the_cam_p);
 }
 
 static COMMAND_FUNC( do_grab )
@@ -301,7 +297,7 @@ static COMMAND_FUNC( do_grab_newest )
 static COMMAND_FUNC( do_stop )
 {
 	CHECK_CAM
-	stop_firewire_capture(QSP_ARG  the_cam_p );
+	spink_stop_capture(the_cam_p );
 }
 
 static COMMAND_FUNC(do_power)
@@ -381,6 +377,7 @@ static COMMAND_FUNC( do_show_spink_cam_framerate )
 #endif
 }
 
+#ifdef FOOBAR
 static COMMAND_FUNC( do_set_video_mode )
 {
 #ifdef HAVE_LIBSPINNAKER
@@ -408,6 +405,7 @@ advise(ERROR_STRING);
 	UNIMP_MSG("set_video_mode");
 #endif // ! HAVE_LIBSPINNAKER
 }
+#endif // FOOBAR
 
 static COMMAND_FUNC( do_set_framerate )
 {
@@ -492,6 +490,7 @@ static COMMAND_FUNC( do_get_cams )
 		WARN("Error getting camera names!?");
 }
 
+#ifdef FOOBAR
 static COMMAND_FUNC( do_get_spink_cam_video_modes )
 {
 	Data_Obj *dp;
@@ -525,41 +524,7 @@ static COMMAND_FUNC( do_get_framerates )
 	// BUG should make this a reserved var...
 	assign_var("n_framerates",s);
 }
-
-static COMMAND_FUNC( do_read_reg )
-{
-	unsigned int addr;
-
-	addr = HOW_MANY("register address");
-	CHECK_CAM
-
-#ifdef HAVE_LIBSPINNAKER
-	{
-	unsigned int val;
-	val = read_register(QSP_ARG  the_cam_p, addr);
-	sprintf(MSG_STR,"0x%x:  0x%x",addr,val);
-	prt_msg(MSG_STR);
-	}
-#else // ! HAVE_LIBSPINNAKER
-	UNIMP_MSG("read_register");
-#endif // ! HAVE_LIBSPINNAKER
-}
-
-static COMMAND_FUNC( do_write_reg )
-{
-	unsigned int addr;
-	unsigned int val;
-
-	addr = HOW_MANY("register address");
-	val = HOW_MANY("value");
-	CHECK_CAM
-
-#ifdef HAVE_LIBSPINNAKER
-	write_register(QSP_ARG  the_cam_p, addr, val);
-#else // ! HAVE_LIBSPINNAKER
-	UNIMP_MSG("write_register");
-#endif // ! HAVE_LIBSPINNAKER
-}
+#endif // FOOBAR
 
 static COMMAND_FUNC( do_prop_info )
 {
@@ -666,6 +631,7 @@ static COMMAND_FUNC( do_set_prop )
 #endif // ! HAVE_LIBSPINNAKER
 }
 
+#ifdef FOOBAR
 static COMMAND_FUNC( do_set_fmt7 )
 {
 	int i;
@@ -687,12 +653,13 @@ static COMMAND_FUNC( do_set_fmt7 )
 	UNIMP_MSG("set_fmt7_mode");
 #endif // ! HAVE_LIBSPINNAKER
 }
+#endif // FOOBAR
 
 static COMMAND_FUNC( do_show_n_bufs )
 {
 	CHECK_CAM
 
-	//show_n_buffers(QSP_ARG  the_cam_p);
+	show_n_buffers(the_cam_p);
 }
 
 static COMMAND_FUNC( do_set_n_bufs )
@@ -776,16 +743,14 @@ static COMMAND_FUNC( do_set_iso_speed )
 
 MENU_BEGIN(spink_cam)
 //ADD_CMD( set_embedded_image_info,	do_set_eii,	enable/disable embedded image information )
-ADD_CMD( read_register,		do_read_reg,		read a camera register )
-ADD_CMD( write_register,	do_write_reg,		write a camera register )
 ADD_CMD( properties,		do_prop_menu,		camera properties submenu )
 ADD_CMD( list_video_modes,	do_list_spink_cam_modes,		list all video modes for this camera )
-ADD_CMD( get_video_modes,	do_get_spink_cam_video_modes,	copy video modes strings to an array )
-ADD_CMD( set_video_mode,	do_set_video_mode,	set video mode )
-ADD_CMD( format7,		do_set_fmt7,		select a format7 mode )
+//ADD_CMD( get_video_modes,	do_get_spink_cam_video_modes,	copy video modes strings to an array )
+//ADD_CMD( set_video_mode,	do_set_video_mode,	set video mode )
+//ADD_CMD( format7,		do_set_fmt7,		select a format7 mode )
 ADD_CMD( show_video_mode,	do_show_spink_cam_video_mode,	display current video mode )
 ADD_CMD( list_framerates,	do_list_spink_cam_framerates,	list all framerates for this camera )
-ADD_CMD( get_framerates,	do_get_framerates,	copy framerate strings to an array )
+//ADD_CMD( get_framerates,	do_get_framerates,	copy framerate strings to an array )
 ADD_CMD( set_framerate,		do_set_framerate,	set framerate )
 ADD_CMD( show_framerate,	do_show_spink_cam_framerate,	show current framerate )
 ADD_CMD( set_iso_speed,		do_set_iso_speed,	set ISO speed )
@@ -991,8 +956,11 @@ MENU_SIMPLE_END(spinnaker)	// doesn't add quit command automatically
 
 COMMAND_FUNC( do_spink_menu )
 {
+#ifdef FOOBAR
 	if( the_cam_p != NULL )
 		push_spink_cam_context(QSP_ARG  the_cam_p);
+#endif // FOOBAR
+
 	CHECK_AND_PUSH_MENU( spinnaker );
 }
 
