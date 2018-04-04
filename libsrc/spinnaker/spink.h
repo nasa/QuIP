@@ -187,7 +187,7 @@ typedef struct spink_cam {
 	spinCamera		skc_current_handle;	// non-NULL if we are holding a handle -
 							// set to NULL when released...
 	spinNodeMapHandle	skc_TL_dev_node_map;	// hNodeMapTLDevice
-	spinImage		skc_img_tbl[MAX_N_BUFFERS];
+	//spinImage		skc_img_tbl[MAX_N_BUFFERS];
 #endif /* HAVE_LIBSPINNAKER */
 	//spinNodeMapHandle	skc_genicam_node_map;	// hNodeMapTLDevice
 
@@ -225,6 +225,7 @@ typedef struct spink_cam {
 	unsigned int		skc_depth;	// bytes per pixel
 	int			skc_n_buffers;
 	int			skc_newest;
+	int			skc_oldest;
 	Data_Obj **		skc_frm_dp_tbl;
 //	Item_Context *		skc_do_icp;	// data_obj context
 //	List *			skc_in_use_lp;	// list of frames...
@@ -361,6 +362,9 @@ extern void _print_spink_node_info(QSP_ARG_DECL Spink_Node *skn_p, int level);
 #define print_spink_node_info(skn_p,level) _print_spink_node_info(QSP_ARG skn_p,level)
 
 // spink_acq.c
+
+extern void _set_camera_node(QSP_ARG_DECL  Spink_Cam *skc_p, const char *node_name, const char *entry_name);
+#define set_camera_node(skc_p, node_name, entry_name) _set_camera_node(QSP_ARG  skc_p, node_name, entry_name)
 
 extern void _set_n_spink_buffers(QSP_ARG_DECL  Spink_Cam *skc_p, int n);
 #define set_n_spink_buffers(skc_p, n) _set_n_spink_buffers(QSP_ARG  skc_p, n)
@@ -556,15 +560,18 @@ extern int check_buffer_alignment(QSP_ARG_DECL  Spink_Cam *fcp);
 //extern const char *name_for_trigger_mode(dc1394trigger_mode_t mode);
 #endif	// HAVE_LIBSPINNAKER
 
-extern void cleanup_spink_cam(Spink_Cam *fcp);
-extern int get_spink_cam_names(QSP_ARG_DECL  Data_Obj *dp );
+extern int _get_spink_cam_names(QSP_ARG_DECL  Data_Obj *dp );
+#define get_spink_cam_names(dp ) _get_spink_cam_names(QSP_ARG  dp )
+
 extern int get_spink_cam_video_mode_strings(QSP_ARG_DECL  Data_Obj *dp, Spink_Cam *fcp);
 extern int get_spink_cam_framerate_strings(QSP_ARG_DECL  Data_Obj *dp, Spink_Cam *fcp);
 extern void push_spink_cam_context(QSP_ARG_DECL  Spink_Cam *fcp);
 extern void pop_spink_cam_context(SINGLE_QSP_ARG_DECL);
 extern int init_spink_cam_system(SINGLE_QSP_ARG_DECL);
 extern int start_firewire_transmission(QSP_ARG_DECL  Spink_Cam * fcp, int buf_size );
-extern Data_Obj * grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * fcp );
+extern Data_Obj * _grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * fcp );
+#define grab_spink_cam_frame(fcp ) _grab_spink_cam_frame(QSP_ARG  fcp )
+
 extern Data_Obj * grab_newest_firewire_frame(QSP_ARG_DECL  Spink_Cam * fcp );
 extern int reset_spink_cam(QSP_ARG_DECL  Spink_Cam * fcp );
 extern void list_spink_cam_trig( QSP_ARG_DECL  Spink_Cam * fcp );

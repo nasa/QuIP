@@ -46,6 +46,7 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #define get_next_image(a,b) _get_next_image(QSP_ARG  a,b)
 #define image_is_incomplete(a,b) _image_is_incomplete(QSP_ARG  a,b)
 #define get_image_status(a,b) _get_image_status(QSP_ARG  a,b)
+#define get_image_status_description(a,b,c) _get_image_status_description(QSP_ARG  a,b,c)
 #define get_image_width(a,b) _get_image_width(QSP_ARG  a,b)
 #define get_image_height(a,b) _get_image_height(QSP_ARG  a,b)
 #define get_iface_map(a,b) _get_iface_map(QSP_ARG  a,b)

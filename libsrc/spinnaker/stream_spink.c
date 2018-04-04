@@ -866,7 +866,7 @@ show_tmrs(SINGLE_QSP_ARG);
 		int queue_idx;
 
 		// get the next frame
-		dp = grab_spink_cam_frame(QSP_ARG  scp);
+		dp = grab_spink_cam_frame(scp);
 n_frames_read++;
 
 		assert( dp != NULL );

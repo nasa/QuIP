@@ -524,20 +524,6 @@ void set_prop_auto(QSP_ARG_DECL  Spink_Cam *skc_p, Spink_Cam_Property_Type *pgpt
 #endif // FOOBAR
 }
 
-void
-cleanup_spink_cam( Spink_Cam *skc_p )
-{
-	//if( IS_CAPTURING(skc_p) )
-		 //dc1394_capture_stop( skc_p->sk_cam_p );
-		 //fly_capture_stop( skc_p->sk_cam_p );
-	//if( IS_TRANSMITTING(skc_p) )
-		//dc1394_video_set_transmission( skc_p->sk_cam_p, DC1394_OFF );
-		//fly_video_set_transmission( skc_p->sk_cam_p, DC1394_OFF );
-	/* dc1394_free_spink_cam */
-	//dc1394_spink_cam_free( skc_p->sk_cam_p );
-	//fly_spink_cam_free( skc_p->sk_cam_p );
-}
-
 
 #define INDEX_SEARCH( stem, type, count, short_stem )			\
 									\
@@ -587,7 +573,7 @@ NAME_LOOKUP_FUNC(bw_allocation,spinkBandwidthAllocation,nba)
 NAME_LOOKUP_FUNC(interface,spinkInterfaceType,nif)
 */
 
-int get_spink_cam_names( QSP_ARG_DECL  Data_Obj *str_dp )
+int _get_spink_cam_names( QSP_ARG_DECL  Data_Obj *str_dp )
 {
 	// Could check format of object here...
 	// Should be string table with enough entries to hold the modes
@@ -911,11 +897,6 @@ void set_fmt7_size(QSP_ARG_DECL  Spink_Cam *skc_p, int w, int h)
 	UNIMP_FUNC("set_fmt7_size");
 }
 
-void release_oldest_frame(QSP_ARG_DECL  Spink_Cam *skc_p)
-{
-	UNIMP_FUNC("release_oldest_frame");
-}
-
 void list_spink_cam_trig(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 #ifdef FOOBAR
@@ -1022,12 +1003,10 @@ void pop_spink_cam_context(SINGLE_QSP_ARG_DECL)
 	Item_Context *icp;
 	icp=pop_dobj_context();
 	assert( icp != NULL );
-fprintf(stderr,"pop_spink_cam_context:  popped %s\n",CTX_NAME(icp));
 }
 
 void push_spink_cam_context(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
-fprintf(stderr,"push_spink_cam_context:  pushing %s\n",CTX_NAME(skc_p->skc_do_icp));
 	push_dobj_context(skc_p->skc_do_icp);
 }
 #endif // FOOBAR
@@ -1133,14 +1112,12 @@ static void _set_command_node(QSP_ARG_DECL  Spink_Node *skn_p)
 
 	assert(skn_p->skn_type_p->snt_type == CommandNode);
 
-fprintf(stderr,"executing %s\n",skn_p->skn_name);
 	if( lookup_spink_node(skn_p, &hNode) < 0 || exec_spink_command(hNode) < 0 ){
 		sprintf(ERROR_STRING,"Error executing %s",skn_p->skn_name);
 		warn(ERROR_STRING);
 	}
 	// wait here for command to finish
 	do {
-fprintf(stderr,"checking to see if %s has finished...\n",skn_p->skn_name);
 		if( command_is_done(hNode,&done) < 0 ) return;
 	} while( ! done );
 }
@@ -1653,10 +1630,13 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 	// don't make a category for the root node
 	if( level > 0 && type == CategoryNode ){
 		Spink_Category *sct_p;
-fprintf(stderr,"register_one_node:  checking for category %s\n",skn_p->skn_name);
 		sct_p = spink_cat_of(skn_p->skn_name);
-		assert(sct_p==NULL); 
-		sct_p = new_spink_cat(skn_p->skn_name);
+		//assert(sct_p==NULL); 
+		// This should always be NULL the first time we initialize the system,
+		// but currently we aren't cleaning up when we shut it down and reinitialize...
+		if( sct_p == NULL ){
+			sct_p = new_spink_cat(skn_p->skn_name);
+		}
 		assert(sct_p!=NULL); 
 		sct_p->sct_root_p = skn_p;
 	}
@@ -1725,14 +1705,12 @@ void _pop_map_contexts(SINGLE_QSP_ARG_DECL)
 {
 	pop_spink_node_context();
 	pop_spink_cat_context();
-fprintf(stderr,"popped category context\n");
 }
 
 void _push_map_contexts(QSP_ARG_DECL  Spink_Map *skm_p)
 {
 	push_spink_node_context(skm_p->skm_node_icp);
 	push_spink_cat_context(skm_p->skm_cat_icp);
-fprintf(stderr,"push_map_contexts:  pushed context %s\n",CTX_NAME(skm_p->skm_cat_icp));
 }
 
 #define register_map_nodes(hMap,skm_p) _register_map_nodes(QSP_ARG  hMap,skm_p)
@@ -1744,7 +1722,6 @@ static void _register_map_nodes(QSP_ARG_DECL  spinNodeMapHandle hMap, Spink_Map 
 //fprintf(stderr,"register_map_nodes BEGIN   hMap = 0x%lx\n",(u_long)hMap);
 
 	//push_spink_node_context(skm_p->skm_icp);
-fprintf(stderr,"register_map_nodes:  pushing contexts for %s\n",skm_p->skm_name);
 	push_map_contexts(skm_p);
 
 //fprintf(stderr,"register_map_nodes fetching root node   hMap = 0x%lx\n",(u_long)hMap);
@@ -1790,7 +1767,6 @@ static Spink_Map * _register_one_map(QSP_ARG_DECL  Spink_Cam *skc_p, Node_Map_Ty
 	if( spink_cat_itp == NULL ) init_spink_cats();
 	skm_p->skm_cat_icp = create_item_context(spink_cat_itp,name);
 	assert(skm_p->skm_cat_icp!=NULL);
-fprintf(stderr,"created context %s\n",CTX_NAME(skm_p->skm_cat_icp));
 
 	// do we need to push the context too???
 
@@ -2021,18 +1997,51 @@ static int _release_spink_interface_structs(SINGLE_QSP_ARG_DECL)
 	return 0;
 }
 
+#define stop_all_cameras() _stop_all_cameras(SINGLE_QSP_ARG)
+
+static void _stop_all_cameras(SINGLE_QSP_ARG_DECL)
+{
+	List *lp;
+	Node *np;
+	Spink_Cam *skc_p;
+
+	lp = spink_cam_list();
+	if( lp == NULL ) return;
+	np = QLIST_HEAD(lp);
+	if( np == NULL ) return;
+
+	while(np!=NULL){
+		skc_p = NODE_DATA(np);
+		if( IS_CAPTURING(skc_p) ) spink_stop_capture(skc_p);
+		np = NODE_NEXT(np);
+	}
+}
+
 void _release_spink_cam_system(SINGLE_QSP_ARG_DECL)
 {
-	assert( hSystem != NULL );
+	if( hSystem == NULL ) return;	// may already be shut down?
+
 DEBUG_MSG(releast_spink_cam_system BEGIN)
+
+	// make sure that no cameras are running...
+fprintf(stderr,"release_spink_cam_system stopping all cameras\n");
+	stop_all_cameras();
+
+fprintf(stderr,"release_spink_cam_system releasing current camera\n");
 	release_current_camera(0);
 
+fprintf(stderr,"release_spink_cam_system releasing interface structs\n");
 	if( release_spink_interface_structs() < 0 ) return;
 	//if( release_spink_cam_structs() < 0 ) return;
 
+fprintf(stderr,"release_spink_cam_system releasing camera list\n");
 	if( release_spink_cam_list(&hCameraList) < 0 ) return;
+fprintf(stderr,"release_spink_cam_system releasing interface list\n");
 	if( release_spink_interface_list(&hInterfaceList) < 0 ) return;
+fprintf(stderr,"release_spink_cam_system releasing system\n");
 	if( release_spink_system(hSystem) < 0 ) return;
+fprintf(stderr,"release_spink_cam_system DONE\n");
+	hSystem = NULL;
 DEBUG_MSG(releast_spink_cam_system DONE)
 }
 
