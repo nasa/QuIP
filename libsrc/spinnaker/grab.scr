@@ -13,15 +13,11 @@ spinnaker
   advise "initializing..."
   init
   advise "DONE initializing..."
-  list_interfaces
   list_cams
 #  info Flea3_FL3-U3-13Y3M
 #  select Flea3_FL3-U3-13Y3M
 #  test
   quit
-
-Viewer v 1280 1024
-view viewers shm_setup v quit quit
 
 Define Release_Oldest 0
 spinnaker capture release quit quit
@@ -32,30 +28,10 @@ spinnaker capture grab quit quit
 .
 
 Define GrabEm 1 n
-repeat $1
-  Grab_Next
-  #Show_Bytes cam$cam_idx.frame$newest v
-  Release_Oldest
-  end
-.
-
-Define GrabFast 1 n
-spinnaker
-  capture
-    repeat $1
-      grab
-      release
-      end
-    quit
-  quit
-.
-
-Define GrabNShow 1 n
 spinnaker capture start quit quit
 repeat $1
   Grab_Next
   #Show_Bytes cam$cam_idx.frame$newest v
-  view viewers shm_update v cam$cam_idx.frame$newest 0 0 quit quit
   Release_Oldest
   end
 spinnaker capture stop quit quit
@@ -105,11 +81,11 @@ spinnaker
   quit
 Set frm_idx 0
 Set n_test 300
-Time_It GrabNShow $n_test
+Time_It GrabEm $n_test
 Show_Underrun_Count
-Time_It GrabNShow $n_test
+Time_It GrabEm $n_test
 Show_Underrun_Count
-Time_It GrabNShow $n_test
+Time_It GrabEm $n_test
 Show_Underrun_Count
 
 exit

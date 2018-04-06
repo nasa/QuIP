@@ -104,6 +104,7 @@ typedef struct spink_node {
 ITEM_INTERFACE_PROTOTYPES(Spink_Node,spink_node)
 
 #define new_spink_node(s)	_new_spink_node(QSP_ARG  s)
+#define del_spink_node(skn_p)	_del_spink_node(QSP_ARG  skn_p)
 #define get_spink_node(s)	_get_spink_node(QSP_ARG  s)
 #define spink_node_of(s)	_spink_node_of(QSP_ARG  s)
 #define init_spink_nodes()	_init_spink_nodes(SINGLE_QSP_ARG)
@@ -119,6 +120,7 @@ typedef struct spink_cat {
 ITEM_INTERFACE_PROTOTYPES(Spink_Category,spink_cat)
 
 #define new_spink_cat(s)	_new_spink_cat(QSP_ARG  s)
+#define del_spink_cat(p)	_del_spink_cat(QSP_ARG  p)
 #define spink_cat_of(s)		_spink_cat_of(QSP_ARG  s)
 #define init_spink_cats()	_init_spink_cats(SINGLE_QSP_ARG)
 #define list_spink_cats(fp)	_list_spink_cats(QSP_ARG  fp)
@@ -167,6 +169,7 @@ typedef struct spink_map {
 ITEM_INTERFACE_PROTOTYPES(Spink_Map,spink_map)
 
 #define new_spink_map(s)	_new_spink_map(QSP_ARG  s)
+#define del_spink_map(s)	_del_spink_map(QSP_ARG  s)
 #define spink_map_of(s)		_spink_map_of(QSP_ARG  s)
 #define list_spink_maps(fp)	_list_spink_maps(QSP_ARG  fp)
 #define pick_spink_map(s)	_pick_spink_map(QSP_ARG  s)
@@ -236,6 +239,7 @@ typedef struct spink_cam {
 ITEM_INTERFACE_PROTOTYPES(Spink_Cam,spink_cam)
 
 #define new_spink_cam(s)	_new_spink_cam(QSP_ARG  s)
+#define del_spink_cam(s)	_del_spink_cam(QSP_ARG  s)
 #define spink_cam_of(s)	_spink_cam_of(QSP_ARG  s)
 #define list_spink_cams(fp)	_list_spink_cams(QSP_ARG  fp)
 #define pick_spink_cam(s)	_pick_spink_cam(QSP_ARG  s)

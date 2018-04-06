@@ -454,18 +454,32 @@ int _do_on_exit(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL))
 	return(0);
 }
 
+#define call_exit_funcs() _call_exit_funcs(SINGLE_QSP_ARG)
+
+static void _call_exit_funcs(SINGLE_QSP_ARG_DECL)
+{
+	int i;
+
+	for(i=0;i<n_exit_funcs;i++){
+		(*exit_func_tbl[i])(SINGLE_QSP_ARG);
+	}
+}
+
 /*
  * Call user exit functions, then exit
+ *
+ * We use the already_exiting flag to avoid infinite recursion if
+ * an error occurs in an exit func
  */
 
 void _nice_exit(QSP_ARG_DECL  int status)
 		/* exit status */
 {
-	int i;
+	static int already_exiting=0;
 
-//call_mcleanup();
-	for(i=0;i<n_exit_funcs;i++){
-		(*exit_func_tbl[i])(SINGLE_QSP_ARG);
+	if( ! already_exiting ){
+		already_exiting=1;
+		call_exit_funcs();
 	}
 
 	exit(status);

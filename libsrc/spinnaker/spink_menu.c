@@ -292,7 +292,7 @@ static COMMAND_FUNC( do_release )
 
 static COMMAND_FUNC( do_close )
 {
-	CHECK_CAM
+	//CHECK_CAM
 #ifdef HAVE_LIBSPINNAKER
 	release_spink_cam_system();
 #endif
@@ -351,29 +351,6 @@ static COMMAND_FUNC( do_record )
 #endif // ! HAVE_LIBSPINNAKER
 }
 
-static COMMAND_FUNC( do_set_grab_mode )
-{
-	int idx;
-
-	CHECK_CAM
-
-	idx = pick_grab_mode(QSP_ARG  the_cam_p, "capture mode");
-	if( idx < 0 ) return;
-
-#ifdef HAVE_LIBSPINNAKER
-	//set_grab_mode(QSP_ARG  the_cam_p, idx );
-#endif // HAVE_LIBSPINNAKER
-}
-
-static COMMAND_FUNC( do_show_grab_mode )
-{
-	CHECK_CAM
-
-#ifdef HAVE_LIBSPINNAKER
-	//show_grab_mode(QSP_ARG  the_cam_p);
-#endif // HAVE_LIBSPINNAKER
-}
-
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(capture_menu,s,f,h)
 
@@ -381,8 +358,6 @@ MENU_BEGIN(capture)
 //ADD_CMD( set_buffer_obj,	do_set_bufs,	specify sequence object to use for capture )
 ADD_CMD( set_n_buffers,		do_set_n_bufs,		specify number of frames in the ring buffer )
 ADD_CMD( show_n_buffers,	do_show_n_bufs,		show number of frames in the ring buffer )
-ADD_CMD( set_mode,		do_set_grab_mode,	specify grab mode )
-ADD_CMD( show_mode,		do_show_grab_mode,	display current grab mode )
 ADD_CMD( start,			do_start,	start capture )
 ADD_CMD( grab,			do_grab,	grab a frame )
 ADD_CMD( grab_newest,		do_grab_newest,	grab the newest frame )
