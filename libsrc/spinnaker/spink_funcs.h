@@ -27,6 +27,9 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #define get_feature_by_index(a,b,c) _get_feature_by_index(QSP_ARG  a,b,c)
 #define get_enum_entry_by_index(a,b,c) _get_enum_entry_by_index(QSP_ARG  a,b,c)
 
+#define get_image_chunk_int(a,b,c) _get_image_chunk_int(QSP_ARG  a,b,c)
+#define get_image_chunk_float(a,b,c) _get_image_chunk_float(QSP_ARG  a,b,c)
+
 // two arg macros
 #define get_image_data(a,b) _get_image_data(QSP_ARG  a,b)
 #define command_is_done(a,b) _command_is_done(QSP_ARG  a,b)

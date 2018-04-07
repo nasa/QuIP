@@ -52,9 +52,7 @@ void _insure_current_camera(QSP_ARG_DECL  Spink_Cam *skc_p)
 	current_skc_p = skc_p;
 }
 
-#define report_node_access_error(hNode, w) _report_node_access_error(QSP_ARG  hNode, w)
-
-static void _report_node_access_error(QSP_ARG_DECL  spinNodeHandle hNode, const char *w)
+void _report_node_access_error(QSP_ARG_DECL  spinNodeHandle hNode, const char *w)
 {
 	char dname[256];
 	size_t len=256;

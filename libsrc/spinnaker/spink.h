@@ -56,6 +56,26 @@ struct spink_node;
 // a global - used for formatting the print-out of nodes
 extern int max_display_name_len;
 
+typedef enum {
+	FLOAT_CHUNK_DATA,
+	INT_CHUNK_DATA
+} Chunk_Data_Type;
+
+typedef struct chunk_data {
+	const char *	cd_name;
+	Chunk_Data_Type	cd_type;
+	union {
+		double u_fltval;
+		int64_t u_intval;
+	} cd_u;
+} Chunk_Data;
+
+ITEM_INTERFACE_PROTOTYPES(Chunk_Data,chunk_data)
+
+#define pick_chunk_data(s)	_pick_chunk_data(QSP_ARG  s)
+#define new_chunk_data(s)	_new_chunk_data(QSP_ARG  s)
+#define list_chunk_datas(fp)	_list_chunk_datas(QSP_ARG  fp)
+
 typedef struct spink_node_type {
 	const char *		snt_name;
 #ifdef HAVE_LIBSPINNAKER
@@ -189,7 +209,7 @@ typedef struct spink_cam {
 #ifdef HAVE_LIBSPINNAKER
 	spinCamera		skc_current_handle;	// non-NULL if we are holding a handle -
 							// set to NULL when released...
-	spinNodeMapHandle	skc_TL_dev_node_map;	// hNodeMapTLDevice
+//	spinNodeMapHandle	skc_TL_dev_node_map;	// hNodeMapTLDevice
 	//spinImage		skc_img_tbl[MAX_N_BUFFERS];
 #endif /* HAVE_LIBSPINNAKER */
 	//spinNodeMapHandle	skc_genicam_node_map;	// hNodeMapTLDevice
@@ -329,6 +349,9 @@ extern void _report_spink_error(QSP_ARG_DECL  spinError error, const char *whenc
 
 // spink_node_map.c
 
+extern void _report_node_access_error(QSP_ARG_DECL  spinNodeHandle hNode, const char *w);
+#define report_node_access_error(hNode, w) _report_node_access_error(QSP_ARG  hNode, w)
+
 extern int _get_display_name_len(QSP_ARG_DECL  spinNodeHandle hdl);
 #define get_display_name_len(hdl) _get_display_name_len(QSP_ARG  hdl)
 
@@ -395,6 +418,13 @@ extern void _select_spink_map(QSP_ARG_DECL  Spink_Map *skm_p);
 
 
 // spink_util.c
+
+extern void _fetch_chunk_data(QSP_ARG_DECL  Chunk_Data *cd_p, Data_Obj *dp);
+#define fetch_chunk_data(cd_p, dp) _fetch_chunk_data(QSP_ARG  cd_p, dp)
+extern void _enable_chunk_data(QSP_ARG_DECL  Spink_Cam *skc_p, Chunk_Data *cd_p);
+#define enable_chunk_data(skc_p, cd_p) _enable_chunk_data(QSP_ARG  skc_p, cd_p)
+extern void _format_chunk_data(QSP_ARG_DECL  char *buf, Chunk_Data *cd_p);
+#define format_chunk_data(buf, cd_p) _format_chunk_data(QSP_ARG  buf, cd_p)
 
 extern void _pop_map_contexts(SINGLE_QSP_ARG_DECL);
 extern void _push_map_contexts(QSP_ARG_DECL  Spink_Map *skm_p);

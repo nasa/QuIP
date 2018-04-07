@@ -469,6 +469,78 @@ static COMMAND_FUNC(do_get_cams)
 }
 
 #undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(chunks_menu,s,f,h)
+
+static COMMAND_FUNC(do_list_chunks)
+{
+	list_chunk_datas( tell_msgfile() );
+}
+
+static COMMAND_FUNC(do_fetch_chunk)
+{
+	Chunk_Data *cd_p;
+	Data_Obj *dp;
+	const char *s;
+	char buf[64];
+
+	s = nameof("variable name");
+
+	cd_p = pick_chunk_data("");
+	dp = pick_obj("camera buffer");
+
+	if( cd_p == NULL || dp == NULL ) return;
+
+	fetch_chunk_data(cd_p,dp);
+	//display_chunk_data(cd_p);
+	format_chunk_data(buf,cd_p);
+	assign_var(s,buf);
+}
+
+static COMMAND_FUNC(do_disp_chunk)
+{
+	Chunk_Data *cd_p;
+	Data_Obj *dp;
+	char buf[64];
+
+	cd_p = pick_chunk_data("");
+	dp = pick_obj("camera buffer");
+
+	if( cd_p == NULL || dp == NULL ) return;
+
+	fetch_chunk_data(cd_p,dp);
+	format_chunk_data(buf,cd_p);
+
+	sprintf(MSG_STR,"\t%s:  ",cd_p->cd_name);
+	prt_msg_frag(MSG_STR);
+	prt_msg(buf);
+}
+
+static COMMAND_FUNC(do_enable_chunk)
+{
+	Chunk_Data *cd_p;
+
+	cd_p = pick_chunk_data("");
+	if( cd_p == NULL ) return;
+
+	CHECK_CAM
+
+	enable_chunk_data(the_cam_p,cd_p);
+}
+
+
+MENU_BEGIN(chunks)
+ADD_CMD( list,		do_list_chunks,		list chunk data types)
+ADD_CMD( enable,	do_enable_chunk,	enable chunk data)
+ADD_CMD( fetch,		do_fetch_chunk,		fetch chunk data)
+ADD_CMD( display,	do_disp_chunk,		display chunk data)
+MENU_END(chunks)
+
+static COMMAND_FUNC(do_chunk_menu)
+{
+	CHECK_AND_PUSH_MENU( chunks );
+}
+
+#undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(spinnaker_menu,s,f,h)
 
 MENU_BEGIN(spinnaker)
@@ -477,6 +549,7 @@ ADD_CMD( init,		do_init,	initialize subsystem )
 ADD_CMD( list_cams,	do_list_spink_cams,	list cameras )
 ADD_CMD( info,		do_cam_info,	print camera info )
 ADD_CMD( nodes,		do_node_menu,	node submenu )
+ADD_CMD( chunks,	do_chunk_menu,	chunk data submenu )
 ADD_CMD( select,	do_select_cam,	select camera )
 ADD_CMD( get_cameras,	do_get_cams,	copy camera names to an array )
 ADD_CMD( capture,	do_captmenu,	capture submenu )

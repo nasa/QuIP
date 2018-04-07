@@ -43,6 +43,7 @@ ITEM_INTERFACE_DECLARATIONS(Spink_Map,spink_map,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Node,spink_node,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Node_Type,spink_node_type,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Category,spink_cat,RB_TREE_CONTAINER)
+ITEM_INTERFACE_DECLARATIONS(Chunk_Data,chunk_data,RB_TREE_CONTAINER)
 
 #define UNIMP_FUNC(name)						\
 	sprintf(ERROR_STRING,"Function %s is not implemented!?",name);	\
@@ -610,7 +611,7 @@ static int _get_unique_cam_name(QSP_ARG_DECL  char *buf, int buflen)
 }
 
 #define INVALID_SET_FUNC(name)									\
-static void _set_##name##_node(QSP_ARG_DECL  Spink_Node *skn_p)					\
+static void _set_##name##_node_from_script(QSP_ARG_DECL  Spink_Node *skn_p)					\
 {												\
 	sprintf(ERROR_STRING,"set_%s_node:  %s nodes should never be set!?",#name,#name);	\
 	error1(ERROR_STRING);									\
@@ -636,6 +637,9 @@ INVALID_SET_FUNC(value)
 
 //command_is_done		CommandIsDone
 //exec_spink_command		CommandExecute
+
+#define set_command_node(skn_p) _set_command_node(QSP_ARG  skn_p)
+
 static void _set_command_node(QSP_ARG_DECL  Spink_Node *skn_p)
 {
 	spinNodeHandle hNode;
@@ -653,20 +657,33 @@ static void _set_command_node(QSP_ARG_DECL  Spink_Node *skn_p)
 	} while( ! done );
 }
 
-static void _set_string_node(QSP_ARG_DECL  Spink_Node *skn_p)
+static void _set_command_node_from_script(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	set_command_node(skn_p);
+}
+
+#define set_string_node(skn_p, s) _set_string_node(QSP_ARG  skn_p, s)
+
+static void _set_string_node(QSP_ARG_DECL  Spink_Node *skn_p, const char *s)
 {
 	spinNodeHandle hNode;
-	const char *s;
 
 	assert(skn_p->skn_type_p->snt_type == StringNode);
-
-	s = nameof(skn_p->skn_name);
 
 	// Does StringSetValue make a deep copy???  If not, we need to save the string before passing!?
 	if( lookup_spink_node(skn_p, &hNode) < 0 || set_node_value_string(hNode,s) < 0 ){
 		sprintf(ERROR_STRING,"Error setting %s",skn_p->skn_name);
 		warn(ERROR_STRING);
 	}
+}
+
+static void _set_string_node_from_script(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	const char *s;
+
+	s = nameof(skn_p->skn_name);
+
+	set_string_node(skn_p,s);
 }
 
 #define get_float_range(skn_p, min_p, max_p) _get_float_range(QSP_ARG  skn_p, min_p, max_p)
@@ -691,18 +708,13 @@ static void _get_int_range(QSP_ARG_DECL  Spink_Node *skn_p, int64_t *min_p, int6
 	if( get_node_max_value_int(hNode,max_p) < 0 ) return;
 }
 
-static void _set_float_node(QSP_ARG_DECL  Spink_Node *skn_p)
+#define set_float_node(skn_p, dval) _set_float_node(QSP_ARG  skn_p, dval)
+
+static void _set_float_node(QSP_ARG_DECL  Spink_Node *skn_p, double dval)
 {
-	double minv, maxv;
-	double dval;
-	char pmpt[LLEN];
 	spinNodeHandle hNode;
 
 	assert(skn_p->skn_type_p->snt_type == FloatNode);
-
-	get_float_range(skn_p,&minv,&maxv);
-	sprintf(pmpt,"%s (%g-%g)",skn_p->skn_name,minv,maxv);
-	dval = how_much(pmpt);
 
 	if( lookup_spink_node(skn_p, &hNode) < 0 || set_node_value_float(hNode,dval) < 0 ){
 		sprintf(ERROR_STRING,"Error setting %s",skn_p->skn_name);
@@ -710,18 +722,28 @@ static void _set_float_node(QSP_ARG_DECL  Spink_Node *skn_p)
 	}
 }
 
-static void _set_integer_node(QSP_ARG_DECL  Spink_Node *skn_p)
+static void _set_float_node_from_script(QSP_ARG_DECL  Spink_Node *skn_p)
 {
-	int64_t minv, maxv;
-	int64_t ival;
+	double minv, maxv;
+	double dval;
 	char pmpt[LLEN];
+
+	assert(skn_p->skn_type_p->snt_type == FloatNode);
+
+	get_float_range(skn_p,&minv,&maxv);
+	sprintf(pmpt,"%s (%g-%g)",skn_p->skn_name,minv,maxv);
+	dval = how_much(pmpt);
+
+	set_float_node(skn_p,dval);
+}
+
+#define set_integer_node(skn_p, ival) _set_integer_node(QSP_ARG  skn_p, ival)
+
+static void _set_integer_node(QSP_ARG_DECL  Spink_Node *skn_p, int64_t ival)
+{
 	spinNodeHandle hNode;
 
 	assert(skn_p->skn_type_p->snt_type == IntegerNode);
-
-	get_int_range(skn_p,&minv,&maxv);
-	sprintf(pmpt,"%s (%ld-%ld)",skn_p->skn_name,minv,maxv);
-	ival = how_many(pmpt);
 
 	if( lookup_spink_node(skn_p, &hNode) < 0 || set_node_value_int(hNode,ival) < 0 ){
 		sprintf(ERROR_STRING,"Error setting %s",skn_p->skn_name);
@@ -729,25 +751,47 @@ static void _set_integer_node(QSP_ARG_DECL  Spink_Node *skn_p)
 	}
 }
 
-// set_node_value_bool		BooleanSetValue
-static void _set_boolean_node(QSP_ARG_DECL  Spink_Node *skn_p)
+static void _set_integer_node_from_script(QSP_ARG_DECL  Spink_Node *skn_p)
 {
+	int64_t minv, maxv;
+	int64_t ival;
 	char pmpt[LLEN];
+
+	assert(skn_p->skn_type_p->snt_type == IntegerNode);
+
+	get_int_range(skn_p,&minv,&maxv);
+	sprintf(pmpt,"%s (%ld-%ld)",skn_p->skn_name,minv,maxv);
+	ival = how_many(pmpt);
+
+	set_integer_node(skn_p,ival);
+}
+
+#define set_boolean_node(skn_p, flag) _set_boolean_node(QSP_ARG  skn_p, flag)
+
+static void _set_boolean_node(QSP_ARG_DECL  Spink_Node *skn_p, bool8_t flag)
+{
 	spinNodeHandle hNode;
-	bool8_t flag;
 
 	assert(skn_p->skn_type_p->snt_type == BooleanNode);
 	
+	if( lookup_spink_node(skn_p, &hNode) < 0 || set_node_value_bool(hNode,flag) < 0 ){
+		sprintf(ERROR_STRING,"Error setting %s",skn_p->skn_name);
+		warn(ERROR_STRING);
+	}
+}
+
+static void _set_boolean_node_from_script(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	char pmpt[LLEN];
+	bool8_t flag;
+
 	sprintf(pmpt,"%s",skn_p->skn_name);
 	if( askif(pmpt) )
 		flag = TRUE;
 	else
 		flag = FALSE;
 
-	if( lookup_spink_node(skn_p, &hNode) < 0 || set_node_value_bool(hNode,flag) < 0 ){
-		sprintf(ERROR_STRING,"Error setting %s",skn_p->skn_name);
-		warn(ERROR_STRING);
-	}
+	set_boolean_node(skn_p,flag);
 }
 
 
@@ -789,34 +833,42 @@ static void make_enumeration_choices(const char ***tbl_ptr, int *nc_p, Spink_Nod
 	}
 }
 
-static void _set_enumeration_node(QSP_ARG_DECL  Spink_Node *skn_p)
+#define set_enumeration_node(skn_p, child) _set_enumeration_node(QSP_ARG  skn_p, child)
+
+static void _set_enumeration_node(QSP_ARG_DECL  Spink_Node *skn_p, Spink_Node *child)
+{
+	spinNodeHandle hNode;
+
+fprintf(stderr,"set_enumeration_node:  child = %s, type = %s\n", child->skn_name,child->skn_type_p->snt_name);
+	assert(skn_p->skn_type_p->snt_type == EnumerationNode);
+	assert(child->skn_type_p->snt_type == EnumEntryNode);
+	assert( child->skn_enum_ival != INVALID_ENUM_INT_VALUE );
+
+	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
+	if( set_enum_int_val(hNode,child->skn_enum_ival) < 0 )
+		warn("Error setting enum value!?");
+}
+
+static void _set_enumeration_node_from_script(QSP_ARG_DECL  Spink_Node *skn_p)
 {
 	int idx;
 	const char **choices;
 	int n_choices;
 	Spink_Node *child;
 	Node *np;
-	spinNodeHandle hNode;
 
 	make_enumeration_choices(&choices,&n_choices,skn_p);
 	idx = which_one(skn_p->skn_name,n_choices,choices);
-	if( idx < 0 ){
-		givbuf(choices);
-		return;
-	}
+	givbuf(choices);
+
+	if( idx < 0 ) return;
 
 	// now find the enum node
 	np = nth_elt(skn_p->skn_children,idx);
 	assert(np!=NULL);
 	child = NODE_DATA(np);
 
-	assert( child->skn_enum_ival != INVALID_ENUM_INT_VALUE );
-
-	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
-	if( set_enum_int_val(hNode,child->skn_enum_ival) < 0 )
-		warn("Error setting enum value!?");
-//SPINNAKERC_API spinEnumerationSetEnumValue(spinNodeHandle hNode, size_t value);
-	// EnumerationSetEnumValue
+	set_enumeration_node(skn_p,child);
 }
 
 
@@ -943,7 +995,7 @@ static void _print_enumeration_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
 #define INIT_NODE_TYPE(name,code)					\
 	snt_p = new_spink_node_type(#name);				\
 	snt_p->snt_type = code;						\
-	snt_p->snt_set_func = _set_##name##_node;			\
+	snt_p->snt_set_func = _set_##name##_node_from_script;			\
 	snt_p->snt_print_value_func = _print_##name##_node_value;	\
 
 
@@ -1616,6 +1668,31 @@ static int _create_spink_interface_structs(SINGLE_QSP_ARG_DECL)
 	return 0;
 }
 
+#define INIT_CHUNK_DATUM(name,type)			\
+	cd_p = new_chunk_data(#name);			\
+	assert(cd_p!=NULL);				\
+	cd_p->cd_type = type;
+
+#define init_chunk_data_structs() _init_chunk_data_structs(SINGLE_QSP_ARG)
+
+static void _init_chunk_data_structs(SINGLE_QSP_ARG_DECL)
+{
+	Chunk_Data *cd_p;
+
+	INIT_CHUNK_DATUM(Width,INT_CHUNK_DATA);
+	INIT_CHUNK_DATUM(Timestamp,INT_CHUNK_DATA);
+	INIT_CHUNK_DATUM(PixelFormat,INT_CHUNK_DATA);
+	INIT_CHUNK_DATUM(OffsetY,INT_CHUNK_DATA);
+	INIT_CHUNK_DATUM(OffsetX,INT_CHUNK_DATA);
+// Image
+	INIT_CHUNK_DATUM(Height,INT_CHUNK_DATA);
+	INIT_CHUNK_DATUM(Gain,FLOAT_CHUNK_DATA);
+	INIT_CHUNK_DATUM(FrameID,INT_CHUNK_DATA);
+	INIT_CHUNK_DATUM(ExposureTime,FLOAT_CHUNK_DATA);
+// CRC
+	INIT_CHUNK_DATUM(BlackLevel,FLOAT_CHUNK_DATA);
+}
+
 int init_spink_cam_system(SINGLE_QSP_ARG_DECL)
 {
 #ifdef HAVE_LIBSPINNAKER
@@ -1630,6 +1707,8 @@ int init_spink_cam_system(SINGLE_QSP_ARG_DECL)
 	// We get the cameras from the system, not from individual interfaces...
 	if( get_spink_cameras(hSystem,&hCameraList,&numCameras) < 0 ) return -1;
 	if( create_spink_camera_structs() < 0 ) return -1;
+
+	init_chunk_data_structs();
 
 	do_on_exit(_release_spink_cam_system);
 
@@ -1689,5 +1768,98 @@ int _spink_release_cam(QSP_ARG_DECL  Spink_Cam *skc_p)
 		return -1;
 	skc_p->skc_current_handle=NULL;
 	return 0;
+}
+
+#define node_for_chunk(cd_p) _node_for_chunk(QSP_ARG  cd_p)
+
+static Spink_Node *_node_for_chunk(QSP_ARG_DECL  Chunk_Data *cd_p)
+{
+	char buf[128];
+	Spink_Node *skn_p;
+fprintf(stderr,"node_for_chunk %s BEGIN\n",cd_p->cd_name);
+	sprintf(buf,"EnumEntry_ChunkSelector_%s",cd_p->cd_name);
+	skn_p = get_spink_node(buf);
+	assert(skn_p!=NULL);
+	return skn_p;
+}
+
+void _enable_chunk_data(QSP_ARG_DECL  Spink_Cam *skc_p, Chunk_Data *cd_p)
+{
+	Spink_Map *skm_p;
+	Spink_Node *skn_p;
+	Spink_Node *val_p;
+
+	skm_p = skc_p->skc_cam_map;
+	assert(skm_p!=NULL);
+	push_map_contexts(skm_p);
+	skn_p = get_spink_node("ChunkModeActive");
+	assert( skn_p != NULL );
+	set_boolean_node(skn_p,True);
+	/*
+	get_node_map_handle(&hMap,skm_p,"enable_chunk_data");
+	assert(hMap!=NULL);
+	if( fetch_spink_node(hMap, "ChunkModeActive", &hNode) < 0 ){
+		warn("enable_chunk_data:  error getting ChunkModeActive node!?");
+		return;
+	}
+	if( ! spink_node_is_available(hNode) ){
+		//if( verbose )
+			report_node_access_error(hNode,"available");
+		return;
+	}
+	if( ! spink_node_is_writable(hNode) ){
+		report_node_access_error(hNode,"writable");
+		return;
+	}
+	*/
+
+	skn_p = get_spink_node("ChunkSelector");
+	assert( skn_p != NULL );
+	assert(skn_p->skn_type_p->snt_type == EnumerationNode );
+
+fprintf(stderr,"enable_chunk_data:  looking up node for %s\n",cd_p->cd_name);
+	val_p = node_for_chunk(cd_p);
+fprintf(stderr,"enable_chunk_data:  found %s\n",val_p->skn_name);
+	set_enumeration_node(skn_p,val_p);
+
+	skn_p = get_spink_node("ChunkEnable");
+	set_boolean_node(skn_p,True);
+
+	pop_map_contexts();
+}
+
+void _fetch_chunk_data(QSP_ARG_DECL  Chunk_Data *cd_p, Data_Obj *dp)
+{
+	spinImage hImg;
+	char buf[128];
+
+	if( OWNS_DATA(dp) ){
+		sprintf(ERROR_STRING,"fetch_chunk_data:  object %s owns its data, not a camera buffer!?",
+			OBJ_NAME(dp));
+		warn(ERROR_STRING);
+		return;
+	}
+
+	hImg = OBJ_EXTRA(dp);
+	assert(hImg!=NULL);
+
+	sprintf(buf,"Chunk%s",cd_p->cd_name);
+//fprintf(stderr,"chunk string is %s\n",buf);
+	if(cd_p->cd_type == INT_CHUNK_DATA ){
+		if( get_image_chunk_int(hImg,buf,&(cd_p->cd_u.u_intval)) < 0 )
+			warn("error fetching int chunk value!?");
+	} else if( cd_p->cd_type == FLOAT_CHUNK_DATA ){
+		if( get_image_chunk_float(hImg,buf,&(cd_p->cd_u.u_fltval)) < 0 )
+			warn("error fetching float chunk value!?");
+	} else error1("fetch_chunk_data:  bad chunk data type code!?");
+}
+
+void _format_chunk_data(QSP_ARG_DECL  char *buf, Chunk_Data *cd_p)
+{
+	if(cd_p->cd_type == INT_CHUNK_DATA ){
+		sprintf(buf,"%ld",cd_p->cd_u.u_intval);
+	} else if( cd_p->cd_type == FLOAT_CHUNK_DATA ){
+		sprintf(buf,"%g",cd_p->cd_u.u_fltval);
+	} else error1("format_chunk_data:  bad chunk data type code!?");
 }
 

@@ -75,6 +75,12 @@ Data_Obj * _grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * skc_p )
 	int index;
 	Data_Obj *dp;
 
+	if( ! IS_CAPTURING(skc_p) ){
+		sprintf(ERROR_STRING,"grab_spink_cam_frame:  %s is not capturing!?",skc_p->skc_name);
+		warn(ERROR_STRING);
+		return NULL;
+	}
+
 	if( next_spink_image(&hImage,skc_p) < 0 ){
 		sprintf(ERROR_STRING,"grab_spink_cam_frame:  Error getting image!?");
 		warn(ERROR_STRING);
@@ -97,7 +103,7 @@ Data_Obj * _grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * skc_p )
 	if( index >= skc_p->skc_n_buffers ) index=0;
 	assert(index>=0&&index<skc_p->skc_n_buffers);
 	dp = skc_p->skc_frm_dp_tbl[index];
-	SET_OBJ_DATA_PTR(dp,data_ptr);
+	point_obj_to_ext_data(dp,data_ptr);
 	SET_OBJ_EXTRA(dp,hImage);
 	skc_p->skc_newest = index;
 	if( skc_p->skc_oldest < 0 ) skc_p->skc_oldest = index;
@@ -112,6 +118,13 @@ void release_oldest_frame(QSP_ARG_DECL  Spink_Cam *skc_p)
 	Data_Obj *dp;
 	int index;
 	spinImage hImage;
+
+	if( ! IS_CAPTURING(skc_p) ){
+		sprintf(ERROR_STRING,"release_oldest_frame:  %s is not capturing!?",
+			skc_p->skc_name);
+		warn(ERROR_STRING);
+		return;
+	}
 
 	if( skc_p->skc_oldest < 0 ){
 		sprintf(ERROR_STRING,"No frames have been grabbed by %s, can't release!?",
@@ -128,7 +141,7 @@ void release_oldest_frame(QSP_ARG_DECL  Spink_Cam *skc_p)
 		sprintf(ERROR_STRING,"release_oldest_frame %s:  Error releasing image %d",skc_p->skc_name,index);
 		warn(ERROR_STRING);
 	}
-	SET_OBJ_DATA_PTR(dp,NULL);
+	point_obj_to_ext_data(dp,NULL);
 	SET_OBJ_EXTRA(dp,NULL);
 	if( skc_p->skc_newest == index ){
 //fprintf(stderr,"release_oldest_frame:  last frame was released\n");
