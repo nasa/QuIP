@@ -341,5 +341,24 @@ printf("spink_test_acq DONE\n");
 	return 0;
 }
 
+void onImageEvent( spinImage hImage, void *user_data_p )
+{
+fprintf(stderr,"image event!\n");
+}
+
+static spinImageEvent ev1;
+typedef struct my_event_info {
+	int64_t a_value;
+} Image_Event_Info;
+
+static Image_Event_Info inf1;
+
+void setup_events(Spink_Cam *skc_p)
+{
+
+	if( create_image_event(&ev1,onImageEvent,(void *)(&inf1) ) < 0 ) return;
+	if( register_cam_image_event(hCam, ev1) < 0 ) return;
+}
+
 #endif // HAVE_LIBSPINNAKER
 

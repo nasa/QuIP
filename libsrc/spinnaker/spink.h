@@ -188,34 +188,6 @@ typedef struct spink_cam {
 	spinNodeMapHandle	skc_TL_dev_node_map;	// hNodeMapTLDevice
 	spinImage		skc_img_tbl[MAX_N_BUFFERS];
 #endif /* HAVE_LIBSPINNAKER */
-	//spinNodeMapHandle	skc_genicam_node_map;	// hNodeMapTLDevice
-
-	/*
-	fc2Context		skc_context;
-	fc2PGRGuid		skc_guid;
-	fc2CameraInfo		skc_cam_info;
-	fc2EmbeddedImageInfo	skc_ei_info;
-	fc2VideoMode		skc_video_mode;	// current
-	fc2FrameRate 		skc_framerate;	// current
-	fc2Config		skc_config;
-	fc2Format7Info *	skc_fmt7_info_tbl;
-	fc2Image *		skc_img_p;
-	*/
-
-	unsigned char *		skc_base;	// for captured frames...
-	long			skc_buf_delta;
-	int	 		skc_framerate_index;	// into all_framerates
-	int	 		skc_video_mode_index;	// into all_video_modes
-	int	 		skc_fmt7_index;		// of available...
-
-	int	 		skc_my_video_mode_index;	// into private tbl
-	int			skc_n_video_modes;
-	int			skc_n_fmt7_modes;
-	int *			skc_video_mode_indices;
-	const char **		skc_video_mode_names;
-	Framerate_Mask *	skc_framerate_mask_tbl;	// one for every video mode
-	int			skc_n_framerates;
-	const char **		skc_framerate_names;
 
 	unsigned int		skc_cols;
 	unsigned int		skc_rows;
