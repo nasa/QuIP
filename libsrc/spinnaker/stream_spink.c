@@ -866,7 +866,7 @@ show_tmrs(SINGLE_QSP_ARG);
 		int queue_idx;
 
 		// get the next frame
-		dp = grab_spink_cam_frame(QSP_ARG  scp);
+		dp = grab_spink_cam_frame(scp);
 n_frames_read++;
 
 		assert( dp != NULL );
@@ -1024,7 +1024,7 @@ advise(ERROR_STRING);
 
 if( verbose ) advise("main thread stopping capture");
 	//meteor_stop_capture(SINGLE_QSP_ARG);
-	stop_firewire_capture(QSP_ARG  scp);
+	spink_stop_capture(scp);
 
 	/* check the total number of dropped frames */
 	//ending_count = _mm->frames_captured;
@@ -1267,12 +1267,12 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,Spink_C
 	// Before starting, make sure that all of the buffers are aligned
 	// for writing with O_DIRECT
 
-	if( check_buffer_alignment(QSP_ARG  scp) < 0 ) return;
+	//if( check_buffer_alignment(QSP_ARG  scp) < 0 ) return;
 
 	// We need to start the camera to get the number of buffers
 	// and their addresses...
 //advise("calling start_firewire_capture...");
-	start_firewire_capture(QSP_ARG  scp);
+	spink_start_capture(scp);
 //advise("Back from start_firewire_capture.");
 
 // meteor stuff??

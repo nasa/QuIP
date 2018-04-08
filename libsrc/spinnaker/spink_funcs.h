@@ -27,6 +27,9 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #define get_feature_by_index(a,b,c) _get_feature_by_index(QSP_ARG  a,b,c)
 #define get_enum_entry_by_index(a,b,c) _get_enum_entry_by_index(QSP_ARG  a,b,c)
 
+#define get_image_chunk_int(a,b,c) _get_image_chunk_int(QSP_ARG  a,b,c)
+#define get_image_chunk_float(a,b,c) _get_image_chunk_float(QSP_ARG  a,b,c)
+
 // two arg macros
 #define get_image_data(a,b) _get_image_data(QSP_ARG  a,b)
 #define command_is_done(a,b) _command_is_done(QSP_ARG  a,b)
@@ -46,6 +49,7 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #define get_next_image(a,b) _get_next_image(QSP_ARG  a,b)
 #define image_is_incomplete(a,b) _image_is_incomplete(QSP_ARG  a,b)
 #define get_image_status(a,b) _get_image_status(QSP_ARG  a,b)
+#define get_image_status_description(a,b,c) _get_image_status_description(QSP_ARG  a,b,c)
 #define get_image_width(a,b) _get_image_width(QSP_ARG  a,b)
 #define get_image_height(a,b) _get_image_height(QSP_ARG  a,b)
 #define get_iface_map(a,b) _get_iface_map(QSP_ARG  a,b)

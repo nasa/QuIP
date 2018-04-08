@@ -587,12 +587,18 @@ Item *current_frag_item( Frag_Match_Info *fmi_p )
 
 static const Item *_list_current_frag_match_item(Frag_Match_Info *fmi_p)
 {
-	return fmi_p->fmi_u.li.curr_np->n_data;
+	if( fmi_p->fmi_u.li.curr_np == NULL )
+		return NULL;
+	else
+		return fmi_p->fmi_u.li.curr_np->n_data;
 }
 
 static const Item *_rb_tree_current_frag_match_item(Frag_Match_Info *fmi_p)
 {
-	return fmi_p->fmi_u.rbti.curr_n_p->data;
+	if( fmi_p->fmi_u.rbti.curr_n_p == NULL )
+		return NULL;
+	else
+		return fmi_p->fmi_u.rbti.curr_n_p->data;
 }
 
 static const Item *_hash_tbl_current_frag_match_item(Frag_Match_Info *fmi_p)

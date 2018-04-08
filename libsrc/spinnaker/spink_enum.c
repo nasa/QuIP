@@ -199,12 +199,9 @@ int _lookup_spink_node(QSP_ARG_DECL  Spink_Node *skn_p, spinNodeHandle *hdl_p)
 {
 	spinNodeMapHandle hMap;
 
-//fprintf(stderr,"lookup_spink_node node = %s calling get_node_map_handle\n",skn_p->skn_name);
-//fprintf(stderr,"lookup_spink_node:  node %s belongs to map %s\n",skn_p->skn_name,skn_p->skn_skm_p->skm_name);
 	if( get_node_map_handle(&hMap,skn_p->skn_skm_p,"lookup_spink_node") < 0 )
 		return -1;
 
-//fprintf(stderr,"lookup_spink_node %s calling fetch_spink_node\n",skn_p->skn_name);
 	if( fetch_spink_node(hMap,skn_p->skn_name,hdl_p) < 0 )
 		return -1;
 
