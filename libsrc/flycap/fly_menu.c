@@ -115,9 +115,12 @@ static COMMAND_FUNC( do_select_cam )
 
 static COMMAND_FUNC( do_start )
 {
+advise("do_start BEGIN");
 	CHECK_CAM
+advise("do_start back from CHECK_CAM, calling start_firewire_capture");
 
 	start_firewire_capture(QSP_ARG  the_cam_p);
+advise("do_start DONE");
 }
 
 static COMMAND_FUNC( do_grab )

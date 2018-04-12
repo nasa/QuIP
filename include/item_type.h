@@ -20,8 +20,14 @@ typedef struct {
 	Node *		last_np;
 } list_frag_match_info;
 
+// frag_match_info - 
+// We store information for each partial match, including the fragment,
+// the item context, and container-specific match info
+//
+// When there is a stack of contexts, we can have a stack of these?
+
 struct frag_match_info {
-	Item				it;	// the partial string - stored in their own context
+	Item				it;		// the partial string - stored in their own context
 	struct item_context *		fmi_icp;	// the item context that these fragments refer to?
 	u_long				fmi_item_serial;
 
@@ -43,6 +49,8 @@ struct frag_match_info {
 #define CURR_RBT_FRAG(fmi_p)	(fmi_p)->fmi_u.rbti.curr_n_p
 #define CURR_LIST_FRAG(fmi_p)	(fmi_p)->fmi_u.li.curr_np
 
+// What is a match_cycle?
+//
 struct match_cycle {
 	Item it;				// name of the fragment
 	Item_Type *	mc_itp;			// the relevant item type

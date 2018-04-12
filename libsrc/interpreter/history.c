@@ -494,7 +494,9 @@ static const char * current_frag_match( Frag_Match_Info * fmi_p )
 
 	cnt_p = CTX_CONTAINER(FMI_CTX(fmi_p));
 	ip = (*(cnt_p->cnt_typ_p->current_frag_match_item))(fmi_p);
-	return ip->item_name;
+	// is this check needed?
+	if( ip == NULL ) return NULL;
+	else return ip->item_name;
 }
 
 #define reset_frag_match(fmi_p,direction) _reset_frag_match(QSP_ARG  fmi_p,direction)
@@ -507,12 +509,26 @@ static void _reset_frag_match(QSP_ARG_DECL  Frag_Match_Info *fmi_p, int directio
 	(*(cnt_p->cnt_typ_p->reset_frag_match))(QSP_ARG  fmi_p,direction);
 }
 
+static inline Node *cycle_match_info( Node *np, int direction, Match_Cycle *mc_p )
+{
+	if( direction == CYC_FORWARD ){
+		np = NODE_NEXT(np);
+		if( np == NULL )
+			np = QLIST_HEAD( MATCH_CYCLE_LIST(mc_p) );
+	} else {
+		np = NODE_PREV(np);
+		if( np == NULL )
+			np = QLIST_TAIL( MATCH_CYCLE_LIST(mc_p) );
+	}
+	return np;
+}
+
 // We can have matches in different contexts on the context stack.  We keep a list that has matches
 // we cycle the current one, and advance if we are at the end of the cycle for the current frag_match_info
 
 static const char * cyc_item_match(QSP_ARG_DECL  const char *so_far, int direction )
 {
-	Frag_Match_Info *fmi_p;
+	Frag_Match_Info *fmi_p, *first_fmi_p;
 	Match_Cycle *mc_p;
 	const char *s;
 	Node *np;
@@ -530,23 +546,23 @@ static const char * cyc_item_match(QSP_ARG_DECL  const char *so_far, int directi
 	assert(np!=NULL);
 
 	fmi_p = NODE_DATA(np);
+	first_fmi_p = fmi_p;
+
 	s = advance_frag_match(fmi_p,direction);
 	if( s != NULL ) return s;
 
-	if( direction == CYC_FORWARD ){
-		np = NODE_NEXT(np);
-		if( np == NULL )
-			np = QLIST_HEAD( MATCH_CYCLE_LIST(mc_p) );
-	} else {
-		np = NODE_PREV(np);
-		if( np == NULL )
-			np = QLIST_TAIL( MATCH_CYCLE_LIST(mc_p) );
-	}
+	do {
+		np = cycle_match_info( np, direction, mc_p );
 
-	fmi_p = NODE_DATA(np);
-	reset_frag_match(fmi_p,direction);
+		fmi_p = NODE_DATA(np);
+		reset_frag_match(fmi_p,direction);
 
-	return current_frag_match(fmi_p);
+		s = current_frag_match(fmi_p);
+		// s can be null if there are no matches in this context...
+		if( s != NULL )
+			return s;
+		// Can this become an infinite loop?
+	} while(1);
 }
 
 //fprintf(stderr,"cyc_item_match: frag_match_info '%s' has type %d\n",

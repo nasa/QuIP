@@ -32,6 +32,7 @@ SUBDIRS =			\
 		fann		\
 		opencv		\
 		flycap		\
+		spinnaker	\
 		ptgrey		\
 		das1602		\
 		ieee1394	\

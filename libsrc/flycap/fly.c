@@ -1575,6 +1575,9 @@ static Fly_Cam *setup_my_fly_cam( QSP_ARG_DECL
 	// We could have multiple instances of the same model...
 	fcp = unique_fly_cam_instance(QSP_ARG  context);
 
+	// Why do we disconnect from the context we were called with -
+	// subsequent cameras will still use it...
+	// Maybe this just undoes the connection directly above?
 	error = fc2Disconnect(context);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2Disconnect" );
@@ -1762,6 +1765,7 @@ int init_fly_cam_system(SINGLE_QSP_ARG_DECL)
 		if( error != FC2_ERROR_OK ){
 			report_fc2_error(QSP_ARG  error, "fc2GetCameraFromIndex" );
 		} else {
+fprintf(stderr,"Calling setup_my_fly_cam for camera %d\n",i);
 			setup_my_fly_cam(QSP_ARG   context, &guid, i );
 		}
 	}
@@ -2176,11 +2180,15 @@ void start_firewire_capture(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	fc2Error error;
 
+advise("start_firewire_capture BEGIN");
 	if( fcp->fc_flags & FLY_CAM_IS_RUNNING ){
 		warn("start_firewire_capture:  fly_cam is already capturing!?");
 		return;
 	}
+advise("start_firewire_capture cam is not already running");
+advise("start_firewire_capture calling fc2StartCapture");
 
+fprintf(stderr,"context = 0x%lx\n",(long)fcp->fc_context);
 	error = fc2StartCapture(fcp->fc_context);
 	if( error != FC2_ERROR_OK ){
 		report_fc2_error(QSP_ARG  error, "fc2StartCapture" );
@@ -2190,8 +2198,10 @@ void start_firewire_capture(QSP_ARG_DECL  Fly_Cam *fcp)
 		// BUG - we should undo this when we stop capturing, because
 		// we might change the video format or something else.
 		// Perhaps more efficiently we could only do it when needed?
+advise("start_firewire_capture calling init_fly_base");
 		init_fly_base(QSP_ARG  fcp);
 	}
+advise("start_firewire_capture DONE");
 }
 
 void stop_firewire_capture(QSP_ARG_DECL  Fly_Cam *fcp)

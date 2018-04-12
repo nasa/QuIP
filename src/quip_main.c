@@ -127,6 +127,10 @@ ADD_CMD(	pgr,		do_pgr_menu,	PGR camera submenu )
 ADD_CMD(	fly,		do_fly_menu,	PGR camera submenu )
 #endif /* HAVE_LIBFLYCAP */
 
+#ifdef HAVE_LIBSPINNAKER
+ADD_CMD(	spinnaker,	do_spink_menu,	FLIR/PGR Spinnaker camera submenu )
+#endif /* HAVE_LIBFLYCAP */
+
 #endif // ! MINIMAL_BUILD
 
 MENU_END(quip)
