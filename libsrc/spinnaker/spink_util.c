@@ -1155,6 +1155,8 @@ void _print_map_tree(QSP_ARG_DECL  Spink_Map *skm_p)
 {
 	assert(skm_p!=NULL);
 	assert(skm_p->skm_root_p!=NULL);
+	sprintf(MSG_STR,"\n%s\n",skm_p->skm_name);
+	prt_msg(MSG_STR);
 	traverse_node_tree(skm_p->skm_root_p,_print_node_from_tree);
 }
 

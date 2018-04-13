@@ -241,11 +241,13 @@ ITEM_INTERFACE_PROTOTYPES(Spink_Cam,spink_cam)
 #define SPINK_CAM_RUNNING		2
 #define SPINK_CAM_CAPTURING		4
 #define SPINK_CAM_TRANSMITTING		8
+#define SPINK_CAM_EVENTS_READY		16
 
 #define IS_CONNECTED(skc_p)	(skc_p->skc_flags & SPINK_CAM_CONNECTED)
 #define IS_RUNNING(skc_p)	(skc_p->skc_flags & SPINK_CAM_RUNNING)
 #define IS_CAPTURING(skc_p)	(skc_p->skc_flags & SPINK_CAM_CAPTURING)
 #define IS_TRANSMITTING(skc_p)	(skc_p->skc_flags & SPINK_CAM_TRANSMITTING)
+#define IS_EVENTFUL(skc_p)	(skc_p->skc_flags & SPINK_CAM_EVENTS_READY)
 
 typedef struct spink_interface {
 	const char *		ski_name;

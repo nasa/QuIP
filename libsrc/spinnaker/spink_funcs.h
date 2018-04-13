@@ -12,6 +12,7 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #include "spink_wrappers.c"
 
 // three arg macros
+#define create_image_event(a,b,c) _create_image_event(QSP_ARG  a,b,c)
 #define get_enum_entry_by_name(a,b,c) _get_enum_entry_by_name(QSP_ARG  a,b,c)
 #define convert_spink_image(a,b,c) _convert_spink_image(QSP_ARG  a,b,c)
 #define fetch_spink_node(a,b,c) _fetch_spink_node(QSP_ARG  a,b,c)
@@ -31,6 +32,7 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #define get_image_chunk_float(a,b,c) _get_image_chunk_float(QSP_ARG  a,b,c)
 
 // two arg macros
+#define register_cam_image_event(a,b) _register_cam_image_event(QSP_ARG  a,b)
 #define get_image_data(a,b) _get_image_data(QSP_ARG  a,b)
 #define command_is_done(a,b) _command_is_done(QSP_ARG  a,b)
 #define set_node_value_string(a,b) _set_node_value_string(QSP_ARG  a,b)

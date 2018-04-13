@@ -3,7 +3,7 @@
 # Permissions seem to change on CentOS 6!?
 
 set f=/dev/sdb1
-sudo chmod 666 $f
+#sudo chmod 666 $f
 ls -l $f
 getfacl $f
 dd if=$f of=blk0 bs=1024 count=2

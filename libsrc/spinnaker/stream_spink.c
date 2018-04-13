@@ -10,6 +10,10 @@
  * First implementation on euler, two 1 TB sata drives, each over 100 Mb/sec
  * Camera is Flea3 USB, 1.3 MB at 150 fps
  *
+ * Now euler has 3 drives, and we'd like to stream 2 BlackFly cameras, each at 170 fps
+ * 1.3 MB per frame...
+ * 2 * 1.3 * 170 = 442 MB/sec - required disk write speed is 150 MB/sec!?
+ *
  */
 
 

@@ -4,6 +4,46 @@
 
 #ifdef HAVE_LIBSPINNAKER
 
+// The use of image events seems to be incompatible with grab/release!?
+// We don't need to grab, because the event handler already gives us the image.
+// Presumably it is released when the handler exits...  This may be incompatible with
+// how we have done recording, where the disk writer releases the image when writing
+// is complete...
+
+typedef struct my_event_info {
+	Query_Stack *ud_qsp;
+	int64_t a_value;
+} Image_Event_Info;
+
+static Image_Event_Info inf1;
+static spinImageEvent ev1;
+static int event_ctr=1;
+
+static void onImageEvent( spinImage hImage, void *user_data_p )
+{
+	Query_Stack *qsp;
+
+	qsp = ((Image_Event_Info *)user_data_p)->ud_qsp;
+fprintf(stderr,"image event %d!\n",event_ctr++);
+	assign_var("image_ready","1");
+}
+
+#define setup_events(skc_p) _setup_events(QSP_ARG  skc_p)
+
+static void _setup_events(QSP_ARG_DECL  Spink_Cam *skc_p)
+{
+	if( IS_EVENTFUL(skc_p) ) return;
+
+	insure_current_camera(skc_p);
+	assert( skc_p->skc_current_handle != NULL );
+	inf1.ud_qsp = qsp;
+	if( create_image_event(&ev1,onImageEvent,(void *)(&inf1) ) < 0 ) return;
+	if( register_cam_image_event(skc_p->skc_current_handle, ev1) < 0 ) return;
+
+	skc_p->skc_flags |= SPINK_CAM_EVENTS_READY;
+	assign_var("image_ready","0");
+}
+
 #ifdef NOT_USED
 //
 // Print image information; height and width recorded in pixels
@@ -282,6 +322,9 @@ int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 // Image acquisition must be ended when no more images are needed.
 //
 
+// triggering events seems to break next/release...  it might be a good way to go
+// for streaming, however.
+
 int _spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	spinCamera hCam;
@@ -297,6 +340,9 @@ int _spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 	skc_p->skc_newest = -1;
 	skc_p->skc_oldest = -1;
 	hCam = skc_p->skc_current_handle;
+
+//	setup_events(skc_p);	// make this optional???
+				// should cleanup events when stopping capture?
 
 	if( begin_acquisition(hCam) < 0 ) return -1;
 
@@ -453,25 +499,6 @@ printf("spink_test_acq DONE\n");
 	return 0;
 }
 #endif // FOOBAR
-
-void onImageEvent( spinImage hImage, void *user_data_p )
-{
-fprintf(stderr,"image event!\n");
-}
-
-static spinImageEvent ev1;
-typedef struct my_event_info {
-	int64_t a_value;
-} Image_Event_Info;
-
-static Image_Event_Info inf1;
-
-void setup_events(Spink_Cam *skc_p)
-{
-
-	if( create_image_event(&ev1,onImageEvent,(void *)(&inf1) ) < 0 ) return;
-	if( register_cam_image_event(hCam, ev1) < 0 ) return;
-}
 
 #endif // HAVE_LIBSPINNAKER
 

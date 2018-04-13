@@ -42,17 +42,25 @@ Set proc_usecs 3000
 # this value causes 110% underrun...
 #Set proc_usecs 12000
 
+Define Init_Timestamp 0
 Set last_ts -1
+Set first_fid -1
+.
 
 Define Show_Timestamp 0
 spinnaker
   chunks
-    display Timestamp cam$cam_idx.frame$newest
+    #display Timestamp cam$cam_idx.frame$newest
     fetch ts Timestamp cam$cam_idx.frame$newest
+    #display FrameID cam$cam_idx.frame$newest
+    fetch fid FrameID cam$cam_idx.frame$newest
     quit
   quit
 If $last_ts>0 Show_Delta
 Set last_ts $ts
+If $first_fid<0 "Set first_fid $fid"
+Add_Var fid -$first_fid
+advise "Frame $fid"
 .
 
 Define Show_Delta 0
@@ -61,13 +69,18 @@ advise "delta = $delta msec"
 .
 
 Define GrabEm 1 n
+Init_Timestamp
 advise "Grabbing $1 frames, starting capture"
 spinnaker capture start quit quit
 advise "capture started..."
 Set i_grab 0
 repeat $1
   advise "grabbing frame $i_grab..."
+  do
+    nop
+    while !$image_ready
   Grab_Next
+  Set image_ready 0
   #Show_Bytes cam$cam_idx.frame$newest v
   Show_Timestamp
   usleep $proc_usecs
@@ -128,14 +141,15 @@ spinnaker
   select $$cam_name
   nodes
     select_map $$cam_name.genicam
-    info_all
+    #info_all
     quit
   chunks
     enable Timestamp
+    enable FrameID
     quit
   nodes
     select_map $$cam_name.genicam
-    info_all
+    #info_all
     quit
   quit
 Pause
