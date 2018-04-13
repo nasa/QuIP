@@ -265,6 +265,13 @@ ITEM_INTERFACE_PROTOTYPES(Spink_Interface,spink_interface)
 #define pick_spink_interface(s)		_pick_spink_interface(QSP_ARG  s)
 #define spink_interface_list()		_spink_interface_list(SINGLE_QSP_ARG)
 
+// information passed to image event handlers...
+
+typedef struct my_event_info {
+	Query_Stack *	ei_qsp;
+	Spink_Cam *	ei_skc_p;
+} Image_Event_Info;
+
 // spink_enum.c
 #ifdef HAVE_LIBSPINNAKER
 extern int _get_camera_model_name(QSP_ARG_DECL  char *buf, size_t buflen, spinCamera hCam);
@@ -361,6 +368,12 @@ extern void _print_spink_node_info(QSP_ARG_DECL Spink_Node *skn_p, int level);
 #define print_spink_node_info(skn_p,level) _print_spink_node_info(QSP_ARG skn_p,level)
 
 // spink_acq.c
+
+extern int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p);
+#define set_acquisition_continuous(skc_p) _set_acquisition_continuous(QSP_ARG  skc_p)
+
+extern void _enable_image_events(QSP_ARG_DECL  Spink_Cam *skc_p, void (*func)(spinImage,void *));
+#define enable_image_events(skc_p,f) _enable_image_events(QSP_ARG  skc_p,f)
 
 extern void _set_camera_node(QSP_ARG_DECL  Spink_Cam *skc_p, const char *node_name, const char *entry_name);
 #define set_camera_node(skc_p, node_name, entry_name) _set_camera_node(QSP_ARG  skc_p, node_name, entry_name)

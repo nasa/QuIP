@@ -10,34 +10,21 @@
 // how we have done recording, where the disk writer releases the image when writing
 // is complete...
 
-typedef struct my_event_info {
-	Query_Stack *ud_qsp;
-	int64_t a_value;
-} Image_Event_Info;
-
-static Image_Event_Info inf1;
 static spinImageEvent ev1;
 static int event_ctr=1;
 
-static void onImageEvent( spinImage hImage, void *user_data_p )
+void _enable_image_events(QSP_ARG_DECL  Spink_Cam *skc_p, void (*func)(spinImage,void *))
 {
-	Query_Stack *qsp;
+	Image_Event_Info *inf_p;
 
-	qsp = ((Image_Event_Info *)user_data_p)->ud_qsp;
-fprintf(stderr,"image event %d!\n",event_ctr++);
-	assign_var("image_ready","1");
-}
-
-#define setup_events(skc_p) _setup_events(QSP_ARG  skc_p)
-
-static void _setup_events(QSP_ARG_DECL  Spink_Cam *skc_p)
-{
 	if( IS_EVENTFUL(skc_p) ) return;
 
 	insure_current_camera(skc_p);
 	assert( skc_p->skc_current_handle != NULL );
-	inf1.ud_qsp = qsp;
-	if( create_image_event(&ev1,onImageEvent,(void *)(&inf1) ) < 0 ) return;
+	inf_p = getbuf(sizeof(*inf_p));		// when to release???  MEMORY LEAK BUG!
+	inf_p->ei_qsp = THIS_QSP;
+	inf_p->ei_skc_p = skc_p;
+	if( create_image_event(&ev1,func,(void *)(inf_p) ) < 0 ) return;
 	if( register_cam_image_event(skc_p->skc_current_handle, ev1) < 0 ) return;
 
 	skc_p->skc_flags |= SPINK_CAM_EVENTS_READY;
@@ -443,62 +430,12 @@ void _set_camera_node(QSP_ARG_DECL  Spink_Cam *skc_p, const char *node_name, con
 	}
 }
 
-#define set_acquisition_continuous(skc_p) _set_acquisition_continuous(QSP_ARG  skc_p)
-
-static int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
+int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	set_camera_node(skc_p,"AcquisitionMode","Continuous");
-	printf("Acquisition mode set to continuous...\n");
+//	printf("Acquisition mode set to continuous...\n");
 	return 0;
 }
-
-#ifdef FOOBAR
-int _spink_test_acq(QSP_ARG_DECL  Spink_Cam *skc_p)
-{
-	spinImage hResultImage = NULL;
-	const unsigned int k_numImages = 10;
-	unsigned int imageCnt = 0;
-	spinImage hConvertedImage = NULL;
-
-printf("spink_test_acq BEGIN\n");
-printf("spink_test_acq will call set_acquisition_continuous\n");
-	if( set_acquisition_continuous(skc_p) < 0 ){
-		warn("spink_test_acq:  unable to set continuous acquisition!?");
-		return -1;
-	}
-printf("spink_test_acq will call spink_start_capture\n");
-	if( spink_start_capture(skc_p) < 0 ){
-		warn("spink_test_acq:  unable to start capture!?");
-		return -1;
-	}
-
-	for (imageCnt = 0; imageCnt < k_numImages; imageCnt++) {
-		void *data_ptr;
-		Data_Obj *dp;
-
-		if( next_spink_image(&hResultImage,skc_p) < 0 ){
-			warn("spink_test_acq:  unable to get next image!?");
-			return -1;	// cleanup???
-		}
-		printf("Grabbed image %d, ", imageCnt);
-		if( print_image_info(hResultImage) < 0 ) return -1;
-		if( create_empty_image(&hConvertedImage) < 0 ) return -1;
-		if( convert_spink_image(hResultImage,PixelFormat_Mono8,hConvertedImage) < 0 ) return -1;
-// get_image_data		ImageGetData
-// SPINNAKERC_API spinImageGetData(spinImage hImage, void** ppData);
-		get_image_data(hConvertedImage,&data_ptr);
-		dp = init_frame_by_data(imageCnt,data_ptr);
-//fprintf(stderr,"Created %s\n",OBJ_NAME(dp));
-
-		//if( destroy_spink_image(hConvertedImage) < 0 ) return -1;
-		if( release_spink_image(hResultImage) < 0 ) return -1;
-	}
-
-	if( spink_stop_capture(skc_p) < 0 ) return -1;
-printf("spink_test_acq DONE\n");
-	return 0;
-}
-#endif // FOOBAR
 
 #endif // HAVE_LIBSPINNAKER
 

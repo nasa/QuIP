@@ -5,69 +5,62 @@
 
 /* Stream video to disk.
  *
- * adapted from meteor library for libflycap.
- *
- * First implementation on euler, two 1 TB sata drives, each over 100 Mb/sec
- * Camera is Flea3 USB, 1.3 MB at 150 fps
- *
  * Now euler has 3 drives, and we'd like to stream 2 BlackFly cameras, each at 170 fps
  * 1.3 MB per frame...
  * 2 * 1.3 * 170 = 442 MB/sec - required disk write speed is 150 MB/sec!?
  *
+ * Older implementation used video reader and disk writer threads...  with image
+ * events, we can let the event handlers to the disk writing, and no longer need
+ * to explicitly read.  However, we have to figure out which disk to write to, and
+ * make sure that we don't write until the previous write has finished.  It would be
+ * nice if we could do this without a mutex, but I'm not sure that that is possible...
+ *
+ * We get the index of the disk as the camera index plus the frame index times the number of cameras,
+ * modulo n_disks.
+ *
+ * Example:  2 cameras, 3 disks:
+ * For this to work, the time to write a frame must be less than 3/2 the frame time.  So
+ * the time to record 6 frames (3 from each camera) will be 6*4/3 = 8 frames, = 2.7 per disk
+ *
+ *	Frame	Camera	Index	Disk		starts at	should finish at
+ *	0	0	0	0		0		1.5
+ *	0	1	1	1		0		1.5
+ *	1	0	2	2		1		2.5
+ *	1	1	3	0 		1.5		3
+ *	2	0	4	1 		2		3.5
+ *	2	1	5	2		2.5		4
+ *	3	0	6	0		3		4.5
+ *	3	1	7	1		3.5		5
+ *	4	0	8	2		4		5.5
+ *	4	1	9	0		4.5		6
+ *	5	0	10	1		5		6.5
+ *	5	1	11	2		5.5		7
+ *	6	0	12	0		6		7.5
+ *	6	1	13	1		6.5		8
+ *	...
+ *
+ * We can look at it from the point of view of the disks:
+ *
+ * time		0	0.5	1.0	1.5	2.0	2.5	3.0	3.5	4.0	4.5	5.0	5.5
+ * disk0	0 c0_f0----------------- 3 c1_f1---------------- 6 c0_f3------------------
+ * disk1	1 c1_f0-----------------        4 c0_f2----------------- 7 c1_f3-----------------	    ...
+ * disk2                        2 c0_f1------------------ 5 c1_f2---------------- 8 c0_f4----------------
+ *
+ * If things run smoothly, at any given time we will be using 4 buffers, 3 writing to disk, and one waiting for its
+ * disk to become available.
+ *
+ * For each disk, we create a variable to hold the index of the next frame/cam index allowed to access the disk.
+ * The handler computes its own index, then checks the variable.  If it is a match, then it can take the file
+ * descriptor and write the data.  When the write finishes, it then advances the index var.  If the var holds a smaller
+ * value, then it needs to wait, either polling or sleeping or a combination of the two.  The sleep time can be
+ * adjusted based on what happens...  The var should never hold a larger value, that is some kind of internal error.
  */
 
-
-#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
-#endif
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
-
-#ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
-#endif
-
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>		/* these two are for getpriority */
-#endif
-
-#ifdef HAVE_SYS_RESOURCE_H
-#include <sys/resource.h>
-#endif
-
-#ifdef HAVE_SIGNAL_H
-#include <signal.h>
-#endif
-
-#ifdef HAVE_SCHED_H
-#include <sched.h>
-#endif
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
 
 #include "quip_prot.h"
 #include "rv_api.h"
 #include "spink.h"
 #include "gmovie.h"
-
-//#include "debug.h"
-//#include "data_obj.h"
 #include "fio_api.h"
 
 #ifdef ALLOW_RT_SCHED
@@ -81,298 +74,18 @@
 
 #endif /* ALLOW_RT_SCHED */
 
+typedef struct recording_disk_info {
+	int		rdi_fd;		// file descriptor
+	int		rdi_idx;	// the disk index
+	uint64_t	rdi_next;	// frame/cam index next to write
+	int		rdi_flags;
+} Recording_Disk_Info;
 
-// New local variables introduced for
-// porting from meteor to flycap
-static int recording_in_process;
-static int n_enqueued;
-static int n_frames_read=0;
-static int mem_locked=0;
+Recording_Disk_Info disk_info_tbl[MAX_DISKS];	// MAX_DISKS is defined in rv_api.h
 
-/* data passed to the video reader */
-
-typedef struct {
-	int32_t		vr_n_frames;
-	int		vr_n_disks;
-	Image_File *	vr_ifp;
-#ifdef THREAD_SAFE_QUERY
-	Query_Stack *	vr_qsp;		// needed for thread-safe-query
-#endif // THREAD_SAFE_QUERY
-	Spink_Cam *	vr_cam_p;
-} vr_args;
-
-struct itimerval tmr1;
-
-static unsigned int old_alarm;
-
-static vr_args vra1;	/* can't be on the stack */
-
-static pid_t master_pid;
-
-/* globals */
-
-#define NOT_RECORDING		1
-#define RECORDING		2
-#define RECORD_HALTING		4		/* async halt requested */
-#define RECORD_FINISHING	8	/* halt request has been processed */
-
-static int record_state=NOT_RECORDING;
-
-#define DEFAULT_BYTES_PER_PIXEL		1
-
-/* disk writer stuff */
-static int32_t n_stream_frames;		/* a global in case we want to print the size of the request */
-static int32_t starting_count;
-static int32_t n_to_write;		/* number of bytes per write op */
-#define N_FRAGMENTS 1			/* blocks_per_frame is ? */
-static pthread_t dw_thr[MAX_DISKS];
-static pthread_t grab_thr;
-
-static int async_capture=0;
-
-/* status codes */
-
-#define MS_INIT		0		/* MASTER CODE  I	init */
-#define MS_WAITING	1		/* MASTER CODE	w	waiting */
-#define MS_CHECKING	2		/* MASTER CODE	c	checking */
-#define MS_RELEASING	3		/* MASTER CODE	r	releasing */
-#define MS_BOT		4		/* MASTER CODE	b	bottom */
-#define MS_DONE		5		/* MASTER CODE	d	done */
-#define MS_ALARM	6		/* MASTER CODE	A	alarm */
-
-#define DW_INIT		0		/* DISK CODE	i	init */
-#define DW_TOP		1		/* DISK CODE	t	top of loop */
-#define DW_WAIT		2		/* DISK CODE	w	waiting */
-#define DW_WRITE	3		/* DISK CODE	W	writing */
-#define DW_DONE		4		/* DISK CODE	D	done writing */
-#define DW_BOT		5		/* DISK CODE	b	bottom */
-#define DW_EXIT		6		/* DISK CODE	x	exit */
-
-#define TRACE_FLOW
-
-#ifdef TRACE_FLOW
-
-static int m_status=0;
-static char mstatstr[]="IwcrbdA";
-static char statstr[]="itwWDbx";
-
-static char estring[MAX_DISKS][128];
-
-static const char *master_codes=
-	"Master Codes:\n"
-	"I	initializing\n"
-	"w	waiting\n"
-	"c	checking\n"
-	"r	releasing\n"
-	"b	bottom of loop\n"
-	"d	done\n"
-	"A	alarm\n";
-
-static const char *dw_codes=
-	"DiskWriter codes:\n"
-	"i	initializing\n"
-	"t	top of loop\n"
-	"w	waiting\n"
-	"W	writing\n"
-	"D	done writing\n"
-	"b	bottom of loop\n"
-	"x	exiting\n";
-
-#define STATUS_HELP(str)					\
-	if( verbose ){						\
-		NADVISE(str);					\
-	}
-
-static const char *column_doc=
-	"thread status newest n_read status next_to_wt ...\n";
-
-#define MSTATUS(code)						\
-m_status = code;						\
-if( verbose ){							\
-sprintf(ERROR_STRING,						\
-"M %c\t%d\t%d\t%c %d/%d\t%c %d/%d",				\
-mstatstr[m_status],newest,n_frames_read,			\
-statstr[ppi[0].ppi_status],					\
-ppi[0].ppi_n_frames_written,					\
-ppi[0].ppi_n_enqueued,						\
-statstr[ppi[1].ppi_status],					\
-ppi[1].ppi_n_frames_written,					\
-ppi[1].ppi_n_enqueued						\
-);								\
-advise(ERROR_STRING);						\
-}
-
-#define STATUS(code)						\
-pip->ppi_status = code;						\
-if( verbose ){							\
-sprintf(estring[pip->ppi_index],				\
-"%c %c\t%d\t%d\t%c %d/%d\t%c %d/%d",			\
-'0'+pip->ppi_index,mstatstr[m_status],newest,n_frames_read,	\
-statstr[ppi[0].ppi_status],					\
-ppi[0].ppi_n_frames_written,					\
-ppi[0].ppi_n_enqueued,					\
-statstr[ppi[1].ppi_status],					\
-ppi[1].ppi_n_frames_written,					\
-ppi[1].ppi_n_enqueued					\
-);								\
-NADVISE(estring[pip->ppi_index]);				\
-}
-
-/* RSTATUS doesn't seem to be used anywere??? */
-
-#define RSTATUS(code)						\
-pip->ppi_status = code;						\
-if( verbose ){							\
-sprintf(estring[pip->ppi_index],				\
-"%c %c\t%d\t%c %d\t%c %d\t%c %d\t%c %d",			\
-'0'+pip->ppi_index,rmstatstr[m_status],				\
-read_frame_want,						\
-rstatstr[ppi[0].ppi_status],					\
-ppi[0].ppi_n_enqueued,					\
-rstatstr[ppi[1].ppi_status],					\
-ppi[1].ppi_n_enqueued,					\
-rstatstr[ppi[2].ppi_status],					\
-ppi[2].ppi_n_enqueued,					\
-rstatstr[ppi[3].ppi_status],					\
-ppi[3].ppi_n_enqueued);					\
-NADVISE(estring[pip->ppi_index]);				\
-}
-
-#define RMSTATUS(code)						\
-m_status = code;						\
-if( verbose ){							\
-sprintf(ERROR_STRING,						\
-"M %c\t%d\t%c %d\t%c %d\t%c %d\t%c %d",				\
-rmstatstr[m_status],						\
-read_frame_want,						\
-rstatstr[ppi[0].ppi_status],					\
-ppi[0].ppi_n_enqueued,					\
-rstatstr[ppi[1].ppi_status],					\
-ppi[1].ppi_n_enqueued,					\
-rstatstr[ppi[2].ppi_status],					\
-ppi[2].ppi_n_enqueued,					\
-rstatstr[ppi[3].ppi_status],					\
-ppi[3].ppi_n_enqueued);					\
-NADVISE(ERROR_STRING);						\
-}
-#else /* ! TRACE_FLOW */
-
-#define MSTATUS(code)		/* nop */
-#define STATUS(code)		/* nop */
-#define RSTATUS(code)		/* nop */
-#define RMSTATUS(code)		/* nop */
-
-#endif /* ! TRACE_FLOW */
-
-
-
-#define MAXCAPT 100000
-#define MAX_RINGBUF_FRAMES	300
-
-#ifdef RECORD_TIMESTAMPS
-/* What is the most timestamps we might want?
- * in field mode, 60 /sec, 3600/min...
- * 10 minutes would be 40000 - with two longs per timeval, and two
- * per sample, that is 640k - is that too much memory??
- *
- * sni recordings are closer to an hour, but because of (previous) disk
- * limitations on purkinje, we record 30 minute sections, 108000 frames.
- */
-#define MAX_TIMESTAMPS	120000
-typedef struct ts_pair {
-	struct timeval grab_time;
-	struct timeval stor_time;
-} TS_Pair;
-
-TS_Pair ts_array[MAX_TIMESTAMPS];
-
-int stamping=0;
-int n_stored_times;
-#endif /* RECORD_TIMESTAMPS */
-
-#define MAX_DISK_WRITER_THREADS		4	/* could be larger, but performance drops... */
-
-#define DEFAULT_DISK_WRITER_THREADS	2	/* 2 should be sufficient, but on craik this causes fifo errors??? */
-						/* on wheatstone (3 disks)
-						 * having this be 2 triggers
-						 * an error...
-						 */
-
-#define MAX_DISKS_PER_THREAD		4	/* should be ceil(((float)MAX_DISKS)/n_disk_writer_threads) */
-
-static int n_disk_writer_threads=DEFAULT_DISK_WRITER_THREADS;
-
-/* These are the data to be passed to each disk writer thread */
-
-#define DW_QUEUE_LEN	64	// needs to be at least the number of buffers
-
-typedef struct per_proc_info {
-	int	ppi_index;		/* thread index */
-	pid_t	ppi_pid;
-	int	ppi_fd[MAX_DISKS_PER_THREAD];			/* file descriptors */
-	int32_t	ppi_n_frames_to_write;	/* number of frames this proc will write */
-	int32_t	ppi_n_frames_written;	/* number of frames already written */
-	int	ppi_flags;
-
-	int	ppi_queue[DW_QUEUE_LEN];	// indices of buffers to write
-
-	// the video_reader enqueues a frame writing the index of the buffer
-	// into the queue at queue_wt_idx, which it then increment,
-	// finally incrementing n_enqueued.
-	//
-	// The disk_writers waits for n_enqueued to be larger than n_dequeued.
-	// Then it writes the buffer from the queue at queue_rd_idx, then
-	// increments n_dequeued.
-	int	ppi_queue_wt_idx;		// video reader controls this
-	int	ppi_queue_rd_idx;		// disk writer controls this
-	// rather than keep a single counter (which would be subject to race
-	// conditions), we keep separate counters for video_reader and
-	// disk_writer to manipulate independently
-	int	ppi_n_enqueued;
-	int	ppi_n_dequeued;
-
-#ifdef RECORD_CAPTURE_COUNT
-	int	ppi_ccount[MAXCAPT];	/* capture count after each write */
-#endif	/* RECORD_CAPTURE_COUNT */
-	int	ppi_tot_disks;
-	int	ppi_my_disks;		/* number of disks that this thread uses */
-#ifdef TRACE_FLOW
-	int	ppi_status;		/* holds disk_writer state */
-#endif /* TRACE_FLOW */
-	Spink_Cam *	ppi_cam_p;
-} Proc_Info;
-
-//#define ppi_next_to_write	ppi_next_frm
-//#define ppi_next_to_read	ppi_next_frm
-
-
-/* flag bits */
-#define DW_READY_TO_GO	1
-#define DW_EXITING	2
-
-#define READY_TO_GO(pip)	( (pip)->ppi_flags & DW_READY_TO_GO )
-#define EXITING(pip)		( (pip)->ppi_flags & DW_EXITING )
-
-
-/* These global variables are used for inter-thread communication... */
-
-static Proc_Info ppi[MAX_DISKS];
-static int thread_write_enabled[MAX_DISKS]={1,1,1,1,1,1,1,1};
-
-static int oldest, newest;	/* indices into ringbuf
-				 *
-				 * In the absence of wrap-around,
-				 * (1+newest-oldest) = n_active.
-				 */
-static int n_ready_bufs;
-
-#ifdef NOT_USED
-static void thread_write_enable(QSP_ARG_DECL  int index, int flag)
-{
-	assert( index >= 0 && index < MAX_DISKS );
-	thread_write_enabled[index]=flag;
-}
-#endif // NOT_USED
+// flag bits
+#define DISK_IDLE	1
+#define DISK_WRITING	2
 
 #ifdef DEBUG_TIMERS
 
@@ -418,16 +131,7 @@ static void reset_stamps()
 }
 #endif /* RECORD_TIMESTAMPS */
 
-/* disk_writer needs to have its own ERROR_STRING, but we fork these threads
- * from a single command, so passing the qsp won't help...
- *
- * Running the Flea3 at 500 fps, we see alternate frames offset by 10,
- * which might be explained by one of the disk writers getting 10 frames behind...
- *
- * We would like to know more about how libflycap handles the ring buffer...
- */
-
-static void *disk_writer(void *argp)
+void write_image_to_disk(spinImage hImage, void *vp)
 {
 	Proc_Info *pip;
 	int fd;
