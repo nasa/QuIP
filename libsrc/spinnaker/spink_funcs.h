@@ -1,3 +1,7 @@
+#ifndef _SPINK_FUNCS_H_
+#define _SPINK_FUNCS_H_
+
+#ifdef HAVE_LIBSPINNAKER
 
 // redefine these macros to declare the prototypes
 #define SPINK_WRAPPER_THREE_ARG(my_name,spin_name,decl1,name1,decl2,name2,decl3,name3)	\
@@ -101,3 +105,5 @@ extern int _##my_name(QSP_ARG_DECL  decl1 name1);
 #undef SPINK_WRAPPER_TWO_ARG
 #undef SPINK_WRAPPER_ONE_ARG
 
+#endif // HAVE_LIBSPINNAKER
+#endif // ! _SPINK_FUNCS_H_

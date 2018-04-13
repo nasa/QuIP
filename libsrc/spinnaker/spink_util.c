@@ -23,19 +23,25 @@
 
 #include "spink.h"
 
+#ifdef HAVE_LIBSPINNAKER
+
 // some globals...
 static Spink_Map *current_map=NULL;
 #define MAX_TREE_DEPTH	5
 static Spink_Node *current_parent_p[MAX_TREE_DEPTH]={NULL,NULL,NULL,NULL};
-int current_node_idx; 
-
 static int use_display_names=0;
+static size_t numInterfaces = 0;
 
 static spinSystem hSystem = NULL;
 static spinInterfaceList hInterfaceList = NULL;
 spinCameraList hCameraList = NULL;
+
+#endif // HAVE_LIBSPINNAKER
+
+int current_node_idx; 
+
+
 size_t numCameras = 0;
-static size_t numInterfaces = 0;
 
 ITEM_INTERFACE_DECLARATIONS(Spink_Interface,spink_interface,RB_TREE_CONTAINER)
 ITEM_INTERFACE_DECLARATIONS(Spink_Cam,spink_cam,RB_TREE_CONTAINER)
@@ -540,8 +546,6 @@ void set_buffer_obj(QSP_ARG_DECL  Spink_Cam *skc_p, Data_Obj *dp)
 }
 #endif // FOOBAR
 
-#endif /* HAVE_LIBSPINNAKER */
-
 Item_Context * _pop_spink_node_context(SINGLE_QSP_ARG_DECL)
 {
 	Item_Context *icp;
@@ -637,6 +641,7 @@ INVALID_SET_FUNC(value)
 
 //command_is_done		CommandIsDone
 //exec_spink_command		CommandExecute
+
 
 #define set_command_node(skn_p) _set_command_node(QSP_ARG  skn_p)
 
@@ -1694,6 +1699,8 @@ static void _init_chunk_data_structs(SINGLE_QSP_ARG_DECL)
 // CRC
 	INIT_CHUNK_DATUM(BlackLevel,FLOAT_CHUNK_DATA);
 }
+#endif // HAVE_LIBSPINNAKER
+
 
 int init_spink_cam_system(SINGLE_QSP_ARG_DECL)
 {
@@ -1717,6 +1724,8 @@ int init_spink_cam_system(SINGLE_QSP_ARG_DECL)
 #endif // HAVE_LIBSPINNAKER
 	return 0;
 }
+
+#ifdef HAVE_LIBSPINNAKER
 
 #define stop_all_cameras() _stop_all_cameras(SINGLE_QSP_ARG)
 
@@ -1864,4 +1873,6 @@ void _format_chunk_data(QSP_ARG_DECL  char *buf, Chunk_Data *cd_p)
 		sprintf(buf,"%g",cd_p->cd_u.u_fltval);
 	} else error1("format_chunk_data:  bad chunk data type code!?");
 }
+
+#endif // HAVE_LIBSPINNAKER
 

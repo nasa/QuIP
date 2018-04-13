@@ -45,7 +45,9 @@
 #define STRING_NODE_FMT_STR	"%-24s"
 
 // a couple of globals...
+#ifdef HAVE_LIBSPINNAKER
 extern spinCameraList hCameraList;
+#endif // HAVE_LIBSPINNAKER
 extern size_t numCameras;
 extern int current_node_idx;
 
@@ -422,8 +424,10 @@ extern void _print_map_tree(QSP_ARG_DECL  Spink_Map *skm_p);
 extern void _print_cat_tree(QSP_ARG_DECL  Spink_Category *sct_p);
 #define print_cat_tree(sct_p) _print_cat_tree(QSP_ARG  sct_p)
 
+#ifdef HAVE_LIBSPINNAKER
 extern Spink_Node_Type *_find_type_by_code(QSP_ARG_DECL  spinNodeType type);
 #define find_type_by_code(type) _find_type_by_code(QSP_ARG  type)
+#endif // HAVE_LIBSPINNAKER
 
 extern Item_Context * _pop_spink_node_context(SINGLE_QSP_ARG_DECL);
 extern void _push_spink_node_context(QSP_ARG_DECL  Item_Context *icp);

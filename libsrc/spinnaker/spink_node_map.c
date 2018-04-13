@@ -4,10 +4,37 @@
 #include "quip_prot.h"
 #include "spink.h"
 
-#ifdef HAVE_LIBSPINNAKER
-
 Spink_Cam *current_skc_p = NULL;
 int max_display_name_len=0;
+
+void _insure_current_camera(QSP_ARG_DECL  Spink_Cam *skc_p)
+{
+//fprintf(stderr,"insure_current_camera %s BEGIN\n",skc_p->skc_name);
+	if( skc_p == current_skc_p ) {
+//fprintf(stderr,"insure_current_camera:  %s is already current\n",skc_p->skc_name);
+		return;
+	}
+
+	if( current_skc_p != NULL ){
+//fprintf(stderr,"insure_current_camera %s will release old camera %s\n", skc_p->skc_name,current_skc_p->skc_name);
+		if( release_current_camera(1) < 0 )
+			error1("insure_current_camera:  failed to release previous camera!?");
+	}
+
+#ifdef HAVE_LIBSPINNAKER
+	if( skc_p->skc_current_handle == NULL ){
+		spinCamera hCam;
+//fprintf(stderr,"insure_current_camera %s needs to refresh the camera handle\n", skc_p->skc_name);
+		if( get_cam_from_list(hCameraList,skc_p->skc_sys_idx,&hCam) < 0 )
+			error1("insure_current_camera:  error getting camera from list!?");
+		skc_p->skc_current_handle = hCam;
+//fprintf(stderr,"insure_current_camera %s:  new handle = 0x%lx\n", skc_p->skc_name,(u_long)hCam);
+	}
+#endif // HAVE_LIBSPINNAKER
+	current_skc_p = skc_p;
+}
+
+#ifdef HAVE_LIBSPINNAKER
 
 // We may release the camera while it is running...
 
@@ -25,31 +52,6 @@ int _release_current_camera(QSP_ARG_DECL  int strict)
 		return -1;
 	current_skc_p = NULL;
 	return 0;
-}
-
-void _insure_current_camera(QSP_ARG_DECL  Spink_Cam *skc_p)
-{
-//fprintf(stderr,"insure_current_camera %s BEGIN\n",skc_p->skc_name);
-	if( skc_p == current_skc_p ) {
-//fprintf(stderr,"insure_current_camera:  %s is already current\n",skc_p->skc_name);
-		return;
-	}
-
-	if( current_skc_p != NULL ){
-//fprintf(stderr,"insure_current_camera %s will release old camera %s\n", skc_p->skc_name,current_skc_p->skc_name);
-		if( release_current_camera(1) < 0 )
-			error1("insure_current_camera:  failed to release previous camera!?");
-	}
-
-	if( skc_p->skc_current_handle == NULL ){
-		spinCamera hCam;
-//fprintf(stderr,"insure_current_camera %s needs to refresh the camera handle\n", skc_p->skc_name);
-		if( get_cam_from_list(hCameraList,skc_p->skc_sys_idx,&hCam) < 0 )
-			error1("insure_current_camera:  error getting camera from list!?");
-		skc_p->skc_current_handle = hCam;
-//fprintf(stderr,"insure_current_camera %s:  new handle = 0x%lx\n", skc_p->skc_name,(u_long)hCam);
-	}
-	current_skc_p = skc_p;
 }
 
 void _report_node_access_error(QSP_ARG_DECL  spinNodeHandle hNode, const char *w)
