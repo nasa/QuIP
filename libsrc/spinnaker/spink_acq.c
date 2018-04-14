@@ -313,6 +313,14 @@ int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 // triggering events seems to break next/release...  it might be a good way to go
 // for streaming, however.
 
+static void test_event_handler(spinImage hImg, void *user_data)
+{
+	Image_Event_Info *inf_p;
+
+	inf_p = (Image_Event_Info *) user_data;
+fprintf(stderr,"Event! (%s)\n",inf_p->ei_skc_p->skc_name);
+}
+
 int _spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	spinCamera hCam;
@@ -331,6 +339,8 @@ int _spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 
 //	setup_events(skc_p);	// make this optional???
 				// should cleanup events when stopping capture?
+	// for testing!
+	enable_image_events(skc_p,test_event_handler);
 
 	if( begin_acquisition(hCam) < 0 ) return -1;
 

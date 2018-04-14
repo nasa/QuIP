@@ -1,0 +1,23 @@
+
+spinnaker
+  init
+  quit
+
+Define Dump_Map 1 map_name
+spinnaker
+  nodes
+    select_map $1
+    info_all
+    quit
+  quit
+.
+
+Dump_Map Blackfly_S_BFS-U3-13Y3M.device_TL
+Dump_Map Blackfly_S_BFS-U3-13Y3M.genicam
+Dump_Map Blackfly_S_BFS-U3-13Y3M.stream_TL
+Dump_Map Flea3_FL3-U3-13Y3M.device_TL
+Dump_Map Flea3_FL3-U3-13Y3M.genicam
+Dump_Map Flea3_FL3-U3-13Y3M.stream_TL
+
+exit
+

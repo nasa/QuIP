@@ -1,6 +1,4 @@
-# For monitoring, we always want to display the newest buffer...
-# This is different from recording where we want to write the oldest
-# buffer first!
+# Based on grab.scr, this is for testing event handling...
 
 max_warnings 3
 #max_warnings -1
@@ -69,19 +67,28 @@ advise "delta = $delta msec"
 
 Define GrabEm 1 n
 Init_Timestamp
-advise "Grabbing $1 frames, starting capture"
-spinnaker capture start quit quit
+advise "Grabbing $1 frames..."
+advise "starting capture ($cam0)"
+spinnaker select $cam0 capture start quit quit
+advise "starting capture ($cam1)"
+spinnaker select $cam1 capture start quit quit
 advise "capture started..."
 Set i_grab 0
-repeat $1
-  advise "grabbing frame $i_grab..."
-  Grab_Next
-  Set image_ready 0
-  Show_Timestamp
-  usleep $proc_usecs
-  Release_Oldest
-  Increment i_grab
-  end
+#repeat $1
+#  advise "grabbing frame $i_grab..."
+#  Grab_Next
+#  Set image_ready 0
+#  Show_Timestamp
+#  usleep $proc_usecs
+#  Release_Oldest
+#  Increment i_grab
+#  end
+
+# for now we just want to see if the handler msg prints?
+do
+  os events quit
+  while 1
+
 spinnaker capture stop quit quit
 .
 
@@ -147,7 +154,6 @@ spinnaker
     #info_all
     quit
   quit
-Pause
 
 # There seems to be some sort of internal bug that bites us when we increase the number
 # of buffers???
