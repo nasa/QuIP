@@ -1,14 +1,14 @@
-# For monitoring, we always want to display the newest buffer...
-# This is different from recording where we want to write the oldest
-# buffer first!
+# test of raw volume recording
+
+rawvol default quit	# make sure rawvol is open
 
 #max_warnings 3
 max_warnings -1
 < $macro_dir/system/mark_time.mac
 
-Set cam0 Blackfly_S_BFS-U3-13Y3M
-Set cam1 Blackfly_S_BFS-U3-13Y3M_2
+Set cam1 Blackfly_S_BFS-U3-13Y3M
 #Set cam2 Flea3_FL3-U3-13Y3M
+Set cam2 Blackfly_S_BFS-U3-13Y3M_2
 
 spinnaker
   advise "initializing..."
@@ -20,46 +20,9 @@ spinnaker
 #  test
   quit
 
-Define Release_Oldest 0
-spinnaker capture release quit quit
-.
-
-Define Grab_Next 0
-spinnaker capture grab quit quit
-.
-
-# at 170 fps, there is around 6msec between frames...
-
-Set proc_usecs 3000
-
-# this value causes 10% underrun...
-#Set proc_usecs 6000
-# this value causes 25% underrun...
-#Set proc_usecs 7000
-# this value causes 40% underrun...
-#Set proc_usecs 8000
-# this value causes 70% underrun...
-#Set proc_usecs 10000
-# this value causes 110% underrun...
-#Set proc_usecs 12000
-
 Define Init_Timestamp 0
 Set last_ts -1
 Set first_fid -1
-.
-
-Define Show_Timestamp 0
-spinnaker
-  chunks
-    fetch ts Timestamp cam$cam_idx.frame$newest
-    fetch fid FrameID cam$cam_idx.frame$newest
-    quit
-  quit
-If $last_ts>0 Show_Delta
-Set last_ts $ts
-If $first_fid<0 "Set first_fid $fid"
-Add_Var fid -$first_fid
-advise "Frame $fid"
 .
 
 Define Show_Delta 0
@@ -75,8 +38,12 @@ advise "capture started..."
 Set i_grab 0
 repeat $1
   advise "grabbing frame $i_grab..."
+  do
+    nop
+    while !$image_ready
   Grab_Next
   Set image_ready 0
+  #Show_Bytes cam$cam_idx.frame$newest v
   Show_Timestamp
   usleep $proc_usecs
   Release_Oldest
@@ -106,6 +73,7 @@ spinnaker
 .
 
 Define Setup_Grab 2 cam n_buffers
+advise "Setting grab params for $1"
 spinnaker
   info $1
   nodes
@@ -113,7 +81,7 @@ spinnaker
     info AcquisitionMode
     select_map $1.stream_TL
     info StreamBufferHandlingMode
-    set StreamBufferHandlingMode NewestOnly
+    set StreamBufferHandlingMode OldestFirst	# or OldestFirstOverwrite?
     info StreamBufferHandlingMode
     info StreamDefaultBufferCount
     set StreamDefaultBufferCount $2
@@ -132,10 +100,12 @@ advise "selecting $1"
 Set cam_idx 1
 Set cam_name cam$cam_idx
 
+Define Enable_Chunks 1 cam
+advise "Enabling chunks for $1"
 spinnaker
-  select $$cam_name
+  select $1
   nodes
-    select_map $$cam_name.genicam
+    select_map $1.genicam
     #info_all
     quit
   chunks
@@ -143,29 +113,16 @@ spinnaker
     enable FrameID
     quit
   nodes
-    select_map $$cam_name.genicam
+    select_map $1.genicam
     #info_all
     quit
   quit
-Pause
+.
 
-# There seems to be some sort of internal bug that bites us when we increase the number
-# of buffers???
-
-Setup_Grab $$cam_name 10	# default, works
-#Setup_Grab $$cam_name 11	# works
-#Setup_Grab $$cam_name 12	# works
-#Setup_Grab $$cam_name 13	# doesn't work
-#Setup_Grab $$cam_name 15	# doesn't work
-
-Set frm_idx 0
-Set n_test 300
-Time_It GrabEm $n_test
-Show_Underrun_Count
-Time_It GrabEm $n_test
-Show_Underrun_Count
-#Time_It GrabEm $n_test
-#Show_Underrun_Count
+Enable_Chunks $cam1
+Enable_Chunks $cam2
+Setup_Grab $cam1 10
+Setup_Grab $cam2 10
 
 Define Show_All_Nodes 0
 spinnaker
@@ -178,6 +135,14 @@ spinnaker
     info_all
     quit quit
 .
+
+spinnaker
+  capture
+advise "Ready to record..."
+#    record foo1 500 2 $cam1 $cam2
+    record foo1 500 1 $cam1
+advise "Done recording!"
+Pause
 
 exit
 

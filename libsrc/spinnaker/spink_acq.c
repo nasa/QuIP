@@ -11,7 +11,6 @@
 // is complete...
 
 static spinImageEvent ev1;
-static int event_ctr=1;
 
 void _enable_image_events(QSP_ARG_DECL  Spink_Cam *skc_p, void (*func)(spinImage,void *))
 {
@@ -22,13 +21,15 @@ void _enable_image_events(QSP_ARG_DECL  Spink_Cam *skc_p, void (*func)(spinImage
 	insure_current_camera(skc_p);
 	assert( skc_p->skc_current_handle != NULL );
 	inf_p = getbuf(sizeof(*inf_p));		// when to release???  MEMORY LEAK BUG!
+#ifdef THREAD_SAFE_QUERY
 	inf_p->ei_qsp = THIS_QSP;
+#endif // THREAD_SAFE_QUERY
 	inf_p->ei_skc_p = skc_p;
 	if( create_image_event(&ev1,func,(void *)(inf_p) ) < 0 ) return;
 	if( register_cam_image_event(skc_p->skc_current_handle, ev1) < 0 ) return;
 
 	skc_p->skc_flags |= SPINK_CAM_EVENTS_READY;
-	assign_var("image_ready","0");
+	//assign_var("image_ready","0");
 }
 
 #ifdef NOT_USED
@@ -140,14 +141,14 @@ Data_Obj * _grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * skc_p )
 	return( skc_p->skc_frm_dp_tbl[index] );
 }
 
-void release_oldest_frame(QSP_ARG_DECL  Spink_Cam *skc_p)
+void _release_oldest_spink_frame(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	Data_Obj *dp;
 	int index;
 	spinImage hImage;
 
 	if( ! IS_CAPTURING(skc_p) ){
-		sprintf(ERROR_STRING,"release_oldest_frame:  %s is not capturing!?",
+		sprintf(ERROR_STRING,"release_oldest_spink_frame:  %s is not capturing!?",
 			skc_p->skc_name);
 		warn(ERROR_STRING);
 		return;
@@ -165,20 +166,20 @@ void release_oldest_frame(QSP_ARG_DECL  Spink_Cam *skc_p)
 	assert(dp!=NULL);
 	hImage = OBJ_EXTRA(dp);
 	if( release_spink_image(hImage) < 0 ){
-		sprintf(ERROR_STRING,"release_oldest_frame %s:  Error releasing image %d",skc_p->skc_name,index);
+		sprintf(ERROR_STRING,"release_oldest_spink_frame %s:  Error releasing image %d",skc_p->skc_name,index);
 		warn(ERROR_STRING);
 	}
 	point_obj_to_ext_data(dp,NULL);
 	SET_OBJ_EXTRA(dp,NULL);
 	if( skc_p->skc_newest == index ){
-//fprintf(stderr,"release_oldest_frame:  last frame was released\n");
+//fprintf(stderr,"release_oldest_spink_frame:  last frame was released\n");
 		skc_p->skc_newest = -1;
 		skc_p->skc_oldest = -1;
 	} else {
 		index++;
 		if( index >= skc_p->skc_n_buffers ) index = 0;
 		skc_p->skc_oldest = index;
-//fprintf(stderr,"release_oldest_frame:  oldest frame is now %d\n",index);
+//fprintf(stderr,"release_oldest_spink_frame:  oldest frame is now %d\n",index);
 	}
 }
 

@@ -56,495 +56,7 @@ ITEM_INTERFACE_DECLARATIONS(Chunk_Data,chunk_data,RB_TREE_CONTAINER)
 	warn(ERROR_STRING);
 
 
-const char *eii_prop_names[N_EII_PROPERTIES]={
-	"timestamp",
-	"gain",
-	"shutter",
-	"brightness",
-	"exposure",
-	"whiteBalance",
-	"frameCounter",
-	"strobePattern",
-	"GPIOPinState",
-	"ROIPosition"
-};
-
 #ifdef HAVE_LIBSPINNAKER
-
-ITEM_INTERFACE_DECLARATIONS(Spink_Cam_Property_Type,pgr_prop,0)
-
-//  When we change spink_cams, we have to refresh all properties!
-
-void list_spink_cam_properties(QSP_ARG_DECL  Spink_Cam *skc_p)
-{
-	List *lp;
-	Node *np;
-	//Spink_Cam_Property_Type *pgpt;
-
-	lp = pgr_prop_list();	// all properties
-	np = QLIST_HEAD(lp);
-	if( np != NULL ){
-		sprintf(MSG_STR,"\n%s properties",skc_p->skc_name);
-		prt_msg(MSG_STR);
-	} else {
-		sprintf(ERROR_STRING,"%s has no properties!?",skc_p->skc_name);
-		warn(ERROR_STRING);
-		return;
-	}
-
-	while(np!=NULL){
-	//	pgpt = (Spink_Cam_Property_Type *)NODE_DATA(np);
-		/*
-		if( pgpt->info.present ){
-			sprintf(MSG_STR,"\t%s",pgpt->name);
-			prt_msg(MSG_STR);
-		}
-		*/
-		np = NODE_NEXT(np);
-	}
-	prt_msg("");
-}
-
-// We call this after we select a spink_cam
-
-void refresh_spink_cam_properties(QSP_ARG_DECL  Spink_Cam *skc_p)
-{
-	List *lp;
-	Node *np;
-	Spink_Cam_Property_Type *pgpt;
-
-	lp = pgr_prop_list();	// all properties
-	np = QLIST_HEAD(lp);
-	while(np!=NULL){
-		pgpt = (Spink_Cam_Property_Type *)NODE_DATA(np);
-		refresh_property_info(QSP_ARG  skc_p, pgpt );
-		/*
-		if( pgpt->info.present ){
-			refresh_property_value(QSP_ARG  skc_p, pgpt );
-		}
-		*/
-		np = NODE_NEXT(np);
-	}
-}
-
-void refresh_property_info(QSP_ARG_DECL  Spink_Cam *skc_p, Spink_Cam_Property_Type *pgpt )
-{
-	//spinkError error;
-
-	/*
-	error = spinkGetPropertyInfo( skc_p->sk_context, &(pgpt->info) );
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkGetPropertyInfo" );
-		return;
-	}
-	*/
-}
-
-void show_property_info(QSP_ARG_DECL  Spink_Cam *skc_p, Spink_Cam_Property_Type *pgpt )
-{
-	//char var_name[32],val_str[32];
-
-	sprintf(MSG_STR,"\n%s %s info:",skc_p->skc_name,pgpt->name);
-	prt_msg(MSG_STR);
-
-#ifdef FOOBAR
-	// Now print out the property info?
-	if( ! pgpt->info.present ){
-		sprintf(MSG_STR,"%s is not present.",pgpt->name);
-		prt_msg(MSG_STR);
-		return;
-	}
-
-	if( pgpt->info.autoSupported )
-		prt_msg("\tAuto is supported");
-	else
-		prt_msg("\tAuto is not supported");
-
-	if( pgpt->info.manualSupported )
-		prt_msg("\tManual is supported");
-	else
-		prt_msg("\tManual is not supported");
-
-	if( pgpt->info.onOffSupported )
-		prt_msg("\tOn/Off is supported");
-	else
-		prt_msg("\tOn/Off is not supported");
-
-	if( pgpt->info.onePushSupported )
-		prt_msg("\tOne push is supported");
-	else
-		prt_msg("\tOne push is not supported");
-
-	if( pgpt->info.absValSupported )
-		prt_msg("\tAbs. Val. is supported");
-	else
-		prt_msg("\tAbs. Val. is not supported");
-
-	if( pgpt->info.readOutSupported )
-		prt_msg("\tReadout is supported");
-	else
-		prt_msg("\tReadout is not supported");
-
-	if( pgpt->info.absValSupported ){
-		sprintf(MSG_STR,"\tRange:\n\t\t"
-		"%d - %d (integer)\n\t\t"
-		"%g - %g (absolute)",
-			pgpt->info.min,
-			pgpt->info.max,
-	pgpt->info.absMin,pgpt->info.absMax);
-		prt_msg(MSG_STR);
-
-		sprintf(var_name,"%s_abs_min",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
-		sprintf(val_str,"%g",pgpt->info.absMin);
-		assign_var(var_name,val_str);
-
-		sprintf(var_name,"%s_abs_max",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
-		sprintf(val_str,"%g",pgpt->info.absMax);
-		assign_var(var_name,val_str);
-	} else {
-		sprintf(MSG_STR,"\tRange:  %d - %d",
-			pgpt->info.min,pgpt->info.max);
-		prt_msg(MSG_STR);
-
-		sprintf(var_name,"%s_abs_min",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
-		assign_var(var_name,"(undefined)");
-
-		sprintf(var_name,"%s_abs_max",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
-		assign_var(var_name,"(undefined)");
-	}
-
-	sprintf(var_name,"%s_min",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
-	sprintf(val_str,"%d",pgpt->info.min);
-	assign_var(var_name,val_str);
-
-	sprintf(var_name,"%s_max",pgpt->name);	// BUG possible buffer overrun, use snprintf or whatever...
-	sprintf(val_str,"%d",pgpt->info.max);
-	assign_var(var_name,val_str);
-
-	sprintf(MSG_STR,"\tUnits:  %s (%s)",pgpt->info.pUnits,pgpt->info.pUnitAbbr);
-	prt_msg(MSG_STR);
-#endif // FOOBAR
-}
-
-void refresh_property_value(QSP_ARG_DECL  Spink_Cam *skc_p, Spink_Cam_Property_Type *pgpt )
-{
-	/*
-	spinkError error;
-
-	error = spinkGetProperty( skc_p->sk_context, &(pgpt->prop) );
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkGetProperty" );
-		return;
-	}
-	*/
-}
-
-void show_property_value(QSP_ARG_DECL  Spink_Cam *skc_p, Spink_Cam_Property_Type *pgpt )
-{
-	sprintf(MSG_STR,"\n%s %s:",
-		skc_p->skc_name,pgpt->name);
-	prt_msg(MSG_STR);
-
-#ifdef FOOBAR
-	if( pgpt->info.autoSupported ){
-		if( pgpt->prop.autoManualMode )
-			sprintf(MSG_STR,"\tAuto mode enabled");
-		else
-			sprintf(MSG_STR,"\tAuto mode disabled");
-	} else if( pgpt->info.manualSupported ){
-		if( pgpt->prop.autoManualMode )
-			sprintf(MSG_STR,"\tautoManualMode is true");
-		else
-			sprintf(MSG_STR,"\tautoManualMode is false");
-	} else {
-		sprintf(MSG_STR,"HUH???  Does not support auto or manual!?");
-	}
-	prt_msg(MSG_STR);
-
-	if( pgpt->info.onOffSupported ){
-		if( pgpt->prop.onOff )
-			prt_msg("\tOn");
-		else
-			prt_msg("\tOff");
-	}
-
-	if( pgpt->info.onePushSupported ){
-		if( pgpt->prop.onePush )
-			prt_msg("\tOne push is true");
-		else
-			prt_msg("\tOne push is false");
-	}
-	// What exactly is readOut???  does this tell us whether we can read
-	// the value back from the spink_cam???
-	if( pgpt->info.readOutSupported ){
-		// Now print out the property value itself!
-		// Can we see both???
-
-		sprintf(MSG_STR,"\t%s:  %d (integer)",
-			pgpt->name,pgpt->prop.valueA);
-		prt_msg(MSG_STR);
-
-		// let a script access the value also
-		sprintf(MSG_STR,"%d",pgpt->prop.valueA);
-		assign_var(pgpt->name,MSG_STR);
-		// should this be a reserved var?  I think so!
-
-		if( pgpt->info.absValSupported ){
-			sprintf(MSG_STR,"\t%s:  %g %s (absolute)",
-				pgpt->name,pgpt->prop.absValue,pgpt->info.pUnitAbbr);
-			prt_msg(MSG_STR);
-
-			// let a script access the value also
-			sprintf(MSG_STR,"%g",pgpt->prop.absValue);
-			sprintf(ERROR_STRING,"%s_abs",pgpt->name);	// using ERROR_STRING as a temporary...
-			assign_var(ERROR_STRING,MSG_STR);
-			// should this be a reserved var?  I think so!
-		} else {
-			sprintf(ERROR_STRING,"%s_abs",pgpt->name);	// using ERROR_STRING as a temporary...
-			assign_var(ERROR_STRING,"(undefined)");
-		}
-	} else {
-		prt_msg("\t(Readout not supported)");
-		sprintf(ERROR_STRING,"%s",pgpt->name);
-		assign_var(ERROR_STRING,"(undefined)");
-		sprintf(ERROR_STRING,"%s_abs",pgpt->name);
-		assign_var(ERROR_STRING,"(undefined)");
-	}
-#endif // FOOBAR
-}
-
-void set_prop_value(QSP_ARG_DECL  Spink_Cam *skc_p, Spink_Cam_Property_Type *pgpt, Spink_Cam_Prop_Val *vp )
-{
-#ifdef FOOBAR
-	spinkError error;
-
-	if( vp->pv_is_abs ){
-		if( vp->pv_u.u_f < pgpt->info.absMin || vp->pv_u.u_f > pgpt->info.absMax ){
-			sprintf(ERROR_STRING,"Requested %s (%f) out of range (%f - %f)",
-				pgpt->name,
-				vp->pv_u.u_f,pgpt->info.absMin,pgpt->info.absMax);
-			warn(ERROR_STRING);
-			return;
-		}
-		pgpt->prop.absControl = TRUE;
-		pgpt->prop.absValue = vp->pv_u.u_f;
-	} else {
-		if( vp->pv_u.u_i < pgpt->info.min || vp->pv_u.u_i > pgpt->info.max ){
-			sprintf(ERROR_STRING,"Requested %s (%d) out of range (%d - %d)",
-				pgpt->name,
-				vp->pv_u.u_i,pgpt->info.min,pgpt->info.max);
-			warn(ERROR_STRING);
-			return;
-		}
-		pgpt->prop.absControl = FALSE;
-		pgpt->prop.valueA = vp->pv_u.u_i;
-	}
-
-	error = spinkSetProperty( skc_p->sk_context, &(pgpt->prop));
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkSetProperty" );
-		return;
-	}
-#endif // FOOBAR
-}
-
-void set_prop_auto(QSP_ARG_DECL  Spink_Cam *skc_p, Spink_Cam_Property_Type *pgpt, BOOL yn )
-{
-#ifdef FOOBAR
-	spinkError error;
-
-	if( ! pgpt->info.autoSupported ){
-		sprintf(ERROR_STRING,"Sorry, auto mode not supported for %s.",
-			pgpt->name);
-		warn(ERROR_STRING);
-		return;
-	}
-
-	pgpt->prop.autoManualMode = yn;
-	error = spinkSetProperty( skc_p->sk_context, &(pgpt->prop) );
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkSetProperty" );
-		return;
-	}
-#endif // FOOBAR
-}
-
-
-#define INDEX_SEARCH( stem, type, count, short_stem )			\
-									\
-static int index_of_##stem( type val )					\
-{									\
-	unsigned int i;							\
-									\
-	for(i=0;i<count;i++){						\
-		if( all_##stem##s[i].short_stem##_value == val )	\
-			return(i);					\
-	}								\
-	return -1;							\
-}
-
-int _get_spink_cam_names( QSP_ARG_DECL  Data_Obj *str_dp )
-{
-	// Could check format of object here...
-	// Should be string table with enough entries to hold the modes
-	// Should the strings be rows or multidim pixels?
-	List *lp;
-	Node *np;
-	Spink_Cam *skc_p;
-	int i, n;
-
-	lp = spink_cam_list();
-	if( lp == NULL ){
-		warn("No spink_cams!?");
-		return 0;
-	}
-
-	n=eltcount(lp);
-	if( OBJ_COLS(str_dp) < n ){
-		sprintf(ERROR_STRING,"String object %s has too few columns (%ld) to hold %d spink_cam names",
-			OBJ_NAME(str_dp),(long)OBJ_COLS(str_dp),n);
-		warn(ERROR_STRING);
-		n = OBJ_COLS(str_dp);
-	}
-		
-	np=QLIST_HEAD(lp);
-	i=0;
-	while(np!=NULL){
-		char *dst;
-		skc_p = (Spink_Cam *) NODE_DATA(np);
-		dst = OBJ_DATA_PTR(str_dp);
-		dst += i * OBJ_PXL_INC(str_dp);
-		if( strlen(skc_p->skc_name)+1 > OBJ_COMPS(str_dp) ){
-			sprintf(ERROR_STRING,"String object %s has too few components (%ld) to hold spink_cam name \"%s\"",
-				OBJ_NAME(str_dp),(long)OBJ_COMPS(str_dp),skc_p->skc_name);
-			warn(ERROR_STRING);
-		} else {
-			strcpy(dst,skc_p->skc_name);
-		}
-		i++;
-		if( i>=n )
-			np=NULL;
-		else
-			np = NODE_NEXT(np);
-	}
-
-	return i;
-}
-
-
-int reset_spink_cam(QSP_ARG_DECL  Spink_Cam *skc_p)
-{
-#ifdef FOOBAR
-	spinkError error;
-
-	error=spinkFireBusReset(skc_p->sk_context,&skc_p->sk_guid);
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkFireBusReset" );
-	}
-#endif // FOOBAR
-
-	return 0;
-}
-
-void report_spink_cam_bandwidth(QSP_ARG_DECL  Spink_Cam *skc_p )
-{
-	UNIMP_FUNC("report_spink_cam_bandwidth");
-}
-
-unsigned int read_register( QSP_ARG_DECL  Spink_Cam *skc_p, unsigned int addr )
-{
-#ifdef FOOBAR
-	spinkError error;
-	unsigned int val;
-
-	error = spinkReadRegister(skc_p->sk_context,addr,&val);
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkReadRegister" );
-	}
-	return val;
-#else // FOOBAR
-	return 0;
-#endif // FOOBAR
-}
-
-void set_fmt7_size(QSP_ARG_DECL  Spink_Cam *skc_p, int w, int h)
-{
-	UNIMP_FUNC("set_fmt7_size");
-}
-
-void list_spink_cam_trig(QSP_ARG_DECL  Spink_Cam *skc_p)
-{
-#ifdef FOOBAR
-	spinkError error;
-	spinkTriggerModeInfo tinfo;
-	spinkTriggerMode tmode;
-
-	error = spinkGetTriggerModeInfo(skc_p->sk_context,&tinfo);
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkGetTriggerModeInfo" );
-		return;
-	}
-	fprintf(stderr,"Trigger mode info:\n");
-#define BOOL_STR(v)	(v?"true":"false")
-	fprintf(stderr,"\tpresent:  %s\n",BOOL_STR(tinfo.present));
-	fprintf(stderr,"\treadOutSupported:  %s\n",BOOL_STR(tinfo.readOutSupported));
-	fprintf(stderr,"\tonOffSupported:  %s\n",BOOL_STR(tinfo.onOffSupported));
-	fprintf(stderr,"\tpolaritySupported:  %s\n",BOOL_STR(tinfo.polaritySupported));
-	fprintf(stderr,"\tvalueReadable:  %s\n",BOOL_STR(tinfo.valueReadable));
-	fprintf(stderr,"\tsourceMask:  0x%x\n",tinfo.sourceMask);
-	fprintf(stderr,"\tsoftwareTriggerSupported:  %s\n",BOOL_STR(tinfo.softwareTriggerSupported));
-	fprintf(stderr,"\tmodeMask:  0x%x\n",tinfo.modeMask);
-
-	error = spinkGetTriggerMode(skc_p->sk_context,&tmode);
-	if( error != SPINK_ERROR_OK ){
-		report_spink_error(QSP_ARG  error, "spinkGetTriggerMode" );
-		return;
-	}
-	fprintf(stderr,"Trigger mode:\n");
-#define ONOFF_STR(v)	(v?"on":"off")
-	fprintf(stderr,"\tonOff:  %s\n",ONOFF_STR(tmode.onOff));
-#define SHOW_INT_PARAM(p) fprintf(stderr,"\t%s:  %d (0x%x)\n",\
-	#p,tmode.p,tmode.p);
-	SHOW_INT_PARAM(polarity)
-	SHOW_INT_PARAM(source)
-	SHOW_INT_PARAM(mode)
-	SHOW_INT_PARAM(parameter)
-#endif // FOOBAR
-}
-
-#ifdef FOOBAR
-void set_buffer_obj(QSP_ARG_DECL  Spink_Cam *skc_p, Data_Obj *dp)
-{
-	// make sure sizes match
-	if( OBJ_COLS(dp) != skc_p->skc_cols || OBJ_ROWS(dp) != skc_p->skc_rows ){
-		sprintf(ERROR_STRING,
-"set_buffer_obj:  size mismatch between %s (%dx%d) and object %s (%dx%d)",
-			skc_p->skc_name,skc_p->skc_cols,skc_p->skc_rows,
-			OBJ_NAME(dp),OBJ_COLS(dp),OBJ_ROWS(dp) );
-		warn(ERROR_STRING);
-		return;
-	}
-	if( PREC_CODE(OBJ_MACH_PREC_PTR(dp)) != PREC_UBY ){
-		sprintf(ERROR_STRING,"Object %s (%s) should have %s precision!?",
-			OBJ_NAME(dp),OBJ_PREC_NAME(dp),NAME_FOR_PREC_CODE(PREC_UBY));
-		warn(ERROR_STRING);
-		return;
-	}
-	{
-#ifdef FOOBAR
-		spinkError error;
-
-		error = spinkSetUserBuffers(skc_p->sk_context, OBJ_DATA_PTR(dp),
-				OBJ_COLS(dp)*OBJ_ROWS(dp)*OBJ_COMPS(dp),OBJ_FRAMES(dp));
-		if( error != SPINK_ERROR_OK ){
-			report_spink_error(QSP_ARG  error, "spinkSetUserBuffers" );
-			return;
-		}
-#endif // FOOBAR
-	}
-	skc_p->skc_base = NULL;	// force init_spink_base to run again
-}
-#endif // FOOBAR
 
 Item_Context * _pop_spink_node_context(SINGLE_QSP_ARG_DECL)
 {
@@ -844,7 +356,7 @@ static void _set_enumeration_node(QSP_ARG_DECL  Spink_Node *skn_p, Spink_Node *c
 {
 	spinNodeHandle hNode;
 
-fprintf(stderr,"set_enumeration_node:  child = %s, type = %s\n", child->skn_name,child->skn_type_p->snt_name);
+//fprintf(stderr,"set_enumeration_node:  child = %s, type = %s\n", child->skn_name,child->skn_type_p->snt_name);
 	assert(skn_p->skn_type_p->snt_type == EnumerationNode);
 	assert(child->skn_type_p->snt_type == EnumEntryNode);
 	assert( child->skn_enum_ival != INVALID_ENUM_INT_VALUE );
@@ -1504,7 +1016,11 @@ static void _get_cam_dimensions(QSP_ARG_DECL  Spink_Cam *skc_p)
 	select_spink_map(skc_p->skc_cam_map);
 	skc_p->skc_cols = int_node_value("Width");
 	skc_p->skc_rows = int_node_value("Height");
+	skc_p->skc_depth = 1;	// BUG should determine based on pixel mode!
+	skc_p->skc_bytes_per_image = skc_p->skc_cols * skc_p->skc_rows * skc_p->skc_depth;
 	select_spink_map(NULL);
+fprintf(stderr,"get_cam_dimensions:  %s has %d rows and %d columns\n",
+skc_p->skc_name,skc_p->skc_rows,skc_p->skc_cols);
 }
 
 #define init_one_spink_cam(idx) _init_one_spink_cam(QSP_ARG  idx)
@@ -1565,7 +1081,7 @@ static int _init_one_spink_cam(QSP_ARG_DECL  int idx)
 	release_current_camera(1);
 
 	return 0;
-}
+} // init_one_spink_cam
 
 #define cleanup_cam_nodemaps(skc_p) _cleanup_cam_nodemaps(QSP_ARG  skc_p)
 
@@ -1702,7 +1218,7 @@ static void _init_chunk_data_structs(SINGLE_QSP_ARG_DECL)
 #endif // HAVE_LIBSPINNAKER
 
 
-int init_spink_cam_system(SINGLE_QSP_ARG_DECL)
+int _init_spink_cam_system(SINGLE_QSP_ARG_DECL)
 {
 #ifdef HAVE_LIBSPINNAKER
 	assert( hSystem == NULL );
@@ -1787,10 +1303,10 @@ static Spink_Node *_node_for_chunk(QSP_ARG_DECL  Chunk_Data *cd_p)
 {
 	char buf[128];
 	Spink_Node *skn_p;
-fprintf(stderr,"node_for_chunk %s BEGIN\n",cd_p->cd_name);
+//fprintf(stderr,"node_for_chunk %s BEGIN\n",cd_p->cd_name);
 	sprintf(buf,"EnumEntry_ChunkSelector_%s",cd_p->cd_name);
 	skn_p = get_spink_node(buf);
-	assert(skn_p!=NULL);
+	//assert(skn_p!=NULL);
 	return skn_p;
 }
 
@@ -1828,13 +1344,15 @@ void _enable_chunk_data(QSP_ARG_DECL  Spink_Cam *skc_p, Chunk_Data *cd_p)
 	assert( skn_p != NULL );
 	assert(skn_p->skn_type_p->snt_type == EnumerationNode );
 
-fprintf(stderr,"enable_chunk_data:  looking up node for %s\n",cd_p->cd_name);
+//fprintf(stderr,"enable_chunk_data:  looking up node for %s\n",cd_p->cd_name);
 	val_p = node_for_chunk(cd_p);
-fprintf(stderr,"enable_chunk_data:  found %s\n",val_p->skn_name);
-	set_enumeration_node(skn_p,val_p);
+	if( val_p != NULL ){
+//fprintf(stderr,"enable_chunk_data:  found %s\n",val_p->skn_name);
+		set_enumeration_node(skn_p,val_p);
 
-	skn_p = get_spink_node("ChunkEnable");
-	set_boolean_node(skn_p,True);
+		skn_p = get_spink_node("ChunkEnable");
+		set_boolean_node(skn_p,True);
+	}
 
 	pop_map_contexts();
 }

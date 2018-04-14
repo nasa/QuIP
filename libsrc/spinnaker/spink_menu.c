@@ -177,7 +177,7 @@ static COMMAND_FUNC( do_init )
 		return;
 	}
 
-	if( init_spink_cam_system(SINGLE_QSP_ARG) < 0 )
+	if( init_spink_cam_system() < 0 )
 		WARN("Error initializing Spinnaker system.");
 #endif
 }
@@ -221,9 +221,6 @@ static COMMAND_FUNC( do_cam_info )
 static void _select_spink_cam(QSP_ARG_DECL  Spink_Cam *scp )
 {
 	the_cam_p = scp;
-#ifdef HAVE_LIBSPINNAKER
-	refresh_spink_cam_properties(QSP_ARG  scp);
-#endif // HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_select_cam )
@@ -275,10 +272,7 @@ static COMMAND_FUNC( do_stop )
 
 static COMMAND_FUNC(do_reset)
 {
-#ifdef HAVE_LIBSPINNAKER
-	CHECK_CAM
-	reset_spink_cam(QSP_ARG  the_cam_p);
-#endif
+	warn("reset not implemented!?");
 }
 
 // conflict started here???
@@ -286,7 +280,7 @@ static COMMAND_FUNC( do_release )
 {
 #ifdef HAVE_LIBSPINNAKER
 	CHECK_CAM
-	release_oldest_frame(QSP_ARG  the_cam_p);
+	release_oldest_spink_frame(the_cam_p);
 #endif
 }
 
@@ -330,22 +324,40 @@ static COMMAND_FUNC( do_set_n_bufs )
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(properties_menu,s,f,h)
 
+#define MAX_CAMERAS	4
+
 static COMMAND_FUNC( do_record )
 {
 	const char *s;
-	int n;
+	int nf,nc;
 	Image_File *ifp;
+	Spink_Cam *skc_p_tbl[MAX_CAMERAS];
+	int i;
 
 	s=NAMEOF("name for raw volume recording");
-	n=HOW_MANY("number of frames");
+	nf=HOW_MANY("total number of frames");
+	nc=HOW_MANY("number of cameras");
+	if( nc < 1 || nc > MAX_CAMERAS ){
+		sprintf(ERROR_STRING,"Number of cameras (%d) must be greater than zero and less than or equal to %d",
+			nc,MAX_CAMERAS);
+		warn(ERROR_STRING);
+		return;
+	}
+	for(i=0;i<nc;i++){
+		skc_p_tbl[i] = pick_spink_cam("");
+	}
+	for(i=0;i<nc;i++){
+		if( skc_p_tbl[i] == NULL ) return;
+	}
+	// BUG here we should insist that all cameras are distinct!
 
-	ifp = get_file_for_recording(s,n,the_cam_p);
+	ifp = get_file_for_recording(s,nf,the_cam_p);
 	if( ifp == NULL ) return;
 	
 	CHECK_CAM
 
 #ifdef HAVE_LIBSPINNAKER
-	stream_record(QSP_ARG  ifp, n, the_cam_p );
+	spink_stream_record(ifp, nf, nc, skc_p_tbl );
 #else // ! HAVE_LIBSPINNAKER
 	UNIMP_MSG("stream_record");
 #endif // ! HAVE_LIBSPINNAKER
@@ -393,11 +405,7 @@ static COMMAND_FUNC( do_fmt7_setsize )
 		WARN("can't set image size while camera is running!?");
 		return;
 	}
-#ifdef HAVE_LIBSPINNAKER
-	set_fmt7_size(QSP_ARG  the_cam_p, w, h );
-#else // ! HAVE_LIBSPINNAKER
 	UNIMP_MSG("set_fmt7_size");
-#endif // ! HAVE_LIBSPINNAKER
 }
 
 static COMMAND_FUNC( do_fmt7_setposn )
@@ -464,8 +472,11 @@ static COMMAND_FUNC(do_get_cams)
 	dp = pick_obj("string table");
 	if( dp == NULL ) return;
 
+	/*
 	if( get_spink_cam_names( dp ) < 0 )
 		WARN("Error getting camera names!?");
+		*/
+	warn("get_spink_cam_names not implemented!?");
 }
 
 #undef ADD_CMD
