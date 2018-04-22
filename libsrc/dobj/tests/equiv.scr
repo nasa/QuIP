@@ -17,8 +17,8 @@ Equivalence el1 b1 1 $t $h 4 1 uint32
 Info el1
 advise ' '
 
-advise "Equivalencing bit to uint64:"
-Equivalence el2 b1 1 $t $h 2 1 uint64
+advise "Equivalencing bit to u_long:"
+Equivalence el2 b1 1 $t $h 2 1 u_long
 Info el2
 advise ' '
 

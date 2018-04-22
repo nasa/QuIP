@@ -116,10 +116,12 @@ static void copy_platform_data(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp)
 {
 	Vec_Obj_Args oa1, *oap=&oa1;
 
+fprintf(stderr,"copy_platform_data %s from %s BEGIN\n",OBJ_NAME(dst_dp),OBJ_NAME(src_dp));
 	setvarg2(oap,dst_dp,src_dp);
 	if( IS_BITMAP(src_dp) ){
 		SET_OA_SBM(oap,src_dp);
-		SET_OA_SRC1(oap,NULL);
+		// SRC1 gets referenced???
+		//SET_OA_SRC1(oap,NULL);
 	}
 
 	if( IS_REAL(src_dp) ) /* BUG case for QUAT too? */
@@ -136,13 +138,17 @@ static void copy_platform_data(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp)
 
 static Data_Obj *contig_obj(QSP_ARG_DECL  Data_Obj *dp)
 {
+	Data_Obj *copy_dp;
+
 	if( IS_CONTIGUOUS(dp) ) return dp;
 	if( HAS_CONTIGUOUS_DATA(dp) ) return dp;
 
 advise("object is not contiguous, and does not have contiguous data, creating temp object for copy...");
 longlist(dp);
 
-	return create_platform_copy(QSP_ARG   dp);
+	copy_dp = create_platform_copy(QSP_ARG   dp);
+longlist(copy_dp);
+	return copy_dp;
 }
 
 static Data_Obj *contig_obj_with_data(QSP_ARG_DECL  Data_Obj *dp)
@@ -150,6 +156,7 @@ static Data_Obj *contig_obj_with_data(QSP_ARG_DECL  Data_Obj *dp)
 	Data_Obj *contig_dp;
 
 	contig_dp = contig_obj(QSP_ARG  dp);
+fprintf(stderr,"contig_obj_with_data:  contig_dp = %s   dp = %s\n",OBJ_NAME(contig_dp),OBJ_NAME(dp));
 	if( contig_dp == dp ) return dp;
 	copy_platform_data(QSP_ARG  contig_dp, dp );
 	return contig_dp;
@@ -161,6 +168,7 @@ static void download_platform_data(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *pf_
 
 	// We can't download if the source data is not contiguous...
 
+fprintf(stderr,"download_platform_data BEGIN ram_dp = %s   pf_dp = %s\n",OBJ_NAME(ram_dp),OBJ_NAME(pf_dp));
 	contig_dp = contig_obj_with_data(QSP_ARG  pf_dp);
 	assert( IS_CONTIGUOUS(ram_dp) );
 
@@ -218,7 +226,9 @@ Data_Obj *insure_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *dp)
 		return NULL;
 	}
 
+fprintf(stderr,"insure_ram_obj_for_reading calling download_platform_data\n");
 	download_platform_data(QSP_ARG  ram_dp, dp);
+fprintf(stderr,"insure_ram_obj_for_reading back from download_platform_data\n");
 
 	return ram_dp;
 }

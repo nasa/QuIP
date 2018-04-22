@@ -621,6 +621,9 @@ static void _get_machine_dimensions(QSP_ARG_DECL  Dimension_Set *dst_dsp, Dimens
  * When we equivalence bitmaps, the xx bits are as good as any others - so
  * we only care about machine dimensions and increments...
  *
+ * It appears the above may be referencing an older approach in which image
+ * rows were padded to be an integral number of words - now we just slosh all
+ * the bits together...
  */
 
 Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Dimension_Set *dsp, Precision * prec_p )
@@ -662,6 +665,8 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 	/* Now we know how many bits in each basic element.
 	 * Figure out how many elements of one makes up an element of the other.
 	 * The results end up in n_per_parent and n_per_child.
+	 *
+	 * Bitmaps are a special case...
 	 */
 	n_per_parent = n_per_child = 1;
 
@@ -702,6 +707,11 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 	total_child_bytes = 1;
 	for(child_dim=0;child_dim<N_DIMENSIONS;child_dim++)
 		total_child_bytes *= DIMENSION(new_dsp,child_dim);
+	if( PREC_CODE(prec_p) == PREC_BIT ){
+		/* convert number of bits to number of words */
+		total_child_bytes += BITS_PER_BITMAP_WORD - 1;
+		total_child_bytes /= BITS_PER_BITMAP_WORD;
+	}
 	total_child_bytes *= PREC_MACH_SIZE( prec_p );
 
 	total_parent_bytes = ELEMENT_SIZE(parent)*OBJ_N_MACH_ELTS(parent);
@@ -746,6 +756,7 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 	 * 
 	 */
 
+fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent);
 	if( n_per_parent > 1 ){
 		// If we have multiple child elements per single
 		// parent element, they have to be contiguous
@@ -766,6 +777,12 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 			child_mach_inc = OBJ_MACH_INC(parent,i);
 			i++;
 		}
+		if( child_mach_inc == 0 ){
+			if( total_child_bytes == total_parent_bytes &&
+				total_child_bytes == PREC_SIZE(prec_p) )
+				child_mach_inc=1;
+		}
+
 		assert( child_mach_inc != 0 );
 
 		/* Is this correct in all cases?  If multiple parent elements make up one child
@@ -847,9 +864,13 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 			/* increase the parent dimension */
 			parent_dim++;
 			prev_parent_mach_elts = total_parent_bytes;
-			if( parent_dim < N_DIMENSIONS )
+			if( parent_dim < N_DIMENSIONS ){
 				total_parent_bytes *= OBJ_MACH_DIM(parent,parent_dim);
-			else {
+			} else if( PREC_CODE(prec_p) == PREC_BIT ){
+fprintf(stderr,"child_dim = %d\n",child_dim);
+				total_child_bytes = (total_child_bytes + BITS_PER_BITMAP_WORD -1 ) / BITS_PER_BITMAP_WORD;
+fprintf(stderr,"total_child_bytes = %d\n",total_child_bytes);
+			} else {
 				sprintf(ERROR_STRING,"make_equivalence:  can't fit objects");
 				warn(ERROR_STRING);
 				sprintf(ERROR_STRING,"total_parent_bytes = %d   total_child_bytes = %d",

@@ -12,6 +12,7 @@
 //#include "warn.h"
 //#include "getbuf.h"
 
+#define JUST_FOR_DEBUGGING	// extra debugging
 
 static int get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
@@ -1043,9 +1044,10 @@ static void verify_gpu_bitmap_info(Data_Obj *dp)
 	n_words_expected = bitmap_obj_word_count(dp);
 	bmi_p = getbuf( BITMAP_GPU_INFO_SIZE(n_words_expected));
 
-	(*PF_MEM_DNLOAD_FN( OBJ_PLATFORM(dp) ))(DEFAULT_QSP_ARG  bmi_p, BITMAP_OBJ_GPU_INFO_DEV_PTR(dp), BITMAP_GPU_INFO_SIZE(n_words_expected), OBJ_PFDEV(dp) );
+	(*PF_MEM_DNLOAD_FN( OBJ_PLATFORM(dp) ))(DEFAULT_QSP_ARG  bmi_p, BITMAP_OBJ_GPU_INFO_DEV_PTR(dp), BITMAP_GPU_INFO_SIZE(n_words_expected), 0 /* offset */, OBJ_PFDEV(dp) );
 	for(i=0;i<n_words_expected;i++){
-		fprintf(stderr,"word %d   offset %d   indices %d %d %d %d %d   valid_bits 0x%llx\n",
+		// BUG - what should the format be here???
+		fprintf(stderr,"word %d   offset %d   indices %d %d %d %d %d   valid_bits 0x%lx\n",
 			i,bmi_p->word_tbl[i].word_offset,
 			bmi_p->word_tbl[i].first_indices[0],
 			bmi_p->word_tbl[i].first_indices[1],
@@ -1110,6 +1112,39 @@ static void tabulate_bitmap_word(Data_Obj *dp, bitnum_t bit_number)
 	SET_BMWI_VALID_BIT(bmwi_p,1L<<(bit_number % BITS_PER_BITMAP_WORD));
 }
 
+#ifdef JUST_FOR_DEBUGGING
+// This function will be useful for debugging...
+
+static void show_bitmap_gpu_info(QSP_ARG_DECL  Bitmap_GPU_Info *bmi_p)
+{
+	dimension_t i;
+	Bitmap_GPU_Word_Info * bmwi_p;
+
+	sprintf(MSG_STR,"Bitmap_GPU_Info at 0x%lx",(long)bmi_p);
+	prt_msg(MSG_STR);
+	sprintf(MSG_STR,"\t%d words",BMI_N_WORDS(bmi_p));
+	prt_msg(MSG_STR);
+
+	for(i=0;i<BMI_N_WORDS(bmi_p);i++){
+		bmwi_p = BMI_WORD_INFO_P(bmi_p,i);
+		// BUG - get correct format!
+		sprintf(MSG_STR,"word %3d   offset %d   first bit %ld  comp %4d  col %4d   row %4d   frame %4d   seq %4d   mask = 0x%lx",
+			i,BMWI_OFFSET(bmwi_p),
+			BMWI_FIRST_BIT_NUM(bmwi_p),
+			BMWI_FIRST_INDEX(bmwi_p,0),
+			BMWI_FIRST_INDEX(bmwi_p,1),
+			BMWI_FIRST_INDEX(bmwi_p,2),
+			BMWI_FIRST_INDEX(bmwi_p,3),
+			BMWI_FIRST_INDEX(bmwi_p,4),
+			BMWI_VALID_BITS(bmwi_p)
+			);
+		prt_msg(MSG_STR);
+	}
+}
+
+#endif // JUST_FOR_DEBUGGING
+
+
 // Populate the structure used to help gpu kernel threads know which bits to twiddle
 //
 // Basically, we have a copy of the bitmap, with 1's in bit positions where there is valid
@@ -1124,10 +1159,12 @@ void init_bitmap_gpu_info(Data_Obj *dp)
 	void *ptr;
 	int tot_siz;
 
+fprintf(stderr,"init_bitmap_gpu_info BEGIN\n");
 	n_words_expected = bitmap_obj_word_count(dp);
 	//bmi_p = getbuf(sizeof(Bitmap_GPU_Info));
 	tot_siz = BITMAP_GPU_INFO_SIZE(n_words_expected);
 	bmi_p = getbuf( tot_siz);
+fprintf(stderr,"init_bitmap_gpu_info allocated host copy at 0x%lx\n",(long)bmi_p);
 	SET_BITMAP_OBJ_GPU_INFO_HOST_PTR(dp,bmi_p);
 
 	SET_BMI_N_WORDS(bmi_p,n_words_expected);
@@ -1149,6 +1186,7 @@ show_bitmap_gpu_info(DEFAULT_QSP_ARG  BITMAP_OBJ_GPU_INFO_HOST_PTR(dp) );
 	ptr = (*PF_MEM_ALLOC_FN( OBJ_PLATFORM(dp) ))(DEFAULT_QSP_ARG  OBJ_PFDEV(dp), BMI_STRUCT_SIZE(bmi_p), 0 );
 	assert( ptr != NULL );
 	SET_BITMAP_OBJ_GPU_INFO_DEV_PTR(dp,ptr);
+fprintf(stderr,"allocated platform mem at 0x%lx\n",(long)ptr);
 
 	// now copy to device
 	(*PF_MEM_UPLOAD_FN( OBJ_PLATFORM(dp) ))(DEFAULT_QSP_ARG
@@ -1158,36 +1196,6 @@ show_bitmap_gpu_info(DEFAULT_QSP_ARG  BITMAP_OBJ_GPU_INFO_HOST_PTR(dp) );
 verify_gpu_bitmap_info(dp);
 #endif // JUST_FOR_DEBUGGING
 } // init_bitmap_gpu_info
-
-#ifdef JUST_FOR_DEBUGGING
-// This function will be useful for debugging...
-
-void show_bitmap_gpu_info(QSP_ARG_DECL  Bitmap_GPU_Info *bmi_p)
-{
-	dimension_t i;
-	Bitmap_GPU_Word_Info * bmwi_p;
-
-	sprintf(MSG_STR,"Bitmap_GPU_Info at 0x%lx",(long)bmi_p);
-	prt_msg(MSG_STR);
-	sprintf(MSG_STR,"\t%d words",BMI_N_WORDS(bmi_p));
-	prt_msg(MSG_STR);
-
-	for(i=0;i<BMI_N_WORDS(bmi_p);i++){
-		bmwi_p = BMI_WORD_INFO_P(bmi_p,i);
-		sprintf(MSG_STR,"word %3d   offset %d   first bit %lld  comp %4d  col %4d   row %4d   frame %4d   seq %4d   mask = 0x%llx",
-			i,BMWI_OFFSET(bmwi_p),
-			BMWI_FIRST_BIT_NUM(bmwi_p),
-			BMWI_FIRST_INDEX(bmwi_p,0),
-			BMWI_FIRST_INDEX(bmwi_p,1),
-			BMWI_FIRST_INDEX(bmwi_p,2),
-			BMWI_FIRST_INDEX(bmwi_p,3),
-			BMWI_FIRST_INDEX(bmwi_p,4),
-			BMWI_VALID_BITS(bmwi_p)
-			);
-		prt_msg(MSG_STR);
-	}
-}
-#endif // JUST_FOR_DEBUGGING
 
 #endif // HAVE_ANY_GPU
 
