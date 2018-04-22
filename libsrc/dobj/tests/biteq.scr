@@ -3,9 +3,13 @@
 
 Set h 7
 Set w 8
-Image bm0 $h $w 1 bit
-Equivalence e0 bm0 1 1 1 1 1 u_long
-Info e0
+#Image bm0 $h $w 1 bit
+#Equivalence e0 bm0 1 1 1 1 1 u_long
+#Info e0
+Vector e0 1 1 u_long
+Equivalence bm0 e0 1 1 7 8 1 bit
+Info bm0
+
 advise 'reading small bitmap data...'
 data
   ascii
