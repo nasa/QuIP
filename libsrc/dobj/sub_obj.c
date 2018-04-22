@@ -10,6 +10,43 @@
 #include "ocl_platform.h"
 #endif // HAVE_OPENCL
 
+typedef struct {
+	const char *	eqd_name;
+	Precision *	eqd_prec_p;
+	Data_Obj *	eqd_parent;
+	Dimension_Set *	eqd_dsp;
+	int		eqd_n_per_parent;
+	int		eqd_n_per_child;
+	int		eqd_bytes_per_parent_elt;
+	int		eqd_bytes_per_child_elt;
+	dimension_t	eqd_total_child_bytes;
+	dimension_t	eqd_total_parent_bytes;
+} Equivalence_Data;
+
+#define EQ_NAME(eqd_p)		(eqd_p)->eqd_name
+#define EQ_PREC_PTR(eqd_p)	(eqd_p)->eqd_prec_p
+#define EQ_PREC_CODE(eqd_p)	PREC_CODE(EQ_PREC_PTR(eqd_p))
+#define EQ_PARENT(eqd_p)	(eqd_p)->eqd_parent
+#define EQ_DIMS(eqd_p)		(eqd_p)->eqd_dsp
+#define EQ_N_PER_PARENT(eqd_p)	(eqd_p)->eqd_n_per_parent
+#define EQ_N_PER_CHILD(eqd_p)	(eqd_p)->eqd_n_per_child
+#define EQ_BYTES_PER_PARENT_ELT(eqd_p)	(eqd_p)->eqd_bytes_per_parent_elt
+#define EQ_BYTES_PER_CHILD_ELT(eqd_p)	(eqd_p)->eqd_bytes_per_child_elt
+#define EQ_TOTAL_CHILD_BYTES(eqd_p)	(eqd_p)->eqd_total_child_bytes
+#define EQ_TOTAL_PARENT_BYTES(eqd_p)	(eqd_p)->eqd_total_parent_bytes
+
+#define SET_EQ_N_PER_PARENT(eqd_p,v)	(eqd_p)->eqd_n_per_parent = v
+#define SET_EQ_N_PER_CHILD(eqd_p,v)	(eqd_p)->eqd_n_per_child = v
+#define SET_EQ_BYTES_PER_PARENT_ELT(eqd_p,v)	(eqd_p)->eqd_bytes_per_parent_elt = v
+#define SET_EQ_BYTES_PER_CHILD_ELT(eqd_p,v)	(eqd_p)->eqd_bytes_per_child_elt = v
+
+#define n_bytes_per_child_elt	EQ_BYTES_PER_CHILD_ELT(eqd_p)
+#define n_bytes_per_parent_elt	EQ_BYTES_PER_PARENT_ELT(eqd_p)
+#define n_per_parent	EQ_N_PER_PARENT(eqd_p)
+#define n_per_child	EQ_N_PER_CHILD(eqd_p)
+#define total_child_bytes	EQ_TOTAL_CHILD_BYTES(eqd_p)
+#define total_parent_bytes	EQ_TOTAL_PARENT_BYTES(eqd_p)
+
 /* This used to be declared withing check_posn(),
  * but old sun compiler says "no automatic aggregate initialization"
  */
@@ -566,37 +603,105 @@ static void _get_machine_dimensions(QSP_ARG_DECL  Dimension_Set *dst_dsp, Dimens
 	}
 }
 
-#define simple_reshape_equiv(name, parent, dsp) _simple_reshape_equiv(QSP_ARG  name, parent, dsp)
-
-static Data_Obj *_simple_reshape_equiv(QSP_ARG_DECL  const char *name, Data_Obj *parent, Dimension_Set *dsp)
+static dimension_t type_size_in_bytes(Precision *prec_p)
 {
-	Data_Obj *new_dp;
-	dimension_t n_elts;
-	int i;
+	dimension_t bytes_per_elt;
 
-	// All we need to do is insure that the dimensions match up...
-	n_elts = dsp->ds_dimension[0];
-	for(i=1;i<N_DIMENSIONS;i++)
-		n_elts *= dsp->ds_dimension[i];
-	assert(n_elts!=0);
+	bytes_per_elt = PREC_MACH_SIZE( prec_p );
+	if( COMPLEX_PRECISION(PREC_CODE(prec_p)) )
+		bytes_per_elt *= 2;
+	else if( QUAT_PRECISION(PREC_CODE(prec_p)) )
+		bytes_per_elt *= 4;
+	return bytes_per_elt;
+}
 
-	if( n_elts != OBJ_N_TYPE_ELTS(parent) ){
-		sprintf(ERROR_STRING,"Can't create equivalence %s, %d elements requested but parent %s has %d!?",
-			name,n_elts,OBJ_NAME(parent),OBJ_N_TYPE_ELTS(parent));
+#define get_n_per_child(eqd_p) _get_n_per_child(QSP_ARG  eqd_p )
+
+static int _get_n_per_child(QSP_ARG_DECL  Equivalence_Data *eqd_p)
+{
+	incr_t n_contig;
+	int parent_dim;
+
+	SET_EQ_N_PER_CHILD(eqd_p, n_bytes_per_child_elt / n_bytes_per_parent_elt);
+	/* new size is larger, first increment must be 1 */
+
+	/* Find the largest number of contiguous elements in the parent */
+	n_contig=1;
+	for(parent_dim=0;parent_dim<N_DIMENSIONS;parent_dim++)
+		if( OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) == n_contig )
+			n_contig *= OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim);
+	/* n_contig is the number of contiguous machine elements in the parent... */
+
+	if( n_contig < EQ_N_PER_CHILD(eqd_p) ){
+		sprintf(ERROR_STRING,
+	"get_n_per_child:  parent object %s n_contig = %d < %d, can't cast to %s",
+			OBJ_NAME(EQ_PARENT(eqd_p)),n_contig,EQ_N_PER_CHILD(eqd_p),PREC_NAME(EQ_PREC_PTR(eqd_p)));
 		warn(ERROR_STRING);
-		return NULL;
+		return -1;
 	}
+	return 0;
+}
 
-	// All is OK
+// Figure out the relation between the element sizes
 
-	new_dp = make_dp(name,dsp,OBJ_PREC_PTR(parent));
-	if( new_dp == NULL ) return new_dp;
+#define compare_element_sizes(eqd_p) _compare_element_sizes(QSP_ARG  eqd_p)
 
-	SET_OBJ_DATA_PTR(new_dp,OBJ_DATA_PTR(parent));
-	parent_relationship(parent,new_dp);
-	new_dp=setup_dp(new_dp,OBJ_PREC_PTR(parent));
-	assert( new_dp != NULL );
-	return new_dp;
+static int _compare_element_sizes(QSP_ARG_DECL  Equivalence_Data *eqd_p)
+{
+	n_bytes_per_child_elt = type_size_in_bytes(EQ_PREC_PTR(eqd_p));
+	n_bytes_per_parent_elt = type_size_in_bytes(OBJ_PREC_PTR(EQ_PARENT(eqd_p)));
+
+	/* Now we know how many bits in each basic element.
+	 * Figure out how many elements of one makes up an element of the other.
+	 * The results end up in n_per_parent and n_per_child.
+	 *
+	 * Bitmaps are a special case...
+	 */
+	SET_EQ_N_PER_PARENT(eqd_p,1);
+	SET_EQ_N_PER_CHILD(eqd_p,1);
+
+	/* Case 1:  child element size is greater than parent element size - casting up */
+	if( n_bytes_per_child_elt > n_bytes_per_parent_elt ) {
+		assert(n_bytes_per_child_elt % n_bytes_per_parent_elt == 0 );
+		if( get_n_per_child(eqd_p) < 0 )
+			return -1;
+	} else if( n_bytes_per_child_elt < n_bytes_per_parent_elt ) {
+		/* Case 2:  child element size is less than parent element size - casting down */
+		//n_per_parent = OBJ_PREC_MACH_SIZE( parent ) / PREC_SIZE( prec & MACH_PREC_MASK ) ;
+		assert(n_bytes_per_parent_elt % n_bytes_per_child_elt == 0 );
+		n_per_parent = n_bytes_per_parent_elt / n_bytes_per_child_elt ;
+	}
+	return 0;
+}
+
+#define check_size_match(eqd_p) _check_size_match(QSP_ARG  eqd_p )
+
+static int _check_size_match(QSP_ARG_DECL  Equivalence_Data *eqd_p)
+{
+	int child_dim;
+
+	total_child_bytes = 1;
+	for(child_dim=0;child_dim<N_DIMENSIONS;child_dim++)
+		total_child_bytes *= DIMENSION( EQ_DIMS(eqd_p),child_dim);
+	if( EQ_PREC_CODE(eqd_p) == PREC_BIT ){
+		/* convert number of bits to number of words */
+		total_child_bytes += BITS_PER_BITMAP_WORD - 1;
+		total_child_bytes /= BITS_PER_BITMAP_WORD;
+	}
+	total_child_bytes *= PREC_MACH_SIZE( EQ_PREC_PTR(eqd_p) );
+
+	total_parent_bytes = ELEMENT_SIZE( EQ_PARENT(eqd_p) ) *
+				OBJ_N_MACH_ELTS( EQ_PARENT(eqd_p) );
+
+	if( total_child_bytes != total_parent_bytes){
+		sprintf(ERROR_STRING,
+	"make_equivalence %s:  total requested size (%d bytes) does not match parent %s (%d bytes)",
+			EQ_NAME(eqd_p),total_child_bytes,
+			OBJ_NAME( EQ_PARENT(eqd_p) ),total_parent_bytes);
+		warn(ERROR_STRING);
+		return -1;
+	}
+	return 0;
 }
 
 /* make_equivalence
@@ -646,39 +751,32 @@ static Data_Obj *_simple_reshape_equiv(QSP_ARG_DECL  const char *name, Data_Obj 
  *	r1 i1 r2 i2 r3 i3	type_dim = 3 mach_dim = 6
  *	R1 I1 R2 I2 R3 I3	type_inc = 1 mach_inc = 2 (col)
  *
- * But for bitmap, type count is larger:  (example uses 4 bit words)
+ * But for bitmaps, type dimension boundaries may not align
+ * with word boundaries; example uses 4 bit words:
  *
- *	bbbb bbxx	type_dim = 6  mach_dim = 2
- *	bbbb bbxx	type_inc = 1 (col), 8 (row)  mach_inc = 1 (col), 2 (row)
+ *	bbbb bb		type_dim = 6  mach_dim = 2 ?
+ *	bb bbbb		type_inc = 1 (col), 6 (row)  mach_inc = 1 (col), 2 (row)
  *
- * When we equivalence bitmaps, the xx bits are as good as any others - so
- * we only care about machine dimensions and increments...
- *
- * It appears the above may be referencing an older approach in which image
- * rows were padded to be an integral number of words - now we just slosh all
- * the bits together...
+ * Because bitmaps can include don't-care bits at the end, the dimensions
+ * may not be an exact match...
  */
 
 Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Dimension_Set *dsp, Precision * prec_p )
 {
 	Data_Obj *newdp;
 	const char *s;
-	dimension_t n_child_bytes_per_elt,n_parent_bytes_per_elt;
 	int parent_dim,child_dim;
-	int n_per_parent, n_per_child;
-	dimension_t	total_child_bytes,
-			total_parent_bytes,
-			prev_parent_mach_elts;
+	dimension_t	prev_parent_mach_elts;
 	incr_t child_mach_inc;
 	incr_t new_mach_inc[N_DIMENSIONS];
 	int multiplier, divisor;
 	Dimension_Set ds1, *new_dsp=(&ds1);
+	Equivalence_Data eqd1, *eqd_p=(&eqd1);
 
-	// First see if the two precisions match - in that case,
-	// it's a simple re-shape
-
-	if( PREC_CODE(prec_p) == OBJ_PREC(parent) )
-		return simple_reshape_equiv(name,parent,dsp);
+	bzero(eqd_p,sizeof(*eqd_p));
+	eqd1.eqd_name = name;
+	eqd1.eqd_parent = parent;
+	eqd1.eqd_prec_p = prec_p;
 
 	/* If we are casting to a larger machine type (e.g. byte to long)
 	 * We have to have at least 4 bytes contiguous.
@@ -689,79 +787,17 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 	 * Figure out how the elements match up.
 	 */
 
-	n_child_bytes_per_elt = PREC_MACH_SIZE( prec_p );
-	if( COMPLEX_PRECISION(PREC_CODE(prec_p)) )
-		n_child_bytes_per_elt *= 2;
-	else if( QUAT_PRECISION(PREC_CODE(prec_p)) )
-		n_child_bytes_per_elt *= 4;
-
-	n_parent_bytes_per_elt = OBJ_PREC_MACH_SIZE( parent );
-	if( IS_COMPLEX(parent) )
-		n_parent_bytes_per_elt *= 2;
-	else if( IS_QUAT(parent) )
-		n_parent_bytes_per_elt *= 4;
-
-	/* Now we know how many bits in each basic element.
-	 * Figure out how many elements of one makes up an element of the other.
-	 * The results end up in n_per_parent and n_per_child.
-	 *
-	 * Bitmaps are a special case...
-	 */
-	n_per_parent = n_per_child = 1;
-
-	/* Case 1:  child element size is greater than parent element size - casting up */
-	if( n_child_bytes_per_elt > n_parent_bytes_per_elt ) {
-		incr_t n_contig;
-
-		//n_per_child = PREC_SIZE( PREC_CODE(prec_p) & MACH_PREC_MASK ) / OBJ_PREC_MACH_SIZE( parent );
-		n_per_child = n_child_bytes_per_elt / n_parent_bytes_per_elt;
-
-		/* new size is larger, first increment must be 1 */
-
-		/* Find the largest number of contiguous elements in the parent */
-		n_contig=1;
-		for(parent_dim=0;parent_dim<N_DIMENSIONS;parent_dim++)
-			if( OBJ_MACH_INC(parent,parent_dim) == n_contig )
-				n_contig *= OBJ_MACH_DIM(parent,parent_dim);
-		/* n_contig is the number of contiguous machine elements in the parent... */
-
-		if( n_contig < n_per_child ){
-			sprintf(ERROR_STRING,
-	"make_equivalence:  parent object %s n_contig = %d < %d, can't cast to %s",
-				OBJ_NAME(parent),n_contig,n_per_child,PREC_NAME(prec_p));
-			warn(ERROR_STRING);
-			return(NULL);
-		}
-	} else if( n_child_bytes_per_elt < n_parent_bytes_per_elt ) {
-		/* Case 2:  child element size is less than parent element size - casting down */
-		//n_per_parent = OBJ_PREC_MACH_SIZE( parent ) / PREC_SIZE( prec & MACH_PREC_MASK ) ;
-		n_per_parent = n_parent_bytes_per_elt / n_child_bytes_per_elt ;
-	}
+	if( compare_element_sizes(eqd_p) < 0 )
+		return NULL;
 
 	/* first make sure the total size matches */
 
 	/* We need the machine dimensions of the new object */
+	// They should only differ for complex, quaternion, color and bit?
 	get_machine_dimensions(new_dsp,dsp,PREC_CODE(prec_p));
 
-	total_child_bytes = 1;
-	for(child_dim=0;child_dim<N_DIMENSIONS;child_dim++)
-		total_child_bytes *= DIMENSION(new_dsp,child_dim);
-	if( PREC_CODE(prec_p) == PREC_BIT ){
-		/* convert number of bits to number of words */
-		total_child_bytes += BITS_PER_BITMAP_WORD - 1;
-		total_child_bytes /= BITS_PER_BITMAP_WORD;
-	}
-	total_child_bytes *= PREC_MACH_SIZE( prec_p );
-
-	total_parent_bytes = ELEMENT_SIZE(parent)*OBJ_N_MACH_ELTS(parent);
-
-	if( total_child_bytes != total_parent_bytes){
-		sprintf(ERROR_STRING,
-	"make_equivalence %s:  total requested size (%d bytes) does not match parent %s (%d bytes)",
-			name,total_child_bytes,OBJ_NAME(parent),total_parent_bytes);
-		warn(ERROR_STRING);
-		return(NULL);
-	}
+	if( check_size_match(eqd_p /*new_dsp,prec_p,parent*/) < 0 )
+		return NULL;
 
 	/* Now we need to see if we can come up with
 	 * a new set of increments that works.

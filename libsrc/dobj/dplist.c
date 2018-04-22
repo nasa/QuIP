@@ -306,7 +306,7 @@ if( debug & debug_data ){
 }
 #endif /* QUIP_DEBUG */
 
-}
+} // show_obj_dimensions
 
 static void list_sizes(QSP_ARG_DECL  Data_Obj *dp)
 {

@@ -1,3 +1,4 @@
+max_warnings 2
 
 Define Test_Bitmaps 0
 Set h 4
@@ -44,6 +45,8 @@ Info ec1
 .
 
 Define Test_Misc 0
+Set h 9
+Set w 8
 
 Image y1 $h $w 1 u_byte
 Image f1 $h $w 1 float
@@ -59,8 +62,8 @@ Info y1
 Info ey1
 .
 
-Test_Bitmaps
-#Test_Misc
+#Test_Bitmaps
+Test_Misc
 Test_Complex
 
 

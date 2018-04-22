@@ -374,6 +374,34 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 #endif // ! NOT_YET
 #endif /* HAVE_CUDA */
 
+// This routine also sets up the machine dimensions and increments...
+
+static dimension_t get_n_bitmap_words(Data_Obj *dp)
+{
+	dimension_t n_bits, n_words, size;
+
+	/* size is in elements (bits), convert to # words */
+	/* round n bits up to an even number of words */
+	n_bits = OBJ_N_TYPE_ELTS(dp);	// total bits
+	n_words = (n_bits+BITS_PER_BITMAP_WORD-1)/ BITS_PER_BITMAP_WORD;
+	size = n_words;
+	SET_OBJ_N_MACH_ELTS(dp,n_words);
+
+	SET_OBJ_MACH_DIM(dp,0,1);
+	SET_OBJ_MACH_DIM(dp,1,n_words);
+	SET_OBJ_MACH_DIM(dp,2,1);
+	SET_OBJ_MACH_DIM(dp,3,1);
+	SET_OBJ_MACH_DIM(dp,4,1);
+
+	SET_OBJ_MACH_INC(dp,0,0);
+	SET_OBJ_MACH_INC(dp,1,1);
+	SET_OBJ_MACH_INC(dp,2,0);
+	SET_OBJ_MACH_INC(dp,3,0);
+	SET_OBJ_MACH_INC(dp,4,0);
+
+	return size;
+}
+
 /*
  * Create a new data object.  This routine calls _make_dp() to create a new
  * header structure and then allocates space for the data.
@@ -398,19 +426,7 @@ _make_dobj_with_shape(QSP_ARG_DECL  const char *name,
 		SET_OBJ_DATA_PTR(dp,NULL);
 	} else {
 		if( IS_BITMAP(dp) ){
-			int n_bits, n_words;
-			/* size is in elements (bits), convert to # words */
-			/* round n bits up to an even number of words */
-			n_bits = OBJ_N_TYPE_ELTS(dp);	// total bits
-			n_words = (n_bits+BITS_PER_BITMAP_WORD-1)/
-						BITS_PER_BITMAP_WORD;
-			size = n_words;
-			SET_OBJ_N_MACH_ELTS(dp,n_words);
-			SET_OBJ_MACH_DIM(dp,0,1);
-			SET_OBJ_MACH_DIM(dp,1,n_words);
-			SET_OBJ_MACH_DIM(dp,2,1);
-			SET_OBJ_MACH_DIM(dp,3,1);
-			SET_OBJ_MACH_DIM(dp,4,1);
+			size = get_n_bitmap_words(dp);
 		} else {
 			size = OBJ_N_MACH_ELTS(dp);
 		}
