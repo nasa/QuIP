@@ -1,0 +1,29 @@
+
+# test of bitmap subimages
+
+Set h 8
+Set w 8
+Image bm0 $h $w 1 bit
+Equivalence e0 bm0 1 1 1 1 1 u_long
+Info e0
+advise 'reading small bitmap data...'
+data
+  ascii
+    read bm0 -
+    	1 1 1 1 1 1 1 1
+    	1 1 0 0 0 1 1 1
+    	1 1 0 0 0 1 1 1
+    	1 1 0 0 0 1 1 1
+    	1 1 1 1 1 1 1 1
+    	1 1 1 1 1 1 1 1
+    	1 1 1 1 1 1 1 1
+    	1 1 1 1 1 1 1 1
+    quit
+  quit
+advise 'DONE reading small bitmap data...'
+Display bm0
+
+data ascii output_fmt hexadecimal quit quit
+Display e0
+exit
+
