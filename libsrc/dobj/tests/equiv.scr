@@ -60,6 +60,9 @@ Equivalence ey1 y1 1 1 $h $w/4 1 u_int
 advise "Equivalencing byte to u_int:"
 Info y1
 Info ey1
+
+Delete_Image f1
+Delete_Image y1
 .
 
 #Test_Bitmaps

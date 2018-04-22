@@ -1,6 +1,7 @@
 #include "quip_config.h"
 
 #include <stdio.h>
+#include <strings.h>	// bzero
 
 #include "quip_prot.h"
 #include "data_obj.h"
@@ -14,7 +15,8 @@ typedef struct {
 	const char *	eqd_name;
 	Precision *	eqd_prec_p;
 	Data_Obj *	eqd_parent;
-	Dimension_Set *	eqd_dsp;
+	Dimension_Set *	eqd_type_dsp;
+	Dimension_Set *	eqd_mach_dsp;
 	int		eqd_n_per_parent;
 	int		eqd_n_per_child;
 	int		eqd_bytes_per_parent_elt;
@@ -27,7 +29,8 @@ typedef struct {
 #define EQ_PREC_PTR(eqd_p)	(eqd_p)->eqd_prec_p
 #define EQ_PREC_CODE(eqd_p)	PREC_CODE(EQ_PREC_PTR(eqd_p))
 #define EQ_PARENT(eqd_p)	(eqd_p)->eqd_parent
-#define EQ_DIMS(eqd_p)		(eqd_p)->eqd_dsp
+#define EQ_TYPE_DIMS(eqd_p)		(eqd_p)->eqd_type_dsp
+#define EQ_MACH_DIMS(eqd_p)		(eqd_p)->eqd_mach_dsp
 #define EQ_N_PER_PARENT(eqd_p)	(eqd_p)->eqd_n_per_parent
 #define EQ_N_PER_CHILD(eqd_p)	(eqd_p)->eqd_n_per_child
 #define EQ_BYTES_PER_PARENT_ELT(eqd_p)	(eqd_p)->eqd_bytes_per_parent_elt
@@ -572,47 +575,36 @@ Data_Obj * _nmk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos,
 /* get_machine_dimensions - utility function to support make_equivalence
  */
 
-#define get_machine_dimensions(dst_dsp, src_dsp, prec) _get_machine_dimensions(QSP_ARG  dst_dsp, src_dsp, prec)
+#define get_machine_dimensions(eqd_p) _get_machine_dimensions(QSP_ARG  eqd_p)
 
-static void _get_machine_dimensions(QSP_ARG_DECL  Dimension_Set *dst_dsp, Dimension_Set *src_dsp, prec_t prec)
+static void _get_machine_dimensions(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 {
-	//*dst_dsp = *src_dsp;	/* Default - they are the same */
+	DIMSET_COPY( EQ_MACH_DIMS(eqd_p), EQ_TYPE_DIMS(eqd_p));
 
-	DIMSET_COPY(dst_dsp,src_dsp);
-
-	if( BITMAP_PRECISION(prec) ){
-		if( DIMENSION(src_dsp,0) != 1 )
+	if( BITMAP_PRECISION( EQ_PREC_CODE(eqd_p) ) ){
+		if( DIMENSION(EQ_TYPE_DIMS(eqd_p),0) != 1 )
 			error1("get_machine_dimensions:  Sorry, don't handle multi-component bitmaps");
-		SET_DIMENSION(dst_dsp,0,1);
+		SET_DIMENSION(EQ_MACH_DIMS(eqd_p),0,1);
 
 		// round number of columns up
-		SET_DIMENSION(dst_dsp,1,N_BITMAP_WORDS(DIMENSION(src_dsp,1)));
-	} else if( COMPLEX_PRECISION(prec) ){
+		// BUG for a bitmap, we should represent it as a row vector?
+		// But that might not be OK of we have a rare legal
+		// non-contiguous bitmap...
+		SET_DIMENSION(EQ_MACH_DIMS(eqd_p),1,N_BITMAP_WORDS(DIMENSION(EQ_TYPE_DIMS(eqd_p),1)));
+	} else if( COMPLEX_PRECISION( EQ_PREC_CODE(eqd_p)) ){
 		// complex can't have a component dimension
-		if( DIMENSION(src_dsp,0) != 1 ){
+		if( DIMENSION(EQ_TYPE_DIMS(eqd_p),0) != 1 ){
 			sprintf(ERROR_STRING,
 		"Sorry, complex images must have component dimension (%d) equal to 1",
-				DIMENSION(src_dsp,0));
+				DIMENSION(EQ_TYPE_DIMS(eqd_p),0));
 			error1(ERROR_STRING);
 		}
-		SET_DIMENSION(dst_dsp,0,2);
-	} else if( QUAT_PRECISION(prec) ){
-		if( DIMENSION(src_dsp,0) != 1 )
+		SET_DIMENSION(EQ_MACH_DIMS(eqd_p),0,2);
+	} else if( QUAT_PRECISION(EQ_PREC_CODE(eqd_p)) ){
+		if( DIMENSION(EQ_TYPE_DIMS(eqd_p),0) != 1 )
 			error1("Sorry, complex quaternion images must have component dimension equal to 1");
-		SET_DIMENSION(dst_dsp,0,4);
+		SET_DIMENSION(EQ_MACH_DIMS(eqd_p),0,4);
 	}
-}
-
-static dimension_t type_size_in_bytes(Precision *prec_p)
-{
-	dimension_t bytes_per_elt;
-
-	bytes_per_elt = PREC_MACH_SIZE( prec_p );
-	if( COMPLEX_PRECISION(PREC_CODE(prec_p)) )
-		bytes_per_elt *= 2;
-	else if( QUAT_PRECISION(PREC_CODE(prec_p)) )
-		bytes_per_elt *= 4;
-	return bytes_per_elt;
 }
 
 #define get_n_per_child(eqd_p) _get_n_per_child(QSP_ARG  eqd_p )
@@ -648,8 +640,8 @@ static int _get_n_per_child(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 
 static int _compare_element_sizes(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 {
-	n_bytes_per_child_elt = type_size_in_bytes(EQ_PREC_PTR(eqd_p));
-	n_bytes_per_parent_elt = type_size_in_bytes(OBJ_PREC_PTR(EQ_PARENT(eqd_p)));
+	n_bytes_per_child_elt = PREC_SIZE(EQ_PREC_PTR(eqd_p));
+	n_bytes_per_parent_elt = PREC_SIZE(OBJ_PREC_PTR(EQ_PARENT(eqd_p)));
 
 	/* Now we know how many bits in each basic element.
 	 * Figure out how many elements of one makes up an element of the other.
@@ -674,21 +666,26 @@ static int _compare_element_sizes(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 	return 0;
 }
 
-#define check_size_match(eqd_p) _check_size_match(QSP_ARG  eqd_p )
+#define check_eq_size_match(eqd_p) _check_eq_size_match(QSP_ARG  eqd_p )
 
-static int _check_size_match(QSP_ARG_DECL  Equivalence_Data *eqd_p)
+static int _check_eq_size_match(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 {
 	int child_dim;
 
 	total_child_bytes = 1;
+	assert( EQ_TYPE_DIMS(eqd_p) != NULL );
 	for(child_dim=0;child_dim<N_DIMENSIONS;child_dim++)
-		total_child_bytes *= DIMENSION( EQ_DIMS(eqd_p),child_dim);
+		total_child_bytes *= DIMENSION( EQ_TYPE_DIMS(eqd_p),child_dim);
+
 	if( EQ_PREC_CODE(eqd_p) == PREC_BIT ){
 		/* convert number of bits to number of words */
 		total_child_bytes += BITS_PER_BITMAP_WORD - 1;
 		total_child_bytes /= BITS_PER_BITMAP_WORD;
+		total_child_bytes *= PREC_MACH_SIZE( EQ_PREC_PTR(eqd_p) );
+	} else {
+		total_child_bytes *= PREC_SIZE( EQ_PREC_PTR(eqd_p) );
 	}
-	total_child_bytes *= PREC_MACH_SIZE( EQ_PREC_PTR(eqd_p) );
+
 
 	total_parent_bytes = ELEMENT_SIZE( EQ_PARENT(eqd_p) ) *
 				OBJ_N_MACH_ELTS( EQ_PARENT(eqd_p) );
@@ -770,13 +767,15 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 	incr_t child_mach_inc;
 	incr_t new_mach_inc[N_DIMENSIONS];
 	int multiplier, divisor;
-	Dimension_Set ds1, *new_dsp=(&ds1);
+	Dimension_Set ds1;
 	Equivalence_Data eqd1, *eqd_p=(&eqd1);
 
 	bzero(eqd_p,sizeof(*eqd_p));
 	eqd1.eqd_name = name;
 	eqd1.eqd_parent = parent;
 	eqd1.eqd_prec_p = prec_p;
+	eqd1.eqd_type_dsp = dsp;
+	eqd1.eqd_mach_dsp = (&ds1);
 
 	/* If we are casting to a larger machine type (e.g. byte to long)
 	 * We have to have at least 4 bytes contiguous.
@@ -794,9 +793,9 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 
 	/* We need the machine dimensions of the new object */
 	// They should only differ for complex, quaternion, color and bit?
-	get_machine_dimensions(new_dsp,dsp,PREC_CODE(prec_p));
+	get_machine_dimensions(eqd_p);
 
-	if( check_size_match(eqd_p /*new_dsp,prec_p,parent*/) < 0 )
+	if( check_eq_size_match(eqd_p /*new_dsp,prec_p,parent*/) < 0 )
 		return NULL;
 
 	/* Now we need to see if we can come up with
@@ -874,10 +873,10 @@ fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent
 
 	// If the parent is a bitmap, this is NOT the number of machine elts!?
 	total_child_bytes = PREC_MACH_SIZE( prec_p );
-	total_child_bytes *= DIMENSION(new_dsp,0);
+	total_child_bytes *= DIMENSION(EQ_MACH_DIMS(eqd_p),0);
 
-	total_parent_bytes = OBJ_PREC_MACH_SIZE( parent );
-	total_parent_bytes *= OBJ_MACH_DIM(parent,0);
+	total_parent_bytes = OBJ_PREC_MACH_SIZE( EQ_PARENT(eqd_p) );
+	total_parent_bytes *= OBJ_MACH_DIM(EQ_PARENT(eqd_p),0);
 
 
 	/* total_parent_bytes, total_child_bytes count the number of elements of the parent
@@ -898,15 +897,15 @@ fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent
 			new_mach_inc[child_dim] = child_mach_inc;
 			child_dim++;
 			if( child_dim < N_DIMENSIONS )
-				total_child_bytes *= DIMENSION(new_dsp,child_dim);
+				total_child_bytes *= DIMENSION(EQ_MACH_DIMS(eqd_p),child_dim);
 			/* increase the parent dimension */
 			parent_dim++;
 			if( parent_dim < N_DIMENSIONS ){
-				total_parent_bytes *= OBJ_MACH_DIM(parent,parent_dim);
+				total_parent_bytes *= OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim);
 
 				/* BUG - need to make sure that the math comes out even, no fractions or truncations */
-				if( OBJ_MACH_INC(parent,parent_dim) != 0 ){
-					child_mach_inc = n_per_parent * OBJ_MACH_INC(parent,parent_dim) / n_per_child;
+				if( OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) != 0 ){
+					child_mach_inc = n_per_parent * OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) / n_per_child;
 				}
 			}
 		} else if( total_parent_bytes > total_child_bytes ){
@@ -920,7 +919,7 @@ fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent
 			new_mach_inc[child_dim] = child_mach_inc;
 			child_dim++;
 			if( child_dim < N_DIMENSIONS )
-				total_child_bytes *= DIMENSION(new_dsp,child_dim);
+				total_child_bytes *= DIMENSION(EQ_MACH_DIMS(eqd_p),child_dim);
 			/* Increasing the increment assumes that the spacing
 			 * within the parent is even at this larger size.
 			 * This is guaranteed it the new child size is LTE
@@ -930,7 +929,7 @@ fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent
 			 */
 			/* assumes child is evenly-spaced between the new dimension and the old */ 
 			if( new_mach_inc[child_dim-1] > 0 )
-				child_mach_inc = DIMENSION(new_dsp,child_dim-1) * new_mach_inc[child_dim-1];
+				child_mach_inc = DIMENSION(EQ_MACH_DIMS(eqd_p),child_dim-1) * new_mach_inc[child_dim-1];
 		} else { /* total_parent_bytes < total_child_bytes */
 			/* Increment the parent dimension WITHOUT incrementing the child.
 			 *
@@ -940,7 +939,7 @@ fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent
 			parent_dim++;
 			prev_parent_mach_elts = total_parent_bytes;
 			if( parent_dim < N_DIMENSIONS ){
-				total_parent_bytes *= OBJ_MACH_DIM(parent,parent_dim);
+				total_parent_bytes *= OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim);
 			} else if( PREC_CODE(prec_p) == PREC_BIT ){
 fprintf(stderr,"child_dim = %d\n",child_dim);
 				total_child_bytes = (total_child_bytes + BITS_PER_BITMAP_WORD -1 ) / BITS_PER_BITMAP_WORD;
@@ -964,18 +963,18 @@ fprintf(stderr,"total_child_bytes = %d\n",total_child_bytes);
 			 * But we probably should remember the last non-zero increment?
 			 */
 
-			if( prev_parent_mach_elts > 1 && OBJ_MACH_INC(parent,parent_dim) != 0 &&
-							OBJ_MACH_INC(parent,parent_dim-1) != 0 &&
-					OBJ_MACH_INC(parent,parent_dim) !=
-					(incr_t)(OBJ_MACH_INC(parent,parent_dim-1)
-					* OBJ_MACH_DIM(parent,parent_dim-1)) ){
+			if( prev_parent_mach_elts > 1 && OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) != 0 &&
+							OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim-1) != 0 &&
+					OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) !=
+					(incr_t)(OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim-1)
+					* OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim-1)) ){
 				sprintf(ERROR_STRING,
-						"make_equivalence:  problem with unevenly spaced parent object %s",OBJ_NAME(parent));
+						"make_equivalence:  problem with unevenly spaced parent object %s",OBJ_NAME(EQ_PARENT(eqd_p)));
 				warn(ERROR_STRING);
 				sprintf(ERROR_STRING,"%s inc[%d] (%d) != inc[%d] (%d) * dim[%d] (%d)",
-					OBJ_NAME(parent),parent_dim,OBJ_MACH_INC(parent,parent_dim),
-					parent_dim-1,OBJ_MACH_INC(parent,parent_dim-1),
-					parent_dim-1,OBJ_MACH_DIM(parent,parent_dim-1));
+					OBJ_NAME(EQ_PARENT(eqd_p)),parent_dim,OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim),
+					parent_dim-1,OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim-1),
+					parent_dim-1,OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim-1));
 				advise(ERROR_STRING);
 
 				sprintf(ERROR_STRING,"prev_parent_mach_elts = %d, total_parent_bytes = %d, total_child_bytes = %d",
