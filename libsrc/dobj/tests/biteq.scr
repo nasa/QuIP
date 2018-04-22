@@ -1,7 +1,7 @@
 
-# test of bitmap subimages
+# test of bitmap equivalences
 
-Set h 8
+Set h 7
 Set w 8
 Image bm0 $h $w 1 bit
 Equivalence e0 bm0 1 1 1 1 1 u_long
@@ -17,7 +17,7 @@ data
     	1 1 1 1 1 1 1 1
     	1 1 1 1 1 1 1 1
     	1 1 1 1 1 1 1 1
-    	1 1 1 1 1 1 1 1
+ #   	1 1 1 1 1 1 1 1
     quit
   quit
 advise 'DONE reading small bitmap data...'
