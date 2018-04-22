@@ -28,6 +28,7 @@ libdobj_a_SOURCES =				\
 			ascmenu.c		\
 			ops_menu.c		\
 			dobj_expr.c		\
+			equivalence.c		\
 			sub_obj.c
 
 noinst_HEADERS =				\
