@@ -12,8 +12,8 @@ Info b1
 #Info odd
 #Pause
 
-advise "Equivalencing bit to uint32:"
-Equivalence el1 b1 1 $t $h 4 1 uint32
+advise "Equivalencing bit to u_int:"
+Equivalence el1 b1 1 $t $h 4 1 u_int
 Info el1
 advise ' '
 
@@ -53,8 +53,8 @@ Equivalence ub1 f1 1 1 $h $w 4 u_byte
 Info f1
 Info ub1
 
-Equivalence ey1 y1 1 1 $h $w/4 1 uint32
-advise "Equivalencing byte to uint32:"
+Equivalence ey1 y1 1 1 $h $w/4 1 u_int
+advise "Equivalencing byte to u_int:"
 Info y1
 Info ey1
 .

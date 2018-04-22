@@ -566,6 +566,39 @@ static void _get_machine_dimensions(QSP_ARG_DECL  Dimension_Set *dst_dsp, Dimens
 	}
 }
 
+#define simple_reshape_equiv(name, parent, dsp) _simple_reshape_equiv(QSP_ARG  name, parent, dsp)
+
+static Data_Obj *_simple_reshape_equiv(QSP_ARG_DECL  const char *name, Data_Obj *parent, Dimension_Set *dsp)
+{
+	Data_Obj *new_dp;
+	dimension_t n_elts;
+	int i;
+
+	// All we need to do is insure that the dimensions match up...
+	n_elts = dsp->ds_dimension[0];
+	for(i=1;i<N_DIMENSIONS;i++)
+		n_elts *= dsp->ds_dimension[i];
+	assert(n_elts!=0);
+
+	if( n_elts != OBJ_N_TYPE_ELTS(parent) ){
+		sprintf(ERROR_STRING,"Can't create equivalence %s, %d elements requested but parent %s has %d!?",
+			name,n_elts,OBJ_NAME(parent),OBJ_N_TYPE_ELTS(parent));
+		warn(ERROR_STRING);
+		return NULL;
+	}
+
+	// All is OK
+
+	new_dp = make_dp(name,dsp,OBJ_PREC_PTR(parent));
+	if( new_dp == NULL ) return new_dp;
+
+	SET_OBJ_DATA_PTR(new_dp,OBJ_DATA_PTR(parent));
+	parent_relationship(parent,new_dp);
+	new_dp=setup_dp(new_dp,OBJ_PREC_PTR(parent));
+	assert( new_dp != NULL );
+	return new_dp;
+}
+
 /* make_equivalence
  *
  * Make an object of arbirary shape, which points to the data area
@@ -640,6 +673,12 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 	incr_t new_mach_inc[N_DIMENSIONS];
 	int multiplier, divisor;
 	Dimension_Set ds1, *new_dsp=(&ds1);
+
+	// First see if the two precisions match - in that case,
+	// it's a simple re-shape
+
+	if( PREC_CODE(prec_p) == OBJ_PREC(parent) )
+		return simple_reshape_equiv(name,parent,dsp);
 
 	/* If we are casting to a larger machine type (e.g. byte to long)
 	 * We have to have at least 4 bytes contiguous.

@@ -22,6 +22,7 @@ data
     	1 1 1 1 1 1 1 1
     	1 1 1 1 1 1 1 1
  #   	1 1 1 1 1 1 1 1
+    advise 'done reading'
     quit
   quit
 advise 'DONE reading small bitmap data...'
