@@ -2683,7 +2683,7 @@ void init_query_stack(Query_Stack *qsp)
 	SET_QS_VAR_FMT_STACK(qsp,NULL);
 	SET_QS_NUMBER_FMT(qsp,NULL);
 
-	SET_QS_EXPECTED_WARNING(qsp,NULL);
+	SET_QS_EXPECTED_WARNING_LIST(qsp,NULL);
 
 	SET_QS_AV_STRINGBUF(qsp,NULL);
 

@@ -1,9 +1,9 @@
 max_warnings 2
 
-Set w 7
-Set h 5
-Set sw 3
-Set sh 3
+Set w 9
+Set h 7
+Set sw 4
+Set sh 4
 
 Define Simple_Tests 0
 Perform_Some_Tests Simple_Test
@@ -15,7 +15,7 @@ Perform_Some_Tests Subimage_Test
 
 Define Illegal_Subimage_Tests 0
 Perform_Some_Tests Illegal_Subimage_Test2
-#Perform_Some_Tests Illegal_Subimage_Test1
+Perform_Some_Tests Illegal_Subimage_Test1
 .
 
 Define Perform_Some_Tests 1 test_macro
@@ -43,7 +43,7 @@ Image parent_$1 $h $w $3 $1
 Subimage inset_$1 parent_$1 $sw $sh 1 1
 Info inset_$1
 Equivalence child_$2 inset_$1 1 1 1 $sh*$sw $4 $2
-Info child_$2
+If obj_exists(child_$2) "Info child_$2"
 Pause
 Delete_Image parent_$1	# automatically deletes the child also
 .
@@ -51,9 +51,13 @@ Delete_Image parent_$1	# automatically deletes the child also
 Define Illegal_Subimage_Test2 4 'parent precision' 'child precision' 'parent multiplier' 'child multiplier'
 Image parent_$1 $h $w*$3 3 $1
 Subimage inset_$1 parent_$1{0} $sw $sh 1 1
+Info parent_$1
 Info inset_$1
+advise "Illegal_Subimage_Test2 $1 $2 $3 $4"
+expect_warning 'error making'
+expect_warning 'get'
 Equivalence child_$2 inset_$1 1 1 1 $sh*$sw $4 $2
-Info child_$2
+If obj_exists(child_$2) "Info child_$2"
 Pause
 Delete_Image parent_$1	# automatically deletes the child also
 .
@@ -138,9 +142,9 @@ Delete_Image y1
 #Test_Misc
 #Test_Complex
 
-#Simple_Tests
-#Subimage_Tests
 Illegal_Subimage_Tests
+Simple_Tests
+Subimage_Tests
 
 exit
 

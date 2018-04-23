@@ -219,7 +219,7 @@ struct query_stack {
 	// BUG - we should phase these out in favor of string_buf's...
 	char		qs_error_string[LLEN];
 	char		qs_msg_str[LLEN];
-	const char *	qs_expected_warning;
+	List *		qs_expected_warning_lp;
 
 #ifdef THREAD_SAFE_QUERY
 #ifdef HAVE_PTHREADS
@@ -355,8 +355,8 @@ struct query_stack {
 
 #define QS_VAR_FMT_STACK(qsp)		(qsp)->qs_var_fmt_stack
 #define SET_QS_VAR_FMT_STACK(qsp,stkp)	(qsp)->qs_var_fmt_stack = stkp
-#define QS_EXPECTED_WARNING(qsp)	(qsp)->qs_expected_warning
-#define SET_QS_EXPECTED_WARNING(qsp,s)	(qsp)->qs_expected_warning = s
+#define QS_EXPECTED_WARNING_LIST(qsp)	(qsp)->qs_expected_warning_lp
+#define SET_QS_EXPECTED_WARNING_LIST(qsp,lp)	(qsp)->qs_expected_warning_lp = lp
 #define QS_NUMBER_FMT(qsp)		(qsp)->qs_number_fmt_string
 #define SET_QS_NUMBER_FMT(qsp,s)	(qsp)->qs_number_fmt_string = s
 #define QS_GFORMAT(qsp)			(qsp)->qs_gfmt_str

@@ -436,9 +436,14 @@ static COMMAND_FUNC( do_expect_warning )
 	expect_warning(QSP_ARG  s);
 }
 
-static COMMAND_FUNC( do_check_expected_warning )
+static COMMAND_FUNC( do_check_expected_warnings )
 {
-	check_expected_warning(SINGLE_QSP_ARG);
+	check_expected_warnings(QSP_ARG  0);
+}
+
+static COMMAND_FUNC( do_clear_expected_warnings )
+{
+	check_expected_warnings(QSP_ARG  1);
 }
 
 /******************** variables menu ***********************/
@@ -1606,7 +1611,8 @@ ADD_CMD( while,		do_while,	conditionally close a loop	)
 ADD_CMD( variables,	do_var_menu,	variables submenu	)
 ADD_CMD( macros,	do_mac_menu,	macros submenu		)
 ADD_CMD( expect_warning,	do_expect_warning,	specify expected warning	)
-ADD_CMD( check_expected_warning,	do_check_expected_warning,	check for expected warning	)
+ADD_CMD( check_expected_warnings,	do_check_expected_warnings,	check for expected warning	)
+ADD_CMD( clear_expected_warnings,	do_clear_expected_warnings,	clear expected warning list	)
 ADD_CMD( warn,		do_warn,	print a warning message	)
 ADD_CMD( <,		do_redir,	read commands from a file	)
 ADD_CMD( >,		do_copy_cmd,	copy commands to a transcript file	)
