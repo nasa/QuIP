@@ -23,6 +23,7 @@ Item_Type *prec_itp=NULL;
 #define INIT_GENERIC_PREC(quip_prec_name,type,code)					\
 	prec_p = new_prec(#quip_prec_name);						\
 	SET_PREC_CODE(prec_p, code);							\
+	SET_PREC_N_COMPS(prec_p, 1);							\
 	SET_PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p,quip_prec_name##_set_value_from_input);	\
 	SET_PREC_INDEXED_DATA_FUNC(prec_p,quip_prec_name##_indexed_data);		\
 	SET_PREC_IS_NUMERIC_FUNC(prec_p,quip_prec_name##_is_numeric);			\
@@ -34,9 +35,15 @@ Item_Type *prec_itp=NULL;
 	SET_PREC_COPY_VALUE_FUNC(prec_p,copy_##quip_prec_name##_value);			\
 	if( (code & PSEUDO_PREC_MASK) == 0 )						\
 		SET_PREC_MACH_PREC_PTR(prec_p, prec_p);					\
-	else {										\
+	else { /* special handling for pseudo-precisions */				\
 		SET_PREC_MACH_PREC_PTR(prec_p,						\
-		prec_for_code( code & MACH_PREC_MASK ) );				\
+			prec_for_code( code & MACH_PREC_MASK ) );			\
+		if( code == PREC_CPX || code == PREC_DBLCPX )				\
+			SET_PREC_N_COMPS(prec_p,2);					\
+		if( code == PREC_QUAT || code == PREC_DBLQUAT )				\
+			SET_PREC_N_COMPS(prec_p,4);					\
+		if( code == PREC_COLOR )						\
+			SET_PREC_N_COMPS(prec_p,3);					\
 	}
 
 static Precision *_new_prec(QSP_ARG_DECL  const char *name)

@@ -67,6 +67,7 @@ struct precision {
 	Item			prec_item;
 	prec_t			prec_code;
 	int			prec_size;	// type size in bytes
+	int			prec_n_comps;	// for pseudo precisions
 	struct precision *	prec_mach_p;	// NULL for machine precisions
 	struct vfunc_tbl *	prec_vf_tbl;
 
@@ -101,8 +102,10 @@ struct precision {
 
 #define PREC_CODE(prec_p)		(prec_p)->prec_code
 #define PREC_SIZE(prec_p)		(prec_p)->prec_size
+#define PREC_N_COMPS(prec_p)		(prec_p)->prec_n_comps
 #define PREC_MACH_PREC_PTR(prec_p)	(prec_p)->prec_mach_p
 #define SET_PREC_CODE(prec_p,c)		(prec_p)->prec_code = c
+#define SET_PREC_N_COMPS(prec_p,c)	(prec_p)->prec_n_comps = c
 #define SET_PREC_CODE_BITS(prec_p,b)	(prec_p)->prec_code |= b
 #define CLEAR_PREC_CODE_BITS(prec_p,b)	(prec_p)->prec_code &= (b)
 

@@ -24,7 +24,10 @@ typedef struct {
 	int		eqd_bytes_per_child_elt;
 	dimension_t	eqd_total_child_bytes;
 	dimension_t	eqd_total_parent_bytes;
-	Increment_Set *	eqd_child_mach_incs;
+	dimension_t	eqd_n_child_bytes;
+	dimension_t	eqd_n_parent_bytes;
+	dimension_t	eqd_prev_parent_mach_elts;
+	Increment_Set *	eqd_child_type_incs;
 } Equivalence_Data;
 
 #define EQ_NAME(eqd_p)		(eqd_p)->eqd_name
@@ -40,7 +43,10 @@ typedef struct {
 #define EQ_BYTES_PER_CHILD_ELT(eqd_p)	(eqd_p)->eqd_bytes_per_child_elt
 #define EQ_TOTAL_CHILD_BYTES(eqd_p)	(eqd_p)->eqd_total_child_bytes
 #define EQ_TOTAL_PARENT_BYTES(eqd_p)	(eqd_p)->eqd_total_parent_bytes
-#define EQ_CHILD_MACH_INCS(eqd_p)	(eqd_p)->eqd_child_mach_incs
+#define EQ_CHILD_TYPE_INCS(eqd_p)	(eqd_p)->eqd_child_type_incs
+#define EQ_PREV_PARENT_MACH_ELTS(eqd_p)	(eqd_p)->eqd_prev_parent_mach_elts
+#define EQ_N_CHILD_BYTES(eqd_p)		(eqd_p)->eqd_n_child_bytes
+#define EQ_N_PARENT_BYTES(eqd_p)	(eqd_p)->eqd_n_parent_bytes
 
 #define SET_EQ_N_PER_PARENT(eqd_p,v)	(eqd_p)->eqd_n_per_parent = v
 #define SET_EQ_N_PER_CHILD(eqd_p,v)	(eqd_p)->eqd_n_per_child = v
@@ -53,48 +59,44 @@ typedef struct {
 #define n_per_child	EQ_N_PER_CHILD(eqd_p)
 #define total_child_bytes	EQ_TOTAL_CHILD_BYTES(eqd_p)
 #define total_parent_bytes	EQ_TOTAL_PARENT_BYTES(eqd_p)
+#define n_child_bytes		EQ_N_CHILD_BYTES(eqd_p)
+#define n_parent_bytes		EQ_N_PARENT_BYTES(eqd_p)
+#define prev_parent_mach_elts	EQ_PREV_PARENT_MACH_ELTS(eqd_p)
 
-#define get_machine_dimensions(eqd_p) _get_machine_dimensions(QSP_ARG  eqd_p)
+// Make sure that only one component is specified for certain
+// pseudo-precisions
 
-static void _get_machine_dimensions(QSP_ARG_DECL  Equivalence_Data *eqd_p)
+#define check_n_comps(eqd_p) _check_n_comps(QSP_ARG  eqd_p)
+
+static int _check_n_comps(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 {
 	DIMSET_COPY( EQ_MACH_DIMS(eqd_p), EQ_TYPE_DIMS(eqd_p));
 
-	if( BITMAP_PRECISION( EQ_PREC_CODE(eqd_p) ) ){
-		if( DIMENSION(EQ_TYPE_DIMS(eqd_p),0) != 1 )
-			error1("get_machine_dimensions:  Sorry, don't handle multi-component bitmaps");
-		SET_DIMENSION(EQ_MACH_DIMS(eqd_p),0,1);
+	if(		BITMAP_PRECISION( EQ_PREC_CODE(eqd_p) ) ||
+			COLOR_PRECISION( EQ_PREC_CODE(eqd_p)) ||
+			COMPLEX_PRECISION( EQ_PREC_CODE(eqd_p)) ||
+			QUAT_PRECISION(EQ_PREC_CODE(eqd_p)) ){
 
-		// round number of columns up
-		// BUG for a bitmap, we should represent it as a row vector?
-		// But that might not be OK of we have a rare legal
-		// non-contiguous bitmap...
-		SET_DIMENSION(EQ_MACH_DIMS(eqd_p),1,N_BITMAP_WORDS(DIMENSION(EQ_TYPE_DIMS(eqd_p),1)));
-	} else if( COMPLEX_PRECISION( EQ_PREC_CODE(eqd_p)) ){
-		// complex can't have a component dimension
 		if( DIMENSION(EQ_TYPE_DIMS(eqd_p),0) != 1 ){
 			sprintf(ERROR_STRING,
-		"Sorry, complex images must have component dimension (%d) equal to 1",
+		"Sorry, %s objects must have component dimension (%d) equal to 1",
+				PREC_NAME(EQ_PREC_PTR(eqd_p)),
 				DIMENSION(EQ_TYPE_DIMS(eqd_p),0));
-			error1(ERROR_STRING);
+			warn(ERROR_STRING);
+			return -1;
 		}
-		SET_DIMENSION(EQ_MACH_DIMS(eqd_p),0,2);
-	} else if( QUAT_PRECISION(EQ_PREC_CODE(eqd_p)) ){
-		if( DIMENSION(EQ_TYPE_DIMS(eqd_p),0) != 1 )
-			error1("Sorry, complex quaternion images must have component dimension equal to 1");
-		SET_DIMENSION(EQ_MACH_DIMS(eqd_p),0,4);
+		SET_DIMENSION(EQ_MACH_DIMS(eqd_p),0,PREC_N_COMPS(EQ_PREC_PTR(eqd_p)));
 	}
+	return 0;
 }
 
-#define get_n_per_child(eqd_p) _get_n_per_child(QSP_ARG  eqd_p )
+// BUG call this something else...
+#define check_parent_contig(eqd_p) _check_parent_contig(QSP_ARG  eqd_p )
 
-static int _get_n_per_child(QSP_ARG_DECL  Equivalence_Data *eqd_p)
+static int _check_parent_contig(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 {
 	incr_t n_contig;
 	int parent_dim;
-
-	SET_EQ_N_PER_CHILD(eqd_p, n_bytes_per_child_elt / n_bytes_per_parent_elt);
-	/* new size is larger, first increment must be 1 */
 
 	/* Find the largest number of contiguous elements in the parent */
 	n_contig=1;
@@ -115,34 +117,27 @@ static int _get_n_per_child(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 
 // Figure out the relation between the element sizes
 
-#define compare_element_sizes(eqd_p) _compare_element_sizes(QSP_ARG  eqd_p)
-
-static int _compare_element_sizes(QSP_ARG_DECL  Equivalence_Data *eqd_p)
+static void compare_element_sizes(Equivalence_Data *eqd_p)
 {
 	n_bytes_per_child_elt = PREC_SIZE(EQ_PREC_PTR(eqd_p));
 	n_bytes_per_parent_elt = PREC_SIZE(OBJ_PREC_PTR(EQ_PARENT(eqd_p)));
 
-	/* Now we know how many bits in each basic element.
-	 * Figure out how many elements of one makes up an element of the other.
-	 * The results end up in n_per_parent and n_per_child.
-	 *
-	 * Bitmaps are a special case...
+	/*
+	 * Bitmaps are a special case... - ?
 	 */
-	SET_EQ_N_PER_PARENT(eqd_p,1);
-	SET_EQ_N_PER_CHILD(eqd_p,1);
 
-	/* Case 1:  child element size is greater than parent element size - casting up */
+	// Set default values
+	n_per_parent = 1;
+	n_per_child = 1;
+
 	if( n_bytes_per_child_elt > n_bytes_per_parent_elt ) {
 		assert(n_bytes_per_child_elt % n_bytes_per_parent_elt == 0 );
-		if( get_n_per_child(eqd_p) < 0 )
-			return -1;
+		n_per_child = n_bytes_per_child_elt / n_bytes_per_parent_elt ;
 	} else if( n_bytes_per_child_elt < n_bytes_per_parent_elt ) {
-		/* Case 2:  child element size is less than parent element size - casting down */
-		//n_per_parent = OBJ_PREC_MACH_SIZE( parent ) / PREC_SIZE( prec & MACH_PREC_MASK ) ;
 		assert(n_bytes_per_parent_elt % n_bytes_per_child_elt == 0 );
 		n_per_parent = n_bytes_per_parent_elt / n_bytes_per_child_elt ;
 	}
-	return 0;
+	// otherwise same size, default values of 1 are correct
 }
 
 #define check_eq_size_match(eqd_p) _check_eq_size_match(QSP_ARG  eqd_p )
@@ -180,7 +175,8 @@ static int _check_eq_size_match(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 	return 0;
 }
 
-static incr_t get_child_mach_inc(Equivalence_Data *eqd_p)
+#ifdef FOOBAR
+static incr_t get_child_type_inc(Equivalence_Data *eqd_p)
 {
 	incr_t inc;
 
@@ -192,7 +188,7 @@ fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent
 	} else {
 		/* The size of a child element is greater than or equal to
 		 * the size of a parent element.
-		 * Set child_mach_inc to the smallest non-zero increment of the parent.
+		 * Set child_type_inc to the smallest non-zero increment of the parent.
 		 * (What is the sense of that?)
 		 * The parent has to have contiguous elements to fill a child
 		 * element, but could then skip...
@@ -207,7 +203,7 @@ fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent
 		}
 		if( inc == 0 ){
 			if( total_child_bytes == total_parent_bytes &&
-				total_child_bytes == PREC_SIZE(EQ_PREC_PTR(eqd_p)) )
+					total_child_bytes == PREC_SIZE(EQ_PREC_PTR(eqd_p)) )
 				inc=1;
 		}
 
@@ -220,12 +216,15 @@ fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent
 	}
 	return inc;
 }
-
+#endif // FOOBAR
 
 /* Now we need to see if we can come up with
- * a new set of increments that works.
+ * a set of increments for the child that will work.
+ *
+ * If the parent is contiguous, there is no problem,
+ * we simply use the standard increments.
  * 
- * We have two kinds of problems:
+ * Otherwise, we have two kinds of problems:
  * If we are coalescing rows in a subimage, then we won't be able
  * to do this with a single increment and should fail.
  *
@@ -248,93 +247,52 @@ fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent
  * the next dimension to the one which is smaller.
  *
  * We have a special problem with bitmaps, because the machine unit
- * is a word, but we count the dimensions in bits.  Remember we pad
+ * is a word, but we count the dimensions in bits.  We no longer pad
  * rows to be an integral number of words...
  *
- * 
  */
 
-#define check_eq_fit(eqd_p) _check_eq_fit(QSP_ARG  eqd_p)
+/* When we bring in more parent elements
+ * to fill in a child dimension, we have to insure that
+ * the spacing remains even.
+ *
+ * This test is like the contiguity test - but we only care
+ * if we already were using more than 1 element from the parent...
+ *
+ * We only check for non-zero parent increments.
+ * But we probably should remember the last non-zero increment?
+ */
 
-static int _check_eq_fit(QSP_ARG_DECL  Equivalence_Data *eqd_p)
+#define check_parent_spacing(eqd_p, parent_dim) _check_parent_spacing(QSP_ARG  eqd_p, parent_dim)
+
+static int _check_parent_spacing(QSP_ARG_DECL  Equivalence_Data *eqd_p, int parent_dim)
 {
-	int parent_dim,child_dim;
-	incr_t child_mach_inc;
-	dimension_t	prev_parent_mach_elts;
+	if(		prev_parent_mach_elts > 1
+		&&	OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) != 0
+		&&	OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim-1) != 0
+		&&	OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) !=
+				(incr_t)(OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim-1)
+					* OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim-1)) ){
+		sprintf(ERROR_STRING,
+			"check_parent_spacing:  problem with unevenly spaced parent object %s",
+			OBJ_NAME(EQ_PARENT(eqd_p)));
+		warn(ERROR_STRING);
+		sprintf(ERROR_STRING,"%s inc[%d] (%d) != inc[%d] (%d) * dim[%d] (%d)",
+			OBJ_NAME(EQ_PARENT(eqd_p)),parent_dim,OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim),
+			parent_dim-1,OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim-1),
+			parent_dim-1,OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim-1));
+		advise(ERROR_STRING);
 
-	child_mach_inc = get_child_mach_inc(eqd_p);
+		sprintf(ERROR_STRING,"prev_parent_mach_elts = %d, n_parent_bytes = %d, n_child_bytes = %d",
+			prev_parent_mach_elts,n_parent_bytes,n_child_bytes);
+		advise(ERROR_STRING);
 
-	child_dim=0;	/* index of current child dimension/increment */
-	parent_dim=0;	/* index of current parent dimension/increment */
+		return -1;
+	}
+	return 0;
+}
 
-	// Set the total number of bytes equal to the bits
-	// in the first element.
-
-	// If the parent is a bitmap, this is NOT the number of machine elts!?
-	total_child_bytes = PREC_MACH_SIZE( EQ_PREC_PTR(eqd_p) );
-	total_child_bytes *= DIMENSION(EQ_MACH_DIMS(eqd_p),0);
-
-	total_parent_bytes = OBJ_PREC_MACH_SIZE( EQ_PARENT(eqd_p) );
-	total_parent_bytes *= OBJ_MACH_DIM(EQ_PARENT(eqd_p),0);
-
-
-	/* total_parent_bytes, total_child_bytes count the number of elements of the parent
-	 * that have been used at the current level of the dimension counters.
-	 *
-	 * child_mach_inc is the current increment to get to the next child element...
-	 * it is the parent increment unless we are casting to a smaller type.
-	 *
-	 * But what about bitmaps???  BUGGY!?
-	 * the dsp arg refers to type dimension, not machine dimension...
-	 */
-
-	while( parent_dim < N_DIMENSIONS || child_dim < N_DIMENSIONS ){
-//fprintf(stderr,"make_equivalence:  parent_dim = %d (%d), total_parent_bytes = %d, child_dim = %d (%d), total_child_bytes = %d\n",
-//parent_dim,OBJ_MACH_DIM(parent,parent_dim),total_parent_bytes,child_dim,DIMENSION(new_dsp,child_dim),total_child_bytes);
-		if( total_parent_bytes == total_child_bytes ){
-			/* increase the child dimension */
-			SET_INCREMENT(EQ_CHILD_MACH_INCS(eqd_p),child_dim,child_mach_inc);
-			child_dim++;
-			if( child_dim < N_DIMENSIONS )
-				total_child_bytes *= DIMENSION(EQ_MACH_DIMS(eqd_p),child_dim);
-			/* increase the parent dimension */
-			parent_dim++;
-			if( parent_dim < N_DIMENSIONS ){
-				total_parent_bytes *= OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim);
-
-				/* BUG - need to make sure that the math comes out even, no fractions or truncations */
-				if( OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) != 0 ){
-					child_mach_inc = n_per_parent * OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) / n_per_child;
-				}
-			}
-		} else if( total_parent_bytes > total_child_bytes ){
-			/* Increment the child dimension only.
-			 */
-			if( child_dim >= N_DIMENSIONS ){
-				warn("make_equivalence:  giving up!?");
-				return -1;
-			}
-			/* increase the child dimension */
-			SET_INCREMENT(EQ_CHILD_MACH_INCS(eqd_p),child_dim,child_mach_inc);
-			child_dim++;
-			if( child_dim < N_DIMENSIONS )
-				total_child_bytes *= DIMENSION(EQ_MACH_DIMS(eqd_p),child_dim);
-			/* Increasing the increment assumes that the spacing
-			 * within the parent is even at this larger size.
-			 * This is guaranteed it the new child size is LTE
-			 * the parent size.  Otherwise, we will have to increase
-			 * the parent dim next time round, and that is when
-			 * we will check it.
-			 */
-			/* assumes child is evenly-spaced between the new dimension and the old */ 
-			if( INCREMENT(EQ_CHILD_MACH_INCS(eqd_p),child_dim-1) > 0 )
-				child_mach_inc = DIMENSION(EQ_MACH_DIMS(eqd_p),child_dim-1) * INCREMENT(EQ_CHILD_MACH_INCS(eqd_p),child_dim-1);
-		} else { /* total_parent_bytes < total_child_bytes */
-			/* Increment the parent dimension WITHOUT incrementing the child.
-			 *
-			 * The parent MUST be even-spaced across the dimensions
-			 */
-			/* increase the parent dimension */
+#ifdef FOOBAR
 			parent_dim++;
 			prev_parent_mach_elts = total_parent_bytes;
 			if( parent_dim < N_DIMENSIONS ){
@@ -344,45 +302,112 @@ fprintf(stderr,"child_dim = %d\n",child_dim);
 				total_child_bytes = (total_child_bytes + BITS_PER_BITMAP_WORD -1 ) / BITS_PER_BITMAP_WORD;
 fprintf(stderr,"total_child_bytes = %d\n",total_child_bytes);
 			} else {
-				sprintf(ERROR_STRING,"make_equivalence:  can't fit objects");
+				sprintf(ERROR_STRING,"check_eq_fit:  can't fit objects");
 				warn(ERROR_STRING);
 				sprintf(ERROR_STRING,"total_parent_bytes = %d   total_child_bytes = %d",
 					total_parent_bytes,total_child_bytes);
 				advise(ERROR_STRING);
 				return -1;
 			}
-			/* When we bring in more parent elements
-			 * to fill in a child dimension, we have to insure that
-			 * the spacing remains even.
-			 *
-			 * This test is like the contiguity test - but we only care
-			 * if we already were using more than 1 element from the parent...
-			 *
-			 * We only check for non-zero parent increments.
-			 * But we probably should remember the last non-zero increment?
-			 */
+#endif // FOOBAR
 
-			if( prev_parent_mach_elts > 1 && OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) != 0 &&
-							OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim-1) != 0 &&
-					OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) !=
-					(incr_t)(OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim-1)
-					* OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim-1)) ){
-				sprintf(ERROR_STRING,
-						"make_equivalence:  problem with unevenly spaced parent object %s",OBJ_NAME(EQ_PARENT(eqd_p)));
-				warn(ERROR_STRING);
-				sprintf(ERROR_STRING,"%s inc[%d] (%d) != inc[%d] (%d) * dim[%d] (%d)",
-					OBJ_NAME(EQ_PARENT(eqd_p)),parent_dim,OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim),
-					parent_dim-1,OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim-1),
-					parent_dim-1,OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim-1));
-				advise(ERROR_STRING);
+#define ADVANCE_PARENT									\
+	prev_parent_mach_elts *= OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim);		\
+	total_parent_bytes *= OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim);		\
+	parent_dim++;									\
+	while( parent_dim < N_DIMENSIONS &&						\
+			OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) == 0 ){		\
+		parent_dim++;								\
+	}
 
-				sprintf(ERROR_STRING,"prev_parent_mach_elts = %d, total_parent_bytes = %d, total_child_bytes = %d",
-					prev_parent_mach_elts,total_parent_bytes,total_child_bytes);
-				advise(ERROR_STRING);
+// ADVANCE_CHILD - increase child_dim until we get some more elements
 
+	//total_child_bytes *= DIMENSION(EQ_TYPE_DIMS(eqd_p),0);
+#define ADVANCE_CHILD								\
+	while( child_dim < N_DIMENSIONS &&					\
+			DIMENSION(EQ_TYPE_DIMS(eqd_p),child_dim) == 1 ){	\
+		SET_INCREMENT(EQ_CHILD_TYPE_INCS(eqd_p),child_dim,0);		\
+		child_dim++;							\
+	}									\
+	if( child_dim >= N_DIMENSIONS ){					\
+		warn("check_eq_fit:  giving up!?");				\
+		return -1;							\
+	}									\
+	SET_INCREMENT(EQ_CHILD_TYPE_INCS(eqd_p),child_dim,(curr_parent_inc*parent_size)/child_size);	\
+	child_dim++;								\
+	if( child_dim < N_DIMENSIONS )						\
+		total_child_bytes *= DIMENSION(EQ_MACH_DIMS(eqd_p),child_dim);
+
+/*
+ * check_eq_fit - this routine decides whether this is going to work,
+ * for a non-contiguous parent.  We have several cases to consider:
+ * 1) subimages
+ * 2) subsamples (like the real part of a complex image)
+ * 3) combinations of 1 & 2
+ *
+ * Subimages:  Here is a case where the row increment is larger
+ * than the row dimension:
+ *
+ *	p p p x x
+ *	p p p x x
+ *	p p p x x
+ *
+ * In this case, in order to be able to construct a child, each row
+ * has to be a complete dimension, so that the child increment can
+ * be adjusted.
+ *
+ * When we are done, we should have computed the child increment set.
+ */
+
+
+#define check_eq_fit(eqd_p) _check_eq_fit(QSP_ARG  eqd_p)
+
+static int _check_eq_fit(QSP_ARG_DECL  Equivalence_Data *eqd_p)
+{
+	int parent_dim,child_dim;
+	incr_t curr_parent_inc;
+	int parent_size;
+	int child_size;
+
+	if( IS_CONTIGUOUS( EQ_PARENT(eqd_p) ) ){
+		// use standard increments
+		// call make_contiguous() AFTER we have created the object...
+		// (requires mach_dims...)
+		return 0;
+	}
+
+	//child_type_inc = get_child_type_inc(eqd_p);
+
+	child_dim=0;	/* index of current child dimension/increment */
+
+	// If the parent is a bitmap, this is NOT the number of machine elts!?
+	child_size = PREC_SIZE( EQ_PREC_PTR(eqd_p) );
+	parent_size = OBJ_PREC_MACH_SIZE( EQ_PARENT(eqd_p) );
+
+	n_child_bytes = child_size;
+	n_parent_bytes = parent_size;
+	parent_dim=(-1);	/* index of current parent dimension/increment */
+	do {
+		parent_dim++;
+		curr_parent_inc = OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim);
+	} while( curr_parent_inc*parent_size < child_size );
+	prev_parent_mach_elts = 1;
+	// curr_parent_inc holds the increment to get to the next parent elt.
+
+	/* n_parent_bytes, n_child_bytes count the number of elements of the parent
+	 * that have been used at the current level of the dimension counters.
+	 */
+
+	while( parent_dim < N_DIMENSIONS || child_dim < N_DIMENSIONS ){
+		if( n_parent_bytes == n_child_bytes ){
+			ADVANCE_CHILD /* set increments, increase the child dimension */
+			ADVANCE_PARENT /* increase the parent dimension, read increment */
+		} else if( n_parent_bytes > n_child_bytes ){
+			ADVANCE_CHILD
+		} else { /* n_parent_bytes < n_child_bytes */
+			ADVANCE_PARENT
+			if( check_parent_spacing(eqd_p,parent_dim) < 0 )
 				return -1;
-			}
-
 		}
 	}
 	return 0;
@@ -493,7 +518,7 @@ static int _create_child_object(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 	} else {	/* Not evenly spaced or contiguous... */
 		//
 		for(child_dim=0;child_dim<N_DIMENSIONS;child_dim++){
-			SET_OBJ_MACH_INC(newdp,child_dim,INCREMENT(EQ_CHILD_MACH_INCS(eqd_p),child_dim));
+			SET_OBJ_MACH_INC(newdp,child_dim,INCREMENT(EQ_CHILD_TYPE_INCS(eqd_p),child_dim));
 		}
 	}
 
@@ -590,12 +615,16 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 	Equivalence_Data eqd1, *eqd_p=(&eqd1);
 
 	bzero(eqd_p,sizeof(*eqd_p));
+
+	// passed args
 	eqd1.eqd_name = name;
 	eqd1.eqd_parent = parent;
 	eqd1.eqd_prec_p = prec_p;
 	eqd1.eqd_type_dsp = dsp;
+
+	// to be filled in
 	eqd1.eqd_mach_dsp = (&ds1);
-	eqd1.eqd_child_mach_incs = (&is1);
+	eqd1.eqd_child_type_incs = (&is1);
 
 	/* If we are casting to a larger machine type (e.g. byte to long)
 	 * We have to have at least 4 bytes contiguous.
@@ -606,15 +635,20 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 	 * Figure out how the elements match up.
 	 */
 
-	if( compare_element_sizes(eqd_p) < 0 )
+	compare_element_sizes(eqd_p);	// sets n_per_child and n_per_parent
+
+	// Make sure the parent can fit one child elt
+	// BUG?  this check is only necessary when the parent is
+	// not contiguous...
+	if( check_parent_contig(eqd_p) < 0 ) return NULL;
+
+	// Make sure we've only requested one component for bit, or
+	// multi-component pseudo-precisions
+	if( check_n_comps(eqd_p) < 0 )
 		return NULL;
 
-	/* first make sure the total size matches */
-
+	/* make sure the total size matches */
 	/* We need the machine dimensions of the new object */
-	// They should only differ for complex, quaternion, color and bit?
-	get_machine_dimensions(eqd_p);
-
 	if( check_eq_size_match(eqd_p) < 0 )
 		return NULL;
 
