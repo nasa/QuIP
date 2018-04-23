@@ -1,5 +1,74 @@
 max_warnings 2
 
+Set w 7
+Set h 5
+Set sw 3
+Set sh 3
+
+Define Simple_Tests 0
+Perform_Some_Tests Simple_Test
+.
+
+Define Subimage_Tests 0
+Perform_Some_Tests Subimage_Test
+.
+
+Define Illegal_Subimage_Tests 0
+Perform_Some_Tests Illegal_Subimage_Test2
+#Perform_Some_Tests Illegal_Subimage_Test1
+.
+
+Define Perform_Some_Tests 1 test_macro
+$1 short u_byte 1 2
+$1 int u_byte 1 4
+$1 long u_byte 1 8
+$1 u_byte short 2 1
+$1 u_byte int 4 1
+$1 u_byte long 8 1
+.
+
+Define Simple_Test 4 'parent precision' 'child precision' 'parent multiplier' 'child multiplier'
+#Image parent_$1 $h $w*$3 1 $1
+Image parent_$1 $h $w $3 $1
+Info parent_$1
+#Equivalence child_$2 parent_$1 1 1 $h $w*$4 1 $2
+Equivalence child_$2 parent_$1 1 1 $h $w $4 $2
+Info child_$2
+Pause
+Delete_Image parent_$1	# automatically deletes the child also
+.
+
+Define Illegal_Subimage_Test1 4 'parent precision' 'child precision' 'parent multiplier' 'child multiplier'
+Image parent_$1 $h $w $3 $1
+Subimage inset_$1 parent_$1 $sw $sh 1 1
+Info inset_$1
+Equivalence child_$2 inset_$1 1 1 1 $sh*$sw $4 $2
+Info child_$2
+Pause
+Delete_Image parent_$1	# automatically deletes the child also
+.
+
+Define Illegal_Subimage_Test2 4 'parent precision' 'child precision' 'parent multiplier' 'child multiplier'
+Image parent_$1 $h $w*$3 3 $1
+Subimage inset_$1 parent_$1{0} $sw $sh 1 1
+Info inset_$1
+Equivalence child_$2 inset_$1 1 1 1 $sh*$sw $4 $2
+Info child_$2
+Pause
+Delete_Image parent_$1	# automatically deletes the child also
+.
+
+Define Subimage_Test 4 'parent precision' 'child precision' 'parent multiplier' 'child multiplier'
+Image parent_$1 $h $w $3 $1
+Subimage inset_$1 parent_$1 $sw $sh 1 1
+Info inset_$1
+Equivalence child_$2 inset_$1 1 1 $sh $sw $4 $2
+Info child_$2
+Pause
+Delete_Image parent_$1	# automatically deletes the child also
+.
+
+
 Define Test_Bitmaps 0
 Set h 4
 Set w 76
@@ -66,9 +135,12 @@ Delete_Image y1
 .
 
 #Test_Bitmaps
-Test_Misc
-Test_Complex
+#Test_Misc
+#Test_Complex
 
+#Simple_Tests
+#Subimage_Tests
+Illegal_Subimage_Tests
 
 exit
 

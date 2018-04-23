@@ -26,6 +26,7 @@ typedef struct {
 	dimension_t	eqd_total_parent_bytes;
 	dimension_t	eqd_n_child_bytes;
 	dimension_t	eqd_n_parent_bytes;
+	dimension_t	eqd_parent_contig_bytes;
 	dimension_t	eqd_prev_parent_mach_elts;
 	Increment_Set *	eqd_child_type_incs;
 } Equivalence_Data;
@@ -47,6 +48,7 @@ typedef struct {
 #define EQ_PREV_PARENT_MACH_ELTS(eqd_p)	(eqd_p)->eqd_prev_parent_mach_elts
 #define EQ_N_CHILD_BYTES(eqd_p)		(eqd_p)->eqd_n_child_bytes
 #define EQ_N_PARENT_BYTES(eqd_p)	(eqd_p)->eqd_n_parent_bytes
+#define EQ_PARENT_CONTIG_BYTES(eqd_p)	(eqd_p)->eqd_parent_contig_bytes
 
 #define SET_EQ_N_PER_PARENT(eqd_p,v)	(eqd_p)->eqd_n_per_parent = v
 #define SET_EQ_N_PER_CHILD(eqd_p,v)	(eqd_p)->eqd_n_per_child = v
@@ -55,13 +57,20 @@ typedef struct {
 
 #define n_bytes_per_child_elt	EQ_BYTES_PER_CHILD_ELT(eqd_p)
 #define n_bytes_per_parent_elt	EQ_BYTES_PER_PARENT_ELT(eqd_p)
-#define n_per_parent	EQ_N_PER_PARENT(eqd_p)
-#define n_per_child	EQ_N_PER_CHILD(eqd_p)
+#define n_per_parent		EQ_N_PER_PARENT(eqd_p)
+#define n_per_child		EQ_N_PER_CHILD(eqd_p)
 #define total_child_bytes	EQ_TOTAL_CHILD_BYTES(eqd_p)
 #define total_parent_bytes	EQ_TOTAL_PARENT_BYTES(eqd_p)
 #define n_child_bytes		EQ_N_CHILD_BYTES(eqd_p)
 #define n_parent_bytes		EQ_N_PARENT_BYTES(eqd_p)
 #define prev_parent_mach_elts	EQ_PREV_PARENT_MACH_ELTS(eqd_p)
+#define parent_contig_bytes	EQ_PARENT_CONTIG_BYTES(eqd_p)
+
+#define PARENT_INC(idx)		OBJ_MACH_INC(EQ_PARENT(eqd_p),idx)
+#define PARENT_DIM(idx)		OBJ_MACH_DIM(EQ_PARENT(eqd_p),idx)
+#define PARENT_MACH_SIZE	OBJ_PREC_MACH_SIZE(EQ_PARENT(eqd_p))
+#define CHILD_ELT_SIZE		PREC_SIZE( EQ_PREC_PTR(eqd_p) )
+#define PARENT_ELT_SIZE		PREC_SIZE(OBJ_PREC_PTR(EQ_PARENT(eqd_p)))
 
 // Make sure that only one component is specified for certain
 // pseudo-precisions
@@ -90,7 +99,10 @@ static int _check_n_comps(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 	return 0;
 }
 
-// BUG call this something else...
+// check_parent_contig computes the size of the largest contiguous block of data
+// in the parent, and makes sure that it is at least as large as a single child
+// element.
+
 #define check_parent_contig(eqd_p) _check_parent_contig(QSP_ARG  eqd_p )
 
 static int _check_parent_contig(QSP_ARG_DECL  Equivalence_Data *eqd_p)
@@ -100,10 +112,10 @@ static int _check_parent_contig(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 
 	/* Find the largest number of contiguous elements in the parent */
 	n_contig=1;
-	for(parent_dim=0;parent_dim<N_DIMENSIONS;parent_dim++)
-		if( OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) == n_contig )
-			n_contig *= OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim);
-	/* n_contig is the number of contiguous machine elements in the parent... */
+	for(parent_dim=0;parent_dim<N_DIMENSIONS;parent_dim++){
+		if( PARENT_INC(parent_dim) == n_contig )
+			n_contig *= PARENT_DIM(parent_dim);
+	}
 
 	if( n_contig < EQ_N_PER_CHILD(eqd_p) ){
 		sprintf(ERROR_STRING,
@@ -112,6 +124,9 @@ static int _check_parent_contig(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 		warn(ERROR_STRING);
 		return -1;
 	}
+
+	parent_contig_bytes = n_contig * PARENT_MACH_SIZE;
+
 	return 0;
 }
 
@@ -119,8 +134,8 @@ static int _check_parent_contig(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 
 static void compare_element_sizes(Equivalence_Data *eqd_p)
 {
-	n_bytes_per_child_elt = PREC_SIZE(EQ_PREC_PTR(eqd_p));
-	n_bytes_per_parent_elt = PREC_SIZE(OBJ_PREC_PTR(EQ_PARENT(eqd_p)));
+	n_bytes_per_child_elt = CHILD_ELT_SIZE;
+	n_bytes_per_parent_elt = PARENT_ELT_SIZE;
 
 	/*
 	 * Bitmaps are a special case... - ?
@@ -157,7 +172,7 @@ static int _check_eq_size_match(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 		total_child_bytes /= BITS_PER_BITMAP_WORD;
 		total_child_bytes *= PREC_MACH_SIZE( EQ_PREC_PTR(eqd_p) );
 	} else {
-		total_child_bytes *= PREC_SIZE( EQ_PREC_PTR(eqd_p) );
+		total_child_bytes *= CHILD_ELT_SIZE;
 	}
 
 
@@ -198,12 +213,12 @@ fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent
 		inc=0;
 		i=0;
 		while( inc==0 && i < N_DIMENSIONS ){
-			inc = OBJ_MACH_INC(EQ_PARENT(eqd_p),i);
+			inc = PARENT_INC(i);
 			i++;
 		}
 		if( inc == 0 ){
 			if( total_child_bytes == total_parent_bytes &&
-					total_child_bytes == PREC_SIZE(EQ_PREC_PTR(eqd_p)) )
+					total_child_bytes == CHILD_ELT_SIZE )
 				inc=1;
 		}
 
@@ -263,23 +278,69 @@ fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent
  * But we probably should remember the last non-zero increment?
  */
 
-#define check_parent_spacing(eqd_p, parent_dim) _check_parent_spacing(QSP_ARG  eqd_p, parent_dim)
+// BUG - this test checks for a non-contiguous parent jump, but doesn't make
+// sure that it is a problem for the child???
 
-static int _check_parent_spacing(QSP_ARG_DECL  Equivalence_Data *eqd_p, int parent_dim)
+// We call check_parent_spacing each time we set a new child increment - we need to
+// insure that everything up to the increment is in good data...
+//
+// In order to use this increment, the parent has to be evenly-spaced over the length of
+// the child dimension...
+
+#define check_parent_spacing(eqd_p) _check_parent_spacing(QSP_ARG  eqd_p)
+
+static int _check_parent_spacing(QSP_ARG_DECL  Equivalence_Data *eqd_p )
 {
+	dimension_t child_contig_size;
+	int i_dim;
+
+	// We begin by computing the largest block of contiguous space
+	// for the parent and child, and checking for a match...
+
+fprintf(stderr,"check_parent_spacing:  parent_contig_size = %d\n",parent_contig_bytes);
+
+#define CHILD_INC(idx)	INCREMENT(EQ_CHILD_TYPE_INCS(eqd_p),idx)
+#define CHILD_DIM(idx)	DIMENSION(EQ_TYPE_DIMS(eqd_p),idx)
+
+	child_contig_size = CHILD_ELT_SIZE;
+	if( CHILD_INC(0) == 1 ){
+		child_contig_size *= CHILD_DIM(0);
+		for(i_dim=1;i_dim<N_DIMENSIONS;i_dim++){
+			if( CHILD_INC(i_dim-1)*CHILD_DIM(i_dim-1) == CHILD_INC(i_dim) ){
+				child_contig_size *= CHILD_DIM(i_dim);
+			} else {
+				i_dim = N_DIMENSIONS;	// break out of loop
+			}
+		}
+	}
+
+	if( child_contig_size != parent_contig_bytes ){
+		sprintf(ERROR_STRING,"check_parent_spacing:  contiguous block size mismatch!?");
+		warn(ERROR_STRING);
+		return -1;
+	}
+
+#ifdef FOOBAR
+fprintf(stderr,"check_parent_spacing:  parent_dim = %d, child_dim = %d\n",parent_dim,child_dim);
+fprintf(stderr,"check_parent_spacing:  prev_parent_mach_elts = %d\n",prev_parent_mach_elts);
+fprintf(stderr,"check_parent_spacing:  parent_inc[%d] = %d, parent_inc[%d] = %d\n",parent_dim,
+PARENT_INC(parent_dim),
+parent_dim-1,
+PARENT_INC(parent_dim-1)
+);
 	if(		prev_parent_mach_elts > 1
-		&&	OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) != 0
-		&&	OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim-1) != 0
-		&&	OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) !=
-				(incr_t)(OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim-1)
+		&&	PARENT_INC(parent_dim) != 0
+		&&	PARENT_INC(parent_dim-1) != 0
+		&&	PARENT_INC(parent_dim) !=
+				(incr_t)(PARENT_INC(parent_dim-1)
 					* OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim-1)) ){
 		sprintf(ERROR_STRING,
 			"check_parent_spacing:  problem with unevenly spaced parent object %s",
 			OBJ_NAME(EQ_PARENT(eqd_p)));
 		warn(ERROR_STRING);
 		sprintf(ERROR_STRING,"%s inc[%d] (%d) != inc[%d] (%d) * dim[%d] (%d)",
-			OBJ_NAME(EQ_PARENT(eqd_p)),parent_dim,OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim),
-			parent_dim-1,OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim-1),
+			OBJ_NAME(EQ_PARENT(eqd_p)),parent_dim,PARENT_INC(parent_dim),
+			parent_dim-1,PARENT_INC(parent_dim-1),
 			parent_dim-1,OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim-1));
 		advise(ERROR_STRING);
 
@@ -289,6 +350,7 @@ static int _check_parent_spacing(QSP_ARG_DECL  Equivalence_Data *eqd_p, int pare
 
 		return -1;
 	}
+#endif // FOOBAR
 	return 0;
 }
 
@@ -313,11 +375,15 @@ fprintf(stderr,"total_child_bytes = %d\n",total_child_bytes);
 
 #define ADVANCE_PARENT									\
 	prev_parent_mach_elts *= OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim);		\
-	total_parent_bytes *= OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim);		\
+	n_parent_bytes *= OBJ_MACH_DIM(EQ_PARENT(eqd_p),parent_dim);			\
 	parent_dim++;									\
 	while( parent_dim < N_DIMENSIONS &&						\
-			OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim) == 0 ){		\
+			PARENT_INC(parent_dim) == 0 ){		\
 		parent_dim++;								\
+	}										\
+	if( parent_dim < N_DIMENSIONS ){						\
+		curr_parent_inc = PARENT_INC(parent_dim);		\
+fprintf(stderr,"ADVANCE_PARENT updated curr_parent_inc to %d, parent_dim = %d\n",curr_parent_inc,parent_dim);\
 	}
 
 // ADVANCE_CHILD - increase child_dim until we get some more elements
@@ -327,16 +393,21 @@ fprintf(stderr,"total_child_bytes = %d\n",total_child_bytes);
 	while( child_dim < N_DIMENSIONS &&					\
 			DIMENSION(EQ_TYPE_DIMS(eqd_p),child_dim) == 1 ){	\
 		SET_INCREMENT(EQ_CHILD_TYPE_INCS(eqd_p),child_dim,0);		\
+fprintf(stderr,"set increment %d to zero\n",child_dim);\
 		child_dim++;							\
 	}									\
-	if( child_dim >= N_DIMENSIONS ){					\
-		warn("check_eq_fit:  giving up!?");				\
-		return -1;							\
-	}									\
-	SET_INCREMENT(EQ_CHILD_TYPE_INCS(eqd_p),child_dim,(curr_parent_inc*parent_size)/child_size);	\
-	child_dim++;								\
-	if( child_dim < N_DIMENSIONS )						\
-		total_child_bytes *= DIMENSION(EQ_MACH_DIMS(eqd_p),child_dim);
+	if( child_dim < N_DIMENSIONS ){						\
+		if( n_child_bytes < parent_size ){				\
+fprintf(stderr,"setting inc %d to 1 (curr_parent_inc = %d)\n",child_dim,curr_parent_inc);\
+			SET_INCREMENT(EQ_CHILD_TYPE_INCS(eqd_p),child_dim,1);	\
+		} else {							\
+fprintf(stderr,"setting inc %d to %d (curr_parent_inc = %d)\n",child_dim,(curr_parent_inc*parent_size)/child_size,curr_parent_inc);\
+			SET_INCREMENT(EQ_CHILD_TYPE_INCS(eqd_p),child_dim,(curr_parent_inc*parent_size)/child_size);	\
+fprintf(stderr,"before scaling, n_child_bytes = %d, n_parent_bytes = %d\n",n_child_bytes,n_parent_bytes);\
+		}								\
+		n_child_bytes *= DIMENSION(EQ_MACH_DIMS(eqd_p),child_dim);	\
+		child_dim++;							\
+	}
 
 /*
  * check_eq_fit - this routine decides whether this is going to work,
@@ -381,16 +452,16 @@ static int _check_eq_fit(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 	child_dim=0;	/* index of current child dimension/increment */
 
 	// If the parent is a bitmap, this is NOT the number of machine elts!?
-	child_size = PREC_SIZE( EQ_PREC_PTR(eqd_p) );
-	parent_size = OBJ_PREC_MACH_SIZE( EQ_PARENT(eqd_p) );
+	child_size = CHILD_ELT_SIZE;
+	parent_size = PARENT_MACH_SIZE;
 
 	n_child_bytes = child_size;
 	n_parent_bytes = parent_size;
 	parent_dim=(-1);	/* index of current parent dimension/increment */
 	do {
 		parent_dim++;
-		curr_parent_inc = OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim);
-	} while( curr_parent_inc*parent_size < child_size );
+		curr_parent_inc = PARENT_INC(parent_dim);
+	} while( /* curr_parent_inc*parent_size < child_size */ curr_parent_inc <= 0 );
 	prev_parent_mach_elts = 1;
 	// curr_parent_inc holds the increment to get to the next parent elt.
 
@@ -399,18 +470,26 @@ static int _check_eq_fit(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 	 */
 
 	while( parent_dim < N_DIMENSIONS || child_dim < N_DIMENSIONS ){
+fprintf(stderr,"top of loop:  parent_dim = %d, child_dim = %d, n_parent_bytes = %d, n_child_bytes = %d, curr_parent_inc = %d\n",
+parent_dim,child_dim,n_parent_bytes,n_child_bytes,curr_parent_inc);
 		if( n_parent_bytes == n_child_bytes ){
-			ADVANCE_CHILD /* set increments, increase the child dimension */
-			ADVANCE_PARENT /* increase the parent dimension, read increment */
+fprintf(stderr,"advancing both...\n");
+			if( child_dim < N_DIMENSIONS ){
+				ADVANCE_CHILD /* set increments, increase the child dimension */
+			}
+			if( parent_dim < N_DIMENSIONS ){
+				ADVANCE_PARENT /* increase the parent dimension, read increment */
+			}
 		} else if( n_parent_bytes > n_child_bytes ){
+fprintf(stderr,"advancing child...\n");
 			ADVANCE_CHILD
 		} else { /* n_parent_bytes < n_child_bytes */
+fprintf(stderr,"advancing parent...\n");
 			ADVANCE_PARENT
-			if( check_parent_spacing(eqd_p,parent_dim) < 0 )
-				return -1;
 		}
 	}
-	return 0;
+	// Now make sure the increments are good
+	return check_parent_spacing(eqd_p);
 }
 
 
@@ -443,7 +522,7 @@ static void set_eqsp_incs(Equivalence_Data *eqd_p)
 		//pdim *= OBJ_MACH_DIM(parent,parent_dim);	/* how many elements we are up to */
 		pdim *= OBJ_TYPE_DIM(EQ_PARENT(eqd_p),parent_dim);	/* how many elements we are up to */
 		if( pdim > 1 ){
-			parent_mach_inc = OBJ_MACH_INC(EQ_PARENT(eqd_p),parent_dim);
+			parent_mach_inc = PARENT_INC(parent_dim);
 			parent_type_inc = OBJ_TYPE_INC(EQ_PARENT(eqd_p),parent_dim);
 			parent_dim=N_DIMENSIONS;			/* break out of loop */
 		}
