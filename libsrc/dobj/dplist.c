@@ -84,8 +84,7 @@ fprintf(stderr,"no categorization of shape at 0x%lx!?\n",(long)shpp);
 	if( BITMAP_PRECISION(SHP_PREC(shpp)) ){
 		assert( (SHP_PREC(shpp) & MACH_PREC_MASK) == BITMAP_MACH_PREC );
 		
-		prt_msg("     bit");
-		return;
+		prt_msg_frag("     bit");
 	} else if( STRING_PRECISION(SHP_PREC(shpp)) || CHAR_PRECISION(SHP_PREC(shpp)) ){
 		assert( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_BY );
 
@@ -94,41 +93,42 @@ fprintf(stderr,"no categorization of shape at 0x%lx!?\n",(long)shpp);
 		else if( CHAR_PRECISION(SHP_PREC(shpp)) )
 			prt_msg("       char");
 		return;
-	}
-
-	sprintf(MSG_STR,"     %s",PREC_NAME( SHP_MACH_PREC_PTR(shpp) ) );
-	prt_msg_frag(MSG_STR);
-	if( COMPLEX_PRECISION(SHP_PREC(shpp)) ){
-		if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_SP )
-			sprintf(MSG_STR,", complex");
-		else if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_DP )
-			sprintf(MSG_STR,", dblcpx");
-		else {
-			assert( AERROR("Unexpected complex machine precision!?") );
-		}
-	} else if( QUAT_PRECISION(SHP_PREC(shpp)) ){
-		if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_SP )
-			sprintf(MSG_STR,", quaternion");
-		else if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_DP )
-			sprintf(MSG_STR,", dblquat");
-		else {
-			assert( AERROR("unexpected quaternion machine precision!?") );
-		}
 	} else {
-		sprintf(MSG_STR,", real");
+		sprintf(MSG_STR,"     %s",PREC_NAME( SHP_MACH_PREC_PTR(shpp) ) );
+		prt_msg_frag(MSG_STR);
+		if( COMPLEX_PRECISION(SHP_PREC(shpp)) ){
+			if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_SP )
+				sprintf(MSG_STR,", complex");
+			else if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_DP )
+				sprintf(MSG_STR,", dblcpx");
+			else {
+				assert( AERROR("Unexpected complex machine precision!?") );
+			}
+		} else if( QUAT_PRECISION(SHP_PREC(shpp)) ){
+			if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_SP )
+				sprintf(MSG_STR,", quaternion");
+			else if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_DP )
+				sprintf(MSG_STR,", dblquat");
+			else {
+				assert( AERROR("unexpected quaternion machine precision!?") );
+			}
+		} else {
+			sprintf(MSG_STR,", real");
+		}
+		prt_msg_frag(MSG_STR);
 	}
 
 	if( SHP_COMPS(shpp) > 1 ){
-		prt_msg_frag(MSG_STR);
 		sprintf(MSG_STR,", %d components",SHP_COMPS(shpp));
+		prt_msg_frag(MSG_STR);
 	}
 
 	if( INTERLACED_SHAPE(shpp) ){
-		prt_msg_frag(MSG_STR);
 		sprintf(MSG_STR,", interlaced");
+		prt_msg_frag(MSG_STR);
 	}
 
-	prt_msg(MSG_STR);
+	prt_msg("");
 }
 
 void dump_shape(QSP_ARG_DECL  Shape_Info *shpp)
