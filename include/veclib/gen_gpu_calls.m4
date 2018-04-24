@@ -6,6 +6,9 @@
 
 my_include(`veclib/gpu_call_utils.m4')
 
+dnl where should this go???  It depends on the definition of the bitmap_word_type...
+define(`LOG2_BITS_PER_BITMAP_WORD',`6')
+
 /**********************************************************************/
 
 // args n, s  are func_name, statement
