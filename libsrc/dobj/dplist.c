@@ -438,6 +438,7 @@ static void list_data(QSP_ARG_DECL  Data_Obj *dp)
 		n = bitmap_obj_word_count(dp);
 	else
 		n = OBJ_N_MACH_ELTS(dp);
+// BUG fix format strings!!!
 #ifdef BITNUM_64
 	sprintf(MSG_STR,"\t%llu %s element%s",n,OBJ_MACH_PREC_NAME(dp),n==1?"":"s");
 #else // ! BITNUM_64

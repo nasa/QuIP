@@ -190,6 +190,24 @@ static void _deliver_warning(QSP_ARG_DECL  const char* msg)
 	check_max_warnings(SINGLE_QSP_ARG);
 }
 
+static void format_expected(QSP_ARG_DECL  char *dest, const char *msg)
+{
+	// BUG - possible buffer overrun
+	sprintf( dest, "%s%s", EXPECTED_PREFIX, msg );
+	assert(strlen(dest)<LLEN);	// at this point, it's too late!?
+}
+
+#define deliver_expected(msg) _deliver_expected(QSP_ARG  msg)
+
+static void _deliver_expected(QSP_ARG_DECL  const char *msg)
+{
+	char msg_to_print[LLEN];	// BUG use String_Buf?
+	format_expected(QSP_ARG  msg_to_print,msg);
+	if( ! silent(SINGLE_QSP_ARG) ){
+		(*advise_vec)(QSP_ARG  msg_to_print);
+	}
+}
+
 #ifdef NOT_NEEDED
 int count_warnings()
 {
@@ -679,20 +697,10 @@ static int is_expected(QSP_ARG_DECL  const char *warning_msg)
 	return 0;
 }
 
-static const char *get_warning_prefix(QSP_ARG_DECL  const char *warning_msg)
-{
-	if( is_expected(QSP_ARG  warning_msg) )
-		return EXPECTED_PREFIX;
-	else
-		return WARNING_PREFIX;
-}
-
 static void format_warning(QSP_ARG_DECL  char *dest, const char *msg)
 {
-	const char *prefix;
-	prefix = get_warning_prefix(QSP_ARG  msg);
 	// BUG - possible buffer overrun
-	sprintf(dest,"%s%s",prefix,msg);
+	sprintf(dest,"%s%s",WARNING_PREFIX,msg);
 	assert(strlen(dest)<LLEN);	// at this point, it's too late!?
 }
 
@@ -837,7 +845,11 @@ void q_error1( QSP_ARG_DECL  const char *msg )
 
 void _warn( QSP_ARG_DECL  const char *msg )
 {
-	tell_input_location(SINGLE_QSP_ARG);
-	deliver_warning(msg);
+	if( is_expected(QSP_ARG  msg) ){
+		deliver_expected(msg);
+	} else {
+		tell_input_location(SINGLE_QSP_ARG);
+		deliver_warning(msg);
+	}
 }
 

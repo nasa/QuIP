@@ -26,8 +26,9 @@ typedef struct {
 	dimension_t	eqd_total_parent_bytes;
 	dimension_t	eqd_n_child_bytes;
 	dimension_t	eqd_n_parent_bytes;
+	dimension_t	eqd_n_parent_elts;
 	dimension_t	eqd_prev_n_child_bytes;
-	dimension_t	eqd_prev_n_parent_bytes;
+	//dimension_t	eqd_prev_n_parent_bytes;
 	dimension_t	eqd_parent_contig_bytes;
 	Increment_Set *	eqd_child_type_incs;
 	int		eqd_parent_dim_idx;
@@ -51,8 +52,9 @@ typedef struct {
 #define EQ_CHILD_TYPE_INCS(eqd_p)	(eqd_p)->eqd_child_type_incs
 #define EQ_N_CHILD_BYTES(eqd_p)		(eqd_p)->eqd_n_child_bytes
 #define EQ_PREV_N_CHILD_BYTES(eqd_p)	(eqd_p)->eqd_prev_n_child_bytes
-#define EQ_PREV_N_PARENT_BYTES(eqd_p)	(eqd_p)->eqd_prev_n_parent_bytes
+//#define EQ_PREV_N_PARENT_BYTES(eqd_p)	(eqd_p)->eqd_prev_n_parent_bytes
 #define EQ_N_PARENT_BYTES(eqd_p)	(eqd_p)->eqd_n_parent_bytes
+#define EQ_N_PARENT_ELTS(eqd_p)		(eqd_p)->eqd_n_parent_elts
 #define EQ_PARENT_CONTIG_BYTES(eqd_p)	(eqd_p)->eqd_parent_contig_bytes
 #define EQ_PARENT_DIM_IDX(eqd_p)	(eqd_p)->eqd_parent_dim_idx
 #define EQ_CHILD_DIM_IDX(eqd_p)		(eqd_p)->eqd_child_dim_idx
@@ -71,18 +73,20 @@ typedef struct {
 #define total_parent_bytes	EQ_TOTAL_PARENT_BYTES(eqd_p)
 #define n_child_bytes		EQ_N_CHILD_BYTES(eqd_p)
 #define prev_n_child_bytes	EQ_PREV_N_CHILD_BYTES(eqd_p)
-#define prev_n_parent_bytes	EQ_PREV_N_PARENT_BYTES(eqd_p)
+//#define prev_n_parent_bytes	EQ_PREV_N_PARENT_BYTES(eqd_p)
 #define n_parent_bytes		EQ_N_PARENT_BYTES(eqd_p)
+#define n_parent_elts		EQ_N_PARENT_ELTS(eqd_p)
 #define parent_contig_bytes	EQ_PARENT_CONTIG_BYTES(eqd_p)
 #define parent_dim_idx		EQ_PARENT_DIM_IDX(eqd_p)
 #define child_dim_idx		EQ_CHILD_DIM_IDX(eqd_p)
 #define curr_parent_inc		EQ_CURR_PARENT_INC(eqd_p)
+#define parent_dp		EQ_PARENT(eqd_p)
 
-#define PARENT_INC(idx)		OBJ_MACH_INC(EQ_PARENT(eqd_p),idx)
-#define PARENT_DIM(idx)		OBJ_MACH_DIM(EQ_PARENT(eqd_p),idx)
-#define PARENT_MACH_SIZE	OBJ_PREC_MACH_SIZE(EQ_PARENT(eqd_p))
+#define PARENT_INC(idx)		OBJ_TYPE_INC(parent_dp,idx)
+#define PARENT_DIM(idx)		OBJ_TYPE_DIM(parent_dp,idx)
+#define PARENT_MACH_SIZE	OBJ_PREC_MACH_SIZE(parent_dp)
 #define CHILD_ELT_SIZE		PREC_SIZE( EQ_PREC_PTR(eqd_p) )
-#define PARENT_ELT_SIZE		PREC_SIZE(OBJ_PREC_PTR(EQ_PARENT(eqd_p)))
+#define PARENT_ELT_SIZE		PREC_SIZE(OBJ_PREC_PTR(parent_dp))
 #define CHILD_INC(idx)		INCREMENT(EQ_CHILD_TYPE_INCS(eqd_p),idx)
 #define CHILD_DIM(idx)		DIMENSION(EQ_TYPE_DIMS(eqd_p),idx)
 #define SET_CHILD_INC(idx,val)	SET_INCREMENT(EQ_CHILD_TYPE_INCS(eqd_p),idx,val)
@@ -136,12 +140,12 @@ static int _check_parent_min_contig(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 	if( n_contig < EQ_N_PER_CHILD(eqd_p) ){
 		sprintf(ERROR_STRING,
 	"get_n_per_child:  parent object %s n_contig (%d) < n_per_child (%d), can't cast to %s",
-			OBJ_NAME(EQ_PARENT(eqd_p)),n_contig,EQ_N_PER_CHILD(eqd_p),PREC_NAME(EQ_PREC_PTR(eqd_p)));
+			OBJ_NAME(parent_dp),n_contig,EQ_N_PER_CHILD(eqd_p),PREC_NAME(EQ_PREC_PTR(eqd_p)));
 		warn(ERROR_STRING);
 		return -1;
 	}
 
-	parent_contig_bytes = n_contig * PARENT_MACH_SIZE;
+	parent_contig_bytes = n_contig * PARENT_ELT_SIZE;
 
 	return 0;
 }
@@ -161,6 +165,7 @@ static void compare_element_sizes(Equivalence_Data *eqd_p)
 	n_per_parent = 1;
 	n_per_child = 1;
 
+fprintf(stderr,"compare_element_sizes:  n_bytes_per_child_elt = %d, n_bytes_per_parent_elt = %d\n",n_bytes_per_child_elt,n_bytes_per_parent_elt);
 	if( n_bytes_per_child_elt > n_bytes_per_parent_elt ) {
 		assert(n_bytes_per_child_elt % n_bytes_per_parent_elt == 0 );
 		n_per_child = n_bytes_per_child_elt / n_bytes_per_parent_elt ;
@@ -168,6 +173,7 @@ static void compare_element_sizes(Equivalence_Data *eqd_p)
 		assert(n_bytes_per_parent_elt % n_bytes_per_child_elt == 0 );
 		n_per_parent = n_bytes_per_parent_elt / n_bytes_per_child_elt ;
 	}
+fprintf(stderr,"compare_element_sizes:  n_per_child = %d, n_per_parent = %d\n",n_per_child,n_per_parent);
 	// otherwise same size, default values of 1 are correct
 }
 
@@ -175,6 +181,8 @@ static void compare_element_sizes(Equivalence_Data *eqd_p)
 
 static int _check_eq_size_match(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 {
+	dimension_t n;
+
 	total_child_bytes = 1;
 	assert( EQ_TYPE_DIMS(eqd_p) != NULL );
 	for(child_dim_idx=0;child_dim_idx<N_DIMENSIONS;child_dim_idx++)
@@ -182,70 +190,43 @@ static int _check_eq_size_match(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 
 	if( EQ_PREC_CODE(eqd_p) == PREC_BIT ){
 		/* convert number of bits to number of words */
-		total_child_bytes += BITS_PER_BITMAP_WORD - 1;
-		total_child_bytes /= BITS_PER_BITMAP_WORD;
+		total_child_bytes = N_BITMAP_WORDS(total_child_bytes);
 		total_child_bytes *= PREC_MACH_SIZE( EQ_PREC_PTR(eqd_p) );
 	} else {
 		total_child_bytes *= CHILD_ELT_SIZE;
 	}
 
 
-	total_parent_bytes = ELEMENT_SIZE( EQ_PARENT(eqd_p) ) *
-				OBJ_N_MACH_ELTS( EQ_PARENT(eqd_p) );
+	if( IS_BITMAP( parent_dp ) )
+		n = bitmap_obj_word_count(parent_dp);
+	else
+		n = OBJ_N_MACH_ELTS( parent_dp );
 
+	total_parent_bytes = ELEMENT_SIZE( parent_dp ) * n;
+
+fprintf(stderr,"check_eq_size_match:  total_parent_bytes = %d (size %d x n_elts %d)\n",
+total_parent_bytes,ELEMENT_SIZE(parent_dp),OBJ_N_MACH_ELTS(parent_dp));
 	if( total_child_bytes != total_parent_bytes){
 		sprintf(ERROR_STRING,
 	"make_equivalence %s:  total requested size (%d bytes) does not match parent %s (%d bytes)",
 			EQ_NAME(eqd_p),total_child_bytes,
-			OBJ_NAME( EQ_PARENT(eqd_p) ),total_parent_bytes);
+			OBJ_NAME( parent_dp ),total_parent_bytes);
 		warn(ERROR_STRING);
 		return -1;
 	}
 	return 0;
 }
 
-#ifdef FOOBAR
-static incr_t get_child_type_inc(Equivalence_Data *eqd_p)
+static incr_t parent_inc_at_level(Equivalence_Data *eqd_p)
 {
 	incr_t inc;
 
-fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent);
-	if( n_per_parent > 1 ){
-		// If we have multiple child elements per single
-		// parent element, they have to be contiguous
-		return 1;
-	} else {
-		/* The size of a child element is greater than or equal to
-		 * the size of a parent element.
-		 * Set child_type_inc to the smallest non-zero increment of the parent.
-		 * (What is the sense of that?)
-		 * The parent has to have contiguous elements to fill a child
-		 * element, but could then skip...
-		 */
-		int i;
-
-		inc=0;
-		i=0;
-		while( inc==0 && i < N_DIMENSIONS ){
-			inc = PARENT_INC(i);
-			i++;
-		}
-		if( inc == 0 ){
-			if( total_child_bytes == total_parent_bytes &&
-					total_child_bytes == CHILD_ELT_SIZE )
-				inc=1;
-		}
-
-		assert( inc != 0 );
-
-		/* Is this correct in all cases?  If multiple parent elements make up one child
-		 * element, the contiguity check should have been performed above.  If they are the same
-		 * size then we are ok.
-		 */
-	}
+	if( IS_BITMAP(parent_dp) )
+		inc = N_BITMAP_WORDS(PARENT_INC(parent_dim_idx));
+	else
+		inc = PARENT_INC(parent_dim_idx);
 	return inc;
 }
-#endif // FOOBAR
 
 /* Now we need to see if we can come up with
  * a set of increments for the child that will work.
@@ -299,33 +280,33 @@ fprintf(stderr,"n_per_child = %d,  n_per_parent = %d\n",n_per_child,n_per_parent
 
 static int _advance_parent(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 {
-fprintf(stderr,"advance_parent:  n_parent_bytes = %d (prev %d), n_child_bytes = %d (prev %d)\n",
-n_parent_bytes,
-prev_n_parent_bytes,
-n_child_bytes,
-prev_n_child_bytes);
-	prev_n_parent_bytes = n_parent_bytes;
+	//prev_n_parent_bytes = n_parent_bytes;	// NOT USED!
 	n_parent_bytes *= PARENT_DIM(parent_dim_idx);
+	n_parent_elts *= PARENT_DIM(parent_dim_idx);
+
+	if( IS_BITMAP(parent_dp) ){
+		n_parent_bytes = BYTES_PER_BITMAP_WORD * N_BITMAP_WORDS(n_parent_elts);
+	}
+
+fprintf(stderr,"advance_parent:  n_parent_bytes = %d, n_child_bytes = %d, parent_dim_idx = %d\n",
+n_parent_bytes,n_child_bytes,parent_dim_idx);
 
 	// will we need another call?
 	if( n_parent_bytes < n_child_bytes ){
-fprintf(stderr,"advance_parent:  will need to call again\n");
 		if( parent_dim_idx < (N_DIMENSIONS-1) ){
 			// see if next dimension is evenly spaced
 			if( PARENT_DIM(parent_dim_idx) * PARENT_INC(parent_dim_idx) != PARENT_INC(parent_dim_idx+1) ){
-fprintf(stderr,"advance_parent:  not evenly-spaced? (parent_dim_idx = %d)\n",parent_dim_idx);
+fprintf(stderr,"advance_parent:  dim[%d] = %d, inc[%d] = %d, inc[%d] = %d\n",
+parent_dim_idx,PARENT_DIM(parent_dim_idx),parent_dim_idx,PARENT_INC(parent_dim_idx),parent_dim_idx+1,PARENT_INC(parent_dim_idx+1));
 				return -1;
 			}
 		} else {
-fprintf(stderr,"advance_parent:  out of data? (parent_dim_idx = %d)\n",parent_dim_idx);
 			return -1;
 		}
 	}
 
 	/* Was the dimension we just added evenly-spaced with respect to the previous dimension? */
-fprintf(stderr,"advance_parent:  dim[%d] = %d,  inc[%d] = %d\n",parent_dim_idx,PARENT_DIM(parent_dim_idx),parent_dim_idx,PARENT_INC(parent_dim_idx));
 	assert(parent_dim_idx < (N_DIMENSIONS-1) );
-fprintf(stderr,"advance_parent:  dim[%d] = %d,  inc[%d] = %d\n",parent_dim_idx+1,PARENT_DIM(parent_dim_idx+1),parent_dim_idx+1,PARENT_INC(parent_dim_idx+1));
 
 
 	parent_dim_idx++;
@@ -333,11 +314,10 @@ fprintf(stderr,"advance_parent:  dim[%d] = %d,  inc[%d] = %d\n",parent_dim_idx+1
 		parent_dim_idx++;
 	}
 	if( parent_dim_idx < N_DIMENSIONS ){
-		curr_parent_inc = PARENT_INC(parent_dim_idx);
-fprintf(stderr,"ADVANCE_PARENT updated curr_parent_inc to %d, parent_dim_idx = %d\n",curr_parent_inc,parent_dim_idx);
+		curr_parent_inc = parent_inc_at_level(eqd_p);
 	}
 	return 0;
-}
+} // advance_parent
 
 // advance_child - increase child_dim_idx until we get some more elements
 
@@ -345,26 +325,18 @@ fprintf(stderr,"ADVANCE_PARENT updated curr_parent_inc to %d, parent_dim_idx = %
 
 static int _advance_child(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 {
-fprintf(stderr,"advance_child:  n_parent_bytes = %d (prev %d), n_child_bytes = %d (prev %d)\n",
-n_parent_bytes,
-prev_n_parent_bytes,
-n_child_bytes,
-prev_n_child_bytes);
 	while( child_dim_idx < N_DIMENSIONS &&CHILD_DIM(child_dim_idx) == 1 ){
 		SET_INCREMENT(EQ_CHILD_TYPE_INCS(eqd_p),child_dim_idx,0);
 		SET_CHILD_INC(child_dim_idx,0);
-fprintf(stderr,"set increment %d to zero\n",child_dim_idx);
 		child_dim_idx++;
 	}
 	if( child_dim_idx < N_DIMENSIONS ){
-		if( n_child_bytes < PARENT_MACH_SIZE ){
-fprintf(stderr,"setting inc %d to 1 (curr_parent_inc = %d)\n",child_dim_idx,curr_parent_inc);
+		if( n_child_bytes < PARENT_ELT_SIZE ){
 			SET_INCREMENT(EQ_CHILD_TYPE_INCS(eqd_p),child_dim_idx,1);
 			SET_CHILD_INC(child_dim_idx,1);
 		} else {
-fprintf(stderr,"setting inc %d to %d (curr_parent_inc = %d)\n",child_dim_idx,(curr_parent_inc*PARENT_MACH_SIZE)/CHILD_ELT_SIZE,curr_parent_inc);
+fprintf(stderr,"advance_child setting increment %d, curr_parent_inc = %d\n",child_dim_idx,curr_parent_inc);
 			SET_CHILD_INC(child_dim_idx,(curr_parent_inc*PARENT_MACH_SIZE)/CHILD_ELT_SIZE);
-fprintf(stderr,"before scaling, n_child_bytes = %d, n_parent_bytes = %d\n",n_child_bytes,n_parent_bytes);
 		}
 		prev_n_child_bytes = n_child_bytes;
 		n_child_bytes *= DIMENSION(EQ_MACH_DIMS(eqd_p),child_dim_idx);
@@ -415,7 +387,7 @@ static int _compute_child_increments(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 	//int parent_size;
 	//int child_size;
 
-	if( IS_CONTIGUOUS( EQ_PARENT(eqd_p) ) ){
+	if( IS_CONTIGUOUS( parent_dp ) ){
 		// use standard increments
 		// call make_contiguous() AFTER we have created the object...
 		// (requires mach_dims...)
@@ -430,38 +402,29 @@ static int _compute_child_increments(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 
 	n_child_bytes = CHILD_ELT_SIZE;
 	n_parent_bytes = PARENT_MACH_SIZE;
+	n_parent_elts = 1;
 	prev_n_child_bytes = 0;
-	prev_n_parent_bytes = 0;
+	//prev_n_parent_bytes = 0;
 	parent_dim_idx=(-1);	/* index of current parent dimension/increment */
 	do {
 		parent_dim_idx++;
-		curr_parent_inc = PARENT_INC(parent_dim_idx);
+		curr_parent_inc = parent_inc_at_level(eqd_p);
 	} while( curr_parent_inc <= 0 );
-fprintf(stderr,"compute_child_increments:  curr_parent_inc initialized to %d\n",curr_parent_inc);
 	// curr_parent_inc holds the increment to get to the next parent elt.
 
 	/* n_parent_bytes, n_child_bytes count the number of elements of the parent
 	 * that have been used at the current level of the dimension counters.
 	 */
 
+fprintf(stderr,"starting loop, n_parent_bytes = %d, n_child_bytes = %d\n",n_parent_bytes,n_child_bytes);
 	while( parent_dim_idx < N_DIMENSIONS || child_dim_idx < N_DIMENSIONS ){
-fprintf(stderr,"top of loop:  parent_dim_idx = %d, child_dim_idx = %d, n_parent_bytes = %d, n_child_bytes = %d, curr_parent_inc = %d\n",
-parent_dim_idx,child_dim_idx,n_parent_bytes,n_child_bytes,curr_parent_inc);
 		if( n_parent_bytes >= n_child_bytes ){
 			if( child_dim_idx < N_DIMENSIONS ){
-fprintf(stderr,"advancing child...\n");
 				if( advance_child(eqd_p) < 0 )
 					return -1;
 			}
-//			if( parent_dim_idx < N_DIMENSIONS ){
-//				ADVANCE_PARENT /* increase the parent dimension, read increment */
-//			}
-//		} else if( n_parent_bytes > n_child_bytes ){
-//fprintf(stderr,"advancing child...\n");
-//			ADVANCE_CHILD
 		} else { /* n_parent_bytes < n_child_bytes */
 			while( parent_dim_idx < N_DIMENSIONS && n_parent_bytes < n_child_bytes ){
-fprintf(stderr,"advancing parent...\n");
 				if( advance_parent(eqd_p) < 0 )
 					return -1;
 			}
@@ -499,10 +462,10 @@ static void set_eqsp_incs(Equivalence_Data *eqd_p)
 	/* find the basic parent increment */
 	for(parent_dim_idx=0;parent_dim_idx<N_DIMENSIONS;parent_dim_idx++){
 		//pdim *= PARENT_DIM(parent_dim_idx);	/* how many elements we are up to */
-		pdim *= OBJ_TYPE_DIM(EQ_PARENT(eqd_p),parent_dim_idx);	/* how many elements we are up to */
+		pdim *= OBJ_TYPE_DIM(parent_dp,parent_dim_idx);	/* how many elements we are up to */
 		if( pdim > 1 ){
 			parent_mach_inc = PARENT_INC(parent_dim_idx);
-			parent_type_inc = OBJ_TYPE_INC(EQ_PARENT(eqd_p),parent_dim_idx);
+			parent_type_inc = OBJ_TYPE_INC(parent_dp,parent_dim_idx);
 			parent_dim_idx=N_DIMENSIONS;			/* break out of loop */
 		}
 	}
@@ -554,9 +517,9 @@ static int _create_child_object(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 
 	s = OBJ_NAME(newdp);	/* save, while we overwrite temporarily */
 	//*newdp = *parent;	/* copy all of the fields... */
-	OBJ_COPY_FROM(newdp, EQ_PARENT(eqd_p));	// newdp points to parent's shape...
+	OBJ_COPY_FROM(newdp, parent_dp);	// newdp points to parent's shape...
 	// after the copy, the shape pointer is the same as the parent's...
-	DUP_OBJ_SHAPE(newdp,EQ_PARENT(eqd_p));
+	DUP_OBJ_SHAPE(newdp,parent_dp);
 
 	SET_OBJ_NAME(newdp,s);
 	SET_OBJ_OFFSET(newdp,0);
@@ -567,9 +530,9 @@ static int _create_child_object(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 		return -1;
 	}
 
-	if( IS_CONTIGUOUS(EQ_PARENT(eqd_p)) )
+	if( IS_CONTIGUOUS(parent_dp) )
 		make_contiguous(newdp);
-	else if( IS_EVENLY_SPACED(EQ_PARENT(eqd_p)) ){
+	else if( IS_EVENLY_SPACED(parent_dp) ){
 		set_eqsp_incs(eqd_p);
 	} else {	/* Not evenly spaced or contiguous... */
 		//
@@ -589,7 +552,7 @@ static int _create_child_object(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 	/* this must be called before setup_dp,
 	 * because flags are first copied from parent
 	 */
-	parent_relationship(EQ_PARENT(eqd_p),newdp);
+	parent_relationship(parent_dp,newdp);
 
 	newdp=setup_dp(newdp,EQ_PREC_PTR(eqd_p));
 	assert( newdp != NULL );
@@ -681,6 +644,13 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 	// to be filled in
 	eqd1.eqd_mach_dsp = (&ds1);
 	eqd1.eqd_child_type_incs = (&is1);
+
+	if( IS_BITMAP(parent) && ! IS_CONTIGUOUS(parent) ){
+		sprintf(ERROR_STRING,"Sorry, can't make equivalence to non-contiguous bitmap %s!?",
+			OBJ_NAME(parent));
+		warn(ERROR_STRING);
+		return NULL;
+	}
 
 	/* If we are casting to a larger machine type (e.g. byte to long)
 	 * We have to have at least 4 bytes contiguous.
