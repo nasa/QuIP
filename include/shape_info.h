@@ -177,30 +177,19 @@ typedef struct bitmap_gpu_word_info {
 typedef struct bitmap_gpu_info {
 	dimension_t			n_bitmap_words;
 	uint32_t			total_size;	// size of this struct in bytes
-	dimension_t			next_word_idx;
-	dimension_t			this_word_idx;
-	dimension_t			last_word_idx;
 	dimension_t			obj_size[N_DIMENSIONS];
 	Bitmap_GPU_Word_Info 		word_tbl[1];	// variable-size table, this must be last in the struct
 } Bitmap_GPU_Info;
 
 #define BITMAP_GPU_INFO_SIZE(n_words)	(sizeof(Bitmap_GPU_Info)+(n_words-1)*sizeof(Bitmap_GPU_Word_Info))
 
+#define BMI_DIMENSION(bmi_p,idx)	(bmi_p)->obj_size[idx]
 #define SET_BMI_DIMENSION(bmi_p,idx,v)	(bmi_p)->obj_size[idx] = v
 
 #define BMI_N_WORDS(bmi_p)		(bmi_p)->n_bitmap_words
 #define SET_BMI_N_WORDS(bmi_p,n)	(bmi_p)->n_bitmap_words = n
 #define BMI_WORD_TBL(bmi_p)		(bmi_p)->word_tbl
 #define BMI_WORD_INFO_P(bmi_p,idx)	(&((bmi_p)->word_tbl[idx]))
-
-#define BMI_LAST_WORD_IDX(bmi_p)	(bmi_p)->last_word_idx
-#define SET_BMI_LAST_WORD_IDX(bmi_p,v)	(bmi_p)->last_word_idx = v
-
-#define BMI_THIS_WORD_IDX(bmi_p)	(bmi_p)->this_word_idx
-#define SET_BMI_THIS_WORD_IDX(bmi_p,v)	(bmi_p)->this_word_idx = v
-
-#define BMI_NEXT_WORD_IDX(bmi_p)	(bmi_p)->next_word_idx
-#define SET_BMI_NEXT_WORD_IDX(bmi_p,v)	(bmi_p)->next_word_idx = v
 
 #define BMI_STRUCT_SIZE(bmi_p)		(bmi_p)->total_size
 #define SET_BMI_STRUCT_SIZE(bmi_p,s)	(bmi_p)->total_size = s

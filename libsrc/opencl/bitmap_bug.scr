@@ -91,6 +91,7 @@ Image ${1}_copy $sh $sw 1 bit
 
 VSet ${1}_image 1
 VSet ${1}_inset 0
+VSet ${1}_inset[0][1] 1
 VSet ${1}_inset2 1
 Display ${1}_image
 Pause

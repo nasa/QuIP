@@ -211,8 +211,10 @@ typedef BITMAP_DATA_TYPE bitmap_word;		// BUG?  do we really need both a macro A
 //#define BITNUM_64	// comment out for 32 bit bit numbers
 #ifdef BITNUM_64
 typedef uint64_t	bitnum_t;	// could be uint32_t?
+#define INVALID_BIT_NUMBER	((uint64_t)((int64_t)-1))
 #else
 typedef uint32_t	bitnum_t;	// should be uint64_t?
+#define INVALID_BIT_NUMBER	((uint32_t)((int32_t)-1))
 #endif // ! BITNUM_64
 
 #define BITS_PER_BYTE			8
@@ -433,6 +435,8 @@ typedef int32_t prec_t;
 #define N_DIMENSIONS	5	/* color, x, y, t, hyper_t */
 
 typedef uint32_t dimension_t;	// If this is changed, must also change opencl/ocl_kern_call_defs.m4!
+#define INVALID_DIMENSION	((uint32_t)((int32_t)-1))
+
 typedef uint32_t index_t;
 typedef int32_t incr_t;
 

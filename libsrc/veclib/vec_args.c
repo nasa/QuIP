@@ -12,6 +12,10 @@
 //#include "warn.h"
 //#include "getbuf.h"
 
+// bitnum_t is unsigned, so we can't use (-1) as an invalid value...
+#define INVALID_WORD_TBL_IDX	INVALID_DIMENSION
+#define INVALID_WORD_IDX	INVALID_DIMENSION
+
 #define JUST_FOR_DEBUGGING	// extra debugging
 
 static int get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
@@ -937,7 +941,7 @@ dimension_t varg_bitmap_word_count(const Vector_Arg *varg_p)
 }
 #endif // FOOBAR
 
-static void traverse_bitmap(Data_Obj *dp, void (*func)(Data_Obj *dp, bitnum_t bit_num) )
+static void traverse_bitmap(Data_Obj *dp, dimension_t word_idx_arg, bitnum_t (*func)(Data_Obj *dp, bitnum_t bit_num, dimension_t word_idx) )
 {
 	dimension_t i,j,k,l,m;
 	bitnum_t bit_number;	// even though dimension_t is 32 bits, the bit number can have 6 more bits
@@ -953,7 +957,7 @@ static void traverse_bitmap(Data_Obj *dp, void (*func)(Data_Obj *dp, bitnum_t bi
 				for(l=0;l<OBJ_COLS(dp);l++){
 					bit_number = col_base;
 					for(m=0;m<OBJ_COMPS(dp);m++){
-						(*func)(dp,bit_number);
+						word_idx_arg = (*func)(dp,bit_number,word_idx_arg);
 						bit_number += OBJ_COMP_INC(dp);
 					}
 					col_base += OBJ_PXL_INC(dp);
@@ -981,7 +985,7 @@ static bitnum_t word_for_bit( bitnum_t bit_number )
 
 // We call this to determine how many words we need to use
 
-static void count_bitmap_word(Data_Obj *dp, bitnum_t bit_number)
+static dimension_t count_bitmap_word(Data_Obj *dp, bitnum_t bit_number, dimension_t last_word_idx)
 {
 	Bitmap_GPU_Info *bmi_p;
 	bitnum_t new_word_idx;
@@ -989,10 +993,10 @@ static void count_bitmap_word(Data_Obj *dp, bitnum_t bit_number)
 	bmi_p = BITMAP_OBJ_GPU_INFO_HOST_PTR(dp);
 
 	new_word_idx = word_for_bit(bit_number);
-	if( new_word_idx != BMI_LAST_WORD_IDX(bmi_p) ){
-		SET_BMI_LAST_WORD_IDX(bmi_p,new_word_idx);
+	if( new_word_idx != last_word_idx ){
 		SET_BMI_N_WORDS(bmi_p,BMI_N_WORDS(bmi_p)+1);	// increment index
 	}
+	return new_word_idx;
 }
 
 bitnum_t bitmap_obj_word_count(Data_Obj *dp)
@@ -1016,11 +1020,8 @@ bitnum_t bitmap_obj_word_count(Data_Obj *dp)
 	SET_BMI_STRUCT_SIZE( bmi_p, sizeof(*bmi_p) );
 
 	SET_BMI_N_WORDS( bmi_p, 0 );
-	SET_BMI_LAST_WORD_IDX( bmi_p, -1 );
-//fprintf(stderr,"bitmap_obj_word_count, indices initialized to %d, %d\n",BMI_NEXT_WORD_IDX(bmi_p),BMI_LAST_WORD_IDX(bmi_p));
-//#endif // HAVE_ANY_GPU
 
-	traverse_bitmap(dp,count_bitmap_word);
+	traverse_bitmap(dp,INVALID_WORD_IDX,count_bitmap_word);
 	n_words = BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(dp) );
 
 	SET_BITMAP_OBJ_GPU_INFO_HOST_PTR(dp,NULL);
@@ -1078,42 +1079,69 @@ static void get_indices_for_bit(dimension_t idx_tbl[N_DIMENSIONS], Data_Obj *dp,
 //	idx_tbl[1] = (bit_number / OBJ_COMPS(dp)) % OBJ_COLS(dp);
 }
 
-static void tabulate_bitmap_word(Data_Obj *dp, bitnum_t bit_number)
+static void init_bitmap_word_info(Bitmap_GPU_Word_Info *bmwi_p, dimension_t this_word_idx, bitnum_t bit_number, Data_Obj *dp)
 {
-	Bitmap_GPU_Word_Info *bmwi_p;
-	Bitmap_GPU_Info *bmi_p;
-	dimension_t new_word_idx;
 	dimension_t idx_tbl[N_DIMENSIONS];
 	int i;
 
+	SET_BMWI_OFFSET(bmwi_p,this_word_idx);
+	SET_BMWI_FIRST_BIT_NUM(bmwi_p,bit_number);
+	get_indices_for_bit(idx_tbl,dp,bit_number);
+	for(i=0;i<N_DIMENSIONS;i++){
+		SET_BMWI_FIRST_INDEX(bmwi_p,i,idx_tbl[i]);
+	}
+	SET_BMWI_VALID_BITS(bmwi_p,0);	// to be safe - but where do we set for real?
+}
+
+static dimension_t tabulate_bitmap_word(Data_Obj *dp, bitnum_t bit_number, dimension_t word_tbl_idx)
+{
+	Bitmap_GPU_Word_Info *bmwi_p;
+	Bitmap_GPU_Info *bmi_p;
+	dimension_t this_word_idx;
+
 	bmi_p = BITMAP_OBJ_GPU_INFO_HOST_PTR(dp);
 
-	new_word_idx = word_for_bit(bit_number);
+	this_word_idx = word_for_bit(bit_number);
 
-	if( new_word_idx != BMI_LAST_WORD_IDX(bmi_p) ){
-		assert(BMI_NEXT_WORD_IDX(bmi_p)<BMI_N_WORDS(bmi_p));
-
-		bmwi_p = BMI_WORD_INFO_P(bmi_p,BMI_NEXT_WORD_IDX(bmi_p));
-		SET_BMI_THIS_WORD_IDX(bmi_p,BMI_NEXT_WORD_IDX(bmi_p));
-		SET_BMI_NEXT_WORD_IDX(bmi_p,BMI_NEXT_WORD_IDX(bmi_p)+1);	// increment index
-
-		SET_BMWI_OFFSET(bmwi_p,new_word_idx);
-
-		get_indices_for_bit(idx_tbl,dp,bit_number);
-		SET_BMWI_FIRST_BIT_NUM(bmwi_p,bit_number);
-		for(i=0;i<N_DIMENSIONS;i++){
-			SET_BMWI_FIRST_INDEX(bmwi_p,i,idx_tbl[i]);
-		}
-		SET_BMWI_VALID_BITS(bmwi_p,0);	// to be safe
-		SET_BMI_LAST_WORD_IDX(bmi_p,new_word_idx);
+	if( word_tbl_idx == INVALID_WORD_TBL_IDX ){	// first time
+		word_tbl_idx = 0;
+		bmwi_p = BMI_WORD_INFO_P(bmi_p,word_tbl_idx);
+		init_bitmap_word_info(bmwi_p,this_word_idx,bit_number,dp);
 	} else {
-		bmwi_p = BMI_WORD_INFO_P(bmi_p,BMI_THIS_WORD_IDX(bmi_p));
+		bmwi_p = BMI_WORD_INFO_P(bmi_p,word_tbl_idx);
+	}
+
+	if( this_word_idx != BMWI_OFFSET(bmwi_p) ){
+		word_tbl_idx ++;
+		assert( word_tbl_idx < BMI_N_WORDS(bmi_p) );
+		bmwi_p = BMI_WORD_INFO_P(bmi_p,word_tbl_idx);
+		init_bitmap_word_info(bmwi_p,this_word_idx,bit_number,dp);
 	}
 	SET_BMWI_VALID_BIT(bmwi_p,1L<<(bit_number % BITS_PER_BITMAP_WORD));
+
+	return word_tbl_idx;
 }
 
 #ifdef JUST_FOR_DEBUGGING
-// This function will be useful for debugging...
+// This functions may be useful for debugging...
+
+#define show_bitmap_word_info(bmwi_p, tbl_idx) _show_bitmap_word_info(QSP_ARG  bmwi_p, tbl_idx)
+
+static void _show_bitmap_word_info(QSP_ARG_DECL  Bitmap_GPU_Word_Info *bmwi_p, int tbl_idx)
+{
+	// BUG - get correct format!
+	sprintf(MSG_STR,"word %3d   offset %d   first bit %"PRId64"  seq %4d  frame %4d   row %4d   col %4d   comp %4d   mask = 0x%"PRIx64,
+		tbl_idx,BMWI_OFFSET(bmwi_p),
+		BMWI_FIRST_BIT_NUM(bmwi_p),
+		BMWI_FIRST_INDEX(bmwi_p,4),
+		BMWI_FIRST_INDEX(bmwi_p,3),
+		BMWI_FIRST_INDEX(bmwi_p,2),
+		BMWI_FIRST_INDEX(bmwi_p,1),
+		BMWI_FIRST_INDEX(bmwi_p,0),
+		BMWI_VALID_BITS(bmwi_p)
+		);
+	prt_msg(MSG_STR);
+}
 
 static void show_bitmap_gpu_info(QSP_ARG_DECL  Bitmap_GPU_Info *bmi_p)
 {
@@ -1122,23 +1150,24 @@ static void show_bitmap_gpu_info(QSP_ARG_DECL  Bitmap_GPU_Info *bmi_p)
 
 	sprintf(MSG_STR,"Bitmap_GPU_Info at 0x%lx",(long)bmi_p);
 	prt_msg(MSG_STR);
-	sprintf(MSG_STR,"\t%d words",BMI_N_WORDS(bmi_p));
+
+	sprintf(MSG_STR,"\t%d total bytes",BMI_STRUCT_SIZE(bmi_p));
+	prt_msg(MSG_STR);
+
+	sprintf(MSG_STR,"\tobj dimensions:  %d  %d  %d  %d  %d",
+		BMI_DIMENSION(bmi_p,4),
+		BMI_DIMENSION(bmi_p,3),
+		BMI_DIMENSION(bmi_p,2),
+		BMI_DIMENSION(bmi_p,1),
+		BMI_DIMENSION(bmi_p,0) );
+	prt_msg(MSG_STR);
+
+	sprintf(MSG_STR,"\t%d words:",BMI_N_WORDS(bmi_p));
 	prt_msg(MSG_STR);
 
 	for(i=0;i<BMI_N_WORDS(bmi_p);i++){
 		bmwi_p = BMI_WORD_INFO_P(bmi_p,i);
-		// BUG - get correct format!
-		sprintf(MSG_STR,"word %3d   offset %d   first bit %"PRId64"  comp %4d  col %4d   row %4d   frame %4d   seq %4d   mask = 0x%"PRIx64,
-			i,BMWI_OFFSET(bmwi_p),
-			BMWI_FIRST_BIT_NUM(bmwi_p),
-			BMWI_FIRST_INDEX(bmwi_p,0),
-			BMWI_FIRST_INDEX(bmwi_p,1),
-			BMWI_FIRST_INDEX(bmwi_p,2),
-			BMWI_FIRST_INDEX(bmwi_p,3),
-			BMWI_FIRST_INDEX(bmwi_p,4),
-			BMWI_VALID_BITS(bmwi_p)
-			);
-		prt_msg(MSG_STR);
+		show_bitmap_word_info(bmwi_p,i);
 	}
 }
 
@@ -1184,9 +1213,9 @@ fprintf(stderr,"init_bitmap_gpu_info allocated host copy at 0x%lx\n",(long)bmi_p
 	// BUG? should zero the block just to be safe?
 
 	// initialize the word index from bit0
-	SET_BMI_NEXT_WORD_IDX( bmi_p, 0 );
-	SET_BMI_LAST_WORD_IDX( bmi_p, -1 );
-	traverse_bitmap(dp,tabulate_bitmap_word);
+	//SET_BMI_NEXT_WORD_IDX( bmi_p, 0 );
+	//SET_BMI_LAST_WORD_IDX( bmi_p, -1 );
+	traverse_bitmap(dp,INVALID_WORD_TBL_IDX,tabulate_bitmap_word);
 
 #ifdef JUST_FOR_DEBUGGING
 show_bitmap_gpu_info(DEFAULT_QSP_ARG  BITMAP_OBJ_GPU_INFO_HOST_PTR(dp) );

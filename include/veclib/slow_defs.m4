@@ -147,7 +147,7 @@ define(`SET_INDICES_2SBM',`							\
 	sbm2_bit_idx.d5_dim[4] = dbm_info_p->word_tbl[tbl_idx].first_index[4];		\
 ')
 
-define(`DECL_INDICES_SBM1',`GPU_INDEX_TYPE sbm1_bit_idx; int i, need_carry;')
+define(`DECL_INDICES_SBM1',`GPU_INDEX_TYPE sbm1_bit_idx; int i; int need_carry;')
 define(`DECL_INDICES_SBM2',`GPU_INDEX_TYPE sbm2_bit_idx;')
 
 

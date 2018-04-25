@@ -77,6 +77,12 @@ define(`SETUP_SLOW_INCS_SBM1',`
 	sbm1_vwxyz_incr.d5_dim[2] = INCREMENT(VA_SRC1_INCSET(vap),2);
 	sbm1_vwxyz_incr.d5_dim[3] = INCREMENT(VA_SRC1_INCSET(vap),3);
 	sbm1_vwxyz_incr.d5_dim[4] = INCREMENT(VA_SRC1_INCSET(vap),4);
+fprintf(stderr,"setup_slow_incs_sbm1:  %d  %d  %d  %d  %d\n",
+sbm1_vwxyz_incr.d5_dim[4],
+sbm1_vwxyz_incr.d5_dim[3],
+sbm1_vwxyz_incr.d5_dim[2],
+sbm1_vwxyz_incr.d5_dim[1],
+sbm1_vwxyz_incr.d5_dim[0]);
 ')
 
 define(`SETUP_SLOW_INCS_SRC2',`
