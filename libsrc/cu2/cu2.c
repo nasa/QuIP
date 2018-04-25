@@ -307,7 +307,6 @@ static void *_cu2_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size
 		advise(ERROR_STRING);
 		return NULL;
 	}
-fprintf(stderr,"cu2_mem_alloc:  returning %d bytes at 0x%lx\n",size,(long)ptr);
 	return ptr;
 }
 
@@ -330,7 +329,6 @@ static void _cu2_mem_free(QSP_ARG_DECL  void *ptr)
 	cudaError_t e;
 
 	// GLOBAL
-fprintf(stderr,"cu2_mem_free:  will free 0x%lx\n",(long)ptr);
 	e = cudaFree(ptr);
 	if( e != cudaSuccess ){
 		describe_cuda_driver_error2("cu2_mem_free","cudaFree",e);
@@ -352,7 +350,6 @@ static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, index
 
 	cudaError_t error;
 
-fprintf(stderr,"cu2_mem_dnload:  dst = 0x%lx   src = 0x%lx   size = %ld   offset = %d\n",(long)dst,(long)src,siz,offset);
         //cutilSafeCall( cutilDeviceSynchronize() );	// added for 4.0?
 #ifdef OLD_CUDA4
 	cutilSafeCall( cudaMemcpy(dst, src, siz, cudaMemcpyDeviceToHost) );
@@ -388,7 +385,6 @@ static void cu2_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, index
 	cutilSafeCall( cudaMemcpy(dst, src, siz, cudaMemcpyHostToDevice) );
 #else // ! OLD_CUDA4
 
-fprintf(stderr,"cu2_mem_upload:  dst = 0x%lx   src = 0x%lx   size = %ld   offset = %d\n",(long)dst,(long)src,siz,offset);
 	// BUG?  do we need to make sure that the correct device is selected?
 
 	error = cudaMemcpy(dst, src, siz, cudaMemcpyHostToDevice);

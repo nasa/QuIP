@@ -294,9 +294,9 @@ define(`FAST_ADVANCE_QUAT_SRC3',`qs3_ptr++ ;')
 define(`FAST_ADVANCE_QUAT_SRC4',`qs4_ptr++ ;')
 dnl #define FAST_ADVANCE_BITMAP	which_bit ++ ;
 define(`FAST_ADVANCE_DBM',`dbm_bit_idx ++ ;')
-define(`FAST_ADVANCE_SBM',`sbm_bit_idx ++ ;')
-define(`FAST_ADVANCE_SBM1',`sbm1_bit_idx ++ ;')
-define(`FAST_ADVANCE_SBM2',`sbm2_bit_idx ++ ;')
+define(`FAST_ADVANCE_SBM',`sbm_bit_offset ++ ;')
+define(`FAST_ADVANCE_SBM1',`sbm1_bit_offset ++ ;')
+define(`FAST_ADVANCE_SBM2',`sbm2_bit_offset ++ ;')
 define(`FAST_ADVANCE_DBM_SBM',`FAST_ADVANCE_DBM FAST_ADVANCE_SBM')
 define(`FAST_ADVANCE_DBM_1SBM',`FAST_ADVANCE_DBM FAST_ADVANCE_SBM1')
 define(`FAST_ADVANCE_DBM_2SBM',`FAST_ADVANCE_DBM FAST_ADVANCE_SBM1 FAST_ADVANCE_SBM2')
@@ -364,9 +364,9 @@ define(`EQSP_ADVANCE_QUAT_SRC3',`qs3_ptr += eqsp_src3_inc ;')
 define(`EQSP_ADVANCE_QUAT_SRC4',`qs4_ptr += eqsp_src4_inc ;')
 dnl #define EQSP_ADVANCE_BITMAP	which_bit  += eqsp_bit_inc ;
 define(`EQSP_ADVANCE_DBM',`dbm_bit_idx  += eqsp_dbm_inc ;')
-define(`EQSP_ADVANCE_SBM',`sbm_bit_idx  += eqsp_sbm_inc ;')
-define(`EQSP_ADVANCE_SBM1',`sbm1_bit_idx  += eqsp_sbm1_inc ;')
-define(`EQSP_ADVANCE_SBM2',`sbm2_bit_idx  += eqsp_sbm2_inc ;')
+define(`EQSP_ADVANCE_SBM',`sbm_bit_offset  += eqsp_sbm_inc ;')
+define(`EQSP_ADVANCE_SBM1',`sbm1_bit_offset  += eqsp_sbm1_inc ;')
+define(`EQSP_ADVANCE_SBM2',`sbm2_bit_offset  += eqsp_sbm2_inc ;')
 define(`EQSP_ADVANCE_DBM_SBM',`EQSP_ADVANCE_DBM EQSP_ADVANCE_SBM')
 define(`EQSP_ADVANCE_DBM_1SBM',`EQSP_ADVANCE_DBM EQSP_ADVANCE_SBM1')
 define(`EQSP_ADVANCE_DBM_2SBM',`EQSP_ADVANCE_DBM EQSP_ADVANCE_SBM1 EQSP_ADVANCE_SBM2')
@@ -652,9 +652,9 @@ define(`INIT_PTRS_QUAT_SRC2',`qs2_ptr = qs2_base[0];')
 define(`INIT_PTRS_QUAT_SRC3',`qs3_ptr = qs3_base[0];')
 define(`INIT_PTRS_QUAT_SRC4',`qs4_ptr = qs4_base[0];')
 
-define(`INIT_PTRS_SBM',`sbm_bit_idx = sbm_base[0];')
-define(`INIT_PTRS_SBM1',`sbm1_bit_idx = sbm1_base[0];')
-define(`INIT_PTRS_SBM2',`sbm2_bit_idx = sbm2_base[0];')
+define(`INIT_PTRS_SBM',`sbm_bit_offset = sbm_base[0];')
+define(`INIT_PTRS_SBM1',`sbm1_bit_offset = sbm1_base[0];')
+define(`INIT_PTRS_SBM2',`sbm2_bit_offset = sbm2_base[0];')
 define(`INIT_PTRS_DBM',`dbm_bit_idx = dbm_base[0];')
 define(`INIT_PTRS_DBM_',`INIT_PTRS_DBM')
 
@@ -721,12 +721,12 @@ define(`INC_PTRS_SRC4',`s4_ptr += IDX_INC(s4inc,0);')
 dnl	/* BUG? here we seem to assume that all bitmaps are contiguous - but
 dnl	 * dobj allows bitmap subimages...
 dnl	 */
-dnl	define(`INC_PTRS_SBM',`sbm_bit_idx++;')
+dnl	define(`INC_PTRS_SBM',`sbm_bit_offset++;')
 
 dnl	The pts stays fixed, we just increment the index...
-define(`INC_PTRS_SBM',`sbm_bit_idx+=IDX_INC(sbminc,0);')
-define(`INC_PTRS_SBM1',`sbm1_bit_idx+=IDX_INC(sbm1inc,0);')
-define(`INC_PTRS_SBM2',`sbm2_bit_idx+=IDX_INC(sbm2inc,0);')
+define(`INC_PTRS_SBM',`sbm_bit_offset+=IDX_INC(sbminc,0);')
+define(`INC_PTRS_SBM1',`sbm1_bit_offset+=IDX_INC(sbm1inc,0);')
+define(`INC_PTRS_SBM2',`sbm2_bit_offset+=IDX_INC(sbm2inc,0);')
 
 define(`INC_PTRS_DBM',`dbm_bit_idx++;')
 define(`INC_PTRS_DBM_',`INC_PTRS_DBM')
@@ -781,8 +781,8 @@ define(`SET_DBM_BIT',`
 ')
 
 define(`DEBUG_SBM_',`
-sprintf(DEFAULT_ERROR_STRING,"sbm_ptr = 0x%"PRIxPTR"   sbm_bit_idx = %d",
-(uintptr_t)sbm_ptr,sbm_bit_idx);
+sprintf(DEFAULT_ERROR_STRING,"sbm_ptr = 0x%"PRIxPTR"   sbm_bit_offset = %d",
+(uintptr_t)sbm_ptr,sbm_bit_offset);
 NADVISE(DEFAULT_ERROR_STRING);
 ')
 
@@ -794,9 +794,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 define(`DEBUG_DBM_1SRC',`DEBUG_DBM_ DEBUG_SRC1')
 
-dnl	define(`srcbit',`((*(sbm_ptr + (sbm_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit_idx))')
-dnl	define(`srcbit1',`((*(sbm1_ptr + (sbm1_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm1_bit_idx))')
-dnl	define(`srcbit2',`((*(sbm2_ptr + (sbm2_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm2_bit_idx))')
+dnl	define(`srcbit',`((*(sbm_ptr + (sbm_bit_offset/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit_offset))')
+dnl	define(`srcbit1',`((*(sbm1_ptr + (sbm1_bit_offset/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm1_bit_offset))')
+dnl	define(`srcbit2',`((*(sbm2_ptr + (sbm2_bit_offset/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm2_bit_offset))')
 
 
 dnl	INIT_BASES(bitmap,typ,suffix)
@@ -1030,19 +1030,19 @@ define(`_DECLARE_BASES',DECLARE_BASES_$1)
 define(`DECLARE_BASES_SBM',`
 	int sbm_base[N_DIMENSIONS-1];
 	bitmap_word *sbm_ptr;
-	int sbm_bit_idx;
+	int sbm_bit_offset;
 ')
 
 define(`DECLARE_BASES_SBM1',`
 	int sbm1_base[N_DIMENSIONS-1];
 	bitmap_word *sbm1_ptr;
-	int sbm1_bit_idx;
+	int sbm1_bit_offset;
 ')
 
 define(`DECLARE_BASES_SBM2',`
 	int sbm2_base[N_DIMENSIONS-1];
 	bitmap_word *sbm2_ptr;
-	int sbm2_bit_idx;
+	int sbm2_bit_offset;
 ')
 
 define(`DECLARE_BASES_DBM_',`DECLARE_BASES_DBM')
@@ -2234,9 +2234,9 @@ define(`FAST_DECLS_4',`FAST_DECLS_3 FAST_DECLS_SRC3')
 define(`FAST_DECLS_5',`FAST_DECLS_4 FAST_DECLS_SRC4')
 define(`FAST_DECLS_LUTMAP_B',`FAST_DECLS_1 FAST_DECLS_BSRC1 FAST_DECLS_MAP_B')
 define(`FAST_DECLS_LUTMAP_S',`FAST_DECLS_1 FAST_DECLS_SSRC1 FAST_DECLS_MAP_S')
-define(`FAST_DECLS_SBM',`int sbm_bit_idx; bitmap_word *sbm_ptr;')
-define(`FAST_DECLS_SBM1',`int sbm1_bit_idx; bitmap_word *sbm1_ptr;')
-define(`FAST_DECLS_SBM2',`int sbm2_bit_idx; bitmap_word *sbm2_ptr;')
+define(`FAST_DECLS_SBM',`int sbm_bit_offset; bitmap_word *sbm_ptr;')
+define(`FAST_DECLS_SBM1',`int sbm1_bit_offset; bitmap_word *sbm1_ptr;')
+define(`FAST_DECLS_SBM2',`int sbm2_bit_offset; bitmap_word *sbm2_ptr;')
 define(`FAST_DECLS_DBM',`int dbm_bit_idx; bitmap_word *dbm_ptr; dimension_t fl_ctr;')
 define(`FAST_DECLS_DBM_1SRC',`FAST_DECLS_DBM FAST_DECLS_SRC1')
 define(`FAST_DECLS_DBM_SBM',`FAST_DECLS_DBM FAST_DECLS_SBM')
@@ -2303,9 +2303,9 @@ define(`EQSP_DECLS_LUTMAP_S',`EQSP_DECLS_1 EQSP_DECLS_SSRC1 EQSP_DECLS_MAP_S')
 define(`EQSP_DECLS_3',`EQSP_DECLS_2 EQSP_DECLS_SRC2')
 define(`EQSP_DECLS_4',`EQSP_DECLS_3 EQSP_DECLS_SRC3')
 define(`EQSP_DECLS_5',`EQSP_DECLS_4 EQSP_DECLS_SRC4')
-define(`EQSP_DECLS_SBM',`int sbm_bit_idx; bitmap_word *sbm_ptr;')
-define(`EQSP_DECLS_SBM1',`int sbm1_bit_idx; bitmap_word *sbm1_ptr;')
-define(`EQSP_DECLS_SBM2',`int sbm2_bit_idx; bitmap_word *sbm2_ptr;')
+define(`EQSP_DECLS_SBM',`int sbm_bit_offset; bitmap_word *sbm_ptr;')
+define(`EQSP_DECLS_SBM1',`int sbm1_bit_offset; bitmap_word *sbm1_ptr;')
+define(`EQSP_DECLS_SBM2',`int sbm2_bit_offset; bitmap_word *sbm2_ptr;')
 define(`EQSP_DECLS_DBM',`int dbm_bit_idx; bitmap_word *dbm_ptr; dimension_t fl_ctr;')
 define(`EQSP_DECLS_DBM_1SRC',`EQSP_DECLS_DBM EQSP_DECLS_SRC1')
 define(`EQSP_DECLS_DBM_SBM',`EQSP_DECLS_DBM EQSP_DECLS_SBM')
@@ -2432,17 +2432,17 @@ FAST_INIT_COUNT
 ')
 
 define(`FAST_INIT_SBM',`
-	sbm_bit_idx = VA_SBM_BIT0(vap);
+	sbm_bit_offset = VA_SBM_BIT0(vap);
 	sbm_ptr=VA_SRC_PTR(vap,4);
 ')
 
 define(`FAST_INIT_SBM1',`
-	sbm1_bit_idx = VA_SBM1_BIT0(vap);
+	sbm1_bit_offset = VA_SBM1_BIT0(vap);
 	sbm1_ptr=VA_SRC_PTR(vap,0);
 ')
 
 define(`FAST_INIT_SBM2',`
-	sbm2_bit_idx = VA_SBM2_BIT0(vap);
+	sbm2_bit_offset = VA_SBM2_BIT0(vap);
 	sbm2_ptr=VA_SRC_PTR(vap,1);
 ')
 
@@ -2542,17 +2542,17 @@ EQSP_INIT_COUNT
 ')
 
 define(`EQSP_INIT_SBM',`
-	sbm_bit_idx = VA_SBM_BIT0(vap);
+	sbm_bit_offset = VA_SBM_BIT0(vap);
 	sbm_ptr=VA_SRC_PTR(vap,4);
 ')
 
 define(`EQSP_INIT_SBM1',`
-	sbm1_bit_idx = VA_SBM1_BIT0(vap);
+	sbm1_bit_offset = VA_SBM1_BIT0(vap);
 	sbm1_ptr=VA_SRC_PTR(vap,0);
 ')
 
 define(`EQSP_INIT_SBM2',`
-	sbm2_bit_idx = VA_SBM2_BIT0(vap);
+	sbm2_bit_offset = VA_SBM2_BIT0(vap);
 	sbm2_ptr=VA_SRC_PTR(vap,1);
 ')
 

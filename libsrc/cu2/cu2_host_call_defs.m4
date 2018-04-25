@@ -293,23 +293,23 @@ dnl /*fprintf(stderr,"SETUP_BLOCKS_XYZ_\n");*/
 ')
 
 
-/* If we have a destination bitmap, we handle all the bits in one word
- * in a single thread.
- *
- * BUG - here we ignore bit0 ???
- *
- * MAX_THREADS_PER_ROW is 32...  for a 512 pixel wide image, the nmber
- * of bitmap words is either 8 (64 bit words) or 16 (32 bit words).
- * So we need to 
- */
+dnl	If we have a destination bitmap, we handle all the bits in one word
+dnl	in a single thread.
+dnl	
+dnl	BUG - here we ignore bit0 ???
+dnl	
+dnl	MAX_THREADS_PER_ROW is 32...  for a 512 pixel wide image, the nmber
+dnl	of bitmap words is either 8 (64 bit words) or 16 (32 bit words).
+dnl	So we need to ...
 
-
+dnl	using the number of bitmap words of the total number of pixel ops
+dnl	is correct only when the destination bitmap is contiguous!?
+dnl	BUG!?
+dnl	SETUP_BLOCKS_X( N_BITMAP_WORDS(VA_ITERATION_TOTAL(vap)) )
 
 dnl	SETUP_BLOCKS_XYZ_DBM_(pdp)
 define(`SETUP_BLOCKS_XYZ_DBM_',`
-
-dnl /*fprintf(stderr,"SETUP_BLOCKS_XYZ_DBM_\n");*/
-	SETUP_BLOCKS_X( N_BITMAP_WORDS(VA_ITERATION_TOTAL(vap)) )
+	SETUP_BLOCKS_X( VA_ITERATION_TOTAL(vap) )
 	SETUP_BLOCKS_Y($1)
 	SETUP_BLOCKS_Z($1)
 ')
@@ -319,7 +319,6 @@ define(`SETUP_BLOCKS_XYZ_DBM_SBM',`
 	SETUP_BLOCKS_XYZ_DBM_($1)
 ')
 
-dnl	BUG?	we should probably consider the sources too???
 define(`SETUP_BLOCKS_XYZ_DBM_2SBM',`
 	SETUP_BLOCKS_XYZ_DBM_($1)
 ')
