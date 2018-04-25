@@ -164,7 +164,7 @@ struct precision {
 
 typedef struct bitmap_gpu_word_info {
 	dimension_t	word_offset;			// relative to the start of the base pointer, in words
-	dimension_t	first_indices[N_DIMENSIONS];	// indices of the first valid bit
+	dimension_t	first_index[N_DIMENSIONS];	// indices of the first valid bit
 	uint64_t	first_bit_num;
 	bitmap_word	valid_bits;
 } Bitmap_GPU_Word_Info;
@@ -180,10 +180,13 @@ typedef struct bitmap_gpu_info {
 	dimension_t			next_word_idx;
 	dimension_t			this_word_idx;
 	dimension_t			last_word_idx;
-	Bitmap_GPU_Word_Info 		word_tbl[1];
+	dimension_t			obj_size[N_DIMENSIONS];
+	Bitmap_GPU_Word_Info 		word_tbl[1];	// variable-size table, this must be last in the struct
 } Bitmap_GPU_Info;
 
 #define BITMAP_GPU_INFO_SIZE(n_words)	(sizeof(Bitmap_GPU_Info)+(n_words-1)*sizeof(Bitmap_GPU_Word_Info))
+
+#define SET_BMI_DIMENSION(bmi_p,idx,v)	(bmi_p)->obj_size[idx] = v
 
 #define BMI_N_WORDS(bmi_p)		(bmi_p)->n_bitmap_words
 #define SET_BMI_N_WORDS(bmi_p,n)	(bmi_p)->n_bitmap_words = n

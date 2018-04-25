@@ -158,7 +158,7 @@ dnl	/* `FLEN_DBM_LOOP' */
 
 define(`FLEN_DBM_LOOP', EQSP_DBM_LOOP($1,$2))
 
-/* `EQSP_DBM_LOOP' */
+dnl	/* `EQSP_DBM_LOOP' */
 define(`EQSP_DBM_LOOP',`							\
 										\
 	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){		\
@@ -172,13 +172,16 @@ define(`EQSP_DBM_LOOP',`							\
 
 define(`SLEN_DBM_LOOP', SLOW_DBM_LOOP( $1, $2 ) )
 
-// len is a different type, but here we don't check the other len dimensions!?  BUG?
-// We don't necessarily want to set all of the bits in the word, if there is
-// a skipping increment?  So this probably won't work for subsamples?  BUG?
+dnl	 len is a different type, but here we don't check the other len dimensions!?  BUG?
+dnl	 We don't necessarily want to set all of the bits in the word, if there is
+dnl	 a skipping increment?  So this probably won't work for subsamples?  BUG?
 
-dnl define(`SLOW_DBM_LOOP',	FAST_DBM_LOOP( $1, $2 ))
+dnl	This definition seems to assume a fast destination bitmap, but possibly
+dnl	slow source operands?
 
-dnl	/* `SLOW_DBM_LOOP' */
+
+dnl	SLOW_DBM_LOOP( work_statment, advance_statement )
+
 define(`SLOW_DBM_LOOP',`							\
 										\
 	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){		\
@@ -214,9 +217,27 @@ define(`ADVANCE_EQSP_1SRC',`ADVANCE_EQSP_SRC1')
 define(`ADVANCE_EQSP_2SRCS',`ADVANCE_EQSP_SRC1 ADVANCE_EQSP_SRC2')
 
 define(`ADVANCE_SLOW__1S',`')
-define(`ADVANCE_SLOW_SBM',`')
-define(`ADVANCE_SLOW_2SBM',`')
-define(`ADVANCE_SLOW_1SBM',`')
+define(`ADVANCE_SLOW_SBM',`/* BUG - advance_slow_sbm not implemented!? */')
+define(`ADVANCE_SLOW_2SBM',`/* BUG - advance_slow_2sbm not implemented!? */')
+
+
+dnl	BUG this 5 is N_DIMENSIONS...
+
+define(`ADVANCE_SLOW_1SBM',`							\
+	for(i=0;i<5;i++){							\
+		if( dbm_info_p->obj_size[i]>1 ){				\
+			sbm1_bit_idx[i] ++;					\
+			if( sbm1_bit_idx[i] >= dbm_info_p->obj_size[i] ){	\
+				sbm1_bit_idx[i] = 0;				\
+				need_carry=1;					\
+			} else {						\
+				need_carry=0;					\
+			}							\
+			if( ! need_carry ) i=5; /* end loop */			\
+		}								\
+	}									\
+')
+
 define(`ADVANCE_SLOW_1SBM_1S',`')
 define(`ADVANCE_SLOW_1SRC_1S',`ADVANCE_SLOW_SRC1')
 define(`ADVANCE_SLOW_1SRC',`ADVANCE_SLOW_SRC1')

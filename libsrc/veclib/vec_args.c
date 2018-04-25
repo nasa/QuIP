@@ -1047,7 +1047,7 @@ static void verify_gpu_bitmap_info(Data_Obj *dp)
 	(*PF_MEM_DNLOAD_FN( OBJ_PLATFORM(dp) ))(DEFAULT_QSP_ARG  bmi_p, BITMAP_OBJ_GPU_INFO_DEV_PTR(dp), BITMAP_GPU_INFO_SIZE(n_words_expected), 0 /* offset */, OBJ_PFDEV(dp) );
 	for(i=0;i<n_words_expected;i++){
 		// BUG - what should the format be here???
-		fprintf(stderr,"word %d   offset %d   indices %d %d %d %d %d   valid_bits 0x%lx\n",
+		fprintf(stderr,"word %d   offset %d   indices %d %d %d %d %d   valid_bits 0x%llx\n",
 			i,bmi_p->word_tbl[i].word_offset,
 			bmi_p->word_tbl[i].first_indices[0],
 			bmi_p->word_tbl[i].first_indices[1],
@@ -1128,7 +1128,7 @@ static void show_bitmap_gpu_info(QSP_ARG_DECL  Bitmap_GPU_Info *bmi_p)
 	for(i=0;i<BMI_N_WORDS(bmi_p);i++){
 		bmwi_p = BMI_WORD_INFO_P(bmi_p,i);
 		// BUG - get correct format!
-		sprintf(MSG_STR,"word %3d   offset %d   first bit %ld  comp %4d  col %4d   row %4d   frame %4d   seq %4d   mask = 0x%lx",
+		sprintf(MSG_STR,"word %3d   offset %d   first bit %lld  comp %4d  col %4d   row %4d   frame %4d   seq %4d   mask = 0x%llx",
 			i,BMWI_OFFSET(bmwi_p),
 			BMWI_FIRST_BIT_NUM(bmwi_p),
 			BMWI_FIRST_INDEX(bmwi_p,0),
@@ -1144,6 +1144,11 @@ static void show_bitmap_gpu_info(QSP_ARG_DECL  Bitmap_GPU_Info *bmi_p)
 
 #endif // JUST_FOR_DEBUGGING
 
+static Data_Obj *oldest_ancestor(Data_Obj *dp)
+{
+	if( OBJ_PARENT(dp) == NULL ) return dp;
+	return oldest_ancestor( OBJ_PARENT(dp) );
+}
 
 // Populate the structure used to help gpu kernel threads know which bits to twiddle
 //
@@ -1158,17 +1163,24 @@ void init_bitmap_gpu_info(Data_Obj *dp)
 	Bitmap_GPU_Info *bmi_p;
 	void *ptr;
 	int tot_siz;
+	Data_Obj *ancestor;	// oldest ancestor, for underlying dimensions
+	int i;
 
 fprintf(stderr,"init_bitmap_gpu_info BEGIN\n");
 	n_words_expected = bitmap_obj_word_count(dp);
-	//bmi_p = getbuf(sizeof(Bitmap_GPU_Info));
 	tot_siz = BITMAP_GPU_INFO_SIZE(n_words_expected);
-	bmi_p = getbuf( tot_siz);
+	bmi_p = getbuf(tot_siz);
 fprintf(stderr,"init_bitmap_gpu_info allocated host copy at 0x%lx\n",(long)bmi_p);
 	SET_BITMAP_OBJ_GPU_INFO_HOST_PTR(dp,bmi_p);
 
 	SET_BMI_N_WORDS(bmi_p,n_words_expected);
 	SET_BMI_STRUCT_SIZE(bmi_p,tot_siz);
+
+	ancestor = oldest_ancestor(dp);
+	for(i=0;i<N_DIMENSIONS;i++){
+		SET_BMI_DIMENSION(bmi_p,i,OBJ_DIMENSION(ancestor,i));
+	}
+
 	// BUG? should zero the block just to be safe?
 
 	// initialize the word index from bit0

@@ -120,9 +120,9 @@ dnl	define(`INIT_INDICES_DBM_SBM',`DECL_INDICES_DBM_SBM SET_INDICES_DBM_SBM')
 /******************** set_indices ***************************/
 
 define(`SET_INDICES_',`')
-define(`SET_INDICES_SBM',`')
-define(`SET_INDICES_2SBM',`')
-define(`SET_INDICES_1SBM',`')
+define(`SET_INDICES_SBM',`/* set_indices_sbm is not implemented!? - should be speed-dependent?? */')
+define(`SET_INDICES_2SBM',`/* set_indices_2sbm is not implemented!? - should be speed-dependent?? */')
+define(`SET_INDICES_1SBM',`/* set_indices_1sbm is not implemented!? - should be speed-dependent?? */')
 define(`SET_BITMAP_INDICES1_',`')
 define(`SET_BITMAP_INDICES2_',`')
 define(`SET_INDICES_1',`SET_INDEX(index1)')

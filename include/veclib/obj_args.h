@@ -143,6 +143,11 @@ typedef struct vector_arg {
 #define VARG_INCSET(varg)	((varg).varg_isp)
 #define VARG_EQSP_INC(varg)		((varg).varg_eqsp_inc)
 
+// In OpenCL the "pointers" to memory blocks aren't addresses, so we can't
+// do address arithmetic with them...  Thus for subimages and the like, we
+// have to pass the base address of the parent, plus an offset.
+// But for bitmaps the offset is encapsulated in bit0
+
 #ifdef HAVE_OPENCL
 #define VARG_OFFSET(varg)	((varg).varg_offset)
 #else // ! HAVE_OPENCL
@@ -379,10 +384,11 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define VA_SRC3_OFFSET(vap)		VA_SRC_OFFSET(vap,2)
 #define VA_SRC4_OFFSET(vap)		VA_SRC_OFFSET(vap,3)
 #define VA_SRC5_OFFSET(vap)		VA_SRC_OFFSET(vap,4)
-#define VA_SBM_OFFSET(vap)		VARG_OFFSET( VA_SBM(vap) )
-#define VA_SBM1_OFFSET(vap)		VARG_OFFSET( VA_SBM1(vap) )
-#define VA_SBM2_OFFSET(vap)		VARG_OFFSET( VA_SBM2(vap) )
-#define VA_DBM_OFFSET(vap)		VARG_OFFSET( VA_DBM(vap) )
+// Bitmaps get their offsets from bit0???
+//#define VA_SBM_OFFSET(vap)		VARG_OFFSET( VA_SBM(vap) )
+//#define VA_SBM1_OFFSET(vap)		VARG_OFFSET( VA_SBM1(vap) )
+//#define VA_SBM2_OFFSET(vap)		VARG_OFFSET( VA_SBM2(vap) )
+//#define VA_DBM_OFFSET(vap)		VARG_OFFSET( VA_DBM(vap) )
 
 #define VA_LENGTH(vap)			(vap)->va_len
 
@@ -533,10 +539,10 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define SET_VA_SRC3_OFFSET(vap,os)	SET_VA_SRC_OFFSET(vap,2,os)
 #define SET_VA_SRC4_OFFSET(vap,os)	SET_VA_SRC_OFFSET(vap,3,os)
 #define SET_VA_SRC5_OFFSET(vap,os)	SET_VA_SRC_OFFSET(vap,4,os)
-#define SET_VA_SBM_OFFSET(vap,os)	SET_VARG_OFFSET( VA_SBM(vap), os )
-#define SET_VA_SBM1_OFFSET(vap,os)	SET_VARG_OFFSET( VA_SBM1(vap), os )
-#define SET_VA_SBM2_OFFSET(vap,os)	SET_VARG_OFFSET( VA_SBM2(vap), os )
-#define SET_VA_DBM_OFFSET(vap,os)	SET_VARG_OFFSET( VA_DBM(vap), os )
+//#define SET_VA_SBM_OFFSET(vap,os)	SET_VARG_OFFSET( VA_SBM(vap), os )
+//#define SET_VA_SBM1_OFFSET(vap,os)	SET_VARG_OFFSET( VA_SBM1(vap), os )
+//#define SET_VA_SBM2_OFFSET(vap,os)	SET_VARG_OFFSET( VA_SBM2(vap), os )
+//#define SET_VA_DBM_OFFSET(vap,os)	SET_VARG_OFFSET( VA_DBM(vap), os )
 
 #define DECLARE_VA_SCALARS						\
 									\

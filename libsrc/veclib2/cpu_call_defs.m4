@@ -887,7 +887,7 @@ define(`INIT_BASES_SBM',`
 
 define(`INIT_BASES_SBM1',`
 	sbm1_ptr= VA_SRC_PTR(vap,0);
-	sbm1_base[3]=VA_SBM2_BIT0(vap);
+	sbm1_base[3]=VA_SBM1_BIT0(vap);
 ')
 
 define(`INIT_BASES_SBM2',`
