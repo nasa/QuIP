@@ -6,6 +6,8 @@ define(`GPU_INDEX_TYPE',`SLOW_GPU_INDEX_TYPE')
 define(`RAMP_IDX',`INDEX_SUM(ramp_idx)')
 dnl	define(`DECLARE_KERN_ARGS_DBM',`KERNEL_ARG_QUALIFIER bitmap_word *dbm, DECLARE_KERN_ARGS_DBM_GPU_INFO')
 
+define(`DECLARE_DBM_INDEX',`')
+
 define(`SCALE_INDEX',`					\
 	$1.d5_dim[0] *= $2.d5_dim[0];					\
 	$1.d5_dim[1] *= $2.d5_dim[1];					\
