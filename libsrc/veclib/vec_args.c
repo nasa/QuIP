@@ -16,7 +16,7 @@
 #define INVALID_WORD_TBL_IDX	INVALID_DIMENSION
 #define INVALID_WORD_IDX	INVALID_DIMENSION
 
-#define JUST_FOR_DEBUGGING	// extra debugging
+//#define JUST_FOR_DEBUGGING	// extra debugging
 
 static int get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
@@ -857,90 +857,6 @@ void show_vec_args(const Vector_Args *vap)
 	
 }
 
-#ifdef PAD_MINDIM
-static dimension_t slow_bitmap_word_count( Dimension_Set *dsp, Increment_Set *isp, bitnum_t bit0 )
-{
-	dimension_t bits_per_row, words_per_row;
-	dimension_t n;
-
-	assert( isp != NULL );
-// BUG llu format assumes bit_count_t is 64 bits
-fprintf(stderr,"varg_n_bitmap_bits (1):  dim[0] = %d, dim[1] = %d, inc[1] = %d, offset = %llu\n",DS_DIM(dsp,0),
-DS_DIM(dsp,1),INCREMENT(isp,1),bit0);
-
-	bits_per_row = 1 + (DS_DIM(dsp,0) * DS_DIM(dsp,1) - 1 ) * INCREMENT(isp,1);
-
-	// The number of words per row may need to be incremented, depending on the value of bit0
-	bits_per_row += bit0 % BITS_PER_BITMAP_WORD;
-
-	words_per_row = N_BITMAP_WORDS(bits_per_row);
-	n = words_per_row * DS_DIM(dsp,2) * DS_DIM(dsp,3) * DS_DIM(dsp,4) ;
-	return n;
-}
-
-static dimension_t eqsp_bitmap_word_count( Dimension_Set *dsp, incr_t eqsp_incr, bit_count_t bit0 )
-{
-	dimension_t bits_per_row, words_per_row;
-	dimension_t n;
-
-	assert(eqsp_incr>0);
-
-	bits_per_row = 1 + (DS_DIM(dsp,0) * DS_DIM(dsp,1) - 1 ) * eqsp_incr;
-	bits_per_row += bit0 % BITS_PER_BITMAP_WORD;
-
-	words_per_row = N_BITMAP_WORDS(bits_per_row);
-	n = words_per_row * DS_DIM(dsp,2) * DS_DIM(dsp,3) * DS_DIM(dsp,4) ;
-	return n;
-}
-
-static dimension_t fast_bitmap_word_count( Dimension_Set *dsp, bit_count_t offset )
-{
-	dimension_t n;
-	n = N_BITMAP_WORDS( DS_N_ELTS(dsp) + (offset%BITS_PER_BITMAP_WORD) );
-	return n;
-}
-#endif // ! PAD_MINDIM
-
-#ifdef FOOBAR
-// For bitmaps with an increment other than 1, we have to include the gaps within the rows
-// to determine the proper number of words
-
-dimension_t varg_bitmap_word_count(const Vector_Arg *varg_p)
-{
-#ifdef PAD_MINDIM
-	if(  VARG_INCSET(*varg_p) != NULL )
-		return slow_bitmap_word_count(VARG_DIMSET(*varg_p),VARG_INCSET(*varg_p),VARG_OFFSET(*varg_p));
-	else if ( VARG_EQSP_INC(*varg_p) > 0 )
-		return eqsp_bitmap_word_count(VARG_DIMSET(*varg_p),VARG_EQSP_INC(*varg_p),VARG_OFFSET(*varg_p));
-	else
-		return fast_bitmap_word_count(VARG_DIMSET(*varg_p),VARG_OFFSET(*varg_p));
-#else // ! PAD_MINDIM
-	// This can be very tricky because the word boundaries can fall anywhere...
-	// One case is where the gaps are in every case less than the word size, in that
-	// case all of the words are used.
-	//
-	// We have the offset (bit0), and dimensions and increments
-	dimension_t bits_per_dim, n_words;
-	dimension_t n;
-
-	assert( isp != NULL );
-
-	for(i=0;i<N_DIMENSIONS;i++){
-		dimension_t gap;
-		gap = INCREMENT(isp,i);
-	bits_per_row = 1 + (DS_DIM(dsp,0) * DS_DIM(dsp,1) - 1 ) * INCREMENT(isp,1);
-
-	// The number of words per row may need to be incremented, depending on the value of bit0
-	bits_per_row += bit0 % BITS_PER_BITMAP_WORD;
-
-	words_per_row = N_BITMAP_WORDS(bits_per_row);
-	n = words_per_row * DS_DIM(dsp,2) * DS_DIM(dsp,3) * DS_DIM(dsp,4) ;
-	return n;
-
-#endif // ! PAD_MINDIM
-}
-#endif // FOOBAR
-
 static void traverse_bitmap(Data_Obj *dp, dimension_t word_idx_arg, bitnum_t (*func)(Data_Obj *dp, bitnum_t bit_num, dimension_t word_idx) )
 {
 	dimension_t i,j,k,l,m;
@@ -1195,11 +1111,9 @@ void init_bitmap_gpu_info(Data_Obj *dp)
 	Data_Obj *ancestor;	// oldest ancestor, for underlying dimensions
 	int i;
 
-fprintf(stderr,"init_bitmap_gpu_info BEGIN\n");
 	n_words_expected = bitmap_obj_word_count(dp);
 	tot_siz = BITMAP_GPU_INFO_SIZE(n_words_expected);
 	bmi_p = getbuf(tot_siz);
-fprintf(stderr,"init_bitmap_gpu_info allocated host copy at 0x%lx\n",(long)bmi_p);
 	SET_BITMAP_OBJ_GPU_INFO_HOST_PTR(dp,bmi_p);
 
 	SET_BMI_N_WORDS(bmi_p,n_words_expected);
@@ -1227,7 +1141,6 @@ show_bitmap_gpu_info(DEFAULT_QSP_ARG  BITMAP_OBJ_GPU_INFO_HOST_PTR(dp) );
 	ptr = (*PF_MEM_ALLOC_FN( OBJ_PLATFORM(dp) ))(DEFAULT_QSP_ARG  OBJ_PFDEV(dp), BMI_STRUCT_SIZE(bmi_p), 0 );
 	assert( ptr != NULL );
 	SET_BITMAP_OBJ_GPU_INFO_DEV_PTR(dp,ptr);
-fprintf(stderr,"allocated platform mem at 0x%lx\n",(long)ptr);
 
 	// now copy to device
 	(*PF_MEM_UPLOAD_FN( OBJ_PLATFORM(dp) ))(DEFAULT_QSP_ARG

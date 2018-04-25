@@ -40,13 +40,13 @@ define(`DECL_INDICES_SRC1',`GPU_INDEX_TYPE index2;')
 define(`DECL_INDICES_SRC2',`GPU_INDEX_TYPE index3;')
 define(`DECL_INDICES_SRC3',`GPU_INDEX_TYPE index4;')
 define(`DECL_INDICES_SRC4',`GPU_INDEX_TYPE index5;')
-define(`DECL_INDICES_SBM',`GPU_INDEX_TYPE sbm_bit_idx;')
+define(`DECL_INDICES_SBM',`GPU_INDEX_TYPE sbm_bit_offset;')
 
 dnl These need to go in speed-specific files!
-dnl define(`DECL_INDICES_SBM1',`GPU_INDEX_TYPE sbm1_bit_idx; int i, need_carry;')
-dnl define(`DECL_INDICES_SBM2',`GPU_INDEX_TYPE sbm2_bit_idx;')
+dnl define(`DECL_INDICES_SBM1',`GPU_INDEX_TYPE sbm1_bit_offset; int i, need_carry;')
+dnl define(`DECL_INDICES_SBM2',`GPU_INDEX_TYPE sbm2_bit_offset;')
 
-define(`DECL_INDICES_SBM_',`GPU_INDEX_TYPE sbm_bit_idx;')
+define(`DECL_INDICES_SBM_',`GPU_INDEX_TYPE sbm_bit_offset;')
 
 define(`DECL_INDICES_2SBM',`DECL_INDICES_SBM1 DECL_INDICES_SBM2')
 define(`DECL_INDICES_1SBM',`DECL_INDICES_SBM1')
@@ -141,7 +141,7 @@ define(`SET_INDICES_SRC2',`index3 = index2;')
 define(`SET_INDICES_SRC3',`index4 = index3;')
 define(`SET_INDICES_SRC4',`index5 = index4;')
 define(`SET_BITMAP_INDICES1_SBM_',`')
-define(`SET_BITMAP_INDICES2_SBM_',`sbm_bit_idx = index1;')
+define(`SET_BITMAP_INDICES2_SBM_',`sbm_bit_offset = index1;')
 
 define(`SET_INDICES_2',`SET_INDICES_1 SET_INDICES_SRC1(index1)')
 define(`SET_INDICES_LUTMAP_B',`SET_INDICES_2')
@@ -172,7 +172,7 @@ dnl	define(`SET_INDICES_DBM_1SRC',`SET_INDICES_DBM SET_INDICES_1SRC')
 dnl	define(`SET_INDICES_DBM_1SRC_1S',`SET_INDICES_DBM_1SRC')
 dnl	define(`SET_INDICES_DBM_2SRCS',`SET_INDICES_DBM_1SRC SET_INDICES_SRC2')
 dnl	// Can't use SET_INDICES_SBM here...
-dnl	define(`SET_INDICES_DBM_SBM',`SET_INDICES_DBM sbm_bit_idx = dbm_bit_idx;')
+dnl	define(`SET_INDICES_DBM_SBM',`SET_INDICES_DBM sbm_bit_offset = dbm_bit_idx;')
 
 /**************** scale_indices ********************/
 
@@ -187,7 +187,7 @@ define(`SCALE_INDICES_SRC1',SCALE_INDEX(index2,inc2))
 define(`SCALE_INDICES_SRC2',SCALE_INDEX(index3,inc3))
 define(`SCALE_INDICES_SRC3',SCALE_INDEX(index4,inc4))
 define(`SCALE_INDICES_SRC4',SCALE_INDEX(index5,inc5))
-dnl define(`SCALE_INDICES_SBM',SCALE_INDEX(sbm_bit_idx,sbm_inc))
+dnl define(`SCALE_INDICES_SBM',SCALE_INDEX(sbm_bit_offset,sbm_inc))
 dnl define(`SCALE_INDICES_DBM',SCALE_INDEX(dbm_bit_idx,dbm_inc))
 define(`SCALE_INDICES_DBM',`')
 define(`SCALE_INDICES_SBM',`')

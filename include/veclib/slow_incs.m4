@@ -1,18 +1,17 @@
 
 suppress_if
 
-dnl SHOW_INCR(inc_p)
+dnl	SHOW_INCR(inc_p)
 
 define(`SHOW_INCR(inc_p)',`fprintf(stderr,"%s:  %d %d %d %d %d\n","$1", ($1)->d5_dim[0], ($1)->d5_dim[1], ($1)->d5_dim[2], ($1)->d5_dim[3], ($1)->d5_dim[4]);')
 
-dnl DECL_SLOW_INCRS(bitmap,vectors)
+dnl	DECL_SLOW_INCRS(bitmap,vectors)
 define(`DECL_SLOW_INCRS',DECL_SLOW_INCRS_$1$2)
-dnl SETUP_SLOW_INCS(bitmap,vectors)
+
+dnl	SETUP_SLOW_INCS(bitmap,vectors)
 define(`SETUP_SLOW_INCS',SETUP_SLOW_INCS_$1$2)
 
-dnl /* decl_slow_incrs_1 */
 define(`DECL_SLOW_INCRS_1',`dim5 dst_vwxyz_incr;')
-dnl /* `DECL_SLOW_INCRS_1' = DECL_SLOW_INCRS_1 */
 define(`DECL_SLOW_INCRS_SRC1',`dim5 s1_vwxyz_incr;')
 define(`DECL_SLOW_INCRS_SRC2',`dim5 s2_vwxyz_incr;')
 define(`DECL_SLOW_INCRS_SRC3',`dim5 s3_vwxyz_incr;')
@@ -77,12 +76,6 @@ define(`SETUP_SLOW_INCS_SBM1',`
 	sbm1_vwxyz_incr.d5_dim[2] = INCREMENT(VA_SRC1_INCSET(vap),2);
 	sbm1_vwxyz_incr.d5_dim[3] = INCREMENT(VA_SRC1_INCSET(vap),3);
 	sbm1_vwxyz_incr.d5_dim[4] = INCREMENT(VA_SRC1_INCSET(vap),4);
-fprintf(stderr,"setup_slow_incs_sbm1:  %d  %d  %d  %d  %d\n",
-sbm1_vwxyz_incr.d5_dim[4],
-sbm1_vwxyz_incr.d5_dim[3],
-sbm1_vwxyz_incr.d5_dim[2],
-sbm1_vwxyz_incr.d5_dim[1],
-sbm1_vwxyz_incr.d5_dim[0]);
 ')
 
 define(`SETUP_SLOW_INCS_SRC2',`
@@ -121,7 +114,7 @@ define(`SETUP_SLOW_INCS_SRC4',`
 	s4_vwxyz_incr.d5_dim[4] = INCREMENT(VA_SRC4_INCSET(vap),4);
 ')
 
-dnl BUG?  is this needed?
+dnl	BUG?  is this needed?
 
 define(`SETUP_SLOW_INCS_SRC5',`
 

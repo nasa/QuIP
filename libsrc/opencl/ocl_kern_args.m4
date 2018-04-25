@@ -5,28 +5,28 @@ define(`SET_KERNEL_SEPARATOR',`')
 
 dnl SHOW_KERNEL_ARG(type,value)
 
-define(`SHOW_KERNEL_ARG(type,value)',`
+define(`SHOW_KERNEL_ARG',`
 
 fprintf(stderr,"Setting kernel arg %d, with size %ld\n",
 ki_idx,sizeof($1));
-fprintf(stderr,"_SHOW_KERNEL_ARG( %s , %s )\n",#$1,#$2);
-if( !strcmp(#$1,"float") ) fprintf(stderr,"\tfloat arg = %g\n",
+fprintf(stderr,"_SHOW_KERNEL_ARG( %s , %s )\n","$1","$2");
+if( !strcmp("$1","float") ) fprintf(stderr,"\tfloat arg = %g\n",
 * ((float *)$2));
-else if( !strcmp(#$1,"int") ) fprintf(stderr,"\tint arg = %d\n",
+else if( !strcmp("$1","int") ) fprintf(stderr,"\tint arg = %d\n",
 * ((int *)$2));
-else if( !strcmp(#$1,"uint32_t") ) fprintf(stderr,"\tuint32_t arg = %d\n",
+else if( !strcmp("$1","uint32_t") ) fprintf(stderr,"\tuint32_t arg = %d\n",
 * ((uint32_t *)$2));
-else if( !strcmp(#$1,"int32_t") ) fprintf(stderr,"\tint32_t arg = %d\n",
+else if( !strcmp("$1","int32_t") ) fprintf(stderr,"\tint32_t arg = %d\n",
 * ((int32_t *)$2));
-else if( !strcmp(#$1,"void *") ) fprintf(stderr,"\tptr arg = 0x%lx (0x%lx)\n",
+else if( !strcmp("$1","void *") ) fprintf(stderr,"\tptr arg = 0x%lx (0x%lx)\n",
 (u_long)$2,(u_long)(*((void **)$2)));
-else if( !strcmp(#$1,"bitmap_word") ) fprintf(stderr,"\tbitmap word arg = 0x%lx\n",
+else if( !strcmp("$1","bitmap_word") ) fprintf(stderr,"\tbitmap word arg = 0x%lx\n",
 (/*bitmap_word*/u_long)$2);
-else if( !strcmp(#$1,"dim5") ) fprintf(stderr,"\tdim5 arg = %d %d %d %d %d\n",
+else if( !strcmp("$1","dim5") ) fprintf(stderr,"\tdim5 arg = %d %d %d %d %d\n",
 ((dim5 *)$2)->d5_dim[0],((dim5 *)$2)->d5_dim[1],((dim5 *)$2)->d5_dim[2],((dim5 *)$2)->d5_dim[3],((dim5 *)$2)->d5_dim[4]); 
-else fprintf(stderr,"\t_SHOW_KERNEL_ARG:  unhandled case for type %s\n",#$1);
+else fprintf(stderr,"\t_SHOW_KERNEL_ARG:  unhandled case for type %s\n","$1");
 
-/*else if( !strcmp(#$1,"dim3") ) fprintf(stderr,"\tdim3 arg = %d %d %d\n",
+/*else if( !strcmp("$1","dim3") ) fprintf(stderr,"\tdim3 arg = %d %d %d\n",
 ((dim3 *)$2)->x,((dim3 *)$2)->y,((dim3 *)$2)->z);
 */
 ')

@@ -88,12 +88,18 @@ Image ${1}_image $h $w 1 bit
 Subimage ${1}_inset ${1}_image $sw $sh $offset_x $offset_y
 Subimage ${1}_inset2 ${1}_image $sw2 $sh2 $offset_x+1 $offset_y+1
 Image ${1}_copy $sh $sw 1 bit
+Subimage ${1}_copy_inset ${1}_copy $sw-2 $sh-2 1 1
 
 VSet ${1}_image 1
 VSet ${1}_inset 0
 VSet ${1}_inset[0][1] 1
 VSet ${1}_inset2 1
 Display ${1}_image
+Pause
+
+VSet ${1}_copy 1
+VSet ${1}_copy_inset 0
+Display ${1}_copy
 Pause
 
 VMov ${1}_copy ${1}_inset

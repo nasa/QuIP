@@ -221,14 +221,14 @@ define(`ADVANCE_SLOW_SBM',`/* BUG - advance_slow_sbm not implemented!? */')
 
 define(`ADVANCE_SLOW_2SBM',`								\
 ADVANCE_SLOW_1SBM									\
-SLOW_BITMAP_ADVANCE_LOOP(sbm2_bit_idx,sbm2_inc)						\
+SLOW_BITMAP_ADVANCE_LOOP(sbm2_bit_offset,sbm2_inc)					\
 ')
 
 define(`SLOW_BITMAP_ADVANCE_LOOP',`							\
 	for(i=0;i<5;i++){								\
 		if( dbm_info_p->obj_size[i]>1 ){					\
 			$1.d5_dim[i] += $2.d5_dim[i];					\
-			if( $1.d5_dim[i] >= dbm_info_p->obj_size[i] ){			\
+			if( ($1.d5_dim[i]/$2.d5_dim[i]) >= dbm_info_p->obj_size[i] ){	\
 				$1.d5_dim[i] = 0;					\
 				need_carry=1;						\
 			} else {							\
@@ -244,7 +244,7 @@ define(`SLOW_BITMAP_ADVANCE_LOOP',`							\
 dnl	BUG this 5 is N_DIMENSIONS...
 
 define(`ADVANCE_SLOW_1SBM',`								\
-SLOW_BITMAP_ADVANCE_LOOP(sbm1_bit_idx,sbm1_inc)						\
+SLOW_BITMAP_ADVANCE_LOOP(sbm1_bit_offset,sbm1_inc)					\
 ')
 
 define(`ADVANCE_SLOW_1SBM_1S',`ADVANCE_SLOW_1SBM')

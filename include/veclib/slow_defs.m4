@@ -94,10 +94,10 @@ define(`SET_INDICES_DBM',`				\
 ')
 
 // For slow bitmap-to-bitmap operations, we need to know the x y etc coordinates
-// in order to compute the source bit.  src1_bit_idx etc
+// in order to compute the source bit.  sbm1_bit_offset etc
 // This is complicated because each thread handles a bitmap word,
 // which can span different rows - so the index has to be updated
-// for each iteration.  This may require adding more fields to the bitmap_gpu_info:
+// for each iteration.  This may required adding more fields to bitmap_gpu_info:
 // namely the dimensions of the whole thing, and the starting point (coordinates) for each word.
 
 
@@ -122,7 +122,7 @@ dnl	(At the moment we are not worrying about outer ops!)
 dnl	The dimensions of the object are passed in dbm_bitmap_gpu_info
 dnl	(or whatever it is called?), while each word has
 dnl	an array first_indices.  After we obtain the word index,
-dnl	we initialize sbm1_bit_idx from first indices;
+dnl	we initialize sbm1_bit_offset from first indices;
 dnl	as we advance through the loop, we need to increment,
 dnl	(the lowest non-1 dimension) and possibly carry
 dnl	to the next highest non-1 dimension...  messy!
@@ -132,23 +132,23 @@ dnl	happening AFTER dbm initialization, so we can use
 dnl	i_dbm_word and tbl_idx...
 
 define(`SET_INDICES_1SBM',`							\
-	sbm1_bit_idx.d5_dim[0] = dbm_info_p->word_tbl[tbl_idx].first_index[0];		\
-	sbm1_bit_idx.d5_dim[1] = dbm_info_p->word_tbl[tbl_idx].first_index[1];		\
-	sbm1_bit_idx.d5_dim[2] = dbm_info_p->word_tbl[tbl_idx].first_index[2];		\
-	sbm1_bit_idx.d5_dim[3] = dbm_info_p->word_tbl[tbl_idx].first_index[3];		\
-	sbm1_bit_idx.d5_dim[4] = dbm_info_p->word_tbl[tbl_idx].first_index[4];		\
+	sbm1_bit_offset.d5_dim[0] = dbm_info_p->word_tbl[tbl_idx].first_index[0];		\
+	sbm1_bit_offset.d5_dim[1] = dbm_info_p->word_tbl[tbl_idx].first_index[1];		\
+	sbm1_bit_offset.d5_dim[2] = dbm_info_p->word_tbl[tbl_idx].first_index[2];		\
+	sbm1_bit_offset.d5_dim[3] = dbm_info_p->word_tbl[tbl_idx].first_index[3];		\
+	sbm1_bit_offset.d5_dim[4] = dbm_info_p->word_tbl[tbl_idx].first_index[4];		\
 ')
 
 define(`SET_INDICES_2SBM',`							\
-	sbm2_bit_idx.d5_dim[0] = dbm_info_p->word_tbl[tbl_idx].first_index[0];		\
-	sbm2_bit_idx.d5_dim[1] = dbm_info_p->word_tbl[tbl_idx].first_index[1];		\
-	sbm2_bit_idx.d5_dim[2] = dbm_info_p->word_tbl[tbl_idx].first_index[2];		\
-	sbm2_bit_idx.d5_dim[3] = dbm_info_p->word_tbl[tbl_idx].first_index[3];		\
-	sbm2_bit_idx.d5_dim[4] = dbm_info_p->word_tbl[tbl_idx].first_index[4];		\
+	sbm2_bit_offset.d5_dim[0] = dbm_info_p->word_tbl[tbl_idx].first_index[0];		\
+	sbm2_bit_offset.d5_dim[1] = dbm_info_p->word_tbl[tbl_idx].first_index[1];		\
+	sbm2_bit_offset.d5_dim[2] = dbm_info_p->word_tbl[tbl_idx].first_index[2];		\
+	sbm2_bit_offset.d5_dim[3] = dbm_info_p->word_tbl[tbl_idx].first_index[3];		\
+	sbm2_bit_offset.d5_dim[4] = dbm_info_p->word_tbl[tbl_idx].first_index[4];		\
 ')
 
-define(`DECL_INDICES_SBM1',`GPU_INDEX_TYPE sbm1_bit_idx; int i; int need_carry;')
-define(`DECL_INDICES_SBM2',`GPU_INDEX_TYPE sbm2_bit_idx;')
+define(`DECL_INDICES_SBM1',`GPU_INDEX_TYPE sbm1_bit_offset; int i; int need_carry;')
+define(`DECL_INDICES_SBM2',`GPU_INDEX_TYPE sbm2_bit_offset;')
 
 
 dnl	 We need to know if we should do this bit...
@@ -160,20 +160,20 @@ dnl	 Here we add the row offset
 dnl	 But when adjust is called, the y increment has already been scaled.
 dnl	 should dbm_bit_idx have more than one dimension or not???
 
-define(`SET_SBM_WORD_IDX',`i_sbm_word=(sbm_bit_idx.d5_dim[1]+sbm_bit_idx.d5_dim[2])/BITS_PER_BITMAP_WORD;')
+define(`SET_SBM_WORD_IDX',`i_sbm_word=(sbm_bit_offset.d5_dim[1]+sbm_bit_offset.d5_dim[2])/BITS_PER_BITMAP_WORD;')
 
 dnl	This was old GPU defn???
 ifdef(`BUILD_FOR_GPU',`
-define(`srcbit',`(sbm_ptr[(INDEX_SUM(sbm_bit_idx)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((INDEX_SUM(sbm_bit_idx)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))')
-define(`srcbit1',`(sbm1_ptr[(INDEX_SUM(sbm1_bit_idx)+sbm1_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((INDEX_SUM(sbm1_bit_idx)+sbm1_bit0)&(BITS_PER_BITMAP_WORD-1)))')
-define(`srcbit2',`(sbm2_ptr[(INDEX_SUM(sbm2_bit_idx)+sbm2_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((INDEX_SUM(sbm2_bit_idx)+sbm2_bit0)&(BITS_PER_BITMAP_WORD-1)))')
+define(`srcbit',`(sbm_ptr[(INDEX_SUM(sbm_bit_offset)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((INDEX_SUM(sbm_bit_offset)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))')
+define(`srcbit1',`(sbm1_ptr[(INDEX_SUM(sbm1_bit_offset)+sbm1_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((INDEX_SUM(sbm1_bit_offset)+sbm1_bit0)&(BITS_PER_BITMAP_WORD-1)))')
+define(`srcbit2',`(sbm2_ptr[(INDEX_SUM(sbm2_bit_offset)+sbm2_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((INDEX_SUM(sbm2_bit_offset)+sbm2_bit0)&(BITS_PER_BITMAP_WORD-1)))')
 ',`	dnl	else ! build_for_gpu
 dnl	For cpu, bit0 is already in the base...
-dnl	define(`srcbit',`(sbm_ptr[sbm_bit_idx>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((sbm_bit_idx)&(BITS_PER_BITMAP_WORD-1)))')
+dnl	define(`srcbit',`(sbm_ptr[sbm_bit_offset>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((sbm_bit_offset)&(BITS_PER_BITMAP_WORD-1)))')
 dnl	Do we need separate GPU definitions?
-define(`srcbit',`((*(sbm_ptr + (sbm_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit_idx))')
-define(`srcbit1',`((*(sbm1_ptr + (sbm1_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm1_bit_idx))')
-define(`srcbit2',`((*(sbm2_ptr + (sbm2_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm2_bit_idx))')
+define(`srcbit',`((*(sbm_ptr + (sbm_bit_offset/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit_offset))')
+define(`srcbit1',`((*(sbm1_ptr + (sbm1_bit_offset/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm1_bit_offset))')
+define(`srcbit2',`((*(sbm2_ptr + (sbm2_bit_offset/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm2_bit_offset))')
 
 ')
 
