@@ -241,6 +241,7 @@ double _cast_from_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_
 
 void _cast_dbl_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,double val)
 {
+	assert(prec_p!=NULL);
 	(*(prec_p->cast_from_double_func))(QSP_ARG  svp,val);
 }
 

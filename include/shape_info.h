@@ -206,9 +206,9 @@ typedef struct bitmap_gpu_info {
 #define SET_BMI_STRUCT_SIZE(bmi_p,s)	(bmi_p)->total_size = s
 
 #define BMWI_OFFSET(bmwi_p)		(bmwi_p)->word_offset
-#define BMWI_FIRST_INDICES(bmwi_p)	(bmwi_p)->first_indices
-#define BMWI_FIRST_INDEX(bmwi_p,which)		BMWI_FIRST_INDICES(bmwi_p)[which]
-#define SET_BMWI_FIRST_INDEX(bmwi_p,which,v)	BMWI_FIRST_INDICES(bmwi_p)[which] = v
+#define BMWI_FIRST_INDEX_TBL(bmwi_p)	(bmwi_p)->first_index
+#define BMWI_FIRST_INDEX(bmwi_p,which)		BMWI_FIRST_INDEX_TBL(bmwi_p)[which]
+#define SET_BMWI_FIRST_INDEX(bmwi_p,which,v)	BMWI_FIRST_INDEX_TBL(bmwi_p)[which] = v
 
 #define BMWI_FIRST_BIT_NUM(bmwi_p)		(bmwi_p)->first_bit_num
 #define SET_BMWI_FIRST_BIT_NUM(bmwi_p,n)	(bmwi_p)->first_bit_num = n

@@ -132,29 +132,34 @@ dnl	happening AFTER dbm initialization, so we can use
 dnl	i_dbm_word and tbl_idx...
 
 define(`SET_INDICES_1SBM',`							\
-	sbm1_bit_idx[0] = dbm_info_p->word_tbl[tbl_idx].first_index[0];		\
-	sbm1_bit_idx[1] = dbm_info_p->word_tbl[tbl_idx].first_index[1];		\
-	sbm1_bit_idx[2] = dbm_info_p->word_tbl[tbl_idx].first_index[2];		\
-	sbm1_bit_idx[3] = dbm_info_p->word_tbl[tbl_idx].first_index[3];		\
-	sbm1_bit_idx[4] = dbm_info_p->word_tbl[tbl_idx].first_index[4];		\
+	sbm1_bit_idx.d5_dim[0] = dbm_info_p->word_tbl[tbl_idx].first_index[0];		\
+	sbm1_bit_idx.d5_dim[1] = dbm_info_p->word_tbl[tbl_idx].first_index[1];		\
+	sbm1_bit_idx.d5_dim[2] = dbm_info_p->word_tbl[tbl_idx].first_index[2];		\
+	sbm1_bit_idx.d5_dim[3] = dbm_info_p->word_tbl[tbl_idx].first_index[3];		\
+	sbm1_bit_idx.d5_dim[4] = dbm_info_p->word_tbl[tbl_idx].first_index[4];		\
 ')
 
 define(`SET_INDICES_2SBM',`							\
-	sbm2_bit_idx[0] = dbm_info_p->word_tbl[tbl_idx].first_index[0];		\
-	sbm2_bit_idx[1] = dbm_info_p->word_tbl[tbl_idx].first_index[1];		\
-	sbm2_bit_idx[2] = dbm_info_p->word_tbl[tbl_idx].first_index[2];		\
-	sbm2_bit_idx[3] = dbm_info_p->word_tbl[tbl_idx].first_index[3];		\
-	sbm2_bit_idx[4] = dbm_info_p->word_tbl[tbl_idx].first_index[4];		\
+	sbm2_bit_idx.d5_dim[0] = dbm_info_p->word_tbl[tbl_idx].first_index[0];		\
+	sbm2_bit_idx.d5_dim[1] = dbm_info_p->word_tbl[tbl_idx].first_index[1];		\
+	sbm2_bit_idx.d5_dim[2] = dbm_info_p->word_tbl[tbl_idx].first_index[2];		\
+	sbm2_bit_idx.d5_dim[3] = dbm_info_p->word_tbl[tbl_idx].first_index[3];		\
+	sbm2_bit_idx.d5_dim[4] = dbm_info_p->word_tbl[tbl_idx].first_index[4];		\
 ')
 
-// We need to know if we should do this bit...
-// From these definitions, it is not clear whether the rows are padded to be an 
-// integral number of words...
-//
-// We assume that i_dbm_word is initilized to dbm_bit_idx.x, before upscaling to the bit index.
-// Here we add the row offset
-// But when adjust is called, the y increment has already been scaled.
-// should dbm_bit_idx have more than one dimension or not???
+define(`DECL_INDICES_SBM1',`GPU_INDEX_TYPE sbm1_bit_idx; int i, need_carry;')
+define(`DECL_INDICES_SBM2',`GPU_INDEX_TYPE sbm2_bit_idx;')
+
+
+dnl	 We need to know if we should do this bit...
+dnl	 From these definitions, it is not clear whether the rows are padded to be an 
+dnl	 integral number of words...
+dnl	
+dnl	 We assume that i_dbm_word is initilized to dbm_bit_idx.x, before upscaling to the bit index.
+dnl	 Here we add the row offset
+dnl	 But when adjust is called, the y increment has already been scaled.
+dnl	 should dbm_bit_idx have more than one dimension or not???
+
 define(`SET_SBM_WORD_IDX',`i_sbm_word=(sbm_bit_idx.d5_dim[1]+sbm_bit_idx.d5_dim[2])/BITS_PER_BITMAP_WORD;')
 
 dnl	This was old GPU defn???

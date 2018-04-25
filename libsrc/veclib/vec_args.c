@@ -1046,14 +1046,14 @@ static void verify_gpu_bitmap_info(Data_Obj *dp)
 
 	(*PF_MEM_DNLOAD_FN( OBJ_PLATFORM(dp) ))(DEFAULT_QSP_ARG  bmi_p, BITMAP_OBJ_GPU_INFO_DEV_PTR(dp), BITMAP_GPU_INFO_SIZE(n_words_expected), 0 /* offset */, OBJ_PFDEV(dp) );
 	for(i=0;i<n_words_expected;i++){
-		// BUG - what should the format be here???
-		fprintf(stderr,"word %d   offset %d   indices %d %d %d %d %d   valid_bits 0x%llx\n",
+		// definitions of PRIx64 etc in inttypes.h
+		fprintf(stderr,"word %d   offset %d   indices %d %d %d %d %d   valid_bits 0x%"PRIx64"\n",
 			i,bmi_p->word_tbl[i].word_offset,
-			bmi_p->word_tbl[i].first_indices[0],
-			bmi_p->word_tbl[i].first_indices[1],
-			bmi_p->word_tbl[i].first_indices[2],
-			bmi_p->word_tbl[i].first_indices[3],
-			bmi_p->word_tbl[i].first_indices[4],
+			bmi_p->word_tbl[i].first_index[0],
+			bmi_p->word_tbl[i].first_index[1],
+			bmi_p->word_tbl[i].first_index[2],
+			bmi_p->word_tbl[i].first_index[3],
+			bmi_p->word_tbl[i].first_index[4],
 			bmi_p->word_tbl[i].valid_bits
 			);
 	}
@@ -1128,7 +1128,7 @@ static void show_bitmap_gpu_info(QSP_ARG_DECL  Bitmap_GPU_Info *bmi_p)
 	for(i=0;i<BMI_N_WORDS(bmi_p);i++){
 		bmwi_p = BMI_WORD_INFO_P(bmi_p,i);
 		// BUG - get correct format!
-		sprintf(MSG_STR,"word %3d   offset %d   first bit %lld  comp %4d  col %4d   row %4d   frame %4d   seq %4d   mask = 0x%llx",
+		sprintf(MSG_STR,"word %3d   offset %d   first bit %"PRId64"  comp %4d  col %4d   row %4d   frame %4d   seq %4d   mask = 0x%"PRIx64,
 			i,BMWI_OFFSET(bmwi_p),
 			BMWI_FIRST_BIT_NUM(bmwi_p),
 			BMWI_FIRST_INDEX(bmwi_p,0),

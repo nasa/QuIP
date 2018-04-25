@@ -28,6 +28,17 @@ define(`SET_INDICES_DBM',`			\
 	dbmi *= BITS_PER_BITMAP_WORD;		\
 ')
 
+define(`DECL_INDICES_SBM1',`GPU_INDEX_TYPE sbm1_bit_idx;')
+define(`DECL_INDICES_SBM2',`GPU_INDEX_TYPE sbm2_bit_idx;')
+
+define(`SET_INDICES_1SBM',`							\
+	sbm1_bit_idx = i_dbm_word * BITS_PER_BITMAP_WORD;			\
+')
+
+define(`SET_INDICES_2SBM',`							\
+	sbm2_bit_idx = i_dbm_word * BITS_PER_BITMAP_WORD;			\
+')
+
 define(`DECL_BASIC_INDICES_DBM',`		\
 	unsigned int i_dbm_bit;			\
 	int i_dbm_word; bitmap_word dbm_bit;	\

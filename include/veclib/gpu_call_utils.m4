@@ -41,11 +41,15 @@ define(`DECL_INDICES_SRC2',`GPU_INDEX_TYPE index3;')
 define(`DECL_INDICES_SRC3',`GPU_INDEX_TYPE index4;')
 define(`DECL_INDICES_SRC4',`GPU_INDEX_TYPE index5;')
 define(`DECL_INDICES_SBM',`GPU_INDEX_TYPE sbm_bit_idx;')
-define(`DECL_INDICES_SBM1',`GPU_INDEX_TYPE sbm1_bit_idx;')
-define(`DECL_INDICES_SBM2',`GPU_INDEX_TYPE sbm2_bit_idx;')
+
+dnl These need to go in speed-specific files!
+dnl define(`DECL_INDICES_SBM1',`GPU_INDEX_TYPE sbm1_bit_idx; int i, need_carry;')
+dnl define(`DECL_INDICES_SBM2',`GPU_INDEX_TYPE sbm2_bit_idx;')
+
+define(`DECL_INDICES_SBM_',`GPU_INDEX_TYPE sbm_bit_idx;')
+
 define(`DECL_INDICES_2SBM',`DECL_INDICES_SBM1 DECL_INDICES_SBM2')
 define(`DECL_INDICES_1SBM',`DECL_INDICES_SBM1')
-define(`DECL_INDICES_SBM_',`GPU_INDEX_TYPE sbm_bit_idx;')
 
 // dbm_bit_idx indexes the bit - from it, we have to compute the index of the word, and the bit mask
 // We have an integral number of words per row.
