@@ -507,14 +507,15 @@ define(`SET_BLOCKS_DBM_1SBM',`SET_BLOCKS_DBM_($1,$2)')
 
 dnl	SET_BLOCKS_SBM_(pdp,len_var)
 define(`SET_BLOCKS_SBM_',`
-	if( (VA_SBM_BIT0(vap)+$2) < BITS_PER_BITMAP_WORD ) {
-		n_threads_per_block.x = 1;
-		n_blocks.x = 1;
-	} else {
-		int nw;
-		nw = N_BITMAP_WORDS(VA_SBM_BIT0(vap)+$2);
-		SET_BLOCKS_FROM_LEN($1,nw)
-	}
+	/* set_blocks_sbm_ is a no-op */
+dnl	if( (VA_SBM_BIT0(vap)+$2) < BITS_PER_BITMAP_WORD ) {
+dnl		n_threads_per_block.x = 1;
+dnl		n_blocks.x = 1;
+dnl	} else {
+dnl		int nw;
+dnl		nw = N_BITMAP_WORDS(VA_SBM_BIT0(vap)+$2);
+dnl		SET_BLOCKS_FROM_LEN($1,nw)
+dnl	}
 ')
 
 dnl	GET_THREADS_PER_DBM_SBMBLOCK(pdp,len_var)

@@ -146,11 +146,11 @@ static Data_Obj *contig_obj(QSP_ARG_DECL  Data_Obj *dp)
 	if( IS_CONTIGUOUS(dp) ) return dp;
 	if( HAS_CONTIGUOUS_DATA(dp) ) return dp;
 
-advise("object is not contiguous, and does not have contiguous data, creating temp object for copy...");
-longlist(dp);
+//advise("object is not contiguous, and does not have contiguous data, creating temp object for copy...");
+//longlist(dp);
 
 	copy_dp = create_platform_copy(QSP_ARG   dp);
-longlist(copy_dp);
+//longlist(copy_dp);
 	return copy_dp;
 }
 
