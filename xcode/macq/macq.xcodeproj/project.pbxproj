@@ -219,6 +219,10 @@
 		7C14653B2097DD590055B598 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCFF3572019491700E8C860 /* fusion.c */; };
 		7C14653D2097DDAB0055B598 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C14653C2097DDAA0055B598 /* equivalence.c */; };
 		7C14653E2097DDB30055B598 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C14653C2097DDAA0055B598 /* equivalence.c */; };
+		7C14654320990D2E0055B598 /* termio.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C14654120990D280055B598 /* termio.c */; };
+		7C14654620990D6E0055B598 /* sigpush.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C14654420990D690055B598 /* sigpush.c */; };
+		7C14654820990FD40055B598 /* libtermcap.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C14654720990FD40055B598 /* libtermcap.tbd */; };
+		7C146549209910070055B598 /* libtermcap.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C14654720990FD40055B598 /* libtermcap.tbd */; };
 		7C152F991CA9FDDB007F2FA2 /* mac_startup.scr in Resources */ = {isa = PBXBuildFile; fileRef = 7C152F981CA9FDDB007F2FA2 /* mac_startup.scr */; };
 		7C2B11F41CA707520089B27A /* questions.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C2B11F31CA707520089B27A /* questions.c */; };
 		7C2B11F61CA707640089B27A /* pipe_support.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C2B11F51CA707640089B27A /* pipe_support.c */; };
@@ -806,6 +810,10 @@
 		7934D54619DB60E6003FA1FF /* polh_tbl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = polh_tbl.c; sourceTree = "<group>"; };
 		7934D54819DB6112003FA1FF /* polh_func.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = polh_func.c; sourceTree = "<group>"; };
 		7C14653C2097DDAA0055B598 /* equivalence.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = equivalence.c; sourceTree = "<group>"; };
+		7C14653F209906610055B598 /* quip_main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = quip_main.c; path = ../../../src/quip_main.c; sourceTree = "<group>"; };
+		7C14654120990D280055B598 /* termio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = termio.c; sourceTree = "<group>"; };
+		7C14654420990D690055B598 /* sigpush.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sigpush.c; sourceTree = "<group>"; };
+		7C14654720990FD40055B598 /* libtermcap.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libtermcap.tbd; path = usr/lib/libtermcap.tbd; sourceTree = SDKROOT; };
 		7C152F981CA9FDDB007F2FA2 /* mac_startup.scr */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = mac_startup.scr; path = ../../../macros/startup/mac_startup.scr; sourceTree = "<group>"; };
 		7C2B11F31CA707520089B27A /* questions.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = questions.c; sourceTree = "<group>"; };
 		7C2B11F51CA707640089B27A /* pipe_support.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pipe_support.c; sourceTree = "<group>"; };
@@ -889,7 +897,6 @@
 		7CE62D081DCC0A3A000FED59 /* container.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = container.c; sourceTree = "<group>"; };
 		7CE62D0A1DCC0A64000FED59 /* rbtree.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rbtree.c; sourceTree = "<group>"; };
 		7CE62D101DCC0CB5000FED59 /* qsh */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = qsh; sourceTree = BUILT_PRODUCTS_DIR; };
-		7CE62D121DCC0CB5000FED59 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		7CE62E2E1DCD5F54000FED59 /* quip_main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = quip_main.m; path = ../../../src/quip_main.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -899,6 +906,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7CDCA7251CC1941F004AD95C /* GLUT.framework in Frameworks */,
+				7C14654820990FD40055B598 /* libtermcap.tbd in Frameworks */,
 				7CDCA7151CC18D9D004AD95C /* OpenGL.framework in Frameworks */,
 				7C6CDBF91CBF7529001AC12F /* OpenCL.framework in Frameworks */,
 				7C653CBC1CA7326100F33A85 /* CoreVideo.framework in Frameworks */,
@@ -912,6 +920,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7C146549209910070055B598 /* libtermcap.tbd in Frameworks */,
 				7CE62D5B1DCD2C94000FED59 /* Foundation.framework in Frameworks */,
 				7CE62D5A1DCD2BED000FED59 /* AppKit.framework in Frameworks */,
 			);
@@ -934,7 +943,6 @@
 			isa = PBXGroup;
 			children = (
 				71AC49DA17E000A400AABB78 /* MacQuIP */,
-				7CE62D111DCC0CB5000FED59 /* qsh */,
 				71AC49D317E000A400AABB78 /* Frameworks */,
 				71AC49D217E000A400AABB78 /* Products */,
 			);
@@ -952,6 +960,7 @@
 		71AC49D317E000A400AABB78 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				7C14654720990FD40055B598 /* libtermcap.tbd */,
 				7CDCA7241CC1941F004AD95C /* GLUT.framework */,
 				7C6CDBFA1CBF7553001AC12F /* OpenGL.framework */,
 				7C6CDBF81CBF7529001AC12F /* OpenCL.framework */,
@@ -988,6 +997,7 @@
 		71AC49DB17E000A400AABB78 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				7C14653F209906610055B598 /* quip_main.c */,
 				7CE62E2E1DCD5F54000FED59 /* quip_main.m */,
 				7C152F981CA9FDDB007F2FA2 /* mac_startup.scr */,
 				7C63B38217E27A0E00CBA8CA /* mac_startup.enc */,
@@ -1034,6 +1044,7 @@
 		71AC49F217E0066800AABB78 /* interpreter */ = {
 			isa = PBXGroup;
 			children = (
+				7C14654120990D280055B598 /* termio.c */,
 				7CE62D0A1DCC0A64000FED59 /* rbtree.c */,
 				7CE62D081DCC0A3A000FED59 /* container.c */,
 				7C2B120D1CA709D80089B27A /* start_quip.c */,
@@ -1082,6 +1093,7 @@
 		71AC4A2517E00BCA00AABB78 /* unix */ = {
 			isa = PBXGroup;
 			children = (
+				7C14654420990D690055B598 /* sigpush.c */,
 				7C6CDBF31CBF7469001AC12F /* pipe_menu.c */,
 				7C2B12131CA70D100089B27A /* sched.c */,
 				71614B4518774928001AC360 /* stamps.c */,
@@ -1462,14 +1474,6 @@
 				7CDCA70F1CC16F84004AD95C /* glmenu.m */,
 			);
 			path = opengl;
-			sourceTree = "<group>";
-		};
-		7CE62D111DCC0CB5000FED59 /* qsh */ = {
-			isa = PBXGroup;
-			children = (
-				7CE62D121DCC0CB5000FED59 /* main.m */,
-			);
-			path = qsh;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1934,6 +1938,7 @@
 				7CE62D931DCD30F9000FED59 /* lutmap.c in Sources */,
 				7CE62DAC1DCD3191000FED59 /* plotmenu.m in Sources */,
 				7CE62DF01DCD398D000FED59 /* gl_util.c in Sources */,
+				7C14654320990D2E0055B598 /* termio.c in Sources */,
 				7CE62D7D1DCD308B000FED59 /* sampmenu.c in Sources */,
 				7CE62D4F1DCD145C000FED59 /* quipCanvas.m in Sources */,
 				7CE62D3E1DCD0CE2000FED59 /* menu.c in Sources */,
@@ -2007,6 +2012,7 @@
 				7CE62DE91DCD394B000FED59 /* vl2_utils.c in Sources */,
 				7CE62D251DCD0BDD000FED59 /* param.c in Sources */,
 				7CE62DDC1DCD385D000FED59 /* spread.c in Sources */,
+				7C14654620990D6E0055B598 /* sigpush.c in Sources */,
 				7CE62D1F1DCD0BC5000FED59 /* callback.c in Sources */,
 				7CE62D6C1DCD3030000FED59 /* dobj_menu.c in Sources */,
 				7CE62D661DCD3014000FED59 /* ascii.c in Sources */,
@@ -2331,7 +2337,10 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = YES;
-				"OTHER_CFLAGS[arch=*]" = "-DBUILD_FOR_MACOS";
+				"OTHER_CFLAGS[arch=*]" = (
+					"-DBUILD_FOR_MACOS",
+					"-DUSE_TTY",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -2361,7 +2370,10 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
-				"OTHER_CFLAGS[arch=*]" = "-DBUILD_FOR_MACOS";
+				"OTHER_CFLAGS[arch=*]" = (
+					"-DBUILD_FOR_MACOS",
+					"-DUSE_TTY",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

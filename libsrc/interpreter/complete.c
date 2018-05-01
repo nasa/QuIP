@@ -50,7 +50,12 @@
 #ifdef HAVE_TERMCAP
 // On the mac, termcap stuff uses curses?
 #ifdef HAVE_CURSES_H
+// When we build in Xcode, the curses.h header is automatically
+// included.  The include guard should prevent it from being
+// included twice, but for some reason it is, so we hack here to fix.
+#ifndef BUILD_FOR_MACOS
 #include <curses.h>
+#endif // ! BUILD_FOR_MACOS
 #endif /* HAVE_CURSES_H */
 #ifdef HAVE_TERM_H
 #include <term.h>

@@ -69,6 +69,8 @@
 #endif /* ! BUILD_FOR_WINDOWS */
 #endif /* ! BUILD_FOR IOS */
 
+
+
 #ifdef HAVE_LIBAVFORMAT
 #ifdef HAVE_LIBAVCODEC
 #define HAVE_AVI_SUPPORT
@@ -101,6 +103,14 @@
 
 // this is necessary for PRIxPTR to be recognized for C++
 #define __STDC_FORMAT_MACROS
+
+#ifdef BUILD_FOR_CMD_LINE
+#define TTY_CTL
+// HAVE_HISTORY is defined in config.h???
+#ifndef HAVE_HISTORY
+#define HAVE_HISTORY
+#endif // ! HAVE_HISTORY
+#endif // BUILD_FOR_CMD_LINE
 
 #endif /* ! _QUIP_CONFIG_H_ */
 

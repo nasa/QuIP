@@ -126,7 +126,8 @@ static int read_global_startup(QSP_ARG_DECL const char *progname)
 
 }
 
-#ifndef BUILD_FOR_OBJC
+//#ifndef BUILD_FOR_OBJC
+#ifdef BUILD_FOR_CMD_LINE
 
 /*
  * Contruct the name of the startup file based on the program name.
@@ -205,7 +206,8 @@ static char *try_default(QSP_ARG_DECL  char *progname) /* look for dotfile in de
 	return( try_directory(QUIP_DEFAULT_DIR,progname) );
 }
 
-#endif // BUILD_FOR_OBJC
+//#endif // ! BUILD_FOR_OBJC
+#endif // BUILD_FOR_CMD_LINE
 
 void rcfile( Query_Stack *qsp, char* progname )
 {
@@ -215,7 +217,8 @@ void rcfile( Query_Stack *qsp, char* progname )
 	// Should we make sure that the qsp has already been initialized?
 	set_progname(progname); 	/* this is for get_progfile */
 
-#ifndef BUILD_FOR_OBJC
+//#ifndef BUILD_FOR_OBJC
+#ifdef BUILD_FOR_CMD_LINE
 	// For unix, the user can put their own startup in:
 	// current directory, $STARTUP_DIRNAME, $HOME, and QUIP_DEFAULT_DIR (/usr/local/share/quip/macros/startup/)
 	strip_fullpath(&progname);	/* strip leading components */
@@ -224,7 +227,8 @@ void rcfile( Query_Stack *qsp, char* progname )
 	if( s == NULL ) s=try_user_spec(QSP_ARG  progname);
 	if( s == NULL ) s=try_home(QSP_ARG  progname);
 	if( s == NULL ) s=try_default(QSP_ARG  progname);
-#endif /* ! BUILD_FOR_OBJC */
+//#endif /* ! BUILD_FOR_OBJC */
+#endif /* BUILD_FOR_CMD_LINE */
 
 	/* Because these functions push the input but do not execute,
 	 * this one is interpreted first, because it is pushed last.
