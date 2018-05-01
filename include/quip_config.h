@@ -105,7 +105,9 @@
 #define __STDC_FORMAT_MACROS
 
 #ifdef BUILD_FOR_CMD_LINE
+#ifndef TTY_CTL
 #define TTY_CTL
+#endif // TTY_CTL
 // HAVE_HISTORY is defined in config.h???
 #ifndef HAVE_HISTORY
 #define HAVE_HISTORY

@@ -315,14 +315,14 @@ static void rdprms(QSP_ARG_DECL  Param *p,FILE* fp, const char *filename)
 	const char *s;
 
 	redir(fp, filename);
-	level=QLEVEL;
+	level=qs_level(SINGLE_QSP_ARG);
 	do {
 		s=nameof("name of parameter");
 		if( get_pval(QSP_ARG  s,p) == -1 )
 			warn("error getting parameter value");
 		/* lookahead word should decrement qlevel at EOF */
 		lookahead(SINGLE_QSP_ARG);
-	} while( level == QLEVEL );
+	} while( level == qs_level(SINGLE_QSP_ARG) );
 }
 
 

@@ -44,6 +44,7 @@
 #include "quip_prot.h"
 #include "serial.h"
 #include "my_stty.h"
+#include "quip_menu.h"
 #include "history.h"		/* simulate_typing */
 
 #ifdef TTY_CTL

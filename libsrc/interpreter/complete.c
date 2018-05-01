@@ -358,6 +358,8 @@ warn("ioctl FIONREAD - EINVAL");
  *
  * This used to be a static function, but if we are going to
  * call it externally, we probably ought to give it a more sensible name.
+ *
+ * There are references to X11 here - what about the native Mac implementation???  BUG!
  */
 
 void check_events(QSP_ARG_DECL  FILE *tty_in)

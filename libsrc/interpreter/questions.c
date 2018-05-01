@@ -12,6 +12,7 @@
 #include "query_prot.h"
 #include "nexpr.h"
 #include "history.h"
+#include "query_stack.h"	// PROMPT_FORMAT, QS_EXPAND_MACS
 
 ITEM_PICK_FUNC(Item_Type,ittyp)
 ITEM_PICK_FUNC(Macro,macro)
@@ -192,7 +193,9 @@ Item *_pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 	ip=item_of(itp,s);	// report_invalid_pick will complain, so don't need to here
 
 	if( ip == NULL ){
+#ifdef HAVE_HISTORY
 		_remove_from_history_list(QSP_ARG  prompt, s);
+#endif // HAVE_HISTORY
 		// list the valid items
 		report_invalid_pick(itp, s);
 	}
@@ -222,4 +225,44 @@ void init_item_hist( QSP_ARG_DECL  Item_Type *itp, const char* prompt )
 	init_hist_from_item_list(prompt,lp);
 }
 #endif /* HAVE_HISTORY */
+
+static inline void insure_prompt_buf(QSP_ARG_DECL  const char *fmt, const char *pmpt)
+{
+	int n_need;
+
+	n_need = (int) (strlen(fmt) + strlen(pmpt));
+	if( n_need > sb_size(QS_QRY_PROMPT_SB(THIS_QSP)) )
+		enlarge_buffer(QS_QRY_PROMPT_SB(THIS_QSP),n_need+32);
+}
+
+
+/* Make prompt takes a query string (like "number of elements") and
+ * prepends "Enter " and appends ":  ".
+ * We can inhibit this by clearing the flag.
+ *
+ * OLD COMMENT:
+ * but in that case we reset the flag after use,
+ * so that we can always assume the default behavior.
+ * - what does that mean?  should we reset the flag here???
+ */
+
+const char *_format_prompt(QSP_ARG_DECL  const char *fmt, const char *prompt)
+{
+	char *pline;
+
+	if( prompt == QS_QRY_PROMPT_STR(THIS_QSP) ){
+		return prompt;
+	}
+
+	insure_prompt_buf(QSP_ARG  fmt,prompt);
+	pline = sb_buffer(QS_QRY_PROMPT_SB(THIS_QSP));
+
+	if( QS_FLAGS(THIS_QSP) & QS_FORMAT_PROMPT ){
+		sprintf(pline,fmt,prompt);
+	} else {
+		strcpy(pline,prompt);
+	}
+
+	return pline;
+}
 

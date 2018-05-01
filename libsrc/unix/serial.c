@@ -45,6 +45,7 @@
 #include "quip_prot.h"
 #include "serial.h"
 #include "history.h"
+#include "query_stack.h"
 
 #ifdef NOT_SURE
 #include "stamps.h"

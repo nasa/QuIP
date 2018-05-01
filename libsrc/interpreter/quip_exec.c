@@ -2,6 +2,7 @@
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "history.h"
+#include "query_stack.h"
 #include "query_prot.h"
 
 static List *mf_list=NULL;

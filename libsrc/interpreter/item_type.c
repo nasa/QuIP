@@ -35,6 +35,7 @@
 #include "query_prot.h"
 #include "item_prot.h"
 #include "container.h"
+#include "stack.h"
 #include "debug.h"
 
 #ifdef QUIP_DEBUG
@@ -44,6 +45,8 @@ static u_long debug_contexts=CTX_DEBUG_MASK;
 
 #ifdef HAVE_HISTORY
 #include "history.h"	/* add_phist() */
+#else /* ! HAVE_HISTORY */
+#include "query_bits.h"	/* qldebug */
 #endif /* HAVE_HISTORY */
 
 /* local prototypes */
