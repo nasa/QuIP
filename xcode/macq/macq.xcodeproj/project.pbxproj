@@ -216,6 +216,9 @@
 		7934D54519DB5CF5003FA1FF /* polh_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7934D54419DB5CF5003FA1FF /* polh_menu.c */; };
 		7934D54719DB60E6003FA1FF /* polh_tbl.c in Sources */ = {isa = PBXBuildFile; fileRef = 7934D54619DB60E6003FA1FF /* polh_tbl.c */; };
 		7934D54919DB6112003FA1FF /* polh_func.c in Sources */ = {isa = PBXBuildFile; fileRef = 7934D54819DB6112003FA1FF /* polh_func.c */; };
+		7C14653B2097DD590055B598 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCFF3572019491700E8C860 /* fusion.c */; };
+		7C14653D2097DDAB0055B598 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C14653C2097DDAA0055B598 /* equivalence.c */; };
+		7C14653E2097DDB30055B598 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C14653C2097DDAA0055B598 /* equivalence.c */; };
 		7C152F991CA9FDDB007F2FA2 /* mac_startup.scr in Resources */ = {isa = PBXBuildFile; fileRef = 7C152F981CA9FDDB007F2FA2 /* mac_startup.scr */; };
 		7C2B11F41CA707520089B27A /* questions.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C2B11F31CA707520089B27A /* questions.c */; };
 		7C2B11F61CA707640089B27A /* pipe_support.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C2B11F51CA707640089B27A /* pipe_support.c */; };
@@ -802,6 +805,7 @@
 		7934D54419DB5CF5003FA1FF /* polh_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = polh_menu.c; sourceTree = "<group>"; };
 		7934D54619DB60E6003FA1FF /* polh_tbl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = polh_tbl.c; sourceTree = "<group>"; };
 		7934D54819DB6112003FA1FF /* polh_func.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = polh_func.c; sourceTree = "<group>"; };
+		7C14653C2097DDAA0055B598 /* equivalence.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = equivalence.c; sourceTree = "<group>"; };
 		7C152F981CA9FDDB007F2FA2 /* mac_startup.scr */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = mac_startup.scr; path = ../../../macros/startup/mac_startup.scr; sourceTree = "<group>"; };
 		7C2B11F31CA707520089B27A /* questions.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = questions.c; sourceTree = "<group>"; };
 		7C2B11F51CA707640089B27A /* pipe_support.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pipe_support.c; sourceTree = "<group>"; };
@@ -1093,6 +1097,7 @@
 		71AC4A4017E00FE100AABB78 /* dobj */ = {
 			isa = PBXGroup;
 			children = (
+				7C14653C2097DDAA0055B598 /* equivalence.c */,
 				7C2B120F1CA70AC80089B27A /* dobj_expr.c */,
 				71AC4A6117E0128B00AABB78 /* memops.c */,
 				71AC4A6217E0128B00AABB78 /* ops_menu.c */,
@@ -1833,6 +1838,7 @@
 				71614B3C18774639001AC360 /* fbmenu.m in Sources */,
 				71614B3E187746AF001AC360 /* genlock.c in Sources */,
 				71614B40187746FC001AC360 /* mouse.c in Sources */,
+				7C14653D2097DDAB0055B598 /* equivalence.c in Sources */,
 				71614B4218774821001AC360 /* serial.c in Sources */,
 				71614B4418774833001AC360 /* my_stty.c in Sources */,
 				71614B4618774928001AC360 /* stamps.c in Sources */,
@@ -1952,6 +1958,7 @@
 				7CE62D371DCD0CC4000FED59 /* debug.c in Sources */,
 				7CE62DE81DCD3948000FED59 /* fftsupp.c in Sources */,
 				7CE62E271DCD5DB7000FED59 /* soundmenu.c in Sources */,
+				7C14653B2097DD590055B598 /* fusion.c in Sources */,
 				7CE62DAE1DCD319B000FED59 /* viewer.m in Sources */,
 				7CE62D8B1DCD30D5000FED59 /* yuv2rgb.c in Sources */,
 				7CE62D301DCD0CA9000FED59 /* encrypt_funcs.c in Sources */,
@@ -2010,6 +2017,7 @@
 				7CE62D421DCD0CF5000FED59 /* substr.c in Sources */,
 				7CE62DD51DCD382F000FED59 /* stamps.c in Sources */,
 				7CE62D561DCD147B000FED59 /* ios_node.m in Sources */,
+				7C14653E2097DDB30055B598 /* equivalence.c in Sources */,
 				7CE62DE21DCD3870000FED59 /* dspread.c in Sources */,
 				7CE62D601DCD2FFB000FED59 /* sub_obj.c in Sources */,
 				7CE62DA81DCD317C000FED59 /* gen_win.m in Sources */,
