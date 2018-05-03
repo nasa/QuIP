@@ -5,6 +5,8 @@
 #include "data_obj.h"
 #include "fio_api.h"
 
+#define MAX_DEBUG	// enables WRAPPER_REPORT
+
 #ifdef HAVE_LIBSPINNAKER
 #include "SpinnakerC.h"
 #endif // HAVE_LIBSPINNAKER

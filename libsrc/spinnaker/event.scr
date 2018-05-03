@@ -130,13 +130,13 @@ advise "selecting $1"
   select $1
   info $1
   capture
-    advise "Setting up $2 buffers"
+    advise "Setting up $2 buffers for $1"
     set_n_buffers $2
     quit
   quit
 .
 
-Set cam_idx 1
+Set cam_idx 0
 Set cam_name cam$cam_idx
 
 spinnaker
@@ -158,11 +158,8 @@ spinnaker
 # There seems to be some sort of internal bug that bites us when we increase the number
 # of buffers???
 
-Setup_Grab $$cam_name 10	# default, works
-#Setup_Grab $$cam_name 11	# works
-#Setup_Grab $$cam_name 12	# works
-#Setup_Grab $$cam_name 13	# doesn't work
-#Setup_Grab $$cam_name 15	# doesn't work
+Setup_Grab $cam0 10	# default, works
+Setup_Grab $cam1 10	# default, works
 
 Set frm_idx 0
 Set n_test 300
