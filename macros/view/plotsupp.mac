@@ -78,9 +78,13 @@ Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
 Label_X_Ticks $xmin $xmax $x_tick_spacing
 .
 
+# Check to see if the variable exists - if not,
+# then set it to the provided default value
+
 Define Check_Var 2 varname default_value
+#If var_exists('$1') "advise 'Check_Var:  variable $1 already exists, with value $$1'"
 If !var_exists('$1')
-  "Set $1 $2"
+  "Set $1 $2 'Check_Var:  $1 set to default value $2"
 .
 
 Define Setup_X_Axis 0

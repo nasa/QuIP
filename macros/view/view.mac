@@ -517,16 +517,16 @@ If $showing "Label_Viewer v$1 '$2'"
 Define Save_Picture 3 image_name viewer_name string
 #advise "Save_Picture $1 $2 $3"
 Hips_Write_Directory $demo_img_dir
-Set vname serial.$2
-If !var_exists($vname) "Set serial.$2 1" 
-Set file_name $2.$$vname.hips2
-If $$vname==1
+Set var_name serial.$2
+If !var_exists($var_name) "Set serial.$2 1" 
+Set file_name $2.$$var_name.hips2
+If $$var_name==1
   Then "append no"
   Else "append yes"
 output_file $demo_img_dir/index.$2
-echo "$2 $$vname\t$1\t$3"
+echo "$2 $$var_name\t$1\t$3"
 
-Increment $vname
+Increment $var_name
 #Filetype hips2
 Put_Hips2 $1 $file_name
 #os Qstack quit
