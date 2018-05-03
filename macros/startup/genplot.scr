@@ -20,7 +20,7 @@ Set plot_name $1
 
 If $argc>1
   Then 'Set plot_param_dir $2'
-  Else 'Set plot_param_dir .'
+  Else 'Set plot_param_dir . advise "No plot_param_dir specified on command line, using ."'
 
 Declare_Plot_GUI
 

@@ -11,6 +11,7 @@ Define Init_Plot_GUI_Defaults 0
 Set plot_name default_plot	# should get plot name from cmd line?
 
 Set n_data_series 0
+Set n_embedded_images 0
 Set n_grids 0
 Set show_plot_legend 0
 Set plot_legend_text no_legend
@@ -39,12 +40,15 @@ Set tick_auto_widget_name "Standard Ticks"
 Set axis_logv_widget_name "Logarithmic Axis"
 Set axis_log_widget_name "Logarithmic Axis"	# obsolete
 Set data_panel "Data"
+Set image_panel "Image"
 Set grid_panel "Grid"
 Set data_edit_panel "Edit Data Series"
+Set image_edit_panel "Edit Embedded Image"
 Set grid_edit_panel "Edit Data Grid"
 Set save_panel "Save Plot Image"
 
 Set series_nickname_widget_name	"Nickname"
+Set image_nickname_widget_name	"Nickname"
 Set grid_nickname_widget_name	"Nickname"
 
 Set plot_frame_toggle_widget_name 'Frame'
@@ -58,6 +62,10 @@ Set data_legend_toggle_widget_name 'Legend'
 Set data_legend_text_widget_name 'Data legend text'
 Set data_legend_x_widget_name 'Data legend X'
 Set data_legend_y_widget_name 'Data legend Y'
+
+Set image_source_file_widget_name 'Image file'
+Set image_posn_x_widget_name 'Origin X'
+Set image_posn_y_widget_name 'Origin Y'
 
 Set grid_source_file_widget_name 'Source file'
 
@@ -78,6 +86,9 @@ Set series_show_legend	0
 Set series_legend_text no_legend
 Set series_legend_x 0
 Set series_legend_y 0
+
+Set image_posn_x 0
+Set image_posn_y 0
 
 Set grid_line_thickness 1
 Set grid_symbol_size 4
@@ -103,11 +114,11 @@ Set y_axis_max 1
 Set y_axis_logv 0
 
 Set x_tick__spacing 1
-Set x_tick_first 0
+#Set x_tick_first 0	# shouldn't this default to xmin?
 Set x_tick_auto 1
 
 Set y_tick__spacing 0.2
-Set y_tick_first 0
+#Set y_tick_first 0
 Set y_tick_auto 1
 
 Set x_axis_legend 'text abcissa'
@@ -248,7 +259,6 @@ Get_Series_Legend_Coords
 If strcmp('$series_symbol','none')
   "$series_symbol $series_legend_symbol_x $series_legend_symbol_y $symbol_size"
 Plot_Legend_Line
-#advise "Refresh_Series_Legend DONE"
 .
 
 Define Plot_Legend_Line 0
@@ -319,6 +329,7 @@ Set $api_axis_max_name $$axis_max_name
 Set $api_axis_legend_name $$axis_legend_name
 
 Set $api_tick_spacing_name $$tick_spacing_name
+Check_Var $tick_first_name $$axis_min_name
 Assign $api_tick_first_name $$tick_first_name-$$axis_min_name	# api uses offset, not first posn
 .
 
@@ -351,6 +362,7 @@ Define Refresh_Plot 0
 If !$plot_ready exit_macro
 #advise "Refresh_Plot BEGIN"
 Erase_Plot
+If $n_embedded_images>0 Embed_Images
 Select_Pen $black
 If $show_frame Draw_Frame
 Install_Both_Axis_Vars
@@ -360,7 +372,6 @@ Refresh_Data
 #advise "Refresh_Plot:  refreshing grids..."
 Refresh_Grids
 Draw_Plot_Legend
-#advise "Refresh_Plot DONE"
 .
 
 Define Draw_Frame 0
@@ -395,6 +406,11 @@ Panel_On $axis_panel_name
 Define DataPanel 0
 Panel_Off $main_panel
 Panel_On $data_panel
+.
+
+Define ImagePanel 0
+Panel_Off $main_panel
+Panel_On $image_panel
 .
 
 Define GridPanel 0
@@ -450,6 +466,10 @@ Define SelectSeries 0
 Set selected_series_nickname $selection
 .
 
+Define SelectImage 0
+Set selected_image_nickname $selection
+.
+
 Define SelectGrid 0
 Set selected_grid_nickname $selection
 .
@@ -500,6 +520,18 @@ Panel_Off $data_panel
 Panel_On $data_edit_panel
 .
 
+# AddImage - create a new series
+
+Define AddImage 0
+Increment n_embedded_images
+Set curr_image_name image_$n_embedded_images
+Set image_nickname $curr_image_name	# default
+Update_Edit_Text $image_nickname_widget_name $image_nickname $image_edit_panel
+Update_Edit_Text $image_source_file_widget_name '(no file specified)' $image_edit_panel
+Panel_Off $image_panel
+Panel_On $image_edit_panel
+.
+
 Define AddGrid 0
 Increment n_grids
 Set curr_grid_name grid_$n_grids
@@ -540,6 +572,11 @@ Update_Toggle $plot_frame_toggle_widget_name $show_frame $gen_panel
 Update_Toggle $plot_legend_toggle_widget_name $show_plot_legend $gen_panel
 Panel_Off $main_panel
 Panel_On $gen_panel
+.
+
+Define No_Image_Msg 0
+If $n_embedded_images==0 "advise 'Please create a new embedded image' exit_macro"
+advise 'Please select an image'
 .
 
 Define No_Series_Msg 0
@@ -611,6 +648,20 @@ Store_Series_Var $1 legend_x
 Store_Series_Var $1 legend_y
 .
 
+Define Load_Image_Vars 1 image_name
+Load_Image_Var $1 filename
+Load_Image_Var $1 nickname
+Load_Image_Var $1 posn_x
+Load_Image_Var $1 posn_y
+.
+
+Define Store_Image_Vars 1 image_name
+Store_Image_Var $1 filename
+Store_Image_Var $1 nickname
+Store_Image_Var $1 posn_x
+Store_Image_Var $1 posn_y
+.
+
 Define Load_Grid_Vars 1 grid_name
 Load_Grid_Var $1 filename
 Load_Grid_Var $1 nickname
@@ -640,6 +691,10 @@ Define Load_Series_Var 2 series_name varname
 Load_Stem_Var $1 $2 series
 .
 
+Define Load_Image_Var 2 image_name varname
+Load_Stem_Var $1 $2 image
+.
+
 Define Load_Grid_Var 2 series_name varname
 Load_Stem_Var $1 $2 grid
 .
@@ -653,6 +708,10 @@ Set $dst_vname $$src_vname	# Set series_filename $series_1_filename
 
 Define Store_Series_Var 2 series_name varname
 Store_Stem_Var $1 $2 series
+.
+
+Define Store_Image_Var 2 image_name varname
+Store_Stem_Var $1 $2 image
 .
 
 Define Store_Grid_Var 2 series_name varname
@@ -672,6 +731,17 @@ Set i 1
 repeat $n_data_series
   Set vname series_${i}_nickname
   If !strcmp('$1','$$vname') "Set curr_series_name series_$i exit_macro"
+  Increment i
+  end
+.
+
+Define Find_Image_From_Nickname 1 nickname
+Set curr_image_name no_image
+If $n_embedded_images==0 exit_macro
+Set i 1
+repeat $n_embedded_images
+  Set vname image_${i}_nickname
+  If !strcmp('$1','$$vname') "Set curr_image_name image_$i exit_macro"
   Increment i
   end
 .
@@ -714,6 +784,25 @@ Panel_On $data_edit_panel
 .
 
 
+Define EditImage 0
+If !strcmp('$selected_image_nickname','no_image') "No_Image_Msg exit_macro"
+Find_Image_From_Nickname $selected_image_nickname
+If !strcmp('$curr_image_name','no_image') "advise 'Could not find image with nickname $selected_image_nickname!?' exit_macro"
+Load_Image_Vars $curr_image_name
+interface
+  decorate $image_edit_panel
+    set_edit_text $image_nickname_widget_name $image_nickname
+    set_edit_text $image_source_file_widget_name $image_filename
+    set_edit_text $image_posn_x_widget_name $image_posn_x
+    set_edit_text $image_posn_y_widget_name $image_posn_y
+
+    quit
+  quit
+Panel_Off $image_panel
+Panel_On $image_edit_panel
+.
+
+
 Define EditGrid 0
 If !strcmp('$selected_grid_nickname','no_grid') "No_Series_Msg exit_macro"
 Find_Grid_From_Nickname $selected_grid_nickname
@@ -736,12 +825,20 @@ Panel_On $grid_edit_panel
 .
 
 
+Define SetImageNickname 0
+Get_Text_Var $image_edit_panel $image_nickname_widget_name image_nickname
+.
+
 Define SetSeriesNickname 0
 Get_Text_Var $data_edit_panel $series_nickname_widget_name series_nickname
 .
 
 Define SetGridNickname 0
 Get_Text_Var $grid_edit_panel $grid_nickname_widget_name grid_nickname
+.
+
+Define SetImageSourceFile 0
+Get_Text_Var $image_edit_panel $image_source_file_widget_name image_filename
 .
 
 Define SetSeriesSourceFile 0
@@ -769,6 +866,14 @@ Get_Text_Var $data_edit_panel $data_legend_x_widget_name series_legend_x
 #Load_Series_Vars $curr_series_name
 .
 
+Define SetImageOriginX 0
+Get_Text_Var $image_edit_panel $image_posn_x_widget_name image_posn_x
+.
+
+Define SetImageOriginY 0
+Get_Text_Var $image_edit_panel $image_posn_y_widget_name image_posn_y
+.
+
 Define SetDataLegendY 0
 Get_Text_Var $data_edit_panel $data_legend_y_widget_name series_legend_y
 #Store_Series_Vars $curr_series_name
@@ -776,10 +881,16 @@ Get_Text_Var $data_edit_panel $data_legend_y_widget_name series_legend_y
 #Load_Series_Vars $curr_series_name
 .
 
-Define EditRefreshPlot 0
+Define DataEditRefreshPlot 0
 Store_Series_Vars $curr_series_name
 Refresh_Plot
 Load_Series_Vars $curr_series_name
+.
+
+Define ImageEditRefreshPlot 0
+Store_Image_Vars $curr_image_name
+Refresh_Plot
+Load_Image_Vars $curr_image_name
 .
 
 Define SetGridSourceFile 0
@@ -868,6 +979,18 @@ repeat $n_data_series
 #Print $1
 .
 
+Define Make_Image_List_Cmd 1 varname
+If $n_embedded_images<1 "Set $1 nop exit_macro"
+Set $1 "items 'Embedded Images' $n_embedded_images"
+Set i 1
+repeat $n_embedded_images
+  Set vname image_${i}_nickname
+  Set $1 "$$1 $$vname"
+  Increment i
+  end
+#Print $1
+.
+
 Define Make_Grid_List_Cmd 1 varname
 If $n_grids<1 "Set $1 nop exit_macro"
 Set $1 "items 'Grid Data' $n_grids"
@@ -885,6 +1008,15 @@ Make_Series_List_Cmd cmd
 #Print cmd
 interface
   decorate $data_panel
+    interpret $cmd
+    quit
+  quit
+.
+
+Define Update_Image_Choices 0
+Make_Image_List_Cmd cmd
+interface
+  decorate $image_panel
     interpret $cmd
     quit
   quit
@@ -910,6 +1042,15 @@ Panel_On $data_panel
 Refresh_Data
 .
 
+Define ImageEditDone 0
+Store_Image_Vars $curr_image_name
+Update_Image_Choices
+Panel_Off $image_edit_panel
+Panel_On $image_panel
+Refresh_Data
+.
+
+
 Define GridEditDone 0
 #Print curr_grid_name
 Store_Grid_Vars $curr_grid_name
@@ -931,6 +1072,8 @@ Save_YAxis_Params
 echo ' '
 Save_Data_Params
 echo ' '
+Save_Image_Params
+echo ' '
 Save_Grid_Params
 output_file -
 .
@@ -942,7 +1085,6 @@ If !file_exists('$plot_param_dir')
   'error_exit "plot_param_dir $plot_param_dir does not exist!?"'
 If !is_directory('$plot_param_dir')
   'error_exit "plot_param_dir $plot_param_dir is not a directory!?"'
-advise "plot_param_dir specified as $plot_param_dir"
 .
 
 Define Get_Plot_Param_Filename 1 plot_name
@@ -990,6 +1132,7 @@ echo "Loading plot parameters from file $1..."
 < $1
 #Print n_data_series
 Update_Series_Choices
+Update_Image_Choices
 Update_Grid_Choices
 Update_Main_Panel
 If $old_plot_w!=$plot_w||$old_plot_h!=$plot_h Redo_Window
@@ -1044,6 +1187,11 @@ Set vname series_${1}_$2
 Save_Param $vname
 .
 
+Define Save_Image_Param 2 idx varname
+Set vname image_${1}_$2
+Save_Param $vname
+.
+
 Define Save_Grid_Param 2 idx varname
 Set vname grid_${1}_$2
 Save_Param $vname
@@ -1080,6 +1228,22 @@ repeat $n_data_series
   Increment i
   end
 .
+
+Define Save_Image_Params 0
+Save_Param n_embedded_images
+Set i 1
+If $n_embedded_images<1 exit_macro
+repeat $n_embedded_images
+  echo ' '
+  Save_Image_Param $i nickname
+  Save_Image_Param $i filename
+  Save_Image_Param $i posn_x
+  Save_Image_Param $i posn_y
+
+  Increment i
+  end
+.
+
 
 Define Save_Grid_Params 0
 Save_Param n_grids
@@ -1524,6 +1688,14 @@ interface
     button Done 'Panel_Off $data_panel Panel_On $main_panel'
     quit
 
+  panel $image_panel $panel_w $panel_h
+  decorate $image_panel
+    button 'Add Image' AddImage
+    scroller 'Embedded Images' SelectImage
+    button 'Edit Image' EditImage
+    button Done 'Panel_Off $image_panel Panel_On $main_panel'
+    quit
+
   panel $grid_panel $panel_w $panel_h
   decorate $grid_panel
     #chooser 'Data Series' SelectSeries 1 no_series
@@ -1541,7 +1713,7 @@ interface
     text $data_legend_text_widget_name SetDataLegendText no_legend
     text $data_legend_x_widget_name SetDataLegendX 0
     text $data_legend_y_widget_name SetDataLegendY 0
-    button 'Refresh_Plot' EditRefreshPlot
+    button 'Refresh_Plot' DataEditRefreshPlot
     button Done SeriesEditDone
     position 120 20
     chooser Color SetSeriesColor 10 white black red blue green cyan yellow dark_yellow magenta gray
@@ -1549,6 +1721,16 @@ interface
     chooser Symbol SetSeriesSymbol 5 none Square Disk Triangle Diamond
     chooser 'Symbol Size' SetSymbolSize 4    3 4 5 6
     chooser 'Line Thickness' SetLineThickness 5 0 1 2 3 4
+    quit
+
+  panel $image_edit_panel $panel_w $panel_h
+  decorate $image_edit_panel
+    text $image_nickname_widget_name SetImageNickname imageNNN
+    text $image_source_file_widget_name SetImageSourceFile /dev/null	# Use file chooser?
+    text $image_posn_x_widget_name SetImageOriginX 0
+    text $image_posn_y_widget_name SetImageOriginY 0
+    button 'Refresh_Plot' ImageEditRefreshPlot
+    button Done ImageEditDone
     quit
 
   panel $grid_edit_panel $panel_w $panel_h
@@ -1585,6 +1767,7 @@ interface
     button 'X axis' XAxisPanel
     button 'Y axis' YAxisPanel
     button 'Data' DataPanel
+    button 'Images' ImagePanel
     button 'Grids' GridPanel
     button 'Refresh Preview' Refresh_Plot
     button 'Save plot params' SavePlotParams
@@ -1609,6 +1792,25 @@ Select_Pen $black
 Legend_Font
 Center_Text
 S_At "$plot_legend_text" $plot_legend_x $plot_legend_y
+.
+
+Define Embed_Images 0
+Set idx 1
+repeat $n_embedded_images
+  Load_Image_Vars image_$idx	# is this correct???
+  Embed_One_Image $image_filename $image_posn_x $image_posn_y
+  end
+.
+
+Define Embed_One_Image 3 filename x y
+If !file_exists('$1') "warn 'No image file $1!?' exit_macro"
+Read_File_Header $1
+Image eoi_tmp nrows('$1') ncols('$1') depth('$1') u_byte
+Get_Next eoi_tmp $1
+view
+  embed Plot_Preview eoi_tmp $image_posn_x nrows(Plot_Preview)-$image_posn_y-nrows(eoi_tmp)
+  quit
+Delete_Image eoi_tmp
 .
 
 
