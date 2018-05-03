@@ -48,10 +48,26 @@ static int expect_exact_count=1;
 	release_ram_obj_for_writing(QSP_ARG  ram_dp, dp);
 
 #define DNAME_PREFIX "downloaded_"
-#define CNAME_PREFIX "continguous_"
-#define INDEX_SUFFIX "_subscripted"
+#define CNAME_PREFIX "contiguous_"
 
-#define IS_SUBSCRIPT_DELIMITER(c)	( (c)=='[' || (c)=='{' )
+#define IS_SUBSCRIPT_DELIMITER(c)	( (c)=='[' || (c)=='{' || (c)==']' || c=='}' )
+
+static char *get_temp_name(const char *prefix, const char *name )
+{
+	char *s, *buf;
+
+	buf = getbuf( strlen(name) + strlen(prefix) + 1 );
+	sprintf(buf,"%s%s",prefix,name);
+
+	// replace index delimiters with underscores...
+	s=buf;
+	while(*s){
+		if( IS_SUBSCRIPT_DELIMITER(*s) )
+			*s = '_';
+		s++;
+	}
+	return buf;
+}
 
 void release_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
 {
@@ -63,21 +79,9 @@ static Data_Obj *create_ram_copy(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Data_Area *save_ap;
 	Data_Obj *tmp_dp;
-	char *tmp_name, *dst;
-	const char *src;
+	char *tmp_name;
 
-	tmp_name = getbuf( strlen(OBJ_NAME(dp)) + strlen(DNAME_PREFIX) + strlen(INDEX_SUFFIX) + 1 );
-
-	strcpy(tmp_name,DNAME_PREFIX);
-	src=OBJ_NAME(dp);
-	dst=tmp_name+strlen(DNAME_PREFIX);
-	while( *src && ! IS_SUBSCRIPT_DELIMITER(*src) ){
-		*dst++ = *src++;
-	}
-	*dst = 0;
-	if( IS_SUBSCRIPT_DELIMITER(*src) ){
-		strcat(tmp_name,INDEX_SUFFIX);
-	}
+	tmp_name = get_temp_name(DNAME_PREFIX,OBJ_NAME(dp));
 
 	save_ap = curr_ap;
 	curr_ap = ram_area_p;
@@ -95,10 +99,10 @@ static Data_Obj *create_platform_copy(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Data_Area *save_ap;
 	Data_Obj *contig_dp;
-	char *tname;
+	const char *tname;
 
-	tname = getbuf( strlen(OBJ_NAME(dp)) + strlen(CNAME_PREFIX) + 1 );
-	sprintf(tname,"%s%s",CNAME_PREFIX,OBJ_NAME(dp));
+	tname = get_temp_name(CNAME_PREFIX,OBJ_NAME(dp));
+	assert(tname!=NULL);
 
 	save_ap = curr_ap;
 	curr_ap = OBJ_AREA( dp );
@@ -119,7 +123,8 @@ static void copy_platform_data(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp)
 	setvarg2(oap,dst_dp,src_dp);
 	if( IS_BITMAP(src_dp) ){
 		SET_OA_SBM(oap,src_dp);
-		SET_OA_SRC1(oap,NULL);
+		// SRC1 gets referenced???
+		//SET_OA_SRC1(oap,NULL);
 	}
 
 	if( IS_REAL(src_dp) ) /* BUG case for QUAT too? */
@@ -136,13 +141,17 @@ static void copy_platform_data(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp)
 
 static Data_Obj *contig_obj(QSP_ARG_DECL  Data_Obj *dp)
 {
+	Data_Obj *copy_dp;
+
 	if( IS_CONTIGUOUS(dp) ) return dp;
 	if( HAS_CONTIGUOUS_DATA(dp) ) return dp;
 
-advise("object is not contiguous, and does not have contiguous data, creating temp object for copy...");
-longlist(dp);
+//advise("object is not contiguous, and does not have contiguous data, creating temp object for copy...");
+//longlist(dp);
 
-	return create_platform_copy(QSP_ARG   dp);
+	copy_dp = create_platform_copy(QSP_ARG   dp);
+//longlist(copy_dp);
+	return copy_dp;
 }
 
 static Data_Obj *contig_obj_with_data(QSP_ARG_DECL  Data_Obj *dp)

@@ -1,6 +1,6 @@
 // This version hand edited to work with iOS
-#ifndef _IOS_CONFIG_H_
-#define _IOS_CONFIG_H_
+#ifndef _MAC_CONFIG_H_
+#define _MAC_CONFIG_H_
 
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
@@ -156,9 +156,6 @@
 
 /* GNU Scientific Library support enabled */
 //#define HAVE_GSL 1
-
-/* response history enabled */
-#define HAVE_HISTORY 1
 
 /* Define to 1 if you have the <ieeefp.h> header file. */
 /* #undef HAVE_IEEEFP_H */
@@ -360,7 +357,7 @@
 #define HAVE_SELECT 1
 
 /* Define to 1 if you have the <signal.h> header file. */
-//#define HAVE_SIGNAL_H 1
+#define HAVE_SIGNAL_H 1
 
 /* Define to 1 if you have the `sleep' function. */
 #define HAVE_SLEEP 1
@@ -711,4 +708,4 @@
 
 #define VERY_CAUTIOUS	// just for debugging
 
-#endif // ! _IOS_CONFIG_H_
+#endif // ! _MAC_CONFIG_H_

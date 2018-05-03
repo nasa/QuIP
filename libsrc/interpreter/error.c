@@ -190,6 +190,24 @@ static void _deliver_warning(QSP_ARG_DECL  const char* msg)
 	check_max_warnings(SINGLE_QSP_ARG);
 }
 
+static void format_expected(QSP_ARG_DECL  char *dest, const char *msg)
+{
+	// BUG - possible buffer overrun
+	sprintf( dest, "%s%s", EXPECTED_PREFIX, msg );
+	assert(strlen(dest)<LLEN);	// at this point, it's too late!?
+}
+
+#define deliver_expected(msg) _deliver_expected(QSP_ARG  msg)
+
+static void _deliver_expected(QSP_ARG_DECL  const char *msg)
+{
+	char msg_to_print[LLEN];	// BUG use String_Buf?
+	format_expected(QSP_ARG  msg_to_print,msg);
+	if( ! silent(SINGLE_QSP_ARG) ){
+		(*advise_vec)(QSP_ARG  msg_to_print);
+	}
+}
+
 #ifdef NOT_NEEDED
 int count_warnings()
 {
@@ -592,58 +610,97 @@ static void tty_error1(QSP_ARG_DECL  const char *s1)
 	nice_exit(1);
 }
 
+// Some errors may generate more than one warning
+
 void expect_warning(QSP_ARG_DECL  const char *msg)
 {
-	const char *e=QS_EXPECTED_WARNING(THIS_QSP);
-	if( e != NULL ){
-		advise("OOPS - expect_warning called more than once!?");
-		rls_str(e);
+	List *lp;
+	Node *np;
+
+	lp = QS_EXPECTED_WARNING_LIST(THIS_QSP);
+	if( lp == NULL ){
+		lp = new_list();
+		SET_QS_EXPECTED_WARNING_LIST(THIS_QSP,lp);
 	}
-	SET_QS_EXPECTED_WARNING(THIS_QSP,savestr(msg));
+
+	np = mk_node( (void *) savestr(msg) );
+	addTail(lp,np);
+}
+
+#define remove_expected_warning(np) _remove_expected_warning(QSP_ARG  np)
+
+static void _remove_expected_warning(QSP_ARG_DECL  Node *np)
+{
+	List *lp;
+	const char *s;
+
+	lp = QS_EXPECTED_WARNING_LIST(THIS_QSP);
+	Node *np2;
+
+	assert(lp!=NULL);
+	s = NODE_DATA(np);
+	np2=remNode(lp,np);
+	assert(np2==np);
+	rls_str(s);
+	rls_node(np);
 }
 
 // Call this to confirm that a warning has been issued as expected
 
-void check_expected_warning(SINGLE_QSP_ARG_DECL)
+void check_expected_warnings(QSP_ARG_DECL  int clear_flag)
 {
-	if( QS_EXPECTED_WARNING(THIS_QSP) != NULL ){
+	List *lp;
+	Node *np;
+
+	lp = QS_EXPECTED_WARNING_LIST(THIS_QSP);
+	if( lp == NULL ) return;
+	if( eltcount(lp) == 0 ) return;
+
+	np = QLIST_HEAD(lp);
+	while(np!=NULL){
 		sprintf(ERROR_STRING,"Expected warning beginning with \"%s\" never issued!?",
-			QS_EXPECTED_WARNING(THIS_QSP));
-		warn(ERROR_STRING);
+			(const char *)NODE_DATA(np));
+		advise(ERROR_STRING);
+		if( clear_flag ){
+			Node *np2;
+			np2=NODE_NEXT(np);
+			remove_expected_warning(np);
+			np = np2;
+		} else {
+			np = NODE_NEXT(np);
+		}
 	}
 }
 
 static int is_expected(QSP_ARG_DECL  const char *warning_msg)
 {
-	int retval=0;
-	const char *e=QS_EXPECTED_WARNING(THIS_QSP);
+	List *lp;
+	Node *np;
 
-	if( e != NULL ){
-		if( !strncmp(e,warning_msg,strlen(e)) ){
-			retval=1;
+	lp = QS_EXPECTED_WARNING_LIST(THIS_QSP);
+	if( lp == NULL ) return 0;
+	np = QLIST_HEAD(lp);
+	while(np!=NULL){
+		const char *s;
+		s = NODE_DATA(np);
+		if( !strncmp(s,warning_msg,strlen(s)) ){
+			Node *np2;
 			DEC_QS_N_WARNINGS(THIS_QSP);
+			np2 = NODE_NEXT(np);
+			remove_expected_warning(np);
+			np = np2;
+			return 1;
+		} else {
+			np = NODE_NEXT(np);
 		}
-		// This is a one-shot!
-		rls_str(e);
-		SET_QS_EXPECTED_WARNING(THIS_QSP,NULL);
 	}
-	return retval;
-}
-
-static const char *get_warning_prefix(QSP_ARG_DECL  const char *warning_msg)
-{
-	if( is_expected(QSP_ARG  warning_msg) )
-		return EXPECTED_PREFIX;
-	else
-		return WARNING_PREFIX;
+	return 0;
 }
 
 static void format_warning(QSP_ARG_DECL  char *dest, const char *msg)
 {
-	const char *prefix;
-	prefix = get_warning_prefix(QSP_ARG  msg);
 	// BUG - possible buffer overrun
-	sprintf(dest,"%s%s",prefix,msg);
+	sprintf(dest,"%s%s",WARNING_PREFIX,msg);
 	assert(strlen(dest)<LLEN);	// at this point, it's too late!?
 }
 
@@ -788,7 +845,11 @@ void q_error1( QSP_ARG_DECL  const char *msg )
 
 void _warn( QSP_ARG_DECL  const char *msg )
 {
-	tell_input_location(SINGLE_QSP_ARG);
-	deliver_warning(msg);
+	if( is_expected(QSP_ARG  msg) ){
+		deliver_expected(msg);
+	} else {
+		tell_input_location(SINGLE_QSP_ARG);
+		deliver_warning(msg);
+	}
 }
 

@@ -27,6 +27,9 @@
 # Thick_Plot thickness data_vector
 # Symbol Disk 3
 # Symbol_Plot data_vector
+#
+#
+# For plotting without axes, use Plot_Space instead of Plot_Data_Range - ?
 
 If var_exists(plotsupp_loaded) "warn 'plotsupp.mac already read!?' exit_macro"
 

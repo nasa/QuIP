@@ -8,9 +8,9 @@ Image bm0 $h $w 1 bit
 Info bm0
 advise "creating equivalence..."
 ## old, used to enforce integral words per row
-#Equivalence e0 bm0 1 1 $h 1 1 uint64
+#Equivalence e0 bm0 1 1 $h 1 1 u_long
 # new
-Equivalence e0 bm0 1 1 1 1 1 uint64
+Equivalence e0 bm0 1 1 1 1 1 u_long
 Info e0
 advise 'reading small bitmap data...'
 data
@@ -48,7 +48,7 @@ Image bm1 $h $w 1 bit
 advise 'creating larger subimage'
 Subimage sbm1 bm1 $sw $sh $sx0 $sy0
 
-#Equivalence l1 bm1 1 1 1 9 1 uint64
+#Equivalence l1 bm1 1 1 1 9 1 u_long
 Info bm1
 Info sbm1
 

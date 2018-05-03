@@ -53,7 +53,9 @@ ADD_CMD(	mseq,		do_mseq_menu,	M-sequence submenu )
 ADD_CMD(	experiments,	do_exp_menu,	psychophysical experiment submenu )
 ADD_CMD(	sound,		do_sound_menu,	sound submenu )
 ADD_CMD(	requantize,	do_requant,	dithering submenu )
-ADD_CMD(	fann,		do_fann_menu,	neural network submenu )
+
+// commented out to build in Xcode - how to configure?
+//ADD_CMD(	fann,		do_fann_menu,	neural network submenu )
 
 #ifndef BUILD_FOR_OBJC
 

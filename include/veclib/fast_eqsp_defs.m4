@@ -31,7 +31,8 @@ dnl Here we add the row offset
 dnl But when adjust is called, the y increment has already been scaled.
 dnl should dbm_bit_idx have more than one dimension or not???
 dnl#define ADJUST_DBM_WORD_IDX	i_dbm_word += ((dbm_bit_idx /* * dbm_inc.y */)/BITS_PER_BITMAP_WORD);
-define(`SET_SBM_WORD_IDX',i_sbm_word=sbm_bit_idx/BITS_PER_BITMAP_WORD;)
+
+define(`SET_SBM_WORD_IDX',i_sbm_word=sbm_bit_offset/BITS_PER_BITMAP_WORD;)
 
 define(`srcbit',(sbm_ptr[this_sbm_bit>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT(this_sbm_bit&(BITS_PER_BITMAP_WORD-1))))
 

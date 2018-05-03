@@ -1,0 +1,16 @@
+
+The original strategy for the projection functions (vsum, vmax, etc)
+was to have seperate helper kernel that would be called
+repeatedly by the host.  But it appears that kernels functions can
+be called by other kernel functions, so it is probably more efficient
+for this logic to be done by one of the kernel threads.
+
+This is a bit tricky - we need to synchronize all threads after
+each iteration, and, as we proceed, more and more threads will be
+doing nothing.  So it is not completely obvious that this will really
+be more efficient than dispatching the correct number of threads from
+the host, depending on the kernel launch overhead cost.
+(Can threads exit???)
+
+
+

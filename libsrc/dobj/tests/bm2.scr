@@ -1,6 +1,4 @@
-#
-# Test some bitmap operations
-max_warnings 2
+# more tests of bitmaps
 
 data ascii max_per_line 32 quit quit
 
@@ -33,6 +31,14 @@ advise proceeding...
 advise "VSet ${1}_image{1} 0"
 VSet ${1}_image{1} 0
 Display ${1}_image
+Pause
+
+Subimage ${1}_inset ${1}_image 4 3 1 2
+VSet ${1}_image 1
+VSet ${1}_inset 0
+Display ${1}_image
+Pause
+Display ${1}_image{0}
 Pause
 .
 
@@ -83,54 +89,19 @@ platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
 Test_Insets g
 .
 
-Define New_Inset_Test 1 stem
-Image ${1}_image $h $w 1 bit
-Subimage ${1}_inset ${1}_image $sw $sh $offset_x $offset_y
-Subimage ${1}_inset2 ${1}_image $sw2 $sh2 $offset_x+1 $offset_y+1
-Image ${1}_copy $sh $sw 1 bit
-
-VSet ${1}_image 1
-VSet ${1}_inset 0
-VSet ${1}_inset2 1
-Display ${1}_image
-Pause
-
-VMov ${1}_copy ${1}_inset
-Display ${1}_copy
-Pause
-
-Delete_Image ${1}_image
-Delete_Image ${1}_copy
-.
-
-Define Perform_New_Inset_Test 0
-Set w 20
-Set h 9
-Set sw 5
-Set sh 6
-Set sw2 3
-Set sh2 2
-Set offset_x 7
-Set offset_y 1
-platforms select CPU CPU1 quit
-New_Inset_Test h
-platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
-New_Inset_Test g
-.
-
 Define Perform_Fast_Test 0
+advise "Perform_Fast_Test BEGIN"
 Set w 16
 Set h 9
 Set d 4
-platforms select CPU CPU1 quit
+
 Test_Fast h
 platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
 Test_Fast g
 .
 
 #Perform_Inset_Test
-#Perform_Fast_Test
-Perform_New_Inset_Test
+Perform_Fast_Test
 
 
 exit

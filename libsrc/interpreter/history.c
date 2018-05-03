@@ -285,45 +285,6 @@ advise(ERROR_STRING);
 	add_word_to_history_list(QSP_ARG  icp,string);
 }
 
-static inline void insure_prompt_buf(QSP_ARG_DECL  const char *fmt, const char *pmpt)
-{
-	int n_need;
-
-	n_need = (int) (strlen(fmt) + strlen(pmpt));
-	if( n_need > sb_size(QS_QRY_PROMPT_SB(THIS_QSP)) )
-		enlarge_buffer(QS_QRY_PROMPT_SB(THIS_QSP),n_need+32);
-}
-
-/* Make prompt takes a query string (like "number of elements") and
- * prepends "Enter " and appends ":  ".
- * We can inhibit this by clearing the flag.
- *
- * OLD COMMENT:
- * but in that case we reset the flag after use,
- * so that we can always assume the default behavior.
- * - what does that mean?  should we reset the flag here???
- */
-
-const char *_format_prompt(QSP_ARG_DECL  const char *fmt, const char *prompt)
-{
-	char *pline;
-
-	if( prompt == QS_QRY_PROMPT_STR(THIS_QSP) ){
-		return prompt;
-	}
-
-	insure_prompt_buf(QSP_ARG  fmt,prompt);
-	pline = sb_buffer(QS_QRY_PROMPT_SB(THIS_QSP));
-
-	if( QS_FLAGS(THIS_QSP) & QS_FORMAT_PROMPT ){
-		sprintf(pline,fmt,prompt);
-	} else {
-		strcpy(pline,prompt);
-	}
-
-	return pline;
-}
-
 #ifdef NOT_USED
 void _rem_phist(QSP_ARG_DECL  const char *prompt,const char* word)
 {
@@ -673,3 +634,4 @@ advise("making new hist list for class");
 }
 
 #endif /* HAVE_HISTORY */
+

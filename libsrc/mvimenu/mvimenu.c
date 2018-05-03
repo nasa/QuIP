@@ -19,6 +19,7 @@
 #include "rv_api.h"
 #include "fio_api.h"
 #include "seq.h"	// BUG - need to separate public & private
+#include "debug.h"
 
 //#ifdef BUILD_FOR_OBJC
 //#include "sizable.h"

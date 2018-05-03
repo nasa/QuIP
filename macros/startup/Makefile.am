@@ -24,7 +24,8 @@ macros_DATA	=	Xgraph.scr		\
 			flyd.scr		\
 			evid.scr		\
 			coq.scr			\
-			airway.scr			\
+			airway.scr		\
+			qsh.scr			\
 			quip.scr
 
 EXTRA_DIST	=	$(macros_DATA)

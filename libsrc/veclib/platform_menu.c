@@ -4,6 +4,7 @@
 #include "pf_viewer.h"	// has to come first to pick up glew.h first
 #include "platform.h"
 #include "ocl_platform.h"
+#include "variable.h"
 
 
 // BUG not thread-safe / add to query_stack!
@@ -236,7 +237,7 @@ static COMMAND_FUNC(do_set_dev_type)
 	select_pfdev(pdp);
 }
 
-// We call this if the user has not set DEFAULT_PLATFORM and DEFAULT_GPU in the enviroment...
+// We call this in case the user has not set DEFAULT_PLATFORM and DEFAULT_GPU in the enviroment...
 
 static void check_platform_defaults(SINGLE_QSP_ARG_DECL)
 {
@@ -246,14 +247,27 @@ static void check_platform_defaults(SINGLE_QSP_ARG_DECL)
 	vp1 = var_of("DEFAULT_PLATFORM");
 	vp2 = var_of("DEFAULT_GPU");
 
-	if( vp1 != NULL && vp2 != NULL ) return;	// already set by user
+	if( vp1 != NULL ){
+		if( vp2 != NULL ) return;	// both already set by user
+		else {
+			sprintf(ERROR_STRING,"DEFAULT_PLATFORM is set to %s, but DEFAULT_GPU is not set!?",
+				VAR_VALUE(vp1));
+			warn(ERROR_STRING);
+		}
+	} else if( vp2 != NULL ){
+		sprintf(ERROR_STRING,"DEFAULT_GPU is set to %s, but DEFAULT_PLATFORM is not set!?",
+			VAR_VALUE(vp2));
+		warn(ERROR_STRING);
+	}
 
 	pdp = find_pfdev(QSP_ARG  PLATFORM_OPENCL);
 	if( pdp == NULL ) pdp = find_pfdev(QSP_ARG  PLATFORM_CUDA);
-
 	if( pdp == NULL ) return;
-	assign_var("DEFAULT_PLATFORM",PLATFORM_NAME(PFDEV_PLATFORM(pdp)));
-	assign_var("DEFAULT_GPU",PFDEV_NAME(pdp));
+
+	if( vp1 == NULL )
+		assign_var("DEFAULT_PLATFORM",PLATFORM_NAME(PFDEV_PLATFORM(pdp)));
+	if( vp2 == NULL )
+		assign_var("DEFAULT_GPU",PFDEV_NAME(pdp));
 }
 
 static COMMAND_FUNC( do_pfdev_info )

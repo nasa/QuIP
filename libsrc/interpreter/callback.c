@@ -1,6 +1,9 @@
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "history.h"
+#include "query_stack.h"
+//#include "node.h"
+//#include "list.h"
 #include "query_prot.h"
 
 #ifdef BUILD_FOR_IOS

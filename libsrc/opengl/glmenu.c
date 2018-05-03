@@ -1714,7 +1714,8 @@ ADD_CMD( transform,		do_xf_menu,	viewing transformation submenu )
 ADD_CMD( lighting,		do_lighting_menu,	lighting submenu )
 ADD_CMD( fullscreen,		do_set_fullscreen,	enable/disable fullscreen mode )
 ADD_CMD( display_lists,		do_dl_menu,	display list submenu )
-ADD_CMD( stereo,		do_stereo_menu,	nVidia shutter glasses submenu )
+// commented out to build in Xcode - need to configure properly!  BUG
+//ADD_CMD( stereo,		do_stereo_menu,	nVidia shutter glasses submenu )
 ADD_CMD( tiles,			do_tile_menu,	tile object submenu )
 MENU_END(gl)
 

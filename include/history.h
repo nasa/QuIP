@@ -2,6 +2,9 @@
 #ifndef _HISTORY_H_
 #define _HISTORY_H_
 
+#define CYC_FORWARD	1
+#define CYC_BACKWARD	2
+
 #ifdef HAVE_HISTORY
 
 #include "query_stack.h"
@@ -26,9 +29,6 @@ extern debug_flag_t hist_debug;		/* used in items.c */
 #endif /* QUIP_DEBUG */
 
 extern int history;		/* global flag */
-
-#define CYC_FORWARD	1
-#define CYC_BACKWARD	2
 
 extern FILE *_tty_out;	/* used to be static in complete.c ... */
 

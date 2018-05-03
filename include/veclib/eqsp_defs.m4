@@ -29,7 +29,7 @@ define(`_VEC_FUNC_CPX_3V_PROJ',`')
 
 my_include(`veclib/fast_eqsp_defs.m4')
 
-define(`this_sbm_bit',`(sbm_bit_idx+sbm_bit0)')
+define(`this_sbm_bit',`(sbm_bit_offset+sbm_bit0)')
 
 // slow defn - almost
 define(`SET_INDICES_DBM',`SET_DBM_TBL_INDEX SET_DBM_INDEX_ARRAY')

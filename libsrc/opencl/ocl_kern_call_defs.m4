@@ -9,6 +9,7 @@
 
 // BUG the structure definitions have to be kept in sync with the definitions in the header files...
 // How could we write this in a way that would insure this?
+// See shape_info.h
 
 define(`KERNEL_FUNC_PRELUDE',`					\
 								\
@@ -25,17 +26,15 @@ typedef struct { int d5_dim[5]; } dim5 ;			\
 typedef unsigned long bitmap_word;				\
 typedef struct {						\
 	uint32_t	word_offset;				\
-	uint32_t	first_indices[5];			\
+	uint32_t	first_index[5];				\
 	uint64_t	first_bit_num;				\
 	bitmap_word	valid_bits;				\
 } Bitmap_GPU_Word_Info;						\
 typedef struct {						\
 	uint32_t			n_bitmap_words;		\
 	uint32_t			total_size;		\
-	int32_t				next_word_idx;		\
-	int32_t				this_word_idx;		\
-	int32_t				last_word_idx;		\
-	Bitmap_GPU_Word_Info 	word_tbl[1];			\
+	int32_t				obj_size[5];		\
+	Bitmap_GPU_Word_Info 		word_tbl[1];		\
 } Bitmap_GPU_Info;						\
 EXTRA_PRELUDE(type_code)					\
 ')

@@ -67,6 +67,7 @@ struct precision {
 	Item			prec_item;
 	prec_t			prec_code;
 	int			prec_size;	// type size in bytes
+	int			prec_n_comps;	// for pseudo precisions
 	struct precision *	prec_mach_p;	// NULL for machine precisions
 	struct vfunc_tbl *	prec_vf_tbl;
 
@@ -101,8 +102,10 @@ struct precision {
 
 #define PREC_CODE(prec_p)		(prec_p)->prec_code
 #define PREC_SIZE(prec_p)		(prec_p)->prec_size
+#define PREC_N_COMPS(prec_p)		(prec_p)->prec_n_comps
 #define PREC_MACH_PREC_PTR(prec_p)	(prec_p)->prec_mach_p
 #define SET_PREC_CODE(prec_p,c)		(prec_p)->prec_code = c
+#define SET_PREC_N_COMPS(prec_p,c)	(prec_p)->prec_n_comps = c
 #define SET_PREC_CODE_BITS(prec_p,b)	(prec_p)->prec_code |= b
 #define CLEAR_PREC_CODE_BITS(prec_p,b)	(prec_p)->prec_code &= (b)
 
@@ -161,7 +164,7 @@ struct precision {
 
 typedef struct bitmap_gpu_word_info {
 	dimension_t	word_offset;			// relative to the start of the base pointer, in words
-	dimension_t	first_indices[N_DIMENSIONS];	// indices of the first valid bit
+	dimension_t	first_index[N_DIMENSIONS];	// indices of the first valid bit
 	uint64_t	first_bit_num;
 	bitmap_word	valid_bits;
 } Bitmap_GPU_Word_Info;
@@ -174,35 +177,27 @@ typedef struct bitmap_gpu_word_info {
 typedef struct bitmap_gpu_info {
 	dimension_t			n_bitmap_words;
 	uint32_t			total_size;	// size of this struct in bytes
-	dimension_t			next_word_idx;
-	dimension_t			this_word_idx;
-	dimension_t			last_word_idx;
-	Bitmap_GPU_Word_Info 		word_tbl[1];
+	dimension_t			obj_size[N_DIMENSIONS];
+	Bitmap_GPU_Word_Info 		word_tbl[1];	// variable-size table, this must be last in the struct
 } Bitmap_GPU_Info;
 
 #define BITMAP_GPU_INFO_SIZE(n_words)	(sizeof(Bitmap_GPU_Info)+(n_words-1)*sizeof(Bitmap_GPU_Word_Info))
+
+#define BMI_DIMENSION(bmi_p,idx)	(bmi_p)->obj_size[idx]
+#define SET_BMI_DIMENSION(bmi_p,idx,v)	(bmi_p)->obj_size[idx] = v
 
 #define BMI_N_WORDS(bmi_p)		(bmi_p)->n_bitmap_words
 #define SET_BMI_N_WORDS(bmi_p,n)	(bmi_p)->n_bitmap_words = n
 #define BMI_WORD_TBL(bmi_p)		(bmi_p)->word_tbl
 #define BMI_WORD_INFO_P(bmi_p,idx)	(&((bmi_p)->word_tbl[idx]))
 
-#define BMI_LAST_WORD_IDX(bmi_p)	(bmi_p)->last_word_idx
-#define SET_BMI_LAST_WORD_IDX(bmi_p,v)	(bmi_p)->last_word_idx = v
-
-#define BMI_THIS_WORD_IDX(bmi_p)	(bmi_p)->this_word_idx
-#define SET_BMI_THIS_WORD_IDX(bmi_p,v)	(bmi_p)->this_word_idx = v
-
-#define BMI_NEXT_WORD_IDX(bmi_p)	(bmi_p)->next_word_idx
-#define SET_BMI_NEXT_WORD_IDX(bmi_p,v)	(bmi_p)->next_word_idx = v
-
 #define BMI_STRUCT_SIZE(bmi_p)		(bmi_p)->total_size
 #define SET_BMI_STRUCT_SIZE(bmi_p,s)	(bmi_p)->total_size = s
 
 #define BMWI_OFFSET(bmwi_p)		(bmwi_p)->word_offset
-#define BMWI_FIRST_INDICES(bmwi_p)	(bmwi_p)->first_indices
-#define BMWI_FIRST_INDEX(bmwi_p,which)		BMWI_FIRST_INDICES(bmwi_p)[which]
-#define SET_BMWI_FIRST_INDEX(bmwi_p,which,v)	BMWI_FIRST_INDICES(bmwi_p)[which] = v
+#define BMWI_FIRST_INDEX_TBL(bmwi_p)	(bmwi_p)->first_index
+#define BMWI_FIRST_INDEX(bmwi_p,which)		BMWI_FIRST_INDEX_TBL(bmwi_p)[which]
+#define SET_BMWI_FIRST_INDEX(bmwi_p,which,v)	BMWI_FIRST_INDEX_TBL(bmwi_p)[which] = v
 
 #define BMWI_FIRST_BIT_NUM(bmwi_p)		(bmwi_p)->first_bit_num
 #define SET_BMWI_FIRST_BIT_NUM(bmwi_p,n)	(bmwi_p)->first_bit_num = n

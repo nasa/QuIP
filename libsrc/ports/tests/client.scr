@@ -2,6 +2,8 @@
 < tests/test_params.scr
 
 ports
-  client client_mouth patrolboat $server_port_num
+  advise "Attempting to connect to port $server_port_num on host $server_host"
+  client client_mouth $server_host $server_port_num
+  advise "Connected, sending message to server"
   xmit text client_mouth 'advise "Message received from client"'
   Pause

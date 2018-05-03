@@ -1,31 +1,170 @@
+max_warnings 2
+#debug data
 
-Define Test_Bitmaps 0
+Define Install_Bitmap_Subimage_Parameters 0
+Set h 5
+Set w 256
+Set sw 64
+Set sh 3
+Set offset_x 64
+Set offset_y 1
+.
+
+Define Install_Bitmap_Parameters 0
 Set h 4
 Set w 76
 Set t 1
+.
 
+Define Install_Std_Parameters 0
+Set w 9
+Set h 7
+Set sw 4
+Set sh 4
+.
+
+Define Simple_Tests 0
+Install_Std_Parameters
+Perform_Some_Tests Simple_Test
+.
+
+Define Subimage_Tests 0
+Install_Std_Parameters
+Perform_Some_Tests Subimage_Test
+.
+
+Define Illegal_Subimage_Tests 0
+Install_Std_Parameters
+Perform_Some_Tests Illegal_Subimage_Test2
+Perform_Some_Tests Illegal_Subimage_Test1
+.
+
+Define Perform_Some_Tests 1 test_macro
+$1 short u_byte 1 2
+$1 int u_byte 1 4
+$1 long u_byte 1 8
+$1 u_byte short 2 1
+$1 u_byte int 4 1
+$1 u_byte long 8 1
+.
+
+# Call this after a test that should succeed
+
+Define Test_Check 1 obj
+If obj_exists($1)
+  Then "Info $1 advise SUCCESS!!!"
+  Else "advise FAILURE!?"
+Pause
+.
+
+# Call this after a test that should fail
+
+Define Fail_Check 1 obj
+clear_expected_warnings
+If obj_exists($1)
+  Then "Info $1 advise FAILURE!?"
+  Else "advise SUCCESS!!!"
+Pause
+.
+
+Define Simple_Test 4 'parent precision' 'child precision' 'parent multiplier' 'child multiplier'
+#Image parent_$1 $h $w*$3 1 $1
+Image parent_$1 $h $w $3 $1
+Info parent_$1
+#Equivalence child_$2 parent_$1 1 1 $h $w*$4 1 $2
+Equivalence child_$2 parent_$1 1 1 $h $w $4 $2
+advise "Simple_Test $1 $2 $3 $4"
+Test_Check child_$2
+Delete_Image parent_$1	# automatically deletes the child also
+.
+
+Define Illegal_Subimage_Test1 4 'parent precision' 'child precision' 'parent multiplier' 'child multiplier'
+Image parent_$1 $h $w $3 $1
+Subimage inset_$1 parent_$1 $sw $sh 1 1
+Info inset_$1
+advise "Illegal_Subimage_Test1 $1 $2 $3 $4"
+expect_warning 'error making'
+Equivalence child_$2 inset_$1 1 1 1 $sh*$sw $4 $2
+Fail_Check child_$2
+Delete_Image parent_$1	# automatically deletes the child also
+.
+
+Define Illegal_Subimage_Test2 4 'parent precision' 'child precision' 'parent multiplier' 'child multiplier'
+Image parent_$1 $h $w*$3 3 $1
+Subimage inset_$1 parent_$1{0} $sw $sh 1 1
+Info parent_$1
+Info inset_$1
+advise "Illegal_Subimage_Test2 $1 $2 $3 $4"
+expect_warning 'error making'
+expect_warning 'get'
+Equivalence child_$2 inset_$1 1 1 1 $sh*$sw $4 $2
+Fail_Check child_$2
+Delete_Image parent_$1	# automatically deletes the child also
+.
+
+Define Subimage_Test 4 'parent precision' 'child precision' 'parent multiplier' 'child multiplier'
+Image parent_$1 $h $w $3 $1
+Subimage inset_$1 parent_$1 $sw $sh 1 1
+Info inset_$1
+Equivalence child_$2 inset_$1 1 1 $sh $sw $4 $2
+advise "Subimage_Test $1 $2 $3 $4"
+Test_Check child_$2
+Delete_Image parent_$1	# automatically deletes the child also
+.
+
+Set bits_per_bitmap_word 64
+
+Define Test_Cast_From_Bitmap 2 type nbits
 Sequence b1 $t $h $w 1 bit
 Info b1
+advise "Equivalencing bit to $1:"
+Equivalence eb_$1 b1 1 1 1 ($bits_per_bitmap_word/$2)*floor(($h*$w+$bits_per_bitmap_word-1)/$bits_per_bitmap_word) 1 $1
+advise "Test_Cast_From_Bitmap $1 $2"
+Test_Check eb_$1
+Delete_Image b1
+.
 
-#advise "Interlacing bit image:"
-#Interlace odd b1 odd
-#Info odd
-#Pause
+Define Test_Cast_From_Bitmap_Subimage 2 type nbits
+advise "Test_Cast_From_Bitmap_Subimage $1 $2"
+Image image_bit $h $w 1 bit
+Info image_bit
+Subimage inset_bit image_bit $sw $sh $offset_x $offset_y
+Info inset_bit
+expect_warning Sorry
+expect_warning 'error making'
+Equivalence eb_$1 inset_bit 1 1 1 ($bits_per_bitmap_word/$2)*floor(($sh*$sw+$bits_per_bitmap_word-1)/$bits_per_bitmap_word) 1 $1
+Fail_Check eb_$1
+clear_expected_warnings
+Delete_Image image_bit
+.
 
-advise "Equivalencing bit to uint32:"
-Equivalence el1 b1 1 $t $h 4 1 uint32
-Info el1
-advise ' '
+Define Test_Cast_To_Bitmap 2 type nbits
+Sequence x $t $h $w 1 $1
+Info x
+Equivalence eb_$1 x 1 1 1 $t*$w*$h*$2 1 bit
+advise "Test_Cast_To_Bitmap $1 $2"
+Test_Check eb_$1
+Delete_Image x
+.
 
-advise "Equivalencing bit to uint64:"
-Equivalence el2 b1 1 $t $h 2 1 uint64
-Info el2
-advise ' '
+Define Test_Bitmap_Subimages 0
+Install_Bitmap_Subimage_Parameters
+# try some legal ones first
+Test_Cast_From_Bitmap_Subimage u_long 64
+.
 
-advise "Equivalencing back to bit"
-Equivalence eb1 el2 1 $t $h 128 1 bit
-Info eb1
-advise ' '
+Define Test_Valid_Bitmaps 0
+Install_Bitmap_Parameters
+
+Test_Cast_To_Bitmap u_byte 8
+Test_Cast_To_Bitmap u_short 16
+Test_Cast_To_Bitmap u_int 32
+Test_Cast_To_Bitmap u_long 64
+
+Test_Cast_From_Bitmap u_byte 8
+Test_Cast_From_Bitmap u_short 16
+Test_Cast_From_Bitmap u_int 32
+Test_Cast_From_Bitmap u_long 64
 .
 
 Define Test_Complex 0
@@ -44,6 +183,8 @@ Info ec1
 .
 
 Define Test_Misc 0
+Set h 9
+Set w 8
 
 Image y1 $h $w 1 u_byte
 Image f1 $h $w 1 float
@@ -53,16 +194,23 @@ Equivalence ub1 f1 1 1 $h $w 4 u_byte
 Info f1
 Info ub1
 
-Equivalence ey1 y1 1 1 $h $w/4 1 uint32
-advise "Equivalencing byte to uint32:"
+Equivalence ey1 y1 1 1 $h $w/4 1 u_int
+advise "Equivalencing byte to u_int:"
 Info y1
 Info ey1
+
+Delete_Image f1
+Delete_Image y1
 .
 
-Test_Bitmaps
 #Test_Misc
-Test_Complex
+#Test_Complex
 
+Test_Bitmap_Subimages
+Test_Valid_Bitmaps
+Illegal_Subimage_Tests
+Simple_Tests
+Subimage_Tests
 
 exit
 

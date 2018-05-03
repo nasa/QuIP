@@ -23,8 +23,9 @@ define(`DECLARE_KERN_ARGS_SRC2_OFFSET',`OCL_OFFSET_TYPE c_offset')
 define(`DECLARE_KERN_ARGS_MAP_OFFSET',`OCL_OFFSET_TYPE map_offset')
 define(`DECLARE_KERN_ARGS_SRC3_OFFSET',`OCL_OFFSET_TYPE d_offset')
 define(`DECLARE_KERN_ARGS_SRC4_OFFSET',`OCL_OFFSET_TYPE e_offset')
-define(`DECLARE_KERN_ARGS_SBM_OFFSET',`OCL_OFFSET_TYPE sbm_offset')
-define(`DECLARE_KERN_ARGS_DBM_OFFSET',`OCL_OFFSET_TYPE dbm_offset')
+
+dnl define(`DECLARE_KERN_ARGS_DBM_OFFSET',`OCL_OFFSET_TYPE dbm_offset')
+dnl define(`DECLARE_KERN_ARGS_SBM_OFFSET',`OCL_OFFSET_TYPE sbm_offset')
 
 define(`OFFSET_A',`+ a_offset')
 define(`OFFSET_B',`+ b_offset')

@@ -18,7 +18,7 @@ define(`qsrc2',`fast_qsrc2')
 define(`qsrc3',`fast_qsrc3')
 define(`qsrc4',`fast_qsrc4')
 
-define(`this_sbm_bit',`(sbm_bit_idx)')
+define(`this_sbm_bit',`(sbm_bit_offset)')
 
 dnl Need backslashes for quoting (OpenCL)
 
@@ -26,6 +26,17 @@ define(`SET_INDICES_DBM',`			\
 	SET_INDEX(dbmi)				\
 	i_dbm_word = dbmi;			\
 	dbmi *= BITS_PER_BITMAP_WORD;		\
+')
+
+define(`DECL_INDICES_SBM1',`GPU_INDEX_TYPE sbm1_bit_offset;')
+define(`DECL_INDICES_SBM2',`GPU_INDEX_TYPE sbm2_bit_offset;')
+
+define(`SET_INDICES_1SBM',`							\
+	sbm1_bit_offset = i_dbm_word * BITS_PER_BITMAP_WORD;			\
+')
+
+define(`SET_INDICES_2SBM',`							\
+	sbm2_bit_offset = i_dbm_word * BITS_PER_BITMAP_WORD;			\
 ')
 
 define(`DECL_BASIC_INDICES_DBM',`		\
@@ -76,7 +87,7 @@ GENERIC_FF_DECL($1,$2,$3,$4,$5,$6,$7)
 define(`_VEC_FUNC_1V_3SCAL',`')	dnl   No fast vramp2d
 
 dnl	Do we need separate GPU definitions?
-define(`srcbit',`((*(sbm_ptr + (sbm_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit_idx))')
-define(`srcbit1',`((*(sbm1_ptr + (sbm1_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm1_bit_idx))')
-define(`srcbit2',`((*(sbm2_ptr + (sbm2_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm2_bit_idx))')
+define(`srcbit',`((*(sbm_ptr + (sbm_bit_offset/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit_offset))')
+define(`srcbit1',`((*(sbm1_ptr + (sbm1_bit_offset/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm1_bit_offset))')
+define(`srcbit2',`((*(sbm2_ptr + (sbm2_bit_offset/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm2_bit_offset))')
 

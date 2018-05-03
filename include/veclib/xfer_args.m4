@@ -382,29 +382,12 @@ define(`XFER_DBM_GPU_INFO',`
 	SET_VA_DBM_GPU_INFO_PTR(vap, BITMAP_OBJ_GPU_INFO_DEV_PTR(bitmap_dst_dp));
 ')
 
-define(`XFER_SBM_GPU_INFO',`
-
-	if( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_src_dp) == NULL ){
-		/* only for gpu objects! */
-		init_bitmap_gpu_info(bitmap_src_dp);
-	}
-	SET_VA_SBM_GPU_INFO_PTR(vap, BITMAP_OBJ_GPU_INFO_DEV_PTR(bitmap_src_dp));
-')
-
 define(`XFER_EQSP_DBM_GPU_INFO',`XFER_DBM_GPU_INFO
 	SET_VA_ITERATION_TOTAL(vap,BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp)));
 ')
 
 define(`XFER_SLOW_DBM_GPU_INFO',`XFER_DBM_GPU_INFO
 	SET_VA_ITERATION_TOTAL(vap,BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp)));
-')
-
-define(`XFER_EQSP_SBM_GPU_INFO',`XFER_SBM_GPU_INFO
-	SET_VA_ITERATION_TOTAL(vap,BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_src_dp)));
-')
-
-define(`XFER_SLOW_SBM_GPU_INFO',`XFER_SBM_GPU_INFO
-	SET_VA_ITERATION_TOTAL(vap,BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_src_dp)));
 ')
 
 ',`') dnl end BUILD_FOR_GPU

@@ -1899,6 +1899,7 @@ const char * _nextline(QSP_ARG_DECL  const char *pline)
 	// buf might be NULL if we are at the end of a macro?
 
 #ifdef MAC
+	// what is this???
 	set_mac_pmpt(pline);
 #endif /* MAC */
 
@@ -1941,6 +1942,7 @@ const char * _nextline(QSP_ARG_DECL  const char *pline)
 	assert(sbp!=NULL);
 	if( SB_SIZE(sbp) < LLEN )
 		enlarge_buffer(sbp,LLEN);
+
 	if( (*(QRY_READFUNC(qp)))(QSP_ARG  (void *)sb_buffer(sbp),(int)sb_size(sbp),(void *)QRY_FILE_PTR(qp)) == NULL ){
 		/* this means EOF if reading with fgets()
 		 * or end of a macro...
@@ -2683,7 +2685,7 @@ void init_query_stack(Query_Stack *qsp)
 	SET_QS_VAR_FMT_STACK(qsp,NULL);
 	SET_QS_NUMBER_FMT(qsp,NULL);
 
-	SET_QS_EXPECTED_WARNING(qsp,NULL);
+	SET_QS_EXPECTED_WARNING_LIST(qsp,NULL);
 
 	SET_QS_AV_STRINGBUF(qsp,NULL);
 
@@ -2978,11 +2980,17 @@ void _zap_fore(QSP_ARG_DECL  Foreach_Loop *frp)
 	givbuf(frp);
 }
 
-#ifdef BUILD_FOR_OBJC
-#define READING_FROM_TERMINAL(qp)	1
-#else // ! BUILD_FOR_OBJC
+//#ifdef BUILD_FOR_OBJC
+//#define READING_FROM_TERMINAL(qp)	1
+//#else // ! BUILD_FOR_OBJC
+//#define READING_FROM_TERMINAL(qp)	( QRY_FILE_PTR(qp) == tfile() )
+//#endif // ! BUILD_FOR_OBJC
+
+#ifdef BUILD_FOR_CMD_LINE
 #define READING_FROM_TERMINAL(qp)	( QRY_FILE_PTR(qp) == tfile() )
-#endif // ! BUILD_FOR_OBJC
+#else // ! BUILD_FOR_CMD_LINE
+#define READING_FROM_TERMINAL(qp)	1
+#endif // ! BUILD_FOR_CMD_LINE
 
 static inline void close_query_file(QSP_ARG_DECL  Query *qp)
 {
@@ -3399,7 +3407,8 @@ void set_qflags(QSP_ARG_DECL int flag)
 }
 #endif /* NOT_USED */
 
-#ifndef BUILD_FOR_OBJC
+//#ifndef BUILD_FOR_OBJC
+#ifdef BUILD_FOR_CMD_LINE
 
 /**/
 /**		stuff to do with the control terminal	**/
@@ -3439,7 +3448,8 @@ FILE *_tfile(SINGLE_QSP_ARG_DECL)
 
 	return(ttyfile);
 }
-#endif // ! BUILD_FOR_OBJC
+//#endif // ! BUILD_FOR_OBJC
+#endif // BUILD_FOR_CMD_LINE
 
 /*
  * Return a pointer to the named variable or NULL.

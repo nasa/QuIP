@@ -1,0 +1,51 @@
+
+Set size	100
+Set inset_size	5
+
+platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
+
+#Image t $inset_size $inset_size 1 float
+#VSet t 5
+#Display t
+#Pause
+
+Image l 1 1 1 u_long
+VSet l 0xabc
+Display l
+Pause
+
+Equivalence bl l 1 1 8 8 1 bit
+Info bl
+Display bl
+Pause
+
+exit
+
+
+Image b $inset_size $inset_size 1 bit
+VSet b 0
+advise "DONE setting bitmap"
+Info b
+Display b
+Pause
+
+
+Image noise $size $size 1 float
+Image bm $size $size 1 bit
+
+Subimage noise_inset noise $inset_size $inset_size 0 0
+Subimage bm_inset bm $inset_size $inset_size 0 0
+
+VUni noise
+
+Display noise_inset
+
+compute compare vsm_gt bm noise 0.5 quit quit
+
+Display bm_inset
+
+exit
+
+
+
+
