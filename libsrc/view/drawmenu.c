@@ -24,11 +24,23 @@
 // variable has to be part of the Query_Stack...
 static Viewer *draw_vp=NULL;
 
-#define DRAW_CHECK(s)	if( draw_vp == NULL ){			\
-	sprintf(ERROR_STRING,"%s:  no drawing viewer selected!?",#s);	\
-				WARN(ERROR_STRING);			\
-				return;					\
-			}
+#define DRAW_CHECK(s)							\
+									\
+	if( draw_vp == NULL ){						\
+		sprintf(ERROR_STRING,"%s:  no drawing viewer selected!?",#s);	\
+		WARN(ERROR_STRING);					\
+		return;							\
+	}
+
+#define DRAW_CHECK_INT(s,error_ret_val)					\
+									\
+	if( draw_vp == NULL ){						\
+		sprintf(ERROR_STRING,"%s:  no drawing viewer selected!?",#s);	\
+		WARN(ERROR_STRING);					\
+		return error_ret_val;					\
+	}
+
+
 #define XFORMING_COORDS(vp)					\
 	( ( vp ) != NULL && VW_FLAGS(vp) & VIEW_XFORM_COORDS )
 
@@ -37,6 +49,7 @@ static Viewer *draw_vp=NULL;
  * it's all together here */
 
 #define MAX_FONT_NAMES	512
+// on the mac, xlsfonts outputs 10277 lines!
 
 #ifdef HAVE_X11
 ITEM_INTERFACE_PROTOTYPES( XFont , xfont )
@@ -66,60 +79,12 @@ static void get_cpair(QSP_ARG_DECL  int *px, int *py)
 	*py=(int)floor(fy+0.5);
 }
 
-static void load_font(QSP_ARG_DECL  const char *fontname)
-{
-#ifdef HAVE_X11
-	// BUG - this stuff should go in xsupp...
-	Font id;
-	XFont *xfp;
-	char **flist;
-	int nfonts;
-
-	DRAW_CHECK(load_font)
-
-	xfp = xfont_of(fontname);
-	if( xfp != NULL ){
-		sprintf(ERROR_STRING,"load_font:  font %s is already loaded!?",
-			fontname);
-		advise(ERROR_STRING);
-		return;
-	}
-
-	flist = XListFonts(VW_DPY(draw_vp),fontname,MAX_FONT_NAMES,&nfonts);
-	if( nfonts > 1 ){
-		/* This is not really an error, not sure
-		 * why it would be that a font would list twice??
-		 */
-		if( verbose ){
-			int i;
-
-			advise("more than 1 font matches this specification");
-			for(i=0;i<nfonts;i++){
-				sprintf(ERROR_STRING,"\t%s",flist[i]);
-				advise(ERROR_STRING);
-			}
-		}
-	} else if( nfonts != 1 ){
-		sprintf(ERROR_STRING,"Font %s is not available",fontname);
-		WARN(ERROR_STRING);
-		XFreeFontNames(flist);
-		return;
-	}
-	XFreeFontNames(flist);
-
-	id = XLoadFont(VW_DPY(draw_vp),fontname);
-	xfp = new_xfont(fontname);
-	if( xfp != NULL ){
-		xfp->xf_id = id;
-		xfp->xf_fsp = XQueryFont(VW_DPY(draw_vp),id);
-		// If we ever delete this thing, we have to free
-		// with XFreeFontInfo
-	}
-
-#endif /* HAVE_X11 */
+// BUG - move to OS-specific file!
 
 #ifdef BUILD_FOR_IOS
 
+static int ios_check_font(const char *fontname)
+{
 	// We don't need to do anything to load the fonts,
 	// although we could print an error message for a bad font name?
 
@@ -146,8 +111,133 @@ static void load_font(QSP_ARG_DECL  const char *fontname)
 			s=[a objectAtIndex:i];
 			fprintf(stderr,"%s\n",s.UTF8String);
 		}
+		return 0;
+	}
+	return 1;
+}
+#endif // BUILD_FOR_IOS
+
+// quick_load_font - load a font we are sure exists
+// returns 1 if loaded, 0 if already loaded
+
+#define quick_load_font(fontname) _quick_load_font(QSP_ARG  fontname)
+
+static int _quick_load_font(QSP_ARG_DECL  const char *fontname)
+{
+#ifdef HAVE_X11
+	// BUG - this stuff should go in xsupp...
+	Font id;
+	XFont *xfp;
+	//char **flist;
+	//int nfonts;
+
+	DRAW_CHECK_INT(quick_load_font,0)
+
+	xfp = xfont_of(fontname);
+	if( xfp != NULL ){
+		if( verbose ){
+			// xlsfonts lists some fonts twice
+			// (perhaps because of multiple font directories???)
+			// so we suppress this warning.
+			sprintf(ERROR_STRING,"load_font:  font %s is already loaded!?",
+				fontname);
+			advise(ERROR_STRING);
+		}
+		return 0;
 	}
 
+	id = XLoadFont(VW_DPY(draw_vp),fontname);
+	xfp = new_xfont(fontname);
+	if( xfp != NULL ){
+		xfp->xf_id = id;
+		xfp->xf_fsp = XQueryFont(VW_DPY(draw_vp),id);
+		// If we ever delete this thing, we have to free
+		// with XFreeFontInfo
+	}
+	return 1;
+
+#endif /* HAVE_X11 */
+
+#ifdef BUILD_FOR_IOS
+	return ios_check_font(fontname);
+#endif /* BUILD_FOR_IOS */
+
+	
+}
+
+// load_font - make sure the font exists before trying to load
+
+#define load_font(fontname) _load_font(QSP_ARG  fontname)
+
+static void _load_font(QSP_ARG_DECL  const char *fontname)
+{
+#ifdef HAVE_X11
+	// BUG - this stuff should go in xsupp...
+	//Font id;
+	//XFont *xfp;
+	char **flist;
+	int nfonts;
+
+	DRAW_CHECK(load_font)
+
+	flist = XListFonts(VW_DPY(draw_vp),fontname,MAX_FONT_NAMES,&nfonts);
+	if( nfonts > 1 ){
+		/* This is not really an error, not sure
+		 * why it would be that a font would list twice??
+		 */
+		if( verbose ){
+			int i;
+
+			advise("more than 1 font matches this specification");
+			for(i=0;i<nfonts;i++){
+				sprintf(ERROR_STRING,"\t%s",flist[i]);
+				advise(ERROR_STRING);
+			}
+		}
+	} else if( nfonts != 1 ){
+		sprintf(ERROR_STRING,"Font %s is not available",fontname);
+		WARN(ERROR_STRING);
+		XFreeFontNames(flist);
+		return;
+	}
+	XFreeFontNames(flist);
+
+#endif /* HAVE_X11 */
+
+	quick_load_font(fontname);
+}
+
+#define load_font_set(pattern) _load_font_set(QSP_ARG  pattern)
+
+static void _load_font_set(QSP_ARG_DECL  const char *pattern)
+{
+#ifdef HAVE_X11
+	// BUG - this stuff should go in xsupp...
+	char **flist;
+	int nfonts, n_loaded;
+	int i;
+
+	DRAW_CHECK(load_font_set)
+
+	flist = XListFonts(VW_DPY(draw_vp),pattern,MAX_FONT_NAMES,&nfonts);
+	if( nfonts == 0 ){
+		sprintf(ERROR_STRING,"No fonts found matching '%s'!?",pattern);
+		advise(ERROR_STRING);
+		return;
+	}
+fprintf(stderr,"%d fonts found matching pattern '%s'\n",nfonts,pattern);
+	// Now load each font...
+	n_loaded=0;
+	for(i=0;i<nfonts;i++){
+		n_loaded += quick_load_font(flist[i]);
+	}
+	XFreeFontNames(flist);
+
+fprintf(stderr,"%d unique fonts loaded\n",n_loaded);
+#endif /* HAVE_X11 */
+
+#ifdef BUILD_FOR_IOS
+	warn("Sorry, load_font_set not implemented yet for iOS!?");
 #endif /* BUILD_FOR_IOS */
 
 }
@@ -168,7 +258,7 @@ static COMMAND_FUNC( do_set_font )
 #ifdef HAVE_X11
 	xfp = xfont_of(s);
 	if( xfp == NULL ){
-		load_font(QSP_ARG  s);
+		load_font(s);
 		xfp = xfont_of(s);
 		if( xfp == NULL ){
 			WARN("Unable to load font!?");
@@ -194,7 +284,15 @@ static COMMAND_FUNC( do_load_font )
 	const char *s;
 
 	s=NAMEOF("font");
-	load_font(QSP_ARG  s);
+	load_font(s);
+}
+
+static COMMAND_FUNC( do_load_font_set )
+{
+	const char *s;
+
+	s=NAMEOF("match pattern");
+	load_font_set(s);
 }
 
 
@@ -456,6 +554,7 @@ static COMMAND_FUNC( do_get_string_width )
 
 MENU_BEGIN(draw)
 ADD_CMD( load,		do_load_font,		load a font )
+ADD_CMD( load_set,	do_load_font_set,	load a group of fonts )
 ADD_CMD( font,		do_set_font,		select a loaded font for drawing )
 ADD_CMD( font_size,	do_set_font_size,	set font size )
 ADD_CMD( text_mode,	do_set_text_mode,	select text drawing mode )

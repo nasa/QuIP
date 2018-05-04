@@ -209,8 +209,8 @@ Define Init_Font_Stuff 0
 Set iso_rev 8859
 #Set iso_rev 10646
 
-#Set unit_font   -adobe-times-bold-r-normal--14-140-75-75-p-77-iso8859-1
-#Set legend_font -adobe-times-bold-r-normal--25-180-100-100-p-132-iso10646-1
+Set unit_font   -adobe-times-bold-r-normal--14-140-75-75-p-77-iso8859-1
+Set legend_font -adobe-times-bold-r-normal--25-180-100-100-p-132-iso10646-1
 
 ## this has been the default...
 ## but these fonts are missing on Ubuntu???
@@ -225,14 +225,14 @@ Set iso_rev 8859
 #Set unit_font "-urw-nimbus roman no9 l-bold-i-normal--0-0-0-0-p-0-iso8859-13"
 #Set legend_font "-urw-nimbus roman no9 l-bold-i-normal--0-0-0-0-p-0-iso8859-15"
 
-# these work on wheatstone...
-Set unit_font "-adobe-times-bold-r-normal--14-140-75-75-p-77-iso${iso_rev}-1"
+## these work on wheatstone...
+#Set unit_font "-adobe-times-bold-r-normal--14-140-75-75-p-77-iso${iso_rev}-1"
+##Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
 #Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
-Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
-#Print legend_font
+##Print legend_font
 
-Set legend_font "-misc-liberation serif-bold-r-normal--0-0-0-0-p-0-iso8859-15"
-Set unit_font "-misc-liberation serif-bold-r-normal--0-0-0-0-p-0-iso8859-15"
+#Set legend_font "-misc-liberation serif-bold-r-normal--0-0-0-0-p-0-iso8859-15"
+#Set unit_font "-misc-liberation serif-bold-r-normal--0-0-0-0-p-0-iso8859-15"
 
 Validate_Fonts
 If $fonts_present exit_macro
