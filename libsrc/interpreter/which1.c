@@ -25,7 +25,6 @@ static void _check_preload(QSP_ARG_DECL  const char *prompt, int n, const char *
 
 // Need to format the prompt!
 	pline = format_prompt(PROMPT_FORMAT, prompt);
-fprintf(stderr,"check_preload calling preload_history_list for %s\n",pline);
 	preload_history_list(pline,n,choices);
 }
 #endif /* HAVE_HISTORY */

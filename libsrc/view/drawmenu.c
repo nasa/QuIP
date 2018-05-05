@@ -165,6 +165,32 @@ static int _quick_load_font(QSP_ARG_DECL  const char *fontname)
 	
 }
 
+#define find_font(varname, family, bold_name, font_size ) _find_font(QSP_ARG  varname, family, bold_name, font_size )
+
+static void _find_font(QSP_ARG_DECL  const char *varname, const char *family, const char * bold_name, int font_size )
+{
+	char **flist;
+	int nfonts;
+	char pattern[LLEN];
+
+	DRAW_CHECK(find_font)
+
+	//                      | change that r to i for italic
+	//                      | |star can be "normal" or "normal-sans" or ???
+	sprintf(pattern,"*%s-%s-r-*--%d-*",family,bold_name,font_size);
+	flist = XListFonts(VW_DPY(draw_vp),pattern,MAX_FONT_NAMES,&nfonts);
+	if( nfonts < 0 ){
+		warn("find_font:  XListFonts returned negative!?");
+		assign_var(varname,"no_font");
+	} else if( nfonts == 0 ){
+		assign_var(varname,"no_font");
+	} else {
+		// return the first font
+		assign_var(varname,flist[0]);
+	}
+	XFreeFontNames(flist);
+}
+
 // load_font - make sure the font exists before trying to load
 
 #define load_font(fontname) _load_font(QSP_ARG  fontname)
@@ -518,6 +544,28 @@ static COMMAND_FUNC( do_set_font_size )
 	set_font_size(draw_vp,s);
 }
 
+#define N_BOLD_TYPES	2
+const char *bold_type_name[N_BOLD_TYPES]={"bold","medium"};
+
+static COMMAND_FUNC( do_find_font )
+{
+	const char *varname, *family;
+	int bold_type_idx, font_size;
+
+	varname = nameof("variable name for font result");
+	family = nameof("font family");
+	bold_type_idx = which_one("bold",N_BOLD_TYPES,bold_type_name);
+	font_size = how_many("font size");
+
+	if( bold_type_idx < 0 ) return;
+	if( font_size <= 0 ) {
+		warn("font size must be positive");
+		return;
+	}
+
+	find_font(varname,family,bold_type_name[bold_type_idx],font_size);
+}
+
 static COMMAND_FUNC( do_set_text_angle )
 {
 	float a;
@@ -557,6 +605,7 @@ ADD_CMD( load,		do_load_font,		load a font )
 ADD_CMD( load_set,	do_load_font_set,	load a group of fonts )
 ADD_CMD( font,		do_set_font,		select a loaded font for drawing )
 ADD_CMD( font_size,	do_set_font_size,	set font size )
+ADD_CMD( find_font,	do_find_font,		find a font matching criteria )
 ADD_CMD( text_mode,	do_set_text_mode,	select text drawing mode )
 ADD_CMD( text_angle,	do_set_text_angle,	select text drawing angle )
 ADD_CMD( list,		do_list_xfonts,		list all loaded fonts )

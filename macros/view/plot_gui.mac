@@ -37,10 +37,14 @@ Set axis_min_widget_name "Min"
 Set tick_spacing_widget_name "Tick Spacing"
 Set tick_first_widget_name "First Tick"
 Set tick_auto_widget_name "Standard Ticks"
+Set font_bold_widget_name "Bold"
+Set font_family_widget_name 'Font Family'
+Set font_size_widget_name 'Font Size'
 Set axis_logv_widget_name "Logarithmic Axis"
 Set axis_log_widget_name "Logarithmic Axis"	# obsolete
 Set data_panel "Data"
 Set image_panel "Image"
+Set font_panel "Fonts"
 Set grid_panel "Grid"
 Set data_edit_panel "Edit Data Series"
 Set image_edit_panel "Edit Embedded Image"
@@ -57,6 +61,7 @@ Set plot_legend_text_widget_name 'Plot legend text'
 Set plot_legend_x_widget_name 'Plot legend X'
 Set plot_legend_y_widget_name 'Plot legend Y'
 
+Set data_series_widget_name 'Data Series'
 Set data_source_file_widget_name 'Source file'
 Set data_legend_toggle_widget_name 'Legend'
 Set data_legend_text_widget_name 'Data legend text'
@@ -123,6 +128,11 @@ Set y_tick_auto 1
 
 Set x_axis_legend 'text abcissa'
 Set y_axis_legend 'text ordinate'
+
+Set font_bold 1
+Set font_size 24	# default
+Set font_family times	# default
+
 
 # defaults
 Set which_axis x
@@ -413,6 +423,11 @@ Panel_Off $main_panel
 Panel_On $image_panel
 .
 
+Define FontPanel 0
+Panel_Off $main_panel
+Panel_On $font_panel
+.
+
 Define GridPanel 0
 Panel_Off $main_panel
 Panel_On $grid_panel
@@ -453,6 +468,12 @@ Define SetTickFirst 0
 Get_Text_Var $tick_panel_name $tick_first_widget_name $tick_first_name
 .
 
+Define TogFontBold 0
+If $toggle_state
+  Then "Set font_bold bold"
+  Else "Set font_bold medium"
+.
+
 Define Get_Text_Var 3 panel_name widget_name var_name
 interface
   decorate $1
@@ -468,6 +489,14 @@ Set selected_series_nickname $selection
 
 Define SelectImage 0
 Set selected_image_nickname $selection
+.
+
+Define SelectFontFamily 0
+Set font_family $selection
+.
+
+Define SelectFontSize 0
+Set font_size $selection
 .
 
 Define SelectGrid 0
@@ -969,7 +998,7 @@ If !strcmp('$1','$2') "Set series_color_index $3"
 
 Define Make_Series_List_Cmd 1 varname
 If $n_data_series<1 "Set $1 nop exit_macro"
-Set $1 "items 'Data Series' $n_data_series"
+Set $1 "items $data_series_widget_name $n_data_series"
 Set i 1
 repeat $n_data_series
   Set vname series_${i}_nickname
@@ -1648,6 +1677,27 @@ Update_Edit_Text $tick_first_widget_name $$tick_first_name $tick_panel_name
 Update_Toggle $tick_auto_widget_name $$tick_auto_name $tick_panel_name
 .
 
+Define SetLegendFont 0
+Find_Current_Font
+If $font_found "Set legend_font $current_font Refresh_Plot"
+.
+
+Define SetUnitFont 0
+Find_Current_Font
+If $font_found "Set unit_font $current_font Refresh_Plot"
+.
+
+Define Find_Current_Font 0
+Set font_found 0
+view
+  draw $the_plotter
+    find_font current_font $font_family $font_bold $font_size
+    quit
+  quit
+# BUG depends on behavior of C code
+If strcmp('$current_font','no_font')  "Set font_found 1"
+.
+
 Define Declare_Plot_GUI 0
 
 interface
@@ -1681,9 +1731,8 @@ interface
 
   panel $data_panel $panel_w $panel_h
   decorate $data_panel
-    #chooser 'Data Series' SelectSeries 1 no_series
     button 'Add New Series' AddData
-    scroller 'Data Series' SelectSeries
+    scroller $data_series_widget_name SelectSeries
     button 'Edit Series' EditData
     button Done 'Panel_Off $data_panel Panel_On $main_panel'
     quit
@@ -1696,9 +1745,24 @@ interface
     button Done 'Panel_Off $image_panel Panel_On $main_panel'
     quit
 
+#Set $1 "items $data_series_widget_name $n_data_series"
+  panel $font_panel $panel_w $panel_h
+  decorate $font_panel
+    scroller $font_family_widget_name SelectFontFamily
+    items $font_family_widget_name 2 times lucida
+    scroller $font_size_widget_name SelectFontSize
+    items $font_size_widget_name 12
+	8	9	10	11
+	12	14	16	18
+	20	22	24	32
+    toggle $font_bold_widget_name TogFontBold
+    button "Set Legend Font" SetLegendFont
+    button "Set Unit Font" SetUnitFont
+    button Done 'Panel_Off $font_panel Panel_On $main_panel'
+    quit
+
   panel $grid_panel $panel_w $panel_h
   decorate $grid_panel
-    #chooser 'Data Series' SelectSeries 1 no_series
     button 'Add New Grid' AddGrid
     scroller 'Grid Data' SelectGrid
     button 'Edit Grid' EditGrid
@@ -1768,6 +1832,7 @@ interface
     button 'Y axis' YAxisPanel
     button 'Data' DataPanel
     button 'Images' ImagePanel
+    button 'Fonts' FontPanel
     button 'Grids' GridPanel
     button 'Refresh Preview' Refresh_Plot
     button 'Save plot params' SavePlotParams
