@@ -966,6 +966,7 @@ Load_Series_Vars $curr_series_name
 Define Set_Color_Index_From_Name 1 color_name
 Map_Color_Index $1 black $black
 Map_Color_Index $1 white $white
+Map_Color_Index $1 gray $gray
 Map_Color_Index $1 red $red
 Map_Color_Index $1 green $green
 Map_Color_Index $1 blue $blue
@@ -973,9 +974,13 @@ Map_Color_Index $1 cyan $cyan
 Map_Color_Index $1 yellow $yellow
 Map_Color_Index $1 magenta $magenta
 Map_Color_Index $1 dark_yellow $dark_yellow
+Map_Color_Index $1 dark_red $dark_red
+Map_Color_Index $1 dark_green $dark_green
+Map_Color_Index $1 dark_cyan $dark_cyan
+Map_Color_Index $1 dark_magenta $dark_magenta
 # print a warning here if the color index is < 0 at this point
 If $series_color_index<0
-  "warn 'OOPS - color indes not set!?'"
+  "warn 'OOPS - color indices not set!?'"
 .
 
 Define SetSeriesSymbol 0
@@ -1582,6 +1587,7 @@ repeat nrows(grid_pts)
 Define Set_Datacolor 1 color_name
 If !strcmp('$1','black') "Set_Datacolor_RGB 0 0 0"
 If !strcmp('$1','white') "Set_Datacolor_RGB 1 1 1"
+If !strcmp('$1','gray') "Set_Datacolor_RGB 0.6 0.6 0.6"
 If !strcmp('$1','red') "Set_Datacolor_RGB 1 0 0"
 If !strcmp('$1','green') "Set_Datacolor_RGB 0 0.6 0"
 If !strcmp('$1','blue') "Set_Datacolor_RGB 0 0 1"
@@ -1589,6 +1595,9 @@ If !strcmp('$1','magenta') "Set_Datacolor_RGB 1 0 1"
 If !strcmp('$1','cyan') "Set_Datacolor_RGB 0 1 1"
 If !strcmp('$1','yellow') "Set_Datacolor_RGB 1 1 0"
 If !strcmp('$1','dark_yellow') "Set_Datacolor_RGB 0.6 0.6 0"
+If !strcmp('$1','dark_green') "Set_Datacolor_RGB 0.0 0.6 0"
+If !strcmp('$1','dark_magenta') "Set_Datacolor_RGB 0.6 0.0 0.6"
+If !strcmp('$1','dark_cyan') "Set_Datacolor_RGB 0.0 0.6 0.6"
 .
 
 Define Set_Datacolor_RGB 3 r g b
@@ -1784,7 +1793,7 @@ interface
     button 'Refresh_Plot' DataEditRefreshPlot
     button Done SeriesEditDone
     position 120 20
-    chooser Color SetSeriesColor 10 white black red blue green cyan yellow dark_yellow magenta gray
+    chooser Color SetSeriesColor 13 white black red blue green cyan yellow magenta gray dark_yellow dark_green dark_cyan dark_magenta
     position 240 20
     chooser Symbol SetSeriesSymbol 5 none Square Disk Triangle Diamond
     chooser 'Symbol Size' SetSymbolSize 4    3 4 5 6

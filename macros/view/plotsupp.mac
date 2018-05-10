@@ -327,11 +327,13 @@ advise "  > plot colors:  $plot_foreground, $plot_background"
 advise "  > minmax_set:  $minmax_set    margins_set:  $margins_set"
 .
 
+# how many do we have to play with???
+
 Define Init_Color_Indices 0
-Set black 20
-Set white 21
-Set gray 22
-Set red	23
+Set black	20
+Set white	21
+Set gray	22
+Set red		23
 Set green	24
 Set yellow	25
 Set cyan	26
@@ -343,6 +345,7 @@ Set dark_green	30
 Set dark_red	31
 Set dark_yellow	32
 Set dark_cyan	33
+Set dark_magenta	34
 .
 
 Define Init_Color_Defs 0
@@ -355,6 +358,7 @@ Setcolor $dark_red 100 0 0
 Setcolor $green 0 255 0
 Setcolor $dark_green 0 100 0
 Setcolor $dark_cyan 0 100 255
+Setcolor $dark_magenta 150 0 150
 Setcolor $blue 0 0 255
 Setcolor $purple 255 0 255	# same as $magenta
 Setcolor $yellow 255 255 0
