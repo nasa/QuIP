@@ -57,13 +57,14 @@ Require_Var ymax
 Require_Var y_legend
 Require_Var y_tick_spacing
 Check_Var y_tick_offset 0
+Check_Var y_tick_last $ymax
 If !$vars_ok exit_macro
 
 Plot_Data_Range $xmin $ymin $xmax $ymax
 
 Y_Legend $y_legend
-Plot_Y_Axis_Offset $ymin $ymax $y_tick_spacing $xmin $y_tick_offset
-Label_Y_Ticks $ymin+$y_tick_offset $ymax $y_tick_spacing
+Plot_Y_Axis_With_Ticks $ymin $ymax $xmin $y_tick_first $y_tick_last $y_tick_spacing
+Label_Y_Ticks $y_tick_first $y_tick_last $y_tick_spacing
 .
 
 Define Redraw_X_Axis 0
@@ -82,9 +83,8 @@ Label_X_Ticks $xmin $xmax $x_tick_spacing
 # then set it to the provided default value
 
 Define Check_Var 2 varname default_value
-#If var_exists('$1') "advise 'Check_Var:  variable $1 already exists, with value $$1'"
 If !var_exists('$1')
-  "Set $1 $2 'Check_Var:  $1 set to default value $2"
+  "Set $1 $2 advise 'Check_Var:  $1 set to default value $2'"
 .
 
 Define Setup_X_Axis 0
@@ -833,14 +833,13 @@ Plot_X_Axis_Offset $1 $2 $3 $4 0
 Mul_Var x_tick_len -1
 .
 
-
-Define Plot_Y_Axis 4 ymin ymax tick_spacing xpos
-Plot_Y_Axis_Offset $1 $2 $3 $4 0
+Define Plot_Y_Axis 4 ymin ymax xpos tick_spacing
+Plot_Y_Axis_With_Ticks $1 $2 $3 $1 $2 $4
 .
 
-Define Plot_Y_Axis_Right 4 ymin ymax tick_spacing xpos
+Define Plot_Y_Axis_Right 4 ymin ymax xpos tick_spacing
 Mul_Var y_tick_len -1
-Plot_Y_Axis_Offset $1 $2 $3 $4 0
+Plot_Y_Axis_With_Ticks $1 $2 $3 $1 $2 $4
 Mul_Var y_tick_len -1
 .
 
@@ -853,9 +852,10 @@ PMove $3 $1
 PCont $3 $2
 .
 
-Define Plot_Y_Axis_Offset 5 ymin ymax tick_spacing xpos first_tick_offset
-Draw_Y_Axis $1 $2 $4
-Draw_Y_Ticks $1 $2 $3 $4 $5
+Define Plot_Y_Axis_With_Ticks 6 ymin ymax xpos first_tick last_tick tick_spacing
+advise "Plot_Y_Axis_With_Ticks $1 $2 $3 $4 $5 $6 BEGIN"
+Draw_Y_Axis $1 $2 $3
+Draw_Y_Ticks $4 $5 $3 $6
 .
 
 Define Draw_Y_Tick_At 2 x y
@@ -868,12 +868,15 @@ PMove $1 $2
 PCont $1+$y_tick_len $2
 .
 
-Define Draw_Y_Ticks 5 ymin ymax tick_spacing xpos first_tick_offset
-Assign _y $1+$5
+Define Draw_Y_Ticks 4 y_first_tick y_last_tick xpos tick_spacing
+advise "Draw_Y_Ticks $1 $2 $3 $4 BEGIN"
+If $4==0 "error_exit 'Draw_Y_Ticks:  tick spacing cannot be zero!?'"
+Assign _y $1
 do
-  Draw_Y_Tick_At $4 $_y
-  Add_Var _y $3
+  Draw_Y_Tick_At $3 $_y
+  Add_Var _y $4
   while $_y<=$2
+advise "Draw_Y_Ticks $1 $2 $3 $4 DONE"
 .
 
 Define Plot_Grid 6 xmin ymin xmax ymax x_spacing y_spacing
@@ -1419,7 +1422,7 @@ repeat $n_x_ticks
   end
 .
 
-Define Label_Y_Ticks 3 first max delta 
+Define Label_Y_Ticks 3 first last delta 
 If !$allow_color_tick_labels "Push_Var pen_color Select_Pen $label_color"
 Assign n_y_ticks 1+floor($tiny+($2-($1))/$3)
 #advise "Label_Y_Ticks $1 $2 $3"

@@ -36,6 +36,7 @@ Set axis_max_widget_name "Max"
 Set axis_min_widget_name "Min"
 Set tick_spacing_widget_name "Tick Spacing"
 Set tick_first_widget_name "First Tick"
+Set tick_last_widget_name "Last Tick"
 Set tick_auto_widget_name "Standard Ticks"
 Set font_bold_widget_name "Bold"
 Set font_family_widget_name 'Font Family'
@@ -120,10 +121,12 @@ Set y_axis_logv 0
 
 Set x_tick__spacing 1
 #Set x_tick_first 0	# shouldn't this default to xmin?
+#Set x_tick_last 0	# shouldn't this default to xmax?
 Set x_tick_auto 1
 
 Set y_tick__spacing 0.2
 #Set y_tick_first 0
+#Set y_tick_last 0
 Set y_tick_auto 1
 
 Set x_axis_legend 'text abcissa'
@@ -141,8 +144,10 @@ Set axis_min_name x_axis_min
 Set axis_max_name x_axis_max
 Set axis_logv_name x_axis_logv
 
-Set tick_spacing_name x_tick__spacing
+Set tick_spacing_name x_tick__spacing	# two underscores to keep this separate from plotsupp.mac - KLUDGE!
+					# WHY is this necessary?
 Set tick_first_name x_tick_first
+Set tick_last_name x_tick_last
 
 Set curr_series_name no_series
 
@@ -355,6 +360,8 @@ Set $api_axis_legend_name $$axis_legend_name
 Set $api_tick_spacing_name $$tick_spacing_name
 Check_Var $tick_first_name $$axis_min_name
 Assign $api_tick_first_name $$tick_first_name-$$axis_min_name	# api uses offset, not first posn
+Check_Var $tick_last_name $$axis_max_name
+Assign $api_tick_last_name $$tick_last_name
 .
 
 Define Install_Log_Axis_Vars 0
@@ -364,6 +371,7 @@ Assign $api_axis_min_name floor(log($$axis_min_name)/log(10))
 Assign $api_axis_max_name ceil(log($$axis_max_name)/log(10))
 Assign $api_tick_spacing_name $$tick_spacing_name
 Assign $api_tick_first_name $$tick_first_name-$$api_axis_min_name
+Assign $api_tick_last_name $$tick_last_name
 Set $api_axis_legend_name "log $$axis_legend_name"
 .
 
@@ -480,6 +488,10 @@ Get_Text_Var $tick_panel_name $tick_spacing_widget_name $tick_spacing_name
 
 Define SetTickFirst 0
 Get_Text_Var $tick_panel_name $tick_first_widget_name $tick_first_name
+.
+
+Define SetTickLast 0
+Get_Text_Var $tick_panel_name $tick_last_widget_name $tick_last_name
 .
 
 Define TogFontBold 0
@@ -1210,6 +1222,7 @@ Save_Tick_Params
 Define Save_Tick_Params 0
 Save_Param $tick_spacing_name
 Save_Param $tick_first_name
+Save_Param $tick_last_name
 Save_Param $tick_auto_name
 .
 
@@ -1383,14 +1396,14 @@ Set y $y_tick_first
 do
   echo "($y) $y	ylabeltick"
   Add_Var y $y_tick_spacing
-  while $y<=$ymax
+  while $y<=$y_tick_last
 echo "($y_legend) ylegend"
 echo "($x_legend) xlegend"
 Set x $x_tick_first
 do
   echo "($x) $x	xlabeltick"
   Add_Var x $x_tick_spacing
-  while $x<=$xmax
+  while $x<=$x_tick_last
 .
 
 Define Draw_Series_Curve 0
@@ -1495,9 +1508,14 @@ output_file -	# close file
 
 os
   system "cat $postscript_lib/jbm_trailer.ps >> $psfile"
-  system "epstool --copy --bbox $psfile $final_psfile"
-  # Should we make sure epstool succeeded?
-  system "/bin/rm $psfile"
+
+  # epstool is broken?
+#  advise "epstool --copy --bbox $psfile $final_psfile"
+#  system "epstool --copy --bbox $psfile $final_psfile"
+#  # Should we make sure epstool succeeded?
+#  system "/bin/rm $psfile"
+
+  system "mv $psfile $final_psfile"
   quit
 .
 
@@ -1681,6 +1699,7 @@ Set axis_logv_name ${1}_axis_logv
 
 Set tick_spacing_name ${1}_tick__spacing	# extra underscore to differentiate from plotsupp (ugly!)
 Set tick_first_name ${1}_tick_first
+Set tick_last_name ${1}_tick_last
 Set tick_auto_name ${1}_tick_auto
 
 Set api_axis_min_name ${1}min
@@ -1688,6 +1707,7 @@ Set api_axis_max_name ${1}max
 Set api_axis_legend_name ${1}_legend
 Set api_tick_spacing_name ${1}_tick_spacing
 Set api_tick_first_name ${1}_tick_offset
+Set api_tick_last_name ${1}_tick_last
 .
 
 Define Update_Axis_Panel 1 which_axis
@@ -1709,6 +1729,7 @@ Update_Edit_Text $axis_max_widget_name $$axis_max_name $axis_panel_name
 
 Update_Edit_Text $tick_spacing_widget_name $$tick_spacing_name $tick_panel_name
 Update_Edit_Text $tick_first_widget_name $$tick_first_name $tick_panel_name
+Update_Edit_Text $tick_last_widget_name $$tick_last_name $tick_panel_name
 Update_Toggle $tick_auto_widget_name $$tick_auto_name $tick_panel_name
 .
 
@@ -1752,6 +1773,7 @@ interface
     toggle $tick_auto_widget_name TogTickAuto
     text $tick_spacing_widget_name SetTickSpacing 0
     text $tick_first_widget_name SetTickFirst 0
+    text $tick_last_widget_name SetTickLast 0
     button Apply Refresh_Plot
     button Done 'Panel_Off $tick_panel_name Panel_On $axis_panel_name'
     quit
@@ -1890,7 +1912,8 @@ Define Draw_Plot_Legend 0
 If !$show_plot_legend exit_macro
 Select_Pen $black
 Legend_Font
-Center_Text
+#Center_Text
+Left_Justify
 S_At "$plot_legend_text" $plot_legend_x $plot_legend_y
 .
 
