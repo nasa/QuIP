@@ -174,14 +174,28 @@ repeat $n_grids
   end
 .
 
+# just for debugging - can't use Display because output may be redirected when writing ps...
+Define Reveal 1 vector
+advise "$1:"
+Assign _nc ncols('$1')
+Set _i 0
+repeat $_nc
+  Assign __x value($1[$_i]{0})
+  Assign __y value($1[$_i]{1})
+  advise "$__x $__y"
+  Increment _i
+  end
+.
+
 Define Get_Series_Points 0
 If obj_exists(series_pts) "Delete_Image series_pts"
 If obj_exists(series_raw_pts) "Delete_Image series_raw_pts"
 Count_Lines nl $series_filename
 Count_Columns nc $series_filename
-If $nc!=2 "warn 'Refresh_Series:  expected file $series_filename to have 2 columns!?' exit_macro"
+If $nc!=2 "warn 'Get_Series_Points:  expected file $series_filename to have 2 columns!?' exit_macro"
 Vector series_raw_pts $nl 2 float
 Get_Ascii series_raw_pts $series_filename
+#Reveal series_raw_pts
 Vector series_pts $nl 2 float
 .
 
@@ -1365,15 +1379,14 @@ echo "$xmax gxu $ymin gyu l"
 echo "$xmin gxu $ymin gyu moveto"
 echo "$xmin gxu $ymax gyu l"
 
-# BUG - use first tick parameter here!
-Set y $ymin
+Set y $y_tick_first
 do
   echo "($y) $y	ylabeltick"
   Add_Var y $y_tick_spacing
   while $y<=$ymax
 echo "($y_legend) ylegend"
 echo "($x_legend) xlegend"
-Set x $xmin
+Set x $x_tick_first
 do
   echo "($x) $x	xlabeltick"
   Add_Var x $x_tick_spacing
@@ -1461,8 +1474,16 @@ If $plot_w>$plot_h
   Then "Set page_orientation landscape"
   Else "Set page_orientation portrait"
 
+Set f1 $postscript_lib/jbm_head.ps
+Set f2 $postscript_lib/jbm_${page_orientation}_page.ps
+Set f3 $postscript_lib/plotmacs.ps
+
+If !file_exists('$f1') "warn 'File $f1 does not exist!?' exit_macro"
+If !file_exists('$f2') "warn 'File $f2 does not exist!?' exit_macro"
+If !file_exists('$f3') "warn 'File $f3 does not exist!?' exit_macro"
+
 os
-  system "cat $postscript_lib/jbm_head.ps $postscript_lib/jbm_${page_orientation}_page.ps $postscript_lib/plotmacs.ps > $psfile"
+  system "cat $f1 $f2 $f3 > $psfile"
   quit
 
 append yes
@@ -1504,6 +1525,7 @@ If strcmp('$ps_symbol_type','none')
 Define Emit_One_Series 1 index
 Load_Series_Vars series_$1
 Get_Series_Points
+Transform_Series	# to log or not to log? that is the question!
 Get_PS_Symbol_For $series_symbol
 Set_Datacolor $series_color
 echo "$datacolor_red $datacolor_green $datacolor_blue setrgbcolor"
