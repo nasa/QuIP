@@ -1957,30 +1957,50 @@ If depth(eoi_tmp)!=1 "error_exit 'Emit_One_Image:  Sorry, only know how to emit 
 # width height bitspersample matrix datasrc image
 echo "/picstr 256 string def"
 # Need translate and scale commands here to place the image...
-echo "$dx $dy 8 [$dx 0 0 $dy 0 0]"
+#echo "$dx $dy 8 [$dx 0 0 $dy 0 0]"
+echo "$dx $dy 8 [1 0 0 1 0 0]"
 echo "{currentfile picstr readhexstring pop}"	# procedure to read data
+echo image
+# Slow_Emit_Image_Data
+Fast_Emit_Image_Data eoi_tmp
+Delete_Image eoi_tmp
+.
+
+# ps gets image data bottom-to-top, so we need to flip the image
+
+Define Fast_Emit_Image_Data 1 image
+If obj_exists(flipped) 'Delete_Image flipped'
+Subsample_Image flipped $1
+	ncols('$1') 0 1
+	nrows('$1') nrows('$1')-1 -1
+data
+  ascii
+    output_fmt postscript
+    display flipped
+    quit
+  quit
+.
+
+Define Slow_Emit_Image_Data 0
 # We are going to print hex bytes...  Let's limit it to 32 per line
 Set n_bytes_per_line 32
 Assign n_remaining $dx*$dy
 Set eoi_x 0
-Set eoi_y 0
-variables
-  format postscript
-  quit
+Assign eoi_y nrows(eoi_tmp)-1	# ps is bottom-to-top
 do
   Assign n_this_line min($n_remaining,$n_bytes_per_line)
   Set byte_str ''
   repeat $n_this_line
+    variables push_fmt postscript quit
     Assign b value(eoi_tmp[$eoi_y][$eoi_x])
+    variables pop_fmt quit
     Set byte_str "$byte_str$b"
     Increment eoi_x
-    If $eoi_x>=$dx "Set eoi_x 0 Increment eoi_y"
+    If $eoi_x>=$dx "Set eoi_x 0 Decrement eoi_y"
     end
   echo $byte_str
   Add_Var n_remaining -$n_this_line
   while $n_remaining>0
-
-Delete_Image eoi_tmp
 .
 
 
