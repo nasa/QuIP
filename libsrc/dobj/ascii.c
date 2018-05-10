@@ -935,8 +935,10 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-		for(i=0;i<OBJ_MACH_DIM(dp,dim);i++)
-			pnt_dim(QSP_ARG  fp,dp,data+i*inc,dim-1);
+		for(i=0;i<OBJ_MACH_DIM(dp,dim);i++){
+			// have to cast i to prevent inc from being cast to unsigned!!!
+			pnt_dim(QSP_ARG  fp,dp,data+((incr_t)i)*inc,dim-1);
+		}
 	} else {
 		pnt_one(QSP_ARG  fp,dp,data);
 	}
