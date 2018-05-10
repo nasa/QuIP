@@ -207,6 +207,7 @@ struct query_stack {
 	char		qs_xfmt_str[8];
 	char		qs_ofmt_str[8];
 	char		qs_dfmt_str[8];
+	char		qs_pfmt_str[8];
 
 	// for formatted ascii input to data objects
 	struct dobj_ascii_info *	qs_dai_p;
@@ -363,10 +364,12 @@ struct query_stack {
 #define QS_XFORMAT(qsp)			(qsp)->qs_xfmt_str
 #define QS_DFORMAT(qsp)			(qsp)->qs_dfmt_str
 #define QS_OFORMAT(qsp)			(qsp)->qs_ofmt_str
+#define QS_PFORMAT(qsp)			(qsp)->qs_pfmt_str
 #define SET_QS_GFORMAT(qsp,s)		strcpy((qsp)->qs_gfmt_str,s)
 #define SET_QS_XFORMAT(qsp,s)		strcpy((qsp)->qs_xfmt_str,s)
 #define SET_QS_DFORMAT(qsp,s)		strcpy((qsp)->qs_dfmt_str,s)
 #define SET_QS_OFORMAT(qsp,s)		strcpy((qsp)->qs_ofmt_str,s)
+#define SET_QS_PFORMAT(qsp,s)		strcpy((qsp)->qs_pfmt_str,s)
 #define QS_AV_STRINGBUF(qsp)		(qsp)->qs_av_sbp
 #define SET_QS_AV_STRINGBUF(qsp,sbp)	(qsp)->qs_av_sbp = sbp
 

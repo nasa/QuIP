@@ -479,6 +479,7 @@ static void init_default_formats(SINGLE_QSP_ARG_DECL)
 	SET_QS_DFORMAT(THIS_QSP, "%"   PRId64 );
 	SET_QS_XFORMAT(THIS_QSP, "0x%" PRIx64 );
 	SET_QS_OFORMAT(THIS_QSP, "0%"  PRIo64 );
+	SET_QS_PFORMAT(THIS_QSP, "%02x" );		// print a byte as two chars for postscript
 
 	SET_QS_NUMBER_FMT( THIS_QSP, QS_DFORMAT(THIS_QSP) );
 }
@@ -589,6 +590,7 @@ static inline void assign_integer_from_double(QSP_ARG_DECL  Typed_Scalar *tsp)
 
 #define IS_INTEGER_FMT( f )		( (f) == QS_XFORMAT(THIS_QSP) ||	\
 					  (f) == QS_DFORMAT(THIS_QSP) ||	\
+					  (f) == QS_PFORMAT(THIS_QSP) ||	\
 					  (f) == QS_OFORMAT(THIS_QSP) )
 
 static inline void assign_var_stringbuf_from_number(QSP_ARG_DECL  Typed_Scalar *tsp)
@@ -737,8 +739,7 @@ static void set_fmt(QSP_ARG_DECL  Number_Fmt i)
 		case FMT_OCTAL:  SET_QS_NUMBER_FMT(THIS_QSP,QS_OFORMAT(THIS_QSP)); break;
 		case FMT_POSTSCRIPT:
 			/* does this make sense? */
-warn("set_fmt:  not sure what to do with FMT_POSTSCRIPT - using decimal.");
-			SET_QS_NUMBER_FMT(THIS_QSP,QS_DFORMAT(THIS_QSP));
+			SET_QS_NUMBER_FMT(THIS_QSP,QS_PFORMAT(THIS_QSP));
 			break;
 		default:
 			assert( AERROR("set_fmt:  unexpected format code!?") );

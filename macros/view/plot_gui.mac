@@ -1460,8 +1460,17 @@ output_file $psfile
 Emit_Plot_Content
 .
 
+Define Emit_Embedded_Images 0
+Set idx 1
+repeat $n_embedded_images
+  Load_Image_Vars image_$idx	# is this correct???
+  Emit_One_Image $image_filename $image_posn_x $image_posn_y
+  end
+.
+
 Define Emit_Plot_Content 0
 Emit_Prolog
+If $n_embedded_images>0 Emit_Embedded_Images
 Emit_Axes
 
 # BUG subject label needs to have parameterized coordinates!
@@ -1933,6 +1942,44 @@ Get_Next eoi_tmp $1
 view
   embed Plot_Preview eoi_tmp $image_posn_x nrows(Plot_Preview)-$image_posn_y-nrows(eoi_tmp)
   quit
+Delete_Image eoi_tmp
+.
+
+Define Emit_One_Image 3 filename x y
+If !file_exists('$1') "warn 'No image file $1!?' exit_macro"
+Read_File_Header $1
+Image eoi_tmp nrows('$1') ncols('$1') depth('$1') u_byte
+Get_Next eoi_tmp $1
+# Here we need to print the image in postscript format...
+Assign dx ncols(eoi_tmp)
+Assign dy nrows(eoi_tmp)
+If depth(eoi_tmp)!=1 "error_exit 'Emit_One_Image:  Sorry, only know how to emit grayscale images...'"
+# width height bitspersample matrix datasrc image
+echo "/picstr 256 string def"
+# Need translate and scale commands here to place the image...
+echo "$dx $dy 8 [$dx 0 0 $dy 0 0]"
+echo "{currentfile picstr readhexstring pop}"	# procedure to read data
+# We are going to print hex bytes...  Let's limit it to 32 per line
+Set n_bytes_per_line 32
+Assign n_remaining $dx*$dy
+Set eoi_x 0
+Set eoi_y 0
+variables
+  format postscript
+  quit
+do
+  Assign n_this_line min($n_remaining,$n_bytes_per_line)
+  Set byte_str ''
+  repeat $n_this_line
+    Assign b value(eoi_tmp[$eoi_y][$eoi_x])
+    Set byte_str "$byte_str$b"
+    Increment eoi_x
+    If $eoi_x>=$dx "Set eoi_x 0 Increment eoi_y"
+    end
+  echo $byte_str
+  Add_Var n_remaining -$n_this_line
+  while $n_remaining>0
+
 Delete_Image eoi_tmp
 .
 
