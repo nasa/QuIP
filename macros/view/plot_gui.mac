@@ -998,7 +998,7 @@ If !strcmp('$1','$2') "Set series_color_index $3"
 
 Define Make_Series_List_Cmd 1 varname
 If $n_data_series<1 "Set $1 nop exit_macro"
-Set $1 "items $data_series_widget_name $n_data_series"
+Set $1 "items '$data_series_widget_name' $n_data_series"
 Set i 1
 repeat $n_data_series
   Set vname series_${i}_nickname
@@ -1034,7 +1034,9 @@ repeat $n_grids
 
 Define Update_Series_Choices 0
 Make_Series_List_Cmd cmd
-#Print cmd
+output_file -
+Print cmd
+Print data_panel
 interface
   decorate $data_panel
     interpret $cmd
@@ -1062,10 +1064,11 @@ interface
 .
 
 Define SeriesEditDone 0
-#advise SeriesEditDone
-#Print curr_series_name
+advise "SeriesEditDone, curr_series_name = $curr_series_name"
 Store_Series_Vars $curr_series_name
+advise 'vars stored'
 Update_Series_Choices
+advise 'choices updated'
 Panel_Off $data_edit_panel
 Panel_On $data_panel
 Refresh_Data
@@ -1235,6 +1238,7 @@ echo "Set $1 '$$1' "
 .
 
 Define Save_Data_Params 0
+advise "Save_Data_Params BEGIN  n_data_series = $n_data_series"
 Save_Param n_data_series
 Set i 1
 If $n_data_series<1 exit_macro
@@ -1745,7 +1749,7 @@ interface
     button Done 'Panel_Off $image_panel Panel_On $main_panel'
     quit
 
-#Set $1 "items $data_series_widget_name $n_data_series"
+#Set $1 "items '$data_series_widget_name' $n_data_series"
   panel $font_panel $panel_w $panel_h
   decorate $font_panel
     scroller $font_family_widget_name SelectFontFamily

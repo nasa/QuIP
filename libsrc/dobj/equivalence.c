@@ -165,7 +165,7 @@ static void compare_element_sizes(Equivalence_Data *eqd_p)
 	n_per_parent = 1;
 	n_per_child = 1;
 
-fprintf(stderr,"compare_element_sizes:  n_bytes_per_child_elt = %d, n_bytes_per_parent_elt = %d\n",n_bytes_per_child_elt,n_bytes_per_parent_elt);
+//fprintf(stderr,"compare_element_sizes:  n_bytes_per_child_elt = %d, n_bytes_per_parent_elt = %d\n",n_bytes_per_child_elt,n_bytes_per_parent_elt);
 	if( n_bytes_per_child_elt > n_bytes_per_parent_elt ) {
 		assert(n_bytes_per_child_elt % n_bytes_per_parent_elt == 0 );
 		n_per_child = n_bytes_per_child_elt / n_bytes_per_parent_elt ;
@@ -173,7 +173,7 @@ fprintf(stderr,"compare_element_sizes:  n_bytes_per_child_elt = %d, n_bytes_per_
 		assert(n_bytes_per_parent_elt % n_bytes_per_child_elt == 0 );
 		n_per_parent = n_bytes_per_parent_elt / n_bytes_per_child_elt ;
 	}
-fprintf(stderr,"compare_element_sizes:  n_per_child = %d, n_per_parent = %d\n",n_per_child,n_per_parent);
+//fprintf(stderr,"compare_element_sizes:  n_per_child = %d, n_per_parent = %d\n",n_per_child,n_per_parent);
 	// otherwise same size, default values of 1 are correct
 }
 
@@ -204,8 +204,8 @@ static int _check_eq_size_match(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 
 	total_parent_bytes = ELEMENT_SIZE( parent_dp ) * n;
 
-fprintf(stderr,"check_eq_size_match:  total_parent_bytes = %d (size %d x n_elts %d)\n",
-total_parent_bytes,ELEMENT_SIZE(parent_dp),OBJ_N_MACH_ELTS(parent_dp));
+//fprintf(stderr,"check_eq_size_match:  total_parent_bytes = %d (size %d x n_elts %d)\n",
+//total_parent_bytes,ELEMENT_SIZE(parent_dp),OBJ_N_MACH_ELTS(parent_dp));
 	if( total_child_bytes != total_parent_bytes){
 		sprintf(ERROR_STRING,
 	"make_equivalence %s:  total requested size (%d bytes) does not match parent %s (%d bytes)",
