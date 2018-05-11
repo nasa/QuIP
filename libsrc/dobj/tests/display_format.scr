@@ -1,0 +1,59 @@
+Scalar sb 1 byte
+Scalar ss 1 short
+Scalar si 1 int
+Scalar sl 1 long
+
+VSet sb -1
+VSet ss -1
+VSet si -1
+VSet sl -1
+
+Define Testit 2 object format
+advise "Displaying $1 with $2 format:"
+data
+  ascii
+    output_fmt $2
+    display $1
+    quit
+  quit
+Pause
+.
+
+Define Test_All_Formats 1 image
+foreach fmt ( decimal hex octal unsigned postscript )
+  Testit $1 $fmt
+end
+.
+
+#Test_All_Formats sb
+#Test_All_Formats ss
+#Test_All_Formats si
+#Test_All_Formats sl
+#exit
+
+Set h 5
+Set w 13
+Image a $h $w 1 u_byte
+Image b $h $w 1 byte
+Image c $h $w 1 short
+Image d $h $w 1 u_short
+Image e $h $w 1 long	# int64_t
+
+Image x $h $w 1 float
+Image y $h $w 1 double
+
+Ramp2D x 0 1.1 10.2
+Ramp2D y 0 1.1 10.2
+
+Ramp2D a 0 1 80
+Ramp2D b 0 1 80
+Ramp2D c 0 1 80
+Ramp2D d 0 1 80
+Ramp2D e 0 1 80
+
+data ascii max_per_line 20 quit quit
+
+foreach image ( x b a c d e y )
+  Test_All_Formats $image
+end
+

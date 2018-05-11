@@ -1112,14 +1112,11 @@ static void sp_pntvec( QSP_ARG_DECL  Data_Obj *dp, FILE *fp )
 	dimension_t i3,i2,i1,i0;
 	const char *ffmtstr;
 
-fprintf(stderr,"sp_pntvec BEGIN\n");
 	// When do we check pad_flag???
 	if( pad_flag )
 		ffmtstr = padded_flt_fmt_str;
 	else
 		ffmtstr = "%g";
-fprintf(stderr,"sp_pntvec:  ffmtstr at 0x%lx\n",(long)ffmtstr);
-fprintf(stderr,"sp_pntvec:  ffmtstr = '%s'\n",ffmtstr);
 
 	base = (float *) OBJ_DATA_PTR(dp);
 
