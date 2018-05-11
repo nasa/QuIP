@@ -70,6 +70,7 @@ typedef struct dobj_ascii_info {
 } Dobj_Ascii_Info;
 
 //#define	ascii_input_fmt		THIS_QSP->qs_dai_p->dai_input_fmt
+#define	ascii_fmt_code		THIS_QSP->qs_dai_p->dai_the_fmt_code
 #define	ascii_warned		THIS_QSP->qs_dai_p->dai_ascii_warned
 #define	ascii_data_dp		THIS_QSP->qs_dai_p->dai_ascii_data_dp
 #define	dobj_n_gotten		THIS_QSP->qs_dai_p->dai_dobj_n_gotten

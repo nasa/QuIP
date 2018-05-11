@@ -91,7 +91,7 @@ extern "C" {
 
 /* libdata stuff */
 #define ASCII_LEVEL			QS_ASCII_LEVEL(THIS_QSP)
-#define THE_FMT_CODE			QS_FMT_CODE(THIS_QSP)
+//#define THE_FMT_CODE			QS_FMT_CODE(THIS_QSP)
 
 
 //

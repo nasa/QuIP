@@ -200,7 +200,7 @@ struct query_stack {
 
 	char		qs_pathname[PATH_MAX];
 
-	int		qs_fmt_code;
+	//int		qs_fmt_code;	// now in dobj_ascii_info
 	Stack *		qs_var_fmt_stack;
 	char *		qs_number_fmt_string;
 	char		qs_gfmt_str[8];
@@ -430,8 +430,8 @@ struct query_stack {
 #define QS_CHEW_LEVEL(qsp)		(qsp)->qs_chew_level
 #define SET_QS_CHEW_LEVEL(qsp,l)	(qsp)->qs_chew_level = l
 #define QS_ASCII_LEVEL(qsp)		(qsp)->qs_ascii_level
-#define QS_FMT_CODE(qsp)		(qsp)->qs_fmt_code
-#define SET_QS_FMT_CODE(qsp,c)		(qsp)->qs_fmt_code=c
+//#define QS_FMT_CODE(qsp)		(qsp)->qs_fmt_code
+//#define SET_QS_FMT_CODE(qsp,c)		(qsp)->qs_fmt_code=c
 #define QS_LOOKAHEAD_LEVEL(qsp)		(qsp)->qs_lookahead_level
 #define SET_QS_LOOKAHEAD_LEVEL(qsp,l)	(qsp)->qs_lookahead_level = l
 

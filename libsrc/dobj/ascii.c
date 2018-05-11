@@ -42,7 +42,7 @@ static void init_format_type_tbl(void);
 #define PAD_INT_FMT_STR 	"%10ld"
 #define NOPAD_FLT_FMT_STR	"%g"
 #define NOPAD_INT_FMT_STR	"%ld"
-#define PS_INT_FMT_STR		"%x"
+#define PS_INT_FMT_STR		"%02x"
 
 #define NORMAL_SEPARATOR	" "
 #define POSTSCRIPT_SEPARATOR	""
@@ -83,6 +83,7 @@ void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p)
 	dai_p->dai_dobj_max_per_line = DEFAULT_MAX_PER_LINE;
 	dai_p->dai_min_field_width = DEFAULT_MIN_FIELD_WIDTH;
 	dai_p->dai_display_precision = DEFAULT_DISPLAY_PRECISION;
+	// BUG need to use postscript separator when format is postscript???
 	dai_p->dai_ascii_separator = NORMAL_SEPARATOR;
 	dai_p->dai_ffmtstr = NOPAD_FLT_FMT_STR;
 	dai_p->dai_ifmtstr = NOPAD_INT_FMT_STR;
@@ -906,6 +907,7 @@ static void pnt_dim( QSP_ARG_DECL  FILE *fp, Data_Obj *dp, unsigned char *data, 
 {
 	dimension_t i;
 	incr_t inc;
+	static int n_this_line=0;	// just for postscript
 
 	assert( ! IS_BITMAP(dp) );
 
@@ -941,8 +943,17 @@ advise(ERROR_STRING);
 		}
 	} else {
 		pnt_one(QSP_ARG  fp,dp,data);
+		n_this_line++;
 	}
-	if( dim == ret_dim ) fprintf(fp,"\n");
+	// For postscript, don't worry about dimensions, just print a fixed number per line...
+	if( ascii_fmt_code == FMT_POSTSCRIPT ){
+		if( n_this_line >= 32 ){
+			fprintf(fp,"\n");
+			n_this_line=0;
+		}
+	} else {
+		if( dim == ret_dim ) fprintf(fp,"\n");
+	}
 }
 
 /* This is a speeded-up version for floats - do we need it? */
@@ -1073,7 +1084,9 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 	save_ifmt=ifmtstr;
 	/* BUG should set format based on desired radix !!! */
 	padflag = 1;
-	set_integer_print_fmt(QSP_ARG   THE_FMT_CODE);	/* handles integer formats */
+
+	// BUG - the format should be set by default!?
+	set_integer_print_fmt(QSP_ARG   ascii_fmt_code);	/* handles integer formats */
 	set_pad_ffmt_str(SINGLE_QSP_ARG);
 
 	if( OBJ_MACH_PREC(dp) == PREC_SP ){
@@ -1305,10 +1318,14 @@ void _read_obj(QSP_ARG_DECL   Data_Obj *dp)
 
 void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code )
 {
-	THE_FMT_CODE = fmt_code;	/* per qsp variable */
+	ascii_fmt_code = fmt_code;	/* per qsp variable */
+	ascii_separator = NORMAL_SEPARATOR;	// default
 	switch(fmt_code){
 		case FMT_POSTSCRIPT:
-			ifmtstr= "%02x"; break;
+			ifmtstr= PS_INT_FMT_STR;
+			ascii_separator = POSTSCRIPT_SEPARATOR;
+			break;
+		// BUG use symbolic constants here!!!
 		case FMT_UDECIMAL:
 			ifmtstr= (padflag ? "%10lu"   : "%lu")  ; break;
 		case FMT_DECIMAL:

@@ -1946,6 +1946,11 @@ Delete_Image eoi_tmp
 .
 
 Define Emit_One_Image 3 filename x y
+# are the positions in pixels???
+advise "Emit_One_Image $1 $2 $3"
+advise "Screen_2_Plot px py $2 (nrows(Plot_Preview)-1)-$3"
+Screen_2_Plot px py $2 (nrows(Plot_Preview)-1)-$3
+advise "px = $px    py = $py"
 If !file_exists('$1') "warn 'No image file $1!?' exit_macro"
 Read_File_Header $1
 Image eoi_tmp nrows('$1') ncols('$1') depth('$1') u_byte
@@ -1957,6 +1962,8 @@ If depth(eoi_tmp)!=1 "error_exit 'Emit_One_Image:  Sorry, only know how to emit 
 # width height bitspersample matrix datasrc image
 echo "/picstr 256 string def"
 # Need translate and scale commands here to place the image...
+echo gsave
+echo "$px gxu $py gyu translate"
 #echo "$dx $dy 8 [$dx 0 0 $dy 0 0]"
 echo "$dx $dy 8 [1 0 0 1 0 0]"
 echo "{currentfile picstr readhexstring pop}"	# procedure to read data
@@ -1964,6 +1971,7 @@ echo image
 # Slow_Emit_Image_Data
 Fast_Emit_Image_Data eoi_tmp
 Delete_Image eoi_tmp
+echo grestore
 .
 
 # ps gets image data bottom-to-top, so we need to flip the image

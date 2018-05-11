@@ -2668,7 +2668,7 @@ void init_query_stack(Query_Stack *qsp)
 	SET_QS_CMD_PROMPT_SB(qsp,new_stringbuf());
 	SET_QS_QRY_PROMPT_SB(qsp,new_stringbuf());
 
-	SET_QS_FMT_CODE(qsp, FMT_DECIMAL);
+	//SET_QS_FMT_CODE(qsp, FMT_DECIMAL);
 
 	init_vector_parser_data_stack(qsp);
 
