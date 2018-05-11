@@ -33,6 +33,7 @@ Item_Type *prec_itp=NULL;
 	SET_PREC_CAST_FROM_DOUBLE_FUNC(prec_p,_cast_##quip_prec_name##_from_double);	\
 	SET_PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p,_cast_indexed_##quip_prec_name##_from_double);	\
 	SET_PREC_COPY_VALUE_FUNC(prec_p,copy_##quip_prec_name##_value);			\
+	SET_PREC_FORMAT_FUNC(prec_p,_format_##quip_prec_name##_value);			\
 	if( (code & PSEUDO_PREC_MASK) == 0 )						\
 		SET_PREC_MACH_PREC_PTR(prec_p, prec_p);					\
 	else { /* special handling for pseudo-precisions */				\
@@ -60,6 +61,74 @@ Precision *_get_prec(QSP_ARG_DECL  const char *name)
 {
 	return (Precision *)get_item(prec_itp, name);
 }
+
+#ifdef FOOBAR
+
+fprintf(stderr,"_format_%s_value:  current format is %s, member = %s\n",#type_str,iof_p->iof_item.item_name,#member);\
+	if( pad_flag ){											\
+fprintf(stderr,"_format_%s_value:  padded_fmt_str = %s\n",#type_str,iof_p->iof_padded_fmt_str);\
+		sprintf(buf,iof_p->iof_padded_fmt_str,svp->member);					\
+	} else {											\
+fprintf(stderr,"_format_%s_value:  plain_fmt_str = %s\n",#type_str,iof_p->iof_plain_fmt_str);\
+		sprintf(buf,iof_p->iof_plain_fmt_str,svp->member);					\
+	}												\
+
+#endif // FOOBAR
+
+// We generally use the long format
+// We would like to show the sign for decimal display,
+// but just the bits for hex and octal...
+
+#define DECLARE_INT_FORMAT_FUNC(type_str)								\
+													\
+static void _format_##type_str##_value(QSP_ARG_DECL  char *buf, Scalar_Value *svp)			\
+{													\
+	Integer_Output_Fmt *iof_p;									\
+													\
+	iof_p = curr_output_int_fmt_p;									\
+	(*(iof_p->iof_fmt_##type_str##_func))(QSP_ARG  buf,svp);					\
+													\
+}
+
+DECLARE_INT_FORMAT_FUNC(string)
+DECLARE_INT_FORMAT_FUNC(char)
+DECLARE_INT_FORMAT_FUNC(byte)
+DECLARE_INT_FORMAT_FUNC(short)
+DECLARE_INT_FORMAT_FUNC(int)
+DECLARE_INT_FORMAT_FUNC(long)
+DECLARE_INT_FORMAT_FUNC(u_byte)
+DECLARE_INT_FORMAT_FUNC(u_short)
+DECLARE_INT_FORMAT_FUNC(u_int)
+DECLARE_INT_FORMAT_FUNC(u_long)
+
+#define DECLARE_FLT_FORMAT_FUNC(type_str,member)							\
+													\
+static void _format_##type_str##_value(QSP_ARG_DECL  char *buf, Scalar_Value *svp)			\
+{													\
+	if( pad_flag )											\
+		sprintf(buf,padded_flt_fmt_str,svp->member);						\
+	else												\
+		sprintf(buf,"%g",svp->member);								\
+}
+
+DECLARE_FLT_FORMAT_FUNC(float,u_f)
+DECLARE_FLT_FORMAT_FUNC(double,u_d)
+
+#define DECLARE_INVALID_FORMAT_FUNC(type_str,member)							\
+													\
+static void _format_##type_str##_value(QSP_ARG_DECL  char *buf, Scalar_Value *svp)			\
+{													\
+	sprintf(ERROR_STRING,"CAUTIOUS:  '%s' is not a machine precision, can't format value!?",#type_str);	\
+	error1(ERROR_STRING);										\
+}
+
+DECLARE_INVALID_FORMAT_FUNC(complex,u_f)
+DECLARE_INVALID_FORMAT_FUNC(dblcpx,u_d)
+DECLARE_INVALID_FORMAT_FUNC(quaternion,u_f)
+DECLARE_INVALID_FORMAT_FUNC(dblquat,u_d)
+DECLARE_INVALID_FORMAT_FUNC(color,u_f)
+DECLARE_INVALID_FORMAT_FUNC(bit,u_b)
+DECLARE_INVALID_FORMAT_FUNC(void,u_b)
 
 /////////////////////////////////
 

@@ -67,6 +67,7 @@ FWD_TYPEDEF(platform_stream,Platform_Stream)
 FWD_TYPEDEF(curl_info,Curl_Info)
 
 FWD_TYPEDEF(image_file,Image_File)
+FWD_TYPEDEF(integer_output_fmt,Integer_Output_Fmt)
 
 typedef List Stack;
 

@@ -93,6 +93,8 @@ struct precision {
 					(QSP_ARG_DECL  Scalar_Value *,int idx,double val);
 	void			(*copy_value_func)
 					(Scalar_Value *,Scalar_Value *);
+	// format for printing
+	void			(*format_func)(QSP_ARG_DECL  char *buf, /* pass buffer len? */  Scalar_Value *data);
 } ;
 
 #define prec_name	prec_item.item_name
@@ -149,6 +151,8 @@ struct precision {
 #define PREC_COPY_VALUE_FUNC(prec_p)	(prec_p)->copy_value_func
 #define SET_PREC_COPY_VALUE_FUNC(prec_p,v)	(prec_p)->copy_value_func = v
 
+#define PREC_FORMAT_FUNC(prec_p)	(prec_p)->format_func
+#define SET_PREC_FORMAT_FUNC(prec_p,v)	(prec_p)->format_func = v
 
 //#ifdef HAVE_ANY_GPU
 //#ifdef HAVE_ANY_GPU

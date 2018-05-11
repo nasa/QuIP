@@ -38,51 +38,99 @@ struct input_format_spec {
 //#define MAX_FORMAT_FIELDS	64
 
 typedef enum {
+	// lots of different ways to print integers...
 	FMT_DECIMAL,
 	FMT_HEX,
 	FMT_OCTAL,
 	FMT_UDECIMAL,
-	FMT_FLOAT,
 	FMT_POSTSCRIPT,
+
+	FMT_FLOAT,		// only one for floats...
+
 	N_PRINT_FORMATS		/* must be last */
-} Number_Fmt;
+} Integer_Output_Fmt_Code;
+
+typedef struct output_number {
+	union {	
+		double d;
+		int64_t l;
+	} on_u;
+} Output_Number;
+
+struct integer_output_fmt {
+	Item			iof_item;
+	Integer_Output_Fmt_Code	iof_code;
+	const char *		iof_padded_fmt_str;	/* printf format */
+	const char *		iof_plain_fmt_str;	/* printf format */
+	void			(*iof_fmt_string_func)(QSP_ARG_DECL  char *,Scalar_Value *);
+	void			(*iof_fmt_char_func)(QSP_ARG_DECL  char *,Scalar_Value *);
+	void			(*iof_fmt_byte_func)(QSP_ARG_DECL  char *,Scalar_Value *);
+	void			(*iof_fmt_u_byte_func)(QSP_ARG_DECL  char *,Scalar_Value *);
+	void			(*iof_fmt_short_func)(QSP_ARG_DECL  char *,Scalar_Value *);
+	void			(*iof_fmt_u_short_func)(QSP_ARG_DECL  char *,Scalar_Value *);
+	void			(*iof_fmt_int_func)(QSP_ARG_DECL  char *,Scalar_Value *);
+	void			(*iof_fmt_u_int_func)(QSP_ARG_DECL  char *,Scalar_Value *);
+	void			(*iof_fmt_long_func)(QSP_ARG_DECL  char *,Scalar_Value *);
+	void			(*iof_fmt_u_long_func)(QSP_ARG_DECL  char *,Scalar_Value *);
+};
+
+extern void set_format_string(Integer_Output_Fmt *, const char *);
+extern void _set_integer_print_fmt(QSP_ARG_DECL  Integer_Output_Fmt *);
+#define set_integer_print_fmt(iof_p) _set_integer_print_fmt(QSP_ARG  iof_p)
+
+ITEM_INTERFACE_PROTOTYPES(Integer_Output_Fmt,int_out_fmt)
+#define init_int_out_fmts()	_init_int_out_fmts(SINGLE_QSP_ARG)
+#define pick_int_out_fmt(s)	_pick_int_out_fmt(QSP_ARG  s)
+#define new_int_out_fmt(s)	_new_int_out_fmt(QSP_ARG  s)
 
 // Is this all for ascii input?
 
 typedef struct dobj_ascii_info {
-	int			dai_padflag;
-	struct data_obj *	dai_ascii_data_dp;
+	// output control variables
+	int			dai_pad_flag;		// there is no way to set this - BUG!
+							// defaults to one for evenly spaced columns on printout
 	int			dai_ascii_warned;
-	int			dai_ascii_level;
-	Number_Fmt		dai_the_fmt_code;
-	int			dai_ret_dim;
-	dimension_t		dai_dobj_n_gotten;
+	Integer_Output_Fmt *	dai_output_int_fmt_p;
 	dimension_t		dai_dobj_max_per_line;
+	int			dai_ret_dim;
 	int			dai_min_field_width;
 	int			dai_display_precision;
-	const char *		dai_ascii_separator;
-	const char *		dai_ffmtstr;	/* float format string */
-	const char *		dai_ifmtstr;	/* integer format string */
-	char 			dai_pad_ffmtstr[16];
+//	const char *		dai_ascii_separator;
+
+	// input control variables
+	int			dai_ascii_level;
+	dimension_t		dai_dobj_n_gotten;
+
+	// not sure
+	struct data_obj *	dai_ascii_data_dp;
+
+//	const char *		dai_padded_flt_fmt_str;	/* float format string */
+//	const char *		dai_plain_flt_fmt_str;	/* float format string */
+
+	char 			dai_padded_flt_fmt_str[16];
 //	Input_Format_Spec	dai_input_fmt[MAX_FORMAT_FIELDS];
+
 	List *			dai_fmt_lp;
 	Node *			dai_curr_fmt_np;
 } Dobj_Ascii_Info;
 
 //#define	ascii_input_fmt		THIS_QSP->qs_dai_p->dai_input_fmt
-#define	ascii_fmt_code		THIS_QSP->qs_dai_p->dai_the_fmt_code
+//#define	ascii_fmt_code		THIS_QSP->qs_dai_p->dai_the_fmt_code
+#define	curr_output_int_fmt_p	THIS_QSP->qs_dai_p->dai_output_int_fmt_p
+#define padded_flt_fmt_str	THIS_QSP->qs_dai_p->dai_padded_flt_fmt_str
+#define plain_flt_fmt_str	THIS_QSP->qs_dai_p->dai_plain_flt_fmt_str
 #define	ascii_warned		THIS_QSP->qs_dai_p->dai_ascii_warned
 #define	ascii_data_dp		THIS_QSP->qs_dai_p->dai_ascii_data_dp
 #define	dobj_n_gotten		THIS_QSP->qs_dai_p->dai_dobj_n_gotten
-#define	ffmtstr			THIS_QSP->qs_dai_p->dai_ffmtstr
-#define	ifmtstr			THIS_QSP->qs_dai_p->dai_ifmtstr
+//#define	ffmtstr			THIS_QSP->qs_dai_p->dai_ffmtstr
+//#define	ifmtstr			THIS_QSP->qs_dai_p->dai_ifmtstr
 #define	dobj_max_per_line	THIS_QSP->qs_dai_p->dai_dobj_max_per_line
-#define	ascii_separator		THIS_QSP->qs_dai_p->dai_ascii_separator
+//#define	ascii_separator		THIS_QSP->qs_dai_p->dai_ascii_separator
 #define	ret_dim			THIS_QSP->qs_dai_p->dai_ret_dim
 #define	pad_ffmtstr		THIS_QSP->qs_dai_p->dai_pad_ffmtstr
 #define	min_field_width		THIS_QSP->qs_dai_p->dai_min_field_width
 #define	display_precision	THIS_QSP->qs_dai_p->dai_display_precision
-#define	padflag			THIS_QSP->qs_dai_p->dai_padflag
+#define	pad_flag			THIS_QSP->qs_dai_p->dai_pad_flag
 
 #define IS_FIRST_FORMAT		( CURRENT_FORMAT_NODE != QLIST_HEAD(INPUT_FORMAT_LIST) )
 #define INPUT_FORMAT_LIST	(THIS_QSP->qs_dai_p->dai_fmt_lp)
@@ -92,7 +140,7 @@ typedef struct dobj_ascii_info {
 #define FIRST_INPUT_FORMAT_NODE	(QLIST_HEAD(INPUT_FORMAT_LIST))
 
 
-//extern void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code );
+//extern void set_integer_print_fmt(QSP_ARG_DECL  Integer_Output_Fmt_Code fmt_code );
 
 #endif /* ! _ASCII_FMTS_H */
 

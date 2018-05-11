@@ -361,7 +361,7 @@ extern void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Pr
 extern char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p);
 extern void pntvec(QSP_ARG_DECL  Data_Obj *dp, FILE *fp);
 extern void dptrace(QSP_ARG_DECL  Data_Obj *);
-extern void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code);
+//extern void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code);
 extern void set_max_per_line(QSP_ARG_DECL  int n);
 extern void set_input_format_string(QSP_ARG_DECL  const char *s);
 extern void set_display_precision(QSP_ARG_DECL  int);

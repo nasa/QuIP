@@ -41,14 +41,99 @@ static void init_format_type_tbl(void);
 #define DEFAULT_MIN_FIELD_WIDTH		10
 #define DEFAULT_DISPLAY_PRECISION	6
 
-#define PAD_FLT_FMT_STR		"%10.24g"
-#define PAD_INT_FMT_STR 	"%10ld"
-#define NOPAD_FLT_FMT_STR	"%g"
-#define NOPAD_INT_FMT_STR	"%ld"
-#define PS_INT_FMT_STR		"%02x"
+#define PADDED_FLT_FMT_STR	"%10.24g"
+#define PLAIN_FLT_FMT_STR	"%g"
 
 #define NORMAL_SEPARATOR	" "
 #define POSTSCRIPT_SEPARATOR	""
+
+ITEM_INTERFACE_DECLARATIONS(Integer_Output_Fmt,int_out_fmt,0)
+
+
+#define DECLARE_FMT_FUNC(type,format,member,padded_fmt_str,plain_fmt_str)		\
+											\
+static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value *svp)	\
+{											\
+	if( pad_flag )									\
+		sprintf(buf," " #padded_fmt_str,svp->member);				\
+	else										\
+		sprintf(buf," " #plain_fmt_str,svp->member);				\
+}
+
+#define DECLARE_PS_FMT_FUNC(type,format,member)						\
+											\
+static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value *svp)	\
+{											\
+	sprintf(buf,"%02x",svp->member);							\
+}
+
+
+#define DECLARE_INVALID_FMT_FUNC(type,format)						\
+											\
+static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value *svp)	\
+{											\
+	sprintf(ERROR_STRING,"CAUTIOUS:  can't apply %s format to %s!?",#format,#type);	\
+	error1(ERROR_STRING);								\
+}
+
+DECLARE_FMT_FUNC(string,	decimal,	u_ub,	%c,	%c)
+DECLARE_FMT_FUNC(char,		decimal,	u_ub,	%c,	%c)
+DECLARE_FMT_FUNC(byte,		decimal,	u_b,	%4d,	%d)
+DECLARE_FMT_FUNC(u_byte,	decimal,	u_ub,	%4d,	%d)
+DECLARE_FMT_FUNC(short,		decimal,	u_s,	%6d,	%d)
+DECLARE_FMT_FUNC(u_short,	decimal,	u_us,	%6d,	%d)
+DECLARE_FMT_FUNC(int,		decimal,	u_l,	%10d,	%d)
+DECLARE_FMT_FUNC(u_int,		decimal,	u_ul,	%10d,	%d)
+DECLARE_FMT_FUNC(long,		decimal,	u_ll,	%10lld,	%lld)
+DECLARE_FMT_FUNC(u_long,	decimal,	u_ull,	%10lld,	%lld)
+// How many digits is a 64 bit integer?
+
+DECLARE_FMT_FUNC(string,	hex,	u_b,	%c,	%c)
+DECLARE_FMT_FUNC(char,		hex,	u_b,	%c,	%c)
+DECLARE_FMT_FUNC(byte,		hex,	u_ub,	0x%-3x,	0x%x)	// cast to unsigned
+DECLARE_FMT_FUNC(u_byte,	hex,	u_ub,	0x%-3x,	0x%x)
+DECLARE_FMT_FUNC(short,		hex,	u_us,	0x%-5x,	0x%x)	// cast to unsigned
+DECLARE_FMT_FUNC(u_short,	hex,	u_us,	0x%-5x,	0x%x)
+DECLARE_FMT_FUNC(int,		hex,	u_l,	0x%-9x,	0x%x)
+DECLARE_FMT_FUNC(u_int,		hex,	u_ul,	0x%-9x,	0x%x)
+DECLARE_FMT_FUNC(long,		hex,	u_ll,	0x%-17llx,	0x%llx)
+DECLARE_FMT_FUNC(u_long,	hex,	u_ull,	0x%-17llx,	0x%llx)
+
+DECLARE_FMT_FUNC(string,	octal,	u_ub,	%c,	%c)
+DECLARE_FMT_FUNC(char,		octal,	u_ub,	%c,	%c)
+DECLARE_FMT_FUNC(byte,		octal,	u_ub,	0%-4o,	0%o)	// cast to unsigned
+DECLARE_FMT_FUNC(u_byte,	octal,	u_ub,	0%-4o,	0%o)
+DECLARE_FMT_FUNC(short,		octal,	u_us,	0%-5o,	0%o)	// cast to unsigned
+DECLARE_FMT_FUNC(u_short,	octal,	u_us,	0%-5o,	0%o)
+DECLARE_FMT_FUNC(int,		octal,	u_l,	0%-9o,	0%o)
+DECLARE_FMT_FUNC(u_int,		octal,	u_ul,	0%-9o,	0%o)
+DECLARE_FMT_FUNC(long,		octal,	u_ll,	0%-17llo,	0%llo)
+DECLARE_FMT_FUNC(u_long,	octal,	u_ull,	0%-17llo,	0%llo)
+
+DECLARE_FMT_FUNC(string,	unsigned,	u_ub,	%c,	%c)
+DECLARE_FMT_FUNC(char,		unsigned,	u_ub,	%c,	%c)
+DECLARE_FMT_FUNC(byte,		unsigned,	u_ub,	%4u,	%u)
+DECLARE_FMT_FUNC(u_byte,	unsigned,	u_ub,	%4u,	%u)
+DECLARE_FMT_FUNC(short,		unsigned,	u_us,	%6u,	%u)
+DECLARE_FMT_FUNC(u_short,	unsigned,	u_us,	%6u,	%u)
+DECLARE_FMT_FUNC(int,		unsigned,	u_ul,	%10u,	%u)
+DECLARE_FMT_FUNC(u_int,		unsigned,	u_ul,	%10u,	%u)
+DECLARE_FMT_FUNC(long,		unsigned,	u_ll,	%10llu,	%llu)
+DECLARE_FMT_FUNC(u_long,	unsigned,	u_ull,	%10llu,	%llu)
+
+DECLARE_FMT_FUNC(string,	postscript,	u_ub,	%c,	%c)
+DECLARE_FMT_FUNC(char,		postscript,	u_ub,	%c,	%c)
+
+DECLARE_PS_FMT_FUNC(byte,	postscript,	u_ub )
+DECLARE_PS_FMT_FUNC(u_byte,	postscript,	u_ub )
+
+// for longer types, just revert to normal hex
+DECLARE_FMT_FUNC(short,		postscript,	u_us,	0x%-5x,	0x%x)	// cast to unsigned
+DECLARE_FMT_FUNC(u_short,	postscript,	u_us,	0x%-5x,	0x%x)
+DECLARE_FMT_FUNC(int,		postscript,	u_ul,	0x%-9x,	0x%x)	// cast to unsigned
+DECLARE_FMT_FUNC(u_int,		postscript,	u_ul,	0x%-9x,	0x%x)
+DECLARE_FMT_FUNC(long,		postscript,	u_ll,	0x%-17llx,	0x%llx)
+DECLARE_FMT_FUNC(u_long,	postscript,	u_ull,	0x%-17llx,	0x%llx)
 
 /* get a pixel from the input stream, store data at *cp */
 
@@ -72,6 +157,62 @@ static void init_format_type_tbl(void);
  *	5) %f, %g read w/ how_much()
  */
 
+#define INIT_OUTPUT_FORMAT(name,code,padded_fmt_str,plain_fmt_str,prefix)	\
+	iof_p = new_int_out_fmt(#name);						\
+	assert(iof_p!=NULL);							\
+	iof_p->iof_code = code;							\
+	iof_p->iof_padded_fmt_str = padded_fmt_str;				\
+	iof_p->iof_plain_fmt_str = plain_fmt_str;				\
+	iof_p->iof_fmt_string_func = _format_string_data_##name;		\
+	iof_p->iof_fmt_char_func = _format_char_data_##name;			\
+	iof_p->iof_fmt_byte_func = _format_byte_data_##name;			\
+	iof_p->iof_fmt_u_byte_func = _format_u_byte_data_##name;		\
+	iof_p->iof_fmt_short_func = _format_short_data_##name;			\
+	iof_p->iof_fmt_u_short_func = _format_u_short_data_##name;		\
+	iof_p->iof_fmt_int_func = _format_int_data_##name;			\
+	iof_p->iof_fmt_u_int_func = _format_u_int_data_##name;			\
+	iof_p->iof_fmt_long_func = _format_long_data_##name;			\
+	iof_p->iof_fmt_u_long_func = _format_u_long_data_##name;		\
+
+
+#ifdef FOOBAR
+static void _format_byte_dec(QSP_ARG_DECL  char *buf,Integer_Output_Fmt *iof_p, Scalar_Value *svp)
+{
+	if( pad_flag )
+		sprintf(buf,iof_p->iof_padded_fmt_str,svp->u_b);
+	else
+		sprintf(buf,iof_p->iof_plain_fmt_str,svp->u_b);
+}
+
+#define DECLARE_FMT_FUNC(type_string,member)								\
+													\
+static void format_##type_string(char *buf,Integer_Output_Fmt *iof_p, Scalar_Value *svp)		\
+{													\
+	if( pad_flag )											\
+		sprintf(buf,iof_p->iof_padded_fmt_str,svp->u_b);						\
+	else												\
+		sprintf(buf,iof_p->iof_plain_fmt_str,svp->u_b);
+}
+#endif // FOOBAR
+
+#define init_output_formats() _init_output_formats(SINGLE_QSP_ARG)
+
+static void _init_output_formats(SINGLE_QSP_ARG_DECL)
+{
+	Integer_Output_Fmt *iof_p;
+
+	INIT_OUTPUT_FORMAT(decimal,	FMT_DECIMAL,	"%10ld",	"%ld",		dec)
+	INIT_OUTPUT_FORMAT(hex,		FMT_HEX,	"0x%-10lx",	"0x%lx",	hex)
+	INIT_OUTPUT_FORMAT(octal,	FMT_OCTAL,	"0%-10lo",	"0%lo",		oct)
+	INIT_OUTPUT_FORMAT(unsigned,	FMT_UDECIMAL,	"%10lu",	"%lu",		uns)
+	INIT_OUTPUT_FORMAT(postscript,	FMT_POSTSCRIPT,	"%02x",		"%02x",		pst)
+
+	// Do we need to have this???
+	// BUG these are not the correct format strings...
+	//INIT_OUTPUT_FORMAT("float",		FMT_FLOAT,	"%g",		"%g",		flt)
+}
+
+
 
 // This global defines the format types used by all threads
 // and is not modified once initialized.
@@ -80,17 +221,19 @@ static struct input_format_type input_format_type_tbl[N_INPUT_FORMAT_TYPES];
 
 void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p)
 {
-	dai_p->dai_padflag = 0;
+	dai_p->dai_pad_flag = 0;
 	dai_p->dai_ascii_data_dp = NULL;
 	dai_p->dai_ascii_warned = 0;
 	dai_p->dai_dobj_max_per_line = DEFAULT_MAX_PER_LINE;
 	dai_p->dai_min_field_width = DEFAULT_MIN_FIELD_WIDTH;
 	dai_p->dai_display_precision = DEFAULT_DISPLAY_PRECISION;
 	// BUG need to use postscript separator when format is postscript???
-	dai_p->dai_ascii_separator = NORMAL_SEPARATOR;
-	dai_p->dai_ffmtstr = NOPAD_FLT_FMT_STR;
-	dai_p->dai_ifmtstr = NOPAD_INT_FMT_STR;
+//	dai_p->dai_padded_flt_fmt_str = PADDED_FLT_FMT_STR;
+//	dai_p->dai_plain_flt_fmt_str = PLAIN_FLT_FMT_STR;
 	dai_p->dai_fmt_lp = NULL;
+
+	//if( int_out_fmt_itp == NULL ) init_int_out_fmts();
+	if( int_out_fmt_itp == NULL ) init_output_formats();
 }
 
 static void show_input_format(SINGLE_QSP_ARG_DECL)
@@ -753,15 +896,23 @@ void format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *dat
 	*/
 }
 
+// BUG?
+// We cast the data to the largest possible size, but do we want sign extension?
+// Yes, but not for display in hex and octal...
+// This is tricky, because the print function doesn't know the source type of the data...
+
 void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision *prec_p)
 {
+	(*(PREC_MACH_PREC_PTR(prec_p)->format_func))(QSP_ARG  buf,data);
+#ifdef FOOBAR
 	mach_prec mp;
+	Integer_Output_Fmt *fmt_p;
 	// long double is kind of inefficient unless we really need it?  BUG
 #ifdef USE_LONG_DOUBLE
 	long
 #endif // USE_LONG_DOUBLE
-	double ddata;
-	int64_t l;
+	Output_Number out_num;
+
 
 	mp = (mach_prec)(MP_BITS(PREC_CODE(prec_p)));
 	switch( mp ){
@@ -771,38 +922,32 @@ void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision
 			break;
 
 #ifdef USE_LONG_DOUBLE
-		case PREC_LP: ddata=(* ((long double *)data) ); goto pntflt;
+		case PREC_LP: out_num.on_u.d=(* ((long double *)data) ); fmt_p = curr_output_flt_fmt_p; break;
 #endif // USE_LONG_DOUBLE
-		case PREC_DP: ddata=(* ((double *)data) ); goto pntflt;
-		case PREC_SP: ddata=(* ((float *)data) ); goto pntflt;
-		case PREC_BY: l= (*(char *)data); goto pntlng;
-		case PREC_IN: l= (* (short *) data ); goto pntlng;
-		case PREC_DI: l= (* (int32_t *) data ); goto pntlng;
-		case PREC_LI: l= (* (int64_t *) data ); goto pntlng;
-		case PREC_UBY: l= (*(u_char *)data); goto pntlng;
-		case PREC_UIN: l= (* (u_short *) data ); goto pntlng;
-		case PREC_UDI: l= (* (uint32_t *) data ); goto pntlng;
-		case PREC_ULI: l= (* (uint64_t *) data ); goto pntlng;
+		case PREC_DP: out_num.on_u.d=(* ((double *)data) ); fmt_p = curr_output_flt_fmt_p; break;
+		case PREC_SP: out_num.on_u.d=(* ((float *)data) ); fmt_p = curr_output_flt_fmt_p; break;
 
-pntflt:
-			/* BUG - sprintf suppresses the fractional part if there are only zeroes
-			 * after the decimal point...
-			 * But for a number like 4.000000001, we'd like to
-			 * suppress the fraction if "digits" is set to something small...
-			 */
-			// BUG - need to use safe snprintf or something!?
-			sprintf(buf,ffmtstr,ddata);
-			break;
-
-pntlng:
-			sprintf(buf,ifmtstr,l);
-			break;
-
+		case PREC_BY: out_num.on_u.l= (*(char *)data); fmt_p = curr_output_int_fmt_p; break;
+		case PREC_IN: out_num.on_u.l= (* (short *) data ); fmt_p = curr_output_int_fmt_p; break;
+		case PREC_DI: out_num.on_u.l= (* (int32_t *) data ); fmt_p = curr_output_int_fmt_p; break;
+		case PREC_LI: out_num.on_u.l= (* (int64_t *) data ); fmt_p = curr_output_int_fmt_p; break;
+		case PREC_UBY: out_num.on_u.l= (*(u_char *)data); fmt_p = curr_output_int_fmt_p; break;
+		case PREC_UIN: out_num.on_u.l= (* (u_short *) data ); fmt_p = curr_output_int_fmt_p; break;
+		case PREC_UDI: out_num.on_u.l= (* (uint32_t *) data ); fmt_p = curr_output_int_fmt_p; break;
+		case PREC_ULI: out_num.on_u.l= (* (uint64_t *) data ); fmt_p = curr_output_int_fmt_p; break;
 		case PREC_INVALID:
 		case N_MACHINE_PRECS:	/* silence compiler */
 			assert( AERROR("format_scalar_value:  bad machine precision") );
 			break;
 	}
+	/* BUG - sprintf suppresses the fractional part if there are only zeroes
+	 * after the decimal point...
+	 * But for a number like 4.000000001, we'd like to
+	 * suppress the fraction if "digits" is set to something small...
+	 */
+	// BUG - need to use safe snprintf or something!?
+	(*(fmt_p->print_func))(buf,fmt_p,&out_num);
+#endif // FOOBAR
 }
 
 char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p )
@@ -896,13 +1041,14 @@ static void pnt_one(QSP_ARG_DECL  FILE *fp, Data_Obj *dp,  u_char *data )
 					fprintf(fp,"\n");
 				}
 				format_scalar_obj(QSP_ARG  buf,128,dp,data);
-				fprintf(fp," %s",buf);
+				// there used to be a space here, but now format_scalar_obj includes a separator
+				fprintf(fp,"%s",buf);
 				data += inc;
 			}
 		}
 	} else {
 		format_scalar_obj(QSP_ARG  buf,128,dp,data);
-		fprintf(fp,"%s%s",ascii_separator,buf);
+		fprintf(fp,"%s",buf);
 	}
 } /* end pnt_one */
 
@@ -947,15 +1093,15 @@ advise(ERROR_STRING);
 		pnt_one(QSP_ARG  fp,dp,data);
 		n_this_line++;
 	}
-	// For postscript, don't worry about dimensions, just print a fixed number per line...
-	if( ascii_fmt_code == FMT_POSTSCRIPT ){
-		if( n_this_line >= 32 ){
-			fprintf(fp,"\n");
-			n_this_line=0;
-		}
-	} else {
+//	// For postscript, don't worry about dimensions, just print a fixed number per line...
+//	if( ascii_fmt_code == FMT_POSTSCRIPT ){
+//		if( n_this_line >= 32 ){
+//			fprintf(fp,"\n");
+//			n_this_line=0;
+//		}
+//	} else {
 		if( dim == ret_dim ) fprintf(fp,"\n");
-	}
+//	}
 }
 
 /* This is a speeded-up version for floats - do we need it? */
@@ -964,6 +1110,16 @@ static void sp_pntvec( QSP_ARG_DECL  Data_Obj *dp, FILE *fp )
 {
 	float *base, *fbase, *rbase, *pbase;
 	dimension_t i3,i2,i1,i0;
+	const char *ffmtstr;
+
+fprintf(stderr,"sp_pntvec BEGIN\n");
+	// When do we check pad_flag???
+	if( pad_flag )
+		ffmtstr = padded_flt_fmt_str;
+	else
+		ffmtstr = "%g";
+fprintf(stderr,"sp_pntvec:  ffmtstr at 0x%lx\n",(long)ffmtstr);
+fprintf(stderr,"sp_pntvec:  ffmtstr = '%s'\n",ffmtstr);
 
 	base = (float *) OBJ_DATA_PTR(dp);
 
@@ -987,11 +1143,14 @@ static void sp_pntvec( QSP_ARG_DECL  Data_Obj *dp, FILE *fp )
 	}
 }
 
+#ifdef FOOBAR
 static void set_pad_ffmt_str(SINGLE_QSP_ARG_DECL)
 {
 	sprintf(pad_ffmtstr,"%%%d.%dg",min_field_width,display_precision);
-	ffmtstr = pad_ffmtstr;
+	//ffmtstr = pad_ffmtstr;
+	set_format_string(curr_output_flt_fmt_p,pad_ffmtstr);
 }
+#endif // FOOBAR
 
 #ifdef NOT_USED
 void set_min_field_width(int fw)
@@ -1054,18 +1213,10 @@ static void display_bitmap(QSP_ARG_DECL  Data_Obj *dp, FILE *fp)
 	}
 }
 
-// Not needed, because bitmaps don't use ret_dim
-#ifdef FOOBAR
-#define MULTIPLE_COLUMNS_OK(dp)						\
-									\
-	( ( IS_BITMAP(dp) && OBJ_COLS(dp) <= BITS_PER_BITMAP_WORD ) ||	\
-	( ( ! IS_BITMAP(dp) ) && OBJ_COLS(dp) <= dobj_max_per_line ) )
-#endif // FOOBAR
-
 void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 {
-	const char *save_ifmt;
-	const char *save_ffmt;
+//	const char *save_ifmt;
+//	const char *save_ffmt;
 	/* first let's figure out when to print returns */
 	/* ret_dim == 0 means a return is printed after every pixel */
 	/* ret_dim == 1 means a return is printed after every row */
@@ -1082,14 +1233,17 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 
 	/* We pad with spaces only if we are printing more than one element */
 
-	save_ffmt=ffmtstr;
-	save_ifmt=ifmtstr;
+//	save_ffmt=ffmtstr;
+//	save_ifmt=ifmtstr;
 	/* BUG should set format based on desired radix !!! */
-	padflag = 1;
+	pad_flag = 1;		// what does this do?
 
-	// BUG - the format should be set by default!?
-	set_integer_print_fmt(QSP_ARG   ascii_fmt_code);	/* handles integer formats */
-	set_pad_ffmt_str(SINGLE_QSP_ARG);
+//	// BUG - the format should be set by default!?
+//	set_integer_print_fmt(QSP_ARG   ascii_fmt_code);	/* handles integer formats */
+//	set_pad_ffmt_str(SINGLE_QSP_ARG);
+
+	// BUG should only do this at init time, and when changed...
+	sprintf(padded_flt_fmt_str,"%%%d.%dg",min_field_width,display_precision);
 
 	if( OBJ_MACH_PREC(dp) == PREC_SP ){
 		sp_pntvec(QSP_ARG  dp,fp);
@@ -1117,8 +1271,8 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 	}
 	fflush(fp);
 
-	ffmtstr = save_ffmt ;
-	ifmtstr = save_ifmt ;
+//	ffmtstr = save_ffmt ;
+//	ifmtstr = save_ifmt ;
 }
 
 static void shp_trace(QSP_ARG_DECL  const char *name,Shape_Info *shpp)
@@ -1321,6 +1475,12 @@ void _read_obj(QSP_ARG_DECL   Data_Obj *dp)
 
 } // read_obj
 
+void _set_integer_print_fmt(QSP_ARG_DECL  Integer_Output_Fmt *iof_p )
+{
+	curr_output_int_fmt_p = iof_p;
+}
+
+#ifdef FOOBAR
 /* has to be external, called from datamenu/ascmenu.c */
 
 void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code )
@@ -1334,17 +1494,18 @@ void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code )
 			break;
 		// BUG use symbolic constants here!!!
 		case FMT_UDECIMAL:
-			ifmtstr= (padflag ? "%10lu"   : "%lu")  ; break;
+			ifmtstr= (pad_flag ? "%10lu"   : "%lu")  ; break;
 		case FMT_DECIMAL:
-			ifmtstr= (padflag ? "%10ld"   : "%ld")  ; break;
+			ifmtstr= (pad_flag ? "%10ld"   : "%ld")  ; break;
 		case FMT_HEX:
-			ifmtstr= (padflag ? "0x%-10lx" : "0x%lx"); break;
+			ifmtstr= (pad_flag ? "0x%-10lx" : "0x%lx"); break;
 		case FMT_OCTAL:
-			ifmtstr= (padflag ? "0%-10lo"  : "0%lo") ; break;
+			ifmtstr= (pad_flag ? "0%-10lo"  : "0%lo") ; break;
 		default:
 			assert( AERROR("unrecognized format code") );
 	}
 }
+#endif // FOOBAR
 
 void set_max_per_line(QSP_ARG_DECL  int n )
 {
