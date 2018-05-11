@@ -19,6 +19,9 @@
 #include "query_stack.h"	// like to eliminate this dependency...
 #include "veclib/obj_args.h"	// argset_prec
 
+// BUG - put this in dai_ struct!
+static int n_this_line=0;	// just for postscript
+
 static void init_format_type_tbl(void);
 
 
@@ -907,7 +910,6 @@ static void pnt_dim( QSP_ARG_DECL  FILE *fp, Data_Obj *dp, unsigned char *data, 
 {
 	dimension_t i;
 	incr_t inc;
-	static int n_this_line=0;	// just for postscript
 
 	assert( ! IS_BITMAP(dp) );
 
@@ -1106,7 +1108,12 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 		 * format printing!
 		 */
 
+		n_this_line=0;
 		pnt_dim(QSP_ARG  fp,dp,(u_char *)OBJ_DATA_PTR(dp),N_DIMENSIONS-1);
+		if( n_this_line > 0 ){	// postscript only
+			fprintf(fp,"\n");
+			n_this_line=0;
+		}
 	}
 	fflush(fp);
 

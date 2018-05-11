@@ -692,8 +692,8 @@ Print plot_ymax
 
 Define Plot_2_Screen 4 xvarname yvarname x y
 # these two statements are for debugging...
-#advise "Plot_2_Screen $1 $2 $3 $4  -   the_plotter = $the_plotter"
-#Show_Plot_Limits
+advise "Plot_2_Screen $1 $2 $3 $4  -   the_plotter = $the_plotter"
+Show_Plot_Limits
 
 # first get the fractional position in the plotting space
 Assign $2 ($4-$plot_ymin)/($plot_ymax-$plot_ymin)
@@ -734,6 +734,11 @@ Assign $2 $plot_ymax-$plot_ymin-$$2
 Add_Var $1 $plot_xmin
 Add_Var $2 $plot_ymin
 #advise "Screen_2_Plot:  $$1 $$2 <- $3 $4"
+.
+
+Define Screen_2_Plot_Delta 4 dx_varname dy_varname dx dy
+Assign $1 $3*($plot_xmax-$plot_xmin)/(ncols('$the_plotter')*(1-($left_margin+$right_margin)))
+Assign $2 $4*($plot_ymax-$plot_ymin)/(nrows('$the_plotter')*(1-($top_margin+$bot_margin)))
 .
 
 Define Test_Coords 0

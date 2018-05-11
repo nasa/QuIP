@@ -394,11 +394,13 @@ Define Refresh_Plot 0
 If !$plot_ready exit_macro
 #advise "Refresh_Plot BEGIN"
 Erase_Plot
-If $n_embedded_images>0 Embed_Images
 Select_Pen $black
 If $show_frame Draw_Frame
 Install_Both_Axis_Vars
 Setup_Axes
+# We need to do the axes before embedding images, because that sets the scale
+If $n_embedded_images>0 Embed_Images
+# We might want to redraw the axes over images?
 #advise "Refresh_Plot:  refreshing data..."
 Refresh_Data
 #advise "Refresh_Plot:  refreshing grids..."
@@ -1939,8 +1941,17 @@ If !file_exists('$1') "warn 'No image file $1!?' exit_macro"
 Read_File_Header $1
 Image eoi_tmp nrows('$1') ncols('$1') depth('$1') u_byte
 Get_Next eoi_tmp $1
+# We specify the lower-left hand corner in plotting units
+# Now we have to compute the window coordinates of the upper left hand corner
+
+Plot_2_Screen sx sy $image_posn_x $image_posn_y
+advise "$image_posn_x $image_posn_y (plot) -> $sx $sy (screen)"
+# x is easy but y has to go up...
+Add_Var sy -(nrows(eoi_tmp)-1)
+advise "will embed at $sx $sy"
+# BUG check that image is in-bounds...
 view
-  embed Plot_Preview eoi_tmp $image_posn_x nrows(Plot_Preview)-$image_posn_y-nrows(eoi_tmp)
+  embed Plot_Preview eoi_tmp $sx $sy
   quit
 Delete_Image eoi_tmp
 .
@@ -1949,8 +1960,9 @@ Define Emit_One_Image 3 filename x y
 # are the positions in pixels???
 advise "Emit_One_Image $1 $2 $3"
 advise "Screen_2_Plot px py $2 (nrows(Plot_Preview)-1)-$3"
-Screen_2_Plot px py $2 (nrows(Plot_Preview)-1)-$3
-advise "px = $px    py = $py"
+# get the plot coordinates of the upper left hand corner
+# We have specified the position in pixels, but it
+# would probably be better to do it in plot units all along?
 If !file_exists('$1') "warn 'No image file $1!?' exit_macro"
 Read_File_Header $1
 Image eoi_tmp nrows('$1') ncols('$1') depth('$1') u_byte
@@ -1960,10 +1972,16 @@ Assign dx ncols(eoi_tmp)
 Assign dy nrows(eoi_tmp)
 If depth(eoi_tmp)!=1 "error_exit 'Emit_One_Image:  Sorry, only know how to emit grayscale images...'"
 # width height bitspersample matrix datasrc image
-echo "/picstr 256 string def"
+echo "/picstr $dx string def"
 # Need translate and scale commands here to place the image...
+# First figure out how many plot units the image takes up
+Screen_2_Plot_Delta pdx pdy $dx $dy
+advise "pdx = $pdx   pdy = $pdy     ($dx, $dy)"
+Mul_Var pdx 1/$dx
+Mul_Var pdy 1/$dy
 echo gsave
-echo "$px gxu $py gyu translate"
+echo "$2 gxu $3 gyu translate"
+echo "$pdx gdxu $pdy gdyu scale"
 #echo "$dx $dy 8 [$dx 0 0 $dy 0 0]"
 echo "$dx $dy 8 [1 0 0 1 0 0]"
 echo "{currentfile picstr readhexstring pop}"	# procedure to read data
