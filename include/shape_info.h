@@ -94,7 +94,8 @@ struct precision {
 	void			(*copy_value_func)
 					(Scalar_Value *,Scalar_Value *);
 	// format for printing
-	void			(*format_func)(QSP_ARG_DECL  char *buf, /* pass buffer len? */  Scalar_Value *data);
+	/* pass buffer len? */
+	void			(*format_func)(QSP_ARG_DECL  char *buf, Scalar_Value *data, int pad_flag);
 } ;
 
 #define prec_name	prec_item.item_name

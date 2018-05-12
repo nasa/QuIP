@@ -68,12 +68,12 @@ Precision *_get_prec(QSP_ARG_DECL  const char *name)
 
 #define DECLARE_INT_FORMAT_FUNC(type_str)								\
 													\
-static void _format_##type_str##_value(QSP_ARG_DECL  char *buf, Scalar_Value *svp)			\
+static void _format_##type_str##_value(QSP_ARG_DECL  char *buf, Scalar_Value *svp, int pad_flag)	\
 {													\
 	Integer_Output_Fmt *iof_p;									\
 													\
 	iof_p = curr_output_int_fmt_p;									\
-	(*(iof_p->iof_fmt_##type_str##_func))(QSP_ARG  buf,svp);					\
+	(*(iof_p->iof_fmt_##type_str##_func))(QSP_ARG  buf,svp,pad_flag);				\
 													\
 }
 
@@ -90,7 +90,7 @@ DECLARE_INT_FORMAT_FUNC(u_long)
 
 #define DECLARE_FLT_FORMAT_FUNC(type_str,member)							\
 													\
-static void _format_##type_str##_value(QSP_ARG_DECL  char *buf, Scalar_Value *svp)			\
+static void _format_##type_str##_value(QSP_ARG_DECL  char *buf, Scalar_Value *svp, int pad_flag)	\
 {													\
 	if( pad_flag )											\
 		sprintf(buf,padded_flt_fmt_str,svp->member);						\
@@ -103,7 +103,7 @@ DECLARE_FLT_FORMAT_FUNC(double,u_d)
 
 #define DECLARE_INVALID_FORMAT_FUNC(type_str,member)							\
 													\
-static void _format_##type_str##_value(QSP_ARG_DECL  char *buf, Scalar_Value *svp)			\
+static void _format_##type_str##_value(QSP_ARG_DECL  char *buf, Scalar_Value *svp, int pad_flag)	\
 {													\
 	sprintf(ERROR_STRING,"CAUTIOUS:  '%s' is not a machine precision, can't format value!?",#type_str);	\
 	error1(ERROR_STRING);										\

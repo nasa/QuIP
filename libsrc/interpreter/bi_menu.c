@@ -567,17 +567,19 @@ static inline void assign_var_from_double(QSP_ARG_DECL  Typed_Scalar *tsp)
 		/* We want to cast to unsigned to get the largest integer? */
 		// does the sign of the cast really matter?
 
+#define NO_PADDING 0
+
 		iof_p = QS_INT_VAR_FMT_P(THIS_QSP);
 //fprintf(stderr,"using %s integer format to print double number %g\n",iof_p->iof_item.item_name,d);
 		assert(iof_p!=NULL);
 		if( d > 0 ){
 			u_long l;
 			l=d;
-			(*(iof_p->iof_fmt_u_long_func))(QSP_ARG  DEST, (Scalar_Value *) &l);
+			(*(iof_p->iof_fmt_u_long_func))(QSP_ARG  DEST, (Scalar_Value *) &l, NO_PADDING);
 		} else {
 			long l;
 			l=d;
-			(*(iof_p->iof_fmt_long_func))(QSP_ARG  DEST, (Scalar_Value *) &l);
+			(*(iof_p->iof_fmt_long_func))(QSP_ARG  DEST, (Scalar_Value *) &l, NO_PADDING);
 		}
 	} else {
 		sprintf(DEST,QS_FLT_VAR_FMT(THIS_QSP),d);
@@ -618,7 +620,7 @@ static inline void assign_var_stringbuf_from_number(QSP_ARG_DECL  Typed_Scalar *
 		iof_p = QS_INT_VAR_FMT_P(THIS_QSP);
 		assert(iof_p!=NULL);
 		//sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),tsp->ts_value.u_ll);
-		(*(iof_p->iof_fmt_long_func))(QSP_ARG  DEST, (Scalar_Value *) &(tsp->ts_value.u_ll));
+		(*(iof_p->iof_fmt_long_func))(QSP_ARG  DEST, (Scalar_Value *) &(tsp->ts_value.u_ll), NO_PADDING);
 	}
 }
 
@@ -1163,9 +1165,6 @@ static COMMAND_FUNC( do_pwd )
 		tell_sys_error("getcwd");
 		return;
 	}
-
-	// cwd is now a dynamic variable!?
-	//assign_var("cwd",savestr(buf));
 	prt_msg(buf);
 }
 

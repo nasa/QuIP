@@ -59,16 +59,16 @@ struct integer_output_fmt {
 	Integer_Output_Fmt_Code	iof_code;
 	const char *		iof_padded_fmt_str;	/* printf format */
 	const char *		iof_plain_fmt_str;	/* printf format */
-	void			(*iof_fmt_string_func)(QSP_ARG_DECL  char *,Scalar_Value *);
-	void			(*iof_fmt_char_func)(QSP_ARG_DECL  char *,Scalar_Value *);
-	void			(*iof_fmt_byte_func)(QSP_ARG_DECL  char *,Scalar_Value *);
-	void			(*iof_fmt_u_byte_func)(QSP_ARG_DECL  char *,Scalar_Value *);
-	void			(*iof_fmt_short_func)(QSP_ARG_DECL  char *,Scalar_Value *);
-	void			(*iof_fmt_u_short_func)(QSP_ARG_DECL  char *,Scalar_Value *);
-	void			(*iof_fmt_int_func)(QSP_ARG_DECL  char *,Scalar_Value *);
-	void			(*iof_fmt_u_int_func)(QSP_ARG_DECL  char *,Scalar_Value *);
-	void			(*iof_fmt_long_func)(QSP_ARG_DECL  char *,Scalar_Value *);
-	void			(*iof_fmt_u_long_func)(QSP_ARG_DECL  char *,Scalar_Value *);
+	void			(*iof_fmt_string_func)(QSP_ARG_DECL  char *,Scalar_Value *, int);
+	void			(*iof_fmt_char_func)(QSP_ARG_DECL  char *,Scalar_Value *, int);
+	void			(*iof_fmt_byte_func)(QSP_ARG_DECL  char *,Scalar_Value *, int);
+	void			(*iof_fmt_u_byte_func)(QSP_ARG_DECL  char *,Scalar_Value *, int);
+	void			(*iof_fmt_short_func)(QSP_ARG_DECL  char *,Scalar_Value *, int);
+	void			(*iof_fmt_u_short_func)(QSP_ARG_DECL  char *,Scalar_Value *, int);
+	void			(*iof_fmt_int_func)(QSP_ARG_DECL  char *,Scalar_Value *, int);
+	void			(*iof_fmt_u_int_func)(QSP_ARG_DECL  char *,Scalar_Value *, int);
+	void			(*iof_fmt_long_func)(QSP_ARG_DECL  char *,Scalar_Value *, int);
+	void			(*iof_fmt_u_long_func)(QSP_ARG_DECL  char *,Scalar_Value *, int);
 };
 
 extern void set_format_string(Integer_Output_Fmt *, const char *);
@@ -85,8 +85,6 @@ ITEM_INTERFACE_PROTOTYPES(Integer_Output_Fmt,int_out_fmt)
 
 typedef struct dobj_ascii_info {
 	// output control variables
-	int			dai_pad_flag;		// there is no way to set this - BUG!
-							// defaults to one for evenly spaced columns on printout
 	int			dai_ascii_warned;
 	Integer_Output_Fmt *	dai_output_int_fmt_p;
 	dimension_t		dai_dobj_max_per_line;
@@ -118,7 +116,6 @@ typedef struct dobj_ascii_info {
 #define	pad_ffmtstr		THIS_QSP->qs_dai_p->dai_pad_ffmtstr
 #define	min_field_width		THIS_QSP->qs_dai_p->dai_min_field_width
 #define	display_precision	THIS_QSP->qs_dai_p->dai_display_precision
-#define	pad_flag		THIS_QSP->qs_dai_p->dai_pad_flag
 
 #define IS_FIRST_FORMAT		( CURRENT_FORMAT_NODE != QLIST_HEAD(INPUT_FORMAT_LIST) )
 #define INPUT_FORMAT_LIST	(THIS_QSP->qs_dai_p->dai_fmt_lp)

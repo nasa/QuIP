@@ -860,7 +860,9 @@ interface
     set_edit_text $image_source_file_widget_name $image_filename
     set_edit_text $image_posn_x_widget_name $image_posn_x
     set_edit_text $image_posn_y_widget_name $image_posn_y
+    advise "set_edit_text '$image_zoom_x_widget_name' '$image_zoom_x'"
     set_edit_text $image_zoom_x_widget_name $image_zoom_x
+    advise "set_edit_text '$image_zoom_y_widget_name' '$image_zoom_y'"
     set_edit_text $image_zoom_y_widget_name $image_zoom_y
 
     quit
@@ -1324,6 +1326,7 @@ repeat $n_embedded_images
   Save_Image_Param $i filename
   Save_Image_Param $i posn_x
   Save_Image_Param $i posn_y
+advise "saving zoom params..."
   Save_Image_Param $i zoom_x
   Save_Image_Param $i zoom_y
 

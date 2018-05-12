@@ -52,7 +52,7 @@ ITEM_INTERFACE_DECLARATIONS(Integer_Output_Fmt,int_out_fmt,0)
 
 #define DECLARE_FMT_FUNC(type,format,member,padded_fmt_str,plain_fmt_str)		\
 											\
-static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value *svp)	\
+static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value *svp, int pad_flag)	\
 {											\
 	if( pad_flag )									\
 		sprintf(buf,#padded_fmt_str,svp->member);				\
@@ -62,7 +62,7 @@ static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value
 
 #define DECLARE_PS_FMT_FUNC(type,format,member)						\
 											\
-static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value *svp)	\
+static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value *svp, int pad_flag)	\
 {											\
 	sprintf(buf,"%02x",svp->member);							\
 }
@@ -70,7 +70,7 @@ static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value
 
 #define DECLARE_INVALID_FMT_FUNC(type,format)						\
 											\
-static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value *svp)	\
+static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value *svp, int pad_flag)	\
 {											\
 	sprintf(ERROR_STRING,"CAUTIOUS:  can't apply %s format to %s!?",#format,#type);	\
 	error1(ERROR_STRING);								\
@@ -175,26 +175,6 @@ DECLARE_FMT_FUNC(u_long,	postscript,	u_ull,	0x%-17llx,	0x%llx)
 	iof_p->iof_fmt_u_long_func = _format_u_long_data_##name;		\
 
 
-#ifdef FOOBAR
-static void _format_byte_dec(QSP_ARG_DECL  char *buf,Integer_Output_Fmt *iof_p, Scalar_Value *svp)
-{
-	if( pad_flag )
-		sprintf(buf,iof_p->iof_padded_fmt_str,svp->u_b);
-	else
-		sprintf(buf,iof_p->iof_plain_fmt_str,svp->u_b);
-}
-
-#define DECLARE_FMT_FUNC(type_string,member)								\
-													\
-static void format_##type_string(char *buf,Integer_Output_Fmt *iof_p, Scalar_Value *svp)		\
-{													\
-	if( pad_flag )											\
-		sprintf(buf,iof_p->iof_padded_fmt_str,svp->u_b);						\
-	else												\
-		sprintf(buf,iof_p->iof_plain_fmt_str,svp->u_b);
-}
-#endif // FOOBAR
-
 #define init_output_formats() _init_output_formats(SINGLE_QSP_ARG)
 
 static void _init_output_formats(SINGLE_QSP_ARG_DECL)
@@ -217,7 +197,6 @@ static struct input_format_type input_format_type_tbl[N_INPUT_FORMAT_TYPES];
 
 void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p)
 {
-	dai_p->dai_pad_flag = 0;
 	dai_p->dai_ascii_data_dp = NULL;
 	dai_p->dai_ascii_warned = 0;
 	dai_p->dai_dobj_max_per_line = DEFAULT_MAX_PER_LINE;
@@ -876,9 +855,10 @@ void format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *dat
 			sprintf(buf,"0%03o",c);
 		return;
 	}
+#define PAD_FOR_EVEN_COLUMNS	1
 
 	if( ! IS_BITMAP(dp) ){
-		format_scalar_value(QSP_ARG  buf,buflen,data,OBJ_PREC_PTR(dp));
+		format_scalar_value(QSP_ARG  buf,buflen,data,OBJ_PREC_PTR(dp),PAD_FOR_EVEN_COLUMNS);
 	}
 	else {
 		warn("format_scalar_obj:  don't know what to do with bitmaps!?");
@@ -894,16 +874,16 @@ void format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *dat
 // Yes, but not for display in hex and octal...
 // This is tricky, because the print function doesn't know the source type of the data...
 
-void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision *prec_p)
+void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision *prec_p, int pad_flag)
 {
-	(*(PREC_MACH_PREC_PTR(prec_p)->format_func))(QSP_ARG  buf,data);
+	(*(PREC_MACH_PREC_PTR(prec_p)->format_func))(QSP_ARG  buf,data,pad_flag);
 }
 
 char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p )
 {
 	static char buf[64];
 
-	format_scalar_value(QSP_ARG  buf,64,data,prec_p);
+	format_scalar_value(QSP_ARG  buf,64,data,prec_p,PAD_FOR_EVEN_COLUMNS);
 	return buf;
 }
 
@@ -1061,11 +1041,7 @@ static void sp_pntvec( QSP_ARG_DECL  Data_Obj *dp, FILE *fp )
 	dimension_t i3,i2,i1,i0;
 	const char *ffmtstr;
 
-	// When do we check pad_flag???
-	if( pad_flag )
-		ffmtstr = padded_flt_fmt_str;
-	else
-		ffmtstr = "%g";
+	ffmtstr = padded_flt_fmt_str;
 
 	base = (float *) OBJ_DATA_PTR(dp);
 
@@ -1089,14 +1065,6 @@ static void sp_pntvec( QSP_ARG_DECL  Data_Obj *dp, FILE *fp )
 	}
 }
 
-#ifdef FOOBAR
-static void set_pad_ffmt_str(SINGLE_QSP_ARG_DECL)
-{
-	sprintf(pad_ffmtstr,"%%%d.%dg",min_field_width,display_precision);
-	//ffmtstr = pad_ffmtstr;
-	set_format_string(curr_output_flt_fmt_p,pad_ffmtstr);
-}
-#endif // FOOBAR
 
 #ifdef NOT_USED
 void set_min_field_width(int fw)
@@ -1179,14 +1147,7 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 
 	/* We pad with spaces only if we are printing more than one element */
 
-//	save_ffmt=ffmtstr;
-//	save_ifmt=ifmtstr;
 	/* BUG should set format based on desired radix !!! */
-	pad_flag = 1;		// what does this do?
-
-//	// BUG - the format should be set by default!?
-//	set_integer_print_fmt(QSP_ARG   ascii_fmt_code);	/* handles integer formats */
-//	set_pad_ffmt_str(SINGLE_QSP_ARG);
 
 	// BUG should only do this at init time, and when changed...
 	sprintf(padded_flt_fmt_str,"%%%d.%dg",min_field_width,display_precision);
@@ -1425,33 +1386,6 @@ void _set_integer_print_fmt(QSP_ARG_DECL  Integer_Output_Fmt *iof_p )
 {
 	curr_output_int_fmt_p = iof_p;
 }
-
-#ifdef FOOBAR
-/* has to be external, called from datamenu/ascmenu.c */
-
-void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code )
-{
-	ascii_fmt_code = fmt_code;	/* per qsp variable */
-	ascii_separator = NORMAL_SEPARATOR;	// default
-	switch(fmt_code){
-		case FMT_POSTSCRIPT:
-			ifmtstr= PS_INT_FMT_STR;
-			ascii_separator = POSTSCRIPT_SEPARATOR;
-			break;
-		// BUG use symbolic constants here!!!
-		case FMT_UDECIMAL:
-			ifmtstr= (pad_flag ? "%10lu"   : "%lu")  ; break;
-		case FMT_DECIMAL:
-			ifmtstr= (pad_flag ? "%10ld"   : "%ld")  ; break;
-		case FMT_HEX:
-			ifmtstr= (pad_flag ? "0x%-10lx" : "0x%lx"); break;
-		case FMT_OCTAL:
-			ifmtstr= (pad_flag ? "0%-10lo"  : "0%lo") ; break;
-		default:
-			assert( AERROR("unrecognized format code") );
-	}
-}
-#endif // FOOBAR
 
 void set_max_per_line(QSP_ARG_DECL  int n )
 {

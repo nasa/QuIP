@@ -359,7 +359,7 @@ extern Data_Obj *insure_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *dp);
 /* ascii.c */
 extern void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p);
 extern void format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *data);
-extern void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision *prec_p);
+extern void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision *prec_p,int pad_flag);
 extern char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p);
 extern void pntvec(QSP_ARG_DECL  Data_Obj *dp, FILE *fp);
 extern void dptrace(QSP_ARG_DECL  Data_Obj *);

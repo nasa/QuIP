@@ -14,6 +14,8 @@
 #include "stack.h"		// BUG
 #include "query_stack.h"		// BUG
 
+#define BAD_STRING(s)	(s==NULL || *s==0)
+
 #ifdef BUILD_FOR_OBJC
 
 #include "ios_gui.h"
@@ -226,8 +228,8 @@ COMMAND_FUNC( mk_position )
 {
 	int x, y;
 
-	x = (int)HOW_MANY("x position");
-	y = (int)HOW_MANY("y position");
+	x = (int)how_many("x position");
+	y = (int)how_many("y position");
 	if( !curr_panel ) return;
 	SET_PO_CURR_X(curr_panel, x);
 	SET_PO_CURR_Y(curr_panel, y);
@@ -254,8 +256,8 @@ COMMAND_FUNC( do_set_posn_object )
 	int x,y;
 
 	sop = pick_scrnobj("");
-	x=(int)HOW_MANY("x position");
-	y=(int)HOW_MANY("y position");
+	x=(int)how_many("x position");
+	y=(int)how_many("y position");
 	if( sop == NULL ) return;
 	SET_SOB_X(sop,x);
 	SET_SOB_Y(sop,y);
@@ -363,9 +365,9 @@ COMMAND_FUNC( mk_panel )
 	//Panel_Obj *po;
 	int dx,dy;
 
-	s=NAMEOF("name for panel");
-	dx=(int)HOW_MANY("panel width");
-	dy=(int)HOW_MANY("panel height");
+	s=nameof("name for panel");
+	dx=(int)how_many("panel width");
+	dy=(int)how_many("panel height");
 	/*po=*/ new_panel(QSP_ARG  s,dx,dy);
 }
 
@@ -377,8 +379,8 @@ COMMAND_FUNC( do_resize_panel )
         return;
     }
 
-    int dx = (int)HOW_MANY("panel width");
-    int dy = (int)HOW_MANY("panel height");
+    int dx = (int)how_many("panel width");
+    int dy = (int)how_many("panel height");
 
     SET_PO_WIDTH(po, dx);
     SET_PO_HEIGHT(po, dy);
@@ -442,13 +444,15 @@ Screen_Obj *_get_parts(QSP_ARG_DECL  const char *class_str)
 	// in these local buffers???
 
 	sprintf(pmpt,"%s label",class_str);
-	//strcpy( label, NAMEOF(pmpt) );
-	label = NAMEOF(pmpt) ;
+	//strcpy( label, nameof(pmpt) );
+	label = nameof(pmpt) ;
 
 	sprintf(pmpt,"%s action text",class_str);
-	text = NAMEOF(pmpt) ;
+	text = nameof(pmpt) ;
 
-	if( curr_panel == NULL ) return(NULL);
+	if( curr_panel == NULL ) return NULL;
+	if( label == NULL ) return NULL;	// a non-existent variable, for example...
+	if( text == NULL ) return NULL;	// a non-existent variable, for example...
 
 	sop = simple_object(label);
 	if( sop == NULL ) return(sop);
@@ -640,14 +644,14 @@ static void _get_menu_items(QSP_ARG_DECL  Screen_Obj *mp)
 
 void _get_min_max_val(QSP_ARG_DECL  int *minp,int *maxp,int *valp)
 {
-	*minp=(int)HOW_MANY("min value");
-	*maxp=(int)HOW_MANY("max value");
-	*valp=(int)HOW_MANY("initial value");
+	*minp=(int)how_many("min value");
+	*maxp=(int)how_many("max value");
+	*valp=(int)how_many("initial value");
 }
 
 void _get_so_width(QSP_ARG_DECL int *widthp)
 {
-	*widthp=(int)HOW_MANY("width");
+	*widthp=(int)how_many("width");
 }
 
 COMMAND_FUNC( mk_button )
@@ -685,7 +689,7 @@ static void mk_text_input_line(QSP_ARG_DECL  int so_code)
 
 	to = get_parts("text");		// sets name and action
 
-	s = NAMEOF("default value");
+	s = nameof("default value");
 
 	if( to == NULL ) return;
 
@@ -757,7 +761,7 @@ COMMAND_FUNC( mk_edit_box )
 	const char *s;
 
 	sop = get_parts("edit box");
-	s = NAMEOF("default value");
+	s = nameof("default value");
 	if( sop == NULL ) return;
 	SET_SOB_CONTENT(sop, save_possibly_empty_str(s));	// overloads action?
 	SET_SOB_TYPE(sop, SOT_EDIT_BOX);
@@ -778,7 +782,7 @@ COMMAND_FUNC( assign_text )
 	/* char msg[80]; */
 
 	sop = pick_scrnobj("");
-	s = NAMEOF("variable name");
+	s = nameof("variable name");
 	if( sop == NULL ) return;
 
 	/* Before we try to get the text, we should check which type of widget we have */
@@ -804,8 +808,9 @@ COMMAND_FUNC( do_set_prompt )
 	Screen_Obj *sop;
 
 	sop = pick_scrnobj("");
-	s = NAMEOF("new prompt");
+	s = nameof("new prompt");
 	if( sop == NULL ) return;
+	if( BAD_STRING(s) ) return;	// a non-existent variable, for example...
 	givbuf((void *)SOB_ACTION(sop));
 	SET_SOB_ACTION(sop, savestr(s));
 	update_prompt(sop);
@@ -817,8 +822,10 @@ COMMAND_FUNC( do_set_edit_text )
 	Screen_Obj *sop;
 
 	sop = pick_scrnobj("");
-	s = NAMEOF("text to display");
+	s = nameof("text to display");
 	if( sop == NULL ) return;
+	if( BAD_STRING(s) ) return;	// a non-existent variable, for example...
+fprintf(stderr,"do_set_edit_text:  s = 0x%lx\n",(long)s);
 
 	// BUG make sure SOT_EDIT_BOX
 	if( SOB_CONTENT(sop) != NULL )
@@ -834,7 +841,7 @@ COMMAND_FUNC( do_set_text_field )
 	Screen_Obj *sop;
 
 	sop = pick_scrnobj("");
-	s = NAMEOF("text to display");
+	s = nameof("text to display");
 	if( sop == NULL ) return;
 
 	// BUG - make sure this is an appropriate object
@@ -869,7 +876,7 @@ COMMAND_FUNC( set_panel_label )
 {
 	const char *s;
 
-	s=NAMEOF("new panel label");
+	s=nameof("new panel label");
 	label_panel(curr_panel,s);
 }
 
@@ -880,8 +887,8 @@ COMMAND_FUNC( set_new_range )
 	int max;
 
 	sop=pick_scrnobj("slider");
-	min=(int)HOW_MANY("min value");
-	max=(int)HOW_MANY("max value");
+	min=(int)how_many("min value");
+	max=(int)how_many("max value");
 	if( sop == NULL ) return;
 	new_slider_range(sop,min,max);
 }
@@ -893,7 +900,7 @@ COMMAND_FUNC( set_new_pos )
 	int val;
 
 	sop=pick_scrnobj("slider");
-	val=(int)HOW_MANY("value");
+	val=(int)how_many("value");
 	if( sop == NULL ) return;
 	new_slider_pos(sop,val);
 }
@@ -1065,7 +1072,7 @@ COMMAND_FUNC( mk_act_ind )
 #endif /* BUILD_FOR_IOS */
 	const char *name;
 
-	name = NAMEOF("name for activity indicator");
+	name = nameof("name for activity indicator");
 #ifdef BUILD_FOR_IOS
 	sop = simple_object(QSP_ARG  name);
 	if( sop == NULL ) return;
@@ -1191,7 +1198,7 @@ COMMAND_FUNC( do_set_gauge_label )
 	const char * s;
 
 	gp=pick_scrnobj("guage");
-	s=NAMEOF("gauge lable");
+	s=nameof("gauge lable");
 
 	if( gp == NULL ) return;
 	INSIST_GAUGE(gp,set_gauge_label)
@@ -1205,7 +1212,7 @@ COMMAND_FUNC( do_set_gauge_value )
 	int n;
 
 	gp=pick_scrnobj("guage");
-	n=(int)HOW_MANY("setting");
+	n=(int)how_many("setting");
 
 	if( gp == NULL ) return;
 	INSIST_GAUGE(gp,set_gauge_value)
@@ -1241,7 +1248,7 @@ COMMAND_FUNC( do_set_choice )
 
 	sop=pick_scrnobj("chooser");
 	if( sop == NULL ){
-		/*s=*/ NAMEOF("dummy word");
+		/*s=*/ nameof("dummy word");
 		return;
 	}
 	/* BUG make sure sop points to a chooser... */
@@ -1323,8 +1330,9 @@ COMMAND_FUNC( do_set_message )
 	const char *s;
 
 	mp=pick_scrnobj("message");
-	s=NAMEOF("message text");
+	s=nameof("message text");
 	if( mp == NULL ) return;
+	if( BAD_STRING(s) ) return;	// a non-existent variable, for example...
 
 	// BUG make sure the screen_obj is the right type!
 
@@ -1339,9 +1347,10 @@ COMMAND_FUNC( do_set_label )
 	const char *s;
 
 	mp=pick_scrnobj("message");
-	s=NAMEOF("message text");
+	s=nameof("message text");
 #ifdef BUILD_FOR_IOS
 	if( mp == NULL ) return;
+	if( BAD_STRING(s) ) return;	// a non-existent variable, for example...
 
 	// BUG make sure the screen_obj is the right type!
 
@@ -1363,9 +1372,10 @@ COMMAND_FUNC( do_append_text )
 	const char *s;
 
 	tb=pick_scrnobj("text_box");
-	s=NAMEOF("text to append");
+	s=nameof("text to append");
 #ifdef BUILD_FOR_IOS
 	if( tb == NULL ) return;
+	if( BAD_STRING(s) ) return;	// a non-existent variable, for example...
 
 	// BUG make sure the screen_obj is the right type!
 
@@ -1452,8 +1462,8 @@ COMMAND_FUNC( do_pposn )
 	int y;
 
 	po=pick_panel("");
-	x=(int)HOW_MANY("x position");
-	y=(int)HOW_MANY("y position");
+	x=(int)how_many("x position");
+	y=(int)how_many("y position");
 
 	if( po != NULL ){
 		SET_PO_X(po,x);
@@ -1478,11 +1488,11 @@ COMMAND_FUNC( do_notice )
 {
 	const char *msg_tbl[5];
 
-	msg_tbl[0]=NAMEOF("notice message");
-	msg_tbl[1]=NAMEOF("Yes prompt");
-	msg_tbl[2]=NAMEOF("Yes action");
-	msg_tbl[3]=NAMEOF("No prompt");
-	msg_tbl[4]=NAMEOF("No action");
+	msg_tbl[0]=nameof("notice message");
+	msg_tbl[1]=nameof("Yes prompt");
+	msg_tbl[2]=nameof("Yes action");
+	msg_tbl[3]=nameof("No prompt");
+	msg_tbl[4]=nameof("No action");
 
 	give_notice(msg_tbl);
 }
@@ -1514,7 +1524,7 @@ int _get_strings(QSP_ARG_DECL Screen_Obj *sop,const char ***sss)
 	int i;
 	int n;
 
-	n=(int)HOW_MANY("number of items");
+	n=(int)how_many("number of items");
 	if( n < 0 ){
 		SET_SOB_N_SELECTORS(sop,0);
 		sprintf(ERROR_STRING,"get_strings:  number of selectors must be non-negative!?");
@@ -1530,7 +1540,7 @@ int _get_strings(QSP_ARG_DECL Screen_Obj *sop,const char ***sss)
 		// do this after returning
 		// SET_SOB_SELECTORS(sop,string_arr);
 		for(i=0;i<n;i++){
-			string_arr[i]=savestr(NAMEOF("selector text") );
+			string_arr[i]=savestr(nameof("selector text") );
 		}
 		*sss = string_arr;
 	} else {
@@ -1611,7 +1621,7 @@ COMMAND_FUNC( do_file_scroller )
 	FILE *fp;
 
 	sop = pick_scrnobj("scroller");
-	fp = try_open( NAMEOF("item file"), "r" );
+	fp = try_open( nameof("item file"), "r" );
 	if( !fp ) return;
 
 	while( fscanf(fp,"%s",word) == 1 ){
@@ -1753,7 +1763,7 @@ COMMAND_FUNC( do_picker )
 	if( sop == NULL ) return;
 	SET_SOB_TYPE(sop, SOT_PICKER);
 
-	n_cyl = (int)HOW_MANY("number of cylinders");
+	n_cyl = (int)how_many("number of cylinders");
 	if( n_cyl < 1 || n_cyl > MAX_CYLINDERS ){
 		sprintf(ERROR_STRING,"Number of cylinders (%d) must be between 1 and %d!?",
 			n_cyl,MAX_CYLINDERS);
@@ -1981,7 +1991,7 @@ COMMAND_FUNC( do_add_choice )
 	const char *s;
 
 	sop = pick_chooser_or_picker(SINGLE_QSP_ARG);
-	s = NAMEOF("choice string");
+	s = nameof("choice string");
 
 	if( sop == NULL ) return;
 
@@ -2023,7 +2033,7 @@ COMMAND_FUNC( do_del_choice )
 	const char *s;
 
 	sop = pick_chooser_or_picker(SINGLE_QSP_ARG);
-	s = NAMEOF("choice string");
+	s = nameof("choice string");
 
 	if( sop == NULL ) return;
 
@@ -2067,7 +2077,7 @@ COMMAND_FUNC( do_set_picks )
 	// if we don't find a match during the
 	// copy process, it is an error.
 
-	n_cyl = (int) HOW_MANY("number of cylinders");
+	n_cyl = (int) how_many("number of cylinders");
 
 	if( n_cyl < 1 || n_cyl > MAX_CYLINDERS ){
 		sprintf(ERROR_STRING,"Number of cylinders (%d) should be between %d and %d!?",n_cyl,1,MAX_CYLINDERS);
@@ -2107,7 +2117,7 @@ Node *first_panel_node(SINGLE_QSP_ARG_DECL)
 	List *lp;
 
 	lp=item_list(panel_obj_itp);
-	if( lp==NULL ) return(NULL);
+	if( lp==NULL ) return NULL;
 	else return(QLIST_HEAD(lp));
 }
 #endif /* NOT_YET */
@@ -2128,7 +2138,7 @@ Screen_Obj *find_object_at(Panel_Obj *po,int x,int y)
 			return(sop);
 		np=np->n_next;
 	}
-	return(NULL);
+	return NULL;
 }
 #endif /* NOT_USED */
 
