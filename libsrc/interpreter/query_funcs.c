@@ -2682,8 +2682,8 @@ void init_query_stack(Query_Stack *qsp)
 	SET_QS_CHEW_LIST(qsp, NULL);
 	SET_QS_CALLBACK_LIST(qsp, NULL);
 
-	SET_QS_VAR_FMT_STACK(qsp,NULL);
-	SET_QS_NUMBER_FMT(qsp,NULL);
+	SET_QS_INT_VAR_FMT_STACK(qsp,NULL);
+	SET_QS_FLT_VAR_FMT(qsp,"%g");
 
 	SET_QS_EXPECTED_WARNING_LIST(qsp,NULL);
 
@@ -2706,7 +2706,18 @@ void init_query_stack(Query_Stack *qsp)
 		SET_QS_QUEUE(qsp,queue);
 	}
 #endif /* USE_QS_QUEUE */
-}
+
+	// Set the default variable format to decimal
+
+	dataobj_init();		// just to be sure
+	{
+	Integer_Output_Fmt *iof_p;
+	iof_p = int_out_fmt_of("decimal");
+	assert(iof_p!=NULL);
+	SET_QS_INT_VAR_FMT_P(qsp,iof_p);
+	}
+
+} // init_query_stack
 
 void _push_stop_level(QSP_ARG_DECL  int l)
 {
@@ -3603,7 +3614,7 @@ const char *save_possibly_empty_str(const char *s)
 const char *savestr(const char *s)
 {
 	char *new_s;
-	
+
 	assert(s!=NULL);
 	assert(*s!=0);
 	new_s = getbuf(strlen(s)+1);

@@ -200,14 +200,10 @@ struct query_stack {
 
 	char		qs_pathname[PATH_MAX];
 
-	//int		qs_fmt_code;	// now in dobj_ascii_info
-	Stack *		qs_var_fmt_stack;
-	char *		qs_number_fmt_string;
-	char		qs_gfmt_str[8];
-	char		qs_xfmt_str[8];
-	char		qs_ofmt_str[8];
-	char		qs_dfmt_str[8];
-	char		qs_pfmt_str[8];
+	Stack *		qs_int_var_fmt_stack;
+
+	Integer_Output_Fmt *	qs_int_var_fmt_p;	// for variables
+	char 			qs_flt_var_fmt[16];
 
 	// for formatted ascii input to data objects
 	struct dobj_ascii_info *	qs_dai_p;
@@ -354,12 +350,14 @@ struct query_stack {
 #define QS_MENU_STACK(qsp)		(qsp)->qs_menu_stack
 #define SET_QS_MENU_STACK(qsp,stkp)	(qsp)->qs_menu_stack = stkp
 
-#define QS_VAR_FMT_STACK(qsp)		(qsp)->qs_var_fmt_stack
-#define SET_QS_VAR_FMT_STACK(qsp,stkp)	(qsp)->qs_var_fmt_stack = stkp
+#define QS_INT_VAR_FMT_STACK(qsp)		(qsp)->qs_int_var_fmt_stack
+#define SET_QS_INT_VAR_FMT_STACK(qsp,stkp)	(qsp)->qs_int_var_fmt_stack = stkp
 #define QS_EXPECTED_WARNING_LIST(qsp)	(qsp)->qs_expected_warning_lp
 #define SET_QS_EXPECTED_WARNING_LIST(qsp,lp)	(qsp)->qs_expected_warning_lp = lp
-#define QS_NUMBER_FMT(qsp)		(qsp)->qs_number_fmt_string
-#define SET_QS_NUMBER_FMT(qsp,s)	(qsp)->qs_number_fmt_string = s
+#define QS_INT_VAR_FMT_P(qsp)		(qsp)->qs_int_var_fmt_p
+#define SET_QS_INT_VAR_FMT_P(qsp,iof_p)	(qsp)->qs_int_var_fmt_p = iof_p
+#define QS_FLT_VAR_FMT(qsp)		(qsp)->qs_flt_var_fmt
+#define SET_QS_FLT_VAR_FMT(qsp,s)	strcpy((qsp)->qs_flt_var_fmt,s)
 #define QS_GFORMAT(qsp)			(qsp)->qs_gfmt_str
 #define QS_XFORMAT(qsp)			(qsp)->qs_xfmt_str
 #define QS_DFORMAT(qsp)			(qsp)->qs_dfmt_str

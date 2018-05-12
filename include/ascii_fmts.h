@@ -44,10 +44,7 @@ typedef enum {
 	FMT_OCTAL,
 	FMT_UDECIMAL,
 	FMT_POSTSCRIPT,
-
-	FMT_FLOAT,		// only one for floats...
-
-	N_PRINT_FORMATS		/* must be last */
+	N_INT_PRINT_FORMATS		/* must be last */
 } Integer_Output_Fmt_Code;
 
 typedef struct output_number {
@@ -82,6 +79,7 @@ ITEM_INTERFACE_PROTOTYPES(Integer_Output_Fmt,int_out_fmt)
 #define init_int_out_fmts()	_init_int_out_fmts(SINGLE_QSP_ARG)
 #define pick_int_out_fmt(s)	_pick_int_out_fmt(QSP_ARG  s)
 #define new_int_out_fmt(s)	_new_int_out_fmt(QSP_ARG  s)
+#define int_out_fmt_of(s)	_int_out_fmt_of(QSP_ARG  s)
 
 // Is this all for ascii input?
 
@@ -95,7 +93,6 @@ typedef struct dobj_ascii_info {
 	int			dai_ret_dim;
 	int			dai_min_field_width;
 	int			dai_display_precision;
-//	const char *		dai_ascii_separator;
 
 	// input control variables
 	int			dai_ascii_level;
@@ -104,33 +101,24 @@ typedef struct dobj_ascii_info {
 	// not sure
 	struct data_obj *	dai_ascii_data_dp;
 
-//	const char *		dai_padded_flt_fmt_str;	/* float format string */
-//	const char *		dai_plain_flt_fmt_str;	/* float format string */
-
 	char 			dai_padded_flt_fmt_str[16];
-//	Input_Format_Spec	dai_input_fmt[MAX_FORMAT_FIELDS];
 
 	List *			dai_fmt_lp;
 	Node *			dai_curr_fmt_np;
 } Dobj_Ascii_Info;
 
-//#define	ascii_input_fmt		THIS_QSP->qs_dai_p->dai_input_fmt
-//#define	ascii_fmt_code		THIS_QSP->qs_dai_p->dai_the_fmt_code
 #define	curr_output_int_fmt_p	THIS_QSP->qs_dai_p->dai_output_int_fmt_p
 #define padded_flt_fmt_str	THIS_QSP->qs_dai_p->dai_padded_flt_fmt_str
 #define plain_flt_fmt_str	THIS_QSP->qs_dai_p->dai_plain_flt_fmt_str
 #define	ascii_warned		THIS_QSP->qs_dai_p->dai_ascii_warned
 #define	ascii_data_dp		THIS_QSP->qs_dai_p->dai_ascii_data_dp
 #define	dobj_n_gotten		THIS_QSP->qs_dai_p->dai_dobj_n_gotten
-//#define	ffmtstr			THIS_QSP->qs_dai_p->dai_ffmtstr
-//#define	ifmtstr			THIS_QSP->qs_dai_p->dai_ifmtstr
 #define	dobj_max_per_line	THIS_QSP->qs_dai_p->dai_dobj_max_per_line
-//#define	ascii_separator		THIS_QSP->qs_dai_p->dai_ascii_separator
 #define	ret_dim			THIS_QSP->qs_dai_p->dai_ret_dim
 #define	pad_ffmtstr		THIS_QSP->qs_dai_p->dai_pad_ffmtstr
 #define	min_field_width		THIS_QSP->qs_dai_p->dai_min_field_width
 #define	display_precision	THIS_QSP->qs_dai_p->dai_display_precision
-#define	pad_flag			THIS_QSP->qs_dai_p->dai_pad_flag
+#define	pad_flag		THIS_QSP->qs_dai_p->dai_pad_flag
 
 #define IS_FIRST_FORMAT		( CURRENT_FORMAT_NODE != QLIST_HEAD(INPUT_FORMAT_LIST) )
 #define INPUT_FORMAT_LIST	(THIS_QSP->qs_dai_p->dai_fmt_lp)

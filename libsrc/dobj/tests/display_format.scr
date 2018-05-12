@@ -38,6 +38,7 @@ Image b $h $w 1 byte
 Image c $h $w 1 short
 Image d $h $w 1 u_short
 Image e $h $w 1 long	# int64_t
+Image f $h $w 1 char
 
 Image x $h $w 1 float
 Image y $h $w 1 double
@@ -50,10 +51,11 @@ Ramp2D b 0 1 80
 Ramp2D c 0 1 80
 Ramp2D d 0 1 80
 Ramp2D e 0 1 80
+Ramp2D f 0 1 80
 
 data ascii max_per_line 20 quit quit
 
-foreach image ( x b a c d e y )
+foreach image ( f x b a c d e y )
   Test_All_Formats $image
 end
 

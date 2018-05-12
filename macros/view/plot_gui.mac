@@ -72,6 +72,8 @@ Set data_legend_y_widget_name 'Data legend Y'
 Set image_source_file_widget_name 'Image file'
 Set image_posn_x_widget_name 'Origin X'
 Set image_posn_y_widget_name 'Origin Y'
+Set image_zoom_x_widget_name 'X Zoom'
+Set image_zoom_y_widget_name 'Y Zoom'
 
 Set grid_source_file_widget_name 'Source file'
 
@@ -95,6 +97,8 @@ Set series_legend_y 0
 
 Set image_posn_x 0
 Set image_posn_y 0
+Set image_zoom_x 1
+Set image_zoom_y 1
 
 Set grid_line_thickness 1
 Set grid_symbol_size 4
@@ -710,6 +714,8 @@ Load_Image_Var $1 filename
 Load_Image_Var $1 nickname
 Load_Image_Var $1 posn_x
 Load_Image_Var $1 posn_y
+Load_Image_Var $1 zoom_x
+Load_Image_Var $1 zoom_y
 .
 
 Define Store_Image_Vars 1 image_name
@@ -717,6 +723,8 @@ Store_Image_Var $1 filename
 Store_Image_Var $1 nickname
 Store_Image_Var $1 posn_x
 Store_Image_Var $1 posn_y
+Store_Image_Var $1 zoom_x
+Store_Image_Var $1 zoom_y
 .
 
 Define Load_Grid_Vars 1 grid_name
@@ -852,6 +860,8 @@ interface
     set_edit_text $image_source_file_widget_name $image_filename
     set_edit_text $image_posn_x_widget_name $image_posn_x
     set_edit_text $image_posn_y_widget_name $image_posn_y
+    set_edit_text $image_zoom_x_widget_name $image_zoom_x
+    set_edit_text $image_zoom_y_widget_name $image_zoom_y
 
     quit
   quit
@@ -929,6 +939,14 @@ Get_Text_Var $image_edit_panel $image_posn_x_widget_name image_posn_x
 
 Define SetImageOriginY 0
 Get_Text_Var $image_edit_panel $image_posn_y_widget_name image_posn_y
+.
+
+Define SetImageZoomX 0
+Get_Text_Var $image_edit_panel $image_zoom_x_widget_name image_zoom_x
+.
+
+Define SetImageZoomY 0
+Get_Text_Var $image_edit_panel $image_zoom_y_widget_name image_zoom_y
 .
 
 Define SetDataLegendY 0
@@ -1306,6 +1324,8 @@ repeat $n_embedded_images
   Save_Image_Param $i filename
   Save_Image_Param $i posn_x
   Save_Image_Param $i posn_y
+  Save_Image_Param $i zoom_x
+  Save_Image_Param $i zoom_y
 
   Increment i
   end
@@ -1466,7 +1486,7 @@ Define Emit_Embedded_Images 0
 Set idx 1
 repeat $n_embedded_images
   Load_Image_Vars image_$idx	# is this correct???
-  Emit_One_Image $image_filename $image_posn_x $image_posn_y
+  Emit_One_Image $image_filename $image_posn_x $image_posn_y $image_zoom_x $image_zoom_y
   end
 .
 
@@ -1861,6 +1881,8 @@ interface
     text $image_source_file_widget_name SetImageSourceFile /dev/null	# Use file chooser?
     text $image_posn_x_widget_name SetImageOriginX 0
     text $image_posn_y_widget_name SetImageOriginY 0
+    text $image_zoom_x_widget_name SetImageZoomX 0
+    text $image_zoom_y_widget_name SetImageZoomY 0
     button 'Refresh_Plot' ImageEditRefreshPlot
     button Done ImageEditDone
     quit
@@ -1956,7 +1978,7 @@ view
 Delete_Image eoi_tmp
 .
 
-Define Emit_One_Image 3 filename x y
+Define Emit_One_Image 5 filename x y zoom_x zoom_y
 # are the positions in pixels???
 advise "Emit_One_Image $1 $2 $3"
 advise "Screen_2_Plot px py $2 (nrows(Plot_Preview)-1)-$3"
@@ -1977,8 +1999,8 @@ echo "/picstr $dx string def"
 # First figure out how many plot units the image takes up
 Screen_2_Plot_Delta pdx pdy $dx $dy
 advise "pdx = $pdx   pdy = $pdy     ($dx, $dy)"
-Mul_Var pdx 1/$dx
-Mul_Var pdy 1/$dy
+Mul_Var pdx $4/$dx
+Mul_Var pdy $5/$dy
 echo gsave
 echo "$2 gxu $3 gyu translate"
 echo "$pdx gdxu $pdy gdyu scale"
@@ -2006,28 +2028,5 @@ data
     quit
   quit
 .
-
-Define Slow_Emit_Image_Data 0
-# We are going to print hex bytes...  Let's limit it to 32 per line
-Set n_bytes_per_line 32
-Assign n_remaining $dx*$dy
-Set eoi_x 0
-Assign eoi_y nrows(eoi_tmp)-1	# ps is bottom-to-top
-do
-  Assign n_this_line min($n_remaining,$n_bytes_per_line)
-  Set byte_str ''
-  repeat $n_this_line
-    variables push_fmt postscript quit
-    Assign b value(eoi_tmp[$eoi_y][$eoi_x])
-    variables pop_fmt quit
-    Set byte_str "$byte_str$b"
-    Increment eoi_x
-    If $eoi_x>=$dx "Set eoi_x 0 Decrement eoi_y"
-    end
-  echo $byte_str
-  Add_Var n_remaining -$n_this_line
-  while $n_remaining>0
-.
-
 
 

@@ -378,7 +378,7 @@ COMMAND_FUNC( do_rv_menu )
 	static int inited=0;
 
 	if( ! inited ){
-		dataobj_init(SINGLE_QSP_ARG);	/* initialize prec_name[] */
+		dataobj_init();	/* initialize prec_name[] */
 		/* insure_default_rv(); */
 #ifdef DEBUG
 		if( rawvol_debug == 0 )

@@ -80,7 +80,7 @@ void a_init(void)
 
 Data_Area *_default_data_area(SINGLE_QSP_ARG_DECL)
 {
-	if( curr_ap == NULL ) dataobj_init(SINGLE_QSP_ARG);
+	if( curr_ap == NULL ) dataobj_init();
 	return(curr_ap);
 }
 

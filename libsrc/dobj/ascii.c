@@ -55,9 +55,9 @@ ITEM_INTERFACE_DECLARATIONS(Integer_Output_Fmt,int_out_fmt,0)
 static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value *svp)	\
 {											\
 	if( pad_flag )									\
-		sprintf(buf," " #padded_fmt_str,svp->member);				\
+		sprintf(buf,#padded_fmt_str,svp->member);				\
 	else										\
-		sprintf(buf," " #plain_fmt_str,svp->member);				\
+		sprintf(buf,#plain_fmt_str,svp->member);				\
 }
 
 #define DECLARE_PS_FMT_FUNC(type,format,member)						\
@@ -206,10 +206,6 @@ static void _init_output_formats(SINGLE_QSP_ARG_DECL)
 	INIT_OUTPUT_FORMAT(octal,	FMT_OCTAL,	"0%-10lo",	"0%lo",		oct)
 	INIT_OUTPUT_FORMAT(unsigned,	FMT_UDECIMAL,	"%10lu",	"%lu",		uns)
 	INIT_OUTPUT_FORMAT(postscript,	FMT_POSTSCRIPT,	"%02x",		"%02x",		pst)
-
-	// Do we need to have this???
-	// BUG these are not the correct format strings...
-	//INIT_OUTPUT_FORMAT("float",		FMT_FLOAT,	"%g",		"%g",		flt)
 }
 
 
@@ -227,12 +223,8 @@ void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p)
 	dai_p->dai_dobj_max_per_line = DEFAULT_MAX_PER_LINE;
 	dai_p->dai_min_field_width = DEFAULT_MIN_FIELD_WIDTH;
 	dai_p->dai_display_precision = DEFAULT_DISPLAY_PRECISION;
-	// BUG need to use postscript separator when format is postscript???
-//	dai_p->dai_padded_flt_fmt_str = PADDED_FLT_FMT_STR;
-//	dai_p->dai_plain_flt_fmt_str = PLAIN_FLT_FMT_STR;
 	dai_p->dai_fmt_lp = NULL;
 
-	//if( int_out_fmt_itp == NULL ) init_int_out_fmts();
 	if( int_out_fmt_itp == NULL ) init_output_formats();
 }
 
@@ -876,24 +868,25 @@ void format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *dat
 	int c;
 
 	if( OBJ_PREC(dp) == PREC_CHAR || OBJ_PREC(dp) == PREC_STR ){
-		c=(*(char *)data);
+		c=(*(unsigned char *)data);
 		// BUG we don't check against buflen here, but should be OK
 		if( isalnum(c) || ispunct(c) )
-			sprintf(buf,"'%c'",c);
+			sprintf(buf," '%c'",c);	// add a space to be the same as 4 octal chars
 		else
-			sprintf(buf,"0%o",c);
+			sprintf(buf,"0%03o",c);
 		return;
 	}
 
 	if( ! IS_BITMAP(dp) ){
 		format_scalar_value(QSP_ARG  buf,buflen,data,OBJ_PREC_PTR(dp));
 	}
-	/*
 	else {
+		warn("format_scalar_obj:  don't know what to do with bitmaps!?");
+		/*
 		l = get_bit_from_bitmap(dp,data);
 		sprintf(buf,ifmtstr,l);
+		*/
 	}
-	*/
 }
 
 // BUG?
@@ -904,50 +897,6 @@ void format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *dat
 void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision *prec_p)
 {
 	(*(PREC_MACH_PREC_PTR(prec_p)->format_func))(QSP_ARG  buf,data);
-#ifdef FOOBAR
-	mach_prec mp;
-	Integer_Output_Fmt *fmt_p;
-	// long double is kind of inefficient unless we really need it?  BUG
-#ifdef USE_LONG_DOUBLE
-	long
-#endif // USE_LONG_DOUBLE
-	Output_Number out_num;
-
-
-	mp = (mach_prec)(MP_BITS(PREC_CODE(prec_p)));
-	switch( mp ){
-
-		case PREC_NONE:
-			assert( AERROR("format_scalar_value:  null precision!?") );
-			break;
-
-#ifdef USE_LONG_DOUBLE
-		case PREC_LP: out_num.on_u.d=(* ((long double *)data) ); fmt_p = curr_output_flt_fmt_p; break;
-#endif // USE_LONG_DOUBLE
-		case PREC_DP: out_num.on_u.d=(* ((double *)data) ); fmt_p = curr_output_flt_fmt_p; break;
-		case PREC_SP: out_num.on_u.d=(* ((float *)data) ); fmt_p = curr_output_flt_fmt_p; break;
-
-		case PREC_BY: out_num.on_u.l= (*(char *)data); fmt_p = curr_output_int_fmt_p; break;
-		case PREC_IN: out_num.on_u.l= (* (short *) data ); fmt_p = curr_output_int_fmt_p; break;
-		case PREC_DI: out_num.on_u.l= (* (int32_t *) data ); fmt_p = curr_output_int_fmt_p; break;
-		case PREC_LI: out_num.on_u.l= (* (int64_t *) data ); fmt_p = curr_output_int_fmt_p; break;
-		case PREC_UBY: out_num.on_u.l= (*(u_char *)data); fmt_p = curr_output_int_fmt_p; break;
-		case PREC_UIN: out_num.on_u.l= (* (u_short *) data ); fmt_p = curr_output_int_fmt_p; break;
-		case PREC_UDI: out_num.on_u.l= (* (uint32_t *) data ); fmt_p = curr_output_int_fmt_p; break;
-		case PREC_ULI: out_num.on_u.l= (* (uint64_t *) data ); fmt_p = curr_output_int_fmt_p; break;
-		case PREC_INVALID:
-		case N_MACHINE_PRECS:	/* silence compiler */
-			assert( AERROR("format_scalar_value:  bad machine precision") );
-			break;
-	}
-	/* BUG - sprintf suppresses the fractional part if there are only zeroes
-	 * after the decimal point...
-	 * But for a number like 4.000000001, we'd like to
-	 * suppress the fraction if "digits" is set to something small...
-	 */
-	// BUG - need to use safe snprintf or something!?
-	(*(fmt_p->print_func))(buf,fmt_p,&out_num);
-#endif // FOOBAR
 }
 
 char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p )
@@ -1041,14 +990,14 @@ static void pnt_one(QSP_ARG_DECL  FILE *fp, Data_Obj *dp,  u_char *data )
 					fprintf(fp,"\n");
 				}
 				format_scalar_obj(QSP_ARG  buf,128,dp,data);
-				// there used to be a space here, but now format_scalar_obj includes a separator
-				fprintf(fp,"%s",buf);
+				// put a space here, because format_scalar_obj does not include a separator
+				fprintf(fp," %s",buf);
 				data += inc;
 			}
 		}
 	} else {
 		format_scalar_obj(QSP_ARG  buf,128,dp,data);
-		fprintf(fp,"%s",buf);
+		fprintf(fp," %s",buf);
 	}
 } /* end pnt_one */
 

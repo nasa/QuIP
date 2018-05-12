@@ -462,10 +462,12 @@ static COMMAND_FUNC( do_set_var )
 		warn(ERROR_STRING);
 		return;
 	}
+	if( name == NULL || value == NULL ) return;
 
 	assign_var(name,value);
 }
 
+#ifdef FOOBAR
 // on 64 bit architecture, long is 64 bits,
 // but what about 32bit (iOS)?
 
@@ -483,6 +485,7 @@ static void init_default_formats(SINGLE_QSP_ARG_DECL)
 
 	SET_QS_NUMBER_FMT( THIS_QSP, QS_DFORMAT(THIS_QSP) );
 }
+#endif // FOOBAR
 
 #ifdef SOLVE_FOR_MAX_ROUNDABLE
 
@@ -534,7 +537,7 @@ static inline void assign_var_stringbuf_from_string(QSP_ARG_DECL  Typed_Scalar *
 
 #define DEST	sb_buffer(QS_AV_STRINGBUF(THIS_QSP))
 
-static inline void assign_integer_from_double(QSP_ARG_DECL  Typed_Scalar *tsp)
+static inline void assign_var_from_double(QSP_ARG_DECL  Typed_Scalar *tsp)
 {
 	/* We used to cast the value to integer if
 	 * the format string is an integer format -
@@ -557,16 +560,27 @@ static inline void assign_integer_from_double(QSP_ARG_DECL  Typed_Scalar *tsp)
 
 #ifdef HAVE_ROUND
 
-	if( fabs(d) < MAX_ROUNDABLE_DOUBLE && d == round(d) ){
+	if( fabs(d) < MAX_ROUNDABLE_DOUBLE && d == round(d) ){ // An integer, or very close to it
+		Integer_Output_Fmt *iof_p;
+
 		/* Why cast to unsigned?  What if signed??? */
 		/* We want to cast to unsigned to get the largest integer? */
 		// does the sign of the cast really matter?
-		if( d > 0 )
-			sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(uint64_t)d);
-		else
-			sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(int64_t)d);
+
+		iof_p = QS_INT_VAR_FMT_P(THIS_QSP);
+//fprintf(stderr,"using %s integer format to print double number %g\n",iof_p->iof_item.item_name,d);
+		assert(iof_p!=NULL);
+		if( d > 0 ){
+			u_long l;
+			l=d;
+			(*(iof_p->iof_fmt_u_long_func))(QSP_ARG  DEST, (Scalar_Value *) &l);
+		} else {
+			long l;
+			l=d;
+			(*(iof_p->iof_fmt_long_func))(QSP_ARG  DEST, (Scalar_Value *) &l);
+		}
 	} else {
-		sprintf(DEST,QS_GFORMAT(THIS_QSP),d);
+		sprintf(DEST,QS_FLT_VAR_FMT(THIS_QSP),d);
 	}
 
 #else /* ! HAVE_ROUND */
@@ -595,25 +609,24 @@ static inline void assign_integer_from_double(QSP_ARG_DECL  Typed_Scalar *tsp)
 
 static inline void assign_var_stringbuf_from_number(QSP_ARG_DECL  Typed_Scalar *tsp)
 {
-	// If the format is hex, decimal, or octal...
-	if( IS_INTEGER_FMT(QS_NUMBER_FMT(THIS_QSP)) ){
-		if( SCALAR_IS_DOUBLE(tsp) ){
-			assign_integer_from_double(QSP_ARG  tsp);
-		} else {	// integer format, integer scalar
-			assert( SCALAR_MACH_PREC_CODE(tsp) == PREC_LI );
-			sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),tsp->ts_value.u_ll);
-		}
+	if( SCALAR_IS_DOUBLE(tsp) ){
+		assign_var_from_double(QSP_ARG  tsp);
 	} else	{
-		// Not integer format, print decimal places
-		double d;
-		d=double_for_scalar(tsp);
-		sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),d);
+		Integer_Output_Fmt *iof_p;
+
+		assert( SCALAR_MACH_PREC_CODE(tsp) == PREC_LI );
+		iof_p = QS_INT_VAR_FMT_P(THIS_QSP);
+		assert(iof_p!=NULL);
+		//sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),tsp->ts_value.u_ll);
+		(*(iof_p->iof_fmt_long_func))(QSP_ARG  DEST, (Scalar_Value *) &(tsp->ts_value.u_ll));
 	}
 }
 
+#ifdef FOOBAR
 #define CHECK_FMT_STRINGS					\
 	if( QS_NUMBER_FMT(THIS_QSP) == NULL )			\
 		init_default_formats(SINGLE_QSP_ARG);
+#endif // FOOBAR
 
 static COMMAND_FUNC( do_assign_var )
 {
@@ -622,7 +635,7 @@ static COMMAND_FUNC( do_assign_var )
 	namestr=nameof("variable name" );
 	estr=nameof("expression" );
     
-	CHECK_FMT_STRINGS
+//	CHECK_FMT_STRINGS
 
 	tsp=pexpr(estr);
 	if( tsp == NULL ) return;
@@ -699,96 +712,43 @@ static COMMAND_FUNC( do_set_nsig )
 		warn(ERROR_STRING);
 		n=MAX_SIG_DIGITS;
 	}
-	CHECK_FMT_STRINGS
 
-	// we insist first that we are using the g (float) format?
-	if( QS_NUMBER_FMT(THIS_QSP) != QS_GFORMAT(THIS_QSP) ){
-		warn("do_set_nsig:  Changing variable format to float (g)");
-		SET_QS_NUMBER_FMT(THIS_QSP,QS_GFORMAT(THIS_QSP));
-	}
-
-	sprintf(QS_NUMBER_FMT(THIS_QSP),"%%.%dg",n);
-}
-
-static const char **var_fmt_list=NULL;
-
-static void init_fmt_choices(SINGLE_QSP_ARG_DECL)
-{
-	var_fmt_list = (const char **) getbuf( N_PRINT_FORMATS * sizeof(char *) );
-
-	var_fmt_list[ FMT_DECIMAL ] = "decimal";
-	var_fmt_list[ FMT_HEX ] = "hex";
-	var_fmt_list[ FMT_OCTAL ] = "octal";
-	var_fmt_list[ FMT_UDECIMAL ] = "unsigned_decimal";
-	var_fmt_list[ FMT_FLOAT ] = "float";
-	var_fmt_list[ FMT_POSTSCRIPT ] = "postscript";
-
-	assert( N_PRINT_FORMATS == 6 );
-}
-
-static void set_fmt(QSP_ARG_DECL  Number_Fmt i)
-{
-	switch(i){
-		case FMT_FLOAT:  SET_QS_NUMBER_FMT(THIS_QSP,QS_GFORMAT(THIS_QSP)); break;
-
-		case FMT_UDECIMAL:	/* do something special for unsigned? */
-		case FMT_DECIMAL:  SET_QS_NUMBER_FMT(THIS_QSP,QS_DFORMAT(THIS_QSP)); break;
-
-		case FMT_HEX:  SET_QS_NUMBER_FMT(THIS_QSP,QS_XFORMAT(THIS_QSP)); break;
-
-		case FMT_OCTAL:  SET_QS_NUMBER_FMT(THIS_QSP,QS_OFORMAT(THIS_QSP)); break;
-		case FMT_POSTSCRIPT:
-			/* does this make sense? */
-			SET_QS_NUMBER_FMT(THIS_QSP,QS_PFORMAT(THIS_QSP));
-			break;
-		default:
-			assert( AERROR("set_fmt:  unexpected format code!?") );
-			break;
-	}
+	sprintf(QS_FLT_VAR_FMT(THIS_QSP),"%%.%dg",n);
 }
 
 static COMMAND_FUNC( do_set_fmt )
 {
-	Number_Fmt i;
+	Integer_Output_Fmt *iof_p;
 
-	if( var_fmt_list == NULL ) init_fmt_choices(SINGLE_QSP_ARG);
-
-	i=(Number_Fmt)WHICH_ONE("print format for variable evaluation",
-		N_PRINT_FORMATS,var_fmt_list);
-	if( ((int)i) < 0 ) return;
-
-	set_fmt(QSP_ARG  i);
+	iof_p = pick_int_out_fmt("format for converting integer variables");
+	if( iof_p == NULL ) return;
+	SET_QS_INT_VAR_FMT_P(THIS_QSP,iof_p);
 }
 
 static COMMAND_FUNC( do_push_fmt )
 {
-	Number_Fmt i;
+	Integer_Output_Fmt *iof_p;
 
-	if( var_fmt_list == NULL ) init_fmt_choices(SINGLE_QSP_ARG);
+	iof_p = pick_int_out_fmt("display format for integer variables");
+	if( iof_p == NULL ) return;
 
-	i=(Number_Fmt)WHICH_ONE("print format for variable evaluation",
-		N_PRINT_FORMATS,var_fmt_list);
-	if( ((int)i) < 0 ) return;
-
-	CHECK_FMT_STRINGS
-
-	if( QS_VAR_FMT_STACK(THIS_QSP) == NULL ){
-		SET_QS_VAR_FMT_STACK(THIS_QSP,new_stack());
+	if( QS_INT_VAR_FMT_STACK(THIS_QSP) == NULL ){
+		SET_QS_INT_VAR_FMT_STACK(THIS_QSP,new_stack());
 	}
-	PUSH_TO_STACK( QS_VAR_FMT_STACK(THIS_QSP), QS_NUMBER_FMT(THIS_QSP) );
+	PUSH_TO_STACK( QS_INT_VAR_FMT_STACK(THIS_QSP), QS_INT_VAR_FMT_P(THIS_QSP) );
 
-	set_fmt(QSP_ARG  i);
+	SET_QS_INT_VAR_FMT_P(THIS_QSP,iof_p);
 }
 
 static COMMAND_FUNC( do_pop_fmt )
 {
 	//assert( QS_VAR_FMT_STACK(THIS_QSP) != NULL );
-	if( QS_VAR_FMT_STACK(THIS_QSP) == NULL || STACK_IS_EMPTY(QS_VAR_FMT_STACK(THIS_QSP)) ){
+	if( QS_INT_VAR_FMT_STACK(THIS_QSP) == NULL || STACK_IS_EMPTY(QS_INT_VAR_FMT_STACK(THIS_QSP)) ){
 		warn("No variable format has been pushed, can't pop!?");
 		return;
 	}
 
-	SET_QS_NUMBER_FMT( THIS_QSP, POP_FROM_STACK( QS_VAR_FMT_STACK(THIS_QSP) ) );
+	SET_QS_INT_VAR_FMT_P( THIS_QSP, POP_FROM_STACK( QS_INT_VAR_FMT_STACK(THIS_QSP) ) );
 }
 
 static COMMAND_FUNC( do_despace )

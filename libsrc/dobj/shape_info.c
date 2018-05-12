@@ -62,19 +62,6 @@ Precision *_get_prec(QSP_ARG_DECL  const char *name)
 	return (Precision *)get_item(prec_itp, name);
 }
 
-#ifdef FOOBAR
-
-fprintf(stderr,"_format_%s_value:  current format is %s, member = %s\n",#type_str,iof_p->iof_item.item_name,#member);\
-	if( pad_flag ){											\
-fprintf(stderr,"_format_%s_value:  padded_fmt_str = %s\n",#type_str,iof_p->iof_padded_fmt_str);\
-		sprintf(buf,iof_p->iof_padded_fmt_str,svp->member);					\
-	} else {											\
-fprintf(stderr,"_format_%s_value:  plain_fmt_str = %s\n",#type_str,iof_p->iof_plain_fmt_str);\
-		sprintf(buf,iof_p->iof_plain_fmt_str,svp->member);					\
-	}												\
-
-#endif // FOOBAR
-
 // We generally use the long format
 // We would like to show the sign for decimal display,
 // but just the bits for hex and octal...

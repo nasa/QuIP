@@ -923,10 +923,7 @@ void dm_init(SINGLE_QSP_ARG_DECL)
 	static int dm_inited=0;
 
 	if( dm_inited ) return;
-	dataobj_init(SINGLE_QSP_ARG);
-
-	/* Version control */
-	//verdatam(SINGLE_QSP_ARG);
+	dataobj_init();
 
 	dm_inited=1;
 }

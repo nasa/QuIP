@@ -260,7 +260,7 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 	Data_Obj *dp;
 
 	if( curr_ap == NULL ){
-		if( ram_area_p == NULL ) dataobj_init(SINGLE_QSP_ARG);
+		if( ram_area_p == NULL ) dataobj_init();
 		curr_ap = ram_area_p;
 	}
 

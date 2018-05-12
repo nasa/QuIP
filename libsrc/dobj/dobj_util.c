@@ -43,7 +43,10 @@ Data_Obj *_pick_obj(QSP_ARG_DECL  const char *pmpt)
 	 */
 
 	/* We might accidentally call this before dataobj_init()... */
-	if( dobj_itp == NULL ) dataobj_init(SINGLE_QSP_ARG);
+	if( dobj_itp == NULL ) dataobj_init();	// probably unnecessary now that we
+						// call this when initializing a query stack...
+						// That was done to get number formatting,
+						// but probably that should be pulled out of data objects...
 
 	if( intractive(SINGLE_QSP_ARG) ) init_item_hist(QSP_ARG  dobj_itp,pmpt);
 #endif /* HAVE_HISTORY */
@@ -720,7 +723,7 @@ static Subscript_Functions dobj_ssf={
 	(Item * (*)(QSP_ARG_DECL  Item *,index_t))	_c_subscript
 };
 
-void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
+void _dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 {
 	static int dobj_inited=0;
 

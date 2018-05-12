@@ -78,7 +78,7 @@ static void x_open_movie(QSP_ARG_DECL  const char *filename)
 	ifp=open_image_file(pathname,"r");
 	if( ifp == NULL ) return;
 
-	if( ram_area_p == NULL ) dataobj_init(SINGLE_QSP_ARG);
+	if( ram_area_p == NULL ) dataobj_init();
 
 	dp = make_dobj(filename, OBJ_TYPE_DIMS(ifp->if_dp),
 			OBJ_PREC_PTR(ifp->if_dp));

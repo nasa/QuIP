@@ -55,7 +55,9 @@ extern void		_gen_xpose(QSP_ARG_DECL  Data_Obj * dp,int dim1,int dim2);
 extern double		get_dobj_size(QSP_ARG_DECL  Data_Obj * dp,int index);
 extern const char *	get_dobj_prec_name(QSP_ARG_DECL  Data_Obj * dp);
 extern double		get_dobj_il_flg(QSP_ARG_DECL  Data_Obj * dp);
-extern void		dataobj_init(SINGLE_QSP_ARG_DECL);
+extern void		_dataobj_init(SINGLE_QSP_ARG_DECL);
+#define dataobj_init() _dataobj_init(SINGLE_QSP_ARG)
+
 extern void		init_dfuncs(SINGLE_QSP_ARG_DECL);
 extern int		same_shape(Shape_Info *,Shape_Info *);
 

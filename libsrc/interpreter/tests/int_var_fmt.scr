@@ -1,0 +1,26 @@
+# default format should be decimal
+Define Test_Some 0
+Assign x 3
+Print x
+advise "'$x'"
+Assign x 3.1
+Print x
+advise "'$x'"
+.
+
+Test_Some
+
+Define Test_Int_Format 1 fmt
+advise "Testing $1 format"
+variables format $1 quit
+Test_Some
+.
+
+Test_Int_Format hex
+Test_Int_Format octal
+Test_Int_Format unsigned
+Test_Int_Format postscript
+Test_Int_Format decimal
+
+exit
+
