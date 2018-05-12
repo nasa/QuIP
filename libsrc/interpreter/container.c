@@ -514,50 +514,6 @@ DECLARE_NEW_ENUM_FUNC(list,List_Enumerator,cnt_lp)
 DECLARE_NEW_ENUM_FUNC(hash_tbl,Hash_Tbl_Enumerator,cnt_htp)
 DECLARE_NEW_ENUM_FUNC(rb_tree,RB_Tree_Enumerator,cnt_tree_p)
 
-#ifdef FOOBAR
-static Enumerator *list_new_enumerator(Container *cnt_p)
-{
-	Enumerator *ep;
-	List_Enumerator *lep;
-
-	lep = new_list_enumerator(cnt_p->cnt_lp);
-	if( lep == NULL ) return NULL;
-
-	ep = new_enumerator(cnt_p);
-	ep->e_typ_p = list_enumerator_type();
-	ep->e_p.lep = lep;
-	return ep;
-}
-
-static Enumerator *hash_tbl_new_enumerator(Container *cnt_p)
-{
-	Enumerator *ep;
-	Hash_Tbl_Enumerator *htep;
-
-	htep = new_hash_tbl_enumerator(cnt_p->cnt_htp);
-	if( htep == NULL ) return NULL;
-
-	ep = new_enumerator(cnt_p);
-	ep->e_typ_p = hash_tbl_enumerator_type();
-	ep->e_p.vp = htep;
-	return ep;
-}
-
-static Enumerator *rb_tree_new_enumerator(Container *cnt_p)
-{
-	Enumerator *ep;
-	RB_Tree_Enumerator *rbtep;
-
-	rbtep = new_rb_tree_enumerator(cnt_p->cnt_tree_p);
-	if( rbtep == NULL ) return NULL;
-
-	ep = new_enumerator(cnt_p);
-	ep->e_typ_p = rb_tree_enumerator_type();
-	ep->e_p.vp = rbtep;
-	return ep;
-}
-#endif // FOOBAR
-
 static Item *_rb_tree_frag_item(Frag_Match_Info *fmi_p)
 {
 	if( CURR_RBT_FRAG(fmi_p) == NULL ) return NULL;

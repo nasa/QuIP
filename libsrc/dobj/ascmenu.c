@@ -493,57 +493,6 @@ static COMMAND_FUNC( do_append )
 	RELEASE_RAM_OBJ_FOR_READING_IF(dp)
 }
 
-#ifdef FOOBAR
-static const char *print_fmt_name[N_PRINT_FORMATS];
-static int fmt_names_inited=0;
-
-static void init_print_fmt_names(void)
-{
-	int i;
-
-	assert( ! fmt_names_inited );
-
-	/* BUG should insure that all formats are inited */
-	for(i=0;i<N_PRINT_FORMATS;i++){
-		switch(i){
-			case FMT_POSTSCRIPT:
-				print_fmt_name[i] = "postscript";
-				break;
-			case FMT_DECIMAL:
-				print_fmt_name[i] = "decimal";
-				break;
-			case FMT_FLOAT:
-				print_fmt_name[i] = "float";
-				break;
-			case FMT_HEX:
-				print_fmt_name[i] = "hexadecimal";
-				break;
-			case FMT_OCTAL:
-				print_fmt_name[i] = "octal";
-				break;
-			case FMT_UDECIMAL:
-				print_fmt_name[i] = "unsigned_decimal";
-				break;
-			default:
-				assert( AERROR("Missing format initialization!?") );
-				break;
-		}
-	}
-	fmt_names_inited=1;
-}
-
-static COMMAND_FUNC( do_set_fmt )
-{
-	int i;
-
-	if( ! fmt_names_inited ) init_print_fmt_names();
-
-	i = WHICH_ONE("format",N_PRINT_FORMATS,print_fmt_name);
-	if( i < 0 ) return;
-	set_integer_print_fmt(QSP_ARG  (Number_Fmt)i);
-}
-#endif // FOOBAR
-
 static COMMAND_FUNC( do_set_fmt )
 {
 	Integer_Output_Fmt *iof_p;

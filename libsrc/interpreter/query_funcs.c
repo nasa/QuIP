@@ -910,37 +910,6 @@ static inline void save_normal_char(QSP_ARG_DECL  int c)
  * First skip leading whitespace (RW_NWSEEN indicates non-white seen)
  */
 
-#ifdef FOOBAR
-static void process_normal(QSP_ARG_DECL  int c, char **result_pp, const char **sp )
-{
-	char *result_ptr;
-	const char *s;
-
-	result_ptr = *result_pp;
-	s = *sp;
-
-	/* Nothing special, most characters processed here.
-	 * We know that the previous character was not
-	 * a backslash.
-	 */
-
-	/* If this char is a backslash, don't save, but
-	 * remember.
-	 */
-	if( c == '\\' ){
-		// To be here, we know the preceding char wasn't a backslash
-		SET_WORD_SCAN_FLAG_BITS(RW_HAVBACK);
-	} else {
-		save_normal_char(QSP_ARG  c);
-		// Should we set this if we are in a comment?
-//		SET_WORD_SCAN_FLAG_BITS(RW_HAVSOME);
-	} // end not backslash
-
-	*result_pp = result_ptr;
-	*sp = s;
-}	// end process_normal
-#endif // FOOBAR
-
 static void left_shift_result(SINGLE_QSP_ARG_DECL)
 {
 	char *buf;
@@ -2408,26 +2377,7 @@ void end_dupline(SINGLE_QSP_ARG_DECL)
 
 static int need_to_chunk(const char *s)		/* does s contain non-quoted spaces? */
 {
-#ifdef FOOBAR
-	int insgl=0, indbl=0;
-
-	while( *s ){
-		if( !(insgl|indbl) ){
-			if( *s == ' ' || *s == '\t' )
-				return(1);
-			else if( *s == '\'' ) insgl=1;
-			else if( *s == '"' ) indbl=1;
-		} else if( insgl ){
-			if( *s == '\'' ) insgl=0;
-		} else if( indbl ){
-			if( *s == '"' ) indbl=0;
-		}
-		s++;
-	}
 	return(0);
-#else /* ! FOOBAR */
-	return(0);	// never chunk
-#endif /* ! FOOBAR */
 }
 
 // dup_word - write this word to the transcript file
@@ -3767,13 +3717,6 @@ Query *query_at_level(QSP_ARG_DECL  int l)
 	// We add levels at the head of the list,
 	// So what we need here is nth_elt_from_end...
 
-#ifdef FOOBAR
-	int n;
-	
-	n = eltcount( QS_QRY_STACK(THIS_QSP) );
-	if( n == 0 ) return NULL;
-	np = nth_elt( QS_QRY_STACK(THIS_QSP), n-(1+l) );
-#endif // FOOBAR
 	np = nth_elt_from_tail( QS_QRY_STACK(THIS_QSP), l );
 
 

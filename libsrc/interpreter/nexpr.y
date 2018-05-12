@@ -161,66 +161,6 @@ typedef union {
 
 // With parser data stored in the query stack, we are thread-safe!
 
-#ifdef FOOBAR
-#ifdef THREAD_SAFE_QUERY
-
-/* For yyerror */
-
-
-#ifdef HAVE_PTHREADS
-// We have one mutex that a thread has to hold to manipulate the list,
-// and a shared flag to show whether or not they are locked...
-
-static pthread_mutex_t	enode_mutex=PTHREAD_MUTEX_INITIALIZER;
-static int enode_flags=0;
-
-/* We don't bother with the mutex if the number of threads is less
- * than 1, but this could create a problem if we create a thread?
- * probably not...
- *
- * This code doesn't seem to be used now (commented out around rls_tree
- * is the only appearance), but it has not been tested with multiple threads,
- * and could have problems???
- */
-
-#define LOCK_ENODES						\
-								\
-	if( n_active_threads > 1 )				\
-	{							\
-		int status;					\
-								\
-		status = pthread_mutex_lock(&enode_mutex);	\
-		if( status != 0 )				\
-			report_mutex_error(QSP_ARG  status,"LOCK_ENODES");\
-		enode_flags |= LIST_LOCKED_FLAG_BITS;			\
-	}
-
-#define UNLOCK_ENODES						\
-								\
-	if( enode_flags & LIST_LOCKED_FLAG_BITS )		\
-	{							\
-		int status;					\
-								\
-		enode_flags &= ~LIST_LOCKED_FLAG_BITS;		\
-		status = pthread_mutex_unlock(&enode_mutex);	\
-		if( status != 0 )				\
-			report_mutex_error(QSP_ARG  status,"UNLOCK_ENODES");\
-	}
-#else /* ! HAVE_PTHREADS */
-
-#define LOCK_ENODES
-#define UNLOCK_ENODES
-
-#endif /* ! HAVE_PTHREADS */
-
-#else /* ! THREAD_SAFE_QUERY */
-
-#define LOCK_ENODES
-#define UNLOCK_ENODES
-
-#endif /* ! THREAD_SAFE_QUERY */
-#endif // FOOBAR
-
 // For the time being a single signature, regardless of THREAD_SAFE_QUERY
 static int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 
@@ -659,16 +599,6 @@ const char *_eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 			break;
 
 		case N_STRVFUNC:
-#ifdef FOOBAR
-#ifdef BUILD_FOR_OBJC
-			// BUG BUG BUG
-			if( check_ios_strv_func(&s,enp->sen_func_p,
-					enp->sen_child[0]) ){
-				// BUG?  does the function get called in check_ios_sizable_func???
-				return s;
-			}
-#endif /* BUILD_FOR_OBJC */
-#endif // FOOBAR
 			// why sizable?  this is supposed to be a string arg...
 			// This makes sense only for the "precision" function -
 			// but what about touuper etc?
@@ -679,16 +609,6 @@ const char *_eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 			break;
 
 		case N_STRV2FUNC:
-#ifdef FOOBAR
-#ifdef BUILD_FOR_OBJC
-			// BUG BUG BUG ? (why?)
-			if( check_ios_strv2_func(&s,enp->sen_func_p,
-					enp->sen_child[0],enp->sen_child[1]) ){
-				// BUG?  does the function get called in check_ios_sizable_func???
-				return s;
-			}
-#endif /* BUILD_FOR_OBJC */
-#endif // FOOBAR
 			// why sizable???
 			/*
 			szp = EVAL_SZBL_EXPR_FUNC(enp->sen_child[0]);
@@ -758,14 +678,6 @@ N_CONDITIONAL
 				(uintptr_t)enp, s);
 			advise(ERROR_STRING);
 			break;
-
-#ifdef FOOBAR
-		case N_SIZABLE:
-			sprintf(ERROR_STRING,"0x%"PRIxPTR"\tsizable\t%s",
-				(uintptr_t)enp, enp->sen_string);
-			advise(ERROR_STRING);
-			break;
-#endif /* FOOBAR */
 
 		case N_TSABLE:
 			s = eval_scalexp_string(enp->sen_child[0]);
@@ -1457,16 +1369,6 @@ dump_enode(QSP_ARG  enp);
 		tsp = scalar_for_double(dval);
 		break;
 	case N_STRVFUNC:		// eval_expr
-#ifdef FOOBAR
-		/* We have problems mixing IOS objects and C structs... */
-#ifdef BUILD_FOR_OBJC
-		if( check_ios_strv_func(&s,enp->sen_func_p,
-				enp->sen_child[0]) ){
-			tsp = scalar_for_string(s);
-			return tsp;
-		}
-#endif /* BUILD_FOR_OBJC */
-#endif // FOOBAR
 		// BUG - if this is to support the precision function, then
 		// the sizable lookup should be done within the function, not here!
 		/*
@@ -1479,15 +1381,6 @@ dump_enode(QSP_ARG  enp);
 		tsp = scalar_for_string(s);
 		break;
 	case N_STRV2FUNC:		// eval_expr
-#ifdef FOOBAR
-#ifdef BUILD_FOR_OBJC
-		if( check_ios_strv2_func(&s,enp->sen_func_p,
-				enp->sen_child[0],enp->sen_child[0]) ){
-			tsp = scalar_for_string(s);
-			return tsp;
-		}
-#endif /* BUILD_FOR_OBJC */
-#endif // FOOBAR
 		s = eval_scalexp_string(enp->sen_child[0]);
 		s2 = eval_scalexp_string(enp->sen_child[1]);
 		s = (*enp->sen_func_p->fn_u.strv2_func)( QSP_ARG s, s2 );
@@ -1522,21 +1415,6 @@ dump_enode(QSP_ARG  enp);
 			(int) double_for_scalar( eval_expr( enp->sen_child[2]) ) );
 		tsp = scalar_for_double(dval);
 		break;
-
-//#ifdef FOOBAR
-//	case N_STRVFUNC:		// eval_expr
-//		// string valued functions, tolower toupper etc
-//		s = eval_scalexp_string(enp->sen_child[0]);
-//		// We take advantage of knowing that the input
-//		// and output strings should have the same lengths...
-//
-//		// scalar_for_string doesn't allocate new string storage!?
-//		dst=get_expr_stringbuf(WHICH_EXPR_STR,strlen(s));
-//		ADVANCE_EXPR_STR
-//		evalStrVFunction( enp->sen_func_p, dst, s );
-//		tsp = scalar_for_string(dst);
-//		break;
-//#endif // FOOBAR
 
 	case N_PLUS:		// eval_expr
 		GET_TWO_DOUBLES
@@ -1579,12 +1457,6 @@ dump_enode(QSP_ARG  enp);
 	case N_OBJNAME:			// eval_expr
 	case N_SUBSCRIPT:		// eval_expr
 	case N_CSUBSCRIPT:		// eval_expr
-//#ifdef FOOBAR
-//	case N_SIZABLE:
-//	case N_SUBSIZ:
-//	case N_CSUBSIZ:
-//	case N_TSABLE:
-//#endif /* FOOBAR */
 		sprintf(ERROR_STRING,
 			"unexpected case (%d) in eval_expr",
 			enp->sen_code);
@@ -1782,17 +1654,6 @@ dump_enode(QSP_ARG  enp);
 		}
 		RELEASE_FIRST
 		break;
-
-//#ifdef FOOBAR
-//	case N_SLCT_CHAR:		// eval_expr
-//advise("case N_SLCT_CHAR");
-//		ival = eval_expr(enp->sen_child[0]);
-//		if( ival < 0 || ival >= strlen(enp->sen_string) )
-//			dval = -1;
-//		else
-//			dval = enp->sen_string[ival];
-//		break;
-//#endif /* FOOBAR */
 
 	default:		// eval_expr
 		assert(0);
@@ -2119,14 +1980,6 @@ static int token_for_func_type(int type)
 }
 
 
-#ifdef FOOBAR
-#ifdef THREAD_SAFE_QUERY
-static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
-#else /* ! THREAD_SAFE_QUERY */
-static int yylex(YYSTYPE *yylvp)			/* return the next token */
-#endif /* ! THREAD_SAFE_QUERY */
-#endif // FOOBAR
-
 // With new bison, we can't specify these args conditionally
 // without some effort...
 static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
@@ -2339,7 +2192,6 @@ static void scalar_parser_cleanup(SINGLE_QSP_ARG_DECL)
 {
 	if( FINAL_EXPR_NODE_P != NULL )
 		rls_tree(FINAL_EXPR_NODE_P);
-	//UNLOCK_ENODES
 	SET_QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP,QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP)-1);
 	assert( QS_SCALAR_PARSER_CALL_DEPTH(THIS_QSP) >= (-1) );
 }
@@ -2449,8 +2301,6 @@ advise(ERROR_STRING);
 		}
 	}
 #endif /* SUN */
-
-	//LOCK_ENODES
 
 	scalar_parser_cleanup(SINGLE_QSP_ARG);
 

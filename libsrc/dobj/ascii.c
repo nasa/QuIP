@@ -12,6 +12,8 @@
 #include <ctype.h>
 #endif
 
+#include <inttypes.h>	// PRId64 etc
+
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "ascii_fmts.h"
@@ -50,14 +52,16 @@ static void init_format_type_tbl(void);
 ITEM_INTERFACE_DECLARATIONS(Integer_Output_Fmt,int_out_fmt,0)
 
 
-#define DECLARE_FMT_FUNC(type,format,member,padded_fmt_str,plain_fmt_str)		\
-											\
+// when we call this, we quote only plain_fmt_str - so we can use the macros like PRId64...
+
+#define DECLARE_FMT_FUNC(type,format,member,fmt_str_prefix,padding_fmt_str,plain_fmt_str)		\
+													\
 static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value *svp, int pad_flag)	\
-{											\
-	if( pad_flag )									\
-		sprintf(buf,#padded_fmt_str,svp->member);				\
-	else										\
-		sprintf(buf,#plain_fmt_str,svp->member);				\
+{													\
+	if( pad_flag )											\
+		sprintf(buf,#fmt_str_prefix #padding_fmt_str plain_fmt_str, svp->member);		\
+	else												\
+		sprintf(buf,#fmt_str_prefix plain_fmt_str, svp->member);				\
 }
 
 #define DECLARE_PS_FMT_FUNC(type,format,member)						\
@@ -76,64 +80,64 @@ static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value
 	error1(ERROR_STRING);								\
 }
 
-DECLARE_FMT_FUNC(string,	decimal,	u_ub,	%c,	%c)
-DECLARE_FMT_FUNC(char,		decimal,	u_ub,	%c,	%c)
-DECLARE_FMT_FUNC(byte,		decimal,	u_b,	%4d,	%d)
-DECLARE_FMT_FUNC(u_byte,	decimal,	u_ub,	%4d,	%d)
-DECLARE_FMT_FUNC(short,		decimal,	u_s,	%6d,	%d)
-DECLARE_FMT_FUNC(u_short,	decimal,	u_us,	%6d,	%d)
-DECLARE_FMT_FUNC(int,		decimal,	u_l,	%10d,	%d)
-DECLARE_FMT_FUNC(u_int,		decimal,	u_ul,	%10d,	%d)
-DECLARE_FMT_FUNC(long,		decimal,	u_ll,	%10lld,	%lld)
-DECLARE_FMT_FUNC(u_long,	decimal,	u_ull,	%10lld,	%lld)
+DECLARE_FMT_FUNC(string,	decimal,	u_ub,	%,	,	"c")
+DECLARE_FMT_FUNC(char,		decimal,	u_ub,	%,	,	"c")
+DECLARE_FMT_FUNC(byte,		decimal,	u_b,	%,	4,	PRId8)
+DECLARE_FMT_FUNC(u_byte,	decimal,	u_ub,	%,	4,	PRIu8)
+DECLARE_FMT_FUNC(short,		decimal,	u_s,	%,	6,	PRId16)
+DECLARE_FMT_FUNC(u_short,	decimal,	u_us,	%,	6,	PRIu16)
+DECLARE_FMT_FUNC(int,		decimal,	u_l,	%,	10,	PRId32)
+DECLARE_FMT_FUNC(u_int,		decimal,	u_ul,	%,	10,	PRIu32)
+DECLARE_FMT_FUNC(long,		decimal,	u_ll,	%,	10,	PRId64)
+DECLARE_FMT_FUNC(u_long,	decimal,	u_ull,	%,	10,	PRIu64)
 // How many digits is a 64 bit integer?
 
-DECLARE_FMT_FUNC(string,	hex,	u_b,	%c,	%c)
-DECLARE_FMT_FUNC(char,		hex,	u_b,	%c,	%c)
-DECLARE_FMT_FUNC(byte,		hex,	u_ub,	0x%-3x,	0x%x)	// cast to unsigned
-DECLARE_FMT_FUNC(u_byte,	hex,	u_ub,	0x%-3x,	0x%x)
-DECLARE_FMT_FUNC(short,		hex,	u_us,	0x%-5x,	0x%x)	// cast to unsigned
-DECLARE_FMT_FUNC(u_short,	hex,	u_us,	0x%-5x,	0x%x)
-DECLARE_FMT_FUNC(int,		hex,	u_l,	0x%-9x,	0x%x)
-DECLARE_FMT_FUNC(u_int,		hex,	u_ul,	0x%-9x,	0x%x)
-DECLARE_FMT_FUNC(long,		hex,	u_ll,	0x%-17llx,	0x%llx)
-DECLARE_FMT_FUNC(u_long,	hex,	u_ull,	0x%-17llx,	0x%llx)
+DECLARE_FMT_FUNC(string,	hex,	u_b,	%,	,	"c")
+DECLARE_FMT_FUNC(char,		hex,	u_b,	%,	,	"c")
+DECLARE_FMT_FUNC(byte,		hex,	u_ub,	0x%,	-3,	PRIx8)	// cast to unsigned
+DECLARE_FMT_FUNC(u_byte,	hex,	u_ub,	0x%,	-3,	PRIx8)
+DECLARE_FMT_FUNC(short,		hex,	u_us,	0x%,	-5,	PRIx16)	// cast to unsigned
+DECLARE_FMT_FUNC(u_short,	hex,	u_us,	0x%,	-5,	PRIx16)
+DECLARE_FMT_FUNC(int,		hex,	u_l,	0x%,	-9,	PRIx32)
+DECLARE_FMT_FUNC(u_int,		hex,	u_ul,	0x%,	-9,	PRIx32)
+DECLARE_FMT_FUNC(long,		hex,	u_ll,	0x%,	-17,	PRIx64)
+DECLARE_FMT_FUNC(u_long,	hex,	u_ull,	0x%,	-17,	PRIx64)
 
-DECLARE_FMT_FUNC(string,	octal,	u_ub,	%c,	%c)
-DECLARE_FMT_FUNC(char,		octal,	u_ub,	%c,	%c)
-DECLARE_FMT_FUNC(byte,		octal,	u_ub,	0%-4o,	0%o)	// cast to unsigned
-DECLARE_FMT_FUNC(u_byte,	octal,	u_ub,	0%-4o,	0%o)
-DECLARE_FMT_FUNC(short,		octal,	u_us,	0%-5o,	0%o)	// cast to unsigned
-DECLARE_FMT_FUNC(u_short,	octal,	u_us,	0%-5o,	0%o)
-DECLARE_FMT_FUNC(int,		octal,	u_l,	0%-9o,	0%o)
-DECLARE_FMT_FUNC(u_int,		octal,	u_ul,	0%-9o,	0%o)
-DECLARE_FMT_FUNC(long,		octal,	u_ll,	0%-17llo,	0%llo)
-DECLARE_FMT_FUNC(u_long,	octal,	u_ull,	0%-17llo,	0%llo)
+DECLARE_FMT_FUNC(string,	octal,	u_ub,	%,	,	"c")
+DECLARE_FMT_FUNC(char,		octal,	u_ub,	%,	,	"c")
+DECLARE_FMT_FUNC(byte,		octal,	u_ub,	0%,	-4,	PRIo8)	// cast to unsigned
+DECLARE_FMT_FUNC(u_byte,	octal,	u_ub,	0%,	-4,	PRIo8)	// 0377
+DECLARE_FMT_FUNC(short,		octal,	u_us,	0%,	-5,	PRIo16)	// cast to unsigned
+DECLARE_FMT_FUNC(u_short,	octal,	u_us,	0%,	-5,	PRIo16)
+DECLARE_FMT_FUNC(int,		octal,	u_l,	0%,	-9,	PRIo32)
+DECLARE_FMT_FUNC(u_int,		octal,	u_ul,	0%,	-9,	PRIo32)
+DECLARE_FMT_FUNC(long,		octal,	u_ll,	0%,	-17,	PRIo64)
+DECLARE_FMT_FUNC(u_long,	octal,	u_ull,	0%,	-17,	PRIo64)
 
-DECLARE_FMT_FUNC(string,	unsigned,	u_ub,	%c,	%c)
-DECLARE_FMT_FUNC(char,		unsigned,	u_ub,	%c,	%c)
-DECLARE_FMT_FUNC(byte,		unsigned,	u_ub,	%4u,	%u)
-DECLARE_FMT_FUNC(u_byte,	unsigned,	u_ub,	%4u,	%u)
-DECLARE_FMT_FUNC(short,		unsigned,	u_us,	%6u,	%u)
-DECLARE_FMT_FUNC(u_short,	unsigned,	u_us,	%6u,	%u)
-DECLARE_FMT_FUNC(int,		unsigned,	u_ul,	%10u,	%u)
-DECLARE_FMT_FUNC(u_int,		unsigned,	u_ul,	%10u,	%u)
-DECLARE_FMT_FUNC(long,		unsigned,	u_ll,	%10llu,	%llu)
-DECLARE_FMT_FUNC(u_long,	unsigned,	u_ull,	%10llu,	%llu)
+DECLARE_FMT_FUNC(string,	unsigned,	u_ub,	%,	,	"c")
+DECLARE_FMT_FUNC(char,		unsigned,	u_ub,	%,	,	"c")
+DECLARE_FMT_FUNC(byte,		unsigned,	u_ub,	%,	4,	PRIu8)
+DECLARE_FMT_FUNC(u_byte,	unsigned,	u_ub,	%,	4,	PRIu8)
+DECLARE_FMT_FUNC(short,		unsigned,	u_us,	%,	6,	PRIu16)
+DECLARE_FMT_FUNC(u_short,	unsigned,	u_us,	%,	6,	PRIu16)
+DECLARE_FMT_FUNC(int,		unsigned,	u_ul,	%,	10,	PRIu32)
+DECLARE_FMT_FUNC(u_int,		unsigned,	u_ul,	%,	10,	PRIu32)
+DECLARE_FMT_FUNC(long,		unsigned,	u_ll,	%,	10,	PRIu64)
+DECLARE_FMT_FUNC(u_long,	unsigned,	u_ull,	%,	10,	PRIu64)
 
-DECLARE_FMT_FUNC(string,	postscript,	u_ub,	%c,	%c)
-DECLARE_FMT_FUNC(char,		postscript,	u_ub,	%c,	%c)
+DECLARE_FMT_FUNC(string,	postscript,	u_ub,	%,	,	"c")
+DECLARE_FMT_FUNC(char,		postscript,	u_ub,	%,	,	"c")
 
 DECLARE_PS_FMT_FUNC(byte,	postscript,	u_ub )
 DECLARE_PS_FMT_FUNC(u_byte,	postscript,	u_ub )
 
 // for longer types, just revert to normal hex
-DECLARE_FMT_FUNC(short,		postscript,	u_us,	0x%-5x,	0x%x)	// cast to unsigned
-DECLARE_FMT_FUNC(u_short,	postscript,	u_us,	0x%-5x,	0x%x)
-DECLARE_FMT_FUNC(int,		postscript,	u_ul,	0x%-9x,	0x%x)	// cast to unsigned
-DECLARE_FMT_FUNC(u_int,		postscript,	u_ul,	0x%-9x,	0x%x)
-DECLARE_FMT_FUNC(long,		postscript,	u_ll,	0x%-17llx,	0x%llx)
-DECLARE_FMT_FUNC(u_long,	postscript,	u_ull,	0x%-17llx,	0x%llx)
+DECLARE_FMT_FUNC(short,		postscript,	u_us,	0x%,	-5,	PRIx16)	// cast to unsigned
+DECLARE_FMT_FUNC(u_short,	postscript,	u_us,	0x%,	-5,	PRIx16)
+DECLARE_FMT_FUNC(int,		postscript,	u_ul,	0x%,	-9,	PRIx32)	// cast to unsigned
+DECLARE_FMT_FUNC(u_int,		postscript,	u_ul,	0x%,	-9,	PRIx32)
+DECLARE_FMT_FUNC(long,		postscript,	u_ll,	0x%,	-17,	PRIx64)
+DECLARE_FMT_FUNC(u_long,	postscript,	u_ull,	0x%,	-17,	PRIx64)
 
 /* get a pixel from the input stream, store data at *cp */
 
@@ -855,7 +859,6 @@ void format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *dat
 			sprintf(buf,"0%03o",c);
 		return;
 	}
-#define PAD_FOR_EVEN_COLUMNS	1
 
 	if( ! IS_BITMAP(dp) ){
 		format_scalar_value(QSP_ARG  buf,buflen,data,OBJ_PREC_PTR(dp),PAD_FOR_EVEN_COLUMNS);

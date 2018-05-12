@@ -206,48 +206,6 @@ else prt_msg_frag(",");
 	return(*buf);
 }
 
-
-#ifdef FOOBAR
-/* We used to get dropped chars (from the knox switcher) before we started
- * reading the echo char-by-char as the command is sent...
- *
- * expect_char() needs a timeout arg...
- */
-
-static int expect_char(Serial_Buffer *sbp, int expected)
-{
-	int c;
-
-//#ifdef QUIP_DEBUG
-//if( debug & sb_debug ){
-//if( expected > 0 ){
-//sprintf(ERROR_STRING,"expect_char:  '%s' (0x%x)",printable_version(expected),expected);
-//advise(ERROR_STRING);
-//} else {
-//advise("expect_char:  looking for any char after mismatch");
-//}
-//}
-//#endif /* QUIP_DEBUG */
-	c = buffered_char(sbp);
-	if( c < 0 ) return(c);
-
-	sbp->sb_n_scanned ++;
-
-	if( c != expected ){
-		if( verbose ){
-			sprintf(ERROR_STRING,"expect_char:  expected 0x%x ('%s'), but saw 0x%x ('%s')",
-					expected,printable_version(expected),c,printable_version(c));
-			warn(ERROR_STRING);
-		}
-		/* pretend the char hasn't been read... */
-		sbp->sb_n_scanned --;
-		return(-1);
-	}
-	
-	return(c);
-} /* end expect_char() */
-#endif /* FOOBAR */
-
 /* This used to be called read_until, and only read until the first char
  * was found.  That should be called read_until_char !?
  */

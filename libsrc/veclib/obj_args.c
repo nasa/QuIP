@@ -48,7 +48,7 @@ longlist(OA_SRC_OBJ(oap,i) );
 			prec = PREC_FOR_ARGSET( OA_ARGSPREC_CODE(oap) );
 //fprintf(stderr,"formatting as float:  %g\n",*((float *)OA_SVAL(oap,i)) );
 			if( prec != PREC_NONE ){
-				format_scalar_value(QSP_ARG  msgbuf,MSG_LEN,(void *)OA_SVAL(oap,i),prec_for_code(prec));
+				format_scalar_value(QSP_ARG  msgbuf,MSG_LEN,(void *)OA_SVAL(oap,i),prec_for_code(prec),NO_PADDING);
 			}
 			else	strcpy(msgbuf,"(invalid precision)");
 				

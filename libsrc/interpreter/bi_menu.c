@@ -467,26 +467,6 @@ static COMMAND_FUNC( do_set_var )
 	assign_var(name,value);
 }
 
-#ifdef FOOBAR
-// on 64 bit architecture, long is 64 bits,
-// but what about 32bit (iOS)?
-
-static const char *def_gfmt_str="%.7g";
-
-static void init_default_formats(SINGLE_QSP_ARG_DECL)
-{
-	assert( QS_NUMBER_FMT(THIS_QSP) == NULL );
-
-	SET_QS_GFORMAT(THIS_QSP, def_gfmt_str );
-	SET_QS_DFORMAT(THIS_QSP, "%"   PRId64 );
-	SET_QS_XFORMAT(THIS_QSP, "0x%" PRIx64 );
-	SET_QS_OFORMAT(THIS_QSP, "0%"  PRIo64 );
-	SET_QS_PFORMAT(THIS_QSP, "%02x" );		// print a byte as two chars for postscript
-
-	SET_QS_NUMBER_FMT( THIS_QSP, QS_DFORMAT(THIS_QSP) );
-}
-#endif // FOOBAR
-
 #ifdef SOLVE_FOR_MAX_ROUNDABLE
 
 // enable this just for system calibration
@@ -567,8 +547,6 @@ static inline void assign_var_from_double(QSP_ARG_DECL  Typed_Scalar *tsp)
 		/* We want to cast to unsigned to get the largest integer? */
 		// does the sign of the cast really matter?
 
-#define NO_PADDING 0
-
 		iof_p = QS_INT_VAR_FMT_P(THIS_QSP);
 //fprintf(stderr,"using %s integer format to print double number %g\n",iof_p->iof_item.item_name,d);
 		assert(iof_p!=NULL);
@@ -623,12 +601,6 @@ static inline void assign_var_stringbuf_from_number(QSP_ARG_DECL  Typed_Scalar *
 		(*(iof_p->iof_fmt_long_func))(QSP_ARG  DEST, (Scalar_Value *) &(tsp->ts_value.u_ll), NO_PADDING);
 	}
 }
-
-#ifdef FOOBAR
-#define CHECK_FMT_STRINGS					\
-	if( QS_NUMBER_FMT(THIS_QSP) == NULL )			\
-		init_default_formats(SINGLE_QSP_ARG);
-#endif // FOOBAR
 
 static COMMAND_FUNC( do_assign_var )
 {

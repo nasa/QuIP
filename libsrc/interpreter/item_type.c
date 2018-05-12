@@ -1490,13 +1490,6 @@ static Frag_Match_Info *context_partial_match(QSP_ARG_DECL  Item_Context *icp, c
 		pop_item_context(frag_itp );
 		assert(fmi_p!=NULL);
 		SET_FMI_CTX(fmi_p,icp);
-#ifdef FOOBAR
-		if( IT_CONTAINER_TYPE(CTX_IT(icp)) == RB_TREE_CONTAINER )
-			fmi_p->type = RB_TREE_CONTAINER;
-		else
-			fmi_p->type = LIST_CONTAINER;
-#endif // FOOBAR
-
 		// Now we need to fill in the entries!
 		rebuild_frag_match_info(QSP_ARG  fmi_p);
 	}

@@ -30,12 +30,6 @@
 
 
 
-#ifdef FOOBAR
-/* SGI? */
-#define GETTERM			ioctl(fd,TCGETA,&tiobuf)
-#define SETTERM			ioctl(fd,TCSETA,&tiobuf)
-#endif /* FOOBAR */
-
 #ifdef HAVE_SYS_IOCTL_H
 /* sys/ioctl.h used w/ slackware, but causes error w/ red hat!? */
 #include <sys/ioctl.h>		/* FIONREAD */

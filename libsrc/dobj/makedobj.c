@@ -2,10 +2,6 @@
 
 #include <stdio.h>
 
-//#ifdef HAVE_OPENCL
-//#include "my_ocl.h"		// why was this needed?  FOOBAR
-//#endif /* HAVE_OPENCL */
-
 #ifdef HAVE_CTYPE_H
 #include <ctype.h>
 #endif
@@ -577,16 +573,6 @@ int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Preci
 	SET_SHP_N_TYPE_ELTS(shpp,1);
 
 	for(i=0;i<N_DIMENSIONS;i++){
-#ifdef FOOBAR
-		if( DIMENSION(dsp,i) <= 0 ){
-			sprintf(ERROR_STRING,
-	"set_shape_dimensions:  Bad %s dimension (%d) specified",
-				dimension_name[i],DIMENSION(dsp,i));
-			warn(ERROR_STRING);
-			SET_DIMENSION(dsp,i,1);
-			retval=(-1);
-		}
-#endif // FOOBAR
 		assert( DIMENSION(dsp,i) > 0 );
 		if( i == 0 ){
 			set_first_shape_dimension(shpp,dsp);
@@ -594,7 +580,6 @@ int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Preci
 			set_shape_dimensions_for_index(shpp,dsp,i);
 		}
 	}
-//	return(retval);
 	return 0;
 }
 

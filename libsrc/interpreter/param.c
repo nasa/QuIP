@@ -22,11 +22,6 @@
 #define UPARAM
 #include "param_api.h"
 
-#ifdef FOOBAR
-/* local prototypes */
-static void	rdprms(QSP_ARG_DECL  Param *p,FILE *fp);
-#endif /* FOOBAR */
-
 static void	wtprms(QSP_ARG_DECL  FILE *fp,Param *p);
 static void	showparm(QSP_ARG_DECL  Param *);
 static void	pparam(QSP_ARG_DECL  Param *,FILE *);
