@@ -508,6 +508,8 @@ extern void _digest(QSP_ARG_DECL const char *text, const char *filename );
 #define push_text(t,f)	_push_text(QSP_ARG  t,f)
 
 extern void push_top_menu(SINGLE_QSP_ARG_DECL);
+extern void _pop_to_top_menu(SINGLE_QSP_ARG_DECL);
+#define pop_to_top_menu() _pop_to_top_menu(SINGLE_QSP_ARG)
 
 extern void do_cmd(SINGLE_QSP_ARG_DECL);
 extern void enable_stripping_quotes(SINGLE_QSP_ARG_DECL);

@@ -3550,6 +3550,13 @@ void push_top_menu(SINGLE_QSP_ARG_DECL)
 	push_menu( BOTTOM_OF_STACK( QS_MENU_STACK(THIS_QSP) ) );
 }
 
+void _pop_to_top_menu(SINGLE_QSP_ARG_DECL)
+{
+	while( STACK_DEPTH( QS_MENU_STACK(THIS_QSP) ) > 1 ){
+		pop_menu();
+	}
+}
+
 
 const char *save_possibly_empty_str(const char *s)
 {

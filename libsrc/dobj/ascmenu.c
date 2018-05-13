@@ -280,6 +280,31 @@ static COMMAND_FUNC( do_read_obj )
 	RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
 }
 
+static COMMAND_FUNC( do_read_obj_from_stream )
+{
+	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
+
+	dp=pick_obj("");
+	if( dp == NULL ) return;
+
+	// reading is tricker for non-ram, because
+	// we must create the copy, then read into
+	// the copy, then xfer to the device...
+
+	INSURE_OK_FOR_WRITING(dp)
+
+	lookahead_til(QLEVEL-1);
+
+	read_obj(ram_dp);
+
+	RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
+
+	// We may have called this from a macro, in which case we want to go back to the top menu...
+	pop_to_top_menu();
+
+}
+
 static COMMAND_FUNC( do_pipe_obj )
 {
 	Data_Obj *dp;
@@ -533,6 +558,7 @@ MENU_BEGIN(ascii)
 
 ADD_CMD( display,	do_disp_obj,	display data	)
 ADD_CMD( read,		do_read_obj,	read vector data from ascii file	)
+ADD_CMD( read_from_input_stream,	do_read_obj_from_stream,	read vector data from input stream (exits menu) )
 ADD_CMD( pipe_read,	do_pipe_obj,	read vector data from named pipe	)
 ADD_CMD( set_string,	do_set_obj_from_var,	read vector data from a string	)
 ADD_CMD( get_string,	do_set_var_from_obj,	set a script variable to the value of a stored string	)
