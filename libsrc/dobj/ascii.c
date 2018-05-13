@@ -186,6 +186,8 @@ static void _init_output_formats(SINGLE_QSP_ARG_DECL)
 	Integer_Output_Fmt *iof_p;
 
 	INIT_OUTPUT_FORMAT(decimal,	FMT_DECIMAL,	"%10ld",	"%ld",		dec)
+	curr_output_int_fmt_p = iof_p;
+
 	INIT_OUTPUT_FORMAT(hex,		FMT_HEX,	"0x%-10lx",	"0x%lx",	hex)
 	INIT_OUTPUT_FORMAT(octal,	FMT_OCTAL,	"0%-10lo",	"0%lo",		oct)
 	INIT_OUTPUT_FORMAT(unsigned,	FMT_UDECIMAL,	"%10lu",	"%lu",		uns)

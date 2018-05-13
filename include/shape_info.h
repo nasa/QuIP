@@ -96,6 +96,8 @@ struct precision {
 	// format for printing
 	/* pass buffer len? */
 	void			(*format_func)(QSP_ARG_DECL  char *buf, Scalar_Value *data, int pad_flag);
+
+	int			(*comp_func)(const void *p1, const void *p2);
 } ;
 
 #define prec_name	prec_item.item_name
@@ -154,6 +156,9 @@ struct precision {
 
 #define PREC_FORMAT_FUNC(prec_p)	(prec_p)->format_func
 #define SET_PREC_FORMAT_FUNC(prec_p,v)	(prec_p)->format_func = v
+
+#define PREC_COMP_FUNC(prec_p)	(prec_p)->comp_func
+#define SET_PREC_COMP_FUNC(prec_p,v)	(prec_p)->comp_func = v
 
 //#ifdef HAVE_ANY_GPU
 //#ifdef HAVE_ANY_GPU
@@ -261,6 +266,7 @@ struct shape_info {
 
 #define COMPLEX_SHAPE( shpp )		( COMPLEX_PRECISION( SHP_PREC(shpp) ) )
 #define QUAT_SHAPE( shpp )		( QUAT_PRECISION( SHP_PREC(shpp) ) )
+#define COLOR_SHAPE( shpp )		( COLOR_PRECISION( SHP_PREC(shpp) ) )
 #define REAL_SHAPE( shpp )		( (SHP_FLAGS( shpp ) & (SHAPE_TYPE_MASK&~DT_MULTIDIM)) == 0 )
 #define MULTIDIM_SHAPE( shpp )		( SHP_FLAGS( shpp ) & DT_MULTIDIM )
 

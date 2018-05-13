@@ -230,13 +230,6 @@ String_Buf *qs_expr_string(SINGLE_QSP_ARG_DECL)
 	return VPD_EXPR_STRING( QS_VECTOR_PARSER_DATA(THIS_QSP) );
 }
 
-/*
-Input_Format_Spec *qs_ascii_input_format(SINGLE_QSP_ARG_DECL)
-{
-	return THIS_QSP->qs_dai_p->dai_input_fmt;
-}
-*/
-
 int qs_level(SINGLE_QSP_ARG_DECL)
 {
 	return QS_LEVEL(THIS_QSP);

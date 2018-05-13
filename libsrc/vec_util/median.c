@@ -417,20 +417,6 @@ void median_1D(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,int median_radius)
 	}
 }
 
-static int comp_dbl_pix(const void *ptr1,const void *ptr2) /* args are pointers into the order array */
-{
-	if( *((const double *)ptr1) > *((const double *)ptr2) ) return(1);
-	else if( *((const double *)ptr1) < *((const double *)ptr2)  ) return(-1);
-	else return(0);
-}
-
-static int comp_flt_pix(const void *ptr1,const void *ptr2) /* args are pointers into the order array */
-{
-	if( *((const float *)ptr1) > *((const float *)ptr2) ) return(1);
-	else if( *((const float *)ptr1) < *((const float *)ptr2)  ) return(-1);
-	else return(0);
-}
-
 /* This function just sorts the pixels in-place.  This is useful for determining
  * the median value of an array, we can sort in place and then sample the middle value.
  */
@@ -444,24 +430,25 @@ void sort_data(QSP_ARG_DECL  Data_Obj *dp)
 		WARN(ERROR_STRING);
 		return;
 	}
-	if( IS_COMPLEX(dp) ){
-		sprintf(ERROR_STRING,"sort_data:  Sorry, can't sort complex object %s",OBJ_NAME(dp));
+	if( IS_COMPLEX(dp) || IS_QUAT(dp) || IS_COLOR(dp) ){
+		sprintf(ERROR_STRING,"sort_data:  Sorry, can't sort complex/quaternion/color object %s",
+			OBJ_NAME(dp));
 		WARN(ERROR_STRING);
 		return;
 	}
-	switch( OBJ_MACH_PREC(dp) ){
-		case PREC_SP:
-			qsort(OBJ_DATA_PTR(dp),(size_t)OBJ_N_MACH_ELTS(dp),OBJ_MACH_PREC_SIZE(dp),comp_flt_pix);
-			break;
-		case PREC_DP:
-			qsort(OBJ_DATA_PTR(dp),(size_t)OBJ_N_MACH_ELTS(dp),OBJ_MACH_PREC_SIZE(dp),comp_dbl_pix);
-			break;
-		default:
-			sprintf(ERROR_STRING,"sort_data:  Sorry, %s precision not supported",
-				OBJ_MACH_PREC_NAME(dp) );
-			WARN(ERROR_STRING);
-			break;
+	if( IS_BITMAP(dp) ){
+		sprintf(ERROR_STRING,"sort_data:  Sorry, can't sort bitmap object %s",
+			OBJ_NAME(dp));
+		WARN(ERROR_STRING);
+		return;
 	}
+	// BUG it is also illegal to sort chars and strings, although we might like to be
+	// able to sort string tables using strcmp!
+	//
+	// Because we use the machine precision below, chars and strings will sort as bytes.
+	// This may cause a problem with null-terminated strings!
+
+	qsort(OBJ_DATA_PTR(dp),(size_t)OBJ_N_MACH_ELTS(dp),OBJ_MACH_PREC_SIZE(dp),PREC_COMP_FUNC(OBJ_MACH_PREC_PTR(dp)));
 }
 
 static Data_Obj *index_sort_data_dp;

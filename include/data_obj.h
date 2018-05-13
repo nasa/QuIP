@@ -180,6 +180,7 @@ struct data_obj {
 
 #define IS_QUAT( dp )		QUAT_SHAPE( OBJ_SHAPE(dp) )
 #define IS_COMPLEX( dp )	COMPLEX_SHAPE(  OBJ_SHAPE(dp) )
+#define IS_COLOR( dp )		COLOR_SHAPE(  OBJ_SHAPE(dp) )
 #define IS_CPX_OR_QUAT(dp)	( IS_COMPLEX(dp) || IS_QUAT(dp) )
 #define IS_REAL( dp )		REAL_SHAPE( OBJ_SHAPE(dp) )
 #define IS_MULTIDIM( dp )	MULTIDIM_SHAPE( OBJ_SHAPE(dp) )
