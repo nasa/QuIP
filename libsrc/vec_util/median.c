@@ -17,8 +17,6 @@ static long s_rinc,d_rinc;
 #define N_NEIGHBORHOOD	9	/* DELTA*DELTA */
 #define MEDIAN_INDEX	4	/* floor(N_NEIGHBORHOOD/2) */
 
-#define INDEX_TYPE	uint32_t	// used to be u_long, broken for 64 bit
-
 typedef struct {
 	int	ival;
 	int	jval;
@@ -417,6 +415,19 @@ void median_1D(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,int median_radius)
 	}
 }
 
+#define good_for_sorting(dp) _good_for_sorting(QSP_ARG  dp)
+
+static int _good_for_sorting(QSP_ARG_DECL  Data_Obj *dp)
+{
+	if( IS_COMPLEX(dp) || IS_QUAT(dp) || IS_COLOR(dp) ){
+		sprintf(ERROR_STRING,"sort_data:  Sorry, can't sort complex/quaternion/color object %s",
+			OBJ_NAME(dp));
+		WARN(ERROR_STRING);
+		return 0;
+	}
+	return 1;
+}
+
 /* This function just sorts the pixels in-place.  This is useful for determining
  * the median value of an array, we can sort in place and then sample the middle value.
  */
@@ -425,14 +436,11 @@ void sort_data(QSP_ARG_DECL  Data_Obj *dp)
 {
 	INSIST_RAM_OBJ(dp,sort_data)
 
+	if( ! good_for_sorting(dp) )
+		return;
+
 	if( ! IS_CONTIGUOUS(dp) ){
 		sprintf(ERROR_STRING,"sort_data:  object %s must be contiguous",OBJ_NAME(dp));
-		WARN(ERROR_STRING);
-		return;
-	}
-	if( IS_COMPLEX(dp) || IS_QUAT(dp) || IS_COLOR(dp) ){
-		sprintf(ERROR_STRING,"sort_data:  Sorry, can't sort complex/quaternion/color object %s",
-			OBJ_NAME(dp));
 		WARN(ERROR_STRING);
 		return;
 	}
@@ -448,50 +456,19 @@ void sort_data(QSP_ARG_DECL  Data_Obj *dp)
 	// Because we use the machine precision below, chars and strings will sort as bytes.
 	// This may cause a problem with null-terminated strings!
 
-	qsort(OBJ_DATA_PTR(dp),(size_t)OBJ_N_MACH_ELTS(dp),OBJ_MACH_PREC_SIZE(dp),PREC_COMP_FUNC(OBJ_MACH_PREC_PTR(dp)));
+	qsort(OBJ_DATA_PTR(dp),(size_t)OBJ_N_MACH_ELTS(dp),OBJ_MACH_PREC_SIZE(dp),PREC_VAL_COMP_FUNC(OBJ_MACH_PREC_PTR(dp)));
 }
 
-static Data_Obj *index_sort_data_dp;
-
-static int comp_indexed_flt_pix(const void *ptr1,const void *ptr2) /* args are pointers into the order array */
-{
-	INDEX_TYPE i1, i2, inc;
-	float *p1, *p2;
-
-	i1 = *((const INDEX_TYPE *)ptr1);
-	i2 = *((const INDEX_TYPE *)ptr2);
-
-	inc = OBJ_TYPE_INC(index_sort_data_dp, OBJ_MINDIM(index_sort_data_dp) );
-
-	p1 = ((float *)OBJ_DATA_PTR(index_sort_data_dp)) + i1*inc;
-	p2 = ((float *)OBJ_DATA_PTR(index_sort_data_dp)) + i2*inc;
-
-	if( *p1 > *p2 ) return(1);
-	else if( *p1 < *p2 ) return(-1);
-	else return(0);
-}
-
-static int comp_indexed_dbl_pix(const void *ptr1,const void *ptr2) /* args are pointers into the order array */
-{
-	INDEX_TYPE i1, i2, inc;
-	double *p1, *p2;
-
-	i1 = *((const INDEX_TYPE *)ptr1);
-	i2 = *((const INDEX_TYPE *)ptr2);
-
-	inc = OBJ_TYPE_INC(index_sort_data_dp, OBJ_MINDIM(index_sort_data_dp) );
-	p1 = ((double *)OBJ_DATA_PTR(index_sort_data_dp)) + i1*inc;
-	p2 = ((double *)OBJ_DATA_PTR(index_sort_data_dp)) + i2*inc;
-
-	if( *p1 > *p2 ) return(1);
-	else if( *p1 < *p2 ) return(-1);
-	else return(0);
-}
+// Too bad this needs a global var...
+/*static*/ Data_Obj *index_sort_data_dp;
 
 void sort_indices(QSP_ARG_DECL  Data_Obj *index_dp,Data_Obj *data_dp)
 {
 	INSIST_RAM_OBJ(index_dp,sort_indices)
 	INSIST_RAM_OBJ(data_dp,sort_indices)
+
+	if( ! good_for_sorting(data_dp) )
+		return;
 
 	if( ! IS_CONTIGUOUS(index_dp) ){
 		sprintf(ERROR_STRING,"sort_data:  object %s must be contiguous",OBJ_NAME(index_dp));
@@ -505,13 +482,7 @@ void sort_indices(QSP_ARG_DECL  Data_Obj *index_dp,Data_Obj *data_dp)
 		WARN(ERROR_STRING);
 		return;
 	}
-	if( OBJ_MACH_PREC(data_dp) != PREC_SP && OBJ_MACH_PREC(data_dp) != PREC_DP ){
-		WARN("Sorry, right now only know how to do index sort for float/double data");
-		sprintf(ERROR_STRING,"Data array %s has %s precision",OBJ_NAME(data_dp),
-			OBJ_PREC_NAME(data_dp));
-		advise(ERROR_STRING);
-		return;
-	}
+
 	/* We index the data using min_dim - if that is not the only dimension, then
 	 * we print a warning, but sort anyway.
 	 */
@@ -536,11 +507,12 @@ void sort_indices(QSP_ARG_DECL  Data_Obj *index_dp,Data_Obj *data_dp)
 
 	index_sort_data_dp = data_dp;
 
+	qsort(OBJ_DATA_PTR(index_dp), (size_t)OBJ_N_MACH_ELTS(index_dp),SIZE_FOR_PREC_CODE( PREC_DI ),
+			PREC_IDX_COMP_FUNC(OBJ_MACH_PREC_PTR(data_dp)));
+
+#ifdef FOOBAR
 	switch( OBJ_MACH_PREC(data_dp) ){
 		case PREC_SP:
-			qsort(OBJ_DATA_PTR(index_dp),
-				(size_t)OBJ_N_MACH_ELTS(index_dp),SIZE_FOR_PREC_CODE( PREC_DI ),
-				comp_indexed_flt_pix);
 			break;
 		case PREC_DP:
 			qsort(OBJ_DATA_PTR(index_dp),
@@ -553,5 +525,6 @@ void sort_indices(QSP_ARG_DECL  Data_Obj *index_dp,Data_Obj *data_dp)
 			break;
 #endif /* CAUTIOUS */
 	}
+#endif // FOOBAR
 }
 

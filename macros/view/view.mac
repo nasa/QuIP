@@ -621,5 +621,11 @@ Assign gray_min		$gray_base
 Assign gray_max		$gray_base+$n_gray_levels-1
 .
 
+Define Embed_Image_In_Viewer 4 viewer image x y
+view
+  embed $1 $2 $3 $4
+  quit
+.
+
 Stop_File view.mac
 

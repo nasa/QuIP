@@ -38,11 +38,6 @@ Set margins_set 0
 
 # basic plotting macros
 
-Define Require_Var 1 varname
-If !var_exists('$1')
-  "warn 'Setup_Axes:  variable $1 must be defined' Set vars_ok 0"
-.
-
 Define Setup_Axes 0
 Setup_Y_Axis
 Setup_X_Axis
@@ -58,6 +53,7 @@ Require_Var y_legend
 Require_Var y_tick_spacing
 Check_Var y_tick_offset 0
 Check_Var y_tick_last $ymax
+Check_Var y_tick_first $ymin
 If !$vars_ok exit_macro
 
 Plot_Data_Range $xmin $ymin $xmax $ymax

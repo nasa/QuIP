@@ -34,7 +34,8 @@ Item_Type *prec_itp=NULL;
 	SET_PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p,_cast_indexed_##quip_prec_name##_from_double);	\
 	SET_PREC_COPY_VALUE_FUNC(prec_p,copy_##quip_prec_name##_value);			\
 	SET_PREC_FORMAT_FUNC(prec_p,_format_##quip_prec_name##_value);			\
-	SET_PREC_COMP_FUNC(prec_p,compare_##quip_prec_name##_values);			\
+	SET_PREC_VAL_COMP_FUNC(prec_p,compare_##quip_prec_name##_values);		\
+	SET_PREC_IDX_COMP_FUNC(prec_p,compare_indexed_##quip_prec_name##s);		\
 	if( (code & PSEUDO_PREC_MASK) == 0 )						\
 		SET_PREC_MACH_PREC_PTR(prec_p, prec_p);					\
 	else { /* special handling for pseudo-precisions */				\
@@ -120,7 +121,7 @@ DECLARE_INVALID_FORMAT_FUNC(void,u_b)
 
 /////////////////////////////////
 
-#define DECLARE_COMPARISON_FUNC(prec_name,type)						\
+#define DECLARE_VAL_COMPARISON_FUNC(prec_name,type)						\
 static int compare_##prec_name##_values(const void *p1, const void *p2)			\
 {											\
 	if( *((const type *)p1) > *((const type *)p2) ) return 1;			\
@@ -128,33 +129,87 @@ static int compare_##prec_name##_values(const void *p1, const void *p2)			\
 	else return 0;									\
 }
 
-DECLARE_COMPARISON_FUNC(byte,char)
-DECLARE_COMPARISON_FUNC(u_byte,unsigned char)
-DECLARE_COMPARISON_FUNC(short,short)
-DECLARE_COMPARISON_FUNC(u_short,unsigned short)
-DECLARE_COMPARISON_FUNC(int,int32_t)
-DECLARE_COMPARISON_FUNC(u_int,uint32_t)
-DECLARE_COMPARISON_FUNC(long,int64_t)
-DECLARE_COMPARISON_FUNC(u_long,uint64_t)
-DECLARE_COMPARISON_FUNC(float,float)
-DECLARE_COMPARISON_FUNC(double,double)
+DECLARE_VAL_COMPARISON_FUNC(byte,char)
+DECLARE_VAL_COMPARISON_FUNC(u_byte,unsigned char)
+DECLARE_VAL_COMPARISON_FUNC(short,short)
+DECLARE_VAL_COMPARISON_FUNC(u_short,unsigned short)
+DECLARE_VAL_COMPARISON_FUNC(int,int32_t)
+DECLARE_VAL_COMPARISON_FUNC(u_int,uint32_t)
+DECLARE_VAL_COMPARISON_FUNC(long,int64_t)
+DECLARE_VAL_COMPARISON_FUNC(u_long,uint64_t)
+DECLARE_VAL_COMPARISON_FUNC(float,float)
+DECLARE_VAL_COMPARISON_FUNC(double,double)
 
-#define INVALID_COMPARISON_FUNC(prec_name)						\
+#define INVALID_VAL_COMPARISON_FUNC(prec_name)						\
 static int compare_##prec_name##_values(const void *p1, const void *p2)			\
 {											\
 	_error1(DEFAULT_QSP_ARG  "CAUTIOUS:  Illegal sort attempt on " #prec_name " data!?");		\
 	return 0;									\
 }
 
-INVALID_COMPARISON_FUNC(complex)
-INVALID_COMPARISON_FUNC(dblcpx)
-INVALID_COMPARISON_FUNC(quaternion)
-INVALID_COMPARISON_FUNC(dblquat)
-INVALID_COMPARISON_FUNC(color)
-INVALID_COMPARISON_FUNC(bit)
-INVALID_COMPARISON_FUNC(char)
-INVALID_COMPARISON_FUNC(string)
-INVALID_COMPARISON_FUNC(void)
+INVALID_VAL_COMPARISON_FUNC(complex)
+INVALID_VAL_COMPARISON_FUNC(dblcpx)
+INVALID_VAL_COMPARISON_FUNC(quaternion)
+INVALID_VAL_COMPARISON_FUNC(dblquat)
+INVALID_VAL_COMPARISON_FUNC(color)
+INVALID_VAL_COMPARISON_FUNC(bit)
+INVALID_VAL_COMPARISON_FUNC(char)
+INVALID_VAL_COMPARISON_FUNC(string)
+INVALID_VAL_COMPARISON_FUNC(void)
+
+/////////////////////////////////
+
+#define DECLARE_IDX_COMPARISON_FUNC(prec_name,type)					\
+											\
+static int compare_indexed_##prec_name##s(const void *ptr1, const void *ptr2)		\
+{											\
+	INDEX_TYPE i1, i2, inc;								\
+	type *p1, *p2;									\
+											\
+	assert(index_sort_data_dp!=NULL);						\
+											\
+	i1 = *((const INDEX_TYPE *)ptr1);						\
+	i2 = *((const INDEX_TYPE *)ptr2);						\
+											\
+	inc = OBJ_TYPE_INC(index_sort_data_dp, OBJ_MINDIM(index_sort_data_dp) );	\
+											\
+	p1 = ((type *)OBJ_DATA_PTR(index_sort_data_dp)) + i1*inc;			\
+	p2 = ((type *)OBJ_DATA_PTR(index_sort_data_dp)) + i2*inc;			\
+											\
+	if( *p1 > *p2 ) return(1);							\
+	else if( *p1 < *p2 ) return(-1);						\
+	else return(0);									\
+}
+
+DECLARE_IDX_COMPARISON_FUNC(byte,char)
+DECLARE_IDX_COMPARISON_FUNC(u_byte,unsigned char)
+DECLARE_IDX_COMPARISON_FUNC(short,short)
+DECLARE_IDX_COMPARISON_FUNC(u_short,unsigned short)
+DECLARE_IDX_COMPARISON_FUNC(int,int32_t)
+DECLARE_IDX_COMPARISON_FUNC(u_int,uint32_t)
+DECLARE_IDX_COMPARISON_FUNC(long,int64_t)
+DECLARE_IDX_COMPARISON_FUNC(u_long,uint64_t)
+DECLARE_IDX_COMPARISON_FUNC(float,float)
+DECLARE_IDX_COMPARISON_FUNC(double,double)
+
+#define INVALID_IDX_COMPARISON_FUNC(prec_name)						\
+											\
+static int compare_indexed_##prec_name##s(const void *p1, const void *p2)			\
+{											\
+	_error1(DEFAULT_QSP_ARG  "CAUTIOUS:  Illegal sort attempt on indices of " #prec_name " data!?");		\
+	return 0;									\
+}
+
+INVALID_IDX_COMPARISON_FUNC(complex)
+INVALID_IDX_COMPARISON_FUNC(dblcpx)
+INVALID_IDX_COMPARISON_FUNC(quaternion)
+INVALID_IDX_COMPARISON_FUNC(dblquat)
+INVALID_IDX_COMPARISON_FUNC(color)
+INVALID_IDX_COMPARISON_FUNC(bit)
+INVALID_IDX_COMPARISON_FUNC(char)
+INVALID_IDX_COMPARISON_FUNC(string)
+INVALID_IDX_COMPARISON_FUNC(void)
+
 
 /////////////////////////////////
 

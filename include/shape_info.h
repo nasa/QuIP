@@ -97,8 +97,15 @@ struct precision {
 	/* pass buffer len? */
 	void			(*format_func)(QSP_ARG_DECL  char *buf, Scalar_Value *data, int pad_flag);
 
-	int			(*comp_func)(const void *p1, const void *p2);
+	int			(*value_comp_func)(const void *p1, const void *p2);
+
+	// When we sort indices, we require this type
+#define INDEX_TYPE	uint32_t
+	int			(*indexed_comp_func)(const void *p1, const void *p2);
 } ;
+
+// BUG this should probably be part of the query stack!
+extern struct data_obj *index_sort_data_dp;
 
 #define prec_name	prec_item.item_name
 
@@ -157,8 +164,11 @@ struct precision {
 #define PREC_FORMAT_FUNC(prec_p)	(prec_p)->format_func
 #define SET_PREC_FORMAT_FUNC(prec_p,v)	(prec_p)->format_func = v
 
-#define PREC_COMP_FUNC(prec_p)	(prec_p)->comp_func
-#define SET_PREC_COMP_FUNC(prec_p,v)	(prec_p)->comp_func = v
+#define PREC_VAL_COMP_FUNC(prec_p)		(prec_p)->value_comp_func
+#define SET_PREC_VAL_COMP_FUNC(prec_p,v)	(prec_p)->value_comp_func = v
+
+#define PREC_IDX_COMP_FUNC(prec_p)		(prec_p)->indexed_comp_func
+#define SET_PREC_IDX_COMP_FUNC(prec_p,v)	(prec_p)->indexed_comp_func = v
 
 //#ifdef HAVE_ANY_GPU
 //#ifdef HAVE_ANY_GPU
