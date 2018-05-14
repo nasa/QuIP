@@ -161,20 +161,21 @@ INVALID_VAL_COMPARISON_FUNC(void)
 
 #define DECLARE_IDX_COMPARISON_FUNC(prec_name,type)					\
 											\
-static int compare_indexed_##prec_name##s(const void *ptr1, const void *ptr2)		\
+static int compare_indexed_##prec_name##s(INDEX_SORT_DATA_DP_ARG const void *ptr1, const void *ptr2)	\
 {											\
 	INDEX_TYPE i1, i2, inc;								\
 	type *p1, *p2;									\
+	INDEX_SORT_DATA_DP_DECL										\
 											\
-	assert(index_sort_data_dp!=NULL);						\
+	assert(dp!=NULL);								\
 											\
 	i1 = *((const INDEX_TYPE *)ptr1);						\
 	i2 = *((const INDEX_TYPE *)ptr2);						\
 											\
-	inc = OBJ_TYPE_INC(index_sort_data_dp, OBJ_MINDIM(index_sort_data_dp) );	\
+	inc = OBJ_TYPE_INC(data_dp, OBJ_MINDIM(data_dp) );				\
 											\
-	p1 = ((type *)OBJ_DATA_PTR(index_sort_data_dp)) + i1*inc;			\
-	p2 = ((type *)OBJ_DATA_PTR(index_sort_data_dp)) + i2*inc;			\
+	p1 = ((type *)OBJ_DATA_PTR(data_dp)) + i1*inc;					\
+	p2 = ((type *)OBJ_DATA_PTR(data_dp)) + i2*inc;					\
 											\
 	if( *p1 > *p2 ) return(1);							\
 	else if( *p1 < *p2 ) return(-1);						\
@@ -194,7 +195,7 @@ DECLARE_IDX_COMPARISON_FUNC(double,double)
 
 #define INVALID_IDX_COMPARISON_FUNC(prec_name)						\
 											\
-static int compare_indexed_##prec_name##s(const void *p1, const void *p2)			\
+static int compare_indexed_##prec_name##s(void *dp, const void *p1, const void *p2)	\
 {											\
 	_error1(DEFAULT_QSP_ARG  "CAUTIOUS:  Illegal sort attempt on indices of " #prec_name " data!?");		\
 	return 0;									\

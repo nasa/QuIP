@@ -959,6 +959,8 @@ AC_SEARCH_LIBS([posix_memalign],[],[have_pmemalign=yes],[have_pmemalign=no])
 
 AC_SEARCH_LIBS([adjtimex],[],[have_adjtimex=yes],[have_adjtimex=no])
 
+AC_SEARCH_LIBS([qsort_r],[],[have_qsort_r=yes],[have_qsort_r=no])
+
 #have_llseek=no
 #AC_SEARCH_LIBS([_llseek],[],[have_llseek=yes])
 
@@ -2031,6 +2033,10 @@ if test "x${have_adjtimex}" = xyes; then
   if test "x${have_sys_timex_h}" = xyes; then
     AC_DEFINE([HAVE_ADJTIMEX], 1, [clock adjustment with adjtimex supported])
   fi
+fi
+
+if test "x${have_qsort_r}" = xyes; then
+  AC_DEFINE([HAVE_QSORT_R], 1, [qsort_r available])
 fi
 
 # no code here for older w3c library???

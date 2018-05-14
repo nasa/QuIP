@@ -459,8 +459,12 @@ void sort_data(QSP_ARG_DECL  Data_Obj *dp)
 	qsort(OBJ_DATA_PTR(dp),(size_t)OBJ_N_MACH_ELTS(dp),OBJ_MACH_PREC_SIZE(dp),PREC_VAL_COMP_FUNC(OBJ_MACH_PREC_PTR(dp)));
 }
 
+#ifndef HAVE_QSORT_R
 // Too bad this needs a global var...
-/*static*/ Data_Obj *index_sort_data_dp;
+// not thread safe unless moved to query_stack.
+Data_Obj *index_sort_data_dp=NULL;
+#endif // ! HAVE_QSORT_R
+
 
 void sort_indices(QSP_ARG_DECL  Data_Obj *index_dp,Data_Obj *data_dp)
 {
@@ -505,26 +509,14 @@ void sort_indices(QSP_ARG_DECL  Data_Obj *index_dp,Data_Obj *data_dp)
 
 	/* BUG perhaps should check that tdim matches # dimensions of data_dp? */
 
-	index_sort_data_dp = data_dp;
+	SET_GLOBAL_THUNK_ARG			// only if no qsort_r
 
-	qsort(OBJ_DATA_PTR(index_dp), (size_t)OBJ_N_MACH_ELTS(index_dp),SIZE_FOR_PREC_CODE( PREC_DI ),
-			PREC_IDX_COMP_FUNC(OBJ_MACH_PREC_PTR(data_dp)));
+	// Should we make sure that we have qsort_r ???
+	INDEX_SORT_FUNC(	OBJ_DATA_PTR(index_dp),
+				(size_t)OBJ_N_MACH_ELTS(index_dp),
+				SIZE_FOR_PREC_CODE( PREC_DI ),
+				INDEX_SORT_THUNK_ARG
+				PREC_IDX_COMP_FUNC(OBJ_MACH_PREC_PTR(data_dp)));
 
-#ifdef FOOBAR
-	switch( OBJ_MACH_PREC(data_dp) ){
-		case PREC_SP:
-			break;
-		case PREC_DP:
-			qsort(OBJ_DATA_PTR(index_dp),
-				(size_t)OBJ_N_MACH_ELTS(index_dp),SIZE_FOR_PREC_CODE( PREC_DI ),
-				comp_indexed_dbl_pix);
-			break;
-#ifdef CAUTIOUS
-		default:
-			WARN("CAUTIOUS:  sort_indices:  unexpected precision");
-			break;
-#endif /* CAUTIOUS */
-	}
-#endif // FOOBAR
 }
 

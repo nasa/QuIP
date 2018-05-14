@@ -99,13 +99,29 @@ struct precision {
 
 	int			(*value_comp_func)(const void *p1, const void *p2);
 
+
+#ifdef HAVE_QSORT_R
+#define INDEX_SORT_DATA_DP_ARG		void *dp,
+#define INDEX_SORT_DATA_DP_DECL		Data_Obj *index_sort_data_dp = (Data_Obj *) dp;
+#define INDEX_SORT_FUNC			qsort_r
+#define INDEX_SORT_THUNK_ARG		(void *) data_dp,
+#define SET_GLOBAL_THUNK_ARG
+#else // ! HAVE_QSORT_R
+#define INDEX_SORT_DATA_DP_ARG
+#define INDEX_SORT_DATA_DP_DECL
+#define INDEX_SORT_FUNC			qsort
+#define INDEX_SORT_THUNK_ARG
+#define SET_GLOBAL_THUNK_ARG		index_sort_data_dp = data_dp;
+#endif // ! HAVE_QSORT_R
+
 	// When we sort indices, we require this type
 #define INDEX_TYPE	uint32_t
-	int			(*indexed_comp_func)(const void *p1, const void *p2);
+	int			(*indexed_comp_func)(INDEX_SORT_DATA_DP_ARG const void *p1, const void *p2);
 } ;
 
-// BUG this should probably be part of the query stack!
-extern struct data_obj *index_sort_data_dp;
+#ifndef HAVE_QSORT_R
+extern Data_Obj *index_sort_data_dp;	// BUG not thread-safe if not in query stack!
+#endif // ! HAVE_QSORT_R
 
 #define prec_name	prec_item.item_name
 
