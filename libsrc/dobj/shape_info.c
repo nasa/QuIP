@@ -165,17 +165,17 @@ static int compare_indexed_##prec_name##s(INDEX_SORT_DATA_DP_ARG const void *ptr
 {											\
 	INDEX_TYPE i1, i2, inc;								\
 	type *p1, *p2;									\
-	INDEX_SORT_DATA_DP_DECL										\
+	INDEX_SORT_DATA_DP_DECL								\
 											\
 	assert(dp!=NULL);								\
 											\
 	i1 = *((const INDEX_TYPE *)ptr1);						\
 	i2 = *((const INDEX_TYPE *)ptr2);						\
 											\
-	inc = OBJ_TYPE_INC(data_dp, OBJ_MINDIM(data_dp) );				\
+	inc = OBJ_TYPE_INC(index_sort_data_dp, OBJ_MINDIM(index_sort_data_dp) );	\
 											\
-	p1 = ((type *)OBJ_DATA_PTR(data_dp)) + i1*inc;					\
-	p2 = ((type *)OBJ_DATA_PTR(data_dp)) + i2*inc;					\
+	p1 = ((type *)OBJ_DATA_PTR(index_sort_data_dp)) + i1*inc;			\
+	p2 = ((type *)OBJ_DATA_PTR(index_sort_data_dp)) + i2*inc;			\
 											\
 	if( *p1 > *p2 ) return(1);							\
 	else if( *p1 < *p2 ) return(-1);						\
