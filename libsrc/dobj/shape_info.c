@@ -167,7 +167,7 @@ static int compare_indexed_##prec_name##s(INDEX_SORT_DATA_DP_ARG const void *ptr
 	type *p1, *p2;									\
 	INDEX_SORT_DATA_DP_DECL								\
 											\
-	assert(dp!=NULL);								\
+	assert(index_sort_data_dp!=NULL);						\
 											\
 	i1 = *((const INDEX_TYPE *)ptr1);						\
 	i2 = *((const INDEX_TYPE *)ptr2);						\
@@ -195,7 +195,7 @@ DECLARE_IDX_COMPARISON_FUNC(double,double)
 
 #define INVALID_IDX_COMPARISON_FUNC(prec_name)						\
 											\
-static int compare_indexed_##prec_name##s(void *dp, const void *p1, const void *p2)	\
+static int compare_indexed_##prec_name##s(INDEX_SORT_DATA_DP_ARG const void *p1, const void *p2)	\
 {											\
 	_error1(DEFAULT_QSP_ARG  "CAUTIOUS:  Illegal sort attempt on indices of " #prec_name " data!?");		\
 	return 0;									\
