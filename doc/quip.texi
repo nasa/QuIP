@@ -84,15 +84,15 @@ This manual is for QuIP, version 0.2.
 @detailmenu
 @c --- The Detailed Node Listing---
 @c 
-@c Overview of QuIP
-@c * Reporting Bugs:: What to do when you discover a bug.
-@c 
-@c Writing QuIP scripts
-@c * First steps::  A simple sample of QuIP
-@c Macros
-@c * Predefined macros::  Finding predefined macros
-@c * Writing new macros::  Writing your own macros
-@c 
+Overview of QuIP
+* History       ::  Some background about QuIP
+
+Writing QuIP scripts
+* First steps::  A simple sample of QuIP
+Macros
+* Predefined macros::  Finding predefined macros
+* Writing new macros::  Writing your own macros
+
 @end detailmenu
 
 @end menu
