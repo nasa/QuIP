@@ -72,6 +72,8 @@ Set data_legend_y_widget_name 'Data legend Y'
 Set image_source_file_widget_name 'Image file'
 Set image_posn_x_widget_name 'Origin X'
 Set image_posn_y_widget_name 'Origin Y'
+Set image_extent_x_widget_name 'H Extent'
+Set image_extent_y_widget_name 'V Extent'
 Set image_zoom_x_widget_name 'X Zoom'
 Set image_zoom_y_widget_name 'Y Zoom'
 
@@ -97,6 +99,8 @@ Set series_legend_y 0
 
 Set image_posn_x 0
 Set image_posn_y 0
+Set image_extent_x 1
+Set image_extent_y 1
 Set image_zoom_x 1
 Set image_zoom_y 1
 
@@ -714,6 +718,8 @@ Load_Image_Var $1 filename
 Load_Image_Var $1 nickname
 Load_Image_Var $1 posn_x
 Load_Image_Var $1 posn_y
+Load_Image_Var $1 extent_x
+Load_Image_Var $1 extent_y
 Load_Image_Var $1 zoom_x
 Load_Image_Var $1 zoom_y
 .
@@ -723,6 +729,8 @@ Store_Image_Var $1 filename
 Store_Image_Var $1 nickname
 Store_Image_Var $1 posn_x
 Store_Image_Var $1 posn_y
+Store_Image_Var $1 extent_x
+Store_Image_Var $1 extent_y
 Store_Image_Var $1 zoom_x
 Store_Image_Var $1 zoom_y
 .
@@ -860,6 +868,8 @@ interface
     set_edit_text $image_source_file_widget_name $image_filename
     set_edit_text $image_posn_x_widget_name $image_posn_x
     set_edit_text $image_posn_y_widget_name $image_posn_y
+    set_edit_text $image_extent_x_widget_name $image_extent_x
+    set_edit_text $image_extent_y_widget_name $image_extent_y
     advise "set_edit_text '$image_zoom_x_widget_name' '$image_zoom_x'"
     set_edit_text $image_zoom_x_widget_name $image_zoom_x
     advise "set_edit_text '$image_zoom_y_widget_name' '$image_zoom_y'"
@@ -941,6 +951,14 @@ Get_Text_Var $image_edit_panel $image_posn_x_widget_name image_posn_x
 
 Define SetImageOriginY 0
 Get_Text_Var $image_edit_panel $image_posn_y_widget_name image_posn_y
+.
+
+Define SetImageExtentX 0
+Get_Text_Var $image_edit_panel $image_extent_x_widget_name image_extent_x
+.
+
+Define SetImageExtentY 0
+Get_Text_Var $image_edit_panel $image_extent_y_widget_name image_extent_y
 .
 
 Define SetImageZoomX 0
@@ -1326,6 +1344,8 @@ repeat $n_embedded_images
   Save_Image_Param $i filename
   Save_Image_Param $i posn_x
   Save_Image_Param $i posn_y
+  Save_Image_Param $i extent_x
+  Save_Image_Param $i extent_y
 advise "saving zoom params..."
   Save_Image_Param $i zoom_x
   Save_Image_Param $i zoom_y
@@ -1489,7 +1509,7 @@ Define Emit_Embedded_Images 0
 Set idx 1
 repeat $n_embedded_images
   Load_Image_Vars image_$idx	# is this correct???
-  Emit_One_Image $image_filename $image_posn_x $image_posn_y $image_zoom_x $image_zoom_y
+  Emit_One_Image $image_filename $image_posn_x $image_posn_y $image_extent_x $image_extent_y
   end
 .
 
@@ -1884,6 +1904,8 @@ interface
     text $image_source_file_widget_name SetImageSourceFile /dev/null	# Use file chooser?
     text $image_posn_x_widget_name SetImageOriginX 0
     text $image_posn_y_widget_name SetImageOriginY 0
+    text $image_extent_x_widget_name SetImageExtentX 0
+    text $image_extent_y_widget_name SetImageExtentY 0
     text $image_zoom_x_widget_name SetImageZoomX 0
     text $image_zoom_y_widget_name SetImageZoomY 0
     button 'Refresh_Plot' ImageEditRefreshPlot
@@ -1981,7 +2003,7 @@ view
 Delete_Image eoi_tmp
 .
 
-Define Emit_One_Image 5 filename x y zoom_x zoom_y
+Define Emit_One_Image 5 filename x y extent_x extent_y
 # are the positions in pixels???
 advise "Emit_One_Image $1 $2 $3"
 advise "Screen_2_Plot px py $2 (nrows(Plot_Preview)-1)-$3"
@@ -2000,10 +2022,18 @@ If depth(eoi_tmp)!=1 "error_exit 'Emit_One_Image:  Sorry, only know how to emit 
 echo "/picstr $dx string def"
 # Need translate and scale commands here to place the image...
 # First figure out how many plot units the image takes up
-Screen_2_Plot_Delta pdx pdy $dx $dy
-advise "pdx = $pdx   pdy = $pdy     ($dx, $dy)"
-Mul_Var pdx $4/$dx
-Mul_Var pdy $5/$dy
+# This gets us the size of the image (unscaled) in plot units
+advise "OLD calculation dx = $dx   dy = $dy"
+###Screen_2_Plot_Delta pdx pdy $dx $dy
+###advise "pdx = $pdx   pdy = $pdy     ($dx, $dy)"
+###Mul_Var pdx $4/$dx
+###Mul_Var pdy $5/$dy
+Assign pdx 1/$dx
+Assign pdy 1/$dy
+advise "OLD calculation pdx = $pdx   pdy = $pdy"
+Assign pdx $4/$dx
+Assign pdy $5/$dy
+advise "New calculation  ext_x = $4  ext_y = $5   pdx = $pdx   pdy = $pdy"
 echo gsave
 echo "$2 gxu $3 gyu translate"
 echo "$pdx gdxu $pdy gdyu scale"

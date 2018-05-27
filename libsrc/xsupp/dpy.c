@@ -313,6 +313,8 @@ static int _dop_setup( QSP_ARG_DECL   Disp_Obj *dop, int desired_depth)
 	SET_DO_CURRW(dop, RootWindow(DO_DISPLAY(dop),DO_SCREEN(dop)));
 
 #ifdef HAVE_OPENGL
+// This is per-display instead of per-viewer because it just depends on the visual
+// use XGLMakeCurrent to select a window...
 	SET_DO_OGL_CTX(dop, NULL);
 #endif /* HAVE_OPENGL */
 

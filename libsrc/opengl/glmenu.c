@@ -1648,6 +1648,7 @@ static COMMAND_FUNC( do_new_gl_buffer )
 //#endif // HAVE_LIBGLEW
 
 	glGenTextures(1, OBJ_TEX_ID_P(dp) );		// makes a texture name
+fprintf(stderr,"new_gl_buffer:  new texture name is 0x%x\n",OBJ_TEX_ID(dp));
 	glBindTexture(GL_TEXTURE_2D, OBJ_TEX_ID(dp) );
 	t = gl_pixel_type(dp);
 	glTexImage2D(	GL_TEXTURE_2D,

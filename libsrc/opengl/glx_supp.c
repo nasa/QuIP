@@ -292,12 +292,12 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 				vp->vw_name);
 			warn(ERROR_STRING);
 		} else {
-			if( verbose ){
+	//		if( verbose ){
 				sprintf(ERROR_STRING,
 		"init_glx_context( %s ):  created GL context 0x%"PRIxPTR,
 			vp->vw_name,(uintptr_t)VW_OGL_CTX(vp));
 				advise(ERROR_STRING);
-			}
+	//		}
 		}
 	}
 	XFree(vis_info_p);

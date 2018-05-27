@@ -1,3 +1,7 @@
+If var_exists(ui_macros_loaded)
+  'warn "ui.mac has already been loaded!?" exit_file'
+Set ui_macros_loaded 1
+
 Define Debug_Button 0
 button Debug debug
 .
@@ -102,5 +106,33 @@ interface pop_nav 1 quit
 
 Define Pop_Navs 1 n_levels
 interface pop_nav $1 quit
+.
+
+
+Set max_panel_stack_depth 6
+Set max_panel_name_len 64
+
+Define Push_Panel 1 panel_name
+If !var_exists(current_control_panel) "Set current_control_panel no_panel"
+If strcmp('$current_control_panel','no_panel')
+  'Panel_Off $current_control_panel'
+Panel_On $1
+Set current_control_panel $1
+If !obj_exists(panel_stack)
+  "Vector panel_stack $max_panel_stack_depth $max_panel_name_len string"
+If !var_exists(panel_stack_depth)
+  "advise 'initializing panel_stack_depth' Set panel_stack_depth -1"
+Increment panel_stack_depth
+If $panel_stack_depth>=$max_panel_stack_depth
+  "error_exit 'Push_Panel:  panel stack overflow!?'"
+Set_String panel_stack[$panel_stack_depth] $current_control_panel
+.
+
+Define Pop_Panel 0
+Panel_Off $current_control_panel
+Decrement panel_stack_depth
+If $panel_stack_depth<0 "error_exit 'panel stack underflow!?'"
+Get_String current_control_panel panel_stack[$panel_stack_depth]
+Panel_On $current_control_panel
 .
 

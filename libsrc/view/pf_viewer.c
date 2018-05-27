@@ -231,6 +231,7 @@ COMMAND_FUNC( do_load_pf_vwr )
 	glEnable(GL_TEXTURE_2D);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glBindTexture(GL_TEXTURE_2D, OBJ_TEX_ID(dp) );
 #else // ! HAVE_OPENGL
 	warn("do_load_pf_viewer:  Sorry, no OpenGL support in this build!?");
 #endif // ! HAVE_OPENGL

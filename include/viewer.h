@@ -310,15 +310,22 @@ struct viewer {
 
 	Line_Params	vw_line_params;
 
+#ifdef HAVE_OPENGL
+	// We had an OpenGL context as part of the viewer, but it really goes with
+	// the visual - we use the same visual for all windows, so we
+	// keep the context as part of the display object
 	/* Should this be ifdef'd? */
 //	GLXContext	vw_ctx;
+#endif /* HAVE_OPENGL */
+
 } ;
 
 #define VW_DOP(vp)	DPA_DOP(VW_DPA(vp))
 
 #ifdef HAVE_OPENGL
 #define VW_OGL_CTX(vp)		DO_OGL_CTX(VW_DOP(vp))
-#define SET_VW_OGL_CTX(vp,v)	SET_DO_OGL_CTX(VW_DOP(vp),v)
+// Never set, this is owned by the display!!!
+//#define SET_VW_OGL_CTX(vp,v)	SET_DO_OGL_CTX(VW_DOP(vp),v)
 #endif /* HAVE_OPENGL */
 
 #define vw_cmap_dp		vw_dpyable.dpa_cmap_dp

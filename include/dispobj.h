@@ -29,6 +29,9 @@ typedef struct display_object {
 	Window		dispobj_rootw;
 	Window		dispobj_currw;
 #ifdef HAVE_OPENGL
+	// The context goes with the display instead of the viewer,
+	// because the context only depends on the visual.
+	// We assume all viewers use the same visual.
 	GLXContext	dispobj_ogl_ctx;
 #endif /* HAVE_OPENGL */
 #endif /* HAVE_X11 */

@@ -393,10 +393,6 @@ Viewer *_viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 
 	SET_VW_OBJ(vp, NULL);
 
-#ifdef HAVE_OPENGL
-	SET_VW_OGL_CTX(vp,NULL);
-#endif /* HAVE_OPENGL */
-
 	SET_GW_TYPE( VW_GW(vp), GW_VIEWER );
 
 	select_viewer(vp);
