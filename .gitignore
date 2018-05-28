@@ -8,7 +8,6 @@ config.h
 config.log
 config.status
 stamp-h1
-*.tar.gz
 configure.scan
 autoscan.log
 confout
