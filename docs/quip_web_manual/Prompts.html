@@ -1,0 +1,52 @@
+<html lang="en">
+<head>
+<title>Prompts - QuIP Manual</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="QuIP Manual">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Interactive-Features.html#Interactive-Features" title="Interactive Features">
+<link rel="next" href="Response-completion.html#Response-completion" title="Response completion">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Prompts"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Response-completion.html#Response-completion">Response completion</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Interactive-Features.html#Interactive-Features">Interactive Features</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.1.1 Prompts</h4>
+
+<p>Prompts and prompt suppression
+
+<p>When QuIP is waiting for user input, a prompt is printed.  Command prompts
+typically end in "&gt; ", preceded by a string indicating the menu hierarchy. 
+Parameter prompts are typically of the form "Enter &lt;parameter description&gt;: ".
+
+<p>Prompts are only printed when QuIP is starved for input.  So if multiple
+commands are entered on a single line, no prompt will be printed before the
+second command is read.
+
+<p>The fact that commands prompt for missing arguments
+makes them somewhat self-documenting.  If you forget the number or order
+of parameters to a given command, you can simply enter it interactively
+and note the prompts.  The transcripting facility (LINK) provides
+a convenient way of recording the results.
+
+</body></html>
+

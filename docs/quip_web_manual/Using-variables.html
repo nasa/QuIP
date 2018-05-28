@@ -1,0 +1,78 @@
+<html lang="en">
+<head>
+<title>Using variables - QuIP Manual</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="QuIP Manual">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Variables.html#Variables" title="Variables">
+<link rel="prev" href="Setting-variables.html#Setting-variables" title="Setting variables">
+<link rel="next" href="Special-variables.html#Special-variables" title="Special variables">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Using-variables"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Special-variables.html#Special-variables">Special variables</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Setting-variables.html#Setting-variables">Setting variables</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Variables.html#Variables">Variables</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.4.3 Using variables</h4>
+
+<p>Variable expansion is peformed when lines are read.  Variable substitution is triggered
+by the dollar sign character <code>$</code>.  As in the UNIX command shells, variable expansion
+is inhibited by enclosing a string in single quotes, and always performed for strings in
+double quotes.
+
+<p>Nested quotes can become rather complicated.  It is the outermost set of quotes that matter;
+In the following example, the variable will be expanded when the line is first read;
+the text interpreted after evaluation of the <code>If</code> condition will be <code>echo 'John is a minor'</code>.
+
+<p>Set name John <br>
+Set age 15 <br>
+If $age&gt;=18 <br>
+  Then "echo '$name is an adult'" <br>
+  Else "echo '$name is a minor'"
+
+<p>On the other hand, the quotes could be switched:
+
+<p>If $age&gt;=18 <br>
+  Then 'echo "$name is an adult"' <br>
+  Else 'echo "$name is a minor"'
+
+<p>In this case, the text to be interpreted will be <code>echo "$name is a minor"</code>. 
+This difference can become important if such a statement is encountered in a loop in
+which the value of the variable changes from one iteration to the next.
+
+<p>Another example where immediate variable expansion must be inhibited is when the variable
+may not exist:
+
+<p>If var_exists(test) <br>
+  Then 'echo "variable test exists and has value = $test"' <br>
+  Else 'echo "variable test does not exist"'
+
+<p>In this example, the first echo command after the <code>Then</code> must
+be enclosed in single quotes, because all of the text is scanned
+and subjected to variable expansion before evaluation of the condition. 
+Enclosing the first <code>echo</code> command in double quotes would
+generate an undefined variable warning in the case where the
+variable does not exist, even though the command will not be executed. 
+This might be considered a design flaw.
+
+</body></html>
+

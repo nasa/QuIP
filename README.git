@@ -28,7 +28,7 @@ _______________________________________
 add a remote:
 
 git remote add nasa_github http://github.com/nasa/QuIP.git
-git remote add jbm_github http://github.com/jbmulligan/quip.git
+git remote add jbm_github https://github.com/jbmulligan/quip.git
 
 ____________________
 

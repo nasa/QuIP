@@ -1,0 +1,57 @@
+<html lang="en">
+<head>
+<title>Startup - QuIP Manual</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="QuIP Manual">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Command-Language.html#Command-Language" title="Command Language">
+<link rel="prev" href="Menus.html#Menus" title="Menus">
+<link rel="next" href="Variables.html#Variables" title="Variables">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Startup"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Variables.html#Variables">Variables</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Menus.html#Menus">Menus</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Command-Language.html#Command-Language">Command Language</a>
+<hr>
+</div>
+
+<h3 class="section">2.3 Startup</h3>
+
+<p>QuIP initialization
+
+<p>Before interpreting user input, QuIP attempts to read a startup file. 
+QuIP looks for a startup file with the same name as by which the program
+was invoked, with the .scr (script) extension added.  Thus, the default
+startup file is named quip.scr.  Creating links to the QuIP executable
+with different names provides a way to produce different behavior on startup
+through the use of specialized startup scripts.
+
+<p>QuIP searches for a startup script in the following series of directories:
+1)  the current directory;
+2)  $QUIPSTARTUPDIR (if defined in the environment);
+3)  $HOME/.quip/startup (if it exists);
+4)  the macro installation directory (/usr/local/share/quip/macros/startup).
+
+<p>Options 2 and 3 happen only when the user customizes his or her environment
+appropriately.  The installation directory used in the last case can
+be modified during the configuration process (XREF building).
+
+</body></html>
+

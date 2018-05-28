@@ -1,0 +1,141 @@
+<html lang="en">
+<head>
+<title>QuIP Manual</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="QuIP Manual">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="#Top">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<h1 class="settitle">QuIP Manual</h1>
+<div class="contents">
+<h2>Table of Contents</h2>
+<ul>
+<li><a name="toc_Top" href="index.html#Top">QuIP User Manual</a>
+<li><a name="toc_Overview" href="Overview.html#Overview">1 Overview</a>
+<ul>
+<li><a href="History.html#History">1.1 History</a>
+<li><a href="First-steps.html#First-steps">1.2 First steps</a>
+</li></ul>
+<li><a name="toc_Command-Language" href="Command-Language.html#Command-Language">2 Command Language</a>
+<ul>
+<li><a href="Interactive-Features.html#Interactive-Features">2.1 Interactive Features</a>
+<ul>
+<li><a href="Prompts.html#Prompts">2.1.1 Prompts</a>
+<li><a href="Response-completion.html#Response-completion">2.1.2 Response completion</a>
+<li><a href="Input-redirection.html#Input-redirection">2.1.3 Input redirection</a>
+<li><a href="Transcripts.html#Transcripts">2.1.4 Transcripts</a>
+</li></ul>
+<li><a href="Menus.html#Menus">2.2 Menus</a>
+<ul>
+<li><a href="Displaying-the-menu.html#Displaying-the-menu">2.2.1 Displaying the menu</a>
+<li><a href="Builtin-commands.html#Builtin-commands">2.2.2 Builtin commands</a>
+<ul>
+<li><a href="Loop-control.html#Loop-control">2.2.2.1 Loop control</a>
+<li><a href="Generating-output.html#Generating-output">2.2.2.2 Generating output</a>
+<li><a href="Interacting-with-the-system.html#Interacting-with-the-system">2.2.2.3 Interacting with the system</a>
+</li></ul>
+<li><a href="Exiting-the-menu.html#Exiting-the-menu">2.2.3 Exiting the menu</a>
+</li></ul>
+<li><a href="Startup.html#Startup">2.3 Startup</a>
+<li><a href="Variables.html#Variables">2.4 Variables</a>
+<ul>
+<li><a href="The-variables-submenu.html#The-variables-submenu">2.4.1 The variables submenu</a>
+<li><a href="Setting-variables.html#Setting-variables">2.4.2 Setting variables</a>
+<li><a href="Using-variables.html#Using-variables">2.4.3 Using variables</a>
+<li><a href="Special-variables.html#Special-variables">2.4.4 Special variables</a>
+<li><a href="Numeric-variables.html#Numeric-variables">2.4.5 Numeric variables</a>
+<li><a href="Advanced-variable-usage.html#Advanced-variable-usage">2.4.6 Advanced variable usage</a>
+</li></ul>
+<li><a href="Macros.html#Macros">2.5 Macros</a>
+<ul>
+<li><a href="Predefined-macros.html#Predefined-macros">2.5.1 Predefined macros</a>
+<li><a href="Writing-new-macros.html#Writing-new-macros">2.5.2 Writing new macros</a>
+</li></ul>
+</li></ul>
+<li><a name="toc_Data-Objects" href="Data-Objects.html#Data-Objects">3 Data Objects</a>
+<ul>
+<li><a href="Dimensions.html#Dimensions">3.1 Dimensions</a>
+<li><a href="Creating-Data-Objects.html#Creating-Data-Objects">3.2 Creating Data Objects</a>
+<li><a href="Subscripting.html#Subscripting">3.3 Subscripting</a>
+</li></ul>
+<li><a name="toc_Expression-Language" href="Expression-Language.html#Expression-Language">4 Expression Language</a>
+<li><a name="toc_Displaying-Images" href="Displaying-Images.html#Displaying-Images">5 Displaying Images</a>
+<ul>
+<li><a href="Creating-a-viewer.html#Creating-a-viewer">5.1 Creating a viewer</a>
+<li><a href="Loading-a-viewer.html#Loading-a-viewer">5.2 Loading a viewer</a>
+<li><a href="Manipulating-viewers.html#Manipulating-viewers">5.3 Manipulating viewers</a>
+</li></ul>
+<li><a name="toc_Image-Files" href="Image-Files.html#Image-Files">6 Image Files</a>
+<li><a name="toc_Plotting-Data" href="Plotting-Data.html#Plotting-Data">7 Plotting Data</a>
+<li><a name="toc_Control-Panels" href="Control-Panels.html#Control-Panels">8 Control Panels</a>
+<li><a name="toc_Advanced-Graphics" href="Advanced-Graphics.html#Advanced-Graphics">9 Advanced Graphics</a>
+<li><a name="toc_Interfacing-Hardware" href="Interfacing-Hardware.html#Interfacing-Hardware">10 Interfacing Hardware</a>
+<ul>
+<li><a href="Frame-grabbers.html#Frame-grabbers">10.1 Frame grabbers</a>
+<ul>
+<li><a href="Matrox-meteor-RGB.html#Matrox-meteor-RGB">10.1.1 Matrox meteor RGB</a>
+<li><a href="V4L2-devices.html#V4L2-devices">10.1.2 V4L2 devices</a>
+<ul>
+<li><a href="LML-BT848.html#LML-BT848">10.1.2.1 LML BT848</a>
+<li><a href="Sensoray-811.html#Sensoray-811">10.1.2.2 Sensoray 811</a>
+</li></ul>
+</li></ul>
+<li><a href="Video-cameras.html#Video-cameras">10.2 Video cameras</a>
+<li><a href="Analog-I_002fO.html#Analog-I_002fO">10.3 Analog I/O</a>
+<li><a href="Serial-devices.html#Serial-devices">10.4 Serial devices</a>
+<li><a href="Parallel-port.html#Parallel-port">10.5 Parallel port</a>
+</li></ul>
+<li><a name="toc_Installing-QuIP" href="Installing-QuIP.html#Installing-QuIP">11 Installing QuIP</a>
+<li><a name="toc_Index" href="Index.html#Index">Index</a>
+</li></ul>
+</div>
+
+
+
+<!-- If and when the manual gets too long, -->
+<!-- we have the option of using @shortcontents -->
+<div class="node">
+<a name="Top"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Overview.html#Overview">Overview</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="../index.html#dir">(dir)</a>
+<hr>
+</div>
+
+<h2 class="unnumbered">QuIP User Manual</h2>
+
+<p>This manual is for QuIP, version 0.2.
+
+<ul class="menu">
+<li><a accesskey="1" href="Overview.html#Overview">Overview </a>:   A brief tour of QuIP
+<li><a accesskey="2" href="Command-Language.html#Command-Language">Command Language </a>:   Writing scripts in QuIP's command language
+<li><a accesskey="3" href="Data-Objects.html#Data-Objects">Data Objects </a>:   QuIP data objects
+<li><a accesskey="4" href="Expression-Language.html#Expression-Language">Expression Language </a>:   Writing scripts using QuIP's expression language
+<li><a accesskey="5" href="Displaying-Images.html#Displaying-Images">Displaying Images </a>:   Displaying images using QuIP viewers
+<li><a accesskey="6" href="Image-Files.html#Image-Files">Image Files </a>:   Loading and storing images
+<li><a accesskey="7" href="Plotting-Data.html#Plotting-Data">Plotting Data </a>:   Using the plotting macros
+<li><a accesskey="8" href="Control-Panels.html#Control-Panels">Control Panels </a>:   Using a GUI to control the program
+<li><a accesskey="9" href="Advanced-Graphics.html#Advanced-Graphics">Advanced Graphics </a>:   Sythesizing images using OpenGL
+<li><a href="Interfacing-Hardware.html#Interfacing-Hardware">Interfacing Hardware </a>:   Controlling various hardware devices
+<li><a href="Installing-QuIP.html#Installing-QuIP">Installing QuIP </a>:   Obtaining and installing QuIP
+<li><a href="Index.html#Index">Index </a>:   Complete index
+
+</ul>
+
+<!-- CHAPTER 1 - OVERVIEW -->
+</body></html>
+

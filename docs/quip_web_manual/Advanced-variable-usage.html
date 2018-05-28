@@ -1,0 +1,53 @@
+<html lang="en">
+<head>
+<title>Advanced variable usage - QuIP Manual</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="QuIP Manual">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Variables.html#Variables" title="Variables">
+<link rel="prev" href="Numeric-variables.html#Numeric-variables" title="Numeric variables">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Advanced-variable-usage"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Numeric-variables.html#Numeric-variables">Numeric variables</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Variables.html#Variables">Variables</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.4.6 Advanced variable usage</h4>
+
+<p>Unlike the UNIX command shells, QuIP does not provide for indexing
+of variables.  In part, that is because QuIP uses braces for subscripting
+data objects, and variables are commonly used to hold the names of
+data objects.
+
+<p>QuIP does provide, however, a slightly cumbersome way to do indexing via double indirection:
+
+<p>Set person1 Larry <br>
+Set person2 Moe <br>
+Set person3 Curly <br>
+Set i 1 <br>
+repeat 3 <br>
+  Set var_name person$i <br>
+  echo "Person $i is $$var_name" <br>
+  Increment i <br>
+  end <br>
+
+</body></html>
+

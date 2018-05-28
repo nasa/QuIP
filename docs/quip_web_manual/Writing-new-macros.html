@@ -1,0 +1,59 @@
+<html lang="en">
+<head>
+<title>Writing new macros - QuIP Manual</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="QuIP Manual">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Macros.html#Macros" title="Macros">
+<link rel="prev" href="Predefined-macros.html#Predefined-macros" title="Predefined macros">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Writing-new-macros"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Predefined-macros.html#Predefined-macros">Predefined macros</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Macros.html#Macros">Macros</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.5.2 Writing new macros</h4>
+
+<p>While the predefined macros may access to the functionality desired
+by a user, most everyone will want to combine these building blocks
+to accomplish specific things.  Any group of commands which is repeated
+more than once is a candidate for inclusion in a macro.
+
+<p>Macro definitions are begun the the command <code>Define</code> (which is itself a macro, albeit
+a very simple one).  The syntax is as follows:
+
+<p>Define &lt;macro_name&gt; &lt;n_args&gt; [ &lt;prompt_specifications&gt; ] <br>
+&lt;macro_body&gt; <br>
+.
+
+<p>The macro body is terminated by a line containing a single period <code>.</code>.  This is the one case where
+white space (or the lack of it) is important:  this period must be on a line by itself with no leading
+white space.
+
+<p>The number of prompt specifications must match the number of arguments specified. 
+Each prompt specification consists of a prompt string (quoted if it contains spaces),
+which may be preceded by an optional object type specifier enclosed in brackets <code>&lt;</code>
+and <code>&gt;</code>.  The purpose of object type specifiers is to enable reponse completion
+when a macro is invoked interactively.
+
+<!-- CHAPTER 3 - DATA OBJECTS -->
+</body></html>
+

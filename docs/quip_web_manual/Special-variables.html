@@ -1,0 +1,52 @@
+<html lang="en">
+<head>
+<title>Special variables - QuIP Manual</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="QuIP Manual">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Variables.html#Variables" title="Variables">
+<link rel="prev" href="Using-variables.html#Using-variables" title="Using variables">
+<link rel="next" href="Numeric-variables.html#Numeric-variables" title="Numeric variables">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Special-variables"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Numeric-variables.html#Numeric-variables">Numeric variables</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Using-variables.html#Using-variables">Using variables</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Variables.html#Variables">Variables</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.4.4 Special variables</h4>
+
+<p>Some variables are preset by the system.  In particular, command line
+arguments given when the program is invoked may be accessed as <code>$argv1</code>,
+<code>$argv2</code>, etc.  The may also be accessed using the abbreviated form used
+for macro arguments, e.g. <code>$1</code>, <code>$2</code>, etc., but the longer form is
+useful inside a macro where the short form accesses the macro arguments.
+
+<p>Scripts may refer to external environment variables, but they are loaded
+as needed.  For example, <code>HOME</code> will not show up on the initial list
+of variables, but an attempt to dereference <code>$HOME</code> will cause the
+environment variable <code>HOME</code> to be imported if it exists.
+
+<p>Other special variables may be set by particular functions.  These are
+described in the description of the functions.
+
+</body></html>
+

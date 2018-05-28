@@ -1,0 +1,66 @@
+<html lang="en">
+<head>
+<title>First steps - QuIP Manual</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="QuIP Manual">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Overview.html#Overview" title="Overview">
+<link rel="prev" href="History.html#History" title="History">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="First-steps"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="History.html#History">History</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Overview.html#Overview">Overview</a>
+<hr>
+</div>
+
+<h3 class="section">1.2 First steps</h3>
+
+<p>Here we present the simplest possible QuIP script.  Invoke QuIP by typing
+'quip' at your command shell prompt.  (QuIP command prompts typically end
+with the string '&gt; '; the top level prompt is 'quip&gt; '.) 
+Characters typed by the user are appear as <kbd>user_input</kbd>.
+
+<p>quip&gt;  <kbd>echo "Hello world" &lt;RET&gt;</kbd> <br>
+Hello world <br>
+quip&gt;
+
+<p>If you type this example in, you might notice that after the first 'e' is typed,
+the interpreter completes the word 'expressions', but that the
+completion disappears as soon as the following 'c' is typed.
+
+<p>Here is a slightly longer version:
+
+<p>quip&gt; <kbd>view &lt;RET&gt;</kbd> <br>
+quip/view&gt; <kbd>viewers &lt;RET&gt;</kbd> <br>
+quip/view/viewers&gt; <kbd> new v 300 100 &lt;RET&gt;</kbd> <br>
+quip/view/viewers&gt; <kbd> quit &lt;RET&gt;</kbd> <br>
+quip/view&gt; <kbd> draw v &lt;RET&gt;</kbd> <br>
+quip/view/draw&gt; <kbd> string "Hello world" 20 20 &lt;RET&gt;</kbd> <br>
+quip/view/draw&gt; <kbd> quit &lt;RET&gt;</kbd> <br>
+quip/view&gt; <kbd> quit &lt;RET&gt;</kbd> <br>
+quip&gt;
+
+<p>The first command <code>view</code> causes the interpreter to enter a submenu,
+which is reflected in the prompt.  By convention, submenus are exited
+with the <code>quit</code> command.
+
+<!-- CHAPTER 2 - COMMAND LANGUAGE -->
+</body></html>
+
