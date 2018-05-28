@@ -1,0 +1,145 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>
+QuIP (QUick Image Processing) Home Page
+</title>
+<!-- body text="#000B70" vlink="#551A8B" link="#000066" bgcolor="#FFD12D" alink="#FF0000" -->
+<style>
+body {font-family: Arial;}
+
+/* Style the tab */
+.tab {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #ffd12d;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    font-size: 17px;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+    background-color: #ddc11d;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+    background-color: #ffe19d;
+}
+
+/* Style the tab content */
+.tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+</style>
+
+</head>
+
+<body text="#000B70" vlink="#551A8B" link="#000066" bgcolor="#FFFFFF" background="hvei_home_files/background.html" alink="#FF0000">
+
+<!--iframe src="hvei_top.html" style="border:none;" width="100%" height="35%"></iframe -->
+<!-- TOP OF PAGE - BEGIN -->
+
+<table>
+<tbody>
+<tr>
+<td>
+<h1 align="center"><font color="#000000">QuIP - QUick Image Processing</font></h1>
+	<h2 align="center"><font color="#000000">An interactive environment for imaging
+	and scientific computing
+	</font></h2>
+
+<!--
+	<br>
+	<h3 align="center">
+	<br>
+	<br>
+	</h3>
+	-->
+</td>
+
+</tr>
+</tbody>
+</table>
+
+<!-- TOP OF PAGE - END -->
+
+<!-- 
+<iframe src="hvei_tabs.html" style="border:none;" width="100%" height="10%"></iframe>
+-->
+<!-- Tab links -->
+<div class="tab">
+  <button class="tablinks" onclick="openTabContent(event, 'Overview')" id="defaultOpen">Overview</button>
+  <button class="tablinks" onclick="openTabContent(event, 'Downloads')">Downloads</button>
+  <button class="tablinks" onclick="openTabContent(event, 'Documentation')">Documentation</button>
+</div>
+
+<!-- Tab content -->
+<div id="Overview" class="tabcontent">
+<!-- HOME CONTENT BEGIN -->
+
+<p align="left">
+The QuIP interpreter is a powerful interactive environment for image processing and scientific computing.  It features integration with a variety of video interfaces, GPU computing with both nVidia's CUDA and OpenCL.  The system is written mostly in C, with help from yacc/bison and the m4 macro processor.  It runs on unix-like systems such as linux and Mac OSX, and has been ported to iOS.
+</p>
+<!-- HOME CONTENT END -->
+</div>
+
+<div id="Downloads" class="tabcontent">
+  <h3>How to get QuiP</h3>
+  The source code for QuIP can be obtained as a <a href="quip-1.0.tar">tar archive</a>, ready to build with the traditional configure/make/install sequence, or by cloning the git repository located <a href="">here</a>.
+</div>
+
+<div id="Documentation" class="tabcontent">
+  <h3>Documentation</h3>
+  The QuIP manual is written in the texinfo system, and is available here as either single <a href="quip.pdf">PDF file</a>, or on-line <a href="quip.html/Overview.html">web pages</a>.
+</div>
+
+<script>
+function openTabContent(evt, cityName) {
+    // Declare all variables
+    var i, tabcontent, tablinks;
+
+    // Get all elements with class="tabcontent" and hide them
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+
+    // Get all elements with class="tablinks" and remove the class "active"
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+
+    // Show the current tab, and add an "active" class to the button that opened the tab
+    document.getElementById(cityName).style.display = "block";
+    evt.currentTarget.className += " active";
+}
+// Get the element with id="defaultOpen" and click on it
+document.getElementById("defaultOpen").click();
+
+</script>
+
+<p>
+<script type="text/javascript">
+
+<!--
+var m = "Last updated " + document.lastModified;
+document.write(m);
+ -->
+ </script>
+</p>
+
+</body></html>
