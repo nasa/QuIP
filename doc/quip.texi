@@ -81,20 +81,6 @@ This manual is for QuIP, version 0.2.
 * Installing QuIP       ::  Obtaining and installing QuIP
 * Index                 ::  Complete index
 
-@detailmenu
-@c --- The Detailed Node Listing---
-@c 
-Overview of QuIP
-* History       ::  Some background about QuIP
-
-Writing QuIP scripts
-* First steps::  A simple sample of QuIP
-Macros
-* Predefined macros::  Finding predefined macros
-* Writing new macros::  Writing your own macros
-
-@end detailmenu
-
 @end menu
 
 @c CHAPTER 1 - OVERVIEW
