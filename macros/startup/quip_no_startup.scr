@@ -1,0 +1,33 @@
+
+# @(#) .quip ver: 1.1 1/19/99
+#
+
+# remove this file to test with no startup file...
+
+verbose no
+
+If !var_exists(QUIP)
+  "variables set QUIP quip quit"
+
+If strcmp('$QUIP','quip')
+  "warn 'Program invoked as quip, but QUIP = $QUIP'"
+
+If !var_exists(QUIPSTARTUPDIR)
+  "advise 'QUIPSTARTUPDIR not set in environment, setting to default value' \
+   variables set QUIPSTARTUPDIR /usr/local/share/$QUIP/macros/startup quit"
+
+variables set macro_dir $QUIPSTARTUPDIR/.. quit
+
+< $QUIPSTARTUPDIR/generic.scr
+< $QUIPSTARTUPDIR/gendata.scr
+< $QUIPSTARTUPDIR/gencomp.scr
+< $QUIPSTARTUPDIR/genclient.scr
+< $QUIPSTARTUPDIR/genview.scr
+
+#view xsync yes quit
+
+compute control n_processors 1 quit quit
+max_warnings 200
+
+#Stop_File quip_no_startup_startup.scr
+

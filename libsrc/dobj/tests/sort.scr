@@ -1,0 +1,7 @@
+Vector v 5 1 short
+data ascii read v - 4 3 2 5 1 quit quit
+Display v
+compute misc sort v quit quit
+Display v
+exit
+

@@ -1,0 +1,9 @@
+Viewer v 444 444
+view
+  draw v
+    load_set *times*bold-r-normal--25-*
+    list
+    #-adobe-times-bold-r-normal--25-180-100-100-p-132-iso8859-1    
+    font -adobe-times-bold-r-normal--25-180-100-100-p-132-iso8859-1    
+    Pause
+
