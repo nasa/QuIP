@@ -8,7 +8,7 @@ TARGETS			=
 
 #if HAVE_MAKEINFO
 
-TARGETS			+= html quip.info
+TARGETS			+= pdf html quip.info
 
 #endif
 
@@ -17,6 +17,7 @@ TARGETS			+= html quip.info
 
 
 all:	$(TARGETS)
+	cp quip.pdf ../docs/quip_manual.pdf
 
 .PHONY:	html
 html:	version.texi $(HTML_DOCS)
