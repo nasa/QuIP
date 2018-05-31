@@ -283,7 +283,7 @@ define(`XFER_EQSP_ARGS_SBM2',`XFER_SBM2_PTR
 
 define(`XFER_SLOW_ARGS_DBM',`SLOW_ARGS_SETUP XFER_DBM_PTR XFER_SLOW_DBM_GPU_INFO
 	SET_VA_DEST_INCSET(vap, OBJ_TYPE_INCS(bitmap_dst_dp) );
-	SET_VA_COUNT(vap, OBJ_TYPE_DIMS(bitmap_dst_dp) );
+	SET_VA_DEST_DIMSET(vap, OBJ_TYPE_DIMS(bitmap_dst_dp) );
 	SET_VA_DBM_BIT0(vap, OBJ_BIT0(bitmap_dst_dp) );
 ')
 
@@ -417,7 +417,7 @@ define(`SLOW_ARGS_SETUP',`')	/* no-op, mem is allocated at object creation... */
 define(`XFER_SLOW_ARGS_1',`SLOW_ARGS_SETUP
 XFER_DEST_PTR
 	SET_VA_DEST_INCSET(vap, OBJ_TYPE_INCS(dst_dp) );
-	SET_VA_COUNT(vap,OBJ_TYPE_DIMS(dst_dp) );
+	SET_VA_DEST_DIMSET(vap,OBJ_TYPE_DIMS(dst_dp) );
 ')
 
 

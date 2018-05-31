@@ -470,8 +470,6 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define SET_VA_SBM2_PTR(vap,ptr)	SET_VARG_PTR( VA_SRC2(vap) , ptr )
 #define SET_VA_DBM_PTR(vap,ptr)		SET_VARG_PTR( VA_DEST(vap) , ptr )
 
-// We didn't have the destination dimset here?
-// Why not???
 #define SET_VA_DEST_DIMSET(vap,v)	SET_VARG_DIMSET( VA_DEST(vap), v )
 #define SET_VA_SRC_DIMSET(vap,idx,v)	SET_VARG_DIMSET( VA_SRC(vap,idx), v )
 #define SET_VA_SRC1_DIMSET(vap,v)	SET_VA_SRC_DIMSET(vap,0,v)
@@ -504,8 +502,6 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 
 #define SET_VA_SBM_EQSP_INC(vap,v)	SET_VARG_EQSP_INC( VA_SRC5(vap), v )
 
-//#define SET_VA_COUNT(vap,v)		SET_SZI_DST_DIMS(VA_SIZE_INFO(vap),v)
-#define SET_VA_COUNT(vap,v)		SET_VARG_DIMSET(VA_DEST(vap),v)
 #define SET_VA_SBM_BIT0(vap,v)		(vap)->va_sbm_bit0 = v
 #define SET_VA_SBM1_BIT0(vap,v)		(vap)->va_sbm1_bit0 = v
 #define SET_VA_SBM2_BIT0(vap,v)		(vap)->va_sbm2_bit0 = v
