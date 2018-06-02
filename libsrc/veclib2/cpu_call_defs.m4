@@ -2027,7 +2027,7 @@ static void SLOW_NAME($1)( LINK_FUNC_ARG_DECLS )
 	const char * func_name="$1";
 
 	INIT_BASES_SRC1
-	s1_ptr = (std_type *) VA_SRC_PTR(vap,0);
+	/* extloc_slow_func */ s1_ptr = (std_type *) VA_SRC_PTR(vap,0);
 	EXTLOC_INITS
 	_INIT_COUNT(i,s1_count,4)
 	while(i-- > 0){
@@ -2163,7 +2163,6 @@ define(`EXTLOC_FAST_FUNC',`
 FF_DECL($1)( LINK_FUNC_ARG_DECLS )
 {
 	FAST_DECLS_SRC1
-	FAST_INIT_SRC1
 	EXTLOC_DECLS
 	dimension_t fl_ctr;
 	const char * func_name="$1";
@@ -2189,7 +2188,6 @@ define(`EXTLOC_EQSP_FUNC',`
 EF_DECL($1)( LINK_FUNC_ARG_DECLS )
 {
 	EQSP_DECLS_SRC1
-	EQSP_INIT_SRC1
 	EXTLOC_DECLS
 	dimension_t fl_ctr;
 	const char * func_name="$1";
@@ -2371,7 +2369,7 @@ dnl */
 
 define(`INIT_MAP_PTR',`map = (std_type *)VA_SRC_PTR(vap,1);')
 
-define(`FAST_INIT_SRC1',`s1_ptr = (std_type *)VA_SRC_PTR(vap,0);')
+define(`FAST_INIT_SRC1',`/* fast_init_src1 */ s1_ptr = (std_type *)VA_SRC_PTR(vap,0);')
 define(`FAST_INIT_BSRC1',`s1_ptr = (u_char *)VA_SRC_PTR(vap,0);')
 define(`FAST_INIT_SSRC1',`s1_ptr = (u_short *)VA_SRC_PTR(vap,0);')
 define(`FAST_INIT_MAP_B',`INIT_MAP_PTR')
@@ -2481,7 +2479,7 @@ dnl define(`EQSP_INIT_COUNT_CPX	fl_ctr = VA_LENGTH(vap);
 dnl define(`EQSP_INIT_COUNT_QUAT	fl_ctr = VA_LENGTH(vap);
 dnl */
 
-define(`EQSP_INIT_SRC1',`s1_ptr = (std_type *)VA_SRC_PTR(vap,0);')
+define(`EQSP_INIT_SRC1',`/* eqsp_init_src1 */ s1_ptr = (std_type *)VA_SRC_PTR(vap,0);')
 define(`EQSP_INIT_BSRC1',`s1_ptr = (u_char *)VA_SRC_PTR(vap,0);')
 define(`EQSP_INIT_SSRC1',`s1_ptr = (u_short *)VA_SRC_PTR(vap,0);')
 define(`EQSP_INIT_SRC2',`s2_ptr = (std_type *)VA_SRC_PTR(vap,1);')
@@ -2745,7 +2743,6 @@ dnl	_GENERIC_FAST_CONV_FUNC(name,dest_type)
 define(`_GENERIC_FAST_CONV_FUNC',`
 FF_DECL($1)( LINK_FUNC_ARG_DECLS )
 {
-	/* FAST_DECLS_1 */
 	/* use passed `type' instead of `dest_type' */
 	$2 *dst_ptr; dimension_t fl_ctr;
 	FAST_DECLS_SRC1
@@ -2765,11 +2762,8 @@ FF_DECL($1)( LINK_FUNC_ARG_DECLS )
 define(`_GENERIC_EQSP_CONV_FUNC',`
 EF_DECL($1)( LINK_FUNC_ARG_DECLS )
 {
-	/* EQSP_DECLS_1 */
 	$2 *dst_ptr; dimension_t fl_ctr;
 	EQSP_DECLS_SRC1
-	/* EQSP_INIT_2 */
-	/* EQSP_INIT_1 */
 	dst_ptr = ($2 *)VA_DEST_PTR(vap);
 	EQSP_INIT_COUNT
 	EQSP_INIT_SRC1
