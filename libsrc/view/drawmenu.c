@@ -165,10 +165,12 @@ static int _quick_load_font(QSP_ARG_DECL  const char *fontname)
 	
 }
 
+
 #define find_font(varname, family, bold_name, font_size ) _find_font(QSP_ARG  varname, family, bold_name, font_size )
 
 static void _find_font(QSP_ARG_DECL  const char *varname, const char *family, const char * bold_name, int font_size )
 {
+#ifdef HAVE_X11
 	char **flist;
 	int nfonts;
 	char pattern[LLEN];
@@ -189,6 +191,7 @@ static void _find_font(QSP_ARG_DECL  const char *varname, const char *family, co
 		assign_var(varname,flist[0]);
 	}
 	XFreeFontNames(flist);
+#endif // HAVE_X11
 }
 
 // load_font - make sure the font exists before trying to load

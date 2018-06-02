@@ -688,8 +688,8 @@ Print plot_ymax
 
 Define Plot_2_Screen 4 xvarname yvarname x y
 # these two statements are for debugging...
-advise "Plot_2_Screen $1 $2 $3 $4  -   the_plotter = $the_plotter"
-Show_Plot_Limits
+#advise "Plot_2_Screen $1 $2 $3 $4  -   the_plotter = $the_plotter"
+#Show_Plot_Limits
 
 # first get the fractional position in the plotting space
 Assign $2 ($4-$plot_ymin)/($plot_ymax-$plot_ymin)

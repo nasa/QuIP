@@ -1142,6 +1142,11 @@
 		7C79F9E51A2D47F1005EE8B8 /* soundmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C79F9E41A2D47F1005EE8B8 /* soundmenu.c */; };
 		7C922E1F19CA51DE00F92C21 /* typed_scalars.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C922E1E19CA51DE00F92C21 /* typed_scalars.c */; };
 		7C9C32181C0699CE00E2094F /* lin_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C9C32171C0699CE00E2094F /* lin_util.c */; };
+		7C9F27A620C32B39002D9F63 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C9F27A520C32B39002D9F63 /* equivalence.c */; };
+		7C9F27A720C32B45002D9F63 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C9F27A520C32B39002D9F63 /* equivalence.c */; };
+		7C9F27A820C32B46002D9F63 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C9F27A520C32B39002D9F63 /* equivalence.c */; };
+		7C9F27A920C32B47002D9F63 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C9F27A520C32B39002D9F63 /* equivalence.c */; };
+		7C9F27AA20C32B48002D9F63 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C9F27A520C32B39002D9F63 /* equivalence.c */; };
 		7CB2931E1FB16B6300466EFD /* ptoz.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB2931D1FB16B6300466EFD /* ptoz.c */; };
 		7CB2931F1FB16BAE00466EFD /* ptoz.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB2931D1FB16B6300466EFD /* ptoz.c */; };
 		7CB293201FB16BAF00466EFD /* ptoz.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB2931D1FB16B6300466EFD /* ptoz.c */; };
@@ -1803,6 +1808,7 @@
 		7C79F9E41A2D47F1005EE8B8 /* soundmenu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = soundmenu.c; sourceTree = "<group>"; };
 		7C922E1E19CA51DE00F92C21 /* typed_scalars.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = typed_scalars.c; sourceTree = "<group>"; };
 		7C9C32171C0699CE00E2094F /* lin_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lin_util.c; sourceTree = "<group>"; };
+		7C9F27A520C32B39002D9F63 /* equivalence.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = equivalence.c; sourceTree = "<group>"; };
 		7CB2931D1FB16B6300466EFD /* ptoz.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ptoz.c; sourceTree = "<group>"; };
 		7CB44FF61D65067A00B6783F /* nrmenu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = nrmenu.c; sourceTree = "<group>"; };
 		7CB44FF71D65067A00B6783F /* numrec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = numrec.c; sourceTree = "<group>"; };
@@ -2104,6 +2110,7 @@
 		7115AE61160769840004645A /* dobj */ = {
 			isa = PBXGroup;
 			children = (
+				7C9F27A520C32B39002D9F63 /* equivalence.c */,
 				7CF4CFB91CA5F1FF004F07AE /* dobj_expr.c */,
 				7182908F1726218800F7CB35 /* makedobj.c */,
 				71828ECA1726159800F7CB35 /* shape_info.c */,
@@ -2876,6 +2883,7 @@
 				71828F451726174F00F7CB35 /* sockopts.c in Sources */,
 				71828F471726176600F7CB35 /* xmitrecv.c in Sources */,
 				71828F4C1726178400F7CB35 /* asc_data.c in Sources */,
+				7C9F27A620C32B39002D9F63 /* equivalence.c in Sources */,
 				71828F4D1726178400F7CB35 /* clrdat.c in Sources */,
 				71828F4E1726178400F7CB35 /* errbars.c in Sources */,
 				71828F4F1726178400F7CB35 /* exp.c in Sources */,
@@ -3303,6 +3311,7 @@
 				7C4332871D4D43FC0033687C /* features.c in Sources */,
 				7C4332881D4D43FC0033687C /* fioasc.c in Sources */,
 				7C4332891D4D43FC0033687C /* ppm.c in Sources */,
+				7C9F27A720C32B45002D9F63 /* equivalence.c in Sources */,
 				7C43328A1D4D43FC0033687C /* reachability.m in Sources */,
 				7C43328B1D4D43FC0033687C /* function.m in Sources */,
 				7C43328C1D4D43FC0033687C /* genlock.c in Sources */,
@@ -3429,6 +3438,7 @@
 				7C4333241D4D49450033687C /* sockopts.c in Sources */,
 				7C4333251D4D49450033687C /* xmitrecv.c in Sources */,
 				7C4333261D4D49450033687C /* asc_data.c in Sources */,
+				7C9F27A820C32B46002D9F63 /* equivalence.c in Sources */,
 				7C4333271D4D49450033687C /* clrdat.c in Sources */,
 				7C4333281D4D49450033687C /* errbars.c in Sources */,
 				7C4333291D4D49450033687C /* exp.c in Sources */,
@@ -3695,6 +3705,7 @@
 				7C4D6DF01D5111A400D34AC4 /* sockopts.c in Sources */,
 				7C4D6DF11D5111A400D34AC4 /* xmitrecv.c in Sources */,
 				7C4D6DF21D5111A400D34AC4 /* asc_data.c in Sources */,
+				7C9F27A920C32B47002D9F63 /* equivalence.c in Sources */,
 				7C4D6DF31D5111A400D34AC4 /* clrdat.c in Sources */,
 				7C4D6DF41D5111A400D34AC4 /* errbars.c in Sources */,
 				7C4D6DF51D5111A400D34AC4 /* exp.c in Sources */,
@@ -4122,6 +4133,7 @@
 				7CB671A91F9484C5001FFADF /* features.c in Sources */,
 				7CB671AA1F9484C5001FFADF /* fioasc.c in Sources */,
 				7CB671AB1F9484C5001FFADF /* ppm.c in Sources */,
+				7C9F27AA20C32B48002D9F63 /* equivalence.c in Sources */,
 				7CB671AC1F9484C5001FFADF /* reachability.m in Sources */,
 				7CB671AD1F9484C5001FFADF /* function.m in Sources */,
 				7CB671AE1F9484C5001FFADF /* genlock.c in Sources */,
