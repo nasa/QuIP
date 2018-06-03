@@ -80,7 +80,7 @@ Label_X_Ticks $xmin $xmax $x_tick_spacing
 
 Define Check_Var 2 varname default_value
 If !var_exists('$1')
-  "Set $1 $2 advise 'Check_Var:  $1 set to default value $2'"
+  "Set $1 $2 Tell_If 'Check_Var:  $1 set to default value $2'"
 .
 
 Define Setup_X_Axis 0
