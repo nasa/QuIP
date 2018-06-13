@@ -3,6 +3,9 @@ divert(-1)	dnl suppress output
 
 include(`veclib/vl2_port.m4')
 
+dnl	USE_SSE should not be needed any more, because the modern
+dnl	compilers do this on their own, no need to provide special
+dnl	code for this...
 define(`USE_SSE',`')	dnl BUG how to import this from config.h?
 
 my_include(`veclib/vl2_veclib_prot.m4')

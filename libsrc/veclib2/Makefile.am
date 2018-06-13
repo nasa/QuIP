@@ -33,13 +33,20 @@ $(srcdir)/vl2_veclib.c:	$(builddir)/vl2_veclib_expanded.c
 	touch $(srcdir)/vl2_veclib.c
 
 
-vl2_utils_expanded.c:	vl2_utils.m4 _vl2_utils.c $(LOCAL_M4FILES) $(INC_M4FILES)
+vl2_utils_expanded.c:	_vl2_utils.c $(LOCAL_M4FILES) $(INC_M4FILES)
 		m4 $(M4OPTS) < $(srcdir)/vl2_utils.m4 > $(builddir)/vl2_utils_expanded.c
 
 # the sed command removes escaped newlines in functions that need
 # to be quoted for opencl...
+#
+# this srcdir stuff is so that make distcheck will work, but for reasons that are
+# not clear, it succeeds when it should fail!?  vl2_veclib.m4 was missing from
+# LOCAL_M4FILES, which caused a normal build from the distribution tarball to fail,
+# but make distcheck succeeded!?!?!?
+#
+# Does it matter that LOCAL_M4FILES does not have srcdir prepended???
 
-vl2_veclib_expanded.c:	$(srcdir)/vl2_veclib.m4 $(LOCAL_M4FILES) $(INC_M4FILES)
+vl2_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) $(srcdir)/vl2_veclib.m4 | sed -e 's/	*\\//' > $(builddir)/vl2_veclib_expanded.c
 
 ## OOPS - BUILT_SOURCES seem to be added to sources and compiled by themselves,
@@ -72,12 +79,13 @@ LOCAL_M4FILES=							\
 			cpu_call_defs.m4			\
 			linear.m4				\
 			vl2_host_call_defs.m4			\
-			vl2_host_untyped_call_defs.m4			\
+			vl2_host_untyped_call_defs.m4		\
 			vl2_host_funcs.m4			\
 			vl2_typed_fft_funcs.m4			\
 			vl2_typtbl.m4				\
 			vl2_utils.m4				\
-			vl2_kernels.m4
+			vl2_kernels.m4				\
+			vl2_veclib.m4
 
 INCDIR=$(top_srcdir)/include/veclib
 INC_M4FILES=							\

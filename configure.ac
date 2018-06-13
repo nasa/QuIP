@@ -9,7 +9,7 @@
 # How can we turn off optimization??
 
 #AC_PREREQ([2.63])
-AC_INIT([quip], [1.0], [jeffrey.b.mulligan@nasa.gov])
+AC_INIT([quip], [1.0.01], [jeffrey.b.mulligan@nasa.gov])
 
 # this line prevents -O2...
 #: ${CXXFLAGS=-g}
@@ -1668,6 +1668,7 @@ AC_CONFIG_FILES([Makefile
 		 macros/movie/Makefile
 		 macros/opengl/Makefile
 		 doc/Makefile
+		 docs/Makefile
 		 libs/Makefile
 		 include/Makefile
 		 include/veclib/Makefile
