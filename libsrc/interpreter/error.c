@@ -684,11 +684,8 @@ static int is_expected(QSP_ARG_DECL  const char *warning_msg)
 		const char *s;
 		s = NODE_DATA(np);
 		if( !strncmp(s,warning_msg,strlen(s)) ){
-			Node *np2;
 			DEC_QS_N_WARNINGS(THIS_QSP);
-			np2 = NODE_NEXT(np);
 			remove_expected_warning(np);
-			np = np2;
 			return 1;
 		} else {
 			np = NODE_NEXT(np);

@@ -424,6 +424,7 @@ int _lookahead_til(QSP_ARG_DECL  int stop_level)
 		/* do look-ahead */
 
 		qp= CURR_QRY(THIS_QSP);
+		assert(qp!=NULL);
 		_level=QLEVEL;
 
 		/* Eating space (and comments) here causes a problem,

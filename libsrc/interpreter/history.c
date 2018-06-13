@@ -507,7 +507,6 @@ static const char * cyc_item_match(QSP_ARG_DECL  const char *so_far, int directi
 	assert(np!=NULL);
 
 	fmi_p = NODE_DATA(np);
-	first_fmi_p = fmi_p;
 
 	s = advance_frag_match(fmi_p,direction);
 	if( s != NULL ) return s;

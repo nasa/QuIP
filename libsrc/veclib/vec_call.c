@@ -438,6 +438,18 @@ OBJ_NAME(OA_DEST(oap) ) ,OBJ_PREC_NAME( OA_DEST(oap) ));		\
 	return -1;
 
 
+#define CHECK_MAP_INDEX_PREC(func_code,prec_code)					\
+\
+if( VF_CODE(vfp) == func_code ){						\
+if( srcp1 != prec_code ){						\
+sprintf(ERROR_STRING,						\
+"Source object %s (%s) must have %s precision for function %s",			\
+OBJ_NAME(OA_SRC1(oap)),NAME_FOR_PREC_CODE(srcp1),	\
+NAME_FOR_PREC_CODE(prec_code),VF_NAME(vfp));		\
+warn(ERROR_STRING);						\
+return -1;							\
+}									\
+}
 
 /* chkprec sets two flags:
  * oa_argsprec (tells machine prec),
@@ -538,24 +550,14 @@ advise("chkprec:  Setting argstype to R_BIT_ARGS!?");
 			}
 		}
 		// Can there be more than 4 sources???
-	}
+		
+		
 #define IS_LUTMAP_FUNC(vfp) ( VF_CODE(vfp) == FVLUTMAPB || VF_CODE(vfp) == FVLUTMAPS )
-
-#define CHECK_MAP_INDEX_PREC(func_code,prec_code)					\
-											\
-	if( VF_CODE(vfp) == func_code ){						\
-		if( srcp1 != prec_code ){						\
-			sprintf(ERROR_STRING,						\
-	"Source object %s (%s) must have %s precision for function %s",			\
-				OBJ_NAME(OA_SRC1(oap)),NAME_FOR_PREC_CODE(srcp1),	\
-				NAME_FOR_PREC_CODE(prec_code),VF_NAME(vfp));		\
-			warn(ERROR_STRING);						\
-			return -1;							\
-		}									\
+		CHECK_MAP_INDEX_PREC(FVLUTMAPB,PREC_UBY)
+		CHECK_MAP_INDEX_PREC(FVLUTMAPS,PREC_UIN)
+		
 	}
 
-	CHECK_MAP_INDEX_PREC(FVLUTMAPB,PREC_UBY)
-	CHECK_MAP_INDEX_PREC(FVLUTMAPS,PREC_UIN)
 
 	/* Figure out what type of function to call based on the arguments... */
 
