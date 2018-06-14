@@ -65,7 +65,10 @@ static void report_npp_error(const char *whence, const char *funcname, NppStatus
 		NPP_ERR_CASE(NPP_OVERFLOW_ERROR,"overflow")
 #endif
 		NPP_ERR_CASE(NPP_NOT_SUPPORTED_MODE_ERROR, "unsupported mode" )
+// NPP_CORRUPTED_DATA_ERROR not present on 6.5 - introduced when???
+#if CUDA_VERSION >= 7000
 		NPP_ERR_CASE(NPP_CORRUPTED_DATA_ERROR, "corrupted data" )
+#endif
 		NPP_ERR_CASE(NPP_ROUND_MODE_NOT_SUPPORTED_ERROR,"unsupported round mode" )
 		NPP_ERR_CASE( NPP_RESIZE_NO_OPERATION_ERROR, "No resize operation" )
 		NPP_ERR_CASE( NPP_NOT_SUFFICIENT_COMPUTE_CAPABILITY, "insufficient compute capability" )
