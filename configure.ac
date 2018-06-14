@@ -9,7 +9,7 @@
 # How can we turn off optimization??
 
 #AC_PREREQ([2.63])
-AC_INIT([quip], [1.0.01], [jeffrey.b.mulligan@nasa.gov])
+AC_INIT([quip], [1.0.02], [jeffrey.b.mulligan@nasa.gov])
 
 # this line prevents -O2...
 #: ${CXXFLAGS=-g}
