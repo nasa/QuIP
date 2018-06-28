@@ -1,0 +1,384 @@
+# This version attempts to use the gpu for more speed...
+
+< $QUIPSTARTUPDIR/quip.scr
+< $macro_dir/system/mark_time.mac
+
+#Set min_panel_width 660		# used to be smaller but with ff, pause etc we need more real estate...
+Set min_panel_width 780		# increased for deinterlace toggle...
+
+max_warnings 1000
+#max_warnings 2
+
+Print argc
+If ($argc!=1)&&($argc!=2)  "error_exit 'usage:  jpsee jpeg_filename <speed>'"
+Set jpeg_file "$argv1"
+If $argc>1
+Then	'Set speed $2'
+Else	'Set speed 1'
+Set chatty 1
+
+Set frame_dwell 1
+
+If file_exists('/dev/rawvol') "rawvol default quit"
+
+# may be rawvol?
+If (!iof_exists('$jpeg_file'))&&!file_exists('$jpeg_file')
+  "error_exit 'File $jpeg_file does not exist '"
+
+# There seems to be a bug when we include .iview instead of .vt ...
+# number of processors???
+
+# Parameters
+Set movie_paused 0
+
+# Open movie file
+If !iof_exists('$jpeg_file')
+  "Filetype jpeg \
+   advise 'Reading file $jpeg_file' \
+   Read_File_Header '$jpeg_file' \
+   advise 'DONE reading file $jpeg_file'"
+
+Assign w	ncols('$jpeg_file')
+Assign h	nrows('$jpeg_file')
+Assign depth	ncomps('$jpeg_file')
+Assign n_frames	nframes('$jpeg_file')
+
+fileio autoclose "$jpeg_file" no quit
+
+Tell_If " "
+Tell_If "-> File info:"
+Tell_If "   > Frame size (w x h x d): $w x $h x $depth"
+Tell_If "   > Number of frames: $n_frames"
+Tell_If " "
+
+
+# Init images
+Image _img	$h $w $depth u_byte
+
+platforms
+  select $DEFAULT_PLATFORM $DEFAULT_GPU
+  Pause
+  quit
+
+Image g_img $h $w $depth u_byte
+Image g_rgba $h $w 4 u_byte
+
+Interlace oddlines _img even
+Interlace evenlines _img odd
+Dup_UByte field oddlines
+Image last_frm	$h $w $depth u_byte
+Image tmp	$h $w 1 u_byte
+
+## Mono_Viewer
+#######################
+If $w<800
+Then	'Set x_v 10'
+Else	'Set x_v 0'
+Set y_v 10
+
+Define Mono_Viewer 0
+Viewer_For v _img
+Posn_Window v $x_v $y_v
+#Protect_LUT 0
+Grayscale_Viewer v
+sleep 2
+gl
+  window v
+  Pause
+  quit
+.
+
+
+## RGB_Viewer
+#######################
+Define RGB_Viewers 0
+Viewer_For rv _img
+Viewer_For gv _img
+Viewer_For bv _img
+Posn_Window rv $x_v $y_v
+Posn_Window gv $x_v $y_v+300
+Posn_Window bv $x_v $y_v+600
+#Protect_LUT 0
+Grayscale_Viewer rv
+Grayscale_Viewer gv
+Grayscale_Viewer bv
+.
+
+
+## Label3
+#######################
+Define Label3 0
+Label_Viewer rv "$jpeg_file, frame $frameno"
+Label_Viewer gv "$jpeg_file, frame $frameno"
+Label_Viewer bv "$jpeg_file, frame $frameno"
+.
+
+
+## Init_Slider
+#############################
+Define Init_Slider 0
+Assign p1_w max($w,$min_panel_width)
+#Assign p1_h 120
+#Assign adjuster_h -10
+#Assign button_h 41
+Assign p1_h 110
+Assign adjuster_h 3
+Assign button_h 78
+Set adjuster_name 'Frame index'
+interface 
+	panel jpsee $p1_w $p1_h
+	decorate jpsee	
+		#Set p_x $p1_w/2-100
+		Set p_x 20
+		Set dx 80
+		position 0 $adjuster_h
+		adjuster_w $adjuster_name Update_Time 0 $n_frames-1 0 $p1_w-35
+		position $p_x $button_h Add_Var p_x $dx
+		button "Fast Rev" FastRev_Movie
+		position $p_x $button_h Add_Var p_x $dx
+		button "Rev Play" RevPlay_Movie
+		position $p_x $button_h Add_Var p_x $dx
+		button "Slow Rev" SlowRev_Movie
+		position $p_x $button_h Add_Var p_x $dx
+		button "Rev Step" RevStep_Movie
+		position $p_x $button_h Add_Var p_x $dx
+		button "Pause" PausePlay_Movie
+		position $p_x $button_h Add_Var p_x $dx
+		button "Fwd Step" FwdStep_Movie
+		position $p_x $button_h Add_Var p_x $dx
+		button "Slow Fwd" SlowFwd_Movie
+		position $p_x $button_h Add_Var p_x $dx
+		button "Fwd Play" FwdPlay_Movie
+		position $p_x $button_h Add_Var p_x $dx
+		button "Fast Fwd" FastFwd_Movie
+		position $p_x $button_h Add_Var p_x $dx
+		button Quit exit
+		position $p_x $button_h Add_Var p_x $dx
+		toggle Deinterlace TogDeinterlace
+	quit
+	control		position jpsee $x_v $y_v+40+$h	show jpsee			quit 
+quit 
+.
+
+
+## Update_Time
+#############################
+Define Update_Time 0
+Assign frame_idx $slider_val
+If $movie_paused	'Assign frame_idx  min($frame_idx,$n_frames-2)	\
+		 Show_Current_Frame'
+nop
+.
+
+Define Show_Current_Frame 0
+File_Seek $jpeg_file $frame_idx
+Get_Next _img $jpeg_file
+Display_Frame
+.
+
+
+## Update_Slider
+#############################
+Define Update_Slider 1 field_idx
+#advise "Update_Slider $1"
+interface decorate jpsee 
+	slide_pos $adjuster_name $1
+quit quit
+.
+
+Define Bound_Frame 0
+Assign frame_idx min(round($frame_idx),$n_frames-1)
+Assign frame_idx max($frame_idx,0)
+.
+
+## PausePlay_Movie
+##############################
+Define PausePlay_Movie 0
+If !var_exists(saved_speed) "Set saved_speed 0"
+If $movie_paused
+  Then Unpause_Movie
+  Else Pause_Movie
+.
+
+Define Pause_Movie 0
+If $speed!=0 "Set saved_speed $speed"
+Set speed 0
+Set movie_paused 1
+os usecs pause_secs pause_usecs quit
+#advise "Paused at $pause_secs $pause_usecs"
+.
+
+Define Unpause_Movie 0
+Set speed $saved_speed
+Set movie_paused 0
+os usecs psecs pusecs quit
+#advise "Unpaused at $psecs $pusecs"
+Add_Var want_ms 1000*($psecs-$pause_secs)+($pusecs-$pause_usecs)/1000
+.
+
+Define FastRev_Movie 0
+If $movie_paused Unpause_Movie
+If $speed>0 "Set speed -1"
+Mul_Var speed 2
+Set frame_dwell 1
+.
+
+Define SlowRev_Movie 0
+If $movie_paused Unpause_Movie
+Set speed -1
+Mul_Var frame_dwell 2
+.
+
+Define FastFwd_Movie 0
+If $movie_paused Unpause_Movie
+If $speed<0 "Set speed 1"
+Mul_Var speed 2
+Set frame_dwell 1
+.
+
+Define SlowFwd_Movie 0
+If $movie_paused Unpause_Movie
+Set speed 1
+Mul_Var frame_dwell 2
+.
+
+Define FwdPlay_Movie 0
+If $movie_paused Unpause_Movie
+If $speed<0 "Set speed 1"
+Assign speed max(1,ceil($speed/2))
+Set frame_dwell 1
+.
+
+Define RevPlay_Movie 0
+If $movie_paused Unpause_Movie
+If $speed>0 "Set speed -1"
+Assign speed min(-1,floor($speed/2))
+Set frame_dwell 1
+.
+
+Define FwdStep_Movie 0
+Pause_Movie
+Increment frame_idx
+Bound_Frame
+Show_Current_Frame
+Update_Slider $frame_idx
+.
+
+Define RevStep_Movie 0
+Pause_Movie
+Decrement frame_idx
+Bound_Frame
+Show_Current_Frame
+Update_Slider $frame_idx
+.
+
+
+## Wait_For_Unpausing
+##############################
+Define Wait_For_Unpausing 0
+do
+	usleep 1000
+	os events quit
+while '$movie_paused'
+.
+
+
+
+# Init viewer
+#If $depth==3
+#  Then RGB_Viewers
+#  Else Mono_Viewer
+Mono_Viewer		# "mono" viewer will display color on a 24 bit display
+Label_Viewer v "$jpeg_file"
+Assign vd depth('$DISPLAY')
+
+# Init Slider
+If !var_exists(n_frames) "error_exit 'variable n_frames does not exist!?'"
+If '$n_frames>1'	Init_Slider
+
+
+
+## Display_Frame
+#############################
+
+Set deinterlace 0		# default value
+
+Define TogDeinterlace 0
+Set deinterlace $toggle_state
+.
+
+Define Display_Frame 0
+If $deinterlace
+  Then Display_Interlace
+  Else Display_Vanilla
+.
+
+Define Display_Vanilla 0
+platforms
+  upload g_img _img
+  quit
+Show_Bytes _img v
+.
+
+Define Display_Interlace 0
+VMov field oddlines
+view embed v field 0 0 quit
+VMov field evenlines
+view embed v field 0 nrows(field) quit
+.
+
+
+## Display_Image
+##################################
+Define Display_Image 0
+#advise "-> Press <Crtl-D> to display image"
+#Pause
+view wait v quit
+Get_Next _img $jpeg_file
+Display_Frame
+advise "-> Press <Crtl-D> to exit"
+Pause
+exit
+.
+
+Zero_Time
+
+
+# Image display
+If '$n_frames==1' Display_Image
+
+# Movie display
+Tell_If "-> Right-click in viewer to exit"
+Tell_If " "
+Set frame_idx 1
+
+# try to update the display at 60 Hz
+Set want_ms 16.666
+
+#verbose yes
+
+do
+	# Get frame
+#advise "top of loop, frame_idx = $frame_idx"
+	# Check events
+	os events quit
+
+	Bound_Frame
+
+	Update_Slider $frame_idx
+	Show_Current_Frame
+	# Check events
+	os events quit
+	If $right_button_down exit
+	
+	If $movie_paused Wait_For_Unpausing
+
+	Assign frame_idx $frame_idx+$speed
+	Assign frame_idx min($frame_idx,$n_frames-1)
+
+	Check_Time
+	# When we pause, we need to add the pause time to want_ms!
+	If $total_ms<$want_ms "usleep 1000*($want_ms-$total_ms)"
+	Add_Var want_ms 16.666*$frame_dwell
+while 1
+
