@@ -48,6 +48,7 @@ static int c_##fname( char c )						\
 	else return 0;							\
 }
 
+DECLARE_CHAR_FUNC( isprint )
 DECLARE_CHAR_FUNC( islower )
 DECLARE_CHAR_FUNC( isupper )
 DECLARE_CHAR_FUNC( isalpha )
@@ -103,6 +104,17 @@ static const char *_format_time(QSP_ARG_DECL  long secs)
 	// remove trailing newline...
 	assert( s[ strlen(s)-1 ] == '\n' );
 	s[ strlen(s)-1 ] = 0;
+	return s;
+}
+
+// When are these allocated strings freed???
+
+static const char *_ascii_to_string(QSP_ARG_DECL  long value)
+{
+	char *s;
+	s=getbuf(2);
+	s[0] = value & 0xff;
+	s[1] = 0;
 	return s;
 }
 
@@ -731,6 +743,7 @@ DECLARE_D2_FUNCTION(	pow,	pow,		FVPOW,		FVSPOW,		FVSPOW2		)
 DECLARE_D2_FUNCTION(	max,	maxfunc,	FVMAX,		FVSMAX,		FVSMAX		)
 DECLARE_D2_FUNCTION(	min,	minfunc,	FVMIN,		FVSMIN,		FVSMIN		)
 
+// STR1 functions take one string as input and return double
 DECLARE_STR1_FUNCTION(	strlen,		dstrlen		)
 DECLARE_STR1_FUNCTION(	var_exists,	dvarexists	)
 DECLARE_STR1_FUNCTION(	macro_exists,	dmacroexists	)
@@ -747,11 +760,16 @@ DECLARE_STR3_FUNCTION(	strncmp,dstrncmp	)
 
 // shouldn't these be string valued functions that translat a whole string?
 // But what about the mapping functions???
+
+// STRV functions take a string as input and produce a string as output
 DECLARE_STRV_FUNCTION(	tolower, s_tolower,	FVTOLOWER, INVALID_VFC,	INVALID_VFC	)
 DECLARE_STRV_FUNCTION(	toupper, s_toupper,	FVTOUPPER, INVALID_VFC,	INVALID_VFC	)
 
+// STRV3 takes a long integer as input and produces a string
 DECLARE_STRV3_FUNCTION(	format_time, _format_time )
+DECLARE_STRV3_FUNCTION(	ascii_char, _ascii_to_string )
 
+DECLARE_CHAR_FUNCTION(	isprint, c_isprint,	FVISPRINT, INVALID_VFC, INVALID_VFC	)
 DECLARE_CHAR_FUNCTION(	islower, c_islower,	FVISLOWER, INVALID_VFC, INVALID_VFC	)
 DECLARE_CHAR_FUNCTION(	isupper, c_isupper,	FVISUPPER, INVALID_VFC, INVALID_VFC	)
 DECLARE_CHAR_FUNCTION(	isalpha, c_isalpha,	FVISALPHA, INVALID_VFC, INVALID_VFC	)
@@ -762,7 +780,10 @@ DECLARE_CHAR_FUNCTION(	iscntrl, c_iscntrl,	FVISCNTRL, INVALID_VFC, INVALID_VFC	)
 DECLARE_CHAR_FUNCTION(	isblank, c_isblank,	FVISBLANK, INVALID_VFC, INVALID_VFC	)
 
 // This was called prec_name, but that was defined by a C macro to be prec_item.item_name!?
+// string in, string out, but input string should be an object name
 DECLARE_STRV_FUNCTION(	precision,	_precfunc, INVALID_VFC, INVALID_VFC, INVALID_VFC	)
+
+// two strings in, one string out
 DECLARE_STRV2_FUNCTION(	strcat,		strcat_func	)
 
 DECLARE_SIZE_FUNCTION(	depth,	_dpfunc,	0	)
