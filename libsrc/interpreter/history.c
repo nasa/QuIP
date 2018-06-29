@@ -489,7 +489,7 @@ static inline Node *cycle_match_info( Node *np, int direction, Match_Cycle *mc_p
 
 static const char * cyc_item_match(QSP_ARG_DECL  const char *so_far, int direction )
 {
-	Frag_Match_Info *fmi_p, *first_fmi_p;
+	Frag_Match_Info *fmi_p;
 	Match_Cycle *mc_p;
 	const char *s;
 	Node *np;

@@ -31,7 +31,8 @@ typedef enum {
 	POSN_FUNCTYP,	// 12	1 positionable arg
 	ILACE_FUNCTYP,	// 13	1 interlaceable arg
 	STRV2_FUNCTYP,	// 14	string-valued function, two string args
-	DOBJV_STR_ARG_FUNCTYP,	// 15	data_obj-valued function, one string arg
+	STRV3_FUNCTYP,	// 15	string-valued function, one long arg
+	DOBJV_STR_ARG_FUNCTYP,	// 16	data_obj-valued function, one string arg
 	N_FUNC_TYPES	// must be last
 } Function_Type;
 
@@ -44,7 +45,7 @@ typedef union {
  	double	      (*sz_func)(QSP_ARG_DECL  Item *);
 	const char *  (*strv_func)(QSP_ARG_DECL  const char *);
 	const char *  (*strv2_func)(QSP_ARG_DECL  const char *, const char *);
-	//void          (*strv_func)(char *, const char *);
+	const char *  (*strv3_func)(QSP_ARG_DECL  time_t );
 	double	      (*ts_func)(QSP_ARG_DECL  Item *,dimension_t frm);
  	double	      (*str1_func)(QSP_ARG_DECL  const char *);
  	double	      (*str2_func)(const char *,const char *);
@@ -184,6 +185,9 @@ ITEM_CHECK_PROT(Quip_Function,function)
 
 #define DECLARE_STRV2_FUNCTION( name, func )	\
 	DECLARE_FUNCTION(name,func,INVALID_VFC,INVALID_VFC,INVALID_VFC,STRV2_FUNCTYP,strv2_func,-1)
+
+#define DECLARE_STRV3_FUNCTION( name, func )	\
+	DECLARE_FUNCTION(name,func,INVALID_VFC,INVALID_VFC,INVALID_VFC,STRV3_FUNCTYP,strv3_func,-1)
 
 #define DECLARE_CHAR_FUNCTION( name, func, code1, code2, code3 )	\
 	DECLARE_FUNCTION(name,func,code1,code2,code3,CHAR_FUNCTYP,char_func,-1)
