@@ -47,6 +47,8 @@ dnl	BUG might be faster if we had our own ctable, but these are not expected to 
 _VEC_FUNC_2V( vtolower,	dst = (dest_type) ( src1 >= CHAR_CONST(A) && src1 <= CHAR_CONST(Z) ? src1 + 32 : src1 ) )
 _VEC_FUNC_2V( vtoupper,	dst = (dest_type) ( src1 >= CHAR_CONST(a) && src1 <= CHAR_CONST(z) ? src1 - 32 : src1 ) )
 	
+// BUG make the right test here...
+_VEC_FUNC_2V( visprint,	dst = (dest_type) ( src1 >= CHAR_CONST( ) && src1 <= CHAR_CONST(~) ? 1 : 0 ) )
 _VEC_FUNC_2V( vislower,	dst = (dest_type) ( src1 >= CHAR_CONST(a) && src1 <= CHAR_CONST(z) ? 1 : 0 ) )
 _VEC_FUNC_2V( visupper,	dst = (dest_type) ( src1 >= CHAR_CONST(A) && src1 <= CHAR_CONST(Z) ? 1 : 0 ) )
 _VEC_FUNC_2V( visalpha,	dst = (dest_type) ( ((src1 >= CHAR_CONST(A) && src1 <= CHAR_CONST(Z))||(src1 >= CHAR_CONST(a) && src1 <= CHAR_CONST(z))) ? 1 : 0 ) )
@@ -65,6 +67,7 @@ dnl	CPU versions using ctype.h macros
 _VEC_FUNC_2V( vtolower,	dst = (dest_type) tolower( (int) src1 )	)
 _VEC_FUNC_2V( vtoupper,	dst = (dest_type) toupper( (int) src1 )	)
 
+_VEC_FUNC_2V( visprint,	dst = (dest_type) isprint( (int) src1 )	)
 _VEC_FUNC_2V( vislower,	dst = (dest_type) islower( (int) src1 )	)
 _VEC_FUNC_2V( visupper,	dst = (dest_type) isupper( (int) src1 )	)
 _VEC_FUNC_2V( visalpha,	dst = (dest_type) isalpha( (int) src1 )	)

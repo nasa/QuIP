@@ -263,6 +263,191 @@ static double disreg(QSP_ARG_DECL  const char *path)
 	else	return 0.0;
 }
 
+static void set_day_of_week(struct tm *tm_p, const char *date_string)
+{
+	int d;
+	switch(date_string[0]){
+		case 'S':
+			if( date_string[1] == 'u' ) d=0;
+			else if( date_string[1] == 'a' ) d=6;
+			else {
+				NWARN("bad day of week!?");
+				return;
+			}
+			break;
+		case 'M':	d=1; break;
+		case 'T':
+			if( date_string[1] == 'u' ) d=2;
+			else if( date_string[1] == 'h' ) d=4;
+			else {
+				NWARN("bad day of week!?");
+				return;
+			}
+			break;
+		case 'W':	d=3; break;
+		case 'F':	d=5; break;
+		default:
+			NWARN("bad day of week!?");
+			return;
+	}
+	tm_p->tm_wday = d;
+}
+
+static void set_month(struct tm *tm_p, const char *date_string)
+{
+	int m;
+	switch(date_string[0]){
+		case 'J':
+			if( date_string[1] == 'a' ) m=0;
+			else if( date_string[1] == 'u' ){
+				if( date_string[2] == 'n' ) m=5;
+				else if( date_string[2] == 'l' ) m=6;
+				else {
+					NWARN("bad month!?");
+					return;
+				}
+			} else {
+				NWARN("bad month!?");
+				return;
+			}
+			break;
+		case 'F':	m=1; break;
+		case 'M':
+			if( date_string[2] == 'r' ) m=2;
+			else if( date_string[2] == 'y' ) m=4;
+			else {
+				NWARN("bad month!?");
+				return;
+			}
+			break;
+		case 'A':
+			if( date_string[1] == 'p' ) m=3;
+			else if( date_string[1] == 'u' ) m=7;
+			else {
+				NWARN("bad month!?");
+				return;
+			}
+			break;
+		case 'S':	m=8; break;
+		case 'O':	m=9; break;
+		case 'N':	m=10; break;
+		case 'D':	m=11; break;
+		default:
+			NWARN("bad month!?");
+			return;
+	}
+	tm_p->tm_mon = m;
+}
+
+static int two_digit_number(const char *s)
+{
+	int n;
+	n = s[0]-'0';
+	n *= 10;
+	n += s[1]-'0';
+	return n;
+}
+
+static void set_day_of_month(struct tm *tm_p, const char *date_string)
+{
+	int d;
+	d = two_digit_number(date_string);
+	if( d > 31 ){
+		NWARN("Bad day of month!?");
+		return;
+	}
+	tm_p->tm_mday = d;
+}
+
+static void set_hour(struct tm *tm_p, const char *date_string)
+{
+	int h;
+	h = two_digit_number(date_string);
+	if( h > 23 ){
+		NWARN("Bad hour!?");
+		return;
+	}
+	tm_p->tm_hour = h;
+}
+
+static void set_minute(struct tm *tm_p, const char *date_string)
+{
+	int m;
+	m = two_digit_number(date_string);
+	if( m > 59 ){
+		NWARN("Bad hour!?");
+		return;
+	}
+	tm_p->tm_min = m;
+}
+
+static void set_second(struct tm *tm_p, const char *date_string)
+{
+	int s;
+	s = two_digit_number(date_string);
+	if( s > 59 ){
+		NWARN("Bad second!?");
+		return;
+	}
+	tm_p->tm_sec = s;
+}
+
+static void set_year(struct tm *tm_p, const char *date_string)
+{
+	int y;
+	y = two_digit_number(date_string);
+	y *= 100;
+	y += two_digit_number(&date_string[2]);
+	if( y < 1970 || y > 2038 ){
+		NWARN("Bad year!?");
+		return;
+	}
+	tm_p->tm_year = y - 1900;
+}
+
+// unix_time() expects a 24 character string of this form:
+// Thu Nov 24 18:22:48 1986
+
+#ifdef LIKE_A_COMMENT
+struct tm {
+        int     tm_sec;         /* seconds after the minute [0-60] */
+        int     tm_min;         /* minutes after the hour [0-59] */
+        int     tm_hour;        /* hours since midnight [0-23] */
+        int     tm_mday;        /* day of the month [1-31] */
+        int     tm_mon;         /* months since January [0-11] */
+        int     tm_year;        /* years since 1900 */
+        int     tm_wday;        /* days since Sunday [0-6] */
+        int     tm_yday;        /* days since January 1 [0-365] */
+        int     tm_isdst;       /* Daylight Savings Time flag */
+        long    tm_gmtoff;      /* offset from CUT in seconds */
+        char    *tm_zone;       /* timezone abbreviation */
+};
+#endif // LIKE_A_COMMENT
+
+
+static double unix_time(QSP_ARG_DECL  const char *date_string)
+{
+	struct tm tm1;
+	time_t t;
+
+	set_day_of_week(&tm1,date_string);
+	set_month(&tm1,&date_string[4]);
+	set_day_of_month(&tm1,&date_string[8]);
+	set_hour(&tm1,&date_string[11]);
+	set_minute(&tm1,&date_string[14]);
+	set_second(&tm1,&date_string[17]);
+	set_year(&tm1,&date_string[20]);
+
+	tm1.tm_yday = (-1);
+	tm1.tm_isdst = 0;
+	tm1.tm_gmtoff = 0;
+	tm1.tm_zone = NULL;
+
+	t = mktime(&tm1);
+
+	return (double) t;
+}
+
 static double bitsum(double num)
 {
 	long l;
@@ -753,6 +938,7 @@ DECLARE_STR1_FUNCTION(	mod_time,	modtimefunc	)
 DECLARE_STR1_FUNCTION(  ascii,		ascii_val	)
 DECLARE_STR1_FUNCTION(	is_directory,	disdir	 )
 DECLARE_STR1_FUNCTION(	is_regfile,	disreg	 )
+DECLARE_STR1_FUNCTION(	unix_time,	unix_time	 )
 
 DECLARE_STR2_FUNCTION(	strcmp,	dstrcmp		)
 DECLARE_STR2_FUNCTION(	strstr,	dstrstr		)
