@@ -93,13 +93,16 @@ static const char *_format_time(QSP_ARG_DECL  long secs)
 	s=getbuf(64);
 	tm_p = gmtime_r(&secs,&tm1);
 	if( tm_p != &tm1 ){
-		strcpy(s,"gmtime_r error!?");
+		strcpy(s,"gmtime_r error!?\n");
 	} else {
 		t = asctime_r( &tm1, s );
 		if( t != s ){
-			strcpy(s,"asctime_r error!?");
+			strcpy(s,"asctime_r error!?\n");
 		}
 	}
+	// remove trailing newline...
+	assert( s[ strlen(s)-1 ] == '\n' );
+	s[ strlen(s)-1 ] = 0;
 	return s;
 }
 
