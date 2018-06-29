@@ -121,7 +121,7 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 		rf = 1;
 	} else {
 		if( verbose ) {
-			sprintf(msg_str,"Range of %s before scaling:  %g - %g",OBJ_NAME(dp),omn,omx);
+			sprintf(msg_str,"scale:  Range of %s before scaling:  %g - %g",OBJ_NAME(dp),omn,omx);
 			prt_msg(msg_str);
 		}
 		rf = (desmax-desmin)/(omx-omn);
