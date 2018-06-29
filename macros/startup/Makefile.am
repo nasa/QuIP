@@ -16,6 +16,7 @@ macros_DATA	=	Xgraph.scr		\
 			ctrack.scr		\
 			jpinfo.scr		\
 			jpsee.scr		\
+			gpsee.scr		\
 			jpz.scr			\
 			jpshr.scr		\
 			jpshow.scr		\

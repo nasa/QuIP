@@ -22,6 +22,8 @@
 #include <math.h>
 #endif /* HAVE_MATH_H */
 
+#include <time.h>
+
 //#ifdef HAVE_GSL
 //#include "gsl/gsl_sf_gamma.h"
 //#endif /* HAVE_GSL */
@@ -56,8 +58,8 @@ DECLARE_CHAR_FUNC( iscntrl )
 DECLARE_CHAR_FUNC( isblank )
 
 /*
-static int c_tolower( char c ) { return( tolower(c) ); }
-static int c_toupper( char c ) { return( toupper(c) ); }
+static int c_tolower( char c ) { return tolower(c); }
+static int c_toupper( char c ) { return toupper(c); }
 */
 
 #define DECLARE_STRINGMAP_FUNCTION( funcname, test_macro, map_macro )	\
@@ -77,11 +79,32 @@ static const char * funcname(QSP_ARG_DECL  const char *s )				\
 		s++;							\
 	}								\
 	*p = 0;								\
-	return( t );							\
+	return t;							\
 }
 
 DECLARE_STRINGMAP_FUNCTION(s_tolower,isupper,tolower)
 DECLARE_STRINGMAP_FUNCTION(s_toupper,islower,toupper)
+
+static const char *_format_time(QSP_ARG_DECL  long secs)
+{
+	char *s, *t;
+	struct tm tm1, *tm_p;
+
+	s=getbuf(64);
+	tm_p = gmtime_r(&secs,&tm1);
+	if( tm_p != &tm1 ){
+		strcpy(s,"gmtime_r error!?\n");
+	} else {
+		t = asctime_r( &tm1, s );
+		if( t != s ){
+			strcpy(s,"asctime_r error!?\n");
+		}
+	}
+	// remove trailing newline...
+	assert( s[ strlen(s)-1 ] == '\n' );
+	s[ strlen(s)-1 ] = 0;
+	return s;
+}
 
 static double modtimefunc(QSP_ARG_DECL  const char *s)
 {
@@ -90,9 +113,9 @@ static double modtimefunc(QSP_ARG_DECL  const char *s)
 
 	if( stat(s,&statb) < 0 ){
 		tell_sys_error(s);
-		return(0.0);
+		return 0.0;
 	}
-	return( (double) statb.st_mtime );
+	return (double) statb.st_mtime;
 #else /* ! HAVE_SYS_STAT_H */
 
 	return 0.0;
@@ -132,7 +155,7 @@ static double rn_uni(double arg)		/* arg is not used... */
 	_warn(DEFAULT_QSP_ARG  "rn_uni:  no drand48!?");
 	d=1.0;
 #endif // ! HAVE_DRAND48
-	return( d );
+	return d;
 }
 
 static double rn_number(double dlimit)
@@ -143,36 +166,36 @@ static double rn_number(double dlimit)
 	ilimit=(int)dlimit;
 	iret=(int)rn(ilimit);
 	dret=iret;
-	return(dret);
+	return dret;
 }
 
 static double dstrstr(const char *s1,const char *s2)
 {
 	char *s;
 	s=strstr(s1,s2);
-	if( s == NULL ) return(-1);
-	else return( (double)(s - s1) );
+	if( s == NULL ) return -1;
+	else return (double)(s - s1);
 }
 
 static double dstrcmp(const char *s1,const char *s2)
 {
 	double d;
 	d=strcmp(s1,s2);
-	return(d);
+	return d;
 }
 
 static double dstrncmp(const char *s1,const char *s2,int n)
 {
 	double d;
 	d=strncmp(s1,s2,n);
-	return(d);
+	return d;
 }
 
 static double dstrlen(QSP_ARG_DECL  const char *s1)
 {
 	double d;
 	d=strlen(s1);
-	return(d);
+	return d;
 }
 
 static double ascii_val(QSP_ARG_DECL  const char *s)
@@ -210,8 +233,8 @@ static double dmacroexists(QSP_ARG_DECL  const char *s)
 static double dexists(QSP_ARG_DECL  const char *fname)
 {
 	if( path_exists(fname) )
-		return(1.0);
-	else	return(0.0);
+		return 1.0;
+	else	return 0.0;
 }
 
 static double disdir(QSP_ARG_DECL  const char *path)
@@ -242,19 +265,19 @@ static double bitsum(double num)
 		bit <<= 1;
 	}
 	num = sum;
-	return( num );
+	return num;
 }
 
 static double maxfunc(double a1,double a2)
 {
-	if( a1 >= a2 ) return(a1);
-	else return(a2);
+	if( a1 >= a2 ) return a1;
+	else return a2;
 }
 
 static double minfunc(double a1,double a2)
 {
-	if( a1 <= a2 ) return(a1);
-	else return(a2);
+	if( a1 <= a2 ) return a1;
+	else return a2;
 }
 
 static Item_Class *sizable_icp=NULL;
@@ -313,10 +336,10 @@ DECLARE_ADD_FUNCTION(subscriptable,Subscript_Functions)
 									\
 Item *find_##type_stem(QSP_ARG_DECL  const char *name )			\
 {									\
-	if( type_stem##_icp == NULL )				\
+	if( type_stem##_icp == NULL )					\
 		init_##type_stem##_class(SINGLE_QSP_ARG);		\
 									\
-	return( get_member(type_stem##_icp,name) );		\
+	return get_member(type_stem##_icp,name);			\
 }
 
 DECLARE_FIND_FUNCTION(sizable)
@@ -385,24 +408,24 @@ const char *get_object_prec_string(QSP_ARG_DECL  Item *ip )	// non-iOS
 {
 	Size_Functions *sfp;
 
-	if( ip == NULL ) return("u_byte");
+	if( ip == NULL ) return "u_byte";
 
 	sfp = get_sizable_functions(QSP_ARG  ip);
 	assert( sfp != NULL );
 
-	return( (*sfp->prec_func)(QSP_ARG  ip) );
+	return (*sfp->prec_func)(QSP_ARG  ip);
 }
 
 double get_object_size(QSP_ARG_DECL  Item *ip,int d_index)
 {
 	Size_Functions *sfp;
 
-	if( ip == NULL ) return(0.0);
+	if( ip == NULL ) return 0.0;
 
 	sfp = get_sizable_functions(QSP_ARG  ip);
 	assert( sfp != NULL );
 
-	return( (*sfp->sz_func)(QSP_ARG  ip,d_index) );
+	return (*sfp->sz_func)(QSP_ARG  ip,d_index);
 }
 
 #endif /* ! BUILD_FOR_OBJC */
@@ -410,25 +433,25 @@ double get_object_size(QSP_ARG_DECL  Item *ip,int d_index)
 static double get_posn(QSP_ARG_DECL  Item *ip, int index)
 {
 	Position_Functions *pfp;
-	if( ip == NULL ) return(0.0);
+	if( ip == NULL ) return 0.0;
 	pfp = get_positionable_functions(QSP_ARG  ip);
 	assert( pfp != NULL );
 	assert( index >= 0 && index <= 1 );
 
-	return( (*pfp->posn_func)(QSP_ARG  ip,index) );
+	return (*pfp->posn_func)(QSP_ARG  ip,index);
 }
 
 static double get_interlace_flag(QSP_ARG_DECL  Item *ip)
 {
 	Interlace_Functions *ifp;
 
-	if( ip == NULL ) return(0.0);
+	if( ip == NULL ) return 0.0;
 
 	ifp = get_interlaceable_functions(QSP_ARG  ip);
 	assert( ifp != NULL );
 	assert( ifp->ilace_func != NULL );
 
-	return( (*ifp->ilace_func)(QSP_ARG  ip) );
+	return (*ifp->ilace_func)(QSP_ARG  ip);
 }
 
 static double get_timestamp(QSP_ARG_DECL  Item *ip,int func_index,dimension_t frame)
@@ -437,7 +460,7 @@ static double get_timestamp(QSP_ARG_DECL  Item *ip,int func_index,dimension_t fr
 	Member_Info *mip;
 	double d;
 
-	if( ip == NULL ) return(0.0);
+	if( ip == NULL ) return 0.0;
 
 	if( tsable_icp == NULL )
 		init_tsable_class(SINGLE_QSP_ARG);
@@ -448,7 +471,7 @@ static double get_timestamp(QSP_ARG_DECL  Item *ip,int func_index,dimension_t fr
 	tsfp = (Timestamp_Functions *) mip->mi_data;
 
 	d = (*(tsfp->timestamp_func[func_index]))(QSP_ARG  ip,frame);
-	return( d );
+	return d;
 }
 
 Item *sub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
@@ -459,7 +482,7 @@ Item *sub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
 	/* currently data objects are the only sizables
 		which can be subscripted */
 
-	if( ip == NULL ) return(ip);
+	if( ip == NULL ) return ip;
 
 	if( subscriptable_icp == NULL )
 		init_subscriptable_class(SINGLE_QSP_ARG);
@@ -473,10 +496,10 @@ Item *sub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
 		sprintf(ERROR_STRING,"Can't subscript object %s!?",
 			ip->item_name);
 		warn(ERROR_STRING);
-		return(NULL);
+		return NULL;
 	}
 
-	return( (*sfp->subscript)(QSP_ARG  ip,index) );
+	return (*sfp->subscript)(QSP_ARG  ip,index);
 }
 
 Item *csub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
@@ -487,7 +510,7 @@ Item *csub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
 	/* currently data objects are the only sizables
 		which can be subscripted */
 
-	if( ip == NULL ) return(ip);
+	if( ip == NULL ) return ip;
 
 	if( subscriptable_icp == NULL )
 		init_subscriptable_class(SINGLE_QSP_ARG);
@@ -501,17 +524,17 @@ Item *csub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
 		sprintf(ERROR_STRING,"Can't subscript object %s",
 			ip->item_name);
 		warn(ERROR_STRING);
-		return(NULL);
+		return NULL;
 	}
 
-	return( (*sfp->csubscript)(QSP_ARG  ip,index) );
+	return (*sfp->csubscript)(QSP_ARG  ip,index);
 }
 
 // We want to be able to pass these functions any type
 // of object, but we can't cast from void * to IOS_Object...
 
 static double _ilfunc(QSP_ARG_DECL  Item *ip)
-{ return( get_interlace_flag(QSP_ARG  ip) ); }
+{ return get_interlace_flag(QSP_ARG  ip); }
 
 static double _x_func(QSP_ARG_DECL  Item *ip)
 { return get_posn(QSP_ARG  ip,0); }
@@ -520,19 +543,19 @@ static double _y_func(QSP_ARG_DECL  Item *ip)
 { return get_posn(QSP_ARG  ip,1); }
 
 static double _dpfunc(QSP_ARG_DECL  Item *ip)
-{ return( get_object_size(QSP_ARG  ip,0) ); }
+{ return get_object_size(QSP_ARG  ip,0); }
 
 static double _colfunc(QSP_ARG_DECL  Item *ip)
-{ return( get_object_size(QSP_ARG  ip,1) ); }
+{ return get_object_size(QSP_ARG  ip,1); }
 
 static double _rowfunc(QSP_ARG_DECL  Item *ip)
-{ return( get_object_size(QSP_ARG  ip,2) ); }
+{ return get_object_size(QSP_ARG  ip,2); }
 
 static double _frmfunc(QSP_ARG_DECL  Item *ip)
-{ return( get_object_size(QSP_ARG  ip,3) ); }
+{ return get_object_size(QSP_ARG  ip,3); }
 
 static double _seqfunc(QSP_ARG_DECL  Item *ip)
-{ return( get_object_size(QSP_ARG  ip,4) ); }
+{ return get_object_size(QSP_ARG  ip,4); }
 
 static const char *_precfunc(QSP_ARG_DECL  const char *s)
 {
@@ -559,7 +582,7 @@ static double _nefunc(QSP_ARG_DECL  Item *ip)
 	for(i=0;i<N_DIMENSIONS;i++)
 		d *= get_object_size(QSP_ARG  ip,i);
 
-	return(d);
+	return d;
 }
 
 #define SIGN(x)		(x<0?-1.0:1.0)
@@ -611,25 +634,25 @@ float erfinvf(float x)
 
 
 static double _secfunc(QSP_ARG_DECL  Item *ip, dimension_t frame )
-{ return( get_timestamp(QSP_ARG  ip,0,frame)); }
+{ return get_timestamp(QSP_ARG  ip,0,frame); }
 
 static double _msecfunc(QSP_ARG_DECL  Item *ip, dimension_t frame )
-{ return( get_timestamp(QSP_ARG  ip,1,frame) ); }
+{ return get_timestamp(QSP_ARG  ip,1,frame); }
 
 static double _usecfunc(QSP_ARG_DECL  Item *ip, dimension_t frame )
-{ return( get_timestamp(QSP_ARG  ip,2,frame) ); }
+{ return get_timestamp(QSP_ARG  ip,2,frame); }
 
 static double signfunc(double x)
-{ if( x > 0 ) return(1.0); else if( x < 0 ) return(-1.0); else return(0.0); }
+{ if( x > 0 ) return 1.0; else if( x < 0 ) return -1.0; else return 0.0; }
 
 static int isnanfunc(double x)
-{ return isnan(x) ; }
+{ return isnan(x); }
 
 static int isinffunc(double x)
-{ return isinf(x) ; }
+{ return isinf(x); }
 
 static int isnormalfunc(double x)
-{ return isnormal(x) ; }
+{ return isnormal(x); }
 
 #ifndef HAVE_ROUND
 double round(double arg) { return floor(arg+0.5); }
@@ -726,6 +749,8 @@ DECLARE_STR3_FUNCTION(	strncmp,dstrncmp	)
 // But what about the mapping functions???
 DECLARE_STRV_FUNCTION(	tolower, s_tolower,	FVTOLOWER, INVALID_VFC,	INVALID_VFC	)
 DECLARE_STRV_FUNCTION(	toupper, s_toupper,	FVTOUPPER, INVALID_VFC,	INVALID_VFC	)
+
+DECLARE_STRV3_FUNCTION(	format_time, _format_time )
 
 DECLARE_CHAR_FUNCTION(	islower, c_islower,	FVISLOWER, INVALID_VFC, INVALID_VFC	)
 DECLARE_CHAR_FUNCTION(	isupper, c_isupper,	FVISUPPER, INVALID_VFC, INVALID_VFC	)

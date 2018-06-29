@@ -302,6 +302,7 @@ static char *_get_expr_stringbuf( QSP_ARG_DECL   int index, long min_len )
 %token <func_p> STR3_FUNC
 %token <func_p> STRV_FUNC
 %token <func_p> STRV2_FUNC
+%token <func_p> STRV3_FUNC
 %token <func_p> CHAR_FUNC
 // What is the difference between an E_STRING and an E_QSTRING??
 // QSTRING is quoted, and can be used to initialize a data object.
@@ -367,6 +368,10 @@ strv_func	: STRV_FUNC '(' e_string /* data_object*/  ')' {
 			$$->sen_func_p = $1;
 			}
 
+		| STRV3_FUNC '(' expression ')' {
+			$$=NODE1(N_STRV3FUNC,$3);
+			$$->sen_func_p = $1;
+			}
 		;
 
 e_string	: E_STRING {
@@ -1387,6 +1392,12 @@ dump_enode(QSP_ARG  enp);
 		tsp = scalar_for_string(s);
 		break;
 
+	case N_STRV3FUNC:		// eval_expr
+		tsp2 = eval_expr(enp->sen_child[0]); 
+		s = (*enp->sen_func_p->fn_u.strv3_func)( QSP_ARG llong_for_scalar(tsp2) );
+		tsp = scalar_for_string(s);
+		break;
+
 	case N_TSFUNC:		// eval_expr
 		szp = eval_tsbl_expr(QSP_ARG  enp->sen_child[0]);
 		tsp2=eval_expr(enp->sen_child[1]);
@@ -1965,6 +1976,7 @@ static int token_for_func_type(int type)
 		case STR3_FUNCTYP:	return(STR3_FUNC);	break;
 		case STRV_FUNCTYP:	return(STRV_FUNC);	break;
 		case STRV2_FUNCTYP:	return(STRV2_FUNC);	break;
+		case STRV3_FUNCTYP:	return(STRV3_FUNC);	break;
 		case CHAR_FUNCTYP:	return(CHAR_FUNC);	break;
 		case SIZE_FUNCTYP:	return(SIZE_FUNC);	break;
 		case DOBJ_FUNCTYP:	return(DATA_FUNC);	break;

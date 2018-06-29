@@ -834,8 +834,9 @@ Plot_X_Axis_Offset $1 $2 $3 $4 0
 Mul_Var x_tick_len -1
 .
 
-Define Plot_Y_Axis 4 ymin ymax xpos tick_spacing
-Plot_Y_Axis_With_Ticks $1 $2 $3 $1 $2 $4
+Define Plot_Y_Axis 4 ymin ymax tick_spacing xpos
+advise "Plot_Y_Axis $1 $2 $3 $4 BEGIN"
+Plot_Y_Axis_With_Ticks $1 $2 $4 $1 $2 $3
 .
 
 Define Plot_Y_Axis_Right 4 ymin ymax xpos tick_spacing

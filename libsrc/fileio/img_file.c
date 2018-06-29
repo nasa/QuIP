@@ -1008,10 +1008,13 @@ static void init_suffixes(SINGLE_QSP_ARG_DECL)
 	INIT_SUFFIX( "jpg",	IFT_JPEG);
 	INIT_SUFFIX( "JPG",	IFT_JPEG);
 	INIT_SUFFIX( "lml",	IFT_LML	);
-	INIT_SUFFIX( "asc",	IFT_ASC	);
 	INIT_SUFFIX( "jpeg",	IFT_JPEG);
 	INIT_SUFFIX( "mjpg",	IFT_JPEG);
+	INIT_SUFFIX( "mjpeg",	IFT_JPEG);
 #endif /* HAVE_JPEG_SUPPORT */
+
+	// this was in the ifdef HAVE_JPEG_SUPPORT - why?
+	INIT_SUFFIX( "asc",	IFT_ASC	);
 
 #ifdef HAVE_PNG
 	INIT_SUFFIX( "png",	IFT_PNG	);

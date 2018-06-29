@@ -58,7 +58,8 @@ typedef enum {
 	N_STRING,			/* 46 */
 	N_STRV2FUNC,			/* 47 */
 	N_DOBJV_STR_ARG_FUNC,		/* 48 */
-	/* N_SLCT_CHAR */		/* 49 */	/* obsolete? */
+	N_STRV3FUNC,			/* 49 */
+	/* N_SLCT_CHAR */		/* XX */	/* obsolete? */
 } Scalar_Expr_Node_Code;
 
 #define MAX_SEN_CHILDREN  3
