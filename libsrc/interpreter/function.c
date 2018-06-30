@@ -399,7 +399,8 @@ static void set_year(struct tm *tm_p, const char *date_string)
 	y *= 100;
 	y += two_digit_number(&date_string[2]);
 	if( y < 1970 || y > 2038 ){
-		NWARN("Bad year!?");
+		sprintf(DEFAULT_ERROR_STRING,"Bad year %d!? (date_string = \"%s\"",y,date_string);
+		NWARN(DEFAULT_ERROR_STRING);
 		return;
 	}
 	tm_p->tm_year = y - 1900;
@@ -443,7 +444,8 @@ static double unix_time(QSP_ARG_DECL  const char *date_string)
 	tm1.tm_gmtoff = 0;
 	tm1.tm_zone = NULL;
 
-	t = mktime(&tm1);
+	//t = mktime(&tm1);	// mktime uses local timezone settings...
+	t = timegm(&tm1);	// UTC
 
 	return (double) t;
 }
