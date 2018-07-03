@@ -3,6 +3,8 @@
 # usage:
 #
 # Create_SVD_Objects prefix npts nparams
+# (load U matrix & datain)
+# Compute_SVD
 #
 
 If var_exists(svd_loaded) exit_file
@@ -36,6 +38,12 @@ Set std_type double
 Create_SVD_Objects $1 $2 $3
 .
 
+Define Compute_SVD 1 prefix
+numrec
+  svd ${1}_u_matrix ${1}_eigenvalues ${1}_v_matrix
+  svbk ${1}_coeffs ${1}_u_matrix ${1}_eigenvalues ${1}_v_matrix ${1}_datain
+  quit
+.
 
 # Another problem:  fit a fn of 33 pts with a quartic:
 #
