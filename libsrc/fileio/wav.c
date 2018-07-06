@@ -2,6 +2,7 @@
 #include "quip_config.h"
 
 #include <stdio.h>
+#include <ctype.h>
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -15,14 +16,49 @@
 
 #define HDR_P(ifp)	((Wav_Header *)ifp->if_hdr_p)
 
-static int valid_wav_header(Wav_Header *hd_p)
+#define wav_error(msg, ifp) _wav_error(QSP_ARG  msg, ifp)
+
+static void _wav_error(QSP_ARG_DECL  const char *msg, Image_File *ifp)
 {
-	if( strncmp(hd_p->wh_riff_label,"RIFF",4) ) return(0);
-	if( strncmp(hd_p->wh_wave_label,"WAVE",4) ) return(0);
-	if( strncmp(hd_p->wh_fmt_label,"fmt ",4) ) return(0);
-	if( strncmp(hd_p->wh_data_label,"data",4) ) return(0);
-	return(1);
+	sprintf(ERROR_STRING,"File %s:  %s!?",msg,ifp->if_name);
+	warn(ERROR_STRING);
 }
+
+#define wav_fatal_error(msg, ifp) _wav_fatal_error(QSP_ARG  msg, ifp)
+
+static void _wav_fatal_error(QSP_ARG_DECL  const char *msg, Image_File *ifp)
+{
+	wav_error(msg,ifp);
+	wav_close(QSP_ARG  ifp);
+}
+
+#define valid_riff_hdr(hd_p) _valid_riff_hdr(QSP_ARG  hd_p)
+
+static int _valid_riff_hdr(QSP_ARG_DECL  Wav_Header *hd_p)
+{
+	if( strncmp(hd_p->wh_riff_label,"RIFF",4) ){
+		warn("bad riff label!?");
+		return 0;
+	}
+	if( strncmp(hd_p->wh_wave_label,"WAVE",4) ){
+		warn("bad wave lavel!?");
+		return 0;
+	}
+	return 1;
+}
+
+#ifdef FOOBAR 
+
+	if( strncmp(hd_p->wh_fmt_label,"fmt ",4) ){
+		warn("bad fmt string!?");
+		return 0;
+	}
+	if( strncmp(hd_p->wh_data_label,"data",4) ){
+		warn("bad data string!?");
+		return 0;
+	}
+	return(1);
+#endif // FOOBAR
 
 //int _wav_to_dp(QSP_ARG_DECL  Data_Obj *dp,Wav_Header *hd_p)
 FIO_FT_TO_DP_FUNC(wav,Wav_Header)
@@ -70,7 +106,7 @@ FIO_FT_TO_DP_FUNC(wav,Wav_Header)
 
 	auto_shape_flags(OBJ_SHAPE(dp));
 
-	return(0);
+	return 0;
 }
 
 #define DEFAULT_SAMPLE_RATE	16000
@@ -100,9 +136,140 @@ static void init_wav_hdr(Wav_Header *hd_p)
 	strncpy(hd_p->wh_fmt_label,"fmt ",4);
 	strncpy(hd_p->wh_data_label,"data",4);
 
-	hd_p->wh_always_16 = 16;
-	hd_p->wh_fmt_tag = 1;
+	hd_p->wh_fmt_size = 16;
+	hd_p->wh_fmt_tag = 1;	// compression code - 1 == no compression?
 }
+
+#define read_wav_header_chunk(ifp) _read_wav_header_chunk(QSP_ARG  ifp)
+
+static int _read_wav_header_chunk(QSP_ARG_DECL  Image_File *ifp)
+{
+	if( fread(&(HDR_P(ifp)->wh_whc),sizeof(Wav_Hdr_Chunk),1,ifp->if_fp) != 1 ){
+		wav_fatal_error("Error reading WAV header chunk",ifp);
+		return -1;
+	}
+	if( ! valid_riff_hdr(HDR_P(ifp)) ){
+		wav_fatal_error("Not a WAV file",ifp);
+		return -1;
+	}
+	return 0;
+}
+
+static int is_printable(const char *s)
+{
+	while( *s ){
+		if( ! isprint(*s) ) return 0;
+		s++;
+	}
+	return 1;
+}
+
+#define read_format_chunk(ifp, wch_p) _read_format_chunk(QSP_ARG  ifp, wch_p)
+
+static int _read_format_chunk(QSP_ARG_DECL  Image_File *ifp, Wav_Chunk_Hdr *wch_p)
+{
+	int n_mandatory, n_extra;
+	char *b;
+
+	HDR_P(ifp)->wh_fhc.fhc_wch = *wch_p;	// copy chunk header
+
+	n_mandatory = sizeof(Wav_Fmt_Data);
+fprintf(stderr,"format chunk has %d mandatory bytes (should be 16?)\n",
+n_mandatory);
+	if( fread(&(HDR_P(ifp)->wh_fhc.fhc_wfd),sizeof(Wav_Fmt_Data),1,ifp->if_fp) != 1 ){
+		wav_fatal_error("Error reading format data",ifp);
+		return -1;
+	}
+	n_extra = wch_p->wch_size - n_mandatory;
+	if( n_extra == 0 ) return 0;
+
+	if( n_extra < 0 ){
+		wav_error("Bad WAV format chunk size",ifp);
+		return -1;
+	}
+
+fprintf("format chunk has %d extra bytes???\n",n_extra);
+	b = getbuf(n_extra);
+	if( fread(b,1,n_extra,ifp->if_fp) != n_extra ){
+		givbuf(b);
+		wav_error("Error reading extra format data",ifp);
+		return -1;
+	}
+	givbuf(b);	// just throw away for now...
+	return 0;
+}
+
+#define read_data_chunk(ifp, wch_p) _read_data_chunk(QSP_ARG  ifp, wch_p)
+
+static int _read_data_chunk(QSP_ARG_DECL  Image_File *ifp, Wav_Chunk_Hdr *wch_p)
+{
+	// we don't read the data, we just copy the chunk header
+	HDR_P(ifp)->wh_dhc.dhc_wch = *wch_p;	// copy chunk header
+	return 0;
+}
+
+#define read_next_chunk_header(ifp) _read_next_chunk_header(QSP_ARG  ifp)
+
+static Wav_Chunk_Hdr * _read_next_chunk_header(QSP_ARG_DECL  Image_File *ifp)
+{
+	static Wav_Chunk_Hdr wch1;
+
+	if( fread(&wch1,sizeof(Wav_Chunk_Hdr),1,ifp->if_fp) != 1 ){
+		wav_fatal_error("Error reading chunk header",ifp);
+		return NULL;
+	}
+	return &wch1;  // BUG static object not thread-safe!
+}
+
+#define process_chunk(ifp, wch_p) _process_chunk(QSP_ARG  ifp, wch_p)
+
+static int _process_chunk(QSP_ARG_DECL  Image_File *ifp, Wav_Chunk_Hdr *wch_p)
+{
+	// See what kind of chunk it is...
+	if( strncmp(wch_p->wch_label,"fmt ",4) ){
+		return read_format_chunk(ifp,wch_p);
+	} else if( strncmp(wch_p->wch_label,"data",4) ){
+		return read_data_chunk(ifp,wch_p);
+	} else {
+		char s[5];
+		strncpy(s,wch_p->wch_label,4);
+		s[4]=0;
+
+		if( is_printable(s) ){
+			sprintf(ERROR_STRING,
+	"read_next_chunk_header (%s):  unrecognized chunk label \"%s\"!?\n",
+				ifp->if_name,s);
+			warn(ERROR_STRING);
+		} else {
+			wav_error("unprintable chunk label",ifp);
+		}
+		// should read the chunk data!?
+		return 0;
+	}
+}
+
+#define read_wav_header(ifp) _read_wav_header(QSP_ARG  ifp)
+
+static int _read_wav_header(QSP_ARG_DECL  Image_File *ifp)
+{
+	Wav_Chunk_Hdr *ch_p;
+
+	if( read_wav_header_chunk(ifp) < 0 )
+		return -1;
+fprintf(stderr,"read_wav_header:  size is %d (0x%x)\n",
+HDR_P(ifp)->wh_whc.whc_wch.wch_size,
+HDR_P(ifp)->wh_whc.whc_wch.wch_size);
+
+	while( (ch_p=read_next_chunk_header(ifp)) != NULL ){
+		int status;
+		status = process_chunk(ifp,ch_p);
+		if( status < 0 ) return -1;	// some error
+		if( status == 1 ) return 0;	// data chunk
+		// if status is 0, read next chunk...
+	}
+	return -1;	// error return, null chunk
+}
+		
 
 FIO_OPEN_FUNC( wav )
 {
@@ -123,23 +290,11 @@ FIO_OPEN_FUNC( wav )
 		 * addresses
 		 */
 
-		if( fread(ifp->if_hdr_p,sizeof(Wav_Header),1,ifp->if_fp) != 1 ){
-			sprintf(ERROR_STRING,"Error reading wav header, file %s",
-				ifp->if_name);
-			WARN(ERROR_STRING);
-			wav_close(QSP_ARG  ifp);
-			return(NULL);
-		}
-		if( ! valid_wav_header(ifp->if_hdr_p) ){
-			sprintf(ERROR_STRING,"File %s does not appear to be a wav file",
-				ifp->if_name);
-			WARN(ERROR_STRING);
-			wav_close(QSP_ARG  ifp);
-			return(NULL);
-		}
-		wav_to_dp(ifp->if_dp,ifp->if_hdr_p);
+		if( read_wav_header(ifp) < 0 )
+			return NULL;
+		wav_to_dp(ifp->if_dp,HDR_P(ifp));
 	} else {	/* writable */
-		init_wav_hdr(ifp->if_hdr_p);		/* initialize the fixed fields */
+		init_wav_hdr(HDR_P(ifp));		/* initialize the fixed fields */
 	}
 	return(ifp);
 }
@@ -188,12 +343,12 @@ FIO_DP_TO_FT_FUNC(wav,Wav_Header)
 	hd_p->wh_blk_align = hd_p->wh_n_channels * hd_p->wh_bits_per_sample / 8;
 	hd_p->wh_bytes_per_sec = hd_p->wh_blk_align * hd_p->wh_samp_rate;
 
-	return(0);
+	return 0;
 }
 
 FIO_SETHDR_FUNC( wav )
 {
-	if( FIO_DP_TO_FT_FUNC_NAME(wav)(QSP_ARG  ifp->if_hdr_p,ifp->if_dp) < 0 ){
+	if( FIO_DP_TO_FT_FUNC_NAME(wav)(QSP_ARG  HDR_P(ifp),ifp->if_dp) < 0 ){
 		wav_close(QSP_ARG  ifp);
 		return(-1);
 	}
@@ -202,10 +357,10 @@ FIO_SETHDR_FUNC( wav )
 	 */
 	if( fwrite(ifp->if_hdr_p,sizeof(Wav_Header),1,ifp->if_fp) != 1 ){
 		sprintf(ERROR_STRING,"error writing wav header file %s",ifp->if_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
-	return(0);
+	return 0;
 }
 
 FIO_WT_FUNC( wav )
@@ -221,7 +376,7 @@ FIO_WT_FUNC( wav )
 	}
 
 	wt_raw_data(dp,ifp);
-	return(0);
+	return 0;
 }
 
 FIO_RD_FUNC( wav )
@@ -242,7 +397,7 @@ FIO_UNCONV_FUNC(wav)
 
 	FIO_DP_TO_FT_FUNC_NAME(wav)(QSP_ARG  *hdr_pp,dp);
 
-	return(0);
+	return 0;
 }
 
 FIO_CONV_FUNC(wav)
@@ -260,7 +415,7 @@ FIO_INFO_FUNC(wav)
 FIO_SEEK_FUNC( wav )
 {
 	sprintf(ERROR_STRING,"wav_seek_frame not implemented!?");
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 
 	return -1;
 }
