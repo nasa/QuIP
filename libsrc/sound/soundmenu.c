@@ -175,7 +175,17 @@ static COMMAND_FUNC( do_playsound )
 	dp = pick_obj("sound object");
 	if( dp == NULL ) return;
 
-	play_sound(QSP_ARG  dp);
+	play_sound(dp);
+}
+
+static COMMAND_FUNC( do_asyncplay )
+{
+	Data_Obj *dp;
+
+	dp = pick_obj("sound object");
+	if( dp == NULL ) return;
+
+	async_play_sound(dp);
 }
 
 static COMMAND_FUNC( do_inputgain )
@@ -363,6 +373,17 @@ MENU_END(audio_record)
 static COMMAND_FUNC(do_pause_sound){pause_sound(SINGLE_QSP_ARG);}
 static COMMAND_FUNC(do_halt_play_stream){halt_play_stream(SINGLE_QSP_ARG);}
 
+static COMMAND_FUNC(do_seek_play)
+{
+	long index;
+
+	index = how_many("sample index");
+	if( index < 0 ){
+		warn("seek_play:  index must be non-negative!?");
+		return;
+	}
+	sound_seek((index_t)index);
+}
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(audio_playback_menu,s,f,h)
@@ -370,6 +391,8 @@ static COMMAND_FUNC(do_halt_play_stream){halt_play_stream(SINGLE_QSP_ARG);}
 MENU_BEGIN(audio_playback)
 ADD_CMD( info,		do_sound_info,		display timestamp )
 ADD_CMD( play,		do_playsound,		play a sound )
+ADD_CMD( async_play,	do_asyncplay,		play a sound asynchronously )
+ADD_CMD( seek,		do_seek_play,		seek to an index in the sound )
 ADD_CMD( pause,		do_pause_sound,		pause a sound )
 ADD_CMD( stream,	do_pb_stream,		stream audio from disk )
 ADD_CMD( halt,		do_halt_play_stream,	halt stream playback )

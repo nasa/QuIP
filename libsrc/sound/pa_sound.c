@@ -39,6 +39,7 @@ typedef struct {
 	Precision *	src_prec_p;
 	int		src_n_channels;	// usually 1 or 2
 	int32_t		src_frames_to_go;
+	int32_t		src_n_frames;	// so we can seek...
 	int		src_dup_flag;
 } Sound_Data;
 
@@ -116,15 +117,10 @@ static int play_dp_callback( const void *inputBuffer, void *outputBuffer,
 
 	qsp = userData;
 
-fprintf(stderr,"play_dp_callback:  inBuf = 0x%lx  outBuf = 0x%lx, frames_per_buf = %ld\n",
-(long)inputBuffer,(long)outputBuffer,frames_per_buffer);
-
-fprintf(stderr,"play_dp_callback:  sdp = 0x%lx\n", (long)sdp);
 	//(void) inputBuffer; /* Prevent unused variable warnings. */
 
 	assert( sdp->src_frames_to_go >= 0 );
 
-fprintf(stderr,"play_dp_callback:  %d frames to go\n",sdp->src_frames_to_go);
 	if( sdp->src_frames_to_go < frames_per_buffer ) {
 		frames_to_copy = sdp->src_frames_to_go;
 		finished = 1;
@@ -141,28 +137,43 @@ fprintf(stderr,"play_dp_callback:  %d frames to go\n",sdp->src_frames_to_go);
 
 } // play_dp_callback
 
-void play_sound(QSP_ARG_DECL  Data_Obj *dp)
+int _sound_seek(QSP_ARG_DECL  index_t idx)
+{
+	// index_t is unsigned so we don't need to check for negative!
+	if( idx >= the_sdp->src_n_frames ){
+		sprintf(ERROR_STRING,
+	"sound_seek:  bad index (%d), should be in the range 0-%d!?",
+			idx,the_sdp->src_n_frames);
+		warn(ERROR_STRING);
+		return -1;
+	}
+	the_sdp->src_idx = idx;
+	the_sdp->src_frames_to_go = the_sdp->src_n_frames - idx;
+	return 0;
+}
+
+int _async_play_sound(QSP_ARG_DECL  Data_Obj *dp)
 {
 	PaStreamParameters  outputParameters;
 	PaTime              streamOpened;
 	PaError             err;
 
 	if(audio_state!=AUDIO_PLAY) audio_init(QSP_ARG  AUDIO_PLAY);
-#ifdef FOOBAR
+
 	if( OBJ_MACH_PREC(dp) != PREC_IN ){
 		sprintf(ERROR_STRING,"Object %s has precision %s, should be %s for sounds",OBJ_NAME(dp),
 			PREC_NAME(OBJ_MACH_PREC_PTR(dp)),NAME_FOR_PREC_CODE(PREC_IN));
 		warn(ERROR_STRING);
-		return;
+		return -1;
 	}
-#endif // FOOBAR
+
 	// what precisions can be played - any?
 
 	if( OBJ_COMPS(dp) > 2 ){
 		sprintf(ERROR_STRING,"Sound %s has %ld components, expected 1 or 2!?",
 			OBJ_NAME(dp),(long)OBJ_COMPS(dp));
 		advise(ERROR_STRING);
-		return;
+		return -1;
 	}
 
 	/* write interleaved */
@@ -170,12 +181,13 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 	the_sdp = &the_sound;
 
 	the_sdp->src_data = OBJ_DATA_PTR(dp);
-	the_sdp->src_frames_to_go = OBJ_N_MACH_ELTS(dp) / OBJ_COMPS(dp) ;
+	the_sdp->src_n_frames = OBJ_N_MACH_ELTS(dp) / OBJ_COMPS(dp) ;
+	the_sdp->src_frames_to_go = the_sdp->src_n_frames;
 fprintf(stderr,"play_sound:  object %s has %d frames\n",
 OBJ_NAME(dp),the_sdp->src_frames_to_go);
 fprintf(stderr,"play_sound:  the_sdp = 0x%lx\n",(long)the_sdp);
 	the_sdp->src_n_channels = OBJ_COMPS(dp) ;
-	the_sdp->src_idx = 0;
+	the_sdp->src_idx = 0;	// start at the beginning!
 	the_sdp->src_prec_p = OBJ_PREC_PTR(dp);
 	if( OBJ_COMPS(dp) == 1 )
 		the_sdp->src_dup_flag = 1;
@@ -185,7 +197,7 @@ fprintf(stderr,"play_sound:  the_sdp = 0x%lx\n",(long)the_sdp);
 	outputParameters.device = Pa_GetDefaultOutputDevice(); /* Default output device. */
 	if (outputParameters.device == paNoDevice) {
 		warn("No default output audio device!?");
-		return;
+		return -1;
 	}
 	outputParameters.channelCount = 2;			/* Stereo output. */
 	switch( PREC_MACH_CODE( OBJ_PREC_PTR(dp) ) ){
@@ -221,8 +233,21 @@ fprintf(stderr,"play_sound:  the_sdp = 0x%lx\n",(long)the_sdp);
 	err = Pa_StartStream( playback_stream );
 	if( err != paNoError ){
 		warn("Error starting playback stream!?");
-		goto close_it;
+		err = Pa_CloseStream( playback_stream );
+		if( err != paNoError ){
+			warn("Error closing playback stream!?");
+		}
+		return -1;
 	}
+	return 0;
+} // end async_play_sound
+
+void _play_sound(QSP_ARG_DECL  Data_Obj *dp)
+{
+	PaError             err;
+
+	if( async_play_sound(dp) < 0 )
+		return;
 
 	// Could make this a "wait_sound" function to allow
 	// asynchronous playback???
@@ -235,7 +260,6 @@ fprintf(stderr,"play_sound:  the_sdp = 0x%lx\n",(long)the_sdp);
 		warn("Error occurred during sound playback!?");
 	}
 
-close_it:
 	err = Pa_CloseStream( playback_stream );
 	if( err != paNoError ){
 		warn("Error closing playback stream!?");

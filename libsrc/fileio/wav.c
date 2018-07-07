@@ -151,6 +151,24 @@ static int is_printable(const char *s)
 	return 1;
 }
 
+#define display_fmt_chunk(wh_p) _display_fmt_chunk(QSP_ARG  wh_p)
+
+static void _display_fmt_chunk(QSP_ARG_DECL  Wav_Header *wh_p)
+{
+	Wav_Fmt_Data *wfd_p;
+
+	wfd_p = (&wh_p->wh_fhc.fhc_wfd);
+
+	sprintf(MSG_STR,"%d channels",wfd_p->wfd_n_channels);
+	prt_msg(MSG_STR);
+	sprintf(MSG_STR,"%d samples per sec",wfd_p->wfd_samp_rate);
+	prt_msg(MSG_STR);
+	sprintf(MSG_STR,"%d bytes per sec",wfd_p->wfd_bytes_per_sec);
+	prt_msg(MSG_STR);
+	sprintf(MSG_STR,"%d bits per sample",wfd_p->wfd_bits_per_sample);
+	prt_msg(MSG_STR);
+}
+
 #define read_format_chunk(ifp, wch_p) _read_format_chunk(QSP_ARG  ifp, wch_p)
 
 static int _read_format_chunk(QSP_ARG_DECL  Image_File *ifp, Wav_Chunk_Hdr *wch_p)
@@ -168,6 +186,7 @@ n_mandatory);
 		wav_fatal_error("Error reading format data",ifp);
 		return -1;
 	}
+display_fmt_chunk(HDR_P(ifp));
 	n_extra = wch_p->wch_size - n_mandatory;
 	if( n_extra == 0 ) return 0;
 
@@ -183,6 +202,7 @@ fprintf(stderr,"format chunk has %d extra bytes???\n",n_extra);
 		status = -1;
 	}
 	givbuf(b);	// just throw away for now...
+
 	return status;
 }
 

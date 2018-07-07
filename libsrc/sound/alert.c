@@ -14,7 +14,7 @@ static void audio_warn(QSP_ARG_DECL  const char *s)
 {
 	tty_warn(QSP_ARG  s);
 	if( warning_dp != NULL )
-		play_sound(QSP_ARG  warning_dp);
+		play_sound(warning_dp);
 }
 
 void use_audio_warning(QSP_ARG_DECL  Data_Obj *dp)

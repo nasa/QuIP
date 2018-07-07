@@ -63,7 +63,15 @@ extern void set_stereo_input(QSP_ARG_DECL  int);
 extern void _record_sound(QSP_ARG_DECL  Data_Obj *);
 #define record_sound(dp) _record_sound(QSP_ARG  dp)
 
-extern void play_sound(QSP_ARG_DECL  Data_Obj *);
+extern void _play_sound(QSP_ARG_DECL  Data_Obj *);
+#define play_sound(dp) _play_sound(QSP_ARG  dp)
+
+extern int _async_play_sound(QSP_ARG_DECL  Data_Obj *);
+#define async_play_sound(dp) _async_play_sound(QSP_ARG  dp)
+
+extern int _sound_seek(QSP_ARG_DECL  index_t idx);
+#define sound_seek(idx) _sound_seek(QSP_ARG  idx)
+
 extern void set_sound_gain(QSP_ARG_DECL  int);
 extern void set_sound_volume(QSP_ARG_DECL  int);
 extern void pause_sound(SINGLE_QSP_ARG_DECL);
