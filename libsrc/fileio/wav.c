@@ -47,19 +47,6 @@ static int _valid_riff_hdr(QSP_ARG_DECL  Wav_Header *hd_p)
 	return 1;
 }
 
-#ifdef FOOBAR 
-
-	if( strncmp(hd_p->wh_fmt_label,"fmt ",4) ){
-		warn("bad fmt string!?");
-		return 0;
-	}
-	if( strncmp(hd_p->wh_data_label,"data",4) ){
-		warn("bad data string!?");
-		return 0;
-	}
-	return(1);
-#endif // FOOBAR
-
 //int _wav_to_dp(QSP_ARG_DECL  Data_Obj *dp,Wav_Header *hd_p)
 FIO_FT_TO_DP_FUNC(wav,Wav_Header)
 {
@@ -170,6 +157,7 @@ static int _read_format_chunk(QSP_ARG_DECL  Image_File *ifp, Wav_Chunk_Hdr *wch_
 {
 	int n_mandatory, n_extra;
 	char *b;
+	int status = 0;
 
 	HDR_P(ifp)->wh_fhc.fhc_wch = *wch_p;	// copy chunk header
 
@@ -188,15 +176,14 @@ n_mandatory);
 		return -1;
 	}
 
-fprintf("format chunk has %d extra bytes???\n",n_extra);
+fprintf(stderr,"format chunk has %d extra bytes???\n",n_extra);
 	b = getbuf(n_extra);
 	if( fread(b,1,n_extra,ifp->if_fp) != n_extra ){
-		givbuf(b);
 		wav_error("Error reading extra format data",ifp);
-		return -1;
+		status = -1;
 	}
 	givbuf(b);	// just throw away for now...
-	return 0;
+	return status;
 }
 
 #define read_data_chunk(ifp, wch_p) _read_data_chunk(QSP_ARG  ifp, wch_p)
@@ -221,15 +208,42 @@ static Wav_Chunk_Hdr * _read_next_chunk_header(QSP_ARG_DECL  Image_File *ifp)
 	return &wch1;  // BUG static object not thread-safe!
 }
 
+#define ignore_chunk(ifp, wch_p) _ignore_chunk(QSP_ARG  ifp, wch_p)
+
+static int _ignore_chunk(QSP_ARG_DECL  Image_File *ifp, Wav_Chunk_Hdr *wch_p)
+{
+	int nb;
+	char *buf;
+	int status=0;
+
+	nb = wch_p->wch_size;
+fprintf(stderr,"ignore_chunk:  size is %d\n",nb);
+	buf = getbuf(nb);
+	if( fread(buf,1,nb,ifp->if_fp) != nb ){
+		wav_fatal_error("Error reading ignored chunk data",ifp);
+		status = -1;
+	}
+	givbuf(buf);
+	return status;
+}
+
 #define process_chunk(ifp, wch_p) _process_chunk(QSP_ARG  ifp, wch_p)
 
 static int _process_chunk(QSP_ARG_DECL  Image_File *ifp, Wav_Chunk_Hdr *wch_p)
 {
 	// See what kind of chunk it is...
-	if( strncmp(wch_p->wch_label,"fmt ",4) ){
+	if( !strncmp(wch_p->wch_label,"fmt ",4) ){
+fprintf(stderr,"format chunk seen!\n");
 		return read_format_chunk(ifp,wch_p);
-	} else if( strncmp(wch_p->wch_label,"data",4) ){
-		return read_data_chunk(ifp,wch_p);
+fprintf(stderr,"back from read_format_chunk\n");
+	} else if( !strncmp(wch_p->wch_label,"data",4) ){
+fprintf(stderr,"data chunk seen!\n");
+		if( read_data_chunk(ifp,wch_p) != 0 )
+			return -1;
+		return 1;	// special return val for data chunk
+	} else if( !strncmp(wch_p->wch_label,"LIST",4) ){
+fprintf(stderr,"list chunk seen!\n");
+		return ignore_chunk(ifp,wch_p);
 	} else {
 		char s[5];
 		strncpy(s,wch_p->wch_label,4);

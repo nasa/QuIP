@@ -116,10 +116,15 @@ static int play_dp_callback( const void *inputBuffer, void *outputBuffer,
 
 	qsp = userData;
 
+fprintf(stderr,"play_dp_callback:  inBuf = 0x%lx  outBuf = 0x%lx, frames_per_buf = %ld\n",
+(long)inputBuffer,(long)outputBuffer,frames_per_buffer);
+
+fprintf(stderr,"play_dp_callback:  sdp = 0x%lx\n", (long)sdp);
 	//(void) inputBuffer; /* Prevent unused variable warnings. */
 
 	assert( sdp->src_frames_to_go >= 0 );
-	
+
+fprintf(stderr,"play_dp_callback:  %d frames to go\n",sdp->src_frames_to_go);
 	if( sdp->src_frames_to_go < frames_per_buffer ) {
 		frames_to_copy = sdp->src_frames_to_go;
 		finished = 1;
@@ -166,6 +171,9 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 
 	the_sdp->src_data = OBJ_DATA_PTR(dp);
 	the_sdp->src_frames_to_go = OBJ_N_MACH_ELTS(dp) / OBJ_COMPS(dp) ;
+fprintf(stderr,"play_sound:  object %s has %d frames\n",
+OBJ_NAME(dp),the_sdp->src_frames_to_go);
+fprintf(stderr,"play_sound:  the_sdp = 0x%lx\n",(long)the_sdp);
 	the_sdp->src_n_channels = OBJ_COMPS(dp) ;
 	the_sdp->src_idx = 0;
 	the_sdp->src_prec_p = OBJ_PREC_PTR(dp);
@@ -206,7 +214,7 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 		256,       /* Frames per buffer. */
 		paClipOff, /* We won't output out of range samples so don't bother clipping them. */
 		play_dp_callback,
-		THIS_QSP );
+		the_sdp );
 
 	streamOpened = Pa_GetStreamTime( playback_stream ); /* Time in seconds when stream was opened (approx). */
 
