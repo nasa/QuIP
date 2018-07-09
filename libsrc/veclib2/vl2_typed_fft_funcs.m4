@@ -108,6 +108,7 @@ static void init_twiddle (dimension_t len)
 		givbuf(twiddle);
 	}
 
+fprintf(stderr,"init_twiddle:  len is %d (0x%x)\n",len,len);
 	twiddle = (std_cpx *)getbuf( sizeof(*twiddle) * (len/2) );
 
 
