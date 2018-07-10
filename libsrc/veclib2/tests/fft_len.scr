@@ -77,7 +77,7 @@ Test_CFFT $1
 
 Do_Test_FFT h
 #platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
-#Test_FFT g
+Do_Test_FFT g
 
 exit
 
