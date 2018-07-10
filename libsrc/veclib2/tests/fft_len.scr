@@ -2,10 +2,14 @@
 
 < $macro_dir/compute/nfilter.mac
 
-#Set dlen 1024*1024		# bad
-#Set dlen 512*512		# bad
-#Set dlen 256*256		# mostly OK, but a little strange
-Set dlen 4
+#Assign dlen 1024*1024		# bad
+#Assign dlen 512*512		# bad
+#Assign dlen 256*256		# mostly OK, but a little strange
+#Assign dlen 4*4096			# NOT OK
+Assign dlen 4*4096			# OK
+#Assign dlen 2*4096			# OK
+#Set dlen 4096			# OK
+#Set dlen 4
 Assign slen min(8,$dlen)
 Set freq_sigma 32
 
@@ -18,17 +22,26 @@ Vector ${1}_xf 1+$dlen/2 1 complex
 Subvector ${1}_sxf ${1}_xf min($slen,ncols(${1}_xf)) 0
 Vector ${1}_cxf $dlen 1 complex
 Subvector ${1}_scxf ${1}_cxf $slen 0
-Vector ${1}_filter 1+$dlen/2 1 complex
+Vector ${1}_rfilter 1+$dlen/2 1 complex
+Vector ${1}_cfilter $dlen 1 complex
 .
 
 Define Init_Filter 1 prefix
-VSet ${1}_filter{1} 0
-Ramp1D ${1}_filter{0} 0 1
-VSMul ${1}_filter{0} ${1}_filter{0} 1/$freq_sigma
-VVMul ${1}_filter{0} ${1}_filter{0} ${1}_filter{0}
-VSMul ${1}_filter{0} ${1}_filter{0} -1/2
-VExp ${1}_filter{0} ${1}_filter{0}
-#Display ${1}_filter
+VSet ${1}_rfilter{1} 0
+Ramp1D ${1}_rfilter{0} 0 1
+VSMul ${1}_rfilter{0} ${1}_rfilter{0} 1/$freq_sigma
+VVMul ${1}_rfilter{0} ${1}_rfilter{0} ${1}_rfilter{0}
+VSMul ${1}_rfilter{0} ${1}_rfilter{0} -1/2
+VExp ${1}_rfilter{0} ${1}_rfilter{0}
+#Display ${1}_rfilter
+.
+
+Define Test_Filter 1 prefix
+Init_Filter $1
+veclib execute vfft ${1}_xf ${1}_f quit
+VVMul ${1}_xf ${1}_xf ${1}_rfilter
+veclib execute vift ${1}_f ${1}_xf quit
+Display ${1}_sf
 .
 
 
@@ -70,9 +83,10 @@ Display ${1}_sc
 Define Do_Test_FFT 1 prefix
 Declare_Test_Objects $1
 Init_Input1 $1
-Test_CFFT $1
-Init_Input2 $1
-Test_CFFT $1
+Test_Filter $1
+#Test_CFFT $1
+#Init_Input2 $1
+#Test_CFFT $1
 .
 
 Do_Test_FFT h
