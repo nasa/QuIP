@@ -168,6 +168,7 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 
 	len = FFT_LEN(fap);
 
+NADVISE("cvfft BEGIN");
 	if( revdone==NULL ){
 		revdone=(char *)getbuf(len);
 		max_fft_len = len;

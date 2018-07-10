@@ -9,71 +9,75 @@ Set dlen 8
 Set slen 8
 Set freq_sigma 32
 
-Define Test_FFT 1 prefix
+Define Declare_Test_Objects 1 prefix
 Vector ${1}_f $dlen 1 float
+Subvector ${1}_sf ${1}_f $slen 0
 Vector ${1}_c $dlen 1 complex
 Subvector ${1}_sc ${1}_c $slen 0
 Vector ${1}_xf 1+$dlen/2 1 complex
-Vector ${1}_cxf $dlen 1 complex
 Subvector ${1}_sxf ${1}_xf min($slen,ncols(${1}_xf)) 0
+Vector ${1}_cxf $dlen 1 complex
 Subvector ${1}_scxf ${1}_cxf $slen 0
 Vector ${1}_filter 1+$dlen/2 1 complex
+.
+
+Define Init_Filter 1 prefix
 VSet ${1}_filter{1} 0
 Ramp1D ${1}_filter{0} 0 1
 VSMul ${1}_filter{0} ${1}_filter{0} 1/$freq_sigma
 VVMul ${1}_filter{0} ${1}_filter{0} ${1}_filter{0}
 VSMul ${1}_filter{0} ${1}_filter{0} -1/2
 VExp ${1}_filter{0} ${1}_filter{0}
-output_file filt.asc
-Display ${1}_filter
-output_file -
-Pause
-
-Subvector ${1}_sf ${1}_f $slen 0
-Init_Input $1
-Pause
-#advise "Filtering with 2D macro..."
-#Low_Pass ${1}_f 16
-#Display ${1}_sf
-#Pause
-#Init_Input $1
-advise "Filtering with 1D calls..."
-veclib execute vfft ${1}_xf ${1}_f quit
-Display ${1}_sxf
-Pause
-#VVMul ${1}_xf ${1}_xf ${1}_filter
-#Display ${1}_sxf
-#Pause
-#
-veclib execute vift ${1}_f ${1}_xf quit
-Display ${1}_sf
-Pause
+#Display ${1}_filter
+.
 
 
+
+Define Test_CFFT 1 prefix
 advise "Computing complex fft..."
 Display ${1}_sc
 Pause
 veclib execute vfft ${1}_cxf ${1}_c quit
 Display ${1}_scxf
 Pause
-Display ${1}_sc
-Pause
+#Display ${1}_sc
+#Pause
 veclib execute vift ${1}_c ${1}_cxf quit
 Display ${1}_sc
 Pause
 .
 
-Define Init_Input 1 prefix
+# a pulse
+Define Init_Input1 1 prefix
 VSet ${1}_f 0
 VSet ${1}_f[0] 1
-Display ${1}_sf
+#Display ${1}_sf
 VSet ${1}_c{1} 0
 VMov ${1}_c{0} ${1}_f
+Display ${1}_sc
 .
 
-Test_FFT h
-platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
-Test_FFT g
+
+# constant real
+Define Init_Input2 1 prefix
+VSet ${1}_f 0
+VSet ${1}_f 1
+VSet ${1}_c{1} 0
+VMov ${1}_c{0} ${1}_f
+Display ${1}_sc
+.
+
+Define Do_Test_FFT 1 prefix
+Declare_Test_Objects $1
+Init_Input1 $1
+Test_CFFT $1
+Init_Input2 $1
+Test_CFFT $1
+.
+
+Do_Test_FFT h
+#platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
+#Test_FFT g
 
 exit
 
