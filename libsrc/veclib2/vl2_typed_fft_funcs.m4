@@ -108,7 +108,6 @@ static void init_twiddle (dimension_t len)
 		givbuf(twiddle);
 	}
 
-fprintf(stderr,"init_twiddle:  len is %d (0x%x)\\n",len,len);
 	twiddle = (std_cpx *)getbuf( sizeof(*twiddle) * (len/2) );
 
 
@@ -157,19 +156,16 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 	std_cpx *source, *dest;
 	dimension_t m, mmax, istep;
 	incr_t src_inc, dst_inc;
-	/* BUG we really don_t want to allocate and deallocate revdone each time... */
-	/* anyway, this is no good because getbuf/givbuf are not thread-safe!
-	 * I can_t see a way to do this without passing the thread index on the stack...
-	 * OR having the entire revdone array on the stack?
-	 */
-	/* char revdone[MAX_FFT_LEN]; */
 
 	//if( ! for_real ) return;
 
 	len = FFT_LEN(fap);
 
-NADVISE("cvfft BEGIN");
 	if( revdone==NULL ){
+		/* this is no good because getbuf/givbuf are not thread-safe!
+		 * I can_t see a way to do this without passing the thread index on the stack...
+		 * OR having the entire revdone array on the stack?
+		 */
 		revdone=(char *)getbuf(len);
 		max_fft_len = len;
 	}
@@ -190,10 +186,8 @@ ifelse(MULTI_PROC_TEST,`1',`
 	dst_inc = FFT_DINC(fap);
 	source=(std_cpx *)FFT_SRC(fap);
 	src_inc = FFT_SINC(fap);
+
 	/* inc1 should be in units of complex */
-sprintf(DEFAULT_ERROR_STRING,"cvfft:  dest = 0x%lx  dstinc = %d,   src = 0x%lx  srcinc = %d",
-(long)dest,dst_inc,(long)source,src_inc);
-NADVISE(DEFAULT_ERROR_STRING);
 
 	if( len != bitrev_size ){
 ifelse(MULTI_PROC_TEST,`1',`
@@ -220,12 +214,17 @@ ifelse(MULTI_PROC_TEST,`1',`
 			dj = bitrev_data[i] * dst_inc;
 			sj = bitrev_data[i] * src_inc;
 			if( di != dj ){
+				// We use tmp so this will still work in-place
 				tmp.re = source[si].re;
 				tmp.im = source[si].im;
 				dest[di].re = source[sj].re;
 				dest[di].im = source[sj].im;
 				dest[dj].re = tmp.re;
 				dest[dj].im = tmp.im;
+			} else {
+				// Unnecessary if in-place...
+				dest[di].re = source[sj].re;
+				dest[di].im = source[sj].im;
 			}
 			revdone[i]=1;
 			revdone[ bitrev_data[i] ]=1;
@@ -240,44 +239,50 @@ ifelse(MULTI_PROC_TEST,`1',`
 	 */
 
 	mmax = 1;
-	while( mmax<len ){
+	while( mmax<len ){	// for s = 1 to log(n)
+				// m = 2^s
+				// w_m = exp(-2 pi i / m)
 		istep = 2*mmax;
-sprintf(DEFAULT_ERROR_STRING,"butterfly loop, mmax = %d < len = %d,  istep = %d",mmax,len,istep);
-NADVISE(DEFAULT_ERROR_STRING);
-		for(m=0;m<mmax;m++){
+		for(m=0;m<mmax;m++){		// for k = 0 to n-1 by m
 			dimension_t index;
 
-			index = m*(len/(mmax<<1));
+						// w = 1
+			index = m*(len/(mmax<<1));		// m * len/2 / mmax
 
 			/* make index modulo len/2 */
 			/* hope this works for negative index!! */
 			index &= ((len>>1)-1);
-sprintf(DEFAULT_ERROR_STRING,"butterfly middle loop, m = %d,  index = %d",m,index);
-NADVISE(DEFAULT_ERROR_STRING);
 
 			/* if( index < 0 ) index += len; */
 
 			wp = (& twiddle[index]);
 
-			for(i=m;i<len;i+=istep){
+			for(i=m;i<len;i+=istep){		// for j = 0 to m/2-1
 				dimension_t dj, di;
 
 				j = i+mmax;
 				dj = j * dst_inc;
 				di = i * dst_inc;
-sprintf(DEFAULT_ERROR_STRING,"butterfly inner loop, i = %d,  j = %d,  di = %d,   dj = %d",i,j,di,dj);
-NADVISE(DEFAULT_ERROR_STRING);
+				// if ISI=1, then temp = (*wp) * dest[dj]
+				// otherwise its the complex conjugate of (*wp)...
+
+				// t = w A[k+j+m/2] (dj)
 				temp.re = wp->re*dest[dj].re
 					- FFT_ISI(fap) * wp->im*dest[dj].im;
 				temp.im = wp->re*dest[dj].im
 					+ FFT_ISI(fap) * wp->im*dest[dj].re;
+				// u = A[k+j]  (di)
+
+				// A[k+j+m/2] = u - t
 				dest[dj].re = dest[di].re-temp.re;
 				dest[dj].im = dest[di].im-temp.im;
+				// A[k+j] = u + t
 				dest[di].re += temp.re;
 				dest[di].im += temp.im;
 			}
 		}
 		mmax = istep;
+
 	}
 
 dnl	This block does the scaling, but this is not done by the fftw or cuFFT,

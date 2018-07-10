@@ -5,8 +5,8 @@
 #Set dlen 1024*1024		# bad
 #Set dlen 512*512		# bad
 #Set dlen 256*256		# mostly OK, but a little strange
-Set dlen 8
-Set slen 8
+Set dlen 4
+Assign slen min(8,$dlen)
 Set freq_sigma 32
 
 Define Declare_Test_Objects 1 prefix
