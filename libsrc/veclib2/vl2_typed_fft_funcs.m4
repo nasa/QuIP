@@ -108,7 +108,7 @@ static void init_twiddle (dimension_t len)
 		givbuf(twiddle);
 	}
 
-fprintf(stderr,"init_twiddle:  len is %d (0x%x)\n",len,len);
+fprintf(stderr,"init_twiddle:  len is %d (0x%x)\\n",len,len);
 	twiddle = (std_cpx *)getbuf( sizeof(*twiddle) * (len/2) );
 
 
@@ -190,6 +190,9 @@ ifelse(MULTI_PROC_TEST,`1',`
 	source=(std_cpx *)FFT_SRC(fap);
 	src_inc = FFT_SINC(fap);
 	/* inc1 should be in units of complex */
+sprintf(DEFAULT_ERROR_STRING,"cvfft:  dest = 0x%lx  dstinc = %d,   src = 0x%lx  srcinc = %d",
+(long)dest,dst_inc,(long)source,src_inc);
+NADVISE(DEFAULT_ERROR_STRING);
 
 	if( len != bitrev_size ){
 ifelse(MULTI_PROC_TEST,`1',`
@@ -238,6 +241,8 @@ ifelse(MULTI_PROC_TEST,`1',`
 	mmax = 1;
 	while( mmax<len ){
 		istep = 2*mmax;
+sprintf(DEFAULT_ERROR_STRING,"butterfly loop, mmax = %d < len = %d,  istep = %d",mmax,len,istep);
+NADVISE(DEFAULT_ERROR_STRING);
 		for(m=0;m<mmax;m++){
 			dimension_t index;
 
@@ -246,6 +251,8 @@ ifelse(MULTI_PROC_TEST,`1',`
 			/* make index modulo len/2 */
 			/* hope this works for negative index!! */
 			index &= ((len>>1)-1);
+sprintf(DEFAULT_ERROR_STRING,"butterfly middle loop, m = %d,  index = %d",m,index);
+NADVISE(DEFAULT_ERROR_STRING);
 
 			/* if( index < 0 ) index += len; */
 
@@ -257,6 +264,8 @@ ifelse(MULTI_PROC_TEST,`1',`
 				j = i+mmax;
 				dj = j * dst_inc;
 				di = i * dst_inc;
+sprintf(DEFAULT_ERROR_STRING,"butterfly inner loop, i = %d,  j = %d,  di = %d,   dj = %d",i,j,di,dj);
+NADVISE(DEFAULT_ERROR_STRING);
 				temp.re = wp->re*dest[dj].re
 					- FFT_ISI(fap) * wp->im*dest[dj].im;
 				temp.im = wp->re*dest[dj].im
