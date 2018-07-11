@@ -26,10 +26,17 @@ define(`init_twiddle',`TYPED_NAME(`init_twiddle_')')
 define(`last_cpx_len',`TYPED_NAME(_last_cpx_len)')
 define(`twiddle',`TYPED_NAME(_twiddle)')
 define(`last_real_len',`TYPED_NAME(_last_real_len)')
+
+dnl BUG pick one or the other of these two methods for real FFT
 define(`_isinfact',`TYPED_NAME(__isinfact)')
 define(`_sinfact',`TYPED_NAME(__sinfact)')
+
+define(`A_array',`TYPED_NAME(_A_array)')
+define(`B_array',`TYPED_NAME(_B_array)')
+
 define(`max_fft_len',`TYPED_NAME(_max_fft_len)')
 define(`init_sinfact',`TYPED_NAME(_init_sinfact)')
+define(`init_AB',`TYPED_NAME(_init_AB)')
 
 define(`INV_FFT',`1')
 define(`FWD_FFT',`-1')
@@ -50,6 +57,9 @@ static std_cpx *twiddle;
 static dimension_t last_real_len=0;
 static std_type *_isinfact=NULL;
 static std_type *_sinfact=NULL;
+
+static std_cpx *A_array=NULL;
+static std_cpx *B_array=NULL;
 
 static char *revdone=NULL;
 static u_int max_fft_len=(-1);
@@ -324,6 +334,8 @@ static void PF_FFT_CALL_NAME(cvift)( FFT_Args *fap )
 // the inverse sine!?  EXPLANATION:  "inverse" sine factor is used in the
 // computation of the inverse DFT!
 
+dnl	the space before the opening paren is important!!!
+
 static void init_sinfact (dimension_t n)
 {
 	dimension_t i;
@@ -353,6 +365,47 @@ static void init_sinfact (dimension_t n)
 	}
 }
 
+dnl	the space before the opening paren is important!!!
+
+static void init_AB (dimension_t n)
+{
+	dimension_t i;
+	std_type arginc, arg;
+
+	last_real_len = n;
+	n /= 2;
+
+	if( A_array != (std_cpx *)NULL )
+		givbuf(A_array);
+	A_array = (std_cpx *)getbuf( n * sizeof(std_cpx) );
+
+	if( B_array != (std_cpx *)NULL )
+		givbuf(B_array);
+	B_array = (std_cpx *)getbuf( n * sizeof(std_cpx) );
+
+	arginc = (std_type)(4 * atan(1.0) / n);
+	arg = 0.0;
+
+	for(i=0;i<n;i++){
+		std_type w_re, w_im;
+
+		// These are probably just the twiddle factors!?
+		// can we use those from a table instead???
+
+		// A_k = 0.5 * ( 1 - j W_2N^k )
+		// B_k = 0.5 * ( 1 + j W_2N^k )
+		w_re = cos(arg);
+		w_im = sin(arg);
+
+		A_array[i].re = 0.5 * ( 1 + w_im );
+		A_array[i].im = 0.5 * (   - w_re );
+		B_array[i].re = 0.5 * ( 1 - w_im );
+		B_array[i].im = 0.5 * (   + w_re );
+
+		arg += arginc;
+	}
+}
+
 
 /* this real fft is based on the method given in problem 19
  * (p. 56) of Elliott & Rao, "Fast Transforms"
@@ -370,6 +423,18 @@ static void init_sinfact (dimension_t n)
 // The TI documentation calls this the "split operation"
 // Found this on the web:
 // Efficient FFT Computation of Real Input - on TI wiki...
+
+dnl	RECOMBINE does not touch the first sample...
+dnl	Lets assume that we have loaded the complex array with the even
+dnl	index samples in the real part, and the odd index samples
+dnl	in the imaginary part...
+dnl	Then RECOMBINE computes s1,s2 - the part of the original signal
+dnl	with even SYMMETRY, and d1,d2 - the part of the signal with odd symm -
+dnl	and flips the sign of every other odd symmetric value - (why?)
+dnl
+dnl	This operation is done on the transform AFTER the forward fft,
+dnl	and on the input values BEFORE the inverse fft...
+
 
 dnl	RECOMBINE(inc)
 
@@ -409,7 +474,7 @@ define(`RECOMBINE',`
  * that looks simpler...
  */
 
-static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
+static void PF_FFT_CALL_NAME(rvfft_v1)( const FFT_Args *fap)
 {
 	std_cpx *cbot, *ctop;
 	std_type *top, *bottom;
@@ -433,6 +498,7 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 	dst_inc = FFT_DINC(fap);
 
 	if( len != last_real_len ){
+dnl	the space before the opening paren is important!!!
 		init_sinfact (len);
 	}
 
@@ -497,6 +563,130 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 	ctop->im = cbot->im = 0.0;
 
 	RECOMBINE(dst_inc)	// in-place
+}
+
+dnl	Alternate implementation based on TI documentation
+dnl
+dnl	This is somewhat simpler, but uses twiddle factors...
+
+define(`ADVANCE_CPX_PTRS',`
+	cbot += dst_inc;
+	ctop -= dst_inc;
+	abot++;
+	bbot++;
+	atop--;
+	btop--;
+')
+
+dnl	GET_CPX_PROD(cptr,aptr,bptr)
+dnl	destination must be distinct from sources!
+
+define(`GET_CPX_PROD',`
+	($1)->re = ($2)->re * ($3)->re - ($2)->im * ($3)->im;
+	($1)->im = ($2)->re * ($3)->im + ($2)->im * ($3)->re;
+')
+
+dnl	conjugate just the first factor...
+
+define(`GET_CPX_CONJ_PROD',`
+	($1)->re = ($2)->re * ($3)->re + ($2)->im * ($3)->im;
+	($1)->im = ($2)->re * ($3)->im - ($2)->im * ($3)->re;
+')
+
+define(`GET_CPX_SUM',`
+	($1)->re = ($2)->re + ($3)->re;
+	($1)->im = ($2)->im + ($3)->im;
+')
+
+static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
+{
+	std_cpx *ctop, *cbot;
+	std_cpx *atop, *abot;
+	std_cpx *btop, *bbot;
+	dimension_t i;
+	dimension_t len;
+	std_type *source;
+	std_cpx *dest;
+	FFT_Args fa;
+	FFT_Args *_fap=(&fa);
+	incr_t src_inc;
+	incr_t dst_inc;
+	std_cpx p1, p2, t1, t2;
+
+	//if( ! for_real ) return;
+
+	/* len is the length of the real data */
+	len = FFT_LEN(fap);
+	source = (std_type *)FFT_SRC(fap);
+	dest = (std_cpx *)FFT_DST(fap);
+	src_inc = FFT_SINC(fap);
+	dst_inc = FFT_DINC(fap);
+
+	// copy the input data
+
+	for(i=1;i<len/2;i++){
+		dest->re = *source;
+		source += src_inc;
+		dest->im = *source;
+		source += src_inc;
+		dest += dst_inc;
+	}
+
+	if( len != last_real_len ){
+dnl	the space before the opening paren is important!!!
+		init_AB (len);
+	}
+
+	// Compute in-place on the destination array...
+	SET_FFT_DST(_fap, FFT_DST(fap) );
+	SET_FFT_DINC(_fap, FFT_DINC(fap) );
+	SET_FFT_SRC(_fap, FFT_DST(fap));
+	SET_FFT_SINC(_fap, FFT_DINC(fap));
+	SET_FFT_LEN(_fap, FFT_LEN(fap)/2 );
+	SET_FFT_ISI(_fap, FWD_FFT);
+
+	// Compute the FFT
+	PF_FFT_CALL_NAME(cvfft)(_fap);
+
+	// Perform the "split"
+	cbot = (std_cpx *)FFT_DST(fap);
+	ctop = cbot + dst_inc * len/2;		// invalid until decremented
+	abot = A_array;
+	atop = A_array + len/2;
+	bbot = B_array;
+	btop = B_array + len/2;
+
+	// 0 is a special case...
+	GET_CPX_PROD(&p1,cbot,abot)
+	GET_CPX_CONJ_PROD(&p2,cbot,bbot)	// would be ctop, but wraps...
+	GET_CPX_SUM(&t1,&p1,&p2)
+	*cbot = t1;
+
+	ADVANCE_CPX_PTRS
+	for(i=1;i<len/4;i++){
+		// G(k) = X(k)A(k) + X*(N-k)B(k)
+		GET_CPX_PROD(&p1,cbot,abot)
+		GET_CPX_CONJ_PROD(&p2,ctop,bbot)
+		GET_CPX_SUM(&t1,&p1,&p2)
+		// G(N-k) = X(N-k)A(N-k) + X*(k)B(N-k)
+		GET_CPX_PROD(&p1,ctop,atop)
+		GET_CPX_CONJ_PROD(&p2,cbot,btop)
+		GET_CPX_SUM(&t2,&p1,&p2)
+
+		*cbot = t1;
+		*ctop = t2;
+
+		ADVANCE_CPX_PTRS
+	}
+
+	// Now cbot and ctop should point to the same thing - the sample at len/4
+	assert(cbot==ctop);
+
+	GET_CPX_PROD(&p1,cbot,abot)
+	GET_CPX_CONJ_PROD(&p1,cbot,bbot)	// would be ctop, but wraps...
+	GET_CPX_SUM(&t1,&p1,&p2)
+	*cbot = t1;
+
 } // rvfft
 
 /* One dimensional real inverse fft.
@@ -531,6 +721,7 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 	len=FFT_LEN(fap);		/* length of the real destination */
 
 	if( len != last_real_len ){
+dnl	the space before the opening paren is important!!!
 		init_sinfact (len);
 	}
 
@@ -759,7 +950,9 @@ define(`MULTIPROCESSOR_ROW_LOOP',`
 	if( OBJ_COLS( $1 )/2 != last_cpx_len )
 		init_twiddle (OBJ_COLS( $1 )/2);
 	if( OBJ_COLS( $1 ) != last_real_len ){
+dnl	the space before the opening paren is important!!!
 		init_sinfact (OBJ_COLS( $1 ));	// multiprocessor row loop
+		// OR init_AB ???
 	}
 
 	while( n_passes -- ){

@@ -2,6 +2,11 @@
 
 < $macro_dir/compute/nfilter.mac
 
+#Set std_type	double
+#Set std_cpx	dblcpx
+Set std_type	float
+Set std_cpx	complex
+
 #Assign dlen 1024*1024		# bad
 #Assign dlen 512*512		# bad
 #Assign dlen 256*256		# mostly OK, but a little strange
@@ -15,16 +20,16 @@ Assign slen min(8,$dlen)
 Set freq_sigma 32
 
 Define Declare_Test_Objects 1 prefix
-Vector ${1}_f $dlen 1 float
+Vector ${1}_f $dlen 1 $std_type
 Subvector ${1}_sf ${1}_f $slen 0
-Vector ${1}_c $dlen 1 complex
+Vector ${1}_c $dlen 1 $std_cpx
 Subvector ${1}_sc ${1}_c $slen 0
-Vector ${1}_xf 1+$dlen/2 1 complex
+Vector ${1}_xf 1+$dlen/2 1 $std_cpx
 Subvector ${1}_sxf ${1}_xf min($slen,ncols(${1}_xf)) 0
-Vector ${1}_cxf $dlen 1 complex
+Vector ${1}_cxf $dlen 1 $std_cpx
 Subvector ${1}_scxf ${1}_cxf $slen 0
-Vector ${1}_rfilter 1+$dlen/2 1 complex
-Vector ${1}_cfilter $dlen 1 complex
+Vector ${1}_rfilter 1+$dlen/2 1 $std_cpx
+Vector ${1}_cfilter $dlen 1 $std_cpx
 .
 
 Define Init_Filter 1 prefix
