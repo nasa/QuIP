@@ -11,6 +11,7 @@ clean-local:
 
 GENERATED_SRCS=							\
 			$(builddir)/vl2_veclib_expanded.c	\
+			$(builddir)/vl2_fft_expanded.c		\
 			$(builddir)/vl2_utils_expanded.c
 
 
@@ -32,6 +33,9 @@ $(srcdir)/vl2_utils.c:	$(builddir)/vl2_utils_expanded.c
 $(srcdir)/vl2_veclib.c:	$(builddir)/vl2_veclib_expanded.c
 	touch $(srcdir)/vl2_veclib.c
 
+$(srcdir)/vl2_fft.c:	$(builddir)/vl2_fft_expanded.c
+	touch $(srcdir)/vl2_fft.c
+
 
 vl2_utils_expanded.c:	_vl2_utils.c $(LOCAL_M4FILES) $(INC_M4FILES)
 		m4 $(M4OPTS) < $(srcdir)/vl2_utils.m4 > $(builddir)/vl2_utils_expanded.c
@@ -46,8 +50,13 @@ vl2_utils_expanded.c:	_vl2_utils.c $(LOCAL_M4FILES) $(INC_M4FILES)
 #
 # Does it matter that LOCAL_M4FILES does not have srcdir prepended???
 
+# BUG - not all of the LOCAL_M4FILES are shared !?
+
 vl2_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) $(srcdir)/vl2_veclib.m4 | sed -e 's/	*\\//' > $(builddir)/vl2_veclib_expanded.c
+
+vl2_fft_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES) vl2_typed_fft_funcs.m4 vl2_fft_funcs.m4
+	m4 $(M4OPTS) $(srcdir)/vl2_fft_funcs.m4 | sed -e 's/	*\\//' > $(builddir)/vl2_fft_expanded.c
 
 ## OOPS - BUILT_SOURCES seem to be added to sources and compiled by themselves,
 ## although we intend for them just to be included... should we call them .h instead?
@@ -60,6 +69,7 @@ vl2_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 
 libvl2_a_SOURCES =			\
 			vl2_veclib.c	\
+			vl2_fft.c	\
 			vl2_utils.c	\
 			vl2.c		\
 			slow_len.c	\
@@ -81,7 +91,6 @@ LOCAL_M4FILES=							\
 			vl2_host_call_defs.m4			\
 			vl2_host_untyped_call_defs.m4		\
 			vl2_host_funcs.m4			\
-			vl2_typed_fft_funcs.m4			\
 			vl2_typtbl.m4				\
 			vl2_utils.m4				\
 			vl2_kernels.m4				\
@@ -139,6 +148,7 @@ INC_M4FILES=							\
 			$(INCDIR)/new_conv.m4			\
 			$(INCDIR)/vl2_port.m4			\
 			$(INCDIR)/vl2_veclib_prot.m4		\
+			$(INCDIR)/vl2_func_prot.m4		\
 			$(INCDIR)/quat_args.m4			\
 			$(INCDIR)/real_args.m4			\
 			$(INCDIR)/report_args.m4		\
@@ -161,15 +171,6 @@ INC_M4FILES=							\
 			$(INCDIR)/xfer_args.m4
 
 #noinst_HEADERS = my_vl2.h
-
-# OLD for cpp macros...
-#vl2_veclib.debug:	vl2_veclib.c
-#	gcc -E -I../.. -I$(top_srcdir)/include vl2_veclib.c > vl2_veclib.debug_
-#	indent < vl2_veclib.debug_  > vl2_veclib.debug
-##./strip_it2.sh
-#
-##vl2.debug:	vl2.c
-##	gcc -E -I../.. -I$(top_srcdir)/include vl2.c > vl2.debug_
 
 noinst_HEADERS =					\
 			$(LOCAL_M4FILES)		\

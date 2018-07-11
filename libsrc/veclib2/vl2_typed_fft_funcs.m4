@@ -646,7 +646,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 // vl2_fft_funcs.m4 buiding_kernels is NOT SET
 
-static void HOST_TYPED_CALL_NAME_CPX(vfft,type_code)( HOST_CALL_ARG_DECLS )
+void HOST_TYPED_CALL_NAME_CPX(vfft,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -661,7 +661,7 @@ static void HOST_TYPED_CALL_NAME_CPX(vfft,type_code)( HOST_CALL_ARG_DECLS )
 	PF_FFT_CALL_NAME(cvfft)( fap );
 }
 
-static void HOST_TYPED_CALL_NAME_CPX(vift,type_code)( HOST_CALL_ARG_DECLS )
+void HOST_TYPED_CALL_NAME_CPX(vift,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -677,7 +677,7 @@ static void HOST_TYPED_CALL_NAME_CPX(vift,type_code)( HOST_CALL_ARG_DECLS )
 }
 
 
-static void HOST_TYPED_CALL_NAME_REAL(vfft,type_code)( HOST_CALL_ARG_DECLS )
+void HOST_TYPED_CALL_NAME_REAL(vfft,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap;
@@ -695,7 +695,7 @@ static void HOST_TYPED_CALL_NAME_REAL(vfft,type_code)( HOST_CALL_ARG_DECLS )
 	PF_FFT_CALL_NAME(rvfft)( fap );
 }
 
-static void HOST_TYPED_CALL_NAME_REAL(vift,type_code)( HOST_CALL_ARG_DECLS )
+void HOST_TYPED_CALL_NAME_REAL(vift,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -910,7 +910,7 @@ define(`MULTIPROCESSOR_COLUMN_LOOP',`
 	}
 ')
 
-static void HOST_TYPED_CALL_NAME_REAL(fftrows,type_code)(HOST_CALL_ARG_DECLS)
+void HOST_TYPED_CALL_NAME_REAL(fftrows,type_code)(HOST_CALL_ARG_DECLS)
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -1038,7 +1038,7 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 	}
 }
 
-static void HOST_TYPED_CALL_NAME_REAL(fft2d,type_code)(HOST_CALL_ARG_DECLS)
+void HOST_TYPED_CALL_NAME_REAL(fft2d,type_code)(HOST_CALL_ARG_DECLS)
 {
 	int n;
 
@@ -1150,7 +1150,7 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 }
 
 
-static void HOST_TYPED_CALL_NAME_REAL(ift2d,type_code)(HOST_CALL_ARG_DECLS)
+void HOST_TYPED_CALL_NAME_REAL(ift2d,type_code)(HOST_CALL_ARG_DECLS)
 {
 	int n;
 
@@ -1165,7 +1165,7 @@ static void HOST_TYPED_CALL_NAME_REAL(ift2d,type_code)(HOST_CALL_ARG_DECLS)
 	}
 }
 
-static void HOST_TYPED_CALL_NAME_REAL(iftrows,type_code)( HOST_CALL_ARG_DECLS )
+void HOST_TYPED_CALL_NAME_REAL(iftrows,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -1242,7 +1242,7 @@ static void HOST_TYPED_CALL_NAME_CPX(xft2d,type_code)( Vec_Obj_Args *oap, FFT_Ar
 	}
 }
 
-static void HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)( HOST_CALL_ARG_DECLS )
+void HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -1257,7 +1257,7 @@ static void HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)( HOST_CALL_ARG_DECLS )
 
 // Duplicates fft2d - but needed for consistency???
 
-static void HOST_TYPED_CALL_NAME_CPX(ift2d,type_code)( HOST_CALL_ARG_DECLS )
+void HOST_TYPED_CALL_NAME_CPX(ift2d,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -1290,7 +1290,7 @@ static void HOST_TYPED_CALL_NAME_CPX(xftrows,type_code)( Vec_Obj_Args *oap, FFT_
 	}
 }
 
-static void HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)( HOST_CALL_ARG_DECLS )
+void HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -1303,7 +1303,7 @@ static void HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)( HOST_CALL_ARG_DECLS )
 	HOST_TYPED_CALL_NAME_CPX(xftrows,type_code)(oap,fap);
 }
 
-static void HOST_TYPED_CALL_NAME_CPX(iftrows,type_code)( HOST_CALL_ARG_DECLS )
+void HOST_TYPED_CALL_NAME_CPX(iftrows,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
