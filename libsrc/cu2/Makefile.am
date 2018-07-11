@@ -10,6 +10,7 @@ M4OPTS=	-I $(top_srcdir)/include -I $(srcdir)
 GENERATED_SRCS=								\
 			$(builddir)/cu2_utils_expanded.c		\
 			$(builddir)/cu2_veclib_expanded.c		\
+			$(builddir)/cu2_fft_expanded.c			\
 			$(builddir)/cu2_fill_expanded.c			\
 			$(builddir)/cu2_yuv2rgb_expanded.c		\
 			$(builddir)/cu2_centroid_expanded.c
@@ -24,6 +25,9 @@ $(builddir)/cu2_utils_expanded.c:	$(LOCAL_M4FILES)
 
 $(builddir)/cu2_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) $(srcdir)/cu2_veclib.m4 | sed -e 's/	*\\//' > $(builddir)/cu2_veclib_expanded.c
+
+$(builddir)/cu2_fft_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES) cu2_fft_funcs.m4 cu2_typed_fft_funcs.m4
+	m4 $(M4OPTS) $(srcdir)/cu2_fft_funcs.m4 | sed -e 's/	*\\//' > $(builddir)/cu2_fft_expanded.c
 
 $(builddir)/cu2_fill_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) < $(srcdir)/cu2_fill.m4 > $(builddir)/cu2_fill_expanded.c
@@ -70,6 +74,12 @@ cu2_funcs.o:		$(srcdir)/cu2_funcs.cu			\
 			$(top_srcdir)/include/veclib/vecgen.h
 	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
 
+cu2_fft.o:		$(srcdir)/cu2_fft.cu			\
+			$(top_builddir)/include/veclib/cu2_veclib_prot.h	\
+			$(top_srcdir)/include/veclib/slow_len.h	\
+			$(top_srcdir)/include/veclib/vecgen.h
+	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
+
 noinst_LIBRARIES = libcu2.a
 
 libcu2_a_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -Wall -Wmissing-prototypes
@@ -78,7 +88,7 @@ libcu2_a_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -Wall -Wmi
 
 libcu2_a_SOURCES =			\
 			cu2_curand.c	\
-			cu2_fft.c	\
+			cu2_fft_supp.c	\
 			cu2_streams.c	\
 			cu2_utils.c
 
@@ -96,6 +106,7 @@ NVCPPFLAGS =	-I/usr/local/cuda/include -I$(builddir) -I$(top_builddir) -I$(top_s
 
 NVCC_SOURCES =						\
 				cu2_funcs.cu		\
+				cu2_fft.cu		\
 				cu2_fill.cu		\
 				cu2_centroid.cu		\
 				cu2_yuv2rgb.cu
@@ -104,6 +115,9 @@ NVCC_SOURCES =						\
 # more dependencies here, but what are they?  BUG
 $(srcdir)/cu2_funcs.cu:	m4_cu2_veclib.c ../../include/platform.h ../../include/my_cu2.h
 		touch $(srcdir)/cu2_funcs.cu
+
+$(srcdir)/cu2_fft.cu:	../../include/platform.h ../../include/my_cu2.h
+		touch $(srcdir)/cu2_fft.cu
 
 # cu2_host_untyped_call_defs.h
 
@@ -117,7 +131,6 @@ $(srcdir)/m4_cu2_veclib.c:	cu2_veclib_expanded.c
 
 LOCAL_M4FILES=							\
 			$(srcdir)/cu2_fft_funcs.m4		\
-			$(srcdir)/cu2_typed_fft_funcs.m4	\
 			$(srcdir)/cu2_host_call_defs.m4		\
 			$(srcdir)/cu2_host_funcs.m4		\
 			$(srcdir)/cu2_kern_call_defs.m4		\

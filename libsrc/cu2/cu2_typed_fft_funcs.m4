@@ -66,24 +66,24 @@ ifdef(`BUILDING_KERNELS',`
 
 // vl2_fft_funcs.m4 buiding_kernels is NOT SET
 
-static void HOST_TYPED_CALL_NAME_CPX(vfft,type_code)( HOST_CALL_ARG_DECLS )
+void HOST_TYPED_CALL_NAME_CPX(vfft,type_code)( HOST_CALL_ARG_DECLS )
 {
 CUDA_CPX_FFT_BODY(cuda_cpx_fft_func,cuda_cpx_fft_type,CUFFT_FORWARD)
 }
 
 dnl	BUG - too much duplicated code?
 
-static void HOST_TYPED_CALL_NAME_CPX(vift,type_code)( HOST_CALL_ARG_DECLS )
+void HOST_TYPED_CALL_NAME_CPX(vift,type_code)( HOST_CALL_ARG_DECLS )
 {
 CUDA_CPX_FFT_BODY(cuda_cpx_fft_func,cuda_cpx_fft_type,CUFFT_INVERSE)
 }
 
-static void HOST_TYPED_CALL_NAME_REAL(vfft,type_code)( HOST_CALL_ARG_DECLS )
+void HOST_TYPED_CALL_NAME_REAL(vfft,type_code)( HOST_CALL_ARG_DECLS )
 {
 CUDA_REAL_FFT_BODY(cuda_real_fft_func,CUFFT_R2C,cuda_cpx_fft_type,cuda_real_fft_type,OBJ_N_TYPE_ELTS(OA_SRC1(oap)))
 }
 
-static void HOST_TYPED_CALL_NAME_REAL(vift,type_code)( HOST_CALL_ARG_DECLS )
+void HOST_TYPED_CALL_NAME_REAL(vift,type_code)( HOST_CALL_ARG_DECLS )
 {
 CUDA_REAL_FFT_BODY(cuda_real_ift_func,CUFFT_C2R,cuda_real_fft_type,cuda_cpx_fft_type,OBJ_N_TYPE_ELTS(OA_DEST(oap)))
 }
@@ -100,28 +100,28 @@ dnl { warn("HOST_TYPED_CALL_NAME(cvfft,type_code) not implemented!?"); }
 dnl static void HOST_TYPED_CALL_NAME(cvift,type_code)(HOST_CALL_ARG_DECLS)
 dnl { warn("HOST_TYPED_CALL_NAME(cvift,type_code) not implemented!?"); }
 
-static void HOST_TYPED_CALL_NAME(rfft2d,type_code)(HOST_CALL_ARG_DECLS)
+void HOST_TYPED_CALL_NAME(rfft2d,type_code)(HOST_CALL_ARG_DECLS)
 { warn("HOST_TYPED_CALL_NAME(rfft2d,type_code) not implemented!?"); }
 
-static void HOST_TYPED_CALL_NAME(rift2d,type_code)(HOST_CALL_ARG_DECLS)
+void HOST_TYPED_CALL_NAME(rift2d,type_code)(HOST_CALL_ARG_DECLS)
 { warn("HOST_TYPED_CALL_NAME(rift2d,type_code) not implemented!?"); }
 
-static void HOST_TYPED_CALL_NAME(cfft2d,type_code)(HOST_CALL_ARG_DECLS)
+void HOST_TYPED_CALL_NAME(cfft2d,type_code)(HOST_CALL_ARG_DECLS)
 { warn("HOST_TYPED_CALL_NAME(cfft2d,type_code) not implemented!?"); }
 
-static void HOST_TYPED_CALL_NAME(cift2d,type_code)(HOST_CALL_ARG_DECLS)
+void HOST_TYPED_CALL_NAME(cift2d,type_code)(HOST_CALL_ARG_DECLS)
 { warn("HOST_TYPED_CALL_NAME(cift2d,type_code) not implemented!?"); }
 
-static void HOST_TYPED_CALL_NAME(rfftrows,type_code)(HOST_CALL_ARG_DECLS)
+void HOST_TYPED_CALL_NAME(rfftrows,type_code)(HOST_CALL_ARG_DECLS)
 { warn("HOST_TYPED_CALL_NAME(rfftrows,type_code) not implemented!?"); }
 
-static void HOST_TYPED_CALL_NAME(riftrows,type_code)(HOST_CALL_ARG_DECLS)
+void HOST_TYPED_CALL_NAME(riftrows,type_code)(HOST_CALL_ARG_DECLS)
 { warn("HOST_TYPED_CALL_NAME(riftrows,type_code) not implemented!?"); }
 
-static void HOST_TYPED_CALL_NAME(cfftrows,type_code)(HOST_CALL_ARG_DECLS)
+void HOST_TYPED_CALL_NAME(cfftrows,type_code)(HOST_CALL_ARG_DECLS)
 { warn("HOST_TYPED_CALL_NAME(cfftrows,type_code) not implemented!?"); }
 
-static void HOST_TYPED_CALL_NAME(ciftrows,type_code)(HOST_CALL_ARG_DECLS)
+void HOST_TYPED_CALL_NAME(ciftrows,type_code)(HOST_CALL_ARG_DECLS)
 { warn("HOST_TYPED_CALL_NAME(ciftrows,type_code) not implemented!?"); }
 
 ') dnl endif ! BUILDING_KERNELS
