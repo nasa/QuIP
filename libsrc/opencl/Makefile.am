@@ -11,7 +11,7 @@ libocl_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
 #AM_CFLAGS= -framework OpenGL
 AM_CFLAGS= -I/System/Library/Frameworks/OpenGL.framework/Headers
 
-GENERATED_SRCS=	ocl_rand_expanded.c ocl_veclib_expanded.c
+GENERATED_SRCS=	ocl_rand_expanded.c ocl_veclib_expanded.c ocl_fft_expanded.c
 
 clean-local:
 	rm -rf $(GENERATED_SRCS) vuni.i
@@ -31,16 +31,23 @@ ocl_rand_expanded.c:	ocl_rand.m4 $(LOCAL_M4FILES) $(INC_M4FILES)
 ocl_veclib_expanded.c:	ocl_veclib.m4 $(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) $(srcdir)/ocl_veclib.m4 > $(builddir)/ocl_veclib_expanded.c
 
+ocl_fft_expanded.c:	ocl_fft_funcs.m4 $(LOCAL_M4FILES) $(INC_M4FILES)
+	m4 $(M4OPTS) $(srcdir)/ocl_fft_funcs.m4 > $(builddir)/ocl_fft_expanded.c
+
 libocl_a_SOURCES =			\
 			ocl_streams.c	\
 			ocl.c		\
 			ocl_menu.c	\
 			ocl_rand.c	\
 			ocl_utils.c	\
+			ocl_fft.c	\
 			ocl_veclib.c
 
 $(srcdir)/ocl_veclib.c:	ocl_veclib_expanded.c
 	touch $(srcdir)/ocl_veclib.c
+
+$(srcdir)/ocl_fft.c:	ocl_fft_expanded.c
+	touch $(srcdir)/ocl_fft.c
 
 #../../include/veclib/vecgen.m4:
 
