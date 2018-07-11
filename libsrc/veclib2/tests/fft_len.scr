@@ -121,8 +121,8 @@ Test_RFFT $1
 .
 
 Do_Test_FFT h
-platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
-Do_Test_FFT g
+#platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
+#Do_Test_FFT g
 
 exit
 
