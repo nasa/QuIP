@@ -99,11 +99,6 @@ NVCPPFLAGS =	-I/usr/local/cuda/include -I$(builddir) -I$(top_builddir) -I$(top_s
 
 .cu.o:	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
 
-#clean-local:
-#	-rm -rf cu2_veclib_expanded.c cu2_veclib_stripped.c
-
-#				new_fill.cu
-
 NVCC_SOURCES =						\
 				cu2_funcs.cu		\
 				cu2_fft.cu		\
@@ -116,18 +111,13 @@ NVCC_SOURCES =						\
 $(srcdir)/cu2_funcs.cu:	m4_cu2_veclib.c ../../include/platform.h ../../include/my_cu2.h
 		touch $(srcdir)/cu2_funcs.cu
 
-$(srcdir)/cu2_fft.cu:	../../include/platform.h ../../include/my_cu2.h
+$(srcdir)/cu2_fft.cu:	../../include/platform.h ../../include/my_cu2.h cu2_fft_expanded.c
 		touch $(srcdir)/cu2_fft.cu
 
 # cu2_host_untyped_call_defs.h
 
 $(srcdir)/m4_cu2_veclib.c:	cu2_veclib_expanded.c
 	touch $(srcdir)/m4_cu2_veclib.c
-
-#			cu2_kern_args.m4
-#			cu2_kernel_src.m4
-
-#			$(srcdir)/new_fill.m4
 
 LOCAL_M4FILES=							\
 			$(srcdir)/cu2_fft_funcs.m4		\
