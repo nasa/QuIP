@@ -10,12 +10,12 @@ Set std_cpx	complex
 #Assign dlen 1024*1024		# bad
 #Assign dlen 512*512		# bad
 #Assign dlen 256*256		# mostly OK, but a little strange
-#Assign dlen 4*4096			# NOT OK
+Assign dlen 4*4096			# NOT OK
 #Assign dlen 16*4096			# NOT OK
 #Assign dlen 4*4096			# NOT OK
 #Assign dlen 2*4096			# OK
 #Set dlen 4096			# OK
-Set dlen 8
+#Set dlen 8
 
 Assign slen min(8,$dlen)
 Set freq_sigma 32

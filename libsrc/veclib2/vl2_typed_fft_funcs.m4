@@ -600,6 +600,25 @@ define(`GET_CPX_SUM',`
 	($1)->im = ($2)->im + ($3)->im;
 ')
 
+dnl	SHOW_SPLIT_DATA(msg)
+
+define(`SHOW_ONE_CPX',`
+	sprintf(DEFAULT_ERROR_STRING,"$1 at 0x%lx:   %g   %g",
+		(long)$1,$1->re,$1->im);
+	NADVISE(DEFAULT_ERROR_STRING);
+')
+
+define(`SHOW_SPLIT_DATA',`
+	NADVISE("$1");
+	SHOW_ONE_CPX(cbot)
+	SHOW_ONE_CPX(ctop)
+	SHOW_ONE_CPX(abot)
+	SHOW_ONE_CPX(atop)
+	SHOW_ONE_CPX(bbot)
+	SHOW_ONE_CPX(btop)
+	NADVISE("");
+')
+
 static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 {
 	std_cpx *ctop, *cbot;
@@ -626,13 +645,20 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 
 	// copy the input data
 
-	for(i=1;i<len/2;i++){
+	for(i=0;i<len/2;i++){
 		dest->re = *source;
 		source += src_inc;
 		dest->im = *source;
 		source += src_inc;
 		dest += dst_inc;
 	}
+sprintf(DEFAULT_ERROR_STRING,"After copy:");
+NADVISE(DEFAULT_ERROR_STRING);
+dest = (std_cpx *)FFT_DST(fap);
+for(i=0;i<len/2;i++){
+sprintf(DEFAULT_ERROR_STRING,"   %g   %g",dest[i].re,dest[i].im);
+NADVISE(DEFAULT_ERROR_STRING);
+}
 
 	if( len != last_real_AB_len ){
 dnl	the space before the opening paren is important!!!
@@ -650,10 +676,18 @@ dnl	the space before the opening paren is important!!!
 	// Compute the FFT
 	PF_FFT_CALL_NAME(cvfft)(_fap);
 
+sprintf(DEFAULT_ERROR_STRING,"After fft:");
+NADVISE(DEFAULT_ERROR_STRING);
+for(i=0;i<len/2;i++){
+sprintf(DEFAULT_ERROR_STRING,"   %g   %g",dest[i].re,dest[i].im);
+NADVISE(DEFAULT_ERROR_STRING);
+}
 	// Perform the "split"
 	cbot = (std_cpx *)FFT_DST(fap);
 	ctop = cbot + dst_inc * len/2;		// valid because xform has len N/2+1
-	*ctop = *cbot;	// X(N/2) = X(0)
+	// Fix the extra entry before we do the split
+	ctop->re = cbot->re - cbot->im;
+	ctop->im = 0;
 
 	abot = A_array;
 	atop = A_array + len/2;
@@ -661,15 +695,18 @@ dnl	the space before the opening paren is important!!!
 	btop = B_array + len/2;
 
 	// 0 is a special case...
+SHOW_SPLIT_DATA(before 0)
 	GET_CPX_PROD(&p1,cbot,abot)
-	GET_CPX_CONJ_PROD(&p2,ctop,bbot)
+	GET_CPX_CONJ_PROD(&p2,cbot,bbot)	// really ctop...
 	GET_CPX_SUM(&t1,&p1,&p2)
 	*cbot = t1;
+SHOW_SPLIT_DATA(after 0)
 
 	ADVANCE_CPX_PTRS
 
 	for(i=1;i<len/4;i++){
 		// G(k) = X(k)A(k) + X*(N-k)B(k)
+SHOW_SPLIT_DATA(before idx)
 		GET_CPX_PROD(&p1,cbot,abot)
 		GET_CPX_CONJ_PROD(&p2,ctop,bbot)
 		GET_CPX_SUM(&t1,&p1,&p2)
@@ -680,6 +717,7 @@ dnl	the space before the opening paren is important!!!
 
 		*cbot = t1;
 		*ctop = t2;
+SHOW_SPLIT_DATA(after idx)
 
 		ADVANCE_CPX_PTRS
 	}
@@ -687,18 +725,12 @@ dnl	the space before the opening paren is important!!!
 	// Now cbot and ctop should point to the same thing - the sample at len/4
 	assert(cbot==ctop);
 
+SHOW_SPLIT_DATA(before last)
 	GET_CPX_PROD(&p1,cbot,abot)
-	GET_CPX_CONJ_PROD(&p1,ctop,bbot)
+	GET_CPX_CONJ_PROD(&p2,ctop,bbot)
 	GET_CPX_SUM(&t1,&p1,&p2)
 	*cbot = t1;
-
-	// Now fix the extra entry
-	cbot = (std_cpx *)FFT_DST(fap);
-	ctop = cbot + dst_inc * len/2;		// valid because xform has len N/2+1
-
-	ctop->re = cbot->im;
-	ctop->im = 0;
-	cbot->im = 0;
+SHOW_SPLIT_DATA(after last)
 
 } // rvfft
 
