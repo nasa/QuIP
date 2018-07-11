@@ -653,6 +653,7 @@ dnl	the space before the opening paren is important!!!
 	// Perform the "split"
 	cbot = (std_cpx *)FFT_DST(fap);
 	ctop = cbot + dst_inc * len/2;		// valid because xform has len N/2+1
+	*ctop = *cbot;	// X(N/2) = X(0)
 
 	abot = A_array;
 	atop = A_array + len/2;
@@ -661,11 +662,12 @@ dnl	the space before the opening paren is important!!!
 
 	// 0 is a special case...
 	GET_CPX_PROD(&p1,cbot,abot)
-	GET_CPX_CONJ_PROD(&p2,cbot,bbot)	// would be ctop, but wraps...
+	GET_CPX_CONJ_PROD(&p2,ctop,bbot)
 	GET_CPX_SUM(&t1,&p1,&p2)
 	*cbot = t1;
 
 	ADVANCE_CPX_PTRS
+
 	for(i=1;i<len/4;i++){
 		// G(k) = X(k)A(k) + X*(N-k)B(k)
 		GET_CPX_PROD(&p1,cbot,abot)
@@ -686,7 +688,7 @@ dnl	the space before the opening paren is important!!!
 	assert(cbot==ctop);
 
 	GET_CPX_PROD(&p1,cbot,abot)
-	GET_CPX_CONJ_PROD(&p1,cbot,bbot)	// would be ctop, but wraps...
+	GET_CPX_CONJ_PROD(&p1,ctop,bbot)
 	GET_CPX_SUM(&t1,&p1,&p2)
 	*cbot = t1;
 
