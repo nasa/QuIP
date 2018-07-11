@@ -6,7 +6,8 @@
 #Assign dlen 512*512		# bad
 #Assign dlen 256*256		# mostly OK, but a little strange
 #Assign dlen 4*4096			# NOT OK
-Assign dlen 4*4096			# OK
+#Assign dlen 16*4096			# NOT OK
+Assign dlen 4*4096			# NOT OK
 #Assign dlen 2*4096			# OK
 #Set dlen 4096			# OK
 #Set dlen 4
@@ -46,10 +47,29 @@ Display ${1}_sf
 
 
 
+Define Test_RFFT 1 prefix
+advise "Computing real fft..."
+Display ${1}_sf
+Pause
+VSet ${1}_xf{0} 0
+VSet ${1}_xf{1} 0
+veclib execute vfft ${1}_xf ${1}_f quit
+Display ${1}_sxf
+Pause
+#Display ${1}_sc
+#Pause
+VSet ${1}_f 0
+veclib execute vift ${1}_f ${1}_xf quit
+Display ${1}_sf
+Pause
+.
+
 Define Test_CFFT 1 prefix
 advise "Computing complex fft..."
 Display ${1}_sc
 Pause
+VSet ${1}_cxf{0} 0
+VSet ${1}_cxf{1} 0
 veclib execute vfft ${1}_cxf ${1}_c quit
 Display ${1}_scxf
 Pause
@@ -64,10 +84,8 @@ Pause
 Define Init_Input1 1 prefix
 VSet ${1}_f 0
 VSet ${1}_f[0] 1
-#Display ${1}_sf
 VSet ${1}_c{1} 0
 VMov ${1}_c{0} ${1}_f
-Display ${1}_sc
 .
 
 
@@ -77,20 +95,28 @@ VSet ${1}_f 0
 VSet ${1}_f 1
 VSet ${1}_c{1} 0
 VMov ${1}_c{0} ${1}_f
-Display ${1}_sc
+.
+
+Define Init_Sine 2 prefix n_cycles
+Ramp1D ${1}_f 0 8*atan(1)*$2/$dlen
+VSin ${1}_f ${1}_f
 .
 
 Define Do_Test_FFT 1 prefix
 Declare_Test_Objects $1
-Init_Input1 $1
-Test_Filter $1
+Init_Sine $1 5
+Test_RFFT $1
+#Init_Input1 $1
 #Test_CFFT $1
+#Test_RFFT $1
+#Test_Filter $1
 #Init_Input2 $1
 #Test_CFFT $1
+#Test_RFFT $1
 .
 
 Do_Test_FFT h
-#platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
+platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
 Do_Test_FFT g
 
 exit

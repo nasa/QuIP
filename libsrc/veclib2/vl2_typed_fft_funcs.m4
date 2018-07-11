@@ -46,6 +46,7 @@ define(`DECLARE_STATIC_FFT_VARS',`
 static dimension_t last_cpx_len=0;
 static std_cpx *twiddle;
 
+// BUG - not thread-safe!?
 static dimension_t last_real_len=0;
 static std_type *_isinfact=NULL;
 static std_type *_sinfact=NULL;
@@ -318,6 +319,11 @@ static void PF_FFT_CALL_NAME(cvift)( FFT_Args *fap )
 	PF_FFT_CALL_NAME(cvfft)(new_fap);
 }
 
+// Compute tables isinfact and sinfact.
+// Curiously, isinfact appears to hold the sine of arg, while sinfact is
+// the inverse sine!?  EXPLANATION:  "inverse" sine factor is used in the
+// computation of the inverse DFT!
+
 static void init_sinfact (dimension_t n)
 {
 	dimension_t i;
@@ -338,6 +344,8 @@ static void init_sinfact (dimension_t n)
 	arg = 0.0;
 
 	// What about the 0th entries???
+	// We don_t want to divide by zero!?
+	// Is it never used???
 	for(i=1;i<n;i++){
 		arg += arginc;
 		_isinfact[i] = 2 * (std_type)sin(arg);
@@ -360,6 +368,8 @@ static void init_sinfact (dimension_t n)
  */
 
 // The TI documentation calls this the "split operation"
+// Found this on the web:
+// Efficient FFT Computation of Real Input - on TI wiki...
 
 dnl	RECOMBINE(inc)
 
@@ -444,7 +454,6 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 	for(i=1;i<len/2;i++){
 		std_type p,q;
 
-		//cbot ++; /* BUG we need to use increment here!!! */
 		cbot += dst_inc;
 		bottom += 2*src_inc;
 		top -= 2*src_inc;
@@ -472,10 +481,10 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 	PF_FFT_CALL_NAME(cvfft)(_fap);
 
 	cbot = dest;
-	cbot->im = (std_type) B0;
+	cbot->im = (std_type) B0;	// shouldn_t this be zero???
 	for(i=1;i<len/2;i++){
 		cbot+=dst_inc;
-		cbot->im *= _sinfact[i];
+		cbot->im *= _sinfact[i];	// rvfft
 	}
 
 	/* now make it look like the correct answer */
@@ -537,7 +546,7 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 	cbot->re *= 0.5;
 	cbot->im *= 0.5;
 
-	RECOMBINE(src_inc)	// in-place
+	RECOMBINE(src_inc)	// in-place - rvift
 
 	/* remember value of B0 */
 	cbot = src;
@@ -547,7 +556,7 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 	cbot->im = 0.0;
 	for(i=1;i<len/2;i++){
 		cbot+=src_inc;
-		cbot->im *= _isinfact[i];
+		cbot->im *= _isinfact[i];	// rvift
 	}
 
 	SET_FFT_DST( _fap, FFT_SRC(fap) );
@@ -559,17 +568,20 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 
 	// compute in-place, overwriting the source...
 	PF_FFT_CALL_NAME(cvfft)(_fap);
+	// Now that we are not scaling the inverse transform,
+	// the returned values here are larger than before by a factor of n/2
+	// But they are half of what they should be...
+	// We fix this by eliminating the multiplication by 0.5f below
 
 	/* now reconstruct the samples */
-	/* BUG we fix destination increment, but assume src inc is 1!? */
 
 	cbot = src;
 	ctop = src + src_inc*(len/2);
 	ep = dest;
 	op = dest+dst_inc;
 
-	*ep = cbot->re;
-	*op = - cbot->im;
+	*ep = cbot->re * 2;		// because un-scaled!
+	*op = - cbot->im * 2;		// because un-scaled?
 	for(i=1;i<len/2;i++){
 		std_type s1, d1;
 		ep += 2*dst_inc;
@@ -578,8 +590,8 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 		ctop-=src_inc;
 		s1 = ctop->re + ctop->im;	/* F(y1) + F(y2) */
 		d1 = cbot->re - cbot->im;	/* y1 - y2 */
-		*ep = 0.5f * ( s1 + d1 );
-		*op = 0.5f * ( d1 - s1 );
+		*ep = /* 0.5f * */ ( s1 + d1 );
+		*op = /* 0.5f * */ ( d1 - s1 );
 	}
 
 	/* now integrate the odd samples */
@@ -598,7 +610,8 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 		op += 2*dst_inc;
 		total += *op;
 	}
-	/* the total should equal B0 */
+sprintf(DEFAULT_ERROR_STRING,"rvift:  total = %g    B0 = %g",total,B0);
+NADVISE(DEFAULT_ERROR_STRING);
 
 	// Not sure what the above comment means...
 	// Because they are generally not equal - does this
@@ -607,12 +620,16 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 	// This code broke after the normalization
 	// was removed from the inverse transform
 	// (done for compatibility w/ other libs).
+	// 7/10/18 - we are off by a factor of 2 compared to cuda AND un-normed cvfft...
 	//
 	// WITH normalization:
 	//diff = (std_type)(2 * ( B0 - total ) / len);
 	// WITHOUT normalization:
-	total /= (len/2);
-	diff = (std_type)( B0 - total );
+	total /= (len);
+	diff = (std_type)( 2*(B0 - total) );
+sprintf(DEFAULT_ERROR_STRING,"rvift:  after normalizing total = %g    diff = %g",total,diff);
+NADVISE(DEFAULT_ERROR_STRING);
+
 	// B0 comes from the transform,
 	// while total comes from the output of the
 	// inverse transform;
@@ -742,7 +759,7 @@ define(`MULTIPROCESSOR_ROW_LOOP',`
 	if( OBJ_COLS( $1 )/2 != last_cpx_len )
 		init_twiddle (OBJ_COLS( $1 )/2);
 	if( OBJ_COLS( $1 ) != last_real_len ){
-		init_sinfact (OBJ_COLS( $1 ));
+		init_sinfact (OBJ_COLS( $1 ));	// multiprocessor row loop
 	}
 
 	while( n_passes -- ){
