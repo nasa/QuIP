@@ -25,7 +25,8 @@ dnl define(`init_twiddle',`TYPED_NAME(_init_twiddle)')
 define(`init_twiddle',`TYPED_NAME(`init_twiddle_')')
 define(`last_cpx_len',`TYPED_NAME(_last_cpx_len)')
 define(`twiddle',`TYPED_NAME(_twiddle)')
-define(`last_real_len',`TYPED_NAME(_last_real_len)')
+define(`last_real_sinfact_len',`TYPED_NAME(_last_real_sinfact_len)')
+define(`last_real_AB_len',`TYPED_NAME(_last_real_AB_len)')
 
 dnl BUG pick one or the other of these two methods for real FFT
 define(`_isinfact',`TYPED_NAME(__isinfact)')
@@ -54,10 +55,11 @@ static dimension_t last_cpx_len=0;
 static std_cpx *twiddle;
 
 // BUG - not thread-safe!?
-static dimension_t last_real_len=0;
+static dimension_t last_real_sinfact_len=0;
 static std_type *_isinfact=NULL;
 static std_type *_sinfact=NULL;
 
+static dimension_t last_real_AB_len=0;
 static std_cpx *A_array=NULL;
 static std_cpx *B_array=NULL;
 
@@ -341,7 +343,7 @@ static void init_sinfact (dimension_t n)
 	dimension_t i;
 	std_type arginc, arg;
 
-	last_real_len = n;
+	last_real_sinfact_len = n;
 	n /= 2;
 
 	if( _sinfact != (std_type *)NULL )
@@ -372,7 +374,7 @@ static void init_AB (dimension_t n)
 	dimension_t i;
 	std_type arginc, arg;
 
-	last_real_len = n;
+	last_real_AB_len = n;
 	n /= 2;
 
 	if( A_array != (std_cpx *)NULL )
@@ -497,7 +499,7 @@ static void PF_FFT_CALL_NAME(rvfft_v1)( const FFT_Args *fap)
 	src_inc = FFT_SINC(fap);
 	dst_inc = FFT_DINC(fap);
 
-	if( len != last_real_len ){
+	if( len != last_real_sinfact_len ){
 dnl	the space before the opening paren is important!!!
 		init_sinfact (len);
 	}
@@ -632,7 +634,7 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 		dest += dst_inc;
 	}
 
-	if( len != last_real_len ){
+	if( len != last_real_AB_len ){
 dnl	the space before the opening paren is important!!!
 		init_AB (len);
 	}
@@ -650,7 +652,8 @@ dnl	the space before the opening paren is important!!!
 
 	// Perform the "split"
 	cbot = (std_cpx *)FFT_DST(fap);
-	ctop = cbot + dst_inc * len/2;		// invalid until decremented
+	ctop = cbot + dst_inc * len/2;		// valid because xform has len N/2+1
+
 	abot = A_array;
 	atop = A_array + len/2;
 	bbot = B_array;
@@ -687,6 +690,14 @@ dnl	the space before the opening paren is important!!!
 	GET_CPX_SUM(&t1,&p1,&p2)
 	*cbot = t1;
 
+	// Now fix the extra entry
+	cbot = (std_cpx *)FFT_DST(fap);
+	ctop = cbot + dst_inc * len/2;		// valid because xform has len N/2+1
+
+	ctop->re = cbot->im;
+	ctop->im = 0;
+	cbot->im = 0;
+
 } // rvfft
 
 /* One dimensional real inverse fft.
@@ -720,7 +731,7 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 	src_inc = FFT_SINC(fap);
 	len=FFT_LEN(fap);		/* length of the real destination */
 
-	if( len != last_real_len ){
+	if( len != last_real_sinfact_len ){
 dnl	the space before the opening paren is important!!!
 		init_sinfact (len);
 	}
@@ -949,7 +960,7 @@ define(`MULTIPROCESSOR_ROW_LOOP',`
 		bitrev_init(OBJ_COLS( $1 )/2);
 	if( OBJ_COLS( $1 )/2 != last_cpx_len )
 		init_twiddle (OBJ_COLS( $1 )/2);
-	if( OBJ_COLS( $1 ) != last_real_len ){
+	if( OBJ_COLS( $1 ) != last_real_sinfact_len ){
 dnl	the space before the opening paren is important!!!
 		init_sinfact (OBJ_COLS( $1 ));	// multiprocessor row loop
 		// OR init_AB ???

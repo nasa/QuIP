@@ -12,10 +12,11 @@ Set std_cpx	complex
 #Assign dlen 256*256		# mostly OK, but a little strange
 #Assign dlen 4*4096			# NOT OK
 #Assign dlen 16*4096			# NOT OK
-Assign dlen 4*4096			# NOT OK
+#Assign dlen 4*4096			# NOT OK
 #Assign dlen 2*4096			# OK
 #Set dlen 4096			# OK
-#Set dlen 4
+Set dlen 8
+
 Assign slen min(8,$dlen)
 Set freq_sigma 32
 
@@ -109,15 +110,15 @@ VSin ${1}_f ${1}_f
 
 Define Do_Test_FFT 1 prefix
 Declare_Test_Objects $1
+Init_Input1 $1
+#Test_CFFT $1
+Test_RFFT $1
+#Test_Filter $1
+Init_Input2 $1
+#Test_CFFT $1
+Test_RFFT $1
 Init_Sine $1 5
 Test_RFFT $1
-#Init_Input1 $1
-#Test_CFFT $1
-#Test_RFFT $1
-#Test_Filter $1
-#Init_Input2 $1
-#Test_CFFT $1
-#Test_RFFT $1
 .
 
 Do_Test_FFT h
