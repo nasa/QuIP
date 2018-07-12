@@ -1,6 +1,18 @@
 // vl2_fft_funcs.m4 BEGIN
 /* included file, so no version string */
 
+dnl	It has been discovered that there are numerical errors in the real-DFT
+dnl	for long sequences.  This appears to be due to small numerical errors
+dnl	in the complex FFT that are somehow magnified.  That is, the problem is
+dnl	less severe if a full complex FFT is used, or if double precision is used.
+dnl
+dnl	In the course of trouble-shooting this, a new real FFT method was implemented,
+dnl	based on a TI white paper.  It is not clear whether there was actually an error
+dnl	in the original version, or which one has better numerical precision, or
+dnl	which one is faster.  It would be nice to compare these.  Also, compare with libfftw!
+dnl	Ultimately, we ought to switch to use libfftw so that we can take advantage
+dnl	of all of the features.
+
 #ifdef HAVE_MATH_H
 #include <math.h>
 #endif
@@ -129,7 +141,7 @@ static void init_twiddle (dimension_t len)
 	/* W -kn N , W N = exp ( -j twopi/N ) */
 
 	for(i=0;i<len/2;i++){
-		theta = twopi*(double)(i)/(double)len;
+		theta = (twopi*(double)(i))/(double)len;
 		twiddle[i].re = (std_type)cos(theta);
 		twiddle[i].im = (std_type)sin(theta);
 	}
@@ -406,7 +418,9 @@ dnl	the space before the opening paren is important!!!
 static void init_AB (dimension_t n)
 {
 	dimension_t i;
-	std_type arginc, arg;
+	std_type arginc;
+	std_type arg;
+	double pi;
 
 	last_real_AB_len = n;
 	n /= 2;
@@ -419,14 +433,19 @@ static void init_AB (dimension_t n)
 		givbuf(B_array);
 	B_array = (std_cpx *)getbuf( n * sizeof(std_cpx) );
 
-	arginc = (std_type)(4 * atan(1.0) / n);
-	arg = 0.0;
+	//arginc = (std_type)(4 * atan(1.0) / n);
+	//arg = 0.0;
+	pi = atan(1.0);
 
 	for(i=0;i<n;i++){
 		std_type w_re, w_im;
 
-		// These are probably just the twiddle factors!?
+		arg = (i * pi) / n;
+		// A and B involve the twiddle factors...
 		// can we use those from a table instead???
+		// We are having problems with numerical errors for large N...
+		// Could it be from rounding errors or loss of precision in these?
+		// Or arg_inc?
 
 		// A_k = 0.5 * ( 1 - j W_2N^k )
 		// B_k = 0.5 * ( 1 + j W_2N^k )
