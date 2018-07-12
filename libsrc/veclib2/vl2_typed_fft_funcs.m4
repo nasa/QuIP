@@ -367,6 +367,40 @@ static void init_sinfact (dimension_t n)
 	}
 }
 
+dnl	GET_CPX_PROD(cptr,aptr,bptr)
+dnl	destination must be distinct from sources!
+
+define(`GET_CPX_PROD',`
+	($1)->re = ($2)->re * ($3)->re - ($2)->im * ($3)->im;
+	($1)->im = ($2)->re * ($3)->im + ($2)->im * ($3)->re;
+')
+
+dnl	conjugate just the first factor...
+
+define(`GET_CPX_CONJ1_PROD',`
+	($1)->re = ($2)->re * ($3)->re + ($2)->im * ($3)->im;
+	($1)->im = ($2)->re * ($3)->im - ($2)->im * ($3)->re;
+')
+
+dnl	conjugate just the second factor...
+
+define(`GET_CPX_CONJ2_PROD',`
+	($1)->re = ($2)->re * ($3)->re + ($2)->im * ($3)->im;
+	($1)->im = ($2)->im * ($3)->re - ($2)->re * ($3)->im;
+')
+
+dnl	conjugate BOTH factors...
+
+define(`GET_CPX_CONJ12_PROD',`
+	($1)->re = ($2)->re * ($3)->re - ($2)->im * ($3)->im;
+	($1)->im = - ($2)->im * ($3)->re - ($2)->re * ($3)->im;
+')
+
+define(`GET_CPX_SUM',`
+	($1)->re = ($2)->re + ($3)->re;
+	($1)->im = ($2)->im + ($3)->im;
+')
+
 dnl	the space before the opening paren is important!!!
 
 static void init_AB (dimension_t n)
@@ -396,8 +430,9 @@ static void init_AB (dimension_t n)
 
 		// A_k = 0.5 * ( 1 - j W_2N^k )
 		// B_k = 0.5 * ( 1 + j W_2N^k )
+		// W_2N^k = exp( - j k pi / N )
 		w_re = cos(arg);
-		w_im = sin(arg);
+		w_im = - sin(arg);
 
 		A_array[i].re = 0.5 * ( 1 + w_im );
 		A_array[i].im = 0.5 * (   - w_re );
@@ -580,59 +615,6 @@ define(`ADVANCE_CPX_PTRS',`
 	btop--;
 ')
 
-dnl	GET_CPX_PROD(cptr,aptr,bptr)
-dnl	destination must be distinct from sources!
-
-define(`GET_CPX_PROD',`
-	($1)->re = ($2)->re * ($3)->re - ($2)->im * ($3)->im;
-	($1)->im = ($2)->re * ($3)->im + ($2)->im * ($3)->re;
-')
-
-dnl	conjugate just the first factor...
-
-define(`GET_CPX_CONJ1_PROD',`
-	($1)->re = ($2)->re * ($3)->re + ($2)->im * ($3)->im;
-	($1)->im = ($2)->re * ($3)->im - ($2)->im * ($3)->re;
-')
-
-dnl	conjugate just the second factor...
-
-define(`GET_CPX_CONJ2_PROD',`
-	($1)->re = ($2)->re * ($3)->re + ($2)->im * ($3)->im;
-	($1)->im = ($2)->im * ($3)->re - ($2)->re * ($3)->im;
-')
-
-dnl	conjugate BOTH factors...
-
-define(`GET_CPX_CONJ12_PROD',`
-	($1)->re = ($2)->re * ($3)->re - ($2)->im * ($3)->im;
-	($1)->im = - ($2)->im * ($3)->re - ($2)->re * ($3)->im;
-')
-
-define(`GET_CPX_SUM',`
-	($1)->re = ($2)->re + ($3)->re;
-	($1)->im = ($2)->im + ($3)->im;
-')
-
-dnl	SHOW_SPLIT_DATA(msg)
-
-define(`SHOW_ONE_CPX',`
-	sprintf(DEFAULT_ERROR_STRING,"$1 at 0x%lx:   %g   %g",
-		(long)$1,$1->re,$1->im);
-	NADVISE(DEFAULT_ERROR_STRING);
-')
-
-define(`SHOW_SPLIT_DATA',`
-	NADVISE("$1");
-	SHOW_ONE_CPX(cbot)
-	SHOW_ONE_CPX(ctop)
-	SHOW_ONE_CPX(abot)
-	SHOW_ONE_CPX(atop)
-	SHOW_ONE_CPX(bbot)
-	SHOW_ONE_CPX(btop)
-	NADVISE("");
-')
-
 static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 {
 	std_cpx *ctop, *cbot;
@@ -666,13 +648,6 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 		source += src_inc;
 		dest += dst_inc;
 	}
-sprintf(DEFAULT_ERROR_STRING,"After copy:");
-NADVISE(DEFAULT_ERROR_STRING);
-dest = (std_cpx *)FFT_DST(fap);
-for(i=0;i<len/2;i++){
-sprintf(DEFAULT_ERROR_STRING,"   %g   %g",dest[i].re,dest[i].im);
-NADVISE(DEFAULT_ERROR_STRING);
-}
 
 	if( len != last_real_AB_len ){
 dnl	the space before the opening paren is important!!!
@@ -690,12 +665,6 @@ dnl	the space before the opening paren is important!!!
 	// Compute the FFT
 	PF_FFT_CALL_NAME(cvfft)(_fap);
 
-sprintf(DEFAULT_ERROR_STRING,"After fft:");
-NADVISE(DEFAULT_ERROR_STRING);
-for(i=0;i<len/2;i++){
-sprintf(DEFAULT_ERROR_STRING,"   %g   %g",dest[i].re,dest[i].im);
-NADVISE(DEFAULT_ERROR_STRING);
-}
 	// Perform the "split"
 	cbot = (std_cpx *)FFT_DST(fap);
 	ctop = cbot + dst_inc * len/2;		// valid because xform has len N/2+1
@@ -709,18 +678,15 @@ NADVISE(DEFAULT_ERROR_STRING);
 	btop = B_array + len/2;
 
 	// 0 is a special case...
-SHOW_SPLIT_DATA(before 0)
 	GET_CPX_PROD(&p1,cbot,abot)
 	GET_CPX_CONJ1_PROD(&p2,cbot,bbot)	// really ctop...
 	GET_CPX_SUM(&t1,&p1,&p2)
 	*cbot = t1;
-SHOW_SPLIT_DATA(after 0)
 
 	ADVANCE_CPX_PTRS
 
 	for(i=1;i<len/4;i++){
 		// G(k) = X(k)A(k) + X*(N-k)B(k)
-SHOW_SPLIT_DATA(before idx)
 		GET_CPX_PROD(&p1,cbot,abot)
 		GET_CPX_CONJ1_PROD(&p2,ctop,bbot)
 		GET_CPX_SUM(&t1,&p1,&p2)
@@ -731,7 +697,6 @@ SHOW_SPLIT_DATA(before idx)
 
 		*cbot = t1;
 		*ctop = t2;
-SHOW_SPLIT_DATA(after idx)
 
 		ADVANCE_CPX_PTRS
 	}
@@ -739,13 +704,10 @@ SHOW_SPLIT_DATA(after idx)
 	// Now cbot and ctop should point to the same thing - the sample at len/4
 	assert(cbot==ctop);
 
-SHOW_SPLIT_DATA(before last)
 	GET_CPX_PROD(&p1,cbot,abot)
 	GET_CPX_CONJ1_PROD(&p2,ctop,bbot)
 	GET_CPX_SUM(&t1,&p1,&p2)
 	*cbot = t1;
-SHOW_SPLIT_DATA(after last)
-
 } // rvfft
 
 /* One dimensional real inverse fft.
@@ -931,30 +893,21 @@ dnl	the space before the opening paren is important!!!
 	cbot = src;
 	ctop = src + src_inc*(len/2);
 
-NADVISE("before split");
-src = (std_cpx *)FFT_SRC(fap);
-for(i=0;i<len/2;i++){
-sprintf(DEFAULT_ERROR_STRING,"   %g   %g",src[i].re,src[i].im);
-NADVISE(DEFAULT_ERROR_STRING);
-}
 	abot = A_array;
 	atop = A_array + len/2;
 	bbot = B_array;
 	btop = B_array + len/2;
 
 	// 0 is a special case...
-SHOW_SPLIT_DATA(before 0)
 	GET_CPX_CONJ2_PROD(&p1,cbot,abot)
-	GET_CPX_CONJ12_PROD(&p2,cbot,bbot)	// really ctop...
+	GET_CPX_CONJ12_PROD(&p2,ctop,bbot)	// ctop!
 	GET_CPX_SUM(&t1,&p1,&p2)
 	*cbot = t1;
-SHOW_SPLIT_DATA(after 0)
 
 	ADVANCE_CPX_PTRS
 
 	for(i=1;i<len/4;i++){
 		// X(k) = G(k)A*(k) + G*(N-k)B*(k)
-SHOW_SPLIT_DATA(before idx)
 		GET_CPX_CONJ2_PROD(&p1,cbot,abot)
 		GET_CPX_CONJ12_PROD(&p2,ctop,bbot)
 		GET_CPX_SUM(&t1,&p1,&p2)
@@ -965,7 +918,6 @@ SHOW_SPLIT_DATA(before idx)
 
 		*cbot = t1;
 		*ctop = t2;
-SHOW_SPLIT_DATA(after idx)
 
 		ADVANCE_CPX_PTRS
 	}
@@ -973,19 +925,10 @@ SHOW_SPLIT_DATA(after idx)
 	// Now cbot and ctop should point to the same thing - the sample at len/4
 	assert(cbot==ctop);
 
-SHOW_SPLIT_DATA(before last)
 	GET_CPX_CONJ2_PROD(&p1,cbot,abot)
 	GET_CPX_CONJ12_PROD(&p2,ctop,bbot)
 	GET_CPX_SUM(&t1,&p1,&p2)
 	*cbot = t1;
-SHOW_SPLIT_DATA(after last)
-
-NADVISE("after split / before transform");
-src = (std_cpx *)FFT_SRC(fap);
-for(i=0;i<len/2;i++){
-sprintf(DEFAULT_ERROR_STRING,"   %g   %g",src[i].re,src[i].im);
-NADVISE(DEFAULT_ERROR_STRING);
-}
 
 	SET_FFT_DST( _fap, FFT_SRC(fap) );
 	SET_FFT_DINC( _fap, FFT_SINC(fap) );
@@ -996,19 +939,16 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 	// compute in-place, overwriting the source...
 	PF_FFT_CALL_NAME(cvfft)(_fap);
-NADVISE("after transform");
-src = (std_cpx *)FFT_SRC(fap);
-for(i=0;i<len/2;i++){
-sprintf(DEFAULT_ERROR_STRING,"   %g   %g",src[i].re,src[i].im);
-NADVISE(DEFAULT_ERROR_STRING);
-}
 
 	// copy the data to the destination
+	// Because the inverse transform is unscaled, we
+	// have to multiply by 2 to get the expected values.
+	// (Because the complex FFT len is half of the sequence len.)
 
 	for(i=0;i<len/2;i++){
-		*dest = src->re;
+		*dest = 2 * src->re;
 		dest += dst_inc;
-		*dest = src->im;
+		*dest = 2 * src->im;
 		dest += dst_inc;
 		src += src_inc;
 	}
