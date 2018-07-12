@@ -590,9 +590,23 @@ define(`GET_CPX_PROD',`
 
 dnl	conjugate just the first factor...
 
-define(`GET_CPX_CONJ_PROD',`
+define(`GET_CPX_CONJ1_PROD',`
 	($1)->re = ($2)->re * ($3)->re + ($2)->im * ($3)->im;
 	($1)->im = ($2)->re * ($3)->im - ($2)->im * ($3)->re;
+')
+
+dnl	conjugate just the second factor...
+
+define(`GET_CPX_CONJ2_PROD',`
+	($1)->re = ($2)->re * ($3)->re + ($2)->im * ($3)->im;
+	($1)->im = ($2)->im * ($3)->re - ($2)->re * ($3)->im;
+')
+
+dnl	conjugate BOTH factors...
+
+define(`GET_CPX_CONJ12_PROD',`
+	($1)->re = ($2)->re * ($3)->re - ($2)->im * ($3)->im;
+	($1)->im = - ($2)->im * ($3)->re - ($2)->re * ($3)->im;
 ')
 
 define(`GET_CPX_SUM',`
@@ -697,7 +711,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 	// 0 is a special case...
 SHOW_SPLIT_DATA(before 0)
 	GET_CPX_PROD(&p1,cbot,abot)
-	GET_CPX_CONJ_PROD(&p2,cbot,bbot)	// really ctop...
+	GET_CPX_CONJ1_PROD(&p2,cbot,bbot)	// really ctop...
 	GET_CPX_SUM(&t1,&p1,&p2)
 	*cbot = t1;
 SHOW_SPLIT_DATA(after 0)
@@ -708,11 +722,11 @@ SHOW_SPLIT_DATA(after 0)
 		// G(k) = X(k)A(k) + X*(N-k)B(k)
 SHOW_SPLIT_DATA(before idx)
 		GET_CPX_PROD(&p1,cbot,abot)
-		GET_CPX_CONJ_PROD(&p2,ctop,bbot)
+		GET_CPX_CONJ1_PROD(&p2,ctop,bbot)
 		GET_CPX_SUM(&t1,&p1,&p2)
 		// G(N-k) = X(N-k)A(N-k) + X*(k)B(N-k)
 		GET_CPX_PROD(&p1,ctop,atop)
-		GET_CPX_CONJ_PROD(&p2,cbot,btop)
+		GET_CPX_CONJ1_PROD(&p2,cbot,btop)
 		GET_CPX_SUM(&t2,&p1,&p2)
 
 		*cbot = t1;
@@ -727,7 +741,7 @@ SHOW_SPLIT_DATA(after idx)
 
 SHOW_SPLIT_DATA(before last)
 	GET_CPX_PROD(&p1,cbot,abot)
-	GET_CPX_CONJ_PROD(&p2,ctop,bbot)
+	GET_CPX_CONJ1_PROD(&p2,ctop,bbot)
 	GET_CPX_SUM(&t1,&p1,&p2)
 	*cbot = t1;
 SHOW_SPLIT_DATA(after last)
@@ -740,9 +754,11 @@ SHOW_SPLIT_DATA(after last)
  * Yes, because the first complex FFT is done in-place.
  * That is necessary because there is an extra column,
  * so we would need to allocate scratch space to do it non-destructively.
+ *
+ * original code based on Elliott & Rao
  */
 
-static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
+static void PF_FFT_CALL_NAME(rvift_v2)( FFT_Args *fap)
 {
 	std_cpx *src;
 	std_type *dest;
@@ -876,6 +892,126 @@ NADVISE(DEFAULT_ERROR_STRING);
 		op += 2*dst_inc;
 	}
 	/* done */
+}
+
+// Alternate implementation based on TI white paper
+// The forward transform seems to have more numerical error
+// than the nVidia solution???
+
+static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
+{
+	std_cpx *src;
+	std_type *dest;
+	dimension_t len;
+	std_cpx *cbot, *ctop;
+	std_cpx *atop, *abot;
+	std_cpx *btop, *bbot;
+	std_cpx p1, p2, t1, t2;
+	dimension_t i;
+	FFT_Args fa;
+	FFT_Args *_fap=(&fa);
+	incr_t dst_inc;
+	incr_t src_inc;
+
+	//if( ! for_real ) return;
+
+	src=(std_cpx *)FFT_SRC(fap);
+	dest=(std_type *)FFT_DST(fap);
+	dst_inc = FFT_DINC(fap);
+	src_inc = FFT_SINC(fap);
+	len=FFT_LEN(fap);		/* length of the real destination */
+
+	if( len != last_real_AB_len ){
+dnl	the space before the opening paren is important!!!
+		init_AB (len);
+	}
+
+	/* transform G(k) to X(k) using the split operation */
+
+	cbot = src;
+	ctop = src + src_inc*(len/2);
+
+NADVISE("before split");
+src = (std_cpx *)FFT_SRC(fap);
+for(i=0;i<len/2;i++){
+sprintf(DEFAULT_ERROR_STRING,"   %g   %g",src[i].re,src[i].im);
+NADVISE(DEFAULT_ERROR_STRING);
+}
+	abot = A_array;
+	atop = A_array + len/2;
+	bbot = B_array;
+	btop = B_array + len/2;
+
+	// 0 is a special case...
+SHOW_SPLIT_DATA(before 0)
+	GET_CPX_CONJ2_PROD(&p1,cbot,abot)
+	GET_CPX_CONJ12_PROD(&p2,cbot,bbot)	// really ctop...
+	GET_CPX_SUM(&t1,&p1,&p2)
+	*cbot = t1;
+SHOW_SPLIT_DATA(after 0)
+
+	ADVANCE_CPX_PTRS
+
+	for(i=1;i<len/4;i++){
+		// X(k) = G(k)A*(k) + G*(N-k)B*(k)
+SHOW_SPLIT_DATA(before idx)
+		GET_CPX_CONJ2_PROD(&p1,cbot,abot)
+		GET_CPX_CONJ12_PROD(&p2,ctop,bbot)
+		GET_CPX_SUM(&t1,&p1,&p2)
+		// G(N-k) = X(N-k)A(N-k) + X*(k)B(N-k)
+		GET_CPX_CONJ2_PROD(&p1,ctop,atop)
+		GET_CPX_CONJ12_PROD(&p2,cbot,btop)
+		GET_CPX_SUM(&t2,&p1,&p2)
+
+		*cbot = t1;
+		*ctop = t2;
+SHOW_SPLIT_DATA(after idx)
+
+		ADVANCE_CPX_PTRS
+	}
+
+	// Now cbot and ctop should point to the same thing - the sample at len/4
+	assert(cbot==ctop);
+
+SHOW_SPLIT_DATA(before last)
+	GET_CPX_CONJ2_PROD(&p1,cbot,abot)
+	GET_CPX_CONJ12_PROD(&p2,ctop,bbot)
+	GET_CPX_SUM(&t1,&p1,&p2)
+	*cbot = t1;
+SHOW_SPLIT_DATA(after last)
+
+NADVISE("after split / before transform");
+src = (std_cpx *)FFT_SRC(fap);
+for(i=0;i<len/2;i++){
+sprintf(DEFAULT_ERROR_STRING,"   %g   %g",src[i].re,src[i].im);
+NADVISE(DEFAULT_ERROR_STRING);
+}
+
+	SET_FFT_DST( _fap, FFT_SRC(fap) );
+	SET_FFT_DINC( _fap, FFT_SINC(fap) );
+	SET_FFT_SRC( _fap, FFT_SRC(fap) );
+	SET_FFT_SINC( _fap, FFT_SINC(fap) );
+	SET_FFT_LEN( _fap, FFT_LEN(fap)/2 );
+	SET_FFT_ISI( _fap, INV_FFT );
+
+	// compute in-place, overwriting the source...
+	PF_FFT_CALL_NAME(cvfft)(_fap);
+NADVISE("after transform");
+src = (std_cpx *)FFT_SRC(fap);
+for(i=0;i<len/2;i++){
+sprintf(DEFAULT_ERROR_STRING,"   %g   %g",src[i].re,src[i].im);
+NADVISE(DEFAULT_ERROR_STRING);
+}
+
+	// copy the data to the destination
+
+	for(i=0;i<len/2;i++){
+		*dest = src->re;
+		dest += dst_inc;
+		*dest = src->im;
+		dest += dst_inc;
+		src += src_inc;
+	}
 }	// rvift
 
 ',` dnl else ! BUILDING_KERNELS
