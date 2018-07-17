@@ -28,6 +28,7 @@
 #include "cmaps.h"
 
 static QUIP_ALERT_OBJ_TYPE *fatal_alert_view=NULL;
+static QUIP_ALERT_OBJ_TYPE *shown_alert_p=NULL;		// other alert, such as a warning?
 static QUIP_ALERT_OBJ_TYPE *busy_alert_p=NULL;		// the active busy alert
 static QUIP_ALERT_OBJ_TYPE *suspended_busy_p=NULL;	// suspended
 static QUIP_ALERT_OBJ_TYPE *final_ending_busy_p=NULL;	// set when active goes away forever
@@ -54,6 +55,7 @@ inline static void remember_confirmation_alert(QUIP_ALERT_OBJ_TYPE *alert)
 
 static void suspend_quip_interpreter(SINGLE_QSP_ARG_DECL)
 {
+advise("suspend_quip_interpreter setting HALTING bit");
 	SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
 }
 
@@ -61,29 +63,30 @@ static void suspend_quip_interpreter(SINGLE_QSP_ARG_DECL)
 
 static void _show_alert( QSP_ARG_DECL   QUIP_ALERT_OBJ_TYPE *alert_p )
 {
-#ifdef OLD
-	[alert_p show];
-#else // ! OLD
+	assert(shown_alert_p==NULL);
+	shown_alert_p = alert_p;
 
 	[ root_view_controller presentViewController:alert_p animated:YES completion:^(void){
 		dispatch_after(0, dispatch_get_main_queue(), ^{
-			if( alert_p == busy_alert_p ){
+			if( alert_p == /* busy_alert_p */ shown_alert_p ){
+NADVISE("show_alert action block:  resuming quip after alert shown...");
 				resume_quip(DEFAULT_QSP_ARG);
 			}
 		    });
 	}
 	];
 
-#endif // ! OLD
-
 	// The alert won't be shown until we relinquish control
 	// back to the system...
 	// So we need to inform the system not to interpret any more commands!
 
+advise("show_alert suspending interpreter...");
 	suspend_quip_interpreter(SINGLE_QSP_ARG);
 }
 
 #define resume_busy() _resume_busy(SINGLE_QSP_ARG)
+
+// resume_busy shows the currently suspended busy alert
 
 static void _resume_busy(SINGLE_QSP_ARG_DECL)
 {
@@ -91,9 +94,11 @@ static void _resume_busy(SINGLE_QSP_ARG_DECL)
 		warn("resume_busy:  no suspended busy alert!?");
 		return;
 	}
+advise("resume_busy setting busy_alert_p from suspended_busy_p");
 	busy_alert_p=suspended_busy_p;
 	suspended_busy_p=NULL;
 	// Isn't this alert already remembered?
+	// This adds it to a list...
 	remember_busy_alert(busy_alert_p);
 	show_alert(busy_alert_p);
 }
@@ -1441,24 +1446,61 @@ void make_console_panel(QSP_ARG_DECL  const char *name)
 
 #define FATAL_ERROR_TYPE_STR	"FATAL ERROR"
 
-struct alert_data {
+typedef struct alert_data {
 	const char *type;
 	const char *msg;
-};
+} Alert_Data;
 
-static struct alert_data deferred_alert = { NULL, NULL };
+static List *free_alert_data=NULL;
+static List *deferred_alert_queue=NULL;
 
-static void clear_deferred_alert(void)
+static Alert_Data *available_alert_data(void)
 {
-	assert(deferred_alert.type != NULL);
-	assert(deferred_alert.msg != NULL);
+	Alert_Data *ad_p;
+	Node *np;
 
-	rls_str(deferred_alert.type);
-	rls_str(deferred_alert.msg);
+	if( free_alert_data == NULL || eltcount(free_alert_data) == 0 ){
+		ad_p = getbuf(sizeof(Alert_Data));
+		ad_p->type = NULL;
+		ad_p->msg = NULL;
+		return ad_p;
+	} else {
+		np = remHead(free_alert_data);
+		assert(np!=NULL);
+		ad_p = NODE_DATA(np);
+		assert(ad_p!=NULL);
+		rls_node(np);
 
-	deferred_alert.type=NULL;
-	deferred_alert.msg=NULL;
+		assert(ad_p->type==NULL);
+		assert(ad_p->msg==NULL);
+		return ad_p;
+	}
 }
+
+static void clear_alert_data(Alert_Data *ad_p)
+{
+	assert(ad_p->type != NULL);
+	assert(ad_p->msg != NULL);
+
+	rls_str(ad_p->type);
+	rls_str(ad_p->msg);
+
+	ad_p->type=NULL;
+	ad_p->msg=NULL;
+}
+
+static void rls_alert_data(Alert_Data *ad_p)
+{
+	Node *np;
+
+	clear_alert_data(ad_p);
+	np = mk_node(ad_p);
+	if( free_alert_data == NULL )
+		free_alert_data = new_list();
+	assert( free_alert_data != NULL );
+	addHead(free_alert_data,np);
+}
+
 
 // We call suspend__busy when the busy alert is up, and we want to
 // display a different alert.  we are probably calling this from
@@ -1473,19 +1515,29 @@ static void _suspend__busy(SINGLE_QSP_ARG_DECL)
 	end_busy(0);	// takes the alert down
 }
 
+// We call defer_alert in two circumstances:
+// 1) an alert is requested before the system is fully initialized
+// 2) an alert is already displayed
+
 static void defer_alert(const char *type, const char *msg)
 {
-	if( deferred_alert.type != NULL ){
-		fprintf(stderr,"MORE THAN ONE DEFERRED ALERT!?\n");
-		fprintf(stderr,"Discarding deferred alert \"%s %s\"\n",
-			deferred_alert.type,deferred_alert.msg);
-		clear_deferred_alert();
-		defer_alert("TOO MANY DEFERRED ALERTS!?",msg);
-	} else {
-		assert(deferred_alert.msg==NULL);
-		deferred_alert.type = savestr(type);
-		deferred_alert.msg = savestr(msg);
-	}
+	Alert_Data *ad_p;
+	Node *np;
+
+	ad_p = available_alert_data();
+	assert(ad_p!=NULL);
+
+	assert(ad_p->msg==NULL);
+	assert(ad_p->type==NULL);
+	ad_p->type = savestr(type);
+	ad_p->msg = savestr(msg);
+
+	np = mk_node(ad_p);
+	if( deferred_alert_queue == NULL )
+		deferred_alert_queue = new_list();
+	assert( deferred_alert_queue != NULL );
+
+	addTail(deferred_alert_queue,np);
 }
 
 static void busy_dismissal_checks(QUIP_ALERT_OBJ_TYPE *a)
@@ -1520,21 +1572,19 @@ static void quip_alert_dismissal_actions(QUIP_ALERT_OBJ_TYPE *alertView, NSInteg
 
 	Alert_Info *aip;
 
+NADVISE("quip_alert_dismissal_actions BEGIN");
 	aip = [Alert_Info alertInfoFor:alertView];
 
-	if( IS_VALID_ALERT(aip) ){
-		[aip forget];	// removes from list
+	assert( IS_VALID_ALERT(aip) );
 
-		alert_dismissal_busy_checks(aip);
-	}
-#ifdef CAUTIOUS
-	 else {
-		sprintf(DEFAULT_ERROR_STRING,
-"CAUTIOUS:  quip_alert_dismissal_actions:  Unrecognized alert type %d!?",aip.type);
-		_warn(DEFAULT_QSP_ARG  DEFAULT_ERROR_STRING);
-		return;
-	}
-#endif // CAUTIOUS
+	[aip forget];	// removes from list
+
+	assert(shown_alert_p!=NULL);
+	shown_alert_p = NULL;
+
+	if( check_deferred_alert() > 0 ) return;
+
+	alert_dismissal_busy_checks(aip);
 }
 
 static void confirmation_alert_dismissal_actions(QUIP_ALERT_OBJ_TYPE *alertView, NSInteger buttonIndex)
@@ -1660,13 +1710,22 @@ static void present_generic_alert(QSP_ARG_DECL  const char *type, const char *ms
 		defer_alert(type,msg);
 		return;
 	}
+	if( shown_alert_p != NULL ){
+		if( shown_alert_p == busy_alert_p ){
+			advise("OOPS - need to dismiss busy alert!?");
+		} else {
+			defer_alert(type,msg);
+			return;
+		}
+	}
 
 	is_fatal = !strcmp(type,FATAL_ERROR_TYPE_STR) ? 1 : 0 ;
 
 	QUIP_ALERT_OBJ_TYPE *alert;
 	alert = create_alert_with_one_button(type,msg);
+
 	remember_normal_alert(alert);
-	fatal_alert_view= is_fatal ? alert : NULL;
+	fatal_alert_view = is_fatal ? alert : NULL;
 	show_alert(alert);
 } // generic_alert
 
@@ -1713,10 +1772,11 @@ void notify_busy(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	UIViewController *vc;
 
-	if( busy_alert_p != NULL ){
+	if( /* busy_alert_p */ shown_alert_p != NULL ){	// already busy?
 		// we have to dismiss the busy indicator
 		// to print a warning pop-up!?
 		return;
+		// really, we need to defer the busy alert!?!?  BUG
 	}
 
 	vc = root_view_controller.topViewController;
@@ -1729,29 +1789,48 @@ void notify_busy(QSP_ARG_DECL  const char *type, const char *msg)
 	QUIP_ALERT_OBJ_TYPE *alert;
 
 	alert = create_alert_with_no_buttons(type,msg);
+
+	// there might already be a warning alert, for example if there
+	// was an undefined variable in the args to notify_busy!?
+
 	remember_busy_alert(alert);
 	show_alert(alert);
+advise("notify_busy setting busy_alert_p");
 	busy_alert_p=alert;	// remember for later
 } // notify_busy
 
 int check_deferred_alert(SINGLE_QSP_ARG_DECL)
 {
-	if( deferred_alert.type == NULL ) return 0;
+	Alert_Data *ad_p;
+	Node *np;
 
-	generic_alert(QSP_ARG  deferred_alert.type,deferred_alert.msg);
+advise("check_deferred_alert BEGIN");
+	if( deferred_alert_queue == NULL ) return 0;
+	if( eltcount(deferred_alert_queue) == 0 ) return 0;
+
+	np = remHead(deferred_alert_queue);
+	assert(np!=NULL);
+	ad_p = NODE_DATA(np);
+	rls_node(np);
+
+	assert(ad_p!=NULL);
+	assert(ad_p->type!=NULL);
+	assert(ad_p->msg!=NULL);
+
+sprintf(ERROR_STRING,"check_deferred_alert will show '%s'",ad_p->msg);
+advise(ERROR_STRING);
+	generic_alert(QSP_ARG  ad_p->type,ad_p->msg);
 
 	// We release these strings, but are we sure that the system is
 	// done with them?  Did generic_alert copy them or make NSStrings?
-	clear_deferred_alert();
+	rls_alert_data(ad_p);
+advise("check_deferred_alert after showing deferred alert");
+
 	return 1;
 }
 
 static void dismiss_busy_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
-#ifdef OLD
-
-	[a dismissWithClickedButtonIndex:0 animated:YES];
-#else // ! OLD
 	[root_view_controller dismissViewControllerAnimated:YES completion:^(void)
 		{
 			dispatch_after(0, dispatch_get_main_queue(), ^{
@@ -1762,20 +1841,24 @@ static void dismiss_busy_alert(QUIP_ALERT_OBJ_TYPE *a)
 		}
 	];
 	suspend_quip_interpreter(SGL_DEFAULT_QSP_ARG);
-#endif // ! OLD
 }
 
+// end_busy is called by a menu command to dismiss the busy indicator
+// under script control.
+//
 // When we call end_busy, we are not really suspended, we already
 // did the things as if we were dismissing the alert when we faked
 // a dismissal when the alert was shown.  Therefore, when we dismiss
 // the gui element now, we have already popped the menu...
+//
+// Years later, I do not understand this comment!?
 
 void _end_busy(QSP_ARG_DECL  int final)
 {
 	QUIP_ALERT_OBJ_TYPE *a;
 
 	if( busy_alert_p == NULL ){
-		warn("end_busy:  no busy indicator!?");
+		warn("end_busy:  no busy indicator!?");	// should this be an assertion?
 		return;
 	}
 
@@ -1795,6 +1878,7 @@ void _end_busy(QSP_ARG_DECL  int final)
 
 void _simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
 {
+advise("simple_alert called...");
 	generic_alert(QSP_ARG  type,msg);
 }
 

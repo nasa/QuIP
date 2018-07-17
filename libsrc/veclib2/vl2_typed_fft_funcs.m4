@@ -353,7 +353,8 @@ dnl	the space before the opening paren is important!!!
 static void init_sinfact (dimension_t n)
 {
 	dimension_t i;
-	std_type arginc, arg;
+	std_type arginc;
+	std_type arg;
 
 	last_real_sinfact_len = n;
 	n /= 2;
@@ -418,7 +419,7 @@ dnl	the space before the opening paren is important!!!
 static void init_AB (dimension_t n)
 {
 	dimension_t i;
-	std_type arginc;
+//	std_type arginc;
 	std_type arg;
 	double pi;
 
@@ -445,7 +446,7 @@ static void init_AB (dimension_t n)
 		// can we use those from a table instead???
 		// We are having problems with numerical errors for large N...
 		// Could it be from rounding errors or loss of precision in these?
-		// Or arg_inc?
+		// Or arginc?
 
 		// A_k = 0.5 * ( 1 - j W_2N^k )
 		// B_k = 0.5 * ( 1 + j W_2N^k )
@@ -458,7 +459,7 @@ static void init_AB (dimension_t n)
 		B_array[i].re = 0.5 * ( 1 - w_im );
 		B_array[i].im = 0.5 * (   + w_re );
 
-		arg += arginc;
+//		arg += arginc;
 	}
 }
 
