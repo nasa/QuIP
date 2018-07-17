@@ -1147,6 +1147,11 @@
 		7C9F27A820C32B46002D9F63 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C9F27A520C32B39002D9F63 /* equivalence.c */; };
 		7C9F27A920C32B47002D9F63 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C9F27A520C32B39002D9F63 /* equivalence.c */; };
 		7C9F27AA20C32B48002D9F63 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C9F27A520C32B39002D9F63 /* equivalence.c */; };
+		7CABE59E20FE49FB00FCD9E3 /* vl2_fft.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CABE59D20FE49FB00FCD9E3 /* vl2_fft.c */; };
+		7CABE59F20FE4A0900FCD9E3 /* vl2_fft.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CABE59D20FE49FB00FCD9E3 /* vl2_fft.c */; };
+		7CABE5A020FE4A0B00FCD9E3 /* vl2_fft.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CABE59D20FE49FB00FCD9E3 /* vl2_fft.c */; };
+		7CABE5A120FE4A0D00FCD9E3 /* vl2_fft.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CABE59D20FE49FB00FCD9E3 /* vl2_fft.c */; };
+		7CABE5A220FE4A0E00FCD9E3 /* vl2_fft.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CABE59D20FE49FB00FCD9E3 /* vl2_fft.c */; };
 		7CB2931E1FB16B6300466EFD /* ptoz.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB2931D1FB16B6300466EFD /* ptoz.c */; };
 		7CB2931F1FB16BAE00466EFD /* ptoz.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB2931D1FB16B6300466EFD /* ptoz.c */; };
 		7CB293201FB16BAF00466EFD /* ptoz.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB2931D1FB16B6300466EFD /* ptoz.c */; };
@@ -1809,6 +1814,7 @@
 		7C922E1E19CA51DE00F92C21 /* typed_scalars.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = typed_scalars.c; sourceTree = "<group>"; };
 		7C9C32171C0699CE00E2094F /* lin_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lin_util.c; sourceTree = "<group>"; };
 		7C9F27A520C32B39002D9F63 /* equivalence.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = equivalence.c; sourceTree = "<group>"; };
+		7CABE59D20FE49FB00FCD9E3 /* vl2_fft.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = vl2_fft.c; sourceTree = "<group>"; };
 		7CB2931D1FB16B6300466EFD /* ptoz.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ptoz.c; sourceTree = "<group>"; };
 		7CB44FF61D65067A00B6783F /* nrmenu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = nrmenu.c; sourceTree = "<group>"; };
 		7CB44FF71D65067A00B6783F /* numrec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = numrec.c; sourceTree = "<group>"; };
@@ -2464,6 +2470,7 @@
 		7C5940161BB512EB00F655B1 /* vl2 */ = {
 			isa = PBXGroup;
 			children = (
+				7CABE59D20FE49FB00FCD9E3 /* vl2_fft.c */,
 				7C4685941E7CB3A8000403FA /* slow_len.c */,
 				7C61EA401E1B080A0056CC01 /* vl2_platform.c */,
 				7C1BD1C91C5017F90093125D /* fftsupp.c */,
@@ -2915,6 +2922,7 @@
 				71828F871726182200F7CB35 /* scramble.c in Sources */,
 				71828F881726182200F7CB35 /* SeedFill.c in Sources */,
 				7C1BD1CA1C5017F90093125D /* fftsupp.c in Sources */,
+				7CABE59E20FE49FB00FCD9E3 /* vl2_fft.c in Sources */,
 				71828F891726182200F7CB35 /* size.c in Sources */,
 				71828F8A1726182200F7CB35 /* thinz.c in Sources */,
 				7C59401A1BB513BE00F655B1 /* vl2_utils.c in Sources */,
@@ -3035,6 +3043,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7C43318D1D4D43FC0033687C /* http_menu.c in Sources */,
+				7CABE59F20FE4A0900FCD9E3 /* vl2_fft.c in Sources */,
 				7C43318E1D4D43FC0033687C /* quipHttpDelegate.m in Sources */,
 				7C43318F1D4D43FC0033687C /* perr.c in Sources */,
 				7C4331901D4D43FC0033687C /* rdoldhdr.c in Sources */,
@@ -3470,6 +3479,7 @@
 				7C4333421D4D49450033687C /* scramble.c in Sources */,
 				7C4333431D4D49450033687C /* SeedFill.c in Sources */,
 				7C4333441D4D49450033687C /* fftsupp.c in Sources */,
+				7CABE5A020FE4A0B00FCD9E3 /* vl2_fft.c in Sources */,
 				7C4333451D4D49450033687C /* size.c in Sources */,
 				7C4333461D4D49450033687C /* thinz.c in Sources */,
 				7C4333471D4D49450033687C /* vl2_utils.c in Sources */,
@@ -3737,6 +3747,7 @@
 				7C4D6E0E1D5111A400D34AC4 /* scramble.c in Sources */,
 				7C4D6E0F1D5111A400D34AC4 /* SeedFill.c in Sources */,
 				7C4D6E101D5111A400D34AC4 /* fftsupp.c in Sources */,
+				7CABE5A120FE4A0D00FCD9E3 /* vl2_fft.c in Sources */,
 				7C4D6E111D5111A400D34AC4 /* size.c in Sources */,
 				7C4D6E121D5111A400D34AC4 /* thinz.c in Sources */,
 				7C4D6E131D5111A400D34AC4 /* vl2_utils.c in Sources */,
@@ -3857,6 +3868,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7CB670991F9484C5001FFADF /* http_menu.c in Sources */,
+				7CABE5A220FE4A0E00FCD9E3 /* vl2_fft.c in Sources */,
 				7CB6709A1F9484C5001FFADF /* quipHttpDelegate.m in Sources */,
 				7CB6709B1F9484C5001FFADF /* perr.c in Sources */,
 				7CB6709C1F9484C5001FFADF /* rdoldhdr.c in Sources */,
