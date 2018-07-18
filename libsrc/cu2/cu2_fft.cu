@@ -1,4 +1,7 @@
 #include "quip_config.h"
+
+#ifdef HAVE_CUDA
+
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -11,4 +14,6 @@
 
 #include "veclib/cu2_veclib_prot.h"
 #include "cu2_fft_expanded.c"
+
+#endif // HAVE_CUDA
 

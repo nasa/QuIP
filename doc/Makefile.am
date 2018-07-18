@@ -8,7 +8,8 @@ TARGETS			=
 
 #if HAVE_MAKEINFO
 
-TARGETS			+= pdf html quip.info
+#TARGETS			+= pdf html quip.info
+TARGETS			+= html quip.info
 
 #endif
 
@@ -16,7 +17,7 @@ TARGETS			+= pdf html quip.info
 	$(MAKEINFO) --html $<
 
 
-all:	$(TARGETS)
+all:	$(TARGETS) pdf
 	cp quip.pdf ../docs/quip_manual.pdf
 	cp -R quip.html ../docs/quip_web_manual
 
