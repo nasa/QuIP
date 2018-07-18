@@ -65,11 +65,13 @@ static void _show_alert( QSP_ARG_DECL   QUIP_ALERT_OBJ_TYPE *alert_p )
 {
 	assert(shown_alert_p==NULL);
 	shown_alert_p = alert_p;
+sprintf(ERROR_STRING,"show_alert:  shown_alert_p set to 0x%lx",(long)shown_alert_p);
+advise(ERROR_STRING);
 
 	[ root_view_controller presentViewController:alert_p animated:YES completion:^(void){
 		dispatch_after(0, dispatch_get_main_queue(), ^{
-			if( alert_p == /* busy_alert_p */ shown_alert_p ){
-NADVISE("show_alert action block:  resuming quip after alert shown...");
+			if( alert_p == busy_alert_p ){
+NADVISE("show_alert action block:  resuming quip after busy indicator shown...");
 				resume_quip(DEFAULT_QSP_ARG);
 			}
 		    });
@@ -1512,6 +1514,7 @@ static void _suspend__busy(SINGLE_QSP_ARG_DECL)
 {
 	// we need to display an alert while we are busy...
 	suspended_busy_p = busy_alert_p;
+advise("suspend_busy calling end_busy...");
 	end_busy(0);	// takes the alert down
 }
 
@@ -1526,6 +1529,7 @@ static void defer_alert(const char *type, const char *msg)
 
 	ad_p = available_alert_data();
 	assert(ad_p!=NULL);
+sprintf(DEFAULT_ERROR_STRING,"defer_alert:  new alert data at 0x%lx",(long)ad_p);
 
 	assert(ad_p->msg==NULL);
 	assert(ad_p->type==NULL);
@@ -1542,6 +1546,7 @@ static void defer_alert(const char *type, const char *msg)
 
 static void busy_dismissal_checks(QUIP_ALERT_OBJ_TYPE *a)
 {
+NADVISE("busy_dismissal_checks BEGIN");
 	if( a == final_ending_busy_p ){	// dismissed busy alert
 		// nothing more to do.
 		final_ending_busy_p=NULL;
@@ -1556,6 +1561,7 @@ static void alert_dismissal_busy_checks(Alert_Info *aip)
 	assert(aip.the_alert_p != final_ending_busy_p);
 	assert( busy_alert_p == NULL );
 
+sprintf(DEFAULT_ERROR_STRING,"alert_dismissal_busy_checks:  suspended_busy_p - 0x%lx",suspended_busy_p);
 	if( suspended_busy_p != NULL ){
 		assert( aip.the_alert_p != suspended_busy_p );
 		resume_busy();
@@ -1581,8 +1587,12 @@ NADVISE("quip_alert_dismissal_actions BEGIN");
 
 	assert(shown_alert_p!=NULL);
 	shown_alert_p = NULL;
+NADVISE("quip_alert_dismissal_actions set shown_alert_p to NULL");
 
-	if( check_deferred_alert() > 0 ) return;
+	if( check_deferred_alert() > 0 ){
+NADVISE("quip_alert_dismissal_actions:  returning after positive return from check_deferred_alert");
+		return;
+	}
 
 	alert_dismissal_busy_checks(aip);
 }
@@ -1711,6 +1721,9 @@ static void present_generic_alert(QSP_ARG_DECL  const char *type, const char *ms
 		return;
 	}
 	if( shown_alert_p != NULL ){
+sprintf(ERROR_STRING,"present_generic_alert:  shown_alert_p = 0x%ld, busy_alert_p = 0x%ld",
+(long)shown_alert_p,(long)busy_alert_p);
+advise(ERROR_STRING);
 		if( shown_alert_p == busy_alert_p ){
 			advise("OOPS - need to dismiss busy alert!?");
 		} else {
@@ -1718,6 +1731,7 @@ static void present_generic_alert(QSP_ARG_DECL  const char *type, const char *ms
 			return;
 		}
 	}
+else advise("present_generic_alert:  shown_alert_p = NULL");
 
 	is_fatal = !strcmp(type,FATAL_ERROR_TYPE_STR) ? 1 : 0 ;
 
@@ -1732,13 +1746,15 @@ static void present_generic_alert(QSP_ARG_DECL  const char *type, const char *ms
 static void generic_alert(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	if( busy_alert_p != NULL ) {
+sprintf(ERROR_STRING,"generic_alert:  busy_alert_p = 0x%lx, will suspend...",(long)busy_alert_p);
+advise(ERROR_STRING);
 		suspend__busy();
 		// relinquish control and come back later
 		defer_alert(type,msg);
 		suspend_quip_interpreter();
-		return;
+	} else {
+		present_generic_alert(QSP_ARG  type, msg);
 	}
-	present_generic_alert(QSP_ARG  type, msg);
 }
 
 void get_confirmation(QSP_ARG_DECL  const char *title, const char *question)
@@ -1795,8 +1811,9 @@ void notify_busy(QSP_ARG_DECL  const char *type, const char *msg)
 
 	remember_busy_alert(alert);
 	show_alert(alert);
-advise("notify_busy setting busy_alert_p");
 	busy_alert_p=alert;	// remember for later
+sprintf(ERROR_STRING,"notify_busy setting busy_alert_p to 0x%lx",(long)busy_alert_p);
+advise(ERROR_STRING);
 } // notify_busy
 
 int check_deferred_alert(SINGLE_QSP_ARG_DECL)
@@ -1831,10 +1848,18 @@ advise("check_deferred_alert after showing deferred alert");
 
 static void dismiss_busy_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
+NADVISE("dismiss_busy_alert dismissing view controller...");
 	[root_view_controller dismissViewControllerAnimated:YES completion:^(void)
 		{
 			dispatch_after(0, dispatch_get_main_queue(), ^{
+NADVISE("view controller dismissal completion block calling check_deferred_alert");
+sprintf(DEFAULT_ERROR_STRING,"shown_alert_p = 0x%lx, busy_alert_p = 0x%lx",
+(long)shown_alert_p,(long)busy_alert_p);
+NADVISE(DEFAULT_ERROR_STRING);
+				shown_alert_p = NULL;
+NADVISE("shown_alert_p set to NULL by completion block");
 				if( ! check_deferred_alert() ){
+NADVISE("view controller dismissal completion block: no deferred_alert");
 					busy_dismissal_checks(a);
 				}
 			});
@@ -1844,7 +1869,8 @@ static void dismiss_busy_alert(QUIP_ALERT_OBJ_TYPE *a)
 }
 
 // end_busy is called by a menu command to dismiss the busy indicator
-// under script control.
+// under script control, or by suspend_busy when a more important alert
+// (such as a warning) needs to be displayed...
 //
 // When we call end_busy, we are not really suspended, we already
 // did the things as if we were dismissing the alert when we faked
@@ -1864,6 +1890,7 @@ void _end_busy(QSP_ARG_DECL  int final)
 
 	a=busy_alert_p;
 	busy_alert_p=NULL;	// in case the delegate is called...
+advise("end_busy:  busy_alert_p reset to NULL");
 // This should dismiss the busy alert but not generate a callback?
 
 	// it seems that we are getting a callback...
