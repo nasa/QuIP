@@ -478,8 +478,12 @@ extern void make_edit_box(QSP_ARG_DECL  Screen_Obj *to);
 extern void update_edit_text(Screen_Obj *sop, const char *string);
 extern const char *get_text(Screen_Obj *to);
 extern void make_gauge(QSP_ARG_DECL  Screen_Obj *go);
-extern void make_slider(QSP_ARG_DECL  Screen_Obj *sop);
-extern void make_slider_w(QSP_ARG_DECL  Screen_Obj *sop);
+
+extern void _make_slider(QSP_ARG_DECL  Screen_Obj *sop);
+extern void _make_slider_w(QSP_ARG_DECL  Screen_Obj *sop);
+#define make_slider(sop) _make_slider(QSP_ARG  sop)
+#define make_slider_w(sop) _make_slider_w(QSP_ARG  sop)
+
 extern void set_toggle_state(Screen_Obj *sop,int pos);
 //extern void set_choice(Screen_Obj *sop,int which);
 extern void make_adjuster(QSP_ARG_DECL  Screen_Obj *sop);

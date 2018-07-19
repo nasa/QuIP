@@ -185,6 +185,7 @@ else if( $flavor == csf ) then
   source add_files.csh
 
   source add_file.csh compute/rdp.mac
+  source add_file.csh compute/gaussian.mac
   source add_file.csh view/opt_ht.mac
 
   source add_file.csh $extra_macro_dir/csf/csf_main.scr

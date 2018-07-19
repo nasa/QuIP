@@ -915,13 +915,13 @@ COMMAND_FUNC( set_new_pos )
 	SET_SOB_MAX(sop,max);				\
 	SET_SOB_VAL(sop,val);				\
 	if( type == SOT_SLIDER )			\
-		make_slider(QSP_ARG  sop);		\
+		make_slider(sop);			\
 	else if( type == SOT_ADJUSTER )			\
 		make_adjuster(QSP_ARG  sop);		\
 	else {						\
 sprintf(ERROR_STRING,"FINISH_SLIDER:  bad slider type!?");	\
 		WARN(ERROR_STRING);			\
-		make_slider(QSP_ARG  sop);		\
+		make_slider(sop);			\
 	}						\
 	add_to_panel(curr_panel,sop);			\
 	INC_PO_CURR_Y(curr_panel, SOB_HEIGHT(sop) + GAP_HEIGHT );

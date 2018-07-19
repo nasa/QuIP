@@ -849,7 +849,7 @@ void update_gauge_label(Screen_Obj *gp )
 #define SLIDER_DELTA_Y	40.0	/* just the slider itself */
 #define SLIDER_TEXT_DY	20.0	// should depend on font size!
 
-void make_slider(QSP_ARG_DECL  Screen_Obj *sop)
+void _make_slider(QSP_ARG_DECL  Screen_Obj *sop)
 {
 	int slider_width;
 	int slider_height=SLIDER_DELTA_Y;
@@ -978,7 +978,7 @@ void make_adjuster(QSP_ARG_DECL  Screen_Obj *sop)
 			 UIControlEventTouchDragInside)];
 	SET_SOB_CONTROL(sop,slider);
 #endif // FOOBAR
-	make_slider( QSP_ARG   sop );
+	make_slider( sop );
 }
 
 void _new_slider_range(QSP_ARG_DECL  Screen_Obj *sop, int xmin, int xmax)

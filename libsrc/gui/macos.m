@@ -846,7 +846,7 @@ void update_gauge_label(Screen_Obj *gp )
 #define SLIDER_TEXT_DY	20	// should depend on font size!
 #define MACOS_SLIDER_HEIGHT	38
 
-void make_slider(QSP_ARG_DECL  Screen_Obj *sop)
+void _make_slider(QSP_ARG_DECL  Screen_Obj *sop)
 {
 	int slider_width;
 
@@ -933,7 +933,7 @@ fprintf(stderr,"clearing continuous flag for slider\n");
 
 void make_adjuster(QSP_ARG_DECL  Screen_Obj *sop)
 {
-	make_slider(QSP_ARG  sop);
+	make_slider(sop);
 #ifdef FOOBAR
 	NSSlider *slider = [[NSSlider alloc] initWithFrame:
 		CGRectMake(

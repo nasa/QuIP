@@ -956,7 +956,7 @@ static void slider_func(Widget sliderID, XtPointer app_data,
 } // slider_func
 #endif /* HAVE_MOTIF */
 
-void make_slider(QSP_ARG_DECL  Screen_Obj *sop)
+void _make_slider(QSP_ARG_DECL  Screen_Obj *sop)
 {
 #ifdef HAVE_MOTIF
 	make_generic_slider(QSP_ARG  sop);
@@ -1059,7 +1059,7 @@ void make_adjuster(QSP_ARG_DECL  Screen_Obj *sop)
 #endif /* HAVE_MOTIF */
 }
 
-void make_slider_w(QSP_ARG_DECL  Screen_Obj *sop)
+void _make_slider_w(QSP_ARG_DECL  Screen_Obj *sop)
 {
 #ifdef HAVE_MOTIF
 	make_width_slider(QSP_ARG  sop);
