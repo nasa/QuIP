@@ -36,7 +36,10 @@ define(`TMPVEC_CALL',`TMPVEC_NAME`'(QSP_ARG  $1,$2,$3,$4)')
 
 define(`IDX3',`index3')
 
-define(`BITS_PER_BITMAP_WORD',`64')
+dnl	We don't want to define this here, because when we compile for 32 bit iOS,
+dnl	we need to use a pre-expanded .c file but pick the definition up from a header file...
+dnl	define(`BITS_PER_BITMAP_WORD',`64')
+
 define(`BIT_NUMBER_MASK',`(BITS_PER_BITMAP_WORD-1)')
 define(`NUMBERED_BIT',`(1L << ( ($1) & BIT_NUMBER_MASK ) )')
 

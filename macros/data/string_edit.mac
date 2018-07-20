@@ -23,5 +23,28 @@ If !obj_exists('$1') "Vector $1 1 strlen('$2')+1 string expressions export $1 qu
 Set_String $1 $2
 .
 
+# these macros are useful when we don't have access to awk...
+# But they were written having forgotten about the Explode macro!?
+
+Define Get_First_Component 3 dest_varname source_string_obj delim
+Get_String source_string $2
+Assign source_idx strstr("$source_string","$3")
+Substring tmp_substr $2 $source_idx 0
+Display tmp_substr
+Get_String $1 tmp_substr
+Delete_Image tmp_substr
+.
+
+Define Strip_First_Component 3 new_obj_name source_string_obj delim
+Get_String source_string $2
+Assign source_len strlen("$source_string")
+Assign delim_idx strstr("$source_string","$3")
+# BUG check for valid delim_idx
+Increment delim_idx
+Substring $1 $2 $source_len-$delim_idx $delim_idx
+.
+
 Stop_File string_edit.mac
+
+
 
