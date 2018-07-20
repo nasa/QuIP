@@ -1058,7 +1058,12 @@ FIO_WT_FUNC( pngfio )		// iOS version
 	// we have a dp...
 	// make a UIImage then convert and write...
 
-	myimg=objc_img_for_dp(dp,0);	// don't set the little-endian flag - why not?
+	myimg=objc_img_for_dp(dp,1);	// set the little-endian flag - why?
+					// If the little-endian flag is set to 0,
+					// then a gray pixel 128,128,128,255(alpha)
+					// is read back as 255,255,255,128 !?
+					// I don't understand that, but it works correctly
+					// like this so I don't care!
 	if( myimg == NULL ){
 		WARN("error creating UIImage!?");
 		return -1;

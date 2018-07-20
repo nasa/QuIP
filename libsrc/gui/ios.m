@@ -1653,15 +1653,6 @@ static QUIP_ALERT_OBJ_TYPE *create_alert_with_two_buttons(const char *type, cons
 {
 	QUIP_ALERT_OBJ_TYPE *alert;
 
-#ifdef OLD
-	// open an alert with a single dismiss button
-	alert = [[QUIP_ALERT_OBJ_TYPE alloc]
-		initWithTitle:STRINGOBJ(title)
-		message:STRINGOBJ(question)
-		delegate:vc
-		cancelButtonTitle: @"Cancel"
-		otherButtonTitles: @"Proceed", nil ];
-#else // ! OLD
 	alert = [UIAlertController
 		 alertControllerWithTitle: STRINGOBJ(type)
 		 message: STRINGOBJ(msg)
@@ -1686,7 +1677,6 @@ static QUIP_ALERT_OBJ_TYPE *create_alert_with_two_buttons(const char *type, cons
 
 	[alert addAction:cancel];
 	[alert addAction:ok];
-#endif // ! OLD
 
 	return alert;
 }
@@ -1793,13 +1783,10 @@ void notify_busy(QSP_ARG_DECL  const char *type, const char *msg)
 	busy_alert_p=alert;	// remember for later
 } // notify_busy
 
-int check_deferred_alert(SINGLE_QSP_ARG_DECL)
+static int deliver_one_deferred_alert()
 {
 	Alert_Data *ad_p;
 	Node *np;
-
-	if( deferred_alert_queue == NULL ) return 0;
-	if( eltcount(deferred_alert_queue) == 0 ) return 0;
 
 	np = remHead(deferred_alert_queue);
 	assert(np!=NULL);
@@ -1817,6 +1804,34 @@ int check_deferred_alert(SINGLE_QSP_ARG_DECL)
 	rls_alert_data(ad_p);
 
 	return 1;
+}
+
+// In practice, this doesn't work so well, because often the warning storms are generated
+// from different commands in a long series.  This will work for bunches of alerts
+// from a single command, but not for the former case because the interpreter is halted to
+// display each alert.
+
+static int multiple_deferred_alerts(SINGLE_QSP_ARG_DECL)
+{
+	QUIP_ALERT_OBJ_TYPE *alert_p;
+
+	// give the user the option of dismissing all of these alerts...
+	sprintf(MSG_STR,"%d queued alerts!",eltcount(deferred_alert_queue));
+	alert_p = create_alert_with_two_buttons(MSG_STR,"Show all?");
+	show_alert(alert_p);
+}
+
+int check_deferred_alert(SINGLE_QSP_ARG_DECL)
+{
+	int n;
+
+	if( deferred_alert_queue == NULL ) return 0;
+	if( (n=eltcount(deferred_alert_queue)) == 0 ) return 0;
+
+	if( n > 1 )
+		return multiple_deferred_alerts(SINGLE_QSP_ARG);
+	else
+		return deliver_one_deferred_alert(SINGLE_QSP_ARG);
 }
 
 static void dismiss_busy_alert(QUIP_ALERT_OBJ_TYPE *a)

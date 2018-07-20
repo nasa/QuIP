@@ -1253,7 +1253,7 @@ void _write_image_to_file(QSP_ARG_DECL  Image_File *ifp,Data_Obj *dp)
 		WARN(ERROR_STRING);
 		return;
 	}
-    
+
 	(*FT_WRITE_FUNC(IF_TYPE(ifp)))(QSP_ARG  dp,ifp);
 }
 
