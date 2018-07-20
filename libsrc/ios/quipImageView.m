@@ -95,6 +95,7 @@ QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
 #ifdef BUILD_FOR_IOS
 	self =[super initWithImage:myimg];
 
+fprintf(stderr,"quipImageView - initWithDataObj %s:  setting alpha to 1\n",OBJ_NAME(dp));
 	self.alpha = 1.0;
 #endif // BUILD_FOR_IOS
 #ifdef BUILD_FOR_MACOS

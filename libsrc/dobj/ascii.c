@@ -58,10 +58,11 @@ ITEM_INTERFACE_DECLARATIONS(Integer_Output_Fmt,int_out_fmt,0)
 													\
 static void _format_##type##_data_##format(QSP_ARG_DECL  char *buf, Scalar_Value *svp, int pad_flag)	\
 {													\
-	if( pad_flag )											\
+	if( pad_flag ){											\
 		sprintf(buf,#fmt_str_prefix #padding_fmt_str plain_fmt_str, svp->member);		\
-	else												\
+	} else {											\
 		sprintf(buf,#fmt_str_prefix plain_fmt_str, svp->member);				\
+	}												\
 }
 
 #define DECLARE_PS_FMT_FUNC(type,format,member)						\

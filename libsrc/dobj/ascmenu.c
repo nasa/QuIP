@@ -355,7 +355,20 @@ static COMMAND_FUNC( do_set_var_from_obj )
 
 	INSURE_OK_FOR_READING(dp)
 
-	assign_var(s,(char *)OBJ_DATA_PTR(ram_dp));
+	// This is NOT OK if the object is a substring
+	if( OBJ_N_MACH_ELTS(ram_dp) == strlen((char *)OBJ_DATA_PTR(ram_dp)) ){
+		assign_var(s,(char *)OBJ_DATA_PTR(ram_dp));
+	} else {
+		char *tmpstr;
+		dimension_t n;
+
+		n = OBJ_N_MACH_ELTS(ram_dp);
+		tmpstr = getbuf( n + 1 );
+		strncpy(tmpstr,(char *)OBJ_DATA_PTR(ram_dp),n);
+		tmpstr[n]=0;
+		assign_var(s,tmpstr);
+		givbuf(tmpstr);
+	}
 
 	RELEASE_RAM_OBJ_FOR_READING_IF(dp)
 }
