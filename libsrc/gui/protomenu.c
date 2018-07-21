@@ -834,7 +834,6 @@ static COMMAND_FUNC( do_notify_busy )
 	title=NAMEOF("title for alert");
 	msg=NAMEOF("alert message");
 
-advise("notify_busy called from script...");
 	notify_busy(title,msg);
 
 	// another event can occur while the alert is getting

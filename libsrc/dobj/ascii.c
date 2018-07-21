@@ -959,6 +959,7 @@ static void pnt_one(QSP_ARG_DECL  FILE *fp, Data_Obj *dp,  u_char *data )
 	if( OBJ_MACH_DIM(dp,0) > 1 ){	/* not real, complex or higher */
 		if( IS_STRING(dp) ){
 			fprintf(fp,"%s",data);
+			n_this_line++;
 		} else {
 			incr_t inc;
 			dimension_t j;
@@ -974,16 +975,19 @@ static void pnt_one(QSP_ARG_DECL  FILE *fp, Data_Obj *dp,  u_char *data )
 				 */
 				if( j>0 && OBJ_MACH_DIM(dp,0) > dobj_max_per_line ){
 					fprintf(fp,"\n");
+					n_this_line = 0;
 				}
 				format_scalar_obj(QSP_ARG  buf,128,dp,data);
 				// put a space here, because format_scalar_obj does not include a separator
 				fprintf(fp," %s",buf);
 				data += inc;
+				n_this_line++;
 			}
 		}
 	} else {
 		format_scalar_obj(QSP_ARG  buf,128,dp,data);
 		fprintf(fp," %s",buf);
+		n_this_line++;
 	}
 } /* end pnt_one */
 
@@ -1007,6 +1011,7 @@ static void pnt_dim( QSP_ARG_DECL  FILE *fp, Data_Obj *dp, unsigned char *data, 
 		 * a null terminator char.
 		 */
 		fprintf(fp,"%.*s\n",(int)OBJ_DIMENSION(dp,OBJ_MINDIM(dp)),data);
+		n_this_line = 0;
 		return;
 	}
 
@@ -1026,7 +1031,6 @@ advise(ERROR_STRING);
 		}
 	} else {
 		pnt_one(QSP_ARG  fp,dp,data);
-		n_this_line++;
 	}
 //	// For postscript, don't worry about dimensions, just print a fixed number per line...
 //	if( ascii_fmt_code == FMT_POSTSCRIPT ){
@@ -1035,7 +1039,10 @@ advise(ERROR_STRING);
 //			n_this_line=0;
 //		}
 //	} else {
-		if( dim == ret_dim ) fprintf(fp,"\n");
+		if( dim == ret_dim ){
+			fprintf(fp,"\n");
+			n_this_line = 0;
+		}
 //	}
 }
 
@@ -1060,13 +1067,21 @@ static void sp_pntvec( QSP_ARG_DECL  Data_Obj *dp, FILE *fp )
 		    for(i0=0;i0<OBJ_MACH_DIM(dp,0);i0++){
 			fprintf(fp," ");
 			fprintf(fp,ffmtstr,*(pbase+i0*OBJ_MACH_INC(dp,0)));
-		        if( ret_dim == 0 && OBJ_MACH_DIM(dp,0) > dobj_max_per_line )
+			n_this_line++;
+		        if( ret_dim == 0 && OBJ_MACH_DIM(dp,0) > dobj_max_per_line ){
 				fprintf(fp,"\n");
+				n_this_line = 0;
+			}
 		    }
-		    if( ret_dim == 0 && OBJ_MACH_DIM(dp,0) <= dobj_max_per_line )
+		    if( ret_dim == 0 && OBJ_MACH_DIM(dp,0) <= dobj_max_per_line ){
 		    	fprintf(fp,"\n");
+			n_this_line = 0;
+		    }
 		}
-		if( ret_dim > 0 ) fprintf(fp,"\n");
+		if( ret_dim > 0 ){
+			fprintf(fp,"\n");
+			n_this_line = 0;
+		}
 	    }
 	}
 }
@@ -1177,7 +1192,7 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 
 		n_this_line=0;
 		pnt_dim(QSP_ARG  fp,dp,(u_char *)OBJ_DATA_PTR(dp),N_DIMENSIONS-1);
-		if( n_this_line > 0 ){	// postscript only
+		if( n_this_line > 0 ){	// postscript only???
 			fprintf(fp,"\n");
 			n_this_line=0;
 		}
@@ -1186,7 +1201,7 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 
 //	ffmtstr = save_ffmt ;
 //	ifmtstr = save_ifmt ;
-}
+} // pntvec
 
 static void shp_trace(QSP_ARG_DECL  const char *name,Shape_Info *shpp)
 {
