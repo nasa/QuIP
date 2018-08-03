@@ -180,29 +180,30 @@ static float likelihood(SINGLE_QSP_ARG_DECL)	/* called from optimization routine
 
 void ml_fit(QSP_ARG_DECL  Data_Tbl *dtp,int ntrac)		/** maximum liklihood fit */
 {
-	Opt_Param op1, *slope_opp=(&op1);
-	Opt_Param op2, *int_opp=(&op2);
+	Opt_Param tmp_param;
+	Opt_Param *slope_param_p=NULL;
+	Opt_Param *intercept_param_p=NULL;
 
 	/* initialize global */
 	the_dtbl = dtp;
 
 	delete_opt_params(SINGLE_QSP_ARG);
 
-	slope_opp->op_name=SLOPE_NAME;
-	slope_opp->maxv=10000.0;
-	slope_opp->minv=(-10000.0);
-	slope_opp->ans = (float) slope;
+	tmp_param.op_name=SLOPE_NAME;
+	tmp_param.maxv=10000.0;
+	tmp_param.minv=(-10000.0);
+	tmp_param.ans = (float) slope;
 	if( slope_constraint < 0 ){
-		slope_opp->maxv = 0.0;
-		if( slope > 0 ) slope_opp->ans = 0.0;
+		tmp_param.maxv = 0.0;
+		if( slope > 0 ) tmp_param.ans = 0.0;
 	} else if( slope_constraint > 0 ){
-		slope_opp->minv = 0.0;
-		if( slope < 0 ) slope_opp->ans = 0.0;
+		tmp_param.minv = 0.0;
+		if( slope < 0 ) tmp_param.ans = 0.0;
 	}
-	slope_opp->delta = (float) fabs(slope/10.0);
-	slope_opp->mindel = (float) 1.0e-30;
+	tmp_param.delta = (float) fabs(slope/10.0);
+	tmp_param.mindel = (float) 1.0e-30;
 
-	add_opt_param(QSP_ARG  slope_opp);
+	slope_param_p = add_opt_param(QSP_ARG  &tmp_param);
 
 
 
@@ -220,29 +221,29 @@ void ml_fit(QSP_ARG_DECL  Data_Tbl *dtp,int ntrac)		/** maximum liklihood fit */
 	 */
 
 	if( !fc_flag ){
-		int_opp->op_name=INTERCEPT_NAME;
-		int_opp->ans = (float) y_int;
-		int_opp->delta = (float) fabs(y_int/10.0);
-		int_opp->mindel = (float) 1.0e-30;
-		int_opp->maxv = 10000.0;
-		int_opp->minv = -10000.0;
-		add_opt_param(QSP_ARG  int_opp);
+		tmp_param.op_name=INTERCEPT_NAME;
+		tmp_param.ans = (float) y_int;
+		tmp_param.delta = (float) fabs(y_int/10.0);
+		tmp_param.mindel = (float) 1.0e-30;
+		tmp_param.maxv = 10000.0;
+		tmp_param.minv = -10000.0;
+		intercept_param_p = add_opt_param(QSP_ARG  &tmp_param);
 	}
 
 
 	optimize(QSP_ARG  likelihood);
 
 	slope = get_opt_param_value(QSP_ARG  SLOPE_NAME);
-	del_opt_param(slope_opp);
+	del_opt_param(slope_param_p);
 
 	if( !fc_flag ){
 		y_int = get_opt_param_value(QSP_ARG  INTERCEPT_NAME);
-		del_opt_param(int_opp);
+		del_opt_param(intercept_param_p);
 	} else
 		y_int = 0.0;
 }
 
-void analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */
+void ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */
 {
 	double _slope, _y_int;
 

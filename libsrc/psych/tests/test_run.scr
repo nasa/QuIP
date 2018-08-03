@@ -1,0 +1,23 @@
+
+Define Trial1 0
+advise "Trial1 xval = $xval   class = $class"
+.
+
+experiments
+  xvals
+    n_vals 21
+    range 0 -2
+    step_type linear
+    save /dev/tty
+    quit
+  class class1 Trial1
+  Set response_string "x value greater than -1.4"
+  present class1 0
+  staircases
+    change n_updn 1
+    change n_data 20
+    quit
+#  run foo_summ1
+  dribble yes
+  run foo_dribble1
+  Pause

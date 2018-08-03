@@ -51,13 +51,17 @@ void set_n_xvals(int n)
 	_nvals = n;
 }
 
-int insure_xval_array(void)
+int _insure_xval_array(SINGLE_QSP_ARG_DECL)
 {
 	if( xval_array == NULL ){
+advise("insure_xval_array:  creating x-value array");
 		if( _nvals <= 0 ){
+			advise("insure_xval_array:  no x-value array, creating with maximum size");
 			set_n_xvals(MAX_X_VALUES);
 		}
 		xval_array = (float *) getbuf( _nvals * sizeof(float) );
+	} else {
+advise("insure_xval_array:  x-value array already exists");
 	}
 	return 0;
 }

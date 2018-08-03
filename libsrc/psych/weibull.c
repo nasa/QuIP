@@ -97,8 +97,9 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 
 static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum liklihood fit */
 {
-	Opt_Param op1, *alpha_opp=(&op1);
-	Opt_Param op2, *beta_opp=(&op2);
+	Opt_Param tmp_param;
+	Opt_Param *alpha_param_p=NULL;
+	Opt_Param *beta_param_p=NULL;
 
 	/* initialize global */
 
@@ -108,33 +109,33 @@ static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum likli
 
 	delete_opt_params(SINGLE_QSP_ARG);	/* clear any existing parameters */
 
-	alpha_opp->op_name = ALPHA_NAME;
-	alpha_opp->ans = xval_array[ _nvals/2 ];
+	tmp_param.op_name = ALPHA_NAME;
+	tmp_param.ans = xval_array[ _nvals/2 ];
 	if( xval_array[0] < xval_array[_nvals-1] ){
-		alpha_opp->maxv =  xval_array[_nvals-1];
-		alpha_opp->minv =  xval_array[0];
+		tmp_param.maxv =  xval_array[_nvals-1];
+		tmp_param.minv =  xval_array[0];
 	} else {
-		alpha_opp->maxv = xval_array[0];
-		alpha_opp->minv = xval_array[_nvals-1];
+		tmp_param.maxv = xval_array[0];
+		tmp_param.minv = xval_array[_nvals-1];
 	}
-	if( alpha_opp->minv < 0.0 ){
+	if( tmp_param.minv < 0.0 ){
 		WARN("wiebull fit will blow up for negative x values");
 		return;
 	}
-	alpha_opp->delta = (float) fabs( xval_array[_nvals/2] - xval_array[ (_nvals/2)+1 ] );
-	alpha_opp->mindel = (float) 1.0e-30;
+	tmp_param.delta = (float) fabs( xval_array[_nvals/2] - xval_array[ (_nvals/2)+1 ] );
+	tmp_param.mindel = (float) 1.0e-30;
 
-	add_opt_param(QSP_ARG  alpha_opp);
+	alpha_param_p = add_opt_param(QSP_ARG  &tmp_param);
 
 
-	beta_opp->op_name = BETA_NAME;
-	beta_opp->ans = 2;
-	beta_opp->maxv = 10000.0;
-	beta_opp->minv = 0.0;
-	beta_opp->delta = 0.5;
-	beta_opp->mindel = (float) 1.0e-30;
+	tmp_param.op_name = BETA_NAME;
+	tmp_param.ans = 2;
+	tmp_param.maxv = 10000.0;
+	tmp_param.minv = 0.0;
+	tmp_param.delta = 0.5;
+	tmp_param.mindel = (float) 1.0e-30;
 
-	add_opt_param(QSP_ARG  beta_opp);
+	beta_param_p = add_opt_param(QSP_ARG  &tmp_param);
 
 	if( fc_flag ){
 		w_gamma = 0.5;
@@ -145,19 +146,19 @@ static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum likli
 
 	optimize(QSP_ARG  w_likelihood);
 
-	alpha_opp=get_opt_param(ALPHA_NAME);
-	assert( alpha_opp != NULL );
+	alpha_param_p=get_opt_param(ALPHA_NAME);
+	assert( alpha_param_p != NULL );
 
-	alpha = alpha_opp->ans;
+	alpha = alpha_param_p->ans;
 
-	beta_opp=get_opt_param(BETA_NAME);
-	assert( beta_opp != NULL );
+	beta_param_p=get_opt_param(BETA_NAME);
+	assert( beta_param_p != NULL );
 
-	beta = beta_opp->ans;
+	beta = beta_param_p->ans;
 
 	/* clean up */
-	del_opt_param(beta_opp);
-	del_opt_param(alpha_opp);
+	del_opt_param(beta_param_p);
+	del_opt_param(alpha_param_p);
 }
 
 void w_analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */

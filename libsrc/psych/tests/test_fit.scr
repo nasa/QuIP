@@ -1,0 +1,8 @@
+
+experiments
+  lookit
+    read foo_dribble1
+    print class0
+    ogive
+      analyse class0
+    Pause

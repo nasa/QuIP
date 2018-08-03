@@ -231,7 +231,7 @@ extern void tersout(QSP_ARG_DECL  Trial_Class *);
 extern COMMAND_FUNC( constrain_slope );
 extern void set_fcflag(int flg);
 extern void set_chance_rate(double chance_rate);
-extern void analyse( QSP_ARG_DECL  Trial_Class *tcp );
+extern void ogive_fit( QSP_ARG_DECL  Trial_Class *tcp );
 #ifdef QUIK
 extern void pntquic(FILE *fp,Trial_Class *tcp,int in_db);
 #endif /* QUIK */
@@ -302,7 +302,9 @@ extern void _w_set_error_rate(QSP_ARG_DECL  double er);
 
 /* xvalmenu.c */
 
-extern int insure_xval_array(void);
+extern int _insure_xval_array(SINGLE_QSP_ARG_DECL);
+#define insure_xval_array() _insure_xval_array(SINGLE_QSP_ARG)
+
 extern void set_n_xvals(int n);
 extern COMMAND_FUNC( xval_menu );
 

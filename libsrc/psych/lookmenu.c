@@ -136,55 +136,55 @@ static COMMAND_FUNC( pntgrph )
 }
 
 
-static COMMAND_FUNC( t_wanal )
+static COMMAND_FUNC( terse_weibull_fit )
 {
 	Trial_Class *tcp;
 
 	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
-	if( no_data(QSP_ARG  "t_wanal") ) return;
+	if( no_data(QSP_ARG  "terse_weibull_fit") ) return;
 
 	w_analyse(QSP_ARG  tcp);
 	w_tersout(QSP_ARG  tcp);
 }
 
-static COMMAND_FUNC( t_danal )
+static COMMAND_FUNC( do_terse_ogive_fit )
 {
 	Trial_Class *tcp;
 
 	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
-	if( no_data(QSP_ARG  "t_danal") ) return;
+	if( no_data(QSP_ARG  "do_terse_ogive_fit") ) return;
 
-	analyse(QSP_ARG  tcp);
+	ogive_fit(QSP_ARG  tcp);
 	tersout(QSP_ARG  tcp);
 }
 
-static COMMAND_FUNC( wanal )
+static COMMAND_FUNC( weibull_fit )
 {
 	Trial_Class *tcp;
 
 	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
-	if( no_data(QSP_ARG  "wanal") ) return;
+	if( no_data(QSP_ARG  "weibull_fit") ) return;
 
 	w_analyse(QSP_ARG  tcp);
 	weibull_out(QSP_ARG  tcp);
 }
 
-static COMMAND_FUNC( danal )
+static COMMAND_FUNC( do_ogive_fit )
 {
 	Trial_Class *tcp;
 
 	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
-	if( no_data(QSP_ARG  "danal") ) return;
+	if( no_data(QSP_ARG  "do_ogive_fit") ) return;
 
-	analyse(QSP_ARG  tcp);
+	ogive_fit(QSP_ARG  tcp);
 	longout(QSP_ARG  tcp);
 }
 
@@ -234,8 +234,8 @@ static COMMAND_FUNC( do_split )
 #define ADD_CMD(s,f,h)	ADD_COMMAND(ogive_menu,s,f,h)
 
 MENU_BEGIN(ogive)
-ADD_CMD( analyse,	danal,			analyse data )
-ADD_CMD( summarize,	t_danal,		analyse data (terse output) )
+ADD_CMD( analyse,	do_ogive_fit,			analyse data )
+ADD_CMD( summarize,	do_terse_ogive_fit,		analyse data (terse output) )
 //ADD_CMD( class,		setcl,			select new stimulus class )
 ADD_CMD( 2afc,		setfc,			set forced-choice flag )
 ADD_CMD( chance_rate, 	do_set_chance_rate,	specify chance P(correct) )
@@ -259,8 +259,8 @@ static COMMAND_FUNC( seter )
 #define ADD_CMD(s,f,h)	ADD_COMMAND(weibull_menu,s,f,h)
 
 MENU_BEGIN(weibull)
-ADD_CMD( analyse,	wanal,		analyse data )
-ADD_CMD( summarize,	t_wanal,	analyse data (terse output) )
+ADD_CMD( analyse,	weibull_fit,		analyse data )
+ADD_CMD( summarize,	terse_weibull_fit,	analyse data (terse output) )
 //ADD_CMD( class,		setcl,		select new stimulus class )
 ADD_CMD( 2afc,		setfc,		set forced-choice flag )
 ADD_CMD( error_rate,	seter,		specify finger-error rate )
