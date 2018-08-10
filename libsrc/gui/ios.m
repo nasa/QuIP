@@ -1819,6 +1819,7 @@ static int multiple_deferred_alerts(SINGLE_QSP_ARG_DECL)
 	sprintf(MSG_STR,"%d queued alerts!",eltcount(deferred_alert_queue));
 	alert_p = create_alert_with_two_buttons(MSG_STR,"Show all?");
 	show_alert(alert_p);
+	return 0;
 }
 
 int check_deferred_alert(SINGLE_QSP_ARG_DECL)

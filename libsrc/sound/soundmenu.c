@@ -375,14 +375,19 @@ static COMMAND_FUNC(do_halt_play_stream){halt_play_stream(SINGLE_QSP_ARG);}
 
 static COMMAND_FUNC(do_seek_play)
 {
-	long index;
+    int64_t idx;
 
-	index = how_many("sample index");
-	if( index < 0 ){
+	idx = how_many("sample index");
+	if( idx < 0 ){
 		warn("seek_play:  index must be non-negative!?");
 		return;
-	}
-	sound_seek((index_t)index);
+    } else if( idx > MAX_INDEX_VAL ){
+        sprintf(ERROR_STRING,"seek_play:  index must be <= %d!?",MAX_INDEX_VAL);
+        warn(ERROR_STRING);
+        return;
+    }
+
+	sound_seek((index_t)idx);
 }
 
 #undef ADD_CMD

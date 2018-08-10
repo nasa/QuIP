@@ -75,7 +75,7 @@ typedef enum {
 	MIXED_ARGS,		/* real/complex */
 	QUATERNION_ARGS,
 	QMIXED_ARGS,		/* real/quaternion */
-	N_ARGSET_TYPES,
+	N_ARGSET_TYPES,		// 6 argset types, easily fits in 32 bit mask...
 	INVALID_ARGSET_TYPE
 } argset_type;	/* argstype */
 
@@ -337,7 +337,8 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 // What is the type mask applied to???
 // argset_type  REAL_ARGS etc...
 #ifdef CAUTIOUS
-#define VL_TYPE_MASK(code)		(code>=0&&code<N_ARGSET_TYPES?1<<(code-1):0)
+//#define VL_TYPE_MASK(code)		((code)>=0&&(code)<N_ARGSET_TYPES?1<<((code)-1):0)
+#define VL_TYPE_MASK(code)		(1<<((code)-1))
 #else // ! CAUTIOUS
 #define VL_TYPE_MASK(code)		(1<<((code)-1))
 #endif // ! CAUTIOUS

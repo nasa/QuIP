@@ -1,6 +1,9 @@
 //
 //  quipCanvas.m
 //
+//  The canvas is intended to be a layer that sits on top of images, that we can draw overlays on.
+//  We are having trouble getting it to erase!?
+
 #import <QuartzCore/QuartzCore.h>
 
 #include "quip_config.h"
@@ -41,6 +44,7 @@
 
  - (void)drawRect:(CGRect)rect
 {
+fprintf(stderr,"quipCanvas drawRect BEGIN\n");
 #ifdef BUILD_FOR_IOS
 	SET_VW_GFX_CTX( CANVAS_VW(self), UIGraphicsGetCurrentContext());
 
@@ -61,13 +65,14 @@
 //advise(DEFAULT_ERROR_STRING);
 	// This is a quip viewer
 	if( VW_DRAW_LIST(CANVAS_VW(self)) != NULL ){
-//		fprintf(stderr,"drawRect %s calling exec_drawlist\n",VW_NAME(CANVAS_VW(self)));
+		fprintf(stderr,"drawRect %s calling exec_drawlist\n",VW_NAME(CANVAS_VW(self)));
 		// erasure is implemented by merely clearing the drawlist.
 		// But nothing gets erased until drawRect is called again!?
 		// How can we force drawRect to be called??
 //sprintf(DEFAULT_ERROR_STRING,"drawRect:  canvas = 0x%lx, calling exec_drawlist",(long)self);
 //advise(DEFAULT_ERROR_STRING);
 		if( exec_drawlist(CANVAS_VW(self)) < 0 ){
+fprintf(stderr,"exec_drawlist returned a negative value!\n");
 			// negative return value indicates erasure requested...
 
 			// Calling MAKE_NEEDY here seems to have no effect, it is probably
@@ -90,6 +95,7 @@
 	}
 #endif // BUILD_FOR_IOS
 	// Need to do more stuff here??
+fprintf(stderr,"drawRect DONE\n");
 }
 
 @end

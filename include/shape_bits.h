@@ -168,6 +168,7 @@ typedef enum {
 								 * even when l has 64 bits.
 								 * a bug in gcc?
 								 */
+#define BITMAP_ONE			1ull
 
 #else	/* __WORDSIZE == 32 */
 
@@ -177,6 +178,7 @@ typedef enum {
 #define BITMAP_ALL_ONES			0xffffffff		/* not currently used? */
 #define LOG2_BITS_PER_BITMAP_WORD	5
 #define BITMAP_WORD_MSB			(SHIFT_IT(BITS_PER_BITMAP_WORD)-1)
+#define BITMAP_ONE			1ul
 
 #endif
 
@@ -438,6 +440,8 @@ typedef uint32_t dimension_t;	// If this is changed, must also change opencl/ocl
 #define INVALID_DIMENSION	((uint32_t)((int32_t)-1))
 
 typedef uint32_t index_t;
+#define MAX_INDEX_VAL	((index_t) 0xffffffff)
+
 typedef int32_t incr_t;
 
 #endif /* undef N_DIMENSIONS */

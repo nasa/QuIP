@@ -241,7 +241,6 @@ data ascii
 .
 
 Define Delete_Plotter 1 plotter_name
-advise "Delete_Plotter BEGIN"
 Push_Var the_plotter
 Push_Var current_window
 Select_Plotter $1
@@ -252,7 +251,6 @@ Pop_Var the_plotter
 Pop_Var current_window
 If strcmp('$the_plotter','no_plotter')
   "advise 'Delete_Plotter setting the_plotter to no_plotter' Set the_plotter no_plotter"
-advise "Delete_Plotter DONE"
 .
 
 # Remember_Plotter_Params:	store script vars to memory data structure
@@ -835,7 +833,6 @@ Mul_Var x_tick_len -1
 .
 
 Define Plot_Y_Axis 4 ymin ymax tick_spacing xpos
-advise "Plot_Y_Axis $1 $2 $3 $4 BEGIN"
 Plot_Y_Axis_With_Ticks $1 $2 $4 $1 $2 $3
 .
 
@@ -855,7 +852,6 @@ PCont $3 $2
 .
 
 Define Plot_Y_Axis_With_Ticks 6 ymin ymax xpos first_tick last_tick tick_spacing
-advise "Plot_Y_Axis_With_Ticks $1 $2 $3 $4 $5 $6 BEGIN"
 Draw_Y_Axis $1 $2 $3
 Draw_Y_Ticks $4 $5 $3 $6
 .
@@ -871,14 +867,12 @@ PCont $1+$y_tick_len $2
 .
 
 Define Draw_Y_Ticks 4 y_first_tick y_last_tick xpos tick_spacing
-advise "Draw_Y_Ticks $1 $2 $3 $4 BEGIN"
 If $4==0 "error_exit 'Draw_Y_Ticks:  tick spacing cannot be zero!?'"
 Assign _y $1
 do
   Draw_Y_Tick_At $3 $_y
   Add_Var _y $4
   while $_y<=$2
-advise "Draw_Y_Ticks $1 $2 $3 $4 DONE"
 .
 
 Define Plot_Grid 6 xmin ymin xmax ymax x_spacing y_spacing

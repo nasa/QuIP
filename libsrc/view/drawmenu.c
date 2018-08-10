@@ -558,7 +558,7 @@ static COMMAND_FUNC( do_find_font )
 	varname = nameof("variable name for font result");
 	family = nameof("font family");
 	bold_type_idx = which_one("bold",N_BOLD_TYPES,bold_type_name);
-	font_size = how_many("font size");
+	font_size = (int) how_many("font size");
 
 	if( bold_type_idx < 0 ) return;
 	if( font_size <= 0 ) {

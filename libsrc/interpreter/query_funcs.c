@@ -3949,6 +3949,11 @@ inline const char *current_filename(SINGLE_QSP_ARG_DECL)
 
 inline void _reset_return_strings(SINGLE_QSP_ARG_DECL)
 {
+	if( CURR_QRY(THIS_QSP) == NULL ){
+		sprintf(ERROR_STRING,"reset_return_strings:  NULL current query!?");
+		advise(ERROR_STRING);
+		return;
+	}
 	SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),0);
 }
 

@@ -1394,7 +1394,7 @@ dump_enode(QSP_ARG  enp);
 
 	case N_STRV3FUNC:		// eval_expr
 		tsp2 = eval_expr(enp->sen_child[0]); 
-		s = (*enp->sen_func_p->fn_u.strv3_func)( QSP_ARG llong_for_scalar(tsp2) );
+		s = (*enp->sen_func_p->fn_u.strv3_func)( QSP_ARG (time_t) llong_for_scalar(tsp2) );
 		tsp = scalar_for_string(s);
 		break;
 

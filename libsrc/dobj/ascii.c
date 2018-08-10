@@ -789,7 +789,7 @@ static void bit_set_value_from_input(QSP_ARG_DECL  bitmap_word *wp, bitnum_t i_b
 		warn("Truncation error converting bit");
 	}
 	// 1ull forces this constant to be 64 bits, unsigned!
-	bit = 1ull << (i_bit % BITS_PER_BITMAP_WORD);
+	bit = BITMAP_ONE << (i_bit % BITS_PER_BITMAP_WORD);
 
 	if( val == 0 ){
 		*( wp + i_bit/BITS_PER_BITMAP_WORD ) &= ~bit;

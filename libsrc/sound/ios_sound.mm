@@ -863,11 +863,13 @@ void play_stream(QSP_ARG_DECL  int fd)
 int _sound_seek(QSP_ARG_DECL  index_t idx)
 {
 	warn("unimplemented for iOS:  _sound_seek");
+    return 0;
 }
 
 int _async_play_sound(QSP_ARG_DECL  Data_Obj *dp)
 {
 	warn("unimplemented for iOS:  _async_play_sound");
+    return 0;
 }
 
 void set_stereo_output(QSP_ARG_DECL  int is_stereo)
