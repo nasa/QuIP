@@ -23,6 +23,9 @@
 #ifdef BUILD_FOR_IOS
 	self = [super initWithFrame:r];
 #endif // BUILD_FOR_IOS
+
+	self.opaque = NO;
+
 	return self;
 }
 
