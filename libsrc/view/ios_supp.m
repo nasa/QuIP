@@ -527,17 +527,33 @@ CGSize drawn_size =
 			break;
 
 		case DO_ERASE:
+fprintf(stderr,"DO_ERASE:  clearing %s (w = %d, h = %d)\n",VW_NAME(vp),VW_WIDTH(vp),VW_HEIGHT(vp));
+
 			rect = CGRectMake(0,0,VW_WIDTH(vp),VW_HEIGHT(vp));
 			// what about CGContextClearRect???
-			//CGContextClearRect( VW_GFX_CTX(vp), rect );
+			CGContextClearRect( VW_GFX_CTX(vp), rect );
 			// ClearRect doesn't seem to work, try fill rect...
 
-			c = [UIColor whiteColor]; // BUG - user should select!
+			//c = [UIColor clearColor]; // BUG - user should select!
 
+			//CGContextSetAlpha( VW_GFX_CTX(vp), 0.0 );	// fully transparent
+			/*
+			CGContextSetAlpha( VW_GFX_CTX(vp), 0.1 );	// half transparent
+			c = [UIColor whiteColor]; // BUG - user should select!
 			CGContextSetFillColorWithColor( VW_GFX_CTX(vp), c.CGColor );
 			CGContextFillRect( VW_GFX_CTX(vp), rect );
+			CGContextSetAlpha( VW_GFX_CTX(vp), 1.0 );	// fully opaque
 
-			// BUG drawing color is not reset?
+// this does nothing!?
+//			c = [UIColor clearColor];
+//			CGContextSetFillColorWithColor( VW_GFX_CTX(vp), c.CGColor );
+//			CGContextFillRect( VW_GFX_CTX(vp), rect );
+
+			// BUG drawing color is not reset to user selection...?
+			c = [UIColor blackColor]; // BUG - user should be cached!
+			CGContextSetFillColorWithColor( VW_GFX_CTX(vp), c.CGColor );
+			*/
+
 
 			break;
 		default:
@@ -923,12 +939,8 @@ void _xp_erase(QSP_ARG_DECL  Viewer *vp)
 	// what would be best would be to make the viewer needy here,
 	// and then wait until it has been redrawn, and THEN release
 	// the list...  Or we could have a non-drawing scan of the list first?
-
-//	if( VW_DRAW_LIST(vp) == NULL ) return;
-//	fprintf(stderr,"_xp_erase %s:  releasing nodes\n",VW_NAME(vp));
-//	rls_nodes_from_ios_list(VW_DRAW_LIST(vp));
-
 	Draw_Op *do_p;
+fprintf(stderr,"xp_erase adding DO_ERASE\n");
 	do_p = new_drawop(DO_ERASE);
 	ADD_DRAW_OP(vp,do_p);
 	MAKE_NEEDY(vp);
@@ -1235,13 +1247,20 @@ void init_viewer_canvas(Viewer *vp)
 
 	qc=[[quipCanvas alloc]initWithSize:size];
 #ifdef BUILD_FOR_IOS
-	SET_QV_CANVAS(VW_QV(vp),qc);
+	//SET_QV_CANVAS(VW_QV(vp),qc);
+	SET_VW_CANVAS(vp,qc);
+
+	// YES is the default value - why is this not happening???
+	qc.clearsContextBeforeDrawing = YES;	// doesn't work!?
 
 	[VW_QV(vp) addSubview:qc];
 	// We want the canvas to be in front of the images,
 	// but behind the controls...
 	[VW_QV(vp) bringSubviewToFront:qc];
+// background color set to clear for canvas!
+// But we are having trouble erasing non-clear stuff to clear!?
 	qc.backgroundColor = [QUIP_COLOR_TYPE clearColor];
+	qc.opaque = YES;	// drawn content should be opaque!?
 
 #endif // BUILD_FOR_IOS
 
