@@ -461,9 +461,8 @@ fi
 #						#
 #################################################
 
-# These fink checks used to come after the X11 checks, but
-# we had a version mismatch problem with libpng (which seems
-# to exist in /opt/X11...).
+#AC_CHECK_FILE([/usr/local/opt/libgcrypt/include],[CPPFLAGS="$CPPFLAGS -I/usr/local/opt/libgcrypt/include"])
+#AC_CHECK_FILE([/usr/local/opt/libgcrypt/lib],[LDFLAGS="$LDFLAGS -L/usr/local/opt/libgcrypt/lib"])
 
 # use homebrew instead of fink?
 #AC_CHECK_FILE([/sw/include],[CPPFLAGS="$CPPFLAGS -I/sw/include"])

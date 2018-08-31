@@ -28,6 +28,12 @@ void get_device_dims(Screen_Obj *sop)
 			SET_SOB_HEIGHT(sop,600);
 			SET_SOB_WIDTH(sop,748);
 			break;
+		case DEV_TYPE_IPHONE5:
+			// this device is 320x568
+			SET_SOB_FONT_SIZE(sop, 18);
+			SET_SOB_HEIGHT(sop,300);
+			SET_SOB_WIDTH(sop,300);
+			break;
 		case DEV_TYPE_IPOD_RETINA:
 			// this device is 320x480, we need to deduct
 			// space for the input line, the nav bar

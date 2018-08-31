@@ -120,7 +120,7 @@ static void *sound_recorder(void *argp)
 	qsp=rap->ra_qsp;
 #endif
 
-	dp=(Data_Obj *)argp;
+	//dp=(Data_Obj *)argp;
 	sprintf(ERROR_STRING,"sound_recorder:  sound is %s",OBJ_NAME(dp));
 	advise(ERROR_STRING);
 	recording_in_progress=1;
