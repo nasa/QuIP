@@ -66,6 +66,7 @@ static COMMAND_FUNC( do_readpipe )
 		assign_var(s,"error_missing_pipe");
 		return;
 	}
+advise("do_readpipe:  calling readfr_pipe");
 	readfr_pipe(QSP_ARG  pp,s);
 }
 
