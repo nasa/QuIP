@@ -2960,6 +2960,7 @@ static inline void close_query_file(QSP_ARG_DECL  Query *qp)
 
 #ifdef HAVE_POPEN
 	if( IS_PIPE(qp) ){
+		// Should we test PREV_QRY as is done below???
 		assert(QRY_PIPE(qp)!=NULL);
 		close_pipe(QSP_ARG  QRY_PIPE(qp));
 		return;
