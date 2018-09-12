@@ -527,7 +527,7 @@ CGSize drawn_size =
 			break;
 
 		case DO_ERASE:
-fprintf(stderr,"DO_ERASE:  clearing %s (w = %d, h = %d)\n",VW_NAME(vp),VW_WIDTH(vp),VW_HEIGHT(vp));
+//fprintf(stderr,"DO_ERASE:  clearing %s (w = %d, h = %d)\n",VW_NAME(vp),VW_WIDTH(vp),VW_HEIGHT(vp));
 
 			rect = CGRectMake(0,0,VW_WIDTH(vp),VW_HEIGHT(vp));
 			// what about CGContextClearRect???
@@ -671,13 +671,13 @@ int _exec_drawlist(QSP_ARG_DECL  Viewer *vp)
 	IOS_Node *np;
 	int retval=0;
 
-fprintf(stderr,"exec_drawlist BEGIN\n");
-dump_drawlist(vp);
+//fprintf(stderr,"exec_drawlist BEGIN\n");
+//dump_drawlist(vp);
 
 	scan_drawlist_for_erasures(vp);
 
-fprintf(stderr,"exec_drawlist: after scanning:\n");
-dump_drawlist(vp);
+//fprintf(stderr,"exec_drawlist: after scanning:\n");
+//dump_drawlist(vp);
 
 #ifdef BUILD_FOR_IOS
 	if( VW_GFX_CTX(vp) != UIGraphicsGetCurrentContext() )
@@ -708,7 +708,7 @@ fprintf(stderr,"exec_drawlist returning after error\n");
 			np = IOS_NODE_NEXT(np);
 		}
 	}
-fprintf(stderr,"exec_drawlist %s:  DONE\n",VW_NAME(vp));
+//fprintf(stderr,"exec_drawlist %s:  DONE\n",VW_NAME(vp));
 	return retval;
 }
 
@@ -779,7 +779,11 @@ void embed_image(QSP_ARG_DECL Viewer *vp, Data_Obj *dp,int x,int y)
 
 	INSIST_IMAGE_VIEWER(embed_image)
 
+	// BUG?  it seems kind of ineffiecient to create a new object
+	// every time we reload an image...  can't we simply reset the
+	// image data property of a quipImageView associated with the viewer?
 	qiv_p = [[quipImageView alloc] initWithDataObj:dp];
+
 //fprintf(stderr,"embed_image:  quipImageView = 0x%lx\n",
 //(long)qiv_p);
 
@@ -940,7 +944,6 @@ void _xp_erase(QSP_ARG_DECL  Viewer *vp)
 	// and then wait until it has been redrawn, and THEN release
 	// the list...  Or we could have a non-drawing scan of the list first?
 	Draw_Op *do_p;
-fprintf(stderr,"xp_erase adding DO_ERASE\n");
 	do_p = new_drawop(DO_ERASE);
 	ADD_DRAW_OP(vp,do_p);
 	MAKE_NEEDY(vp);

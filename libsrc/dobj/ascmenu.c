@@ -329,8 +329,15 @@ static COMMAND_FUNC( do_pipe_obj )
 	/* If there was just enough data, then the pipe
 	 * will have been closed already... */
 
-	/* BUG we should check qlevel to make sure that the pipe was popped... */
-	pp->p_fp = NULL;
+	/* check qlevel to make sure that the pipe was popped... */
+	if( ASCII_LEVEL == QLEVEL + 1 ){	// expected
+		close_pipe(QSP_ARG  pp);
+	} else {
+		sprintf(ERROR_STRING,
+	"do_pipe_obj:  final level %d is not one less than ascii level %d!?",
+			QLEVEL,ASCII_LEVEL);
+		warn(ERROR_STRING);
+	}
 
 	RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
 }

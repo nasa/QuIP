@@ -1306,12 +1306,12 @@ static int get_sheets(QSP_ARG_DECL  Data_Obj *dp,unsigned char *data,int dim)
 	return status;
 }
 
-void _read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int expect_exact_count)
+void _read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *filename, int expect_exact_count)
 {
 	const char *orig_filename;
 	int level;
 
-	orig_filename = savestr(s);	/* with input formats, we might lose it */
+	orig_filename = savestr(filename);	/* with input formats, we might lose it */
 
 	/*
 	 * We check qlevel, so that if the file is bigger than
@@ -1321,12 +1321,11 @@ void _read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int e
 	 * file, that has to be taken care of in read_obj()
 	 */
 
-	//push_input_file(QSP_ARG  s);
+	//push_input_file(QSP_ARG  filename);
 	redir(fp, orig_filename);
 
 	/* BUG we'd like to have the string be 'Pipe: "command args"' or something... */
-	if( !strncmp(s,"Pipe",4) ){
-		// THIS_QSP->qs_query[QLEVEL].q_flags |= Q_PIPE;
+	if( !strncmp(filename,"Pipe",4) ){
 		SET_QS_FLAG_BITS( THIS_QSP, Q_PIPE );
 	}
 
@@ -1399,6 +1398,10 @@ void _read_obj(QSP_ARG_DECL   Data_Obj *dp)
 		if( CURRENT_FORMAT_NODE != FIRST_INPUT_FORMAT_NODE ){
 			consume_format_line(QSP_ARG  OBJ_PREC_PTR(dp));
 		}
+	}
+
+	if( QLEVEL == ASCII_LEVEL ){
+		warn("qlevel equals ascii_level after reading object!?");
 	}
 
 } // read_obj

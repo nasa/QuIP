@@ -58,7 +58,9 @@ os
   pipes
     open counter_pipe read "cat '$2' | wc -l"
     read counter_pipe cl_tmp
-    close counter_pipe
+    If strcmp('$cl_tmp','pipe_read_error')
+      Then "close counter_pipe"
+      Else "Set $1 0 quit quit exit_macro"
     quit
   quit
 Assign $1 $cl_tmp

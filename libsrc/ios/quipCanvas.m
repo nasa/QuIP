@@ -47,12 +47,12 @@
 
  - (void)drawRect:(CGRect)rect
 {
-fprintf(stderr,"quipCanvas drawRect BEGIN\n");
+//fprintf(stderr,"quipCanvas drawRect BEGIN\n");
 #ifdef BUILD_FOR_IOS
 	SET_VW_GFX_CTX( CANVAS_VW(self), UIGraphicsGetCurrentContext());
 
-fprintf(stderr,"quipCanvas:drawRect:  viewer context set to 0x%lx\n",
-(long)VW_GFX_CTX(CANVAS_VW(self)));
+//fprintf(stderr,"quipCanvas:drawRect:  viewer context set to 0x%lx\n",
+//(long)VW_GFX_CTX(CANVAS_VW(self)));
 
 #ifdef CAUTIOUS
 	if( VW_GFX_CTX( CANVAS_VW(self) ) == NULL ){
@@ -64,15 +64,9 @@ fprintf(stderr,"quipCanvas:drawRect:  viewer context set to 0x%lx\n",
 #endif /* CAUTIOUS */
 	// Drawing code
 
-sprintf(DEFAULT_ERROR_STRING,"drawRect:  canvas = 0x%lx",(long)self);
-advise(DEFAULT_ERROR_STRING);
 	// This is a quip viewer
 	if( VW_DRAW_LIST(CANVAS_VW(self)) != NULL ){
-		fprintf(stderr,"drawRect %s calling exec_drawlist\n",VW_NAME(CANVAS_VW(self)));
-sprintf(DEFAULT_ERROR_STRING,"drawRect:  canvas = 0x%lx, calling exec_drawlist",(long)self);
-advise(DEFAULT_ERROR_STRING);
 		if( exec_drawlist(CANVAS_VW(self)) < 0 ){
-fprintf(stderr,"exec_drawlist returned a negative value!\n");
 			// Before, a negative return meant that an erase and redraw was needed -
 			// But now erase is executed, so it shouldn't need to be called twice!?
 
@@ -91,7 +85,7 @@ fprintf(stderr,"exec_drawlist returned a negative value!\n");
 	}
 #endif // BUILD_FOR_IOS
 	// Need to do more stuff here??
-fprintf(stderr,"drawRect DONE\n");
+//fprintf(stderr,"drawRect DONE\n");
 }
 
 @end
