@@ -253,7 +253,7 @@ static void report_drawop(Viewer *vp, Draw_Op *do_p)
 			fprintf(stderr,"DO_CONT %s  %g %g\n",VW_NAME(vp),DOA_X(do_p),DOA_Y(do_p));
 			break;
 		case DO_LINEWIDTH:
-			fprintf(stderr,"DO_LINEWIDTH %s  %d\n",VW_NAME(vp),DOA_LINEWIDTH(do_p));
+			fprintf(stderr,"DO_LINEWIDTH %s  %g\n",VW_NAME(vp),DOA_LINEWIDTH(do_p));
 			break;
 		case DO_MOVE:
 			fprintf(stderr,"DO_MOVE %s  %g %g\n",VW_NAME(vp),DOA_X(do_p),DOA_Y(do_p));

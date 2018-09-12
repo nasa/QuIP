@@ -647,6 +647,13 @@ event_done:
 
 	//Gen_Win *po;
 	switch( w ){
+		case 568:	// iPhone5?
+			dev_type = DEV_TYPE_IPHONE5;
+			force_reserved_var(DEFAULT_QSP_ARG  "DISPLAY","iPhone5");
+			dummy_panel(DEFAULT_QSP_ARG  "iPhone5",
+				dev_size.width, dev_size.height);
+			break;
+
 		case 320:
 			// iPod w/ retina display - 320 x 480???
 			dev_type = DEV_TYPE_IPOD_RETINA;
@@ -661,7 +668,7 @@ event_done:
 			// ipad Simulator - iPad 2, non-retina?
 			dev_type = DEV_TYPE_IPAD2;
 			force_reserved_var(DEFAULT_QSP_ARG  "DISPLAY","iPad2");
-			/*po=*/ dummy_panel(DEFAULT_QSP_ARG  "iPad2",
+			dummy_panel(DEFAULT_QSP_ARG  "iPad2",
 				dev_size.width, dev_size.height);
 			break;
 		case 2732:
