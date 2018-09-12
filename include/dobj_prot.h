@@ -372,7 +372,7 @@ extern void set_display_precision(QSP_ARG_DECL  int);
 extern int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str);
 
 extern void _read_obj(QSP_ARG_DECL Data_Obj *dp);
-extern void _read_ascii_data(QSP_ARG_DECL Data_Obj *dp, FILE *fp, const char *s, int expect_exact_count);
+extern void _read_ascii_data(QSP_ARG_DECL Data_Obj *dp, void *vp, const char *s, int expect_exact_count);
 
 #define read_obj(dp) _read_obj(QSP_ARG dp)
 #define read_ascii_data(dp,fp,s,c) _read_ascii_data(QSP_ARG dp,fp,s,c)

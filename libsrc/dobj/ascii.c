@@ -1306,12 +1306,23 @@ static int get_sheets(QSP_ARG_DECL  Data_Obj *dp,unsigned char *data,int dim)
 	return status;
 }
 
-void _read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *filename, int expect_exact_count)
+void _read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, void *vp, const char *filename, int expect_exact_count)
 {
 	const char *orig_filename;
 	int level;
 
 	orig_filename = savestr(filename);	/* with input formats, we might lose it */
+
+#ifdef HAVE_POPEN
+	if( !strncmp(filename,"Pipe",4) ){
+		redir_from_pipe(QSP_ARG  vp, orig_filename);
+	} else {
+		redir(vp, orig_filename);
+	}
+#else // ! HAVE_POPEN
+	redir(vp, orig_filename);
+#endif // ! HAVE_POPEN
+
 
 	/*
 	 * We check qlevel, so that if the file is bigger than
@@ -1320,14 +1331,6 @@ void _read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *filename
 	 * This logic cannot deal with too *little* data in the
 	 * file, that has to be taken care of in read_obj()
 	 */
-
-	//push_input_file(QSP_ARG  filename);
-	redir(fp, orig_filename);
-
-	/* BUG we'd like to have the string be 'Pipe: "command args"' or something... */
-	if( !strncmp(filename,"Pipe",4) ){
-		SET_QS_FLAG_BITS( THIS_QSP, Q_PIPE );
-	}
 
 	level = QLEVEL;
 

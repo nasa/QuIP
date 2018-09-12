@@ -305,6 +305,8 @@ static COMMAND_FUNC( do_read_obj_from_stream )
 
 }
 
+// Do we need to test HAVE_POPEN here???  BUG???
+
 static COMMAND_FUNC( do_pipe_obj )
 {
 	Data_Obj *dp;
@@ -324,19 +326,23 @@ static COMMAND_FUNC( do_pipe_obj )
 
 	INSURE_OK_FOR_WRITING(dp)
 
+	// BUG  a symbolic constant should be used here - this has to match
+	// test string in read_ascii_data!!!
+
 	sprintf(cmdbuf,"Pipe:  %s",pp->p_cmd);
-	read_ascii_data(ram_dp,pp->p_fp,cmdbuf,expect_exact_count);
+	read_ascii_data(ram_dp,pp,cmdbuf,expect_exact_count);
 	/* If there was just enough data, then the pipe
 	 * will have been closed already... */
 
+	// pipe should be closed when input is exhausted!
+
 	/* check qlevel to make sure that the pipe was popped... */
-	if( ASCII_LEVEL == QLEVEL + 1 ){	// expected
-		close_pipe(QSP_ARG  pp);
-	} else {
+	if( ASCII_LEVEL != QLEVEL + 1 ){	// expected
 		sprintf(ERROR_STRING,
 	"do_pipe_obj:  final level %d is not one less than ascii level %d!?",
 			QLEVEL,ASCII_LEVEL);
 		warn(ERROR_STRING);
+		// close pipe???
 	}
 
 	RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
