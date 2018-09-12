@@ -1,0 +1,30 @@
+
+Set infile tests/pipe_data.txt
+
+Set n_header_lines 2
+
+Define Read_It 1 filename
+Count_Lines nl $1
+If obj_exists(data_tbl) "Delete_Image data_tbl"
+Vector data_tbl $nl-$n_header_lines 1 float
+os
+  pipes
+    open data_pipe read "tail -n +3 $infile"
+    quit
+  quit
+data
+  ascii
+    pipe_read data_tbl data_pipe
+    quit
+  quit
+Display data_tbl
+.
+
+Read_It $infile
+Pause
+Read_It $infile
+Pause
+Read_It $infile
+Pause
+exit
+
