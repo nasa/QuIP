@@ -668,12 +668,15 @@ static int literal_format_read_string(QSP_ARG_DECL  const char **sptr, const cha
 static inline int _check_input_level(SINGLE_QSP_ARG_DECL)
 {
 	if( QLEVEL != ASCII_LEVEL ){
-		sprintf(ERROR_STRING,"check_input_level (ascii):  input depth is %d, expected %d!?",
-			QLEVEL,ASCII_LEVEL);
+		if( verbose ){
+			sprintf(ERROR_STRING,
+				"check_input_level (ascii):  input depth is %d, expected %d!?",
+				QLEVEL,ASCII_LEVEL);
+			advise(ERROR_STRING);
+		}
+		sprintf(ERROR_STRING,"premature end of data (%d elements read so far)",dobj_n_gotten);
 		warn(ERROR_STRING);
-		advise("premature end of data");
-		sprintf(ERROR_STRING,"%d elements read so far",dobj_n_gotten);
-		advise(ERROR_STRING);
+
 		if( HAS_FORMAT_LIST ){
 			prt_msg_frag("input_format:  ");
 			show_input_format(SINGLE_QSP_ARG);
@@ -1417,10 +1420,8 @@ void _read_obj(QSP_ARG_DECL   Data_Obj *dp)
 		}
 	}
 
-	if( QLEVEL == ASCII_LEVEL ){
-		warn("qlevel equals ascii_level after reading object!?");
-	}
-
+	// Input file will not be popped if reading from stdin,
+	// OR flag set...
 } // read_obj
 
 void _set_integer_print_fmt(QSP_ARG_DECL  Integer_Output_Fmt *iof_p )
