@@ -39,9 +39,13 @@
 
 #include "string.h"
 
+#ifdef QUIP_DEBUG
 debug_flag_t gl_debug=0;
+#endif // QUIP_DEBUG
 
 #define check_gl_error(s)	_check_gl_error(QSP_ARG  s)
+
+#define GL_DEBUG_MSG(msg)	DEBUG_MSG(gl_debug,msg)
 
 static void _check_gl_error(QSP_ARG_DECL  char *s)
 {
@@ -75,14 +79,14 @@ static COMMAND_FUNC( set_clear_color )
 
 	get_rgb_triple(QSP_ARG v);
 
-	if( debug & gl_debug ) advise("glClearColor");
+	GL_DEBUG_MSG("glClearColor");
 
 	glClearColor(v[0],v[1],v[2],0.0);
 }
 
 static COMMAND_FUNC( do_clear_color )
 {
-	if( debug & gl_debug ) advise("glClear GL_COLOR_BUFFER_BIT");
+	GL_DEBUG_MSG("glClear GL_COLOR_BUFFER_BIT");
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -98,9 +102,9 @@ static COMMAND_FUNC( do_clear_color )
 
 static COMMAND_FUNC( do_clear_depth )
 {
-	if( debug & gl_debug ) advise("glClearDepth 1.0");
+	GL_DEBUG_MSG("glClearDepth 1.0");
 	glClearDepth(1.0);
-	if( debug & gl_debug ) advise("glClear GL_DEPTH_BUFFER_BIT");
+	GL_DEBUG_MSG("glClear GL_DEPTH_BUFFER_BIT");
 	glClear(GL_DEPTH_BUFFER_BIT);
 }
 
@@ -109,7 +113,7 @@ static COMMAND_FUNC( set_gl_pen )
 	float v[3];
 
 	get_rgb_triple(QSP_ARG v);
-	if( debug & gl_debug ) advise("glColor3f");
+	GL_DEBUG_MSG("glColor3f");
 	glColor3f(v[0],v[1],v[2]);
 }
 
@@ -126,7 +130,7 @@ static COMMAND_FUNC( select_shader )
 	i=WHICH_ONE("shading model",N_SHADING_MODELS,shading_models);
 	if( i < 0 ) return;
 
-	if( debug & gl_debug ) advise("glShadeModel");
+	GL_DEBUG_MSG("glShadeModel");
 	switch(i){
 		case 0:	glShadeModel(GL_FLAT); break;
 		case 1:	glShadeModel(GL_SMOOTH); break;
@@ -176,7 +180,7 @@ static COMMAND_FUNC( do_gl_begin )
 		}
 	}
 
-	if( debug & gl_debug ) advise("glBegin");
+	GL_DEBUG_MSG("glBegin");
 	glBegin(p);
 	current_primitive = p;
 }
@@ -190,7 +194,7 @@ static COMMAND_FUNC( do_gl_end )
 
 	/* BUG check here that vertex count is appropriate for obj type */
 
-	if( debug & gl_debug ) advise("glEnd");
+	GL_DEBUG_MSG("glEnd");
 	glEnd();
 	current_primitive = INVALID_CONSTANT ;
 }
@@ -203,10 +207,9 @@ static COMMAND_FUNC(	do_gl_vertex )
 	y=(float)HOW_MUCH("y coordinate");
 	z=(float)HOW_MUCH("z coordinate");
 
-	if( debug & gl_debug ){
-		sprintf(ERROR_STRING,"glVertex3f %g %g %g",x,y,z);
-		advise(ERROR_STRING);
-	}
+	sprintf(ERROR_STRING,"glVertex3f %g %g %g",x,y,z);
+	GL_DEBUG_MSG(ERROR_STRING);
+
 	glVertex3f(x,y,z);
 }
 
@@ -218,10 +221,9 @@ static COMMAND_FUNC(	do_gl_color )
 	g=(float)HOW_MUCH("green");
 	b=(float)HOW_MUCH("blue");
 
-	if( debug & gl_debug ){
-		sprintf(ERROR_STRING,"glColor3f %g %g %g",r,g,b);
-		advise(ERROR_STRING);
-	}
+	sprintf(ERROR_STRING,"glColor3f %g %g %g",r,g,b);	// should be ifdef'd
+	GL_DEBUG_MSG(ERROR_STRING);
+
 	glColor3f(r,g,b);
 }
 
@@ -242,10 +244,9 @@ static COMMAND_FUNC(	do_gl_normal )
 	y=(float)HOW_MUCH("y coordinate");
 	z=(float)HOW_MUCH("z coordinate");
 
-	if( debug & gl_debug ){
-		sprintf(ERROR_STRING,"glNormal3f %g %g %g",x,y,z);
-		advise(ERROR_STRING);
-	}
+	sprintf(ERROR_STRING,"glNormal3f %g %g %g",x,y,z);	// BUG should be ifdef'd
+	DEBUG_MSG(gl_debug,ERROR_STRING);
+
 	glNormal3f(x,y,z);
 }
 
@@ -256,7 +257,7 @@ static COMMAND_FUNC(	do_gl_tc )
 	s=(float)HOW_MUCH("s coordinate");
 	t=(float)HOW_MUCH("t coordinate");
 
-	if( debug & gl_debug ) advise("glTexCoord2f");
+	GL_DEBUG_MSG("glTexCoord2f");
 	glTexCoord2f(s,t);
 }
 
@@ -290,7 +291,7 @@ static COMMAND_FUNC(	do_gl_material )
 			pvec[1] = (float)HOW_MUCH("ambient green");
 			pvec[2] = (float)HOW_MUCH("ambient blue");
 			pvec[3] = (float)HOW_MUCH("ambient alpha");
-			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_DIFFUSE (ambient?)");
+			GL_DEBUG_MSG("glMaterialfv GL_FRONT_AND_BACK GL_DIFFUSE (ambient?)");
 			/* diffuse or ambient??? */
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pvec);
 			break; }
@@ -299,7 +300,7 @@ static COMMAND_FUNC(	do_gl_material )
 			pvec[1] = (float)HOW_MUCH("diffuse green");
 			pvec[2] = (float)HOW_MUCH("diffuse blue");
 			pvec[3] = (float)HOW_MUCH("diffuse alpha");
-			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_DUFFUSE");
+			GL_DEBUG_MSG("glMaterialfv GL_FRONT_AND_BACK GL_DUFFUSE");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pvec);
 			break; }
 		case 2: {
@@ -307,12 +308,12 @@ static COMMAND_FUNC(	do_gl_material )
 			pvec[1] = (float)HOW_MUCH("specular green");
 			pvec[2] = (float)HOW_MUCH("specular blue");
 			pvec[3] = (float)HOW_MUCH("specular alpha");
-			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_SPECULAR");
+			GL_DEBUG_MSG("glMaterialfv GL_FRONT_AND_BACK GL_SPECULAR");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, pvec);
 			break; }
 		case 3: {
 			pvec[0] = (float)HOW_MUCH("shininess");
-			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_SHININESS");
+			GL_DEBUG_MSG("glMaterialfv GL_FRONT_AND_BACK GL_SHININESS");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, pvec);
 			break; }
 		case 4:
@@ -320,7 +321,7 @@ static COMMAND_FUNC(	do_gl_material )
 			pvec[1] = (float)HOW_MUCH("emission green");
 			pvec[2] = (float)HOW_MUCH("emission blue");
 			pvec[2] = (float)HOW_MUCH("emission alpha");
-			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_EMISSION");
+			GL_DEBUG_MSG("glMaterialfv GL_FRONT_AND_BACK GL_EMISSION");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, pvec);
 			break;
 		default:
@@ -349,7 +350,7 @@ static COMMAND_FUNC( do_fface )
 	dir = CHOOSE_WINDING_DIR("winding direction of polygon front faces");
 	if( dir == INVALID_CONSTANT ) return;
 
-	if( debug & gl_debug ) advise("glFrontFace");
+	GL_DEBUG_MSG("glFrontFace");
 	glFrontFace(dir);
 }
 
@@ -360,7 +361,7 @@ static COMMAND_FUNC( do_cface )
 	c = CHOOSE_FACING_DIR("facing direction of polygons to be culled");
 	if( c == INVALID_CONSTANT ) return;
 
-	if( debug & gl_debug ) advise("glCullFace");
+	GL_DEBUG_MSG("glCullFace");
 	glCullFace(c);
 }
 
@@ -370,7 +371,7 @@ static COMMAND_FUNC(	do_gl_ptsize )
 
 	size = (float)HOW_MUCH("size");
 
-	if( debug & gl_debug ) advise("glPointSize");
+	GL_DEBUG_MSG("glPointSize");
 	glPointSize(size);
 }
 
@@ -509,10 +510,8 @@ static COMMAND_FUNC( do_load_name )
 	int n;
 
 	n=(int)HOW_MANY("'name' number");
-	if( debug & gl_debug ){
-		sprintf(ERROR_STRING,"glLoadName %d",n);
-		advise(ERROR_STRING);
-	}
+	sprintf(ERROR_STRING,"glLoadName %d",n);
+	GL_DEBUG_MSG(ERROR_STRING);
 	glLoadName(n);
 	check_gl_error("glLoadName");
 }
@@ -522,19 +521,15 @@ static COMMAND_FUNC( do_push_name )
 	int n;
 
 	n=(int)HOW_MANY("'name' number");
-	if( debug & gl_debug ){
-		sprintf(ERROR_STRING,"glPushName %d",n);
-		advise(ERROR_STRING);
-	}
+	sprintf(ERROR_STRING,"glPushName %d",n);
+	GL_DEBUG_MSG(ERROR_STRING);
 	glPushName(n);
 }
 
 static COMMAND_FUNC( do_pop_name )
 {
-	if( debug & gl_debug ){
-		sprintf(ERROR_STRING,"glPopName");
-		advise(ERROR_STRING);
-	}
+	sprintf(ERROR_STRING,"glPopName");
+	GL_DEBUG_MSG(ERROR_STRING);
 	glPopName();
 }
 
@@ -542,10 +537,8 @@ static COMMAND_FUNC( do_set_buf )
 {
 	GLenum buf;
 
-	if( debug & gl_debug ){
-		sprintf(ERROR_STRING,"glDrawBuffer");
-		advise(ERROR_STRING);
-	}
+	sprintf(ERROR_STRING,"glDrawBuffer");
+	GL_DEBUG_MSG(ERROR_STRING);
 	buf=CHOOSE_DRAW_BUFFER("buffer for drawing");
 	glDrawBuffer(buf);
 }
@@ -591,10 +584,8 @@ static COMMAND_FUNC( do_enable )
 		return;
 	}
 
-	if( debug & gl_debug ) {
-		sprintf(ERROR_STRING,"glEnable %s",gl_cap_string(cap));
-		advise(ERROR_STRING);
-	}
+	sprintf(ERROR_STRING,"glEnable %s",gl_cap_string(cap));
+	GL_DEBUG_MSG(ERROR_STRING);
 	glEnable(cap);
 }
 
@@ -605,10 +596,8 @@ static COMMAND_FUNC( do_disable )
 	cap = CHOOSE_CAP("capability");
 	if( cap == INVALID_CONSTANT ) return;
 
-	if( debug & gl_debug ) {
-		sprintf(ERROR_STRING,"glDisable %s",gl_cap_string(cap));
-		advise(ERROR_STRING);
-	}
+	sprintf(ERROR_STRING,"glDisable %s",gl_cap_string(cap));
+	GL_DEBUG_MSG(ERROR_STRING);
 	glDisable(cap);
 }
 
@@ -826,16 +815,16 @@ void set_texture_image(QSP_ARG_DECL  Data_Obj *dp)
 		return;
 	}
 
-	if( debug & gl_debug ) advise("glTexImage2D");
+	GL_DEBUG_MSG("glTexImage2D");
 	glTexImage2D(GL_TEXTURE_2D, 0, OBJ_COMPS(dp), OBJ_COLS(dp),
 		OBJ_ROWS(dp), 0, code, prec, OBJ_DATA_PTR(dp));
 
-	if( debug & gl_debug ) advise("glTexParameterf (4)");
+	GL_DEBUG_MSG("glTexParameterf (4)");
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	if( debug & gl_debug ) advise("glTexEnv");
+	GL_DEBUG_MSG("glTexEnv");
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	/*glEnable(GL_TEXTURE_2D);
 		glShadeModel(GL_FLAT);*/
@@ -868,7 +857,7 @@ static COMMAND_FUNC( set_pt_size )
 		WARN(ERROR_STRING);
 		return;
 	}
-	if( debug & gl_debug ) advise("glPointSize");
+	GL_DEBUG_MSG("glPointSize");
 	glPointSize(s);
 }
 
@@ -882,7 +871,7 @@ static COMMAND_FUNC( set_line_width )
 		WARN(ERROR_STRING);
 		return;
 	}
-	if( debug & gl_debug ) advise("glLineWidth");
+	GL_DEBUG_MSG("glLineWidth");
 	glLineWidth(w);
 }
 
@@ -902,7 +891,7 @@ static COMMAND_FUNC( set_poly_mode )
 		return;
 	}
 
-	if( debug & gl_debug ) advise("glPolygonMode");
+	GL_DEBUG_MSG("glPolygonMode");
 	/* could be more elegant ... */
 	if (!((strcmp(face, "frontNback"))||(strcmp(mode, "point"))))
 		glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
@@ -933,7 +922,7 @@ static COMMAND_FUNC( set_poly_mode )
 	if( face_dir == INVALID_CONSTANT || polygon_mode == INVALID_CONSTANT )
 		return;
 
-	if( debug & gl_debug ) advise("glPolygonMode");
+	GL_DEBUG_MSG("glPolygonMode");
 
 	glPolygonMode(face_dir,polygon_mode);
 }
@@ -960,13 +949,13 @@ static COMMAND_FUNC( set_xf_mode )
 	m=CHOOSE_VIEWING_MODE("matrix mode");
 	if( m == INVALID_CONSTANT ) return;
 
-	if( debug & gl_debug ) advise("glMatrixMode");
+	GL_DEBUG_MSG("glMatrixMode");
 	glMatrixMode( m );
 }
 
 static COMMAND_FUNC( do_identity )
 {
-	if( debug & gl_debug ) advise("glLoadIdentity");
+	GL_DEBUG_MSG("glLoadIdentity");
 	glLoadIdentity();
 }
 
@@ -981,7 +970,7 @@ static COMMAND_FUNC( set_frustum )
 	n = HOW_MUCH("near");
 	f = HOW_MUCH("far");
 
-	if( debug & gl_debug ) advise("glFrustum");
+	GL_DEBUG_MSG("glFrustum");
 	glFrustum(l,r,b,t,n,f);
 }
 
@@ -1001,7 +990,7 @@ static COMMAND_FUNC( do_look_at )
 	uy = (float)HOW_MUCH("y up direction");
 	uz = (float)HOW_MUCH("z up direction");
 
-	if( debug & gl_debug ) advise("gluLookAt");
+	GL_DEBUG_MSG("gluLookAt");
 	gluLookAt(x,y,z,cx,cy,cz,ux,uy,uz);
 }
 
@@ -1013,7 +1002,7 @@ static COMMAND_FUNC( do_scale )
 	fy=(float)HOW_MUCH("y scale factor");
 	fz=(float)HOW_MUCH("z scale factor");
 
-	if( debug & gl_debug ) advise("glScalef");
+	GL_DEBUG_MSG("glScalef");
 	glScalef(fx,fy,fz);
 }
 
@@ -1025,7 +1014,7 @@ static COMMAND_FUNC( do_xlate )
 	ty=(float)HOW_MUCH("y translation");
 	tz=(float)HOW_MUCH("z translation");
 
-	if( debug & gl_debug ) advise("glTranslatef");
+	GL_DEBUG_MSG("glTranslatef");
 	glTranslatef(tx,ty,tz);
 }
 
@@ -1040,7 +1029,7 @@ static COMMAND_FUNC( do_persp )
 
 	/* BUG check for errors */
 
-	if( debug & gl_debug ) advise("gluPerspective");
+	GL_DEBUG_MSG("gluPerspective");
 	gluPerspective(fovy,aspect,near,far);
 }
 
@@ -1055,7 +1044,7 @@ static COMMAND_FUNC( do_ortho )
 	n = HOW_MUCH("near");
 	f = HOW_MUCH("far");
 
-	if( debug & gl_debug ) advise("glOrtho");
+	GL_DEBUG_MSG("glOrtho");
 	glOrtho(l,r,b,t,n,f);
 }
 
@@ -1089,7 +1078,7 @@ static COMMAND_FUNC( do_ld_mat )
 
 	/* BUG check size & type here */
 
-	if( debug & gl_debug ) advise("glLoadMatrixf");
+	GL_DEBUG_MSG("glLoadMatrixf");
 	glLoadMatrixf((GLfloat *)OBJ_DATA_PTR(dp));
 }
 
@@ -1102,7 +1091,7 @@ static COMMAND_FUNC( do_mul_mat )
 
 	/* BUG check size & type here */
 
-	if( debug & gl_debug ) advise("glMultMatrixf");
+	GL_DEBUG_MSG("glMultMatrixf");
 	glMultMatrixf((GLfloat *)OBJ_DATA_PTR(dp));
 }
 
@@ -1116,7 +1105,7 @@ static COMMAND_FUNC( do_rotate )
 	dy = (float)HOW_MUCH("rotation axis y");
 	dz = (float)HOW_MUCH("rotation axis z");
 
-	if( debug & gl_debug ) advise("glRotatef");
+	GL_DEBUG_MSG("glRotatef");
 	glRotatef(angle,dx,dy,dz);
 }
 
@@ -1141,7 +1130,7 @@ static COMMAND_FUNC( do_push_mat )
 		return;
 	}
 	n_pushed_matrices++;
-	if( debug & gl_debug ) advise("glPushMatrix");
+	GL_DEBUG_MSG("glPushMatrix");
 	glPushMatrix();
 	/* no error code?
 	 * BUG we should count & limit number of pushes allowed...
@@ -1154,7 +1143,7 @@ static COMMAND_FUNC( do_pop_mat )
 		WARN("Can't pop last matrix from stack");
 		return;
 	}
-	if( debug & gl_debug ) advise("glPopMatrix");
+	GL_DEBUG_MSG("glPopMatrix");
 	glPopMatrix();
 	n_pushed_matrices--;
 }
@@ -1229,7 +1218,7 @@ static COMMAND_FUNC( set_ambient )
 
 	CHECK_LIGHT("ambient");
 
-	if( debug & gl_debug ) advise("glLightfv GL_AMBIENT");
+	GL_DEBUG_MSG("glLightfv GL_AMBIENT");
 	glLightfv(which_light,GL_AMBIENT,v);
 }
 
@@ -1244,7 +1233,7 @@ static COMMAND_FUNC( set_diffuse )
 
 	CHECK_LIGHT("diffuse");
 
-	if( debug & gl_debug ) advise("glLightfv GL_DIFFUSE");
+	GL_DEBUG_MSG("glLightfv GL_DIFFUSE");
 	glLightfv(which_light,GL_DIFFUSE,v);
 }
 
@@ -1259,7 +1248,7 @@ static COMMAND_FUNC( set_specular )
 
 	CHECK_LIGHT("specular");
 
-	if( debug & gl_debug ) advise("glLightfv GL_SPECULAR");
+	GL_DEBUG_MSG("glLightfv GL_SPECULAR");
 	glLightfv(which_light, GL_SPECULAR, v);
 }
 
@@ -1274,7 +1263,7 @@ static COMMAND_FUNC( set_light_position )
 
 	CHECK_LIGHT("position")
 
-	if( debug & gl_debug ) advise("glLightfv GL_POSITION");
+	GL_DEBUG_MSG("glLightfv GL_POSITION");
 	glLightfv(which_light,GL_POSITION,v);
 }
 
@@ -1288,7 +1277,7 @@ static COMMAND_FUNC( set_spot_dir )
 
 	CHECK_LIGHT("spot direction")
 
-	if( debug & gl_debug ) advise("glLightfv GL_POSITION");
+	GL_DEBUG_MSG("glLightfv GL_POSITION");
 	glLightfv(which_light,GL_SPOT_DIRECTION,v);
 }
 
@@ -1301,13 +1290,13 @@ static COMMAND_FUNC( set_global_ambient )
 	v[2]=(float)HOW_MUCH("blue");
 	v[3]=1.0;
 
-	if( debug & gl_debug ) advise("glLightModelfv");
+	GL_DEBUG_MSG("glLightModelfv");
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT,v);
 }
 
 static COMMAND_FUNC( set_local_viewer )
 {
-	if( debug & gl_debug ) advise("glLightModeli");
+	GL_DEBUG_MSG("glLightModeli");
 
 	if( ASKIF("use viewer position when computing specular reflections") )
 		glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER,GL_TRUE);
@@ -1317,7 +1306,7 @@ static COMMAND_FUNC( set_local_viewer )
 
 static COMMAND_FUNC( set_two_side )
 {
-	if( debug & gl_debug ) advise("glLightModeli");
+	GL_DEBUG_MSG("glLightModeli");
 
 	if( ASKIF("light back faces of polygons") )
 		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
@@ -1351,7 +1340,7 @@ static COMMAND_FUNC( set_atten )
 	i=WHICH_ONE("attenuation model",N_ATTENUATIONS,atten_names);
 	f=(float)HOW_MUCH("attenuation constant");
 	if( i < 0 ) return;
-	if( debug & gl_debug ) advise("glLightf");
+	GL_DEBUG_MSG("glLightf");
 	switch(i){
 		case 0: glLightf(which_light,GL_CONSTANT_ATTENUATION,f); break;
 		case 1: glLightf(which_light,GL_LINEAR_ATTENUATION,f); break;
@@ -1725,7 +1714,9 @@ COMMAND_FUNC( do_gl_menu )
 	static int inited=0;
 	if( !inited ){
 		inited=1;
+#ifdef QUIP_DEBUG
 		gl_debug = add_debug_module("gl");
+#endif // QUIP_DEBUG
 		DECLARE_STR1_FUNCTION(	display_list_exists,	display_list_exists )
 	}
 	CHECK_AND_PUSH_MENU(gl);

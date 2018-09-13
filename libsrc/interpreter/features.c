@@ -4,7 +4,8 @@
 #include "query_stack.h"
 
 typedef enum {
-	SWF_DEBUG,
+	SWF_ASSERTIONS,
+	SWF_DEBUG_MODULES,
 	SWF_CAUTIOUS,
 	SWF_HISTORY,
 	SWF_HELPFUL,
@@ -63,7 +64,8 @@ typedef struct sw_feature {
 } SW_Feature;
 
 static SW_Feature swf_tbl[N_SW_FEATURES]={
-{ UNKNOWN, SWF_DEBUG,		"module debugging"		},
+{ UNKNOWN, SWF_ASSERTIONS,	"debugging with assertions"	},
+{ UNKNOWN, SWF_DEBUG_MODULES,	"module debugging"		},
 { UNKNOWN, SWF_CAUTIOUS,	"cautious checking"		},
 { UNKNOWN, SWF_HISTORY,		"response history"		},
 { UNKNOWN, SWF_HELPFUL,		"detailed command help"	},
@@ -130,10 +132,16 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 static void get_feature_states(SINGLE_QSP_ARG_DECL)
 {
 
-#ifdef DEBUG
-	FEATURE_PRESENT(SWF_DEBUG);
+#ifdef NDEBUG
+	FEATURE_ABSENT(SWF_ASSERTIONS);
 #else
-	FEATURE_ABSENT(SWF_DEBUG);
+	FEATURE_PRESENT(SWF_ASSERTIONS);
+#endif
+
+#ifdef QUIP_DEBUG
+	FEATURE_PRESENT(SWF_DEBUG_MODULES);
+#else
+	FEATURE_ABSENT(SWF_DEBUG_MODULES);
 #endif
 
 #ifdef CAUTIOUS

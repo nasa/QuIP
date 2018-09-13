@@ -734,7 +734,9 @@ void _dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 		return;
 	}
 
+#ifdef QUIP_DEBUG
 	debug_data = add_debug_module("data");
+#endif // QUIP_DEBUG
 
 	// BUG?  this happens here on the main thread, but child threads
 	// will need to be initialized elsewhere!

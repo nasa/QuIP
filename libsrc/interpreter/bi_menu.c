@@ -931,11 +931,18 @@ static COMMAND_FUNC( do_log_message )
 
 static COMMAND_FUNC( do_debug )
 {
+#ifdef QUIP_DEBUG
 	Debug_Module *dmp;
 
 	dmp = pick_debug("");
 	if( dmp != NULL )
 		set_debug(dmp);
+#else // ! QUIP_DEBUG
+	const char *s;
+
+	s = nameof("dummy word");
+	warn("Sorry, module debugging not enabled in this build!?");
+#endif // ! QUIP_DEBUG
 }
 
 static COMMAND_FUNC( do_echo )

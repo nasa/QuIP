@@ -319,10 +319,12 @@ static void list_sizes(QSP_ARG_DECL  Data_Obj *dp)
 	prt_msg(MSG_STR);
 
 	show_obj_dimensions(QSP_ARG  dp,OBJ_TYPE_DIMS(dp),OBJ_TYPE_INCS(dp));
+#ifdef QUIP_DEBUG
 	if( debug & debug_data ){
 		prt_msg("machine type dimensions:");
 		show_obj_dimensions(QSP_ARG  dp,OBJ_MACH_DIMS(dp),OBJ_MACH_INCS(dp));
 	}
+#endif // QUIP_DEBUG
 }
 
 

@@ -332,8 +332,10 @@ void vl_init(SINGLE_QSP_ARG_DECL)
 		return;
 	}
 
+#ifdef QUIP_DEBUG
 	if( veclib_debug == 0 )
 		veclib_debug = add_debug_module("veclib");
+#endif // QUIP_DEBUG
 
 	/* sort the table to insure that each entry is at the location of its code */
 #ifdef CAUTIOUS

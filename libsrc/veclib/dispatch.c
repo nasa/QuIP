@@ -125,7 +125,10 @@ static void dump_tbl_row(Vec_Func_Array *row)
 #endif // MAX_DEBUG
 
 
+#ifdef QUIP_DEBUG
 debug_flag_t veclib_debug=0;
+#endif // QUIP_DEBUG
+
 #if N_PROCESSORS > 1
 
 static void *data_processor(void *argp)

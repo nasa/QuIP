@@ -31,6 +31,8 @@ extern "C" {
 #include <stdio.h>
 #include "quip_fwd.h"	// forward definitions of structs and typedefs
 
+#include "debug.h"	// to pick up AERROR...
+
 // BUG - this really should be eliminated?
 #include "llen.h"
 
