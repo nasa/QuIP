@@ -23,4 +23,4 @@ output
 errors
 a.out
 .deps
-
+.DS_Store

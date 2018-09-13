@@ -19,6 +19,9 @@
 #include "ascii_fmts.h"
 #include "dobj_private.h"
 #include "query_stack.h"	// like to eliminate this dependency...
+#ifdef HAVE_POPEN
+#include "pipe_support.h"
+#endif // HAVE_POPEN
 #include "veclib/obj_args.h"	// argset_prec
 
 // BUG - put this in dai_ struct!
@@ -1306,31 +1309,19 @@ static int get_sheets(QSP_ARG_DECL  Data_Obj *dp,unsigned char *data,int dim)
 	return status;
 }
 
-void _read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, void *vp, const char *filename, int expect_exact_count)
+/*
+ * We check qlevel, so that if the file is bigger than
+ * the data object, the file will be closed so that
+ * the succeeding data will not be read as a command.
+ * This logic cannot deal with too *little* data in the
+ * file, that has to be taken care of in read_obj()
+ */
+
+#define read_object_with_check(dp, expect_exact_count, filename) _read_object_with_check(QSP_ARG  dp, expect_exact_count, filename)
+
+static void _read_object_with_check(QSP_ARG_DECL  Data_Obj *dp, int expect_exact_count, const char *filename)
 {
-	const char *orig_filename;
 	int level;
-
-	orig_filename = savestr(filename);	/* with input formats, we might lose it */
-
-#ifdef HAVE_POPEN
-	if( !strncmp(filename,"Pipe",4) ){
-		redir_from_pipe(QSP_ARG  vp, orig_filename);
-	} else {
-		redir(vp, orig_filename);
-	}
-#else // ! HAVE_POPEN
-	redir(vp, orig_filename);
-#endif // ! HAVE_POPEN
-
-
-	/*
-	 * We check qlevel, so that if the file is bigger than
-	 * the data object, the file will be closed so that
-	 * the succeeding data will not be read as a command.
-	 * This logic cannot deal with too *little* data in the
-	 * file, that has to be taken care of in read_obj()
-	 */
 
 	level = QLEVEL;
 
@@ -1340,14 +1331,37 @@ void _read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, void *vp, const char *filename
 		if( expect_exact_count ){
 			sprintf(ERROR_STRING,
 				"Needed %d values for object %s, file %s has more!?",
-				OBJ_N_MACH_ELTS(dp),OBJ_NAME( dp) ,orig_filename);
+				OBJ_N_MACH_ELTS(dp),OBJ_NAME( dp) ,filename);
 			warn(ERROR_STRING);
 		}
 		pop_file();
 	}
+}
 
+#ifdef HAVE_POPEN
+void _read_ascii_data_from_pipe(QSP_ARG_DECL  Data_Obj *dp, Pipe *pp, const char *filename, int expect_exact_count)
+{
+	const char *orig_filename;
+
+	assert(!strncmp(filename,PIPE_PREFIX_STRING,strlen(PIPE_PREFIX_STRING)));
+	orig_filename = savestr(filename);	/* with input formats, we might lose it */
+	redir_from_pipe(QSP_ARG  pp, orig_filename);	// BUG?  Do we really need to store a copy of the filename?
+	read_object_with_check(dp, expect_exact_count, filename);
 	rls_str( orig_filename);
-} // read_ascii_data
+}
+#endif // ! HAVE_POPEN
+
+void _read_ascii_data_from_file(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *filename, int expect_exact_count)
+{
+	const char *orig_filename;
+
+	// We allow a filename to begin with the pipe prefix???
+	//assert(strncmp(filename,PIPE_PREFIX_STRING,strlen(PIPE_PREFIX_STRING)));
+	orig_filename = savestr(filename);	/* with input formats, we might lose it */
+	redir(fp, orig_filename);
+	read_object_with_check(dp, expect_exact_count, filename);
+	rls_str( orig_filename);
+}
 
 void _read_obj(QSP_ARG_DECL   Data_Obj *dp)
 {

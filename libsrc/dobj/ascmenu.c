@@ -13,6 +13,10 @@
 #include "getbuf.h"
 #include "veclib_api.h"	// BUG should integrate into data_obj.h...
 #include "platform.h"
+#ifdef HAVE_POPEN
+#include "pipe_support.h"
+#endif // HAVE_POPEN
+
 
 // BUG should be per-thread variable...
 static int expect_exact_count=1;
@@ -270,7 +274,7 @@ static COMMAND_FUNC( do_read_obj )
 		fp=try_open( s, "r" );
 		if( !fp ) return;
 
-		read_ascii_data(ram_dp,fp,s,expect_exact_count);
+		read_ascii_data_from_file(ram_dp,fp,s,expect_exact_count);
 	} else {
 		/* read from stdin, no problem... */
 
@@ -320,6 +324,7 @@ static COMMAND_FUNC( do_pipe_obj )
 	if( dp == NULL ) return;
 	if( pp == NULL ) return;
 
+#ifdef HAVE_POPEN
 	// reading is tricker for non-ram, because
 	// we must create the copy, then read into
 	// the copy, then xfer to the device...
@@ -329,8 +334,8 @@ static COMMAND_FUNC( do_pipe_obj )
 	// BUG  a symbolic constant should be used here - this has to match
 	// test string in read_ascii_data!!!
 
-	sprintf(cmdbuf,"Pipe:  %s",pp->p_cmd);
-	read_ascii_data(ram_dp,pp,cmdbuf,expect_exact_count);
+	sprintf(cmdbuf,"%s:  %s",PIPE_PREFIX_STRING,pp->p_cmd);
+	read_ascii_data_from_pipe(ram_dp,pp,cmdbuf,expect_exact_count);
 	/* If there was just enough data, then the pipe
 	 * will have been closed already... */
 
@@ -346,6 +351,9 @@ static COMMAND_FUNC( do_pipe_obj )
 	}
 
 	RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
+#else // ! HAVE_POPEN
+	warn("Sorry, no support for UNIX pipes in this build...");
+#endif // ! HAVE_POPEN
 }
 
 static COMMAND_FUNC( do_set_var_from_obj )
