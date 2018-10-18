@@ -44,7 +44,29 @@ Increment delim_idx
 Substring $1 $2 $source_len-$delim_idx $delim_idx
 .
 
+
+#Set f gamma_fit.$dummy_user_username.1.asc		# We want to get $dummy_user_username and 1...  like awk...
+# BUG?  make sure explode doesn't overflow if there are too many components or characters...
+
+Define Explode 3 string char table
+VSet $3 0
+Set_String $3[0] $1
+Assign l strlen('$1')
+Assign x strstr('$1','$2')
+Set i 0
+do
+  If $i>=ncols('$3') "warn 'Explode:  too many components for table object $3!?' exit_macro"
+  Subscalar sub_word $3[$i] $l-$x-1 $x+1
+  Get_String sss sub_word
+  Delete_Image sub_word
+  VSet $3[$i][$x] 0	# add null terminator to this substring
+  Set_String $3[$i+1] $sss
+  Assign x strstr('$sss','$2')
+  If $x==(-1) exit_macro
+#  Print x
+  Increment i
+  end
+.
+
 Stop_File string_edit.mac
-
-
 

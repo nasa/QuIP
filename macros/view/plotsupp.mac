@@ -853,7 +853,9 @@ PCont $3 $2
 
 Define Plot_Y_Axis_With_Ticks 6 ymin ymax xpos first_tick last_tick tick_spacing
 Draw_Y_Axis $1 $2 $3
-Draw_Y_Ticks $4 $5 $3 $6
+If $1<$2
+  Then "Draw_Y_Ticks_Ascending $4 $5 $3 $6"
+  Else "Draw_Y_Ticks_Descending $4 $5 $3 $6"
 .
 
 Define Draw_Y_Tick_At 2 x y
@@ -866,13 +868,22 @@ PMove $1 $2
 PCont $1+$y_tick_len $2
 .
 
-Define Draw_Y_Ticks 4 y_first_tick y_last_tick xpos tick_spacing
-If $4==0 "error_exit 'Draw_Y_Ticks:  tick spacing cannot be zero!?'"
+Define Draw_Y_Ticks_Ascending 4 y_first_tick y_last_tick xpos tick_spacing
+If $4==0 "error_exit 'Draw_Y_Ticks_Ascending:  tick spacing cannot be zero!?'"
 Assign _y $1
 do
   Draw_Y_Tick_At $3 $_y
   Add_Var _y $4
   while $_y<=$2
+.
+
+Define Draw_Y_Ticks_Descending 4 y_first_tick y_last_tick xpos tick_spacing
+If $4==0 "error_exit 'Draw_Y_Ticks_Descending:  tick spacing cannot be zero!?'"
+Assign _y $1
+do
+  Draw_Y_Tick_At $3 $_y
+  Add_Var _y -$4
+  while $_y>=$2
 .
 
 Define Plot_Grid 6 xmin ymin xmax ymax x_spacing y_spacing
@@ -1420,13 +1431,13 @@ repeat $n_x_ticks
 
 Define Label_Y_Ticks 3 first last delta 
 If !$allow_color_tick_labels "Push_Var pen_color Select_Pen $label_color"
-Assign n_y_ticks 1+floor($tiny+($2-($1))/$3)
+Assign n_y_ticks 1+floor($tiny+abs($2-($1))/$3)
 #advise "Label_Y_Ticks $1 $2 $3"
 #Print n_y_ticks
 Assign tick_y $1
 repeat $n_y_ticks
   Label_Y_Tick $tick_y	$tick_y
-  Add_Var tick_y $3
+  Add_Var tick_y sign($2-$1)*$3
   end
 If !$allow_color_tick_labels "Pop_Var pen_color"
 
