@@ -27,7 +27,7 @@ variables set $1 $2 quit
 .
 
 Define UnSet 1 'variable name'
-variables unset $1 quit
+variables delete $1 quit
 .
 
 Define Variables 0

@@ -6,7 +6,11 @@ If !var_exists($1) "Set $1 0"
 .
 
 Define Delete_Var 1 name
-variables unset $1 quit
+variables delete $1 quit
+.
+
+Define UnSet_If 1 name
+If var_exists('$1') "UnSet $1"
 .
 
 Define Increment 1 'variable name'
