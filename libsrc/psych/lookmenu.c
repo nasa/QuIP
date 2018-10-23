@@ -33,15 +33,16 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 		return;
 	}
 	fclose(fp);
-	n_have_classes = eltcount(class_list());
+	n_have_classes = eltcount(trial_class_list());
 
 	sprintf(num_str,"%d",n_have_classes);	// BUG?  buffer overflow
 						// if n_have_classes too big???
 	assign_reserved_var( "n_classes" , num_str );
 	
 	if( verbose ){
+		assert(global_xval_dp!=NULL);
 		sprintf(ERROR_STRING,"File %s read, %d classes, %d x-values",
-			filename,n_have_classes,_nvals);
+			filename,n_have_classes,OBJ_COLS(global_xval_dp));
 		advise(ERROR_STRING);
 	}
 }
@@ -84,10 +85,14 @@ static void pntcurve(QSP_ARG_DECL  FILE *fp, Trial_Class * tcp)
         int j;
         Summary_Data_Tbl *dtp;
 
-	dtp=CLASS_SUMM_DATA_TBL(tcp);
+	assert(CLASS_XVAL_OBJ(tcp)!=NULL);
+	dtp=CLASS_SUMM_DTBL(tcp);
 	for(j=0;j<SUMM_DTBL_SIZE(dtp);j++){
 		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) > 0 ){
-			fprintf(fp,"%f\t", xval_array[ j ]);
+			float *xv_p;
+			xv_p = indexed_data( CLASS_XVAL_OBJ(tcp), j);
+			assert(xv_p!=NULL);
+			fprintf(fp,"%f\t", *xv_p);
 			fprintf(fp,"%f\n",DATUM_FRACTION(SUMM_DTBL_ENTRY(dtp,j)));
 		}
 	}
@@ -229,20 +234,11 @@ static COMMAND_FUNC( do_pnt_bars )
 	pnt_bars( QSP_ARG  fp, tcp );
 }
 
-static COMMAND_FUNC( do_xv_xform )
-{
-	const char *s;
-
-	s=nameof("dm expression string for x-value transformation");
-	set_xval_xform(s);
-}
-
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(lookit_menu,s,f,h)
 
 MENU_BEGIN(lookit)
 ADD_CMD( read,		do_read_data,	read new data file )
-ADD_CMD( xform,		do_xv_xform,	set automatic x-value transformation )
 ADD_CMD( print,		do_print_raw,	print raw data )
 //ADD_CMD( class,		setcl,		select new stimulus class )
 ADD_CMD( plotprint,	pntgrph,	print data for plotting )

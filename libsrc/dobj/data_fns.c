@@ -308,7 +308,7 @@ _mk_img(QSP_ARG_DECL  const char *name,dimension_t rows,dimension_t cols,dimensi
 
 
 Data_Obj *
-mk_vec(QSP_ARG_DECL  const char *name,dimension_t dim,dimension_t type_dim,Precision *prec_p)		/**/
+_mk_vec(QSP_ARG_DECL  const char *name,dimension_t dim,dimension_t type_dim,Precision *prec_p)		/**/
 {
 	return( make_obj(name,1,1,dim,type_dim,prec_p) );
 }

@@ -20,17 +20,14 @@
 #include "getbuf.h"
 #include "data_obj.h"
 #include "quip_menu.h"
+#include "veclib_api.h"
 
-
-/* local prototypes */
-
-static COMMAND_FUNC( do_load_xvals );
 
 /* globals */
 // BUG not thread-safe, but probably OK
 static float xval_1=1.0, xval_n=0.0;
-float *xval_array=NULL;
-int _nvals=0;
+//float *xval_array=NULL;
+static int global_n_xvals=0;
 
 #define LINEAR_STEPS	0
 #define LOG_STEPS	1
@@ -41,45 +38,59 @@ static int log_steps=0;
 
 // This is ramp1D !?
 
-void set_n_xvals(int n)
+#define set_n_xvals(n) _set_n_xvals(QSP_ARG  n)
+
+static void _set_n_xvals(QSP_ARG_DECL  int n)
 {
 	assert( n > 0 && n <= MAX_X_VALUES );
 
-	if( n != _nvals && xval_array != NULL ){
-		givbuf(xval_array);
-		xval_array = getbuf( n * sizeof(float) );
+	if( global_xval_dp != NULL ){
+		if( n != OBJ_COLS(global_xval_dp) ){
+			sprintf(ERROR_STRING,
+	"set_n_xvals:  requested value %d does not match object %s!?",
+				n,OBJ_NAME(global_xval_dp));
+			warn(ERROR_STRING);
+			return;
+		}
 	}
-	_nvals = n;
+	global_n_xvals = n;
+fprintf(stderr,"number of x-values set to %d\n",n);
 }
 
 int _insure_xval_array(SINGLE_QSP_ARG_DECL)
 {
-	if( xval_array == NULL ){
-advise("insure_xval_array:  creating x-value array");
-		if( _nvals <= 0 ){
+	if( global_xval_dp == NULL ){
+		if( verbose )
+			advise("insure_xval_array:  creating x-value object");
+		if( global_n_xvals <= 0 ){
 			sprintf(ERROR_STRING,
 	"insure_xval_array:  number of x-values not specified, defaulting to %d",MAX_X_VALUES);
 			advise(ERROR_STRING);
 			set_n_xvals(MAX_X_VALUES);
 		}
 	} else {
-advise("insure_xval_array:  freeing existing x-value array...");
-		givbuf(xval_array);
+		if( verbose )
+			advise("insure_xval_array:  x-value object already exists...");
+		return 0;
 	}
-	xval_array = (float *) getbuf( _nvals * sizeof(float) );
+	global_xval_dp = mk_vec("default_x_values",global_n_xvals,1,prec_for_code(PREC_SP));
+	assert(global_xval_dp!=NULL);
 	return 0;
 }
 
-static void linsteps(void)	/** make linear steps */
+#define linsteps() _linsteps(SINGLE_QSP_ARG)
+
+static void _linsteps(SINGLE_QSP_ARG_DECL)	/** make linear steps */
 {
 	float inc;
-	int i;
+	int n_xvals;
+
+	assert(global_xval_dp!=NULL);
+	n_xvals = OBJ_COLS(global_xval_dp);
 
 	inc=xval_n - xval_1;
-	inc /= (_nvals-1);
-	xval_array[0] = xval_1;
-	for(i=0;i<_nvals;i++)
-		xval_array[i]=xval_1+i*inc;
+	inc /= (n_xvals-1);
+	easy_ramp2d(QSP_ARG  global_xval_dp, xval_1, inc, 0);
 }
 
 #define make_steps() _make_steps(SINGLE_QSP_ARG)
@@ -89,26 +100,27 @@ static void _make_steps(SINGLE_QSP_ARG_DECL)
 	if( insure_xval_array() < 0 ) return;
 
 	if( log_steps ){
-		int i;
-
 		xval_1 = (float) log( xval_1 );
 		xval_n = (float) log( xval_n );
-		linsteps();
-		for(i=0;i<_nvals;i++)
-			xval_array[i]=(float) exp( xval_array[i] );
-	} else linsteps();
-}
+	}
 
+	linsteps();
 
-static COMMAND_FUNC( do_load_xvals )
-{
-	rdxvals( QSP_ARG  nameof("x value file") );
+	if( log_steps ){
+		Vec_Obj_Args oa1;
+
+		clear_obj_args(&oa1);
+		SET_OA_DEST(&oa1, global_xval_dp);
+		SET_OA_SRC1(&oa1, global_xval_dp);
+		set_obj_arg_flags(&oa1);
+
+		platform_dispatch_by_code( QSP_ARG  FVEXP, &oa1 );
+	}
 }
 
 static COMMAND_FUNC( do_import_xvals )
 {
 	Data_Obj *dp;
-	int i; float *p;
 
 	dp = pick_obj("float object for x-values");
 	if( dp == NULL ) return;
@@ -140,14 +152,7 @@ static COMMAND_FUNC( do_import_xvals )
 		warn(ERROR_STRING);
 		return;
 	}
-
-	set_n_xvals( OBJ_COLS(dp) );
-	if( insure_xval_array() < 0 ) return;
-	p = OBJ_DATA_PTR(dp);
-	for(i=0;i<_nvals;i++){
-		xval_array[i] = *p;
-		p += OBJ_PXL_INC(dp);
-	}
+	global_xval_dp = dp;
 }
 
 static COMMAND_FUNC( do_set_nxvals )
@@ -174,7 +179,7 @@ static COMMAND_FUNC( do_set_range )
 	make_steps();
 }
 
-static COMMAND_FUNC( do_set_steps )
+static COMMAND_FUNC( do_set_step_type )
 {
 	int i;
 
@@ -189,12 +194,19 @@ static COMMAND_FUNC( do_save_xvals )
 {
 	FILE *fp;
 	int i;
+	int n_xvals;
 
 	fp=try_nice( nameof("output file"), "w" );
 	if( !fp ) return;
 
-	for(i=0;i<_nvals;i++)
-		fprintf(fp,"%f\n",xval_array[i]);
+	assert(global_xval_dp!=NULL);
+	n_xvals = OBJ_COLS(global_xval_dp);
+
+	for(i=0;i<n_xvals;i++){
+		float *xv_p;
+		xv_p = indexed_data(global_xval_dp,i);
+		fprintf(fp,"%f\n",*xv_p);
+	}
 
 	fclose(fp);
 }
@@ -202,12 +214,11 @@ static COMMAND_FUNC( do_save_xvals )
 #define ADD_CMD(s,f,h)	ADD_COMMAND(xvals_menu,s,f,h)
 
 MENU_BEGIN(xvals)
-ADD_CMD( load,		do_load_xvals,	load x values from a file )
 ADD_CMD( import,	do_import_xvals,	load x values from a data object )
 ADD_CMD( save,		do_save_xvals,	save x values to a file )
 ADD_CMD( n_vals,	do_set_nxvals,	set number of x values )
 ADD_CMD( range,		do_set_range,	set range of x values )
-ADD_CMD( step_type,	do_set_steps,	select linear/logarithmic steps )
+ADD_CMD( step_type,	do_set_step_type,	select linear/logarithmic steps )
 MENU_END(xvals)
 
 COMMAND_FUNC( xval_menu )	/** play around with an experiment */

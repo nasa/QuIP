@@ -37,7 +37,7 @@ static Data_Obj *tmp_pt_dp=NULL;
 												\
 	if( tmp_pt_dp == NULL ){								\
 		/* BUG?  should we get the precision based on the current format? */		\
-		tmp_pt_dp = mk_vec(QSP_ARG  "tmp_polhemus_pt",1,POLHEMUS_READING_COUNT,prec_for_code(PREC_SP));		\
+		tmp_pt_dp = mk_vec("tmp_polhemus_pt",1,POLHEMUS_READING_COUNT,prec_for_code(PREC_SP));		\
 		if( tmp_pt_dp == NULL ) error1("error creating temporary polhemus point");	\
 	}
 

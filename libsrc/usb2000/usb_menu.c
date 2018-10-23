@@ -233,7 +233,7 @@ static short mk_spec_vector(QSP_ARG_DECL  short size, Spectral_Data *sdp)
 		return -1;
 	}
 
-	dp = mk_vec(QSP_ARG  name,size,2,PREC_FOR_CODE(PREC_SP));
+	dp = mk_vec(name,size,2,PREC_FOR_CODE(PREC_SP));
 
 	if( dp == NULL ) {
 		warn("unable to create spectra data vector");

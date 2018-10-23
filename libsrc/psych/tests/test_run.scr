@@ -1,4 +1,4 @@
-max_warnings 2
+#max_warnings 2
 
 Define Trial1 0
 advise "Trial1 xval = $xval   class = $class"
@@ -8,7 +8,9 @@ experiments
   xvals
     n_vals 21
     range 0 -2
+    advise "x value range set"
     step_type linear
+    advise "x value step type set"
     save /dev/tty
     quit
   classes

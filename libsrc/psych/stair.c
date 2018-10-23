@@ -27,7 +27,6 @@ static int caught;
 static void mk_stair_array(SINGLE_QSP_ARG_DECL);
 static int prestep(SINGLE_QSP_ARG_DECL);
 #define PRESTEP			prestep(SINGLE_QSP_ARG)
-static void clear_data(Trial_Class *tcp);
 
 static List *stair_list(SINGLE_QSP_ARG_DECL);
 static void tally(Staircase *stc,int rsp);
@@ -58,29 +57,51 @@ static Staircase **stair_tbl=NULL;
 ITEM_INTERFACE_DECLARATIONS(Trial_Class,trial_class,0)
 ITEM_INTERFACE_DECLARATIONS(Staircase,stair,0)
 
-#define init_summ_data_tbl(dtp) _init_summ_data_tbl(QSP_ARG  dtp)
-
-static void _init_summ_data_tbl(QSP_ARG_DECL  Summary_Data_Tbl *dtp)
+static void alloc_summ( Summary_Data_Tbl *sdt_p, dimension_t size )
 {
-	SET_SUMM_DTBL_N(dtp,0);
-	if( _nvals > 0 ){
-		SET_SUMM_DTBL_SIZE(dtp,_nvals);
-		SET_SUMM_DTBL_DATA(dtp,(Summary_Datum *)getbuf(_nvals*sizeof(Summary_Datum)));
-	} else {
-		SET_SUMM_DTBL_SIZE(dtp,0);
-		SET_SUMM_DTBL_DATA(dtp,NULL);
-		warn("init_summ_data_tbl:  number of x-values is not set!?");
+	SET_SUMM_DTBL_SIZE(sdt_p,size);
+	SET_SUMM_DTBL_DATA(sdt_p, (Summary_Datum *)
+		getbuf(size*sizeof(Summary_Datum)));
+}
+
+void clear_summary_data( Summary_Data_Tbl *sdt_p )
+{
+	int i;
+
+	// more efficient to write words?
+	//	memset(SUMM_DTBL_DATA(sdt_p),0,size*sizeof(Summary_Datum));
+
+	SET_SUMM_DTBL_N(sdt_p,0);
+	for(i=0;i<SUMM_DTBL_SIZE(sdt_p);i++){
+		SET_DATUM_NTOTAL(SUMM_DTBL_ENTRY(sdt_p,i),0);
+		SET_DATUM_NCORR(SUMM_DTBL_ENTRY(sdt_p,i),0);
 	}
 }
 
-#define new_summary_data_tbl() _new_summary_data_tbl(SINGLE_QSP_ARG)
+#define init_summ_data_tbl(sdt_p,dp) _init_summ_data_tbl(QSP_ARG  sdt_p,dp)
 
-static Summary_Data_Tbl *_new_summary_data_tbl(SINGLE_QSP_ARG_DECL)
+static void _init_summ_data_tbl(QSP_ARG_DECL  Summary_Data_Tbl *sdt_p, Data_Obj *dp)
+{
+	SET_SUMM_DTBL_N(sdt_p,0);
+	SET_SUMM_DTBL_CLASS(sdt_p,NULL);
+	SET_SUMM_DTBL_XVAL_OBJ(sdt_p,dp);
+	
+	if( dp != NULL ){
+		alloc_summ(sdt_p,OBJ_COLS(dp));
+		clear_summary_data(sdt_p);
+	} else {
+		SET_SUMM_DTBL_SIZE(sdt_p,0);
+		SET_SUMM_DTBL_DATA(sdt_p,NULL);
+		warn("init_summ_data_tbl:  NULL x-value object!?");
+	}
+}
+
+Summary_Data_Tbl *_new_summary_data_tbl(QSP_ARG_DECL  Data_Obj *xv_dp)
 {
 	Summary_Data_Tbl *sdt_p;
 	
 	sdt_p = getbuf(sizeof(Summary_Data_Tbl));
-	init_summ_data_tbl(sdt_p);
+	init_summ_data_tbl(sdt_p,xv_dp);
 	return sdt_p;
 }
 
@@ -91,7 +112,7 @@ static void init_seq_data_tbl(Sequential_Data_Tbl *qdt_p)
 
 #define new_sequential_data_tbl() _new_sequential_data_tbl(SINGLE_QSP_ARG)
 
-static Sequential_Data_Tbl *_new_sequential_data_tbl(SINGLE_QSP_ARG_DECL)
+Sequential_Data_Tbl *_new_sequential_data_tbl(SINGLE_QSP_ARG_DECL)
 {
 	Sequential_Data_Tbl *qdt_p;
 
@@ -107,7 +128,7 @@ static List *stair_list(SINGLE_QSP_ARG_DECL)
 	return(item_list(stair_itp) );
 }
 
-//static int nullstim(QSP_ARG_DECL  int c,int v,Staircase *stcp)
+//static int nullstim(QSP_ARG_DECL  int c,int v,Staircase *st_p)
 //{
 //	sprintf(ERROR_STRING,"no stimulus routine");
 //	WARN(ERROR_STRING);
@@ -118,7 +139,7 @@ void new_exp(SINGLE_QSP_ARG_DECL)		/** discard old stairs */
 {
 	List *lp;
 	Node *np;
-	Staircase *stcp;
+	Staircase *st_p;
 
 	nstairs=0;
 
@@ -128,10 +149,10 @@ void new_exp(SINGLE_QSP_ARG_DECL)		/** discard old stairs */
 	/* Don't we have a routine to delete all staircases? */
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
-		stcp = (Staircase *)np->n_data;
+		st_p = (Staircase *)np->n_data;
 		np=np->n_next;		/* must do this before freeing item! */
-		del_stair(stcp);
-		givbuf((void *)stcp->stair_name);
+		del_stair(st_p);
+		givbuf((void *)st_p->stair_name);
 	}
 }
 
@@ -142,8 +163,8 @@ void set_recording(int flag)
 
 static void tally(Staircase *stc,int rsp)			/* record new data */
 {
-fprintf(stderr,"noting response to class data table at 0x%lx\n",(long) CLASS_SUMM_DATA_TBL(STAIR_CLASS(stc)));
-	note_trial(CLASS_SUMM_DATA_TBL(STAIR_CLASS(stc)),STAIR_VAL(stc),rsp,STAIR_CRCT_RSP(stc));
+fprintf(stderr,"noting response to class data table at 0x%lx\n",(long) CLASS_SUMM_DTBL(STAIR_CLASS(stc)));
+	note_trial(CLASS_SUMM_DTBL(STAIR_CLASS(stc)),STAIR_VAL(stc),rsp,STAIR_CRCT_RSP(stc));
 fprintf(stderr,"noting response to staircase data table at 0x%lx\n",(long) STAIR_DATA_TBL(stc));
 	note_trial(STAIR_DATA_TBL(stc),STAIR_VAL(stc),rsp,STAIR_CRCT_RSP(stc));
 }
@@ -179,17 +200,18 @@ static void adj_inc(Staircase *stc)	/* adjust the increment */
 	}
 }
 
-static void adj_val(Staircase *stc)	/* set the value for the next trial */
+static void adj_val(Staircase *st_p)	/* set the value for the next trial */
 {
 	switch( _trans ){
 		case TRANS_UP: 
-			stc->stair_val += STAIR_INC(stc); break;
+			st_p->stair_val += STAIR_INC(st_p); break;
 		case TRANS_DN: 
-			stc->stair_val -= STAIR_INC(stc); break;
+			st_p->stair_val -= STAIR_INC(st_p); break;
 		default: break;
 	}
-	if( stc->stair_val < 0 ) stc->stair_val = 0;
-	if( stc->stair_val >= _nvals ) stc->stair_val = (int) _nvals-1;
+	if( st_p->stair_val < 0 ) st_p->stair_val = 0;
+	if( st_p->stair_val > STAIR_MAX_VAL(st_p) )
+		st_p->stair_val = (int) STAIR_MAX_VAL(st_p);
 }
 
 #define FC_RSP(stc,rsp)		(STAIR_CRCT_RSP(stc)==YES?rsp:(rsp^3))
@@ -249,16 +271,6 @@ void save_response(QSP_ARG_DECL  int rsp,Staircase *stc)
 
 	}
 
-	/*
-	if( drib_file != NULL )
-		wt_dribble(drib_file,
-			stc->stair_tcp,
-			stc->stair_index,
-			stc->stair_val,
-			rsp,
-			stc->stair_crctrsp);
-			*/
-
 	if( dribbling() )
 		dribble(stc,rsp);
 
@@ -303,7 +315,7 @@ static int step(QSP_ARG_DECL Staircase *stc)
 	advise(ERROR_STRING);
 
 	/* stimulus routines MUST call response() for proper abort & redo */
-	rsp=(*stmrt)( QSP_ARG stc->stair_tcp, stc->stair_val, stc );
+	rsp=(*stmrt)( QSP_ARG STAIR_CLASS(stc), stc->stair_val, stc );
 
 	save_response(QSP_ARG rsp,stc);
 	return(rsp);
@@ -317,33 +329,39 @@ int makestair( QSP_ARG_DECL  int st,	/* staircase type */
 		)
 {
 	char str[64];
-	Staircase *stcp;
+	Staircase *st_p;
+	int n_xvals;
 
 	assert( tcp != NULL );
 
 	sprintf(str,"staircase.%s.%d",CLASS_NAME(tcp),CLASS_N_STAIRS(tcp) );
-	stcp = new_stair(str);
-	assert(stcp!=NULL);
+	st_p = new_stair(str);
+	assert(st_p!=NULL);
 
-	stcp->stair_tcp = tcp;
-	stcp->stair_index = CLASS_N_STAIRS(tcp);
+	SET_STAIR_CLASS(st_p,tcp);
+	st_p->stair_index = CLASS_N_STAIRS(tcp);
 	SET_CLASS_N_STAIRS(tcp,CLASS_N_STAIRS(tcp)+1);
 
-	SET_STAIR_TYPE(stcp,st);
-	SET_STAIR_CRCT_RSP(stcp,cr);
-	SET_STAIR_INC_RSP(stcp,ir);
+	SET_STAIR_TYPE(st_p,st);
+	SET_STAIR_CRCT_RSP(st_p,cr);
+	SET_STAIR_INC_RSP(st_p,ir);
 
-	SET_STAIR_LAST_RSP3(stcp,REDO);
-	SET_STAIR_LAST_RSP(stcp,REDO);
-	SET_STAIR_LAST_TRIAL(stcp,NO_TRANS);
+	SET_STAIR_LAST_RSP3(st_p,REDO);
+	SET_STAIR_LAST_RSP(st_p,REDO);
+	SET_STAIR_LAST_TRIAL(st_p,NO_TRANS);
 
-	SET_STAIR_DATA_TBL(stcp,new_summary_data_tbl());
+	SET_STAIR_DATA_TBL(st_p,new_summary_data_tbl(CLASS_XVAL_OBJ(tcp)));
+	SET_SUMM_DTBL_CLASS( STAIR_DATA_TBL(st_p), tcp );
 
-	if( _nvals <= 0 ){
+	if( STAIR_XVAL_OBJ(st_p) == NULL ){
 		WARN("X values should be read before setting up staircases");
 		advise("setting initial staircase increment to 1");
-		SET_STAIR_INC(stcp,1);
-	} else SET_STAIR_INC(stcp, (int) _nvals/2);
+		SET_STAIR_INC(st_p,1);
+		n_xvals=0;
+	} else {
+		n_xvals = (int) OBJ_COLS(STAIR_XVAL_OBJ(st_p));
+		SET_STAIR_INC(st_p, n_xvals/2);
+	}
 
 	/* random initialization is ok in general, but not good
 		for different types of stair on a U-shaped function! */
@@ -354,10 +372,10 @@ int makestair( QSP_ARG_DECL  int st,	/* staircase type */
 	/* n/2 is not so good for real forced choice,
 		but it's probably not much worse than random */
 
-	stcp->stair_val = (int) _nvals/2 ;
+	st_p->stair_val = n_xvals/2 ;
 
-	SET_STAIR_MIN_INC(stcp,mi);
-	if( mi < 0 ) SET_STAIR_INC(stcp,STAIR_INC(stcp)*(-1));
+	SET_STAIR_MIN_INC(st_p,mi);
+	if( mi < 0 ) SET_STAIR_INC(st_p,STAIR_INC(st_p)*(-1));
 
 	return(nstairs++);
 } /* end makestair */
@@ -420,7 +438,7 @@ static void mk_stair_array(SINGLE_QSP_ARG_DECL)
 {
 	List *lp;
 	Node *np;
-	Staircase **stcp;
+	Staircase **st_pp;
 	int n;
 
 	if( stair_itp == NULL ) init_stairs();	// init item subsystem
@@ -435,11 +453,11 @@ static void mk_stair_array(SINGLE_QSP_ARG_DECL)
 		return;
 	}
 
-	stcp = stair_tbl = (Staircase **)getbuf( n * sizeof(stcp) );
+	st_pp = stair_tbl = (Staircase **)getbuf( n * sizeof(Staircase *) );
 	stair_order = (SCRAMBLE_TYPE *) getbuf( n * sizeof(*stair_order) );
 	np = QLIST_HEAD(lp);
 	while( np != NULL ){
-		*stcp++ = (Staircase *)np->n_data;
+		*st_pp++ = (Staircase *)np->n_data;
 		np = np->n_next;
 	}
 }
@@ -547,17 +565,17 @@ void add_stair(QSP_ARG_DECL  int type,Trial_Class *tcp )
 		WARN("Error creating staircase!?");
 }
 
-void delete_staircase(QSP_ARG_DECL  Staircase *stcp)
+void delete_staircase(QSP_ARG_DECL  Staircase *st_p)
 {
-	del_item(stair_itp,stcp);
-	givbuf((void *)stcp->stair_name);	// not done by del_item?
+	del_item(stair_itp,st_p);
+	givbuf((void *)st_p->stair_name);	// not done by del_item?
 }
 
 COMMAND_FUNC( del_all_stairs )
 {
 	List *lp;
 	Node *np;
-	Staircase *stcp;
+	Staircase *st_p;
 
 	if( stair_itp == NULL ) return;	/* nothing to do */
 
@@ -568,8 +586,8 @@ advise("deleting all staircases");
 
 	np=QLIST_HEAD(lp);
 	while( np != NULL ){
-		stcp = (Staircase *) np->n_data;
-		delete_staircase(QSP_ARG  stcp);
+		st_p = (Staircase *) np->n_data;
+		delete_staircase(QSP_ARG  st_p);
 		np=np->n_next;
 	}
 }
@@ -600,7 +618,7 @@ Trial_Class *index_class(QSP_ARG_DECL  int index)
 
 void del_class(QSP_ARG_DECL  Trial_Class *tcp)
 {
-	givbuf( CLASS_SUMM_DATA_TBL(tcp) );
+	givbuf( CLASS_SUMM_DTBL(tcp) );
 
 	/* what is this data field? */
 	if( CLASS_CMD(tcp) != NULL ) rls_str(CLASS_CMD(tcp));
@@ -635,41 +653,14 @@ Trial_Class *new_class_for_index( QSP_ARG_DECL  int class_index )
 	Trial_Class *tcp;
 
 	sprintf(newname,"class%d",class_index);
+
+	tcp = create_named_class(newname);
 	tcp = trial_class_of(newname);
 	if( tcp != NULL )
-		return(tcp);
+		return NULL;
 
-	tcp = new_trial_class(newname);
-
-	assert( tcp != NULL );
-
-	/* Now do the initial setup for the class structure */
-
-	SET_CLASS_SUMM_DATA_TBL(tcp,new_summary_data_tbl());
-	SET_CLASS_SEQ_DATA_TBL(tcp,new_sequential_data_tbl());
-	SET_CLASS_CMD(tcp, NULL);
-	SET_CLASS_INDEX(tcp,class_index);
-	SET_CLASS_N_STAIRS(tcp,0);
-
-	clear_data(tcp);
 
 	return(tcp);
 }
 
-static void clear_data(Trial_Class *tcp)	/* clear data table for this class */
-{
-	int val_idx;
-
-	//SET_SUMM_DTBL_N(CLASS_SUMM_DATA_TBL(tcp),0);
-	for(val_idx=0;val_idx<SUMM_DTBL_N(CLASS_SUMM_DATA_TBL(tcp));val_idx++){
-		SET_DATUM_NTOTAL(SUMM_DTBL_ENTRY(CLASS_SUMM_DATA_TBL(tcp),val_idx),0);
-		SET_DATUM_NCORR(SUMM_DTBL_ENTRY(CLASS_SUMM_DATA_TBL(tcp),val_idx),0);
-	}
-}
-
-List *_class_list(SINGLE_QSP_ARG_DECL)
-{
-	if( trial_class_itp == NULL ) return(NULL);
-	return( item_list(trial_class_itp) );
-}
 

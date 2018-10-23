@@ -1529,7 +1529,7 @@ IOS_RETURN_VAL(NULL)
 	return(NULL);
 } /* end eval_bitmap() */
 
-static void easy_ramp2d(QSP_ARG_DECL  Data_Obj *dst_dp,double start,double dx,double dy)
+void easy_ramp2d(QSP_ARG_DECL  Data_Obj *dst_dp,double start,double dx,double dy)
 {
 	Vec_Obj_Args oa1;
 	Scalar_Value sv1, sv2, sv3;

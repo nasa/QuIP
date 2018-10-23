@@ -158,7 +158,8 @@ extern void		_cast_dbl_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *, 
 #define cast_dbl_to_color_scalar(index, svp, prec_p, val) _cast_dbl_to_color_scalar(QSP_ARG  index, svp, prec_p, val)
 
 extern Data_Obj *	mk_cscalar(QSP_ARG_DECL  const char *name,double rval, double ival);
-extern Data_Obj *	mk_vec(QSP_ARG_DECL  const char *,dimension_t, dimension_t,Precision *prec_p);
+extern Data_Obj *	_mk_vec(QSP_ARG_DECL  const char *,dimension_t, dimension_t,Precision *prec_p);
+#define mk_vec(name,n_elts,depth,prec_p) _mk_vec(QSP_ARG  name,n_elts,depth,prec_p)
 extern Data_Obj *	dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name);
 extern Data_Obj *	dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name);
 extern Data_Obj *	dup_obj(QSP_ARG_DECL  Data_Obj *dp,const char *name);
@@ -415,5 +416,9 @@ extern Precision *	complex_precision(Precision *);
 
 // fio_menu.c
 extern COMMAND_FUNC( do_fio_menu );
+
+
+// from evaltree.c, but should be moved!?!?
+extern void easy_ramp2d(QSP_ARG_DECL  Data_Obj *dst_dp,double start,double dx,double dy);
 
 #endif // ! _DOBJ_PROT_H_

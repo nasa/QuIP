@@ -138,13 +138,21 @@ void pnt_bars(QSP_ARG_DECL  FILE *fp, Trial_Class *tcp)
         int j;
         Summary_Data_Tbl *dtp;
 	float upper_bar, lower_bar;
+	int n_xvals;
 
 	if( tcp == NULL ) return;
 
-	dtp=CLASS_SUMM_DATA_TBL(tcp);
-	for(j=0;j<_nvals;j++){
+	assert(CLASS_XVAL_OBJ(tcp)!=NULL);
+	n_xvals = OBJ_COLS( CLASS_XVAL_OBJ(tcp) );
+	assert(n_xvals>1);
+
+	dtp=CLASS_SUMM_DTBL(tcp);
+	for(j=0;j<n_xvals;j++){
 		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) > 0 ){
-			fprintf(fp,"%f\t", xval_array[ j ]);
+			float *xv_p;
+
+			xv_p = indexed_data(CLASS_XVAL_OBJ(tcp),j);
+			fprintf(fp,"%f\t", *xv_p);
 			n_obs = DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j));
 			n_seen = DATUM_NCORR(SUMM_DTBL_ENTRY(dtp,j));
 			fprintf(fp,"%f\t",(double) n_seen / (double) n_obs );

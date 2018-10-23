@@ -5,49 +5,38 @@
 #include "debug.h"
 #include "list.h"
 
-void clrdat(SINGLE_QSP_ARG_DECL)	/* just clears data tables */
+static void clear_one_class(QSP_ARG_DECL  Trial_Class *tc_p, void *arg )
 {
-	List *lp;
-	Node *np;
-	Trial_Class *tcp;
-	Summary_Data_Tbl *dtp;
-	int i;
+	Summary_Data_Tbl *sdt_p;
 
-	lp=class_list();
-	if( lp == NULL ) return;
+	sdt_p = CLASS_SUMM_DTBL(tc_p);
+	if( sdt_p == NULL ){
+		sprintf(ERROR_STRING,
+	"Stimulus class %s has null data table, initializing...",
+			CLASS_NAME(tc_p) );
+		advise(ERROR_STRING);
 
-	np=QLIST_HEAD(lp);
-	while(np!=NULL){
-		tcp = (Trial_Class *) np->n_data;
-		dtp = CLASS_SUMM_DATA_TBL(tcp);
-		if( dtp == NULL ){
-			sprintf(ERROR_STRING,
-		"Stimulus class %s has null data table, initializing...",
-				CLASS_NAME(tcp) );
-			advise(ERROR_STRING);
-
-			dtp = alloc_data_tbl(tcp,_nvals);
-		}
-fprintf(stderr,"clrdat:  clearing data table for class %s\n",CLASS_NAME(tcp));
-		SET_SUMM_DTBL_N(dtp,0);
-		for(i=0;i<SUMM_DTBL_SIZE(dtp);i++){
-			SET_DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,i),0);
-			SET_DATUM_NCORR(SUMM_DTBL_ENTRY(dtp,i),0);
-		}
-		np=np->n_next;
+		sdt_p = new_summary_data_tbl(CLASS_XVAL_OBJ(tc_p));
+		SET_SUMM_DTBL_CLASS(sdt_p,tc_p);
+	} else {
+		clear_summary_data(sdt_p);
 	}
-fprintf(stderr,"clrdat:  DONE\n");
 }
 
-void note_trial(Summary_Data_Tbl *sdtp,int val,int rsp,int crct)
+void clrdat(SINGLE_QSP_ARG_DECL)	/* just clears data tables */
 {
-	assert( sdtp != NULL );
+	iterate_over_classes(clear_one_class,NULL);
+}
+
+void note_trial(Summary_Data_Tbl *sdt_p,int val,int rsp,int crct)
+{
+	assert( sdt_p != NULL );
 
 	if( rsp == crct )
-		SET_DATUM_NCORR( SUMM_DTBL_ENTRY(sdtp,val),
-			1 + DATUM_NCORR( SUMM_DTBL_ENTRY(sdtp,val) ) );
+		SET_DATUM_NCORR( SUMM_DTBL_ENTRY(sdt_p,val),
+			1 + DATUM_NCORR( SUMM_DTBL_ENTRY(sdt_p,val) ) );
 	if( rsp != REDO && rsp != ABORT )
-		SET_DATUM_NTOTAL( SUMM_DTBL_ENTRY(sdtp,val),
-			1 + DATUM_NTOTAL( SUMM_DTBL_ENTRY(sdtp,val) ) );
+		SET_DATUM_NTOTAL( SUMM_DTBL_ENTRY(sdt_p,val),
+			1 + DATUM_NTOTAL( SUMM_DTBL_ENTRY(sdt_p,val) ) );
 }
 

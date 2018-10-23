@@ -39,7 +39,7 @@ Data_Obj *new_lintbl( QSP_ARG_DECL  const char * name )
 #ifdef HAVE_CUDA
 	push_data_area(ram_area_p);
 #endif
-	lt_dp = mk_vec(QSP_ARG  name,n_lin_lvls,N_COMPS,PREC_FOR_CODE(PREC_UIN));
+	lt_dp = mk_vec(name,n_lin_lvls,N_COMPS,PREC_FOR_CODE(PREC_UIN));
 #ifdef HAVE_CUDA
 	pop_data_area();
 #endif

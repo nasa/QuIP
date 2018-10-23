@@ -55,6 +55,7 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 
 	float t_alpha, t_beta;	/* trial slope and int */
 	Opt_Param *opp;
+	int n_xvals;
 
 	/* compute the likelihood for this guess */
 
@@ -68,7 +69,12 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 
 	t_beta = opp->ans;
 
-	for(i=0;i<_nvals;i++){
+	assert(global_xval_dp!=NULL);
+	n_xvals = OBJ_COLS(global_xval_dp);
+	assert(n_xvals>1);
+
+	for(i=0;i<n_xvals;i++){
+		float *xv_p;
 
 		/* calculate theoretical percent correct with this guess */
 
@@ -76,7 +82,8 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 			continue;
 
 		nc=DATUM_NCORR( SUMM_DTBL_ENTRY(the_dtp,i) );
-		xv = xval_array[ i ];
+		xv_p = indexed_data(global_xval_dp,i);
+		xv = *xv_p;
 
 		if( xv == 0.0 ) pc = (float) w_gamma;
 		else {
@@ -100,6 +107,8 @@ static void weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac)		/** maxim
 	Opt_Param tmp_param;
 	Opt_Param *alpha_param_p=NULL;
 	Opt_Param *beta_param_p=NULL;
+	int n_xvals;
+	float *first_xv_p, *last_xv_p, *mid_xv_p, *mid2_xv_p;
 
 	/* initialize global */
 
@@ -109,20 +118,30 @@ static void weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac)		/** maxim
 
 	delete_opt_params(SINGLE_QSP_ARG);	/* clear any existing parameters */
 
+	assert(global_xval_dp!=NULL);
+	n_xvals = OBJ_COLS(global_xval_dp);
+	assert(n_xvals>1);
+
 	tmp_param.op_name = ALPHA_NAME;
-	tmp_param.ans = xval_array[ _nvals/2 ];
-	if( xval_array[0] < xval_array[_nvals-1] ){
-		tmp_param.maxv =  xval_array[_nvals-1];
-		tmp_param.minv =  xval_array[0];
+
+	mid_xv_p = indexed_data(global_xval_dp,n_xvals/2);
+	mid2_xv_p = indexed_data(global_xval_dp,n_xvals/2+1);
+	first_xv_p = indexed_data(global_xval_dp,0);
+	last_xv_p = indexed_data(global_xval_dp,n_xvals-1);
+
+	tmp_param.ans = *mid_xv_p;
+	if( *first_xv_p < *last_xv_p ){
+		tmp_param.maxv =  *last_xv_p;
+		tmp_param.minv =  *first_xv_p;
 	} else {
-		tmp_param.maxv = xval_array[0];
-		tmp_param.minv = xval_array[_nvals-1];
+		tmp_param.maxv = *first_xv_p;
+		tmp_param.minv = *last_xv_p;
 	}
 	if( tmp_param.minv < 0.0 ){
 		WARN("wiebull fit will blow up for negative x values");
 		return;
 	}
-	tmp_param.delta = (float) fabs( xval_array[_nvals/2] - xval_array[ (_nvals/2)+1 ] );
+	tmp_param.delta = (float) fabs( *mid_xv_p - *mid2_xv_p );
 	tmp_param.mindel = (float) 1.0e-30;
 
 	alpha_param_p = add_opt_param(QSP_ARG  &tmp_param);
@@ -165,7 +184,7 @@ void w_analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith
 {
 	int ntrac=(-1);
 
-	weibull_fit( QSP_ARG  CLASS_SUMM_DATA_TBL(tcp), ntrac );
+	weibull_fit( QSP_ARG  CLASS_SUMM_DTBL(tcp), ntrac );
 }
 
 void weibull_out(QSP_ARG_DECL  Trial_Class * tcp)			/** verbose analysis report */

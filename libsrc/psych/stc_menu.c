@@ -11,47 +11,26 @@
 
 int is_fc=0;
 
-void general_mod(QSP_ARG_DECL int t_class)
+void general_mod(QSP_ARG_DECL Trial_Class * tc_p)
 {
 	const char *s;
-	Trial_Class *tcp;
 
 	s=NAMEOF("stimulus command string");
-	tcp = index_class(QSP_ARG  t_class);
-	assert( tcp != NULL );
+	assert( tc_p != NULL );
 
-	if( CLASS_CMD(tcp) != NULL )
-		givbuf((void *) CLASS_CMD(tcp) );
-	SET_CLASS_CMD( tcp, savestr(s) );
+	if( CLASS_CMD(tc_p) != NULL )
+		givbuf((void *) CLASS_CMD(tc_p) );
+	SET_CLASS_CMD( tc_p, savestr(s) );
 }
 
-#ifdef FOOBAR
-/* BUG?  this routine duplicates chew_text??? */
-
-void interpret_text_fragment(QSP_ARG_DECL const char *s)
-{
-	int ql;
-
-	PUSH_TEXT(s);
-
-	ql=QLEVEL;
-
-	/* now need to interpret input intil text is eaten */
-
-	while( QLEVEL >= ql ) {
-		qs_do_cmd(THIS_QSP);
-		lookahead_til(QSP_ARG ql-1);
-	}
-}
-#endif // FOOBAR
-
-int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
+int default_stim(QSP_ARG_DECL  Trial_Class *tc_p,int val,Staircase *stc_p)
 {
 	char stim_str[256], *s;
 	int coin=0;	// initialize to quiet compiler, but not necessary!?
 	int rsp;
 	//struct var *vp;
 	Variable *vp;
+	float *xv_p;
 
 	if( is_fc ){
 		coin=(int)rn(1);
@@ -59,7 +38,9 @@ int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
 		assign_var("coin",stim_str);
 	}
 
-	sprintf(stim_str,"%f",xval_array[val]);
+	assert( CLASS_XVAL_OBJ(tc_p) != NULL );
+	xv_p = indexed_data( CLASS_XVAL_OBJ(tc_p), val );
+	sprintf(stim_str,"%f",*xv_p);
 
 	/* clip trailing zeros if there is a decimal point */
 	s=stim_str;
@@ -85,16 +66,16 @@ int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
 	assign_var("xval",stim_str);
 	sprintf(stim_str,"%d",val);
 	assign_var("val",stim_str);
-	sprintf(stim_str,"%d",CLASS_INDEX(tcp));
+	sprintf(stim_str,"%d",CLASS_INDEX(tc_p));
 	assign_var("class",stim_str);
 
-	assert( tcp != NULL );
+	assert( tc_p != NULL );
 
-	//sprintf(msg_str,"Text \"%s\"",(char *)(tcp->cl_data));
+	//sprintf(msg_str,"Text \"%s\"",(char *)(tc_p->cl_data));
 	//PUSH_INPUT_FILE(msg_str);
 
-	//interpret_text_fragment(QSP_ARG tcp->cl_data);		/* use chew_text??? */
-	chew_text(CLASS_CMD(tcp), "(stimulus text)");
+	//interpret_text_fragment(QSP_ARG tc_p->cl_data);		/* use chew_text??? */
+	chew_text(CLASS_CMD(tc_p), "(stimulus text)");
 	vp=var_of("response_string");
 	if( vp != NULL )
 		rsp=response(QSP_ARG  VAR_VALUE(vp));
@@ -124,16 +105,16 @@ int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
 			else if( rsp == NO ) rsp = YES;
 		}
 		*/
-		assert( stcp != NULL );
+		assert( stc_p != NULL );
         
         // analyzer complains coin is a garbage value??? BUG?
 		if( coin ){
-			SET_STAIR_CRCT_RSP(stcp,NO);
+			SET_STAIR_CRCT_RSP(stc_p,NO);
 		} else {
-			SET_STAIR_CRCT_RSP(stcp,YES);
+			SET_STAIR_CRCT_RSP(stc_p,YES);
 		}
 		if( verbose ){
-			if( rsp == STAIR_CRCT_RSP(stcp) )
+			if( rsp == STAIR_CRCT_RSP(stc_p) )
 				advise("correct");
 			else
 				advise("incorrect");

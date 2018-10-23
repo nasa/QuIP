@@ -38,12 +38,12 @@
 /* local prototypes */
 
 static void null_init(void);
-static void null_mod(QSP_ARG_DECL int);
+static void null_mod(QSP_ARG_DECL Trial_Class *);
 static void set_rsp_word(const char **sptr,const char *s,const char *default_str);
 
 /* these two global vars ought to be declared in a .h file ... */
 void (*initrt)(void)=null_init;
-void (*modrt)(QSP_ARG_DECL int)=null_mod;
+void (*modrt)(QSP_ARG_DECL Trial_Class *)=null_mod;
 
 
 
@@ -80,7 +80,7 @@ static void null_init(void)
 	NADVISE("null_init...");
 }
 
-static void null_mod(QSP_ARG_DECL int c){}
+static void null_mod(QSP_ARG_DECL Trial_Class * tc_p){}
 
 static COMMAND_FUNC( modify );
 static COMMAND_FUNC( do_trial );
@@ -90,14 +90,15 @@ static COMMAND_FUNC( set_dribble_flag );
 static COMMAND_FUNC( setyesno );
 static COMMAND_FUNC( use_keyboard );
 
-//static int present_stim(QSP_ARG_DECL int c,int v,Staircase *stcp);
+//static int present_stim(QSP_ARG_DECL int c,int v,Staircase *stc_p);
 static void do_rspinit(void);
 
 #define INSIST_XVALS						\
 								\
-	if( _nvals <= 0 ){					\
+	if( CLASS_XVAL_OBJ(tc_p) == NULL ){			\
 		sprintf(ERROR_STRING,				\
-	"Need to initialize x values (n=%d)",_nvals);		\
+	"Need to specify x values for class '%s'",		\
+			CLASS_NAME(tc_p));			\
 		warn(ERROR_STRING);				\
 		return;						\
 	}
@@ -116,44 +117,43 @@ static void do_rspinit()
 
 static COMMAND_FUNC( modify )
 {
-	unsigned int n;
+	Trial_Class *tc_p;
 
+	tc_p = pick_trial_class("");
+	if( tc_p == NULL ) return;
+
+	// BUG?  perhaps modrt should be a class member?
 	if( modrt==null_mod ) error1("pointer modrt must be defined by user");
-	n=(unsigned int)how_many("condition index");
-	if( n >= eltcount(class_list()) ) warn("undefined condition");
-	else (*modrt)(QSP_ARG n);
+
+	(*modrt)(QSP_ARG tc_p);
 }
 
 static int insure_exp_is_ready(SINGLE_QSP_ARG_DECL)	/* make sure there is something to run */
 {
-	if( eltcount(class_list()) <= 0 ){
+	if( eltcount(trial_class_list()) <= 0 ){
 		warn("no conditions defined");
-		return(-1);
-	}
-	if( _nvals <= 0 ){
-		sprintf(ERROR_STRING,"Need to initialize x values (n=%d)",_nvals);
-		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(0);
 }
 
-static int present_stim(QSP_ARG_DECL Trial_Class *tcp,int v,Staircase *stcp)
+static int present_stim(QSP_ARG_DECL Trial_Class *tc_p,int v,Staircase *stc_p)
 {
 	int rsp=REDO;
 
 	if( insure_exp_is_ready(SINGLE_QSP_ARG) == -1 ) return(-1);
 
-	assert( v >= 0 && v < _nvals );
+	assert( CLASS_XVAL_OBJ(tc_p) != NULL );
+	assert( v >= 0 && v < OBJ_COLS( CLASS_XVAL_OBJ(tc_p) ) );
 
-	rsp=(*stmrt)(QSP_ARG tcp,v,stcp);
+	rsp=(*stmrt)(QSP_ARG tc_p,v,stc_p);
 
 	return(rsp);
 }
 
 #define INIT_DUMMY_STAIR(st)			\
 	/* make a dummy staircase */		\
-	SET_STAIR_CLASS(&st, tcp);		\
+	SET_STAIR_CLASS(&st, tc_p);		\
 	SET_STAIR_INDEX(&st, 0);		\
 	SET_STAIR_VAL(&st, v);			\
 	SET_STAIR_CRCT_RSP(&st, YES);		\
@@ -166,14 +166,14 @@ static COMMAND_FUNC( do_trial )	/** present a stimulus, tally response */
 	short v;
 	int rsp;
 	Staircase st1;
-	Trial_Class *tcp;
+	Trial_Class *tc_p;
 
-	tcp = pick_trial_class("");
+	tc_p = pick_trial_class("");
 	v=(short)how_many("level");
 
-	if( tcp == NULL ) return;
+	if( tc_p == NULL ) return;
 
-	rsp=present_stim(QSP_ARG tcp,v,NULL);
+	rsp=present_stim(QSP_ARG tc_p,v,NULL);
 
 	INIT_DUMMY_STAIR(st1)
 
@@ -185,33 +185,33 @@ static COMMAND_FUNC( do_trial )	/** present a stimulus, tally response */
 static COMMAND_FUNC( demo )		/** demo a stimulus for this experiment */
 {
 	int v,r;
-	Trial_Class *tcp;
+	Trial_Class *tc_p;
 
 	//c=(int)how_many("stimulus class");
-	tcp = pick_trial_class("");
+	tc_p = pick_trial_class("");
 	v=(int)how_many("level");
 
-	if( tcp == NULL ) return;
+	if( tc_p == NULL ) return;
 
-	r=present_stim(QSP_ARG tcp,v,NULL);
+	r=present_stim(QSP_ARG tc_p,v,NULL);
 	assert( IS_VALID_RESPONSE(r) );
 }
 
 static COMMAND_FUNC( show_stim )	/** demo a stimulus but don't get response */
 {
 	int v,r;
-	Trial_Class *tcp;
+	Trial_Class *tc_p;
 
 	//c=(int)how_many("stimulus class");
-	tcp = pick_trial_class("");
+	tc_p = pick_trial_class("");
 	v=(int)how_many("level");
 
-	if( tcp == NULL ) return;
+	if( tc_p == NULL ) return;
 
 	INSIST_XVALS
 
 	get_response_from_keyboard=0;
-	r=present_stim(QSP_ARG tcp,v,NULL);
+	r=present_stim(QSP_ARG tc_p,v,NULL);
 	assert( IS_VALID_RESPONSE(r) );
 
 	get_response_from_keyboard=1;
@@ -244,53 +244,53 @@ static void make_staircases(SINGLE_QSP_ARG_DECL)
 	int j;
 	List *lp;
 	Node *np;
-	Trial_Class *tcp;
+	Trial_Class *tc_p;
 
-	lp=class_list();
+	lp=trial_class_list();
 	assert( lp != NULL );
 
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
-		tcp=(Trial_Class *)np->n_data;
+		tc_p=(Trial_Class *)np->n_data;
 		np=np->n_next;
 
 		/* makestair( type, class, mininc, correct rsp, inc rsp ); */
 		for( j=0;j<n_updn;j++)
-			makestair( QSP_ARG  UP_DOWN, tcp, 1, YES, YES );
+			makestair( QSP_ARG  UP_DOWN, tc_p, 1, YES, YES );
 		for( j=0;j<n_dnup;j++)
-			makestair( QSP_ARG  UP_DOWN, tcp, -1, YES, YES );
+			makestair( QSP_ARG  UP_DOWN, tc_p, -1, YES, YES );
 		for(j=0;j<n_2up;j++)
 			/*
 			 * 2-up increases val after 2 YES's,
 			 * decreases val after 1 NO
 			 * seeks 71% YES, YES decreasing with val
 			 */
-			makestair( QSP_ARG  TWO_TO_ONE, tcp, 1, YES, YES );
+			makestair( QSP_ARG  TWO_TO_ONE, tc_p, 1, YES, YES );
 		for(j=0;j<n_2dn;j++)
 			/*
 			 * 2-down decreases val after 2 NO's,
 			 * increases val after 1 YES
 			 * Seeks 71% NO, NO increasing with val
 			 */
-			makestair( QSP_ARG  TWO_TO_ONE, tcp, -1, YES, NO );
+			makestair( QSP_ARG  TWO_TO_ONE, tc_p, -1, YES, NO );
 		for(j=0;j<n_2iup;j++)
 			/*
 			 * 2-inverted-up decreases val after 2 YES's,
 			 * increases val after 1 NO
 			 * Seeks 71% YES, YES increasing with val
 			 */
-			makestair( QSP_ARG  TWO_TO_ONE, tcp, -1, YES, YES );
+			makestair( QSP_ARG  TWO_TO_ONE, tc_p, -1, YES, YES );
 		for(j=0;j<n_2idn;j++)
 			/*
 			 * 2-inverted-down increases val after 2 NO's,
 			 * decreases val after 1 YES
 			 * Seeks 71% NO, NO decreasing with val
 			 */
-			makestair( QSP_ARG  TWO_TO_ONE, tcp, 1, YES, NO );
+			makestair( QSP_ARG  TWO_TO_ONE, tc_p, 1, YES, NO );
 		for(j=0;j<n_3up;j++)
-			makestair( QSP_ARG  THREE_TO_ONE, tcp, 1, YES, YES );
+			makestair( QSP_ARG  THREE_TO_ONE, tc_p, 1, YES, YES );
 		for(j=0;j<n_3dn;j++)
-			makestair( QSP_ARG  THREE_TO_ONE, tcp, -1, YES, NO );
+			makestair( QSP_ARG  THREE_TO_ONE, tc_p, -1, YES, NO );
 	}
 }
 
@@ -326,34 +326,42 @@ static COMMAND_FUNC( set_nstairs )	/** set up experiment */
 static COMMAND_FUNC( do_new_class )
 {
 	const char *name, *cmd;
-	Trial_Class *tcp;
+	Trial_Class *tc_p;
 
 	name = nameof("nickname for this class");
 	cmd = nameof("string to execute for this stimulus class");
 
+	tc_p = create_named_class(name);
+	if( tc_p == NULL ) return;
+
+	SET_CLASS_CMD(tc_p,savestr(cmd));
+}
+
+Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
+{
+	Trial_Class *tc_p;
+
 	// Make sure not in use
-	tcp = trial_class_of(name);
-	if( tcp != NULL ){
+	tc_p = trial_class_of(name);
+	if( tc_p != NULL ){
 		sprintf(ERROR_STRING,"Class name \"%s\" is already in use!?",
 			name);
 		warn(ERROR_STRING);
-		return;
+		return NULL;
 	}
 
-	tcp = new_trial_class(name );
-	SET_CLASS_CMD(tcp,savestr(cmd));
-	SET_CLASS_INDEX(tcp,class_index++);
-	SET_CLASS_SUMM_DATA_TBL(tcp,NULL);
-	SET_CLASS_N_STAIRS(tcp,0);
+	tc_p = new_trial_class(name );
+	SET_CLASS_INDEX(tc_p,class_index++);
+	SET_CLASS_N_STAIRS(tc_p,0);
+	if( global_xval_dp != NULL )
+		SET_CLASS_XVAL_OBJ(tc_p,global_xval_dp);
+	SET_CLASS_SUMM_DTBL(tc_p,new_summary_data_tbl(CLASS_XVAL_OBJ(tc_p)));
+	SET_CLASS_SEQ_DATA_TBL(tc_p,new_sequential_data_tbl());
+	SET_CLASS_CMD(tc_p, NULL);
 
-	if( _nvals > 0 ){
-		alloc_data_tbl(tcp,_nvals);
-	} else {
-		warn("need to specify x-values before declaring stimulus class!?");
-		SET_CLASS_SUMM_DATA_TBL(tcp,NULL);
-	}
-
-	//(*modrt)(QSP_ARG tcp->cl_index);
+	assert( CLASS_SUMM_DTBL(tc_p) != NULL );
+	clear_summary_data( CLASS_SUMM_DTBL(tc_p) );
+	return tc_p;
 }
 
 static void setup_files(SINGLE_QSP_ARG_DECL)
@@ -396,16 +404,16 @@ COMMAND_FUNC( do_delete_all_classes )
 {
 	List *lp;
 	Node *np,*next;
-	Trial_Class *tcp;
+	Trial_Class *tc_p;
 
-	lp=class_list();
+	lp=trial_class_list();
 	if( lp==NULL ) return;
 
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
-		tcp=(Trial_Class *)np->n_data;
+		tc_p=(Trial_Class *)np->n_data;
 		next = np->n_next;	/* del_class messes with the nodes... */
-		del_class(QSP_ARG  tcp);
+		del_class(QSP_ARG  tc_p);
 		np=next;
 	}
 	assign_reserved_var( "n_classes" , "0" );
@@ -465,14 +473,14 @@ static COMMAND_FUNC( do_feedback )
 
 static COMMAND_FUNC( do_creat_stc )
 {
-	Trial_Class *tcp;
+	Trial_Class *tc_p;
 	short c;
 
 	c= (short) how_many("stimulus class");
 
-	tcp = new_class_for_index(QSP_ARG  c);
+	tc_p = new_class_for_index(QSP_ARG  c);
 
-	assert( tcp != NULL );
+	assert( tc_p != NULL );
 }
 
 /* This is an alternative menu for when we want to use a staircase to set levels, but
@@ -483,15 +491,20 @@ static COMMAND_FUNC( do_creat_stc )
 static COMMAND_FUNC( do_get_value )
 {
 	const char *s;
-	Staircase *stcp;
+	Staircase *stc_p;
 	char valstr[32];
+	float *xv_p;
 
 	s = nameof("name of variable for value storage");
-	stcp=pick_stair( "" );
+	stc_p=pick_stair( "" );
 
-	if( stcp == NULL ) return;
+	if( stc_p == NULL ) return;
 
-	sprintf(valstr,"%g",xval_array[stcp->stair_val]);
+	assert(STAIR_XVAL_OBJ(stc_p)!=NULL);
+	xv_p = indexed_data(STAIR_XVAL_OBJ(stc_p),stc_p->stair_val);
+	assert(xv_p!=NULL);
+
+	sprintf(valstr,"%g",*xv_p);
 	assign_var(s,valstr);
 }
 
@@ -537,7 +550,7 @@ static COMMAND_FUNC( do_show_class_summ )
 	tc_p = pick_trial_class("");
 	if( tc_p == NULL ) return;
 
-	write_summary_data( CLASS_SUMM_DATA_TBL(tc_p), tell_msgfile() );
+	write_summary_data( CLASS_SUMM_DTBL(tc_p), tell_msgfile() );
 }
 
 static COMMAND_FUNC( do_show_class_seq )

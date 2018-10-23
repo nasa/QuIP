@@ -9,7 +9,7 @@ libpsych_a_SOURCES = 				\
 						\
 		xvalmenu.c			\
 		stc_menu.c	exp.c		\
-		stair.c		rxvals.c	\
+		stair.c				\
 		asc_data.c	lookmenu.c	\
 		mlfit.c		lump.c		\
 		weibull.c			\

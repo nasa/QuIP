@@ -44,7 +44,7 @@ Data_Obj *_new_colormap(QSP_ARG_DECL  const char *name)
 	push_data_area(ram_area_p);
 #endif
 
-	dp=mk_vec(QSP_ARG  name,N_COLORS,N_COMPS,PREC_FOR_CODE(PREC_UBY));
+	dp=mk_vec(name,N_COLORS,N_COMPS,PREC_FOR_CODE(PREC_UBY));
 
 #ifdef HAVE_CUDA
 	pop_data_area();

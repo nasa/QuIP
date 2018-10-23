@@ -10,8 +10,8 @@ static void _lump(QSP_ARG_DECL  Trial_Class *dst_tcp,Trial_Class *src_tcp)
 	Summary_Data_Tbl *dtp_fr;
 	int j;
 
-	dtp_to=CLASS_SUMM_DATA_TBL(dst_tcp);
-	dtp_fr=CLASS_SUMM_DATA_TBL(src_tcp);
+	dtp_to=CLASS_SUMM_DTBL(dst_tcp);
+	dtp_fr=CLASS_SUMM_DTBL(src_tcp);
 
 	if( SUMM_DTBL_SIZE(dtp_to) != SUMM_DTBL_SIZE(dtp_fr) ){
 		sprintf(ERROR_STRING,
