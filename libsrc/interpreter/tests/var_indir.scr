@@ -1,0 +1,14 @@
+# set indirect variables
+
+Set x_1	a
+Set x_2	b
+Set y_1	c
+Set y_2	d
+
+Define Show12 1 stem
+echo "${1}_1 = ${${1}_1}"
+.
+
+Show12 x
+exit
+

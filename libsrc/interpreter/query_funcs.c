@@ -991,6 +991,7 @@ static char * get_varval(QSP_ARG_DECL  char **spp)			/** see if buf containts a 
 	char *vname;
 	char tmp_vnam[LLEN];
 	int had_curly=0;
+	int n_stored_chars;
 
 	sp = *spp;
 
@@ -1003,22 +1004,32 @@ static char * get_varval(QSP_ARG_DECL  char **spp)			/** see if buf containts a 
 		had_curly=1;
 	}
 
-	if( *sp == VAR_DELIM ){		/* variable recursion? */
-		vname = get_varval(QSP_ARG  &sp);
-		if( vname==NULL ) return(NULL);
-	} else {			/* read in a varaible name */
-		int i;
-
-		i=0;
-		while( IS_LEGAL_VAR_CHAR(*sp) && i < LLEN )
-			tmp_vnam[i++] = *sp++;
-		if( i == LLEN ){
-			warn("Variable name too long");
-			i--;
+	tmp_vnam[0]=0;	// clear initial value
+	n_stored_chars=0;
+	while( ( *sp == VAR_DELIM || IS_LEGAL_VAR_CHAR(*sp) )
+			&& n_stored_chars < LLEN-1 ){
+		if( *sp == VAR_DELIM ){		/* variable recursion? */
+			vname = get_varval(QSP_ARG  &sp);
+			if( vname==NULL ) return(NULL);
+			n_stored_chars += strlen(vname);
+			// check for string overflow
+			if( n_stored_chars >= LLEN ){
+				warn("Variable name too long!?");
+			} else {
+				strcat(tmp_vnam,vname);
+			}
+		} else {
+			if( n_stored_chars >= LLEN ){
+				warn("Variable name too long!?");
+			} else {
+				tmp_vnam[n_stored_chars++] = *sp++;
+			}
 		}
-		tmp_vnam[i]=0;
-		vname = tmp_vnam;
 	}
+	// BUG make sure size is still good
+	assert(n_stored_chars < LLEN-1 );
+	tmp_vnam[n_stored_chars]=0;
+	vname = tmp_vnam;
 
 	if( had_curly ){
 		if( *sp != RIGHT_CURLY ){
