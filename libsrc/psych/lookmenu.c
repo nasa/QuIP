@@ -7,25 +7,12 @@
 #include "variable.h"
 #include "quip_menu.h"
 
-//static Trial_Class *curr_tcp=NULL;
-static int n_have_classes=0;
-
-#ifdef FOOBAR
-#define CHECK_CURR_TCP(whence)				\
-							\
-	if( curr_tcp == NULL ){				\
-		sprintf(ERROR_STRING,			\
-	"%s:  no condition selected!?",#whence);	\
-		WARN(ERROR_STRING);			\
-		return;					\
-	}
-#endif // FOOBAR
-		
 static COMMAND_FUNC( do_read_data )	/** read a data file */
 {
 	FILE *fp;
 	const char *filename;
 	char num_str[16];
+	int n_have_classes;
 
 	filename=nameof("data file");
 	fp=try_open( filename, "r" );
@@ -38,8 +25,7 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 
 	/* clear old classes */
 	do_delete_all_classes(SINGLE_QSP_ARG);
-	//curr_tcp=NULL;
-	n_have_classes=0;
+
 	if( read_exp_data(QSP_ARG  fp) != 0 ){
 		fclose(fp);
 		sprintf(ERROR_STRING,"do_read_data:  error return from read_exp_data, file %s",filename);
@@ -58,18 +44,6 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 			filename,n_have_classes,_nvals);
 		advise(ERROR_STRING);
 	}
-}
-
-static int no_data(QSP_ARG_DECL  const char *whence)
-{
-	if( n_have_classes <= 0 ){
-		sprintf(ERROR_STRING,
-			"%s:  must read a data file before this operation!",
-			whence);
-		WARN(ERROR_STRING);
-		return(1);
-	}
-	return(0);
 }
 
 #ifdef QUIK
@@ -102,7 +76,6 @@ static COMMAND_FUNC( do_print_raw )
 
 	tcp = pick_trial_class("");
 	if( tcp == NULL ) return;
-	if( no_data(QSP_ARG  "do_print_raw") ) return;
 	print_raw_data(QSP_ARG  tcp);
 }
 
@@ -130,8 +103,6 @@ static COMMAND_FUNC( pntgrph )
 	fp=try_nice( nameof("output file"), "w" );
 	if( fp == NULL || tcp == NULL ) return;
 
-	if( no_data(QSP_ARG  "pntgrph") ) return;
-
 	pntcurve(QSP_ARG  fp,tcp);
 }
 
@@ -143,7 +114,6 @@ static COMMAND_FUNC( terse_weibull_fit )
 	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
-	if( no_data(QSP_ARG  "terse_weibull_fit") ) return;
 
 	w_analyse(QSP_ARG  tcp);
 	w_tersout(QSP_ARG  tcp);
@@ -156,7 +126,6 @@ static COMMAND_FUNC( do_terse_ogive_fit )
 	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
-	if( no_data(QSP_ARG  "do_terse_ogive_fit") ) return;
 
 	ogive_fit(QSP_ARG  tcp);
 	tersout(QSP_ARG  tcp);
@@ -169,7 +138,6 @@ static COMMAND_FUNC( weibull_fit )
 	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
-	if( no_data(QSP_ARG  "weibull_fit") ) return;
 
 	w_analyse(QSP_ARG  tcp);
 	weibull_out(QSP_ARG  tcp);
@@ -182,7 +150,6 @@ static COMMAND_FUNC( do_ogive_fit )
 	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
-	if( no_data(QSP_ARG  "do_ogive_fit") ) return;
 
 	ogive_fit(QSP_ARG  tcp);
 	longout(QSP_ARG  tcp);
@@ -195,27 +162,6 @@ static COMMAND_FUNC( do_set_chance_rate )
 	set_chance_rate( HOW_MUCH("Probability of correct response due to guessing") );
 }
 
-#ifdef FUBAR
-static COMMAND_FUNC( setcl )
-{
-	//classno=(int)HOW_MANY("index of class of interest");
-	curr_tcp = pick_trial_class("name of class of interest");
-	if( curr_tcp == NULL ) return;
-
-	if( no_data(QSP_ARG  "setcl") ) return;
-
-#ifdef FOOBAR
-	if( classno < 0 || classno >= n_have_classes ){
-		sprintf(ERROR_STRING,
-	"Ridiculous selection %d, should be in range 0 to %d (inclusive)",
-			classno,n_have_classes-1);
-		WARN(ERROR_STRING);
-		classno=0;
-	}
-#endif // FOOBAR
-}
-#endif // FUBAR
-
 static COMMAND_FUNC( do_split )
 {
 	int wu;
@@ -226,7 +172,6 @@ static COMMAND_FUNC( do_split )
 	wu = ASKIF("retain upper half");
 
 	if( tcp == NULL ) return;
-	if( no_data(QSP_ARG  "split") ) return;
 
 	split(tcp,wu);
 }
