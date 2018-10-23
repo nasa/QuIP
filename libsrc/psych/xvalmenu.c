@@ -18,6 +18,7 @@
 
 #include "stc.h"
 #include "getbuf.h"
+#include "data_obj.h"
 #include "quip_menu.h"
 
 
@@ -56,13 +57,16 @@ int _insure_xval_array(SINGLE_QSP_ARG_DECL)
 	if( xval_array == NULL ){
 advise("insure_xval_array:  creating x-value array");
 		if( _nvals <= 0 ){
-			advise("insure_xval_array:  no x-value array, creating with maximum size");
+			sprintf(ERROR_STRING,
+	"insure_xval_array:  number of x-values not specified, defaulting to %d",MAX_X_VALUES);
+			advise(ERROR_STRING);
 			set_n_xvals(MAX_X_VALUES);
 		}
-		xval_array = (float *) getbuf( _nvals * sizeof(float) );
 	} else {
-advise("insure_xval_array:  x-value array already exists");
+advise("insure_xval_array:  freeing existing x-value array...");
+		givbuf(xval_array);
 	}
+	xval_array = (float *) getbuf( _nvals * sizeof(float) );
 	return 0;
 }
 
@@ -99,6 +103,51 @@ static void _make_steps(SINGLE_QSP_ARG_DECL)
 static COMMAND_FUNC( do_load_xvals )
 {
 	rdxvals( QSP_ARG  nameof("x value file") );
+}
+
+static COMMAND_FUNC( do_import_xvals )
+{
+	Data_Obj *dp;
+	int i; float *p;
+
+	dp = pick_obj("float object for x-values");
+	if( dp == NULL ) return;
+
+	if( OBJ_PREC(dp) != PREC_SP ){
+		sprintf(ERROR_STRING,"import_xvals:  object %s (%s) should have %s precision!?",
+			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)),NAME_FOR_PREC_CODE(PREC_SP));
+		warn(ERROR_STRING);
+		return;
+	}
+	if( OBJ_COMPS(dp) != 1 ){
+		sprintf(ERROR_STRING,"import_xvals:  object %s should have 1 component!?", OBJ_NAME(dp));
+		warn(ERROR_STRING);
+		return;
+	}
+	if( OBJ_ROWS(dp) != 1 ){
+		sprintf(ERROR_STRING,"import_xvals:  object %s should have 1 row!?", OBJ_NAME(dp));
+		warn(ERROR_STRING);
+		return;
+	}
+	if( OBJ_FRAMES(dp) != 1 ){
+		sprintf(ERROR_STRING,"import_xvals:  object %s should have 1 frame!?", OBJ_NAME(dp));
+		warn(ERROR_STRING);
+		return;
+	}
+	if( OBJ_COLS(dp) < 2 || OBJ_COLS(dp) > MAX_X_VALUES ){
+		sprintf(ERROR_STRING,"import_xvals:  object %s has %d columns, should be in range 2-%d!?",
+			OBJ_NAME(dp),OBJ_COLS(dp),MAX_X_VALUES);
+		warn(ERROR_STRING);
+		return;
+	}
+
+	set_n_xvals( OBJ_COLS(dp) );
+	if( insure_xval_array() < 0 ) return;
+	p = OBJ_DATA_PTR(dp);
+	for(i=0;i<_nvals;i++){
+		xval_array[i] = *p;
+		p += OBJ_PXL_INC(dp);
+	}
 }
 
 static COMMAND_FUNC( do_set_nxvals )
@@ -154,6 +203,7 @@ static COMMAND_FUNC( do_save_xvals )
 
 MENU_BEGIN(xvals)
 ADD_CMD( load,		do_load_xvals,	load x values from a file )
+ADD_CMD( import,	do_import_xvals,	load x values from a data object )
 ADD_CMD( save,		do_save_xvals,	save x values to a file )
 ADD_CMD( n_vals,	do_set_nxvals,	set number of x values )
 ADD_CMD( range,		do_set_range,	set range of x values )

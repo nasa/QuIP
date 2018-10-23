@@ -35,14 +35,14 @@ static double	alpha,		/* threshold parameter */
 #define MIN_DELTA	0.0001		/* minumum finger error rate */
 static double error_rate=DELTA;
 
-static Data_Tbl *the_dtp;
+static Summary_Data_Tbl *the_dtp;
 
 #define ALPHA_INDEX	0
 #define BETA_INDEX	1
 #define N_WPARMS	2	/* number of variable paramters */
 
 /* local prototypes */
-static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp, int ntrac);
+static void weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp, int ntrac);
 
 static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return likelihood of guess */
 {
@@ -72,10 +72,10 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 
 		/* calculate theoretical percent correct with this guess */
 
-		if( (ntt=DATUM_NTOTAL(DTBL_ENTRY(the_dtp,i)) ) <= 0 )
+		if( (ntt=DATUM_NTOTAL(SUMM_DTBL_ENTRY(the_dtp,i)) ) <= 0 )
 			continue;
 
-		nc=DATUM_NCORR( DTBL_ENTRY(the_dtp,i) );
+		nc=DATUM_NCORR( SUMM_DTBL_ENTRY(the_dtp,i) );
 		xv = xval_array[ i ];
 
 		if( xv == 0.0 ) pc = (float) w_gamma;
@@ -95,7 +95,7 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 	return(lh);
 }
 
-static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum liklihood fit */
+static void weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac)		/** maximum liklihood fit */
 {
 	Opt_Param tmp_param;
 	Opt_Param *alpha_param_p=NULL;
@@ -165,7 +165,7 @@ void w_analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith
 {
 	int ntrac=(-1);
 
-	weibull_fit( QSP_ARG  CLASS_DATA_TBL(tcp), ntrac );
+	weibull_fit( QSP_ARG  CLASS_SUMM_DATA_TBL(tcp), ntrac );
 }
 
 void weibull_out(QSP_ARG_DECL  Trial_Class * tcp)			/** verbose analysis report */

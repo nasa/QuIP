@@ -109,13 +109,13 @@ static COMMAND_FUNC( do_print_raw )
 static void pntcurve(QSP_ARG_DECL  FILE *fp, Trial_Class * tcp)
 {
         int j;
-        Data_Tbl *dtp;
+        Summary_Data_Tbl *dtp;
 
-	dtp=CLASS_DATA_TBL(tcp);
-	for(j=0;j<DTBL_SIZE(dtp);j++){
-		if( DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) > 0 ){
+	dtp=CLASS_SUMM_DATA_TBL(tcp);
+	for(j=0;j<SUMM_DTBL_SIZE(dtp);j++){
+		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) > 0 ){
 			fprintf(fp,"%f\t", xval_array[ j ]);
-			fprintf(fp,"%f\n",DATUM_FRACTION(DTBL_ENTRY(dtp,j)));
+			fprintf(fp,"%f\n",DATUM_FRACTION(SUMM_DTBL_ENTRY(dtp,j)));
 		}
 	}
 	fclose(fp);

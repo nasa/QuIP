@@ -11,12 +11,12 @@
 static Staircase s1;
 
 static Param stair_ptbl[]={
-{ "val",     "starting value",			       SHORTP,&s1.stc_val },
-{ "inc",     "current increment",		       SHORTP,&s1.stc_inc },
-{ "mininc",  "minimum increment (negative for ?)",     SHORTP,&s1.stc_min_inc },
-{ "crctrsp", "response to count as correct",	       SHORTP,&s1.stc_crct_rsp },
-{ "incrsp",  "response for staircase to consider up",  SHORTP,&s1.stc_inc_rsp },
-{ "type",    "type code (1 up-dn, 2 2-to-1, 4 3-to-1", SHORTP,&s1.stc_type },
+{ "val",     "starting value",			       SHORTP,&s1.stair_val },
+{ "inc",     "current increment",		       SHORTP,&s1.stair_inc },
+{ "mininc",  "minimum increment (negative for ?)",     SHORTP,&s1.stair_min_inc },
+{ "crctrsp", "response to count as correct",	       SHORTP,&s1.stair_crct_rsp },
+{ "incrsp",  "response for staircase to consider up",  SHORTP,&s1.stair_inc_rsp },
+{ "type",    "type code (1 up-dn, 2 2-to-1, 4 3-to-1", SHORTP,&s1.stair_type },
 { NULL_UPARAM	}
 };
 
@@ -24,8 +24,8 @@ static COMMAND_FUNC( edit_stair )
 {
 	Staircase *stcp;
 
-	stcp = pick_stc("");
-	if( stcp== NO_STAIR ) return;
+	stcp = pick_stair("");
+	if( stcp== NULL ) return;
 
 	memcpy(&s1,stcp,sizeof(*stcp));
 	chngp(QSP_ARG stair_ptbl);
@@ -68,22 +68,22 @@ static COMMAND_FUNC( do_del_stair )
 {
 	Staircase *stcp;
 
-	stcp=pick_stc( "" );
-	if( stcp == NO_STAIR ) return;
-	del_stair(QSP_ARG  stcp);
+	stcp=pick_stair( "" );
+	if( stcp == NULL ) return;
+	delete_staircase(QSP_ARG  stcp);
 }
 
-static COMMAND_FUNC(do_list_stairs){list_stcs(tell_msgfile());}
+static COMMAND_FUNC(do_list_stairs){list_stairs(tell_msgfile());}
 
 static COMMAND_FUNC( do_step_stair )
 {
 	Staircase *stcp;
 	int resp;
 
-	stcp=pick_stc( "" );
+	stcp=pick_stair( "" );
 	resp=response(QSP_ARG "response");
 
-	if( stcp == NO_STAIR ) return;
+	if( stcp == NULL ) return;
 
 	save_response(QSP_ARG resp,stcp);
 }

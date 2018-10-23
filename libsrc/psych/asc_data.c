@@ -30,7 +30,7 @@
 /* printf/scanf format strings */
 static const char *topline="%d classes, %d x values\n";
 static const char *xvline="\t%g\n";
-static const char *class_header="Trial_Class %d, %d data points\n";
+static const char *class_header_format_str="Trial_Class %d, %d data points\n";
 static const char *pointline="\t%d\t%d\t%d\n";
 
 static const char *summline="Summary data\n";
@@ -49,28 +49,30 @@ FILE *drib_file=NULL;		/* trial by trial dribble */
 
 static void rls_data_tbl(Trial_Class *tcp)
 {
-	Data_Tbl *dtp;
+	Summary_Data_Tbl *sdt_p;
 
-	dtp = CLASS_DATA_TBL(tcp);
-	givbuf( DTBL_DATA(dtp) );
-	givbuf(dtp);
-	SET_CLASS_DATA_TBL(tcp,NULL);
+	sdt_p = CLASS_SUMM_DATA_TBL(tcp);
+	givbuf( SUMM_DTBL_DATA(sdt_p) );
+	givbuf(sdt_p);
+	SET_CLASS_SUMM_DATA_TBL(tcp,NULL);
 }
 
-Data_Tbl *alloc_data_tbl( Trial_Class *tcp, int size )
+Summary_Data_Tbl *alloc_data_tbl( Trial_Class *tcp, int size )
 {
-	Data_Tbl *dtp;
+	Summary_Data_Tbl *sdt_p;
 
-	assert( CLASS_DATA_TBL(tcp) == NULL );
+	assert( CLASS_SUMM_DATA_TBL(tcp) == NULL );
 
-	dtp = getbuf(sizeof(Data_Tbl));
-	SET_CLASS_DATA_TBL(tcp,dtp);
-	SET_DTBL_DATA(dtp, getbuf(size * sizeof(Datum) ) );
-	SET_DTBL_SIZE(dtp,size);
-	SET_DTBL_N(dtp,0);
-	// BUG?  Should we zero the table here?
+	sdt_p = getbuf(sizeof(Summary_Data_Tbl));
+	SET_CLASS_SUMM_DATA_TBL(tcp,sdt_p);
+	SET_SUMM_DTBL_DATA(sdt_p, getbuf(size * sizeof(Summary_Datum) ) );
+	// we zero the table here.
+	memset(SUMM_DTBL_DATA(sdt_p),0,size*sizeof(Summary_Datum));	// more efficient to write words?
+	SET_SUMM_DTBL_SIZE(sdt_p,size);
+	SET_SUMM_DTBL_N(sdt_p,0);
+	SET_SUMM_DTBL_CLASS(sdt_p,tcp);
 
-	return dtp;
+	return sdt_p;
 }
 
 static int next_input_line(FILE *fp)
@@ -91,22 +93,39 @@ void mark_drib(FILE *fp)
 
 static void write_class_data(Trial_Class *tcp,FILE *fp)
 {
+	write_summary_data( CLASS_SUMM_DATA_TBL(tcp), fp );
+}
+
+void write_summary_data( Summary_Data_Tbl *sdt_p, FILE *fp )
+{
 	int j;
-	Data_Tbl *dtp;
 
-	//SET_DTBL_N(CLASS_DATA_TBL(tcp),0);
-
-	dtp = CLASS_DATA_TBL(tcp);
-	for(j=0;j<DTBL_SIZE(dtp);j++)
-		if( DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) != 0 )
-			SET_DTBL_N(dtp,1+DTBL_N(dtp));
-	fprintf(fp,class_header,CLASS_INDEX(tcp),DTBL_N(dtp));
-	for(j=0;j<DTBL_SIZE(dtp);j++)
-		if( DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) != 0 )
+	for(j=0;j<SUMM_DTBL_SIZE(sdt_p);j++)
+		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(sdt_p,j)) != 0 )
+			SET_SUMM_DTBL_N(sdt_p,1+SUMM_DTBL_N(sdt_p));
+	fprintf(fp,class_header_format_str,CLASS_INDEX(SUMM_DTBL_CLASS(sdt_p)),SUMM_DTBL_N(sdt_p));
+	for(j=0;j<SUMM_DTBL_SIZE(sdt_p);j++)
+		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(sdt_p,j)) != 0 )
 			fprintf(fp,pointline, j,
-				DATUM_NTOTAL(DTBL_ENTRY(dtp,j)),
-				DATUM_NCORR(DTBL_ENTRY(dtp,j))
+				DATUM_NTOTAL(SUMM_DTBL_ENTRY(sdt_p,j)),
+				DATUM_NCORR(SUMM_DTBL_ENTRY(sdt_p,j))
 				);
+}
+
+void write_sequential_data( Sequential_Data_Tbl *qdt_p, FILE *fp )
+{
+	Node *np;
+	List *lp;
+
+	assert(qdt_p!=NULL);
+	lp = SEQ_DTBL_LIST(qdt_p);
+	assert(lp!=NULL);
+	np = QLIST_HEAD(lp);
+	while(np!=NULL){
+		Sequence_Datum *qd_p;
+		qd_p = NODE_DATA(np);
+		np = NODE_NEXT(np);
+	}
 }
 
 /* this is separate so we can include it at the top of dribble files */
@@ -152,33 +171,33 @@ static int read_class_summary(QSP_ARG_DECL  FILE *fp)
 {
 	short index,np;
 	Trial_Class *tcp;
-	Data_Tbl *dtp;
+	Summary_Data_Tbl *sdt_p;
 	int j;
 
-	if( fscanf(fp,class_header,&index,&np) != 2 ){
+	if( fscanf(fp,class_header_format_str,&index,&np) != 2 ){
 		warn("error reading class header");
 		return(-1);
 	}
 	tcp=index_class(QSP_ARG  index);
-	assert( tcp != NO_CLASS );
+	assert( tcp != NULL );
 
-	dtp = CLASS_DATA_TBL(tcp);
+	sdt_p = CLASS_SUMM_DATA_TBL(tcp);
 	// BUG?  make sure that np <= size
-	if( np > DTBL_SIZE(dtp) ){
+	if( np > SUMM_DTBL_SIZE(sdt_p) ){
 		rls_data_tbl(tcp);
-		dtp = alloc_data_tbl(tcp,np);
+		sdt_p = alloc_data_tbl(tcp,np);
 	}
 
-	SET_DTBL_N(dtp,np);
-	for(j=0;j<DTBL_N(dtp);j++){
+	SET_SUMM_DTBL_N(sdt_p,np);
+	for(j=0;j<SUMM_DTBL_N(sdt_p);j++){
 		short di,nt,nc;
 
 		if( fscanf(fp,pointline,&di,&nt,&nc) != 3 ){
 			warn("error reading data line");
 			return(-1);
 		} else {
-			SET_DATUM_NTOTAL( DTBL_ENTRY(dtp,j), nt );
-			SET_DATUM_NCORR( DTBL_ENTRY(dtp,j), nc );
+			SET_DATUM_NTOTAL( SUMM_DTBL_ENTRY(sdt_p,j), nt );
+			SET_DATUM_NCORR( SUMM_DTBL_ENTRY(sdt_p,j), nc );
 		}
 	}
 	if( feof(fp) ) have_input_line=0;
@@ -212,7 +231,7 @@ static int rd_dribble(QSP_ARG_DECL  FILE *fp)
 				return -1;
 			}
 			//note_trial(tcp,i_val,resp,crct);
-			note_trial(tcp,i_val,resp,crct);
+			note_trial(CLASS_SUMM_DATA_TBL(tcp),i_val,resp,crct);
 		} else {
 			if( feof(fp) )
 				have_input_line=0;
@@ -420,7 +439,7 @@ void setup_classes(QSP_ARG_DECL  int n)
 
 		sprintf(name,"class%d",i);
 		tcp = trial_class_of(name);
-		if( tcp == NO_CLASS ){
+		if( tcp == NULL ){
 			/*
 			if(verbose){
 				sprintf(ERROR_STRING,"setup_classes:  class %s not found, creating a new class",

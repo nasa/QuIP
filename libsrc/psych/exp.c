@@ -119,7 +119,7 @@ static COMMAND_FUNC( modify )
 	unsigned int n;
 
 	if( modrt==null_mod ) error1("pointer modrt must be defined by user");
-	n=(unsigned int)HOW_MANY("condition index");
+	n=(unsigned int)how_many("condition index");
 	if( n >= eltcount(class_list()) ) warn("undefined condition");
 	else (*modrt)(QSP_ARG n);
 }
@@ -151,6 +151,16 @@ static int present_stim(QSP_ARG_DECL Trial_Class *tcp,int v,Staircase *stcp)
 	return(rsp);
 }
 
+#define INIT_DUMMY_STAIR(st)			\
+	/* make a dummy staircase */		\
+	SET_STAIR_CLASS(&st, tcp);		\
+	SET_STAIR_INDEX(&st, 0);		\
+	SET_STAIR_VAL(&st, v);			\
+	SET_STAIR_CRCT_RSP(&st, YES);		\
+	SET_STAIR_INC_RSP(&st, YES);		\
+	SET_STAIR_TYPE(&st, UP_DOWN);		\
+	SET_STAIR_INC(&st, 1);
+
 static COMMAND_FUNC( do_trial )	/** present a stimulus, tally response */
 {
 	short v;
@@ -158,22 +168,14 @@ static COMMAND_FUNC( do_trial )	/** present a stimulus, tally response */
 	Staircase st1;
 	Trial_Class *tcp;
 
-	//c=(short)HOW_MANY("stimulus class");
 	tcp = pick_trial_class("");
-	v=(short)HOW_MANY("level");
+	v=(short)how_many("level");
 
 	if( tcp == NULL ) return;
 
 	rsp=present_stim(QSP_ARG tcp,v,NULL);
 
-	/* make a dummy staircase */
-	SET_STAIR_CLASS(&st1, tcp);
-	SET_STAIR_INDEX(&st1, 0);
-	SET_STAIR_VAL(&st1, v);
-	SET_STAIR_CRCT_RSP(&st1, YES);
-	SET_STAIR_INC_RSP(&st1, YES);
-	SET_STAIR_TYPE(&st1, UP_DOWN);
-	SET_STAIR_INC(&st1, 1);
+	INIT_DUMMY_STAIR(st1)
 
 	save_response(QSP_ARG  rsp,&st1);
 }
@@ -185,9 +187,9 @@ static COMMAND_FUNC( demo )		/** demo a stimulus for this experiment */
 	int v,r;
 	Trial_Class *tcp;
 
-	//c=(int)HOW_MANY("stimulus class");
+	//c=(int)how_many("stimulus class");
 	tcp = pick_trial_class("");
-	v=(int)HOW_MANY("level");
+	v=(int)how_many("level");
 
 	if( tcp == NULL ) return;
 
@@ -200,9 +202,9 @@ static COMMAND_FUNC( show_stim )	/** demo a stimulus but don't get response */
 	int v,r;
 	Trial_Class *tcp;
 
-	//c=(int)HOW_MANY("stimulus class");
+	//c=(int)how_many("stimulus class");
 	tcp = pick_trial_class("");
-	v=(int)HOW_MANY("level");
+	v=(int)how_many("level");
 
 	if( tcp == NULL ) return;
 
@@ -341,14 +343,14 @@ static COMMAND_FUNC( do_new_class )
 	tcp = new_trial_class(name );
 	SET_CLASS_CMD(tcp,savestr(cmd));
 	SET_CLASS_INDEX(tcp,class_index++);
-	SET_CLASS_DATA_TBL(tcp,NULL);
+	SET_CLASS_SUMM_DATA_TBL(tcp,NULL);
 	SET_CLASS_N_STAIRS(tcp,0);
 
 	if( _nvals > 0 ){
 		alloc_data_tbl(tcp,_nvals);
 	} else {
 		warn("need to specify x-values before declaring stimulus class!?");
-		SET_CLASS_DATA_TBL(tcp,NULL);
+		SET_CLASS_SUMM_DATA_TBL(tcp,NULL);
 	}
 
 	//(*modrt)(QSP_ARG tcp->cl_index);
@@ -466,11 +468,11 @@ static COMMAND_FUNC( do_creat_stc )
 	Trial_Class *tcp;
 	short c;
 
-	c= (short) HOW_MANY("stimulus class");
+	c= (short) how_many("stimulus class");
 
-	tcp = class_for(QSP_ARG  c);
+	tcp = new_class_for_index(QSP_ARG  c);
 
-	assert( tcp != NO_CLASS );
+	assert( tcp != NULL );
 }
 
 /* This is an alternative menu for when we want to use a staircase to set levels, but
@@ -485,11 +487,11 @@ static COMMAND_FUNC( do_get_value )
 	char valstr[32];
 
 	s = nameof("name of variable for value storage");
-	stcp=pick_stc( "" );
+	stcp=pick_stair( "" );
 
-	if( stcp == NO_STAIR ) return;
+	if( stcp == NULL ) return;
 
-	sprintf(valstr,"%g",xval_array[stcp->stc_val]);
+	sprintf(valstr,"%g",xval_array[stcp->stair_val]);
 	assign_var(s,valstr);
 }
 
@@ -513,11 +515,63 @@ static COMMAND_FUNC( do_staircase_menu )
 	CHECK_AND_PUSH_MENU( staircases );
 }
 
+static COMMAND_FUNC( do_list_classes )
+{
+	list_trial_classs( tell_msgfile() );
+}
+
+static COMMAND_FUNC( do_class_info )
+{
+	Trial_Class *tc_p;
+
+	tc_p = pick_trial_class("");
+	if( tc_p == NULL ) return;
+
+	advise("Sorry, don't know how to print class info yet!?");
+}
+
+static COMMAND_FUNC( do_show_class_summ )
+{
+	Trial_Class *tc_p;
+
+	tc_p = pick_trial_class("");
+	if( tc_p == NULL ) return;
+
+	write_summary_data( CLASS_SUMM_DATA_TBL(tc_p), tell_msgfile() );
+}
+
+static COMMAND_FUNC( do_show_class_seq )
+{
+	Trial_Class *tc_p;
+
+	tc_p = pick_trial_class("");
+	if( tc_p == NULL ) return;
+
+	write_sequential_data( CLASS_SEQ_DATA_TBL(tc_p), tell_msgfile() );
+}
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(class_menu,s,f,h)
+
+MENU_BEGIN(class)
+ADD_CMD( new,		do_new_class,		add a stimulus class )
+ADD_CMD( list,		do_list_classes,	list all stimulus classes )
+ADD_CMD( info,		do_class_info,		print info about a class )
+ADD_CMD( summary_data,	do_show_class_summ,	print summary data from a class )
+ADD_CMD( sequential_data,	do_show_class_seq,	print sequential data from a class )
+ADD_CMD( delete_all,	do_delete_all_classes,	delete all conditions )
+MENU_END(class)
+
+static COMMAND_FUNC( do_class_menu )
+{
+	CHECK_AND_PUSH_MENU(class);
+}
+
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(experiment_menu,s,f,h)
 
 MENU_BEGIN(experiment)
-ADD_CMD( class,		do_new_class,	add a stimulus class )
+ADD_CMD( classes,	do_class_menu,	stimulus class submenu )
 ADD_CMD( modify,	modify,		modify parameters )
 ADD_CMD( test,		demo,		test a condition )
 ADD_CMD( test_stim,	show_stim,	test with scripted response )
@@ -528,7 +582,6 @@ ADD_CMD( staircases,	set_nstairs,	set up staircases )
 ADD_CMD( staircase_menu,	do_staircase_menu,	staircase submenu )
 ADD_CMD( run,		do_run_exp,	run experiment )
 ADD_CMD( 2AFC,		set_2afc,	set forced choice flag )
-ADD_CMD( delete,	do_delete_all_classes,	delete all conditions )
 ADD_CMD( keys,		setyesno,	select response keys )
 ADD_CMD( xvals,		xval_menu,	x value submenu )
 ADD_CMD( dribble,	set_dribble_flag,	set long/short data file format )

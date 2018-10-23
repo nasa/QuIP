@@ -136,17 +136,17 @@ static void get_bar(QSP_ARG_DECL  int index, float (*func)(SINGLE_QSP_ARG_DECL),
 void pnt_bars(QSP_ARG_DECL  FILE *fp, Trial_Class *tcp)
 {
         int j;
-        Data_Tbl *dtp;
+        Summary_Data_Tbl *dtp;
 	float upper_bar, lower_bar;
 
 	if( tcp == NULL ) return;
 
-	dtp=CLASS_DATA_TBL(tcp);
+	dtp=CLASS_SUMM_DATA_TBL(tcp);
 	for(j=0;j<_nvals;j++){
-		if( DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) > 0 ){
+		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) > 0 ){
 			fprintf(fp,"%f\t", xval_array[ j ]);
-			n_obs = DATUM_NTOTAL(DTBL_ENTRY(dtp,j));
-			n_seen = DATUM_NCORR(DTBL_ENTRY(dtp,j));
+			n_obs = DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j));
+			n_seen = DATUM_NCORR(SUMM_DTBL_ENTRY(dtp,j));
 			fprintf(fp,"%f\t",(double) n_seen / (double) n_obs );
 			if( n_obs == n_seen ) upper_bar=1.0;
 			else {

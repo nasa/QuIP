@@ -49,19 +49,62 @@ static int recording;
 static int prelim;
 static int trialno;
 static int _trans;		/* possible transition of current trial */
-static SCRAMBLE_TYPE *order=NULL;	/* permutation buffer */
+static SCRAMBLE_TYPE *stair_order=NULL;	/* permutation buffer */
 
 static int nstairs=0;
 
 static Staircase **stair_tbl=NULL;
 
 ITEM_INTERFACE_DECLARATIONS(Trial_Class,trial_class,0)
-ITEM_INTERFACE_DECLARATIONS(Staircase,stc,0)
+ITEM_INTERFACE_DECLARATIONS(Staircase,stair,0)
+
+#define init_summ_data_tbl(dtp) _init_summ_data_tbl(QSP_ARG  dtp)
+
+static void _init_summ_data_tbl(QSP_ARG_DECL  Summary_Data_Tbl *dtp)
+{
+	SET_SUMM_DTBL_N(dtp,0);
+	if( _nvals > 0 ){
+		SET_SUMM_DTBL_SIZE(dtp,_nvals);
+		SET_SUMM_DTBL_DATA(dtp,(Summary_Datum *)getbuf(_nvals*sizeof(Summary_Datum)));
+	} else {
+		SET_SUMM_DTBL_SIZE(dtp,0);
+		SET_SUMM_DTBL_DATA(dtp,NULL);
+		warn("init_summ_data_tbl:  number of x-values is not set!?");
+	}
+}
+
+#define new_summary_data_tbl() _new_summary_data_tbl(SINGLE_QSP_ARG)
+
+static Summary_Data_Tbl *_new_summary_data_tbl(SINGLE_QSP_ARG_DECL)
+{
+	Summary_Data_Tbl *sdt_p;
+	
+	sdt_p = getbuf(sizeof(Summary_Data_Tbl));
+	init_summ_data_tbl(sdt_p);
+	return sdt_p;
+}
+
+static void init_seq_data_tbl(Sequential_Data_Tbl *qdt_p)
+{
+	SET_SEQ_DTBL_LIST(qdt_p,new_list());
+}
+
+#define new_sequential_data_tbl() _new_sequential_data_tbl(SINGLE_QSP_ARG)
+
+static Sequential_Data_Tbl *_new_sequential_data_tbl(SINGLE_QSP_ARG_DECL)
+{
+	Sequential_Data_Tbl *qdt_p;
+
+	qdt_p = getbuf(sizeof(Sequential_Data_Tbl));
+	init_seq_data_tbl(qdt_p);
+	return qdt_p;
+}
+
 
 static List *stair_list(SINGLE_QSP_ARG_DECL)
 {
-	if( stc_itp==NULL ) return(NULL);
-	return(item_list(stc_itp) );
+	if( stair_itp==NULL ) return(NULL);
+	return(item_list(stair_itp) );
 }
 
 //static int nullstim(QSP_ARG_DECL  int c,int v,Staircase *stcp)
@@ -87,8 +130,8 @@ void new_exp(SINGLE_QSP_ARG_DECL)		/** discard old stairs */
 	while(np!=NULL){
 		stcp = (Staircase *)np->n_data;
 		np=np->n_next;		/* must do this before freeing item! */
-		del_stc(stcp);
-		givbuf((void *)stcp->stc_name);
+		del_stair(stcp);
+		givbuf((void *)stcp->stair_name);
 	}
 }
 
@@ -99,14 +142,16 @@ void set_recording(int flag)
 
 static void tally(Staircase *stc,int rsp)			/* record new data */
 {
-	note_trial(STAIR_CLASS(stc),STAIR_VAL(stc),rsp,STAIR_CRCT_RSP(stc));
-	//note_trial(stc,rsp);
+fprintf(stderr,"noting response to class data table at 0x%lx\n",(long) CLASS_SUMM_DATA_TBL(STAIR_CLASS(stc)));
+	note_trial(CLASS_SUMM_DATA_TBL(STAIR_CLASS(stc)),STAIR_VAL(stc),rsp,STAIR_CRCT_RSP(stc));
+fprintf(stderr,"noting response to staircase data table at 0x%lx\n",(long) STAIR_DATA_TBL(stc));
+	note_trial(STAIR_DATA_TBL(stc),STAIR_VAL(stc),rsp,STAIR_CRCT_RSP(stc));
 }
 
 static void adj_inc(Staircase *stc)	/* adjust the increment */
 {
 
-	if( _trans == NO_TR ) return;
+	if( _trans == NO_TRANS ) return;
 	else if( _trans == STAIR_LAST_TRIAL(stc) ) return;
 	STAIR_LAST_TRIAL(stc)=_trans;
 
@@ -117,7 +162,7 @@ static void adj_inc(Staircase *stc)	/* adjust the increment */
 	 * exit from random excursions into never-never land
 	 */
 
-	if( STAIR_TYPE(stc) != UP_DOWN && _trans == TR_DN ) return;
+	if( STAIR_TYPE(stc) != UP_DOWN && _trans == TRANS_DN ) return;
 
 	/* negative inc means WHAT??? */
 
@@ -137,14 +182,14 @@ static void adj_inc(Staircase *stc)	/* adjust the increment */
 static void adj_val(Staircase *stc)	/* set the value for the next trial */
 {
 	switch( _trans ){
-		case TR_UP: 
-			stc->stc_val += STAIR_INC(stc); break;
-		case TR_DN: 
-			stc->stc_val -= STAIR_INC(stc); break;
+		case TRANS_UP: 
+			stc->stair_val += STAIR_INC(stc); break;
+		case TRANS_DN: 
+			stc->stair_val -= STAIR_INC(stc); break;
 		default: break;
 	}
-	if( stc->stc_val < 0 ) stc->stc_val = 0;
-	if( stc->stc_val >= _nvals ) stc->stc_val = (int) _nvals-1;
+	if( stc->stair_val < 0 ) stc->stair_val = 0;
+	if( stc->stair_val >= _nvals ) stc->stair_val = (int) _nvals-1;
 }
 
 #define FC_RSP(stc,rsp)		(STAIR_CRCT_RSP(stc)==YES?rsp:(rsp^3))
@@ -154,29 +199,29 @@ static int iftrans(Staircase *stc,int rsp)	/* see if this response warrants a tr
 	int retval;
 
 	if( STAIR_TYPE(stc) == UP_DOWN ){
-		if( rsp == STAIR_INC_RSP(stc) ) retval=TR_UP;
-		else retval=TR_DN;
+		if( rsp == STAIR_INC_RSP(stc) ) retval=TRANS_UP;
+		else retval=TRANS_DN;
 	} else if( STAIR_TYPE(stc) == TWO_TO_ONE ){
 		if( FC_RSP(stc,rsp) == STAIR_INC_RSP(stc) ){
 			if( STAIR_LAST_RSP(stc) == STAIR_INC_RSP(stc) ){
 				rsp=NO_RSP;
 				SET_STAIR_LAST_RSP(stc,NO_RSP);
-				retval=TR_UP;
-			} else retval=NO_TR;
-		} else retval=TR_DN;
+				retval=TRANS_UP;
+			} else retval=NO_TRANS;
+		} else retval=TRANS_DN;
 	} else if( STAIR_TYPE(stc) == THREE_TO_ONE ){
 		if( FC_RSP(stc,rsp) == STAIR_INC_RSP(stc) ){
 			if( STAIR_LAST_RSP(stc) == STAIR_INC_RSP(stc) ){
 				if( STAIR_LAST_RSP3(stc) == STAIR_INC_RSP(stc) ){
 					rsp=NO_RSP;
 					SET_STAIR_LAST_RSP(stc,NO_RSP);
-					retval=TR_UP;
-				} else retval=NO_TR;
-			} else retval=NO_TR;
-		} else retval=TR_DN;
+					retval=TRANS_UP;
+				} else retval=NO_TRANS;
+			} else retval=NO_TRANS;
+		} else retval=TRANS_DN;
 	} else {
 		NERROR1("bad stair type");
-		retval=NO_TR;		/* NOTREACHED */
+		retval=NO_TRANS;		/* NOTREACHED */
 	}
 
 	SET_STAIR_LAST_RSP3(stc, STAIR_LAST_RSP(stc) );
@@ -207,11 +252,11 @@ void save_response(QSP_ARG_DECL  int rsp,Staircase *stc)
 	/*
 	if( drib_file != NULL )
 		wt_dribble(drib_file,
-			stc->stc_tcp,
-			stc->stc_index,
-			stc->stc_val,
+			stc->stair_tcp,
+			stc->stair_index,
+			stc->stair_val,
 			rsp,
-			stc->stc_crctrsp);
+			stc->stair_crctrsp);
 			*/
 
 	if( dribbling() )
@@ -245,7 +290,7 @@ static int step(QSP_ARG_DECL Staircase *stc)
 {
 	int rsp;
 
-	if( stc->stc_val == (-1) ) return(0);	/* discarded */
+	if( stc->stair_val == (-1) ) return(0);	/* discarded */
 #ifdef CATCH_SIGS
 	Redo=0;
 	caught=0;
@@ -258,7 +303,7 @@ static int step(QSP_ARG_DECL Staircase *stc)
 	advise(ERROR_STRING);
 
 	/* stimulus routines MUST call response() for proper abort & redo */
-	rsp=(*stmrt)( QSP_ARG stc->stc_tcp, stc->stc_val, stc );
+	rsp=(*stmrt)( QSP_ARG stc->stair_tcp, stc->stair_val, stc );
 
 	save_response(QSP_ARG rsp,stc);
 	return(rsp);
@@ -277,11 +322,11 @@ int makestair( QSP_ARG_DECL  int st,	/* staircase type */
 	assert( tcp != NULL );
 
 	sprintf(str,"staircase.%s.%d",CLASS_NAME(tcp),CLASS_N_STAIRS(tcp) );
-	stcp = new_stc(str);
-	if( stcp == NULL )
-		return(-1);
-	stcp->stc_tcp = tcp;
-	stcp->stc_index = CLASS_N_STAIRS(tcp);
+	stcp = new_stair(str);
+	assert(stcp!=NULL);
+
+	stcp->stair_tcp = tcp;
+	stcp->stair_index = CLASS_N_STAIRS(tcp);
 	SET_CLASS_N_STAIRS(tcp,CLASS_N_STAIRS(tcp)+1);
 
 	SET_STAIR_TYPE(stcp,st);
@@ -290,7 +335,9 @@ int makestair( QSP_ARG_DECL  int st,	/* staircase type */
 
 	SET_STAIR_LAST_RSP3(stcp,REDO);
 	SET_STAIR_LAST_RSP(stcp,REDO);
-	SET_STAIR_LAST_TRIAL(stcp,NO_TR);
+	SET_STAIR_LAST_TRIAL(stcp,NO_TRANS);
+
+	SET_STAIR_DATA_TBL(stcp,new_summary_data_tbl());
 
 	if( _nvals <= 0 ){
 		WARN("X values should be read before setting up staircases");
@@ -301,17 +348,13 @@ int makestair( QSP_ARG_DECL  int st,	/* staircase type */
 	/* random initialization is ok in general, but not good
 		for different types of stair on a U-shaped function! */
 
-	/*
-	stcp->stc_val = rn( _nvals-1 );
-	*/
-
 	/* normally val=0 is easiest to see (YES)
 	 */
 
 	/* n/2 is not so good for real forced choice,
 		but it's probably not much worse than random */
 
-	stcp->stc_val = (int) _nvals/2 ;
+	stcp->stair_val = (int) _nvals/2 ;
 
 	SET_STAIR_MIN_INC(stcp,mi);
 	if( mi < 0 ) SET_STAIR_INC(stcp,STAIR_INC(stcp)*(-1));
@@ -380,18 +423,20 @@ static void mk_stair_array(SINGLE_QSP_ARG_DECL)
 	Staircase **stcp;
 	int n;
 
-	if( stc_itp == NULL )
-		init_stcs();
+	if( stair_itp == NULL ) init_stairs();	// init item subsystem
 
-	if( stair_tbl != NULL )
-		givbuf(stair_tbl);
-	if( order != NULL )
-		givbuf(order);
+	if( stair_tbl != NULL ) givbuf(stair_tbl);
+	if( stair_order != NULL ) givbuf(stair_order);
 
-	lp = stair_list(SINGLE_QSP_ARG);
+	lp = stair_list(SINGLE_QSP_ARG);	// list of already-created staircases
 	n = eltcount(lp);
+	if( n < 1 ){
+		warn("mk_stair_array:  no staircases specified!?");
+		return;
+	}
+
 	stcp = stair_tbl = (Staircase **)getbuf( n * sizeof(stcp) );
-	order = (SCRAMBLE_TYPE *) getbuf( n * sizeof(*order) );
+	stair_order = (SCRAMBLE_TYPE *) getbuf( n * sizeof(*stair_order) );
 	np = QLIST_HEAD(lp);
 	while( np != NULL ){
 		*stcp++ = (Staircase *)np->n_data;
@@ -401,19 +446,16 @@ static void mk_stair_array(SINGLE_QSP_ARG_DECL)
 
 void _run_init(SINGLE_QSP_ARG_DECL)	/* general runtime initialization */
 {
-advise("calling rninit");
-	rninit(SINGLE_QSP_ARG);
+	rninit(SINGLE_QSP_ARG);		// seed random number generator
 
 #ifdef CATCH_SIGS
 	sig_set(SIGINT,icatch);
 #endif /* CATCH_SIGS */
 
-advise("calling clrdat");
 	clrdat(SINGLE_QSP_ARG);
 	recording=0;
 	Abort=0;
 
-advise("calling mk_stair_array");
 	mk_stair_array(SINGLE_QSP_ARG);
 
 advise("calling initrt");
@@ -426,10 +468,10 @@ static void stepall(SINGLE_QSP_ARG_DECL)	/** step each stair in a random order *
 
 if( nstairs==0 ) error1("stepall:  no staircases!?");
 
-	permute(QSP_ARG  order,nstairs);
+	permute(QSP_ARG  stair_order,nstairs);
 	for(i=0;i<nstairs;i++){
-		if( (!Abort) && step( QSP_ARG  stair_tbl[ order[i] ] ) == REDO ){
-			scramble(QSP_ARG  &order[i], nstairs-i );
+		if( (!Abort) && step( QSP_ARG  stair_tbl[ stair_order[i] ] ) == REDO ){
+			scramble(QSP_ARG  &stair_order[i], nstairs-i );
 			i--;
 		}
 	}
@@ -453,7 +495,7 @@ static void stair_trials(QSP_ARG_DECL  int np,int nt)
 				sprintf(ERROR_STRING,
 		"\007no preliminary threshold for stair %d",i);
 				WARN(ERROR_STRING);
-				stair_tbl[i]->stc_val=(-1);
+				stair_tbl[i]->stair_val=(-1);
 			}
 	} else while( (!Abort) && np-- ) stepall(SINGLE_QSP_ARG);
 	trialno=0;
@@ -485,13 +527,13 @@ static int prestep(SINGLE_QSP_ARG_DECL)	/* step stairs below criterion in a rand
 	int i;
 	int still=0;
 
-	permute(QSP_ARG  order,nstairs);
+	permute(QSP_ARG  stair_order,nstairs);
 	for(i=0;i<nstairs;i++){
-		if( !Abort && STAIR_INC(stair_tbl[order[i]])
-				!= STAIR_MIN_INC(stair_tbl[order[i]]) ){
+		if( !Abort && STAIR_INC(stair_tbl[stair_order[i]])
+				!= STAIR_MIN_INC(stair_tbl[stair_order[i]]) ){
 
 			still=1;
-			step( QSP_ARG  stair_tbl[order[i]] );
+			step( QSP_ARG  stair_tbl[stair_order[i]] );
 		}
 	}
 	return(still);
@@ -505,10 +547,10 @@ void add_stair(QSP_ARG_DECL  int type,Trial_Class *tcp )
 		WARN("Error creating staircase!?");
 }
 
-void del_stair(QSP_ARG_DECL  Staircase *stcp)
+void delete_staircase(QSP_ARG_DECL  Staircase *stcp)
 {
-	del_item(stc_itp,stcp);
-	givbuf((void *)stcp->stc_name);
+	del_item(stair_itp,stcp);
+	givbuf((void *)stcp->stair_name);	// not done by del_item?
 }
 
 COMMAND_FUNC( del_all_stairs )
@@ -517,7 +559,7 @@ COMMAND_FUNC( del_all_stairs )
 	Node *np;
 	Staircase *stcp;
 
-	if( stc_itp == NULL ) return;	/* nothing to do */
+	if( stair_itp == NULL ) return;	/* nothing to do */
 
 advise("deleting all staircases");
 
@@ -527,7 +569,7 @@ advise("deleting all staircases");
 	np=QLIST_HEAD(lp);
 	while( np != NULL ){
 		stcp = (Staircase *) np->n_data;
-		del_stair(QSP_ARG  stcp);
+		delete_staircase(QSP_ARG  stcp);
 		np=np->n_next;
 	}
 }
@@ -558,7 +600,7 @@ Trial_Class *index_class(QSP_ARG_DECL  int index)
 
 void del_class(QSP_ARG_DECL  Trial_Class *tcp)
 {
-	givbuf( CLASS_DATA_TBL(tcp) );
+	givbuf( CLASS_SUMM_DATA_TBL(tcp) );
 
 	/* what is this data field? */
 	if( CLASS_CMD(tcp) != NULL ) rls_str(CLASS_CMD(tcp));
@@ -581,28 +623,13 @@ Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 	if( lp == NULL ) n=0;
 	else n=(int)eltcount(lp);
 
-	tcp = class_for(QSP_ARG  n);
+	tcp = new_class_for_index(QSP_ARG  n);
 	return(tcp);
 }
 
-#define init_data_tbl(dtp) _init_data_tbl(QSP_ARG  dtp)
+// new_class_for_index creates a new class...
 
-static void _init_data_tbl(QSP_ARG_DECL  Data_Tbl *dtp)
-{
-	SET_DTBL_N(dtp,0);
-	if( _nvals > 0 ){
-		SET_DTBL_SIZE(dtp,_nvals);
-		SET_DTBL_DATA(dtp,(Datum *)getbuf(_nvals*sizeof(Datum)));
-	} else {
-		SET_DTBL_SIZE(dtp,0);
-		SET_DTBL_DATA(dtp,NULL);
-		warn("init_data_tbl:  number of x-values is not set!?");
-	}
-}
-
-// class_for creates a new class...
-
-Trial_Class *class_for( QSP_ARG_DECL  int class_index )
+Trial_Class *new_class_for_index( QSP_ARG_DECL  int class_index )
 {
 	char newname[32];
 	Trial_Class *tcp;
@@ -618,8 +645,8 @@ Trial_Class *class_for( QSP_ARG_DECL  int class_index )
 
 	/* Now do the initial setup for the class structure */
 
-	SET_CLASS_DATA_TBL(tcp,(Data_Tbl *)getbuf(sizeof(Data_Tbl)) );
-	init_data_tbl(CLASS_DATA_TBL(tcp));
+	SET_CLASS_SUMM_DATA_TBL(tcp,new_summary_data_tbl());
+	SET_CLASS_SEQ_DATA_TBL(tcp,new_sequential_data_tbl());
 	SET_CLASS_CMD(tcp, NULL);
 	SET_CLASS_INDEX(tcp,class_index);
 	SET_CLASS_N_STAIRS(tcp,0);
@@ -633,10 +660,10 @@ static void clear_data(Trial_Class *tcp)	/* clear data table for this class */
 {
 	int val_idx;
 
-	//SET_DTBL_N(CLASS_DATA_TBL(tcp),0);
-	for(val_idx=0;val_idx<DTBL_N(CLASS_DATA_TBL(tcp));val_idx++){
-		SET_DATUM_NTOTAL(DTBL_ENTRY(CLASS_DATA_TBL(tcp),val_idx),0);
-		SET_DATUM_NCORR(DTBL_ENTRY(CLASS_DATA_TBL(tcp),val_idx),0);
+	//SET_SUMM_DTBL_N(CLASS_SUMM_DATA_TBL(tcp),0);
+	for(val_idx=0;val_idx<SUMM_DTBL_N(CLASS_SUMM_DATA_TBL(tcp));val_idx++){
+		SET_DATUM_NTOTAL(SUMM_DTBL_ENTRY(CLASS_SUMM_DATA_TBL(tcp),val_idx),0);
+		SET_DATUM_NCORR(SUMM_DTBL_ENTRY(CLASS_SUMM_DATA_TBL(tcp),val_idx),0);
 	}
 }
 
