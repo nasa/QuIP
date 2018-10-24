@@ -28,7 +28,6 @@ static void mk_stair_array(SINGLE_QSP_ARG_DECL);
 static int prestep(SINGLE_QSP_ARG_DECL);
 #define PRESTEP			prestep(SINGLE_QSP_ARG)
 
-static List *stair_list(SINGLE_QSP_ARG_DECL);
 static void tally(Staircase *stc,int rsp);
 static int iftrans(Staircase *stc,int rsp);
 static void adj_inc(Staircase *stc);
@@ -110,8 +109,6 @@ static void init_seq_data_tbl(Sequential_Data_Tbl *qdt_p)
 	SET_SEQ_DTBL_LIST(qdt_p,new_list());
 }
 
-#define new_sequential_data_tbl() _new_sequential_data_tbl(SINGLE_QSP_ARG)
-
 Sequential_Data_Tbl *_new_sequential_data_tbl(SINGLE_QSP_ARG_DECL)
 {
 	Sequential_Data_Tbl *qdt_p;
@@ -121,20 +118,6 @@ Sequential_Data_Tbl *_new_sequential_data_tbl(SINGLE_QSP_ARG_DECL)
 	return qdt_p;
 }
 
-
-static List *stair_list(SINGLE_QSP_ARG_DECL)
-{
-	if( stair_itp==NULL ) return(NULL);
-	return(item_list(stair_itp) );
-}
-
-//static int nullstim(QSP_ARG_DECL  int c,int v,Staircase *st_p)
-//{
-//	sprintf(ERROR_STRING,"no stimulus routine");
-//	WARN(ERROR_STRING);
-//	return(0);
-//}
-
 void new_exp(SINGLE_QSP_ARG_DECL)		/** discard old stairs */
 {
 	List *lp;
@@ -143,7 +126,7 @@ void new_exp(SINGLE_QSP_ARG_DECL)		/** discard old stairs */
 
 	nstairs=0;
 
-	lp = stair_list(SINGLE_QSP_ARG);
+	lp = stair_list();
 	if( lp==NULL ) return;
 
 	/* Don't we have a routine to delete all staircases? */
@@ -159,14 +142,6 @@ void new_exp(SINGLE_QSP_ARG_DECL)		/** discard old stairs */
 void set_recording(int flag)
 {
 	recording = flag;
-}
-
-static void tally(Staircase *stc,int rsp)			/* record new data */
-{
-fprintf(stderr,"noting response to class data table at 0x%lx\n",(long) CLASS_SUMM_DTBL(STAIR_CLASS(stc)));
-	note_trial(CLASS_SUMM_DTBL(STAIR_CLASS(stc)),STAIR_VAL(stc),rsp,STAIR_CRCT_RSP(stc));
-fprintf(stderr,"noting response to staircase data table at 0x%lx\n",(long) STAIR_DATA_TBL(stc));
-	note_trial(STAIR_DATA_TBL(stc),STAIR_VAL(stc),rsp,STAIR_CRCT_RSP(stc));
 }
 
 static void adj_inc(Staircase *stc)	/* adjust the increment */
@@ -251,6 +226,19 @@ static int iftrans(Staircase *stc,int rsp)	/* see if this response warrants a tr
 	return(retval);
 }
 
+static void tally(Staircase *stc,int rsp)			/* record new data */
+{
+fprintf(stderr,"noting response to class data table at 0x%lx\n",(long) CLASS_SUMM_DTBL(STAIR_CLASS(stc)));
+	update_summary(CLASS_SUMM_DTBL(STAIR_CLASS(stc)),stc,rsp);
+fprintf(stderr,"noting response to staircase data table at 0x%lx\n",(long) STAIR_SUMM_DTBL(stc));
+	update_summary(STAIR_SUMM_DTBL(stc),stc,rsp);
+
+assert(CLASS_SEQ_DTBL(STAIR_CLASS(stc))!=NULL);
+	append_trial(CLASS_SEQ_DTBL(STAIR_CLASS(stc)),stc,rsp);
+assert(STAIR_SEQ_DTBL(stc)!=NULL);
+	append_trial(STAIR_SEQ_DTBL(stc),stc,rsp);
+}
+
 /* save_reponse not only saves the response, it also updates the staircase!?  a misnomer... */
 
 #define FEEDBACK_FILENAME	"(pushed feedback_string)"
@@ -322,7 +310,7 @@ static int step(QSP_ARG_DECL Staircase *stc)
 }
 
 int makestair( QSP_ARG_DECL  int st,	/* staircase type */
-		Trial_Class *tcp,	/* staircase class */
+		Trial_Class *tc_p,	/* staircase class */
 		int mi,		/* mininimum increment */
 		int cr,		/* correct response */
 		int ir		/* increment response */
@@ -332,15 +320,15 @@ int makestair( QSP_ARG_DECL  int st,	/* staircase type */
 	Staircase *st_p;
 	int n_xvals;
 
-	assert( tcp != NULL );
+	assert( tc_p != NULL );
 
-	sprintf(str,"staircase.%s.%d",CLASS_NAME(tcp),CLASS_N_STAIRS(tcp) );
+	sprintf(str,"staircase.%s.%d",CLASS_NAME(tc_p),CLASS_N_STAIRS(tc_p) );
 	st_p = new_stair(str);
 	assert(st_p!=NULL);
 
-	SET_STAIR_CLASS(st_p,tcp);
-	st_p->stair_index = CLASS_N_STAIRS(tcp);
-	SET_CLASS_N_STAIRS(tcp,CLASS_N_STAIRS(tcp)+1);
+	SET_STAIR_CLASS(st_p,tc_p);
+	st_p->stair_index = CLASS_N_STAIRS(tc_p);
+	SET_CLASS_N_STAIRS(tc_p,CLASS_N_STAIRS(tc_p)+1);
 
 	SET_STAIR_TYPE(st_p,st);
 	SET_STAIR_CRCT_RSP(st_p,cr);
@@ -350,8 +338,11 @@ int makestair( QSP_ARG_DECL  int st,	/* staircase type */
 	SET_STAIR_LAST_RSP(st_p,REDO);
 	SET_STAIR_LAST_TRIAL(st_p,NO_TRANS);
 
-	SET_STAIR_DATA_TBL(st_p,new_summary_data_tbl(CLASS_XVAL_OBJ(tcp)));
-	SET_SUMM_DTBL_CLASS( STAIR_DATA_TBL(st_p), tcp );
+	SET_STAIR_SUMM_DTBL(st_p,new_summary_data_tbl(CLASS_XVAL_OBJ(tc_p)));
+	SET_SUMM_DTBL_CLASS( STAIR_SUMM_DTBL(st_p), tc_p );
+
+	SET_STAIR_SEQ_DTBL(st_p,new_sequential_data_tbl());
+	SET_SEQ_DTBL_CLASS( STAIR_SEQ_DTBL(st_p), tc_p );
 
 	if( STAIR_XVAL_OBJ(st_p) == NULL ){
 		WARN("X values should be read before setting up staircases");
@@ -446,7 +437,7 @@ static void mk_stair_array(SINGLE_QSP_ARG_DECL)
 	if( stair_tbl != NULL ) givbuf(stair_tbl);
 	if( stair_order != NULL ) givbuf(stair_order);
 
-	lp = stair_list(SINGLE_QSP_ARG);	// list of already-created staircases
+	lp = stair_list();	// list of already-created staircases
 	n = eltcount(lp);
 	if( n < 1 ){
 		warn("mk_stair_array:  no staircases specified!?");
@@ -559,16 +550,10 @@ static int prestep(SINGLE_QSP_ARG_DECL)	/* step stairs below criterion in a rand
 
 void set_summary_file(FILE *fp) { summ_file=fp; }
 
-void add_stair(QSP_ARG_DECL  int type,Trial_Class *tcp )
+void add_stair(QSP_ARG_DECL  int type,Trial_Class *tc_p )
 {
-	if( makestair(QSP_ARG  type,tcp,1,YES,YES) < 0 )
+	if( makestair(QSP_ARG  type,tc_p,1,YES,YES) < 0 )
 		WARN("Error creating staircase!?");
-}
-
-void delete_staircase(QSP_ARG_DECL  Staircase *st_p)
-{
-	del_item(stair_itp,st_p);
-	givbuf((void *)st_p->stair_name);	// not done by del_item?
 }
 
 COMMAND_FUNC( del_all_stairs )
@@ -581,54 +566,76 @@ COMMAND_FUNC( del_all_stairs )
 
 advise("deleting all staircases");
 
-	lp=stair_list(SINGLE_QSP_ARG);
+	lp=stair_list();
 	if( lp == NULL ) return;
 
 	np=QLIST_HEAD(lp);
 	while( np != NULL ){
 		st_p = (Staircase *) np->n_data;
-		delete_staircase(QSP_ARG  st_p);
+		del_stair(st_p);
 		np=np->n_next;
 	}
 }
 
 /* class functions */
 
-Trial_Class *index_class(QSP_ARG_DECL  int index)
+Trial_Class *find_class_from_index(QSP_ARG_DECL  int index)
 {
-	Node *np;
-	Trial_Class *tcp;
 	List *lp;
+	Node *np;
 
-	lp=item_list(trial_class_itp);
+	lp=trial_class_list();
 	assert( lp != NULL );
 
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
-		tcp=(Trial_Class *)np->n_data;
-		if( CLASS_INDEX(tcp) == index ) return(tcp);
+		Trial_Class *tc_p;
+		tc_p=(Trial_Class *)np->n_data;
+		if( CLASS_INDEX(tc_p) == index ) return(tc_p);
 		np=np->n_next;
 	}
 	sprintf(ERROR_STRING,
-		"index_class:  no class with index %d",index);
+		"find_class_from_index:  no class with index %d",index);
 	WARN(ERROR_STRING);
 
 	return(NULL);
 }
 
-void del_class(QSP_ARG_DECL  Trial_Class *tcp)
+Staircase *find_stair_from_index(QSP_ARG_DECL  int index)
 {
-	givbuf( CLASS_SUMM_DTBL(tcp) );
+	List *lp;
+	Node *np;
+
+	lp=stair_list();
+	assert( lp != NULL );
+
+	np=QLIST_HEAD(lp);
+	while(np!=NULL){
+		Staircase *st_p;
+		st_p=(Staircase *)np->n_data;
+		if( STAIR_INDEX(st_p) == index ) return(st_p);
+		np=np->n_next;
+	}
+	sprintf(ERROR_STRING,
+		"find_stair_from_index:  no staircase with index %d",index);
+	WARN(ERROR_STRING);
+
+	return(NULL);
+}
+
+void del_class(QSP_ARG_DECL  Trial_Class *tc_p)
+{
+	givbuf( CLASS_SUMM_DTBL(tc_p) );
 
 	/* what is this data field? */
-	if( CLASS_CMD(tcp) != NULL ) rls_str(CLASS_CMD(tcp));
+	if( CLASS_CMD(tc_p) != NULL ) rls_str(CLASS_CMD(tc_p));
 
-	del_trial_class(tcp);
+	del_trial_class(tc_p);
 }
 
 Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 {
-	Trial_Class *tcp;
+	Trial_Class *tc_p;
 	List *lp;
 	int n;
 
@@ -641,8 +648,8 @@ Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 	if( lp == NULL ) n=0;
 	else n=(int)eltcount(lp);
 
-	tcp = new_class_for_index(QSP_ARG  n);
-	return(tcp);
+	tc_p = new_class_for_index(QSP_ARG  n);
+	return(tc_p);
 }
 
 // new_class_for_index creates a new class...
@@ -650,17 +657,17 @@ Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 Trial_Class *new_class_for_index( QSP_ARG_DECL  int class_index )
 {
 	char newname[32];
-	Trial_Class *tcp;
+	Trial_Class *tc_p;
 
 	sprintf(newname,"class%d",class_index);
 
-	tcp = create_named_class(newname);
-	tcp = trial_class_of(newname);
-	if( tcp != NULL )
+	tc_p = trial_class_of(newname);
+	if( tc_p != NULL )
 		return NULL;
 
+	tc_p = create_named_class(newname);
 
-	return(tcp);
+	return(tc_p);
 }
 
 

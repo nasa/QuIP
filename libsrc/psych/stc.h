@@ -29,14 +29,14 @@ typedef struct trial_class {
 #define CLASS_N_STAIRS(tc_p)		(tc_p)->tc_nstairs
 #define CLASS_INDEX(tc_p)		(tc_p)->tc_index
 #define CLASS_SUMM_DTBL(tc_p)		(tc_p)->tc_sdt_p
-#define CLASS_SEQ_DATA_TBL(tc_p)	(tc_p)->tc_qdt_p
+#define CLASS_SEQ_DTBL(tc_p)		(tc_p)->tc_qdt_p
 #define CLASS_XVAL_OBJ(tc_p)		(tc_p)->tc_xval_dp
 
 #define SET_CLASS_CMD(tc_p,v)		(tc_p)->tc_cmd = v
 #define SET_CLASS_N_STAIRS(tc_p,v)	(tc_p)->tc_nstairs = v
 #define SET_CLASS_INDEX(tc_p,v)		(tc_p)->tc_index = v
 #define SET_CLASS_SUMM_DTBL(tc_p,v)	(tc_p)->tc_sdt_p = v
-#define SET_CLASS_SEQ_DATA_TBL(tc_p,v)	(tc_p)->tc_qdt_p = v
+#define SET_CLASS_SEQ_DTBL(tc_p,v)	(tc_p)->tc_qdt_p = v
 #define SET_CLASS_XVAL_OBJ(tc_p,v)	(tc_p)->tc_xval_dp = v
 
 
@@ -80,7 +80,20 @@ typedef struct sequence_datum {
 	int	sqd_stair_idx;
 	int	sqd_xval_idx;
 	int	sqd_response;
+	int	sqd_correct_response;
 } Sequence_Datum;
+
+#define SEQ_DATUM_CLASS_IDX(qd_p)	(qd_p)->sqd_class_idx
+#define SEQ_DATUM_STAIR_IDX(qd_p)	(qd_p)->sqd_stair_idx
+#define SEQ_DATUM_XVAL_IDX(qd_p)	(qd_p)->sqd_xval_idx
+#define SEQ_DATUM_RESPONSE(qd_p)	(qd_p)->sqd_response
+#define SEQ_DATUM_CRCT_RSP(qd_p)	(qd_p)->sqd_correct_response
+
+#define SET_SEQ_DATUM_CLASS_IDX(qd_p,v)	(qd_p)->sqd_class_idx = v
+#define SET_SEQ_DATUM_STAIR_IDX(qd_p,v)	(qd_p)->sqd_stair_idx = v
+#define SET_SEQ_DATUM_XVAL_IDX(qd_p,v)	(qd_p)->sqd_xval_idx = v
+#define SET_SEQ_DATUM_RESPONSE(qd_p,v)	(qd_p)->sqd_response = v
+#define SET_SEQ_DATUM_CRCT_RSP(qd_p,v)	(qd_p)->sqd_correct_response = v
 
 typedef struct sequential_data_tbl {
 	List *		qdt_lp;
@@ -89,8 +102,10 @@ typedef struct sequential_data_tbl {
 } Sequential_Data_Tbl;
 
 #define SEQ_DTBL_LIST(qdt_p)	(qdt_p)->qdt_lp
+#define SEQ_DTBL_CLASS(qdt_p)	(qdt_p)->qdt_tc_p
 
 #define SET_SEQ_DTBL_LIST(qdt_p,v)	(qdt_p)->qdt_lp = v
+#define SET_SEQ_DTBL_CLASS(qdt_p,v)	(qdt_p)->qdt_tc_p = v
 
 
 typedef struct staircase {
@@ -123,7 +138,8 @@ typedef struct staircase {
 #define STAIR_LAST_RSP3(st_p)	(st_p)->stair_last_rsp3
 #define STAIR_LAST_TRIAL(st_p)	(st_p)->stair_last_trial
 #define STAIR_INDEX(st_p)	(st_p)->stair_index
-#define STAIR_DATA_TBL(st_p)	(st_p)->stair_sdt_p
+#define STAIR_SUMM_DTBL(st_p)	(st_p)->stair_sdt_p
+#define STAIR_SEQ_DTBL(st_p)	(st_p)->stair_qdt_p
 #define STAIR_XVAL_OBJ(st_p)	CLASS_XVAL_OBJ( STAIR_CLASS(st_p) )
 #define STAIR_MAX_VAL(st_p)	(OBJ_COLS(STAIR_XVAL_OBJ(st_p))-1)
 
@@ -138,7 +154,8 @@ typedef struct staircase {
 #define SET_STAIR_LAST_RSP3(st_p,v)	(st_p)->stair_last_rsp3 = v
 #define SET_STAIR_LAST_TRIAL(st_p,v)	(st_p)->stair_last_trial = v
 #define SET_STAIR_INDEX(st_p,v)		(st_p)->stair_index = v
-#define SET_STAIR_DATA_TBL(st_p,v)	(st_p)->stair_sdt_p = v
+#define SET_STAIR_SUMM_DTBL(st_p,v)	(st_p)->stair_sdt_p = v
+#define SET_STAIR_SEQ_DTBL(st_p,v)	(st_p)->stair_qdt_p = v
 
 #define NO_STC_DATA	(-1)
 
@@ -211,6 +228,7 @@ ITEM_INTERFACE_PROTOTYPES(Staircase,stair)
 #define new_stair(s)	_new_stair(QSP_ARG  s)
 #define init_stairs()	_init_stairs(SINGLE_QSP_ARG)
 #define list_stairs(fp)	_list_stairs(QSP_ARG  fp)
+#define stair_list()	_stair_list(SINGLE_QSP_ARG)
 
 
 extern Summary_Data_Tbl *_new_summary_data_tbl(QSP_ARG_DECL Data_Obj *dp);
@@ -235,11 +253,11 @@ extern void set_dribble_file(FILE *fp);
 extern void set_summary_file(FILE *fp);
 extern void add_stair(QSP_ARG_DECL  int type,Trial_Class *tc_p);
 //extern void list_stairs(void);
-extern void delete_staircase(QSP_ARG_DECL  Staircase *stairp);
 extern COMMAND_FUNC( del_all_stairs );
 extern void si_init(void);
 
-extern Trial_Class *index_class(QSP_ARG_DECL  int);
+extern Trial_Class *find_class_from_index(QSP_ARG_DECL  int);
+extern Staircase *find_stair_from_index(QSP_ARG_DECL  int index);
 extern void del_class(QSP_ARG_DECL  Trial_Class *tc_p);
 extern Trial_Class *new_class(SINGLE_QSP_ARG_DECL);
 
@@ -275,7 +293,10 @@ extern void ogive_fit( QSP_ARG_DECL  Trial_Class *tc_p );
 #ifdef QUIK
 extern void pntquic(FILE *fp,Trial_Class *tc_p,int in_db);
 #endif /* QUIK */
-extern void print_raw_data(QSP_ARG_DECL  Trial_Class * tc_p);
+extern void _print_class_summary(QSP_ARG_DECL  Trial_Class * tc_p);
+extern void _print_class_sequence(QSP_ARG_DECL  Trial_Class * tc_p);
+#define print_class_summary(tc_p) _print_class_summary(QSP_ARG  tc_p)
+#define print_class_sequence(tc_p) _print_class_sequence(QSP_ARG  tc_p)
 
 extern double _regr(QSP_ARG_DECL  Summary_Data_Tbl *dp,int first);
 extern void _split(QSP_ARG_DECL  Trial_Class * tc_p,int wantupper);
@@ -311,7 +332,8 @@ extern void setup_classes(QSP_ARG_DECL  int n);
 /* clrdat.c */
 
 extern void clrdat(SINGLE_QSP_ARG_DECL);
-extern void note_trial(Summary_Data_Tbl *sdt_p,int val,int rsp,int crct);
+extern void update_summary(Summary_Data_Tbl *sdt_p,Staircase *st_p,int rsp);
+extern void append_trial( Sequential_Data_Tbl *qdt_p, Staircase *st_p , int rsp );
 
 
 /* errbars.c */

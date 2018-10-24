@@ -349,47 +349,6 @@ void pntquic(FILE *fp,Trial_Class * tcp,int in_db)
 }
 #endif /* QUIK */
 
-void print_raw_data(QSP_ARG_DECL  Trial_Class * tcp)
-{
-        int j;
-        Summary_Data_Tbl *dtp;
-	int n_xvals;
-
-	assert( tcp != NULL );
-
-	dtp=CLASS_SUMM_DTBL(tcp);
-	assert( dtp != NULL );
-
-	assert(CLASS_XVAL_OBJ(tcp)!=NULL);
-	n_xvals = OBJ_COLS( CLASS_XVAL_OBJ(tcp) );
-	assert(n_xvals>1);
-
-	if( verbose ){
-		sprintf(msg_str,"class = %s, %d points",
-			CLASS_NAME(tcp),SUMM_DTBL_N(CLASS_SUMM_DTBL(tcp)));
-		prt_msg(msg_str);
-		sprintf(msg_str,"val\txval\t\tntot\tncorr\t%% corr\n");
-		prt_msg(msg_str);
-	}
-	//j=0;
-	for(j=0;j<n_xvals;j++){
-		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) > 0 ){
-			float *xv_p;
-			xv_p = indexed_data(CLASS_XVAL_OBJ(tcp),j);
-			assert(xv_p!=NULL);
-			sprintf(msg_str,"%d\t%f\t%d\t%d\t%f",
-				j,
-				*xv_p,
-				DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)),
-				DATUM_NCORR(SUMM_DTBL_ENTRY(dtp,j)),
-				(double) DATUM_NCORR(SUMM_DTBL_ENTRY(dtp,j)) /
-					(double) DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) );
-			prt_msg(msg_str);
-		}
-	}
-	prt_msg("\n");
-}
-
 void _split(QSP_ARG_DECL  Trial_Class * tcp,int wantupper)
 {
         int j;
@@ -397,7 +356,7 @@ void _split(QSP_ARG_DECL  Trial_Class * tcp,int wantupper)
 	int havzero=0;
 	int n_xvals;
 
-	//tcp=index_class(QSP_ARG  cl);
+	//tcp=find_class_from_index(QSP_ARG  cl);
 	dtp=CLASS_SUMM_DTBL(tcp);
 	assert(dtp!=NULL);
 

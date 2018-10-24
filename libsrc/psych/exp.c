@@ -355,8 +355,13 @@ Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
 	SET_CLASS_N_STAIRS(tc_p,0);
 	if( global_xval_dp != NULL )
 		SET_CLASS_XVAL_OBJ(tc_p,global_xval_dp);
+
 	SET_CLASS_SUMM_DTBL(tc_p,new_summary_data_tbl(CLASS_XVAL_OBJ(tc_p)));
-	SET_CLASS_SEQ_DATA_TBL(tc_p,new_sequential_data_tbl());
+	SET_SUMM_DTBL_CLASS( CLASS_SUMM_DTBL(tc_p), tc_p );
+
+	SET_CLASS_SEQ_DTBL(tc_p,new_sequential_data_tbl());
+	SET_SEQ_DTBL_CLASS( CLASS_SEQ_DTBL(tc_p), tc_p );
+
 	SET_CLASS_CMD(tc_p, NULL);
 
 	assert( CLASS_SUMM_DTBL(tc_p) != NULL );
@@ -560,7 +565,7 @@ static COMMAND_FUNC( do_show_class_seq )
 	tc_p = pick_trial_class("");
 	if( tc_p == NULL ) return;
 
-	write_sequential_data( CLASS_SEQ_DATA_TBL(tc_p), tell_msgfile() );
+	write_sequential_data( CLASS_SEQ_DTBL(tc_p), tell_msgfile() );
 }
 
 #undef ADD_CMD

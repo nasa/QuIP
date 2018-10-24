@@ -60,21 +60,127 @@ void mark_drib(FILE *fp)
 	fflush(fp);
 }
 
-static void write_class_data(QSP_ARG_DECL  Trial_Class *tcp,void *_fp)
+#define write_class_summ_data(tc_p,_fp) _write_class_summ_data(QSP_ARG  tc_p,_fp)
+
+static void _write_class_summ_data(QSP_ARG_DECL  Trial_Class *tc_p,void *_fp)
 {
 	FILE *fp;
 	fp = (FILE *) _fp;
-	write_summary_data( CLASS_SUMM_DTBL(tcp), fp );
+	assert(fp!=NULL);
+	assert(CLASS_SUMM_DTBL(tc_p)!=NULL);
+fprintf(stderr,"write_class_summ_data calling write_summary_data...\n");
+	write_summary_data( CLASS_SUMM_DTBL(tc_p), fp );
 }
+
+void _print_class_summary(QSP_ARG_DECL  Trial_Class * tcp)
+{
+fprintf(stderr,"print_class_summary BEGIN\n");
+	if( verbose ){
+		sprintf(msg_str,"class = %s, %d points",
+			CLASS_NAME(tcp),SUMM_DTBL_N(CLASS_SUMM_DTBL(tcp)));
+		prt_msg(msg_str);
+		sprintf(msg_str,"val\txval\t\tntot\tncorr\t%% corr\n");
+		prt_msg(msg_str);
+	}
+
+	write_class_summ_data(tcp,tell_msgfile());
+}
+
+static void write_sequence_datum(Sequence_Datum *qd_p, FILE *fp)
+{
+	fprintf(fp,"%d\t%d\t%d\t%d\t%d\n",
+		SEQ_DATUM_CLASS_IDX(qd_p),
+		SEQ_DATUM_STAIR_IDX(qd_p),
+		SEQ_DATUM_XVAL_IDX(qd_p),
+		SEQ_DATUM_RESPONSE(qd_p),
+		SEQ_DATUM_CRCT_RSP(qd_p) );
+
+	fflush(fp);
+}
+
+#define print_sequence_datum(qd_p) _print_sequence_datum(QSP_ARG  qd_p)
+
+static void _print_sequence_datum(QSP_ARG_DECL  Sequence_Datum *qd_p)
+{
+	write_sequence_datum(qd_p, tell_msgfile());
+}
+
+void _print_class_sequence(QSP_ARG_DECL  Trial_Class *tcp)
+{
+	List *lp;
+	Node *np;
+
+	assert( CLASS_SEQ_DTBL(tcp) != NULL );
+	lp = SEQ_DTBL_LIST( CLASS_SEQ_DTBL(tcp) );
+	assert(lp!=NULL);
+
+	np = QLIST_HEAD(lp);
+	while( np != NULL ){
+		Sequence_Datum *qd_p;
+		qd_p = (Sequence_Datum *) NODE_DATA(np);
+		assert(qd_p!=NULL);
+		print_sequence_datum(qd_p);
+		np = NODE_NEXT(np);
+	}
+}
+
+#ifdef FOOBAR
+void print_class_summary(QSP_ARG_DECL  Trial_Class * tcp)
+{
+        int j;
+        Summary_Data_Tbl *dtp;
+	int n_xvals;
+
+	assert( tcp != NULL );
+
+	dtp=CLASS_SUMM_DTBL(tcp);
+	assert( dtp != NULL );
+
+	assert(CLASS_XVAL_OBJ(tcp)!=NULL);
+	n_xvals = OBJ_COLS( CLASS_XVAL_OBJ(tcp) );
+	assert(n_xvals>1);
+
+	if( verbose ){
+		sprintf(msg_str,"class = %s, %d points",
+			CLASS_NAME(tcp),SUMM_DTBL_N(CLASS_SUMM_DTBL(tcp)));
+		prt_msg(msg_str);
+		sprintf(msg_str,"val\txval\t\tntot\tncorr\t%% corr\n");
+		prt_msg(msg_str);
+	}
+	//j=0;
+	for(j=0;j<n_xvals;j++){
+		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) > 0 ){
+			float *xv_p;
+			xv_p = indexed_data(CLASS_XVAL_OBJ(tcp),j);
+			assert(xv_p!=NULL);
+			sprintf(msg_str,"%d\t%f\t%d\t%d\t%f",
+				j,
+				*xv_p,
+				DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)),
+				DATUM_NCORR(SUMM_DTBL_ENTRY(dtp,j)),
+				(double) DATUM_NCORR(SUMM_DTBL_ENTRY(dtp,j)) /
+					(double) DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) );
+			prt_msg(msg_str);
+		}
+	}
+	prt_msg("\n");
+}
+#endif // FOOBAR
 
 void write_summary_data( Summary_Data_Tbl *sdt_p, FILE *fp )
 {
 	int j;
 
+fprintf(stderr,"write_summary_data BEGIN\n");
+
+	// count the number of points with at least one trial
 	for(j=0;j<SUMM_DTBL_SIZE(sdt_p);j++)
 		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(sdt_p,j)) != 0 )
 			SET_SUMM_DTBL_N(sdt_p,1+SUMM_DTBL_N(sdt_p));
+
+	assert(SUMM_DTBL_CLASS(sdt_p)!=NULL);
 	fprintf(fp,class_header_format_str,CLASS_INDEX(SUMM_DTBL_CLASS(sdt_p)),SUMM_DTBL_N(sdt_p));
+
 	for(j=0;j<SUMM_DTBL_SIZE(sdt_p);j++)
 		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(sdt_p,j)) != 0 )
 			fprintf(fp,pointline, j,
@@ -139,14 +245,14 @@ void _iterate_over_classes( QSP_ARG_DECL  void (*func)(QSP_ARG_DECL  Trial_Class
 {
 	List *lp;
 	Node *np;
-	Trial_Class *tcp;
+	Trial_Class *tc_p;
 
 	lp = trial_class_list();
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
-		tcp=(Trial_Class *)np->n_data;
-		assert(tcp!=NULL);
-		(*func)(QSP_ARG  tcp,arg);
+		tc_p=(Trial_Class *)np->n_data;
+		assert(tc_p!=NULL);
+		(*func)(QSP_ARG  tc_p,arg);
 		np=np->n_next;
 	}
 }
@@ -158,7 +264,7 @@ void write_exp_data(QSP_ARG_DECL  FILE *fp)	/* replaces routine formerly in stai
 	write_data_preamble(QSP_ARG  fp);
 	fputs(summline,fp);
 
-	iterate_over_classes(write_class_data,fp);
+	iterate_over_classes(_write_class_summ_data,fp);
 
 	fflush(fp);
 }
@@ -166,7 +272,7 @@ void write_exp_data(QSP_ARG_DECL  FILE *fp)	/* replaces routine formerly in stai
 static int read_class_summary(QSP_ARG_DECL  FILE *fp)
 {
 	short index,np;
-	Trial_Class *tcp;
+	Trial_Class *tc_p;
 	Summary_Data_Tbl *sdt_p;
 	int j;
 
@@ -174,10 +280,10 @@ static int read_class_summary(QSP_ARG_DECL  FILE *fp)
 		warn("error reading class header");
 		return(-1);
 	}
-	tcp=index_class(QSP_ARG  index);
-	assert( tcp != NULL );
+	tc_p=find_class_from_index(QSP_ARG  index);
+	assert( tc_p != NULL );
 
-	sdt_p = CLASS_SUMM_DTBL(tcp);
+	sdt_p = CLASS_SUMM_DTBL(tc_p);
 	assert( np <= SUMM_DTBL_SIZE(sdt_p) );
 	// we used to reallocate the data table here???
 
@@ -217,14 +323,28 @@ static int rd_dribble(QSP_ARG_DECL  FILE *fp)
 	while( next_input_line(fp) >= 0 ){
 		n=sscanf(input_line,"%d\t%d\t%d\t%d\t%d\n",&i_class,&i_stair,&i_val,&resp,&crct);
 		if( n == 5 ){
-			Trial_Class *tcp;
-			tcp=index_class(QSP_ARG  i_class);
-			if( tcp == NULL ){
+			Trial_Class *tc_p;
+			Staircase *st_p;
+
+			tc_p=find_class_from_index(QSP_ARG  i_class);
+			if( tc_p == NULL ){
 				fprintf(stderr,"rd_dribble:  didn't find class for index %d!?\n",i_class);
 				return -1;
 			}
-			//note_trial(tcp,i_val,resp,crct);
-			note_trial(CLASS_SUMM_DTBL(tcp),i_val,resp,crct);
+
+			st_p=find_stair_from_index(QSP_ARG  i_stair);
+			if( st_p == NULL ){
+				fprintf(stderr,"rd_dribble:  didn't find stair for index %d!?\n",i_stair);
+				return -1;
+			}
+
+			assert( STAIR_CLASS(st_p) == tc_p );
+			assert( STAIR_CRCT_RSP(st_p) == crct );
+
+			SET_STAIR_VAL(st_p,i_val);
+
+			update_summary(CLASS_SUMM_DTBL(tc_p),st_p,resp);
+
 		} else {
 			if( feof(fp) )
 				have_input_line=0;
@@ -369,11 +489,11 @@ void setup_classes(QSP_ARG_DECL  int n)
 	 * This allows us to read multiple files if they are concatenated...
 	 */
 	for(i=0;i<n;i++){
-		Trial_Class *tcp;
+		Trial_Class *tc_p;
 
 		sprintf(name,"class%d",i);
-		tcp = trial_class_of(name);
-		if( tcp == NULL ){
+		tc_p = trial_class_of(name);
+		if( tc_p == NULL ){
 			/*
 			if(verbose){
 				sprintf(ERROR_STRING,"setup_classes:  class %s not found, creating a new class",

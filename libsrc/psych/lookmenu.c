@@ -71,13 +71,22 @@ static COMMAND_FUNC( prquic )
 
 
 
-static COMMAND_FUNC( do_print_raw )
+static COMMAND_FUNC( do_print_summ )
 {
 	Trial_Class *tcp;
 
 	tcp = pick_trial_class("");
 	if( tcp == NULL ) return;
-	print_raw_data(QSP_ARG  tcp);
+	print_class_summary(tcp);
+}
+
+static COMMAND_FUNC( do_print_seq )
+{
+	Trial_Class *tcp;
+
+	tcp = pick_trial_class("");
+	if( tcp == NULL ) return;
+	print_class_sequence(tcp);
 }
 
 static void pntcurve(QSP_ARG_DECL  FILE *fp, Trial_Class * tcp)
@@ -239,7 +248,8 @@ static COMMAND_FUNC( do_pnt_bars )
 
 MENU_BEGIN(lookit)
 ADD_CMD( read,		do_read_data,	read new data file )
-ADD_CMD( print,		do_print_raw,	print raw data )
+ADD_CMD( print_summary,		do_print_summ,	print summary data )
+ADD_CMD( print_sequence,	do_print_seq,	print sequential data )
 //ADD_CMD( class,		setcl,		select new stimulus class )
 ADD_CMD( plotprint,	pntgrph,	print data for plotting )
 ADD_CMD( errbars,	do_pnt_bars,	print psychometric function with error bars )

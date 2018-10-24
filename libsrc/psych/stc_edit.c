@@ -70,7 +70,7 @@ static COMMAND_FUNC( do_del_stair )
 
 	stcp=pick_stair( "" );
 	if( stcp == NULL ) return;
-	delete_staircase(QSP_ARG  stcp);
+	del_stair(stcp);
 }
 
 static COMMAND_FUNC(do_list_stairs){list_stairs(tell_msgfile());}
