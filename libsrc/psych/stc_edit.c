@@ -55,13 +55,12 @@ static COMMAND_FUNC( do_add_stair )
 	/* now get the parameters in a user friendly way */
 
 	t= (short) get_stair_type(SINGLE_QSP_ARG);
-	//c=(short)HOW_MANY("index of associated condition");
 	tcp = pick_trial_class("");
 
 	if( t < 0 ) return;
 	if( tcp == NULL ) return;
 
-	add_stair(QSP_ARG  t,tcp);
+	add_stair(t,tcp);
 }
 
 static COMMAND_FUNC( do_del_stair )
@@ -81,11 +80,11 @@ static COMMAND_FUNC( do_step_stair )
 	int resp;
 
 	stcp=pick_stair( "" );
-	resp=response(QSP_ARG "response");
+	resp = collect_response("response");
 
 	if( stcp == NULL ) return;
 
-	save_response(QSP_ARG resp,stcp);
+	save_response(resp,stcp);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(staircases_menu,s,f,h)

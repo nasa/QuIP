@@ -82,17 +82,6 @@ static void null_init(void)
 
 static void null_mod(QSP_ARG_DECL Trial_Class * tc_p){}
 
-static COMMAND_FUNC( modify );
-static COMMAND_FUNC( do_trial );
-static COMMAND_FUNC( demo );
-static COMMAND_FUNC( set_nstairs );
-static COMMAND_FUNC( set_dribble_flag );
-static COMMAND_FUNC( setyesno );
-static COMMAND_FUNC( use_keyboard );
-
-//static int present_stim(QSP_ARG_DECL int c,int v,Staircase *stc_p);
-static void do_rspinit(void);
-
 #define INSIST_XVALS						\
 								\
 	if( CLASS_XVAL_OBJ(tc_p) == NULL ){			\
@@ -137,7 +126,9 @@ static int insure_exp_is_ready(SINGLE_QSP_ARG_DECL)	/* make sure there is someth
 	return(0);
 }
 
-static int present_stim(QSP_ARG_DECL Trial_Class *tc_p,int v,Staircase *stc_p)
+#define present_stim(tc_p,v,stc_p) _present_stim(QSP_ARG tc_p,v,stc_p)
+
+static int _present_stim(QSP_ARG_DECL Trial_Class *tc_p,int v,Staircase *stc_p)
 {
 	int rsp=REDO;
 
@@ -173,11 +164,11 @@ static COMMAND_FUNC( do_trial )	/** present a stimulus, tally response */
 
 	if( tc_p == NULL ) return;
 
-	rsp=present_stim(QSP_ARG tc_p,v,NULL);
+	rsp=present_stim(tc_p,v,NULL);
 
 	INIT_DUMMY_STAIR(st1)
 
-	save_response(QSP_ARG  rsp,&st1);
+	save_response(rsp,&st1);
 }
 
 #define IS_VALID_RESPONSE(r)	r == REDO || r == ABORT || r == YES || r == NO
@@ -193,7 +184,7 @@ static COMMAND_FUNC( demo )		/** demo a stimulus for this experiment */
 
 	if( tc_p == NULL ) return;
 
-	r=present_stim(QSP_ARG tc_p,v,NULL);
+	r=present_stim(tc_p,v,NULL);
 	assert( IS_VALID_RESPONSE(r) );
 }
 
@@ -211,7 +202,7 @@ static COMMAND_FUNC( show_stim )	/** demo a stimulus but don't get response */
 	INSIST_XVALS
 
 	get_response_from_keyboard=0;
-	r=present_stim(QSP_ARG tc_p,v,NULL);
+	r=present_stim(tc_p,v,NULL);
 	assert( IS_VALID_RESPONSE(r) );
 
 	get_response_from_keyboard=1;
@@ -239,7 +230,9 @@ struct param expptbl[]={
 
 /* make the staircases specified by the parameter table */
 
-static void make_staircases(SINGLE_QSP_ARG_DECL)
+#define make_staircases() _make_staircases(SINGLE_QSP_ARG)
+
+static void _make_staircases(SINGLE_QSP_ARG_DECL)
 {
 	int j;
 	List *lp;
@@ -254,43 +247,43 @@ static void make_staircases(SINGLE_QSP_ARG_DECL)
 		tc_p=(Trial_Class *)np->n_data;
 		np=np->n_next;
 
-		/* makestair( type, class, mininc, correct rsp, inc rsp ); */
+		/* make_staircase( type, class, mininc, correct rsp, inc rsp ); */
 		for( j=0;j<n_updn;j++)
-			makestair( QSP_ARG  UP_DOWN, tc_p, 1, YES, YES );
+			make_staircase( UP_DOWN, tc_p, 1, YES, YES );
 		for( j=0;j<n_dnup;j++)
-			makestair( QSP_ARG  UP_DOWN, tc_p, -1, YES, YES );
+			make_staircase( UP_DOWN, tc_p, -1, YES, YES );
 		for(j=0;j<n_2up;j++)
 			/*
 			 * 2-up increases val after 2 YES's,
 			 * decreases val after 1 NO
 			 * seeks 71% YES, YES decreasing with val
 			 */
-			makestair( QSP_ARG  TWO_TO_ONE, tc_p, 1, YES, YES );
+			make_staircase( TWO_TO_ONE, tc_p, 1, YES, YES );
 		for(j=0;j<n_2dn;j++)
 			/*
 			 * 2-down decreases val after 2 NO's,
 			 * increases val after 1 YES
 			 * Seeks 71% NO, NO increasing with val
 			 */
-			makestair( QSP_ARG  TWO_TO_ONE, tc_p, -1, YES, NO );
+			make_staircase( TWO_TO_ONE, tc_p, -1, YES, NO );
 		for(j=0;j<n_2iup;j++)
 			/*
 			 * 2-inverted-up decreases val after 2 YES's,
 			 * increases val after 1 NO
 			 * Seeks 71% YES, YES increasing with val
 			 */
-			makestair( QSP_ARG  TWO_TO_ONE, tc_p, -1, YES, YES );
+			make_staircase( TWO_TO_ONE, tc_p, -1, YES, YES );
 		for(j=0;j<n_2idn;j++)
 			/*
 			 * 2-inverted-down increases val after 2 NO's,
 			 * decreases val after 1 YES
 			 * Seeks 71% NO, NO decreasing with val
 			 */
-			makestair( QSP_ARG  TWO_TO_ONE, tc_p, 1, YES, NO );
+			make_staircase( TWO_TO_ONE, tc_p, 1, YES, NO );
 		for(j=0;j<n_3up;j++)
-			makestair( QSP_ARG  THREE_TO_ONE, tc_p, 1, YES, YES );
+			make_staircase( THREE_TO_ONE, tc_p, 1, YES, YES );
 		for(j=0;j<n_3dn;j++)
-			makestair( QSP_ARG  THREE_TO_ONE, tc_p, -1, YES, NO );
+			make_staircase( THREE_TO_ONE, tc_p, -1, YES, NO );
 	}
 }
 
@@ -318,7 +311,7 @@ static COMMAND_FUNC( set_nstairs )	/** set up experiment */
 		qs_do_cmd(THIS_QSP);
 
 	new_exp(SINGLE_QSP_ARG);
-	make_staircases(SINGLE_QSP_ARG);
+	make_staircases();
 }
 
 // was addcnd
@@ -337,6 +330,17 @@ static COMMAND_FUNC( do_new_class )
 	SET_CLASS_CMD(tc_p,savestr(cmd));
 }
 
+static void set_class_xval_obj( Trial_Class *tc_p, Data_Obj *dp )
+{
+	if( CLASS_XVAL_OBJ(tc_p) != NULL )
+		remove_reference(CLASS_XVAL_OBJ(tc_p));
+
+	SET_CLASS_XVAL_OBJ(tc_p,dp);
+
+	if( dp != NULL )
+		add_reference(dp);
+}
+
 Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
 {
 	Trial_Class *tc_p;
@@ -353,14 +357,16 @@ Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
 	tc_p = new_trial_class(name );
 	SET_CLASS_INDEX(tc_p,class_index++);
 	SET_CLASS_N_STAIRS(tc_p,0);
-	if( global_xval_dp != NULL )
-		SET_CLASS_XVAL_OBJ(tc_p,global_xval_dp);
+
+	SET_CLASS_XVAL_OBJ(tc_p,NULL);			// so we don't un-reference garbage
+	set_class_xval_obj(tc_p,global_xval_dp);	// may be null
 
 	SET_CLASS_SUMM_DTBL(tc_p,new_summary_data_tbl(CLASS_XVAL_OBJ(tc_p)));
 	SET_SUMM_DTBL_CLASS( CLASS_SUMM_DTBL(tc_p), tc_p );
 
 	SET_CLASS_SEQ_DTBL(tc_p,new_sequential_data_tbl());
 	SET_SEQ_DTBL_CLASS( CLASS_SEQ_DTBL(tc_p), tc_p );
+
 
 	SET_CLASS_CMD(tc_p, NULL);
 
@@ -369,7 +375,12 @@ Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
 	return tc_p;
 }
 
-static void setup_files(SINGLE_QSP_ARG_DECL)
+// In the old days we only saved to files...
+// Now we want to be able to import other data for fitting???
+
+#define setup_files() _setup_files(SINGLE_QSP_ARG)
+
+static void _setup_files(SINGLE_QSP_ARG_DECL)
 {
 	FILE *fp;
 
@@ -388,21 +399,19 @@ static void setup_files(SINGLE_QSP_ARG_DECL)
 	if( IS_DRIBBLING ){
 		init_dribble_file(SINGLE_QSP_ARG);
 	} else {
-		while( (fp=try_nice(nameof("summary data file"),"w"))
-			== NULL ) ;
+		while( (fp=try_nice(nameof("summary data file"),"w")) == NULL )
+			;
 		set_summary_file(fp);
 	}
-advise("setup_files DONE");
 }
 
 static COMMAND_FUNC( do_run_exp )
 {
 	if( insure_exp_is_ready(SINGLE_QSP_ARG) == -1 ) return;
 
-	setup_files(SINGLE_QSP_ARG);
+	setup_files();
 
-fprintf(stderr,"calling _run_stairs %d %d\n",n_prel,n_data);
-	_run_stairs(QSP_ARG  n_prel,n_data);
+	run_stairs(n_prel,n_data);
 }
 
 COMMAND_FUNC( do_delete_all_classes )
@@ -418,7 +427,7 @@ COMMAND_FUNC( do_delete_all_classes )
 	while(np!=NULL){
 		tc_p=(Trial_Class *)np->n_data;
 		next = np->n_next;	/* del_class messes with the nodes... */
-		del_class(QSP_ARG  tc_p);
+		del_class(tc_p);
 		np=next;
 	}
 	assign_reserved_var( "n_classes" , "0" );
@@ -427,7 +436,7 @@ COMMAND_FUNC( do_delete_all_classes )
 
 static COMMAND_FUNC( set_dribble_flag )
 {
-	if( ASKIF("Record trial-by-trial data") )
+	if( askif("Record trial-by-trial data") )
 		SET_EXP_FLAG(DRIBBLING);
 	else
 		CLEAR_EXP_FLAG(DRIBBLING);
@@ -440,14 +449,14 @@ static COMMAND_FUNC( set_dribble_flag )
 
 COMMAND_FUNC( do_exp_init )
 {
-	setup_files(SINGLE_QSP_ARG);
-	_run_init(SINGLE_QSP_ARG);
+	setup_files();
+	run_init();
 	set_recording( 1 );
 }
 
 COMMAND_FUNC( set_2afc )
 {
-	if( ASKIF( "2AFC experiment" ) ){
+	if( askif( "2AFC experiment" ) ){
 		advise("Setting 2afc flag");
 		advise("Inverting response based on $coin");
 		is_fc=1;
@@ -476,6 +485,8 @@ static COMMAND_FUNC( do_feedback )
 
 }
 
+// BUG!?!?  - this creates a class, not a staircase???
+
 static COMMAND_FUNC( do_creat_stc )
 {
 	Trial_Class *tc_p;
@@ -483,7 +494,7 @@ static COMMAND_FUNC( do_creat_stc )
 
 	c= (short) how_many("stimulus class");
 
-	tc_p = new_class_for_index(QSP_ARG  c);
+	tc_p = new_class_for_index(c);
 
 	assert( tc_p != NULL );
 }
@@ -511,26 +522,6 @@ static COMMAND_FUNC( do_get_value )
 
 	sprintf(valstr,"%g",*xv_p);
 	assign_var(s,valstr);
-}
-
-#define ADD_CMD(s,f,h)	ADD_COMMAND(staircases_menu,s,f,h)
-
-MENU_BEGIN(staircases)
-ADD_CMD( create,	do_creat_stc,	create a staircase )
-ADD_CMD( edit,		staircase_menu,	edit individual staircases )
-ADD_CMD( get_value,	do_get_value,	get current level of a staircase )
-ADD_CMD( xvals,		xval_menu,	x value submenu )
-ADD_CMD( use_keyboard,	use_keyboard,	enable/disable use of keyboard for responses )
-MENU_END(staircases)
-
-static COMMAND_FUNC( do_staircase_menu )
-{
-	if( !rsp_inited ){
-		do_rspinit();
-		rninit(SINGLE_QSP_ARG);
-		new_exp(SINGLE_QSP_ARG);
-	}
-	CHECK_AND_PUSH_MENU( staircases );
 }
 
 static COMMAND_FUNC( do_list_classes )
@@ -585,39 +576,6 @@ static COMMAND_FUNC( do_class_menu )
 	CHECK_AND_PUSH_MENU(class);
 }
 
-#undef ADD_CMD
-#define ADD_CMD(s,f,h)	ADD_COMMAND(experiment_menu,s,f,h)
-
-MENU_BEGIN(experiment)
-ADD_CMD( classes,	do_class_menu,	stimulus class submenu )
-ADD_CMD( modify,	modify,		modify parameters )
-ADD_CMD( test,		demo,		test a condition )
-ADD_CMD( test_stim,	show_stim,	test with scripted response )
-ADD_CMD( init,		do_exp_init,	start new experiment )
-ADD_CMD( present,	do_trial,	present a stimulus & save data )
-ADD_CMD( finish,	do_save_data,	close data files )
-ADD_CMD( staircases,	set_nstairs,	set up staircases )
-ADD_CMD( staircase_menu,	do_staircase_menu,	staircase submenu )
-ADD_CMD( run,		do_run_exp,	run experiment )
-ADD_CMD( 2AFC,		set_2afc,	set forced choice flag )
-ADD_CMD( keys,		setyesno,	select response keys )
-ADD_CMD( xvals,		xval_menu,	x value submenu )
-ADD_CMD( dribble,	set_dribble_flag,	set long/short data file format )
-ADD_CMD( edit_stairs,	staircase_menu,	edit individual staircases )
-ADD_CMD( lookit,	lookmenu,	data analysis submenu )
-ADD_CMD( feedback,	do_feedback,	specify feedback strings )
-MENU_END(experiment)
-
-COMMAND_FUNC( do_exp_menu )
-{
-	if( !rsp_inited ){
-		do_rspinit();
-		rninit(SINGLE_QSP_ARG);
-		new_exp(SINGLE_QSP_ARG);
-	}
-	CHECK_AND_PUSH_MENU(experiment);
-}
-
 static void set_rsp_word(const char **sptr,const char *s,const char *default_str)
 {
 	/* free the old string only if different from the default */
@@ -631,7 +589,7 @@ static void set_rsp_word(const char **sptr,const char *s,const char *default_str
 
 static COMMAND_FUNC( use_keyboard )
 {
-	get_response_from_keyboard = ASKIF("use keyboard for responses");
+	get_response_from_keyboard = askif("use keyboard for responses");
 }
 
 /* BUG
@@ -642,9 +600,9 @@ static COMMAND_FUNC( use_keyboard )
 
 static COMMAND_FUNC( setyesno )
 {
-	get_rsp_word(QSP_ARG  &response_list[YES_INDEX],RSP_YES);
-	get_rsp_word(QSP_ARG  &response_list[NO_INDEX],RSP_NO);
-	get_rsp_word(QSP_ARG  &response_list[REDO_INDEX],RSP_REDO);
+	get_rsp_word(&response_list[YES_INDEX],RSP_YES);
+	get_rsp_word(&response_list[NO_INDEX],RSP_NO);
+	get_rsp_word(&response_list[REDO_INDEX],RSP_REDO);
 
 	/* now check that everything is legal! */
 
@@ -679,7 +637,7 @@ bad:
 	return;
 }
 
-void get_rsp_word(QSP_ARG_DECL const char **sptr,const char *def_rsp)
+void _get_rsp_word(QSP_ARG_DECL const char **sptr,const char *def_rsp)
 {
 	char buf[LLEN];
 	const char *s;
@@ -714,7 +672,7 @@ static void init_responses(char *target_prompt_string,const char *question_strin
 	}
 }
 
-int response(QSP_ARG_DECL  const char *question_string)
+int _collect_response(QSP_ARG_DECL  const char *question_string)
 {
 	int n;
 	char rpmtstr[128];	// BUG? possible buffer overflow?
@@ -749,5 +707,60 @@ int response(QSP_ARG_DECL  const char *question_string)
 	}
 	/* should never be reached */
 	return(ABORT);
+}
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(staircases_menu,s,f,h)
+
+MENU_BEGIN(staircases)
+ADD_CMD( create,	do_creat_stc,	create a staircase )
+ADD_CMD( edit,		staircase_menu,	edit individual staircases )
+ADD_CMD( get_value,	do_get_value,	get current level of a staircase )
+ADD_CMD( xvals,		xval_menu,	x value submenu )
+ADD_CMD( use_keyboard,	use_keyboard,	enable/disable use of keyboard for responses )
+MENU_END(staircases)
+
+static COMMAND_FUNC( do_staircase_menu )
+{
+	if( !rsp_inited ){
+		do_rspinit();
+		rninit(SINGLE_QSP_ARG);
+		new_exp(SINGLE_QSP_ARG);
+	}
+	CHECK_AND_PUSH_MENU( staircases );
+}
+
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(experiment_menu,s,f,h)
+
+MENU_BEGIN(experiment)
+ADD_CMD( classes,	do_class_menu,	stimulus class submenu )
+ADD_CMD( modify,	modify,		modify parameters )
+ADD_CMD( test,		demo,		test a condition )
+ADD_CMD( test_stim,	show_stim,	test with scripted response )
+ADD_CMD( init,		do_exp_init,	start new experiment )
+ADD_CMD( present,	do_trial,	present a stimulus & save data )
+ADD_CMD( finish,	do_save_data,	close data files )
+ADD_CMD( staircases,	set_nstairs,	set up staircases )
+ADD_CMD( staircase_menu,	do_staircase_menu,	staircase submenu )
+ADD_CMD( run,		do_run_exp,	run experiment )
+ADD_CMD( 2AFC,		set_2afc,	set forced choice flag )
+ADD_CMD( keys,		setyesno,	select response keys )
+ADD_CMD( xvals,		xval_menu,	x value submenu )
+ADD_CMD( dribble,	set_dribble_flag,	set long/short data file format )
+ADD_CMD( edit_stairs,	staircase_menu,	edit individual staircases )
+ADD_CMD( lookit,	lookmenu,	data analysis submenu )
+ADD_CMD( feedback,	do_feedback,	specify feedback strings )
+MENU_END(experiment)
+
+COMMAND_FUNC( do_exp_menu )
+{
+	if( !rsp_inited ){
+		do_rspinit();
+		rninit(SINGLE_QSP_ARG);
+		new_exp(SINGLE_QSP_ARG);
+	}
+	CHECK_AND_PUSH_MENU(experiment);
 }
 

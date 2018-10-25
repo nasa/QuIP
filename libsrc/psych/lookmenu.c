@@ -26,7 +26,7 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 	/* clear old classes */
 	do_delete_all_classes(SINGLE_QSP_ARG);
 
-	if( read_exp_data(QSP_ARG  fp) != 0 ){
+	if( read_exp_data(fp) != 0 ){
 		fclose(fp);
 		sprintf(ERROR_STRING,"do_read_data:  error return from read_exp_data, file %s",filename);
 		WARN(ERROR_STRING);
@@ -57,7 +57,7 @@ static COMMAND_FUNC( prquic )
 
 	fp=try_nice( nameof("quic file"), "w");
 	tcp = pick_trial_class("");
-	in_db = ASKIF("transform x values to decibels");
+	in_db = askif("transform x values to decibels");
 
 	if( fp == NULL || tcp == NULL ) return;
 
@@ -89,7 +89,9 @@ static COMMAND_FUNC( do_print_seq )
 	print_class_sequence(tcp);
 }
 
-static void pntcurve(QSP_ARG_DECL  FILE *fp, Trial_Class * tcp)
+#define print_psychometric_pts(fp, tcp) _print_psychometric_pts(QSP_ARG  fp, tcp)
+
+static void _print_psychometric_pts(QSP_ARG_DECL  FILE *fp, Trial_Class * tcp)
 {
         int j;
         Summary_Data_Tbl *dtp;
@@ -117,7 +119,7 @@ static COMMAND_FUNC( pntgrph )
 	fp=try_nice( nameof("output file"), "w" );
 	if( fp == NULL || tcp == NULL ) return;
 
-	pntcurve(QSP_ARG  fp,tcp);
+	print_psychometric_pts(fp,tcp);
 }
 
 
@@ -129,8 +131,8 @@ static COMMAND_FUNC( terse_weibull_fit )
 
 	if( tcp == NULL ) return;
 
-	w_analyse(QSP_ARG  tcp);
-	w_tersout(QSP_ARG  tcp);
+	w_analyse(tcp);
+	w_tersout(tcp);
 }
 
 static COMMAND_FUNC( do_terse_ogive_fit )
@@ -141,8 +143,8 @@ static COMMAND_FUNC( do_terse_ogive_fit )
 
 	if( tcp == NULL ) return;
 
-	ogive_fit(QSP_ARG  tcp);
-	tersout(QSP_ARG  tcp);
+	ogive_fit(tcp);
+	tersout(tcp);
 }
 
 static COMMAND_FUNC( weibull_fit )
@@ -153,8 +155,8 @@ static COMMAND_FUNC( weibull_fit )
 
 	if( tcp == NULL ) return;
 
-	w_analyse(QSP_ARG  tcp);
-	weibull_out(QSP_ARG  tcp);
+	w_analyse(tcp);
+	weibull_out(tcp);
 }
 
 static COMMAND_FUNC( do_ogive_fit )
@@ -165,15 +167,15 @@ static COMMAND_FUNC( do_ogive_fit )
 
 	if( tcp == NULL ) return;
 
-	ogive_fit(QSP_ARG  tcp);
-	longout(QSP_ARG  tcp);
+	ogive_fit(tcp);
+	longout(tcp);
 }
 
-static COMMAND_FUNC( setfc ) { set_fcflag( ASKIF("do analysis relative to 50% chance") ); }
+static COMMAND_FUNC( setfc ) { set_fcflag( askif("do analysis relative to 50% chance") ); }
 
 static COMMAND_FUNC( do_set_chance_rate )
 {
-	set_chance_rate( HOW_MUCH("Probability of correct response due to guessing") );
+	set_chance_rate( how_much("Probability of correct response due to guessing") );
 }
 
 static COMMAND_FUNC( do_split )
@@ -183,7 +185,7 @@ static COMMAND_FUNC( do_split )
 
 	tcp = pick_trial_class("");
 
-	wu = ASKIF("retain upper half");
+	wu = askif("retain upper half");
 
 	if( tcp == NULL ) return;
 
@@ -210,7 +212,7 @@ static COMMAND_FUNC( seter )
 {
 	double er;
 
-	er=HOW_MUCH("finger error rate");
+	er=how_much("finger error rate");
 	w_set_error_rate(er);
 }
 

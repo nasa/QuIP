@@ -21,6 +21,12 @@ extern void check_contiguity(Data_Obj *);
 extern int _is_contiguous(QSP_ARG_DECL  Data_Obj *);
 #define is_contiguous(dp) _is_contiguous(QSP_ARG  dp)
 
+
+/* dobj_util.c */
+
+extern void add_reference(Data_Obj *dp);
+extern void remove_reference(Data_Obj *dp);
+
 /* data_obj.c */
 
 extern void		_init_precisions(SINGLE_QSP_ARG_DECL);

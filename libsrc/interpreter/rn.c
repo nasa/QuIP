@@ -181,7 +181,7 @@ void rninit(SINGLE_QSP_ARG_DECL)        /** randomly seed the generator */
  * We start at the end and count down.
  */
 
-void scramble(QSP_ARG_DECL  SCRAMBLE_TYPE* buf,u_long n)
+void _scramble(QSP_ARG_DECL  SCRAMBLE_TYPE* buf,u_long n)
      /* buf = buffer of long words to be scrambled */
      /* n = number of words to scramble */
 {
@@ -201,7 +201,7 @@ void scramble(QSP_ARG_DECL  SCRAMBLE_TYPE* buf,u_long n)
  * Initialize the contents of the buffer, then scramble
  */
 
-void permute(QSP_ARG_DECL  SCRAMBLE_TYPE *buf,int n)
+void _permute(QSP_ARG_DECL  SCRAMBLE_TYPE *buf,int n)
      /* buf =  permutation buffer */
      /* n = number to scramble */
 {
@@ -213,7 +213,7 @@ void permute(QSP_ARG_DECL  SCRAMBLE_TYPE *buf,int n)
 		return;
 	}
         for(i=0;i<n;i++) buf[i]=i;
-        scramble(QSP_ARG  buf,n);
+        scramble(buf,n);
 }
 
 

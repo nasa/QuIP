@@ -232,41 +232,58 @@ ITEM_INTERFACE_PROTOTYPES(Staircase,stair)
 
 
 extern Summary_Data_Tbl *_new_summary_data_tbl(QSP_ARG_DECL Data_Obj *dp);
+extern void rls_summ_dtbl(Summary_Data_Tbl *sdt_p);
 extern  Sequential_Data_Tbl *_new_sequential_data_tbl(SINGLE_QSP_ARG_DECL);
 #define new_summary_data_tbl(dp) _new_summary_data_tbl(QSP_ARG  dp)
 #define new_sequential_data_tbl() _new_sequential_data_tbl(SINGLE_QSP_ARG)
 
 extern void clear_summary_data( Summary_Data_Tbl *sdt_p );
-extern Trial_Class *new_class_for_index(QSP_ARG_DECL  int index);
-extern void save_response(QSP_ARG_DECL  int rsp,Staircase *stair);
+extern Trial_Class *_new_class_for_index(QSP_ARG_DECL  int index);
+#define new_class_for_index(index) _new_class_for_index(QSP_ARG  index)
+
+extern void _save_response(QSP_ARG_DECL  int rsp,Staircase *st_p);
+#define save_response(rsp,st_p) _save_response(QSP_ARG  rsp,st_p)
+
 extern void _run_init(SINGLE_QSP_ARG_DECL);
+#define run_init() _run_init(SINGLE_QSP_ARG)
+
 extern void new_exp(SINGLE_QSP_ARG_DECL);
 extern void clrit(void);
 extern void set_recording(int flag);
-extern int makestair( QSP_ARG_DECL  int st, Trial_Class *tc_p, int mi, int cr, int ir );
+extern int _make_staircase( QSP_ARG_DECL  int st, Trial_Class *tc_p, int mi, int cr, int ir );
+#define make_staircase( st, tc_p, mi, cr, ir ) _make_staircase( QSP_ARG  st, tc_p, mi, cr, ir )
+
 extern COMMAND_FUNC( do_save_data );
 #ifdef CATCH_SIGS
 extern void icatch(void);
 #endif /* CATCH_SIGS */
 extern void _run_stairs(QSP_ARG_DECL  int np,int nt);
+#define run_stairs(np,nt) _run_stairs(QSP_ARG  np,nt)
+
 extern void set_dribble_file(FILE *fp);
 extern void set_summary_file(FILE *fp);
-extern void add_stair(QSP_ARG_DECL  int type,Trial_Class *tc_p);
+extern void _add_stair(QSP_ARG_DECL  int type,Trial_Class *tc_p);
+#define add_stair(type,tc_p) _add_stair(QSP_ARG  type,tc_p)
+
 //extern void list_stairs(void);
 extern COMMAND_FUNC( del_all_stairs );
 extern void si_init(void);
 
-extern Trial_Class *find_class_from_index(QSP_ARG_DECL  int);
-extern Staircase *find_stair_from_index(QSP_ARG_DECL  int index);
-extern void del_class(QSP_ARG_DECL  Trial_Class *tc_p);
+extern Trial_Class *_find_class_from_index(QSP_ARG_DECL  int);
+#define find_class_from_index(idx) _find_class_from_index(QSP_ARG  idx)
+
+extern Staircase *_find_stair_from_index(QSP_ARG_DECL  int index);
+#define find_stair_from_index(index) _find_stair_from_index(QSP_ARG  index)
+
 extern Trial_Class *new_class(SINGLE_QSP_ARG_DECL);
+extern void _del_class(QSP_ARG_DECL  Trial_Class *tc_p);
+#define del_class(tc_p) _del_class(QSP_ARG  tc_p)
 
 /* exp.c */
 extern Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name);
 #define create_named_class(name) _create_named_class(QSP_ARG  name)
 extern COMMAND_FUNC( do_delete_all_classes );
 extern void nullrt(void);
-extern void run_stairs(void);
 //extern void make_staircases(SINGLE_QSP_ARG_DECL);
 extern COMMAND_FUNC( do_exp_init );
 
@@ -275,21 +292,31 @@ extern void exprmnt(void);
 #endif /* FOOBAR */
 
 extern COMMAND_FUNC( do_exp_menu );
-extern void get_rsp_word(QSP_ARG_DECL const char **sptr,const char *def_rsp);
-extern int response(QSP_ARG_DECL  const char *s);
+extern void _get_rsp_word(QSP_ARG_DECL const char **sptr,const char *def_rsp);
+#define get_rsp_word(sptr,def_rsp) _get_rsp_word(QSP_ARG sptr,def_rsp)
+
+extern int _collect_response(QSP_ARG_DECL  const char *s);
+#define collect_response(s) _collect_response(QSP_ARG  s)
+
 extern void init_rps(char *target,const char *s);
 
 /* stc_edit.c */
 extern COMMAND_FUNC( staircase_menu );
 
 /* mlfit.c */
-extern void ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac);
-extern void longout(QSP_ARG_DECL  Trial_Class *);
-extern void tersout(QSP_ARG_DECL  Trial_Class *);
+extern void _ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac);
+#define ml_fit(dp,ntrac) _ml_fit(QSP_ARG  dp,ntrac)
+extern void _longout(QSP_ARG_DECL  Trial_Class *);
+#define longout(tc_p) _longout(QSP_ARG  tc_p)
+extern void _tersout(QSP_ARG_DECL  Trial_Class *);
+#define tersout(tc_p) _tersout(QSP_ARG  tc_p)
+
 extern COMMAND_FUNC( constrain_slope );
 extern void set_fcflag(int flg);
 extern void set_chance_rate(double chance_rate);
-extern void ogive_fit( QSP_ARG_DECL  Trial_Class *tc_p );
+extern void _ogive_fit( QSP_ARG_DECL  Trial_Class *tc_p );
+#define ogive_fit(tc_p) _ogive_fit(QSP_ARG  tc_p )
+
 #ifdef QUIK
 extern void pntquic(FILE *fp,Trial_Class *tc_p,int in_db);
 #endif /* QUIK */
@@ -321,13 +348,10 @@ extern void dribble(Staircase *st_p, int rsp);
 extern void close_dribble(void);
 extern void init_dribble_file(SINGLE_QSP_ARG_DECL);
 extern void mark_drib(FILE *fp);
-extern void write_exp_data(QSP_ARG_DECL  FILE *fp);
-//extern void wtclass(Trial_Class *tc_p,FILE *fp);
-extern int  read_exp_data(QSP_ARG_DECL  FILE *fp);
-//extern int  rd_one_summ(QSP_ARG_DECL  FILE *fp);
-//extern void wt_top(QSP_ARG_DECL  FILE *fp);
-extern void setup_classes(QSP_ARG_DECL  int n);
-//extern void wt_dribble(FILE *fp,Trial_Class *tc_p,int index,int val,int rsp,int crct);
+extern void _write_exp_data(QSP_ARG_DECL  FILE *fp);
+extern int  _read_exp_data(QSP_ARG_DECL  FILE *fp);
+#define write_exp_data(fp) _write_exp_data(QSP_ARG  fp)
+#define read_exp_data(fp) _read_exp_data(QSP_ARG  fp)
 
 /* clrdat.c */
 
@@ -355,9 +379,12 @@ extern COMMAND_FUNC( lookmenu );
 
 /* weibull.c */
 
-extern void w_analyse( QSP_ARG_DECL  Trial_Class * );
-extern void w_tersout(QSP_ARG_DECL  Trial_Class * );
-extern void weibull_out(QSP_ARG_DECL  Trial_Class * );
+extern void _w_analyse( QSP_ARG_DECL  Trial_Class * );
+extern void _w_tersout(QSP_ARG_DECL  Trial_Class * );
+extern void _weibull_out(QSP_ARG_DECL  Trial_Class * );
+#define w_analyse(tc_p) _w_analyse(QSP_ARG  tc_p )
+#define w_tersout(tc_p) _w_tersout(QSP_ARG  tc_p )
+#define weibull_out(tc_p) _weibull_out(QSP_ARG  tc_p )
 
 extern void _w_set_error_rate(QSP_ARG_DECL  double er);
 #define w_set_error_rate(er) _w_set_error_rate(QSP_ARG  er)

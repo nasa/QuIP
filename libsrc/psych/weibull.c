@@ -138,13 +138,13 @@ static void weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac)		/** maxim
 		tmp_param.minv = *last_xv_p;
 	}
 	if( tmp_param.minv < 0.0 ){
-		WARN("wiebull fit will blow up for negative x values");
+		warn("wiebull fit will blow up for negative x values");
 		return;
 	}
 	tmp_param.delta = (float) fabs( *mid_xv_p - *mid2_xv_p );
 	tmp_param.mindel = (float) 1.0e-30;
 
-	alpha_param_p = add_opt_param(QSP_ARG  &tmp_param);
+	alpha_param_p = add_opt_param(&tmp_param);
 
 
 	tmp_param.op_name = BETA_NAME;
@@ -154,7 +154,7 @@ static void weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac)		/** maxim
 	tmp_param.delta = 0.5;
 	tmp_param.mindel = (float) 1.0e-30;
 
-	beta_param_p = add_opt_param(QSP_ARG  &tmp_param);
+	beta_param_p = add_opt_param(&tmp_param);
 
 	if( fc_flag ){
 		w_gamma = 0.5;
@@ -163,7 +163,7 @@ static void weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac)		/** maxim
 	}
 
 
-	optimize(QSP_ARG  w_likelihood);
+	optimize(w_likelihood);
 
 	alpha_param_p=get_opt_param(ALPHA_NAME);
 	assert( alpha_param_p != NULL );
@@ -180,14 +180,14 @@ static void weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac)		/** maxim
 	del_opt_param(alpha_param_p);
 }
 
-void w_analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */
+void _w_analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */
 {
 	int ntrac=(-1);
 
 	weibull_fit( QSP_ARG  CLASS_SUMM_DTBL(tcp), ntrac );
 }
 
-void weibull_out(QSP_ARG_DECL  Trial_Class * tcp)			/** verbose analysis report */
+void _weibull_out(QSP_ARG_DECL  Trial_Class * tcp)			/** verbose analysis report */
 {
         sprintf(msg_str,"\nTrial_Class %s\n",CLASS_NAME(tcp));
 	prt_msg(msg_str);
@@ -199,7 +199,7 @@ void weibull_out(QSP_ARG_DECL  Trial_Class * tcp)			/** verbose analysis report 
 	/* BUG print out chi-square like statistic */
 }
 
-void w_tersout(QSP_ARG_DECL  Trial_Class * tcp)
+void _w_tersout(QSP_ARG_DECL  Trial_Class * tcp)
 {
 	sprintf(msg_str,"%s\t%f\t%f",CLASS_NAME(tcp),alpha,beta);
 	prt_msg(msg_str);

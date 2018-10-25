@@ -302,6 +302,19 @@ advise(ERROR_STRING);
 	// and set to null, but that is done in del_item
 }
 
+void add_reference(Data_Obj *dp)
+{
+	// BUG - this should be atomic for a multi-threaded environment!
+	SET_OBJ_REFCOUNT(dp, 1 + OBJ_REFCOUNT(dp) );
+}
+
+void remove_reference(Data_Obj *dp)
+{
+	assert(OBJ_REFCOUNT(dp)>0);
+	// BUG - this should be atomic for a multi-threaded environment!
+	SET_OBJ_REFCOUNT(dp, OBJ_REFCOUNT(dp) - 1 );
+}
+
 
 /* Mindim and maxdim are used to determine which dimensions should be used for
  * indexing.  Here, we use mach_dim instead of type_dim, so that we can index

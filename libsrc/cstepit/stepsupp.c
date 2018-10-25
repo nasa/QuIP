@@ -51,7 +51,7 @@ void delete_opt_params(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-Opt_Param * add_opt_param(QSP_ARG_DECL  Opt_Param *opp)
+Opt_Param * _add_opt_param(QSP_ARG_DECL  Opt_Param *opp)
 {
 	Opt_Param *new_opp;
 
@@ -66,13 +66,13 @@ Opt_Param * add_opt_param(QSP_ARG_DECL  Opt_Param *opp)
 	return(new_opp);
 }
 
-void optimize(QSP_ARG_DECL  float (*opt_func)(SINGLE_QSP_ARG_DECL))
+void _optimize(QSP_ARG_DECL  float (*opt_func)(SINGLE_QSP_ARG_DECL))
 {
 	insure_opt_pkg(SINGLE_QSP_ARG);
 	(*curr_opt_pkg->pkg_c_func)(QSP_ARG  opt_func);
 }
 
-float get_opt_param_value(QSP_ARG_DECL  const char *name)
+float _get_opt_param_value(QSP_ARG_DECL  const char *name)
 {
 	Opt_Param *opp;
 

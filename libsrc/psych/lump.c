@@ -37,8 +37,8 @@ COMMAND_FUNC( do_lump )
 {
 	Trial_Class *dst_tcp, *src_tcp;
 
-	dst_tcp=find_class_from_index( QSP_ARG   (int) HOW_MANY("destination class") );
-	src_tcp=find_class_from_index( QSP_ARG   (int) HOW_MANY("source class") );
+	dst_tcp = find_class_from_index( (int) how_many("destination class") );
+	src_tcp = find_class_from_index( (int) how_many("source class") );
 
 	if( dst_tcp == NULL || src_tcp == NULL )
 		return;

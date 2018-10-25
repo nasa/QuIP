@@ -153,13 +153,14 @@ static COMMAND_FUNC( do_import_xvals )
 		return;
 	}
 	global_xval_dp = dp;
+fprintf(stderr,"do_import_xvals:  global_xval_dp at 0x%lx %s\n",(long)dp,OBJ_NAME(dp));
 }
 
 static COMMAND_FUNC( do_set_nxvals )
 {
 	int n;
 
-	n = (int) HOW_MANY("number of x values");
+	n = (int) how_many("number of x values");
 	if( n <= 0 || n > MAX_X_VALUES ){
 		sprintf(ERROR_STRING,
 			"Number of x values must be between 0 and %d",MAX_X_VALUES);
@@ -173,8 +174,8 @@ static COMMAND_FUNC( do_set_nxvals )
 
 static COMMAND_FUNC( do_set_range )
 {
-	xval_1 = (int) HOW_MUCH("zeroeth value");
-	xval_n = (int) HOW_MUCH("last value");
+	xval_1 = (int) how_much("zeroeth value");
+	xval_n = (int) how_much("last value");
 
 	make_steps();
 }

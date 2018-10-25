@@ -78,25 +78,25 @@ int default_stim(QSP_ARG_DECL  Trial_Class *tc_p,int val,Staircase *stc_p)
 	chew_text(CLASS_CMD(tc_p), "(stimulus text)");
 	vp=var_of("response_string");
 	if( vp != NULL )
-		rsp=response(QSP_ARG  VAR_VALUE(vp));
+		rsp = collect_response(VAR_VALUE(vp));
 	else {
 		static int warned=0;
 
 		if( !warned ){
-			WARN("default_stim:  script variable $response_string not defined");
+			warn("default_stim:  script variable $response_string not defined");
 			warned=1;
 		}
-		rsp=response(QSP_ARG  "Enter response: ");
+		rsp = collect_response("Enter response: ");
 	}
 
 	if( is_fc ){
 		/* stimulus routine may have changed value of coin */
 		vp=var_of("coin");
 		if( vp == NULL )
-			WARN("variable \"coin\" not set!!!");
+			warn("variable \"coin\" not set!!!");
 		else {
 			if( sscanf(VAR_VALUE(vp),"%d",&coin) != 1 )
-			WARN("error scanning integer from variable \"coin\"\n");
+			warn("error scanning integer from variable \"coin\"\n");
 		}
 
 		/*

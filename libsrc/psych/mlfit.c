@@ -157,10 +157,10 @@ static float likelihood(SINGLE_QSP_ARG_DECL)	/* called from optimization routine
 	assert( global_xval_dp != NULL );
 	n_xvals = OBJ_COLS(global_xval_dp);
 
-	t_slope = get_opt_param_value(QSP_ARG  SLOPE_NAME);
+	t_slope = get_opt_param_value(SLOPE_NAME);
 
 	if( !fc_flag )
-		t_int = get_opt_param_value(QSP_ARG  INTERCEPT_NAME);
+		t_int = get_opt_param_value(INTERCEPT_NAME);
 	else
 		t_int = 0.0;
 
@@ -188,7 +188,7 @@ static float likelihood(SINGLE_QSP_ARG_DECL)	/* called from optimization routine
 	return(lh);
 }
 
-void ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int ntrac)		/** maximum liklihood fit */
+void _ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int ntrac)		/** maximum liklihood fit */
 {
 	Opt_Param tmp_param;
 	Opt_Param *slope_param_p=NULL;
@@ -213,7 +213,7 @@ void ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int ntrac)		/** maximum liklihoo
 	tmp_param.delta = (float) fabs(slope/10.0);
 	tmp_param.mindel = (float) 1.0e-30;
 
-	slope_param_p = add_opt_param(QSP_ARG  &tmp_param);
+	slope_param_p = add_opt_param(&tmp_param);
 
 
 
@@ -237,23 +237,23 @@ void ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int ntrac)		/** maximum liklihoo
 		tmp_param.mindel = (float) 1.0e-30;
 		tmp_param.maxv = 10000.0;
 		tmp_param.minv = -10000.0;
-		intercept_param_p = add_opt_param(QSP_ARG  &tmp_param);
+		intercept_param_p = add_opt_param(&tmp_param);
 	}
 
 
-	optimize(QSP_ARG  likelihood);
+	optimize(likelihood);
 
-	slope = get_opt_param_value(QSP_ARG  SLOPE_NAME);
+	slope = get_opt_param_value(SLOPE_NAME);
 	del_opt_param(slope_param_p);
 
 	if( !fc_flag ){
-		y_int = get_opt_param_value(QSP_ARG  INTERCEPT_NAME);
+		y_int = get_opt_param_value(INTERCEPT_NAME);
 		del_opt_param(intercept_param_p);
 	} else
 		y_int = 0.0;
 }
 
-void ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */
+void _ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */
 {
 	double _slope, _y_int;
 
@@ -265,7 +265,7 @@ void ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith
                 return;
         }
 
-	ml_fit( QSP_ARG  CLASS_SUMM_DTBL(tcp), /* ntrac */ -1 );
+	ml_fit( CLASS_SUMM_DTBL(tcp), /* ntrac */ -1 );
 
 	/* now we want to compute the correlation coefficient
 	 * for the final fit
@@ -292,7 +292,7 @@ void ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith
 	}
 }
 
-void longout(QSP_ARG_DECL  Trial_Class *tcp)	/** verbose analysis report */
+void _longout(QSP_ARG_DECL  Trial_Class *tcp)	/** verbose analysis report */
 {
         sprintf(msg_str,"\nTrial_Class %s\n",CLASS_NAME(tcp));
 	prt_msg(msg_str);
@@ -312,7 +312,7 @@ void longout(QSP_ARG_DECL  Trial_Class *tcp)	/** verbose analysis report */
 	}
 }
 
-void tersout(QSP_ARG_DECL  Trial_Class *tcp)
+void _tersout(QSP_ARG_DECL  Trial_Class *tcp)
 {
 	if( !fc_flag ) 
 		sprintf(msg_str,"%d\t%f\t%f\t%f", CLASS_INDEX(tcp),_r_, _x_,siqd);
@@ -356,7 +356,6 @@ void _split(QSP_ARG_DECL  Trial_Class * tcp,int wantupper)
 	int havzero=0;
 	int n_xvals;
 
-	//tcp=find_class_from_index(QSP_ARG  cl);
 	dtp=CLASS_SUMM_DTBL(tcp);
 	assert(dtp!=NULL);
 

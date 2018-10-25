@@ -73,11 +73,16 @@ ITEM_INTERFACE_PROTOTYPES(Opt_Param,opt_param)
 
 //extern void init_opt_params(void);
 extern void delete_opt_params(SINGLE_QSP_ARG_DECL);
-extern Opt_Param * add_opt_param(QSP_ARG_DECL  Opt_Param *);
-extern void optimize( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) );
+extern Opt_Param * _add_opt_param(QSP_ARG_DECL  Opt_Param *);
+#define add_opt_param(op_p) _add_opt_param(QSP_ARG  op_p)
+
+extern void _optimize( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) );
+#define optimize( func ) _optimize( QSP_ARG  func )
+
 //extern List *opt_param_list(SINGLE_QSP_ARG_DECL);
 extern void opt_param_info(QSP_ARG_DECL  Opt_Param *);
-extern float get_opt_param_value(QSP_ARG_DECL  const char *);
+extern float _get_opt_param_value(QSP_ARG_DECL  const char *);
+#define get_opt_param_value(s) _get_opt_param_value(QSP_ARG  s)
 
 
 /* pkg.c */
