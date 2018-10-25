@@ -252,15 +252,20 @@ static int iftrans(Staircase *st_p,int rsp)	/* see if this response warrants a t
 
 static void tally(Staircase *st_p,int rsp)			/* record new data */
 {
-fprintf(stderr,"noting response to class data table at 0x%lx\n",(long) CLASS_SUMM_DTBL(STAIR_CLASS(st_p)));
-	update_summary(CLASS_SUMM_DTBL(STAIR_CLASS(st_p)),st_p,rsp);
-fprintf(stderr,"noting response to staircase data table at 0x%lx\n",(long) STAIR_SUMM_DTBL(st_p));
-	update_summary(STAIR_SUMM_DTBL(st_p),st_p,rsp);
+	assert(st_p!=NULL);
+	assert(STAIR_CLASS(st_p)!=NULL);
 
-assert(CLASS_SEQ_DTBL(STAIR_CLASS(st_p))!=NULL);
+	assert(CLASS_SUMM_DTBL(STAIR_CLASS(st_p))!=NULL);
+	update_summary(CLASS_SUMM_DTBL(STAIR_CLASS(st_p)),st_p,rsp);
+	if( STAIR_SUMM_DTBL(st_p) != NULL ){
+		update_summary(STAIR_SUMM_DTBL(st_p),st_p,rsp);
+	}
+
+	assert(CLASS_SEQ_DTBL(STAIR_CLASS(st_p))!=NULL);
 	append_trial(CLASS_SEQ_DTBL(STAIR_CLASS(st_p)),st_p,rsp);
-assert(STAIR_SEQ_DTBL(st_p)!=NULL);
-	append_trial(STAIR_SEQ_DTBL(st_p),st_p,rsp);
+
+	if( STAIR_SEQ_DTBL(st_p) != NULL )
+		append_trial(STAIR_SEQ_DTBL(st_p),st_p,rsp);
 }
 
 

@@ -145,6 +145,8 @@ static int _present_stim(QSP_ARG_DECL Trial_Class *tc_p,int v,Staircase *stc_p)
 #define INIT_DUMMY_STAIR(st)			\
 	/* make a dummy staircase */		\
 	SET_STAIR_CLASS(&st, tc_p);		\
+	SET_STAIR_SUMM_DTBL(&st, NULL);		\
+	SET_STAIR_SEQ_DTBL(&st, NULL);		\
 	SET_STAIR_INDEX(&st, 0);		\
 	SET_STAIR_VAL(&st, v);			\
 	SET_STAIR_CRCT_RSP(&st, YES);		\
@@ -152,12 +154,12 @@ static int _present_stim(QSP_ARG_DECL Trial_Class *tc_p,int v,Staircase *stc_p)
 	SET_STAIR_TYPE(&st, UP_DOWN);		\
 	SET_STAIR_INC(&st, 1);
 
-static COMMAND_FUNC( do_trial )	/** present a stimulus, tally response */
+static COMMAND_FUNC( do_one_trial )	/** present a stimulus, tally response */
 {
 	short v;
 	int rsp;
-	Staircase st1;
 	Trial_Class *tc_p;
+	Staircase st1;
 
 	tc_p = pick_trial_class("");
 	v=(short)how_many("level");
@@ -168,17 +170,17 @@ static COMMAND_FUNC( do_trial )	/** present a stimulus, tally response */
 
 	INIT_DUMMY_STAIR(st1)
 
+	set_recording(1);
 	save_response(rsp,&st1);
 }
 
 #define IS_VALID_RESPONSE(r)	r == REDO || r == ABORT || r == YES || r == NO
 
-static COMMAND_FUNC( demo )		/** demo a stimulus for this experiment */
+static COMMAND_FUNC( do_test_stim )		/** demo a stimulus for this experiment */
 {
 	int v,r;
 	Trial_Class *tc_p;
 
-	//c=(int)how_many("stimulus class");
 	tc_p = pick_trial_class("");
 	v=(int)how_many("level");
 
@@ -186,26 +188,6 @@ static COMMAND_FUNC( demo )		/** demo a stimulus for this experiment */
 
 	r=present_stim(tc_p,v,NULL);
 	assert( IS_VALID_RESPONSE(r) );
-}
-
-static COMMAND_FUNC( show_stim )	/** demo a stimulus but don't get response */
-{
-	int v,r;
-	Trial_Class *tc_p;
-
-	//c=(int)how_many("stimulus class");
-	tc_p = pick_trial_class("");
-	v=(int)how_many("level");
-
-	if( tc_p == NULL ) return;
-
-	INSIST_XVALS
-
-	get_response_from_keyboard=0;
-	r=present_stim(tc_p,v,NULL);
-	assert( IS_VALID_RESPONSE(r) );
-
-	get_response_from_keyboard=1;
 }
 
 static int n_updn;	/** number of up-down stairs */
@@ -587,7 +569,7 @@ static void set_rsp_word(const char **sptr,const char *s,const char *default_str
 	else *sptr=default_str;
 }
 
-static COMMAND_FUNC( use_keyboard )
+static COMMAND_FUNC( do_use_kb )
 {
 	get_response_from_keyboard = askif("use keyboard for responses");
 }
@@ -717,7 +699,6 @@ ADD_CMD( create,	do_creat_stc,	create a staircase )
 ADD_CMD( edit,		staircase_menu,	edit individual staircases )
 ADD_CMD( get_value,	do_get_value,	get current level of a staircase )
 ADD_CMD( xvals,		xval_menu,	x value submenu )
-ADD_CMD( use_keyboard,	use_keyboard,	enable/disable use of keyboard for responses )
 MENU_END(staircases)
 
 static COMMAND_FUNC( do_staircase_menu )
@@ -737,10 +718,10 @@ static COMMAND_FUNC( do_staircase_menu )
 MENU_BEGIN(experiment)
 ADD_CMD( classes,	do_class_menu,	stimulus class submenu )
 ADD_CMD( modify,	modify,		modify parameters )
-ADD_CMD( test,		demo,		test a condition )
-ADD_CMD( test_stim,	show_stim,	test with scripted response )
+ADD_CMD( test,		do_test_stim,	test a condition )
+ADD_CMD( use_keyboard,	do_use_kb,	enable/disable use of keyboard for responses )
 ADD_CMD( init,		do_exp_init,	start new experiment )
-ADD_CMD( present,	do_trial,	present a stimulus & save data )
+ADD_CMD( present,	do_one_trial,	present a stimulus & save data )
 ADD_CMD( finish,	do_save_data,	close data files )
 ADD_CMD( staircases,	set_nstairs,	set up staircases )
 ADD_CMD( staircase_menu,	do_staircase_menu,	staircase submenu )
