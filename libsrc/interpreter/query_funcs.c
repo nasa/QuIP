@@ -977,47 +977,55 @@ static inline void sync_lbptrs(SINGLE_QSP_ARG_DECL)
 	}
 }
 
+#define get_varval(spp) _get_varval(QSP_ARG  spp)
 
+static char * _get_varval(QSP_ARG_DECL  char **spp);	// forward declaration, some recursion...
+
+#define concat_expanded_varname(buf, spp, n_p) _concat_expanded_varname(QSP_ARG  buf, spp, n_p)
+
+static int _concat_expanded_varname(QSP_ARG_DECL  char *buf, char **spp, int *n_p)
+{
+	char *vname;
+
+	vname = get_varval(spp);
+
+	if( vname==NULL ) return -1;
+	*n_p += strlen(vname);
+	// check for string overflow
+	if( *n_p >= LLEN ){
+		warn("Variable name too long!?");
+	} else {
+		strcat(buf,vname);
+	}
+	return 0;
+}
 
 #define LEFT_CURLY	'{'
 #define RIGHT_CURLY	'}'
 
-// get_varval is called when a var delimiter '$' is encountered
+#define read_variable_name(tmp_vnam, spp) _read_variable_name(QSP_ARG  tmp_vnam, spp)
 
-static char * get_varval(QSP_ARG_DECL  char **spp)			/** see if buf containts a variable */
+static int _read_variable_name(QSP_ARG_DECL  char *tmp_vnam, char **spp)
 {
-	const char *val_str;
 	char *sp;
-	char *vname;
-	char tmp_vnam[LLEN];
 	int had_curly=0;
-	int n_stored_chars;
+	int n_stored_chars=0;
 
 	sp = *spp;
-
-	assert( *sp == VAR_DELIM );
-
-	sp++;		/* skip over $ sign */
+	tmp_vnam[0]=0;	// clear initial value
 
 	if( *sp == LEFT_CURLY ){
 		sp++;
 		had_curly=1;
+	} else if( *sp == VAR_DELIM ){
+		// *spp = sp;		// not necessary, sp hasn't changed yet
+		return concat_expanded_varname(tmp_vnam,spp,&n_stored_chars);
 	}
-
-	tmp_vnam[0]=0;	// clear initial value
-	n_stored_chars=0;
-	while( ( *sp == VAR_DELIM || IS_LEGAL_VAR_CHAR(*sp) )
+	while( ( (had_curly && *sp == VAR_DELIM) || IS_LEGAL_VAR_CHAR(*sp) )
 			&& n_stored_chars < LLEN-1 ){
 		if( *sp == VAR_DELIM ){		/* variable recursion? */
-			vname = get_varval(QSP_ARG  &sp);
-			if( vname==NULL ) return(NULL);
-			n_stored_chars += strlen(vname);
-			// check for string overflow
-			if( n_stored_chars >= LLEN ){
-				warn("Variable name too long!?");
-			} else {
-				strcat(tmp_vnam,vname);
-			}
+			if( concat_expanded_varname(tmp_vnam,&sp,&n_stored_chars) < 0 )
+				return -1;
 		} else {
 			if( n_stored_chars >= LLEN ){
 				warn("Variable name too long!?");
@@ -1029,7 +1037,6 @@ static char * get_varval(QSP_ARG_DECL  char **spp)			/** see if buf containts a 
 	// BUG make sure size is still good
 	assert(n_stored_chars < LLEN-1 );
 	tmp_vnam[n_stored_chars]=0;
-	vname = tmp_vnam;
 
 	if( had_curly ){
 		if( *sp != RIGHT_CURLY ){
@@ -1042,7 +1049,35 @@ static char * get_varval(QSP_ARG_DECL  char **spp)			/** see if buf containts a 
 	}
 
 	*spp = sp;
+	return 0;
+}
 
+
+
+// get_varval is called when a var delimiter '$' is encountered
+// We want to allow variable concatenation, e.g. $a$b, but also allow variable
+// names expanded from variable expressions: ${a$b}
+// We don't want to require curly braces for simple double indirection, e.g. $$a...
+
+static char * _get_varval(QSP_ARG_DECL  char **spp)			/** see if buf containts a variable */
+{
+	const char *val_str;
+	char *sp;
+	char *vname;
+	char tmp_vnam[LLEN];	// BUG?  should we used an unlimited length String_Buf?
+
+	sp = *spp;
+
+	assert( *sp == VAR_DELIM );
+
+	sp++;		/* skip over $ sign */
+
+	if( read_variable_name(tmp_vnam,&sp) < 0 )
+		return NULL;
+
+	*spp = sp;
+
+	vname = tmp_vnam;
 	if( strlen(vname) <= 0 ){
 		sprintf(ERROR_STRING,"null invalid variable name \"%s\"",sp);
 		advise(ERROR_STRING);
@@ -1184,7 +1219,7 @@ static void var_expand(QSP_ARG_DECL  String_Buf *sbp)
 				cat_string(RESULT,sb_buffer(SCRATCHBUF));
 			}
 
-			vv = get_varval(QSP_ARG  &sp);
+			vv = get_varval(&sp);
 
 #ifdef QUIP_DEBUG
 if( debug&qldebug ){
