@@ -22,9 +22,9 @@
 
 #define max( n1 , n2 )		(n1>n2?n1:n2)
 
-void tell_cost(QSP_ARG_DECL  Subrt *srp)
+void _tell_cost(QSP_ARG_DECL  Subrt *srp)
 {
-	cost_tree(QSP_ARG  SR_BODY(srp) );
+	cost_tree(SR_BODY(srp) );
 	warn("Sorry, cost reporting not implemented");
 }
 
@@ -283,7 +283,7 @@ static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 }
 
-void cost_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _cost_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
 
@@ -291,7 +291,7 @@ void cost_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	for(i=0;i<MAX_CHILDREN(enp);i++){
 		if( VN_CHILD(enp,i) != NULL )
-			cost_tree(QSP_ARG  VN_CHILD(enp,i));
+			cost_tree(VN_CHILD(enp,i));
 	}
 
 	/* now all the child nodes have been scanned, process this one */

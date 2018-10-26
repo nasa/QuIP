@@ -129,8 +129,8 @@ extern void _list_temp_dps(QSP_ARG_DECL  FILE *fp);
 
 extern Data_Obj * _hunt_obj(QSP_ARG_DECL  const char *s);
 #define hunt_obj(s) _hunt_obj(QSP_ARG  s)
-extern Data_Obj * get_obj(QSP_ARG_DECL  const char *s);
-#define GET_OBJ(s)	get_obj(QSP_ARG  s)
+extern Data_Obj * _get_obj(QSP_ARG_DECL  const char *s);
+#define get_obj(s)	_get_obj(QSP_ARG  s)
 extern Data_Obj * get_vec(QSP_ARG_DECL  const char *s);
 extern Data_Obj * img_of(QSP_ARG_DECL  const char *s);
 extern Data_Obj * get_seq(QSP_ARG_DECL  const char *s);
@@ -144,7 +144,8 @@ extern void *		multiply_indexed_data(Data_Obj *dp, dimension_t *offset );
 extern void *		indexed_data(Data_Obj *dp, dimension_t offset );
 extern void		make_contiguous(Data_Obj *);
 extern int		set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dimensions,Precision *);
-extern int		obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname);
+extern int		_obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname);
+#define obj_rename(dp,newname) _obj_rename(QSP_ARG  dp,newname)
 extern Data_Obj *	_mk_scalar(QSP_ARG_DECL  const char *name,Precision *prec_p);
 extern void		assign_scalar_obj(QSP_ARG_DECL  Data_Obj *,Scalar_Value *);
 

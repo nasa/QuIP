@@ -52,7 +52,7 @@ Data_Obj *_pick_obj(QSP_ARG_DECL  const char *pmpt)
 #endif /* HAVE_HISTORY */
 
 	s=NAMEOF(pmpt);
-	return( get_obj(QSP_ARG  s) );
+	return( get_obj(s) );
 }
 
 // free function for ram data area
@@ -224,7 +224,7 @@ advise(ERROR_STRING);
 
 		idp = id_of(OBJ_NAME(dp));
 		assert( idp != NULL );
-		delete_id(QSP_ARG  (Item *)idp);
+		delete_id((Item *)idp);
 	}
 
 	if( OBJ_CHILDREN( dp ) != NULL ){
@@ -769,7 +769,7 @@ void _dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 	init_dfuncs(SINGLE_QSP_ARG);
 
 	set_obj_funcs(
-                  get_obj,
+                  _get_obj,
                   _dobj_of,
                   _d_subscript,
                   _c_subscript);

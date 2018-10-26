@@ -376,7 +376,7 @@ void dp_svbksb(Data_Obj *x_dp, Data_Obj *u_dp, Data_Obj *w_dp, Data_Obj *v_dp, D
 
 }
 
-void dp_jacobi(QSP_ARG_DECL  Data_Obj *v_dp, Data_Obj *d_dp, Data_Obj *a_dp, int *nrotp)
+void _dp_jacobi(QSP_ARG_DECL  Data_Obj *v_dp, Data_Obj *d_dp, Data_Obj *a_dp, int *nrotp)
 {
 	void *a_rowlist[MAX_DIM], *v_rowlist[MAX_DIM];
 	int n;
@@ -437,7 +437,7 @@ void dp_jacobi(QSP_ARG_DECL  Data_Obj *v_dp, Data_Obj *d_dp, Data_Obj *a_dp, int
 	}
 }
 
-void dp_eigsrt(QSP_ARG_DECL  Data_Obj *v_dp, Data_Obj *d_dp)
+void _dp_eigsrt(QSP_ARG_DECL  Data_Obj *v_dp, Data_Obj *d_dp)
 {
 	void *v_rowlist[MAX_DIM];
 	int n;
@@ -479,7 +479,7 @@ void dp_eigsrt(QSP_ARG_DECL  Data_Obj *v_dp, Data_Obj *d_dp)
 	}
 }
 
-void dp_moment(QSP_ARG_DECL  Data_Obj *d_dp)
+void _dp_moment(QSP_ARG_DECL  Data_Obj *d_dp)
 {
 	/* std_type *d_rowlist[MAX_DIM]; */
 	int n;

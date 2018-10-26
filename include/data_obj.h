@@ -452,7 +452,8 @@ extern Data_Area *curr_ap;
 void _describe_shape(QSP_ARG_DECL  Shape_Info *shpp);
 #define describe_shape(shpp)	_describe_shape(QSP_ARG  shpp)
 
-extern Item_Context *create_dobj_context(QSP_ARG_DECL  const char *);
+extern Item_Context *_create_dobj_context(QSP_ARG_DECL  const char *);
+#define create_dobj_context(s) _create_dobj_context(QSP_ARG  s)
 
 extern Data_Obj *_pick_dobj(QSP_ARG_DECL  const char *pmpt);
 extern Data_Area *_pick_data_area(QSP_ARG_DECL  const char *pmpt);

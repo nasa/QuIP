@@ -51,7 +51,7 @@ list_dobjs(SINGLE_QSP_ARG);
 	return( index_data(dp,s) );
 }
 
-Data_Obj *get_obj(QSP_ARG_DECL  const char *name)
+Data_Obj *_get_obj(QSP_ARG_DECL  const char *name)
 {
 	Data_Obj *dp;
 
@@ -67,7 +67,7 @@ Data_Obj *get_vec(QSP_ARG_DECL  const char *s)
 {
 	Data_Obj *dp;
 
-	dp=get_obj(QSP_ARG  s);
+	dp=get_obj(s);
 	if( dp==NULL ) return(dp);
 	if( !(OBJ_FLAGS(dp) & DT_VECTOR) ){
 		sprintf(ERROR_STRING,"object \"%s\" is not a vector",s);
@@ -82,7 +82,7 @@ img_of(QSP_ARG_DECL  const char *s)				/**/
 {
 	Data_Obj *dp;
 
-	dp=get_obj(QSP_ARG  s);
+	dp=get_obj(s);
 	if( dp==NULL ) return(dp);
 	if( !(OBJ_FLAGS(dp) & DT_IMAGE) ){
 		sprintf(ERROR_STRING,"object \"%s\" is not an image",s);
@@ -96,7 +96,7 @@ Data_Obj *get_seq(QSP_ARG_DECL  const char *s)
 {
 	Data_Obj *dp;
 
-	dp=get_obj(QSP_ARG  s);
+	dp=get_obj(s);
 	if( dp==NULL ) return(dp);
 	if( !(OBJ_FLAGS(dp) & DT_SEQUENCE) ){
 		sprintf(ERROR_STRING,"object \"%s\" is not an sequence",s);
@@ -110,7 +110,7 @@ Data_Obj * get_img( QSP_ARG_DECL  const char *s )
 {
 	Data_Obj *dp;
 
-	dp=get_obj(QSP_ARG  s);
+	dp=get_obj(s);
 	if( dp==NULL ) return(dp);
 	if( !IS_IMAGE(dp) ){
 		sprintf(ERROR_STRING,"data object %s is not an image",s);

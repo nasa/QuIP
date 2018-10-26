@@ -324,7 +324,7 @@ static void _dump_subtree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
 
-	_dump_node_with_shape(QSP_ARG  enp);
+	dump_node_with_shape(enp);
 
 	for(i=0;i<MAX_CHILDREN(enp);i++){
 		if( VN_CHILD(enp,i)!=NULL){

@@ -14,7 +14,7 @@
  * we already had a prototype.
  */
 
-void update_subrt(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *body )
+void _update_subrt(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *body )
 {
 	if( SR_BODY(srp) != NULL ){
 		node_error(body);
@@ -53,7 +53,9 @@ Subrt * _remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Ex
 	return(srp);
 }
 
-static Vec_Expr_Node *get_scalar_arg(QSP_ARG_DECL  Precision *prec_p, const char *prompt)
+#define get_scalar_arg(prec_p, prompt) _get_scalar_arg(QSP_ARG  prec_p, prompt)
+
+static Vec_Expr_Node *_get_scalar_arg(QSP_ARG_DECL  Precision *prec_p, const char *prompt)
 {
 	Scalar_Value sv;
 	Vec_Expr_Node *enp;
@@ -80,7 +82,9 @@ static Vec_Expr_Node *get_scalar_arg(QSP_ARG_DECL  Precision *prec_p, const char
 	return enp;
 }
 
-static Vec_Expr_Node *get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *prec_p)
+#define get_one_arg(enp, prec_p) _get_one_arg(QSP_ARG  enp, prec_p)
+
+static Vec_Expr_Node *_get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *prec_p)
 {
 	const char *s;
 	Data_Obj *dp;
@@ -92,8 +96,8 @@ static Vec_Expr_Node *get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *p
 				PREC_NAME(prec_p),
 				VN_DECL_NAME(enp)
 				);
-			s = NAMEOF(msg_str);
-			dp = get_obj(QSP_ARG  s);
+			s = nameof(msg_str);
+			dp = get_obj(s);
 			if( dp != NULL ){
 				Vec_Expr_Node *obj_enp;
 				obj_enp=node0(T_STATIC_OBJ);
@@ -110,7 +114,7 @@ static Vec_Expr_Node *get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *p
 				PREC_NAME(prec_p),
 				VN_DECL_NAME(enp)
 				);
-			ret_enp = get_scalar_arg(QSP_ARG  prec_p, msg_str);
+			ret_enp = get_scalar_arg(prec_p, msg_str);
 			point_node_shape(ret_enp,scalar_shape(PREC_CODE(prec_p)));
 			break;
 		default:
@@ -148,7 +152,7 @@ static Platform_Device *_pfdev_for_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	return pdp;
 }
 
-void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Platform_Device *pdp=NULL;
 	Vec_Expr_Node *defining_enp=NULL;
@@ -162,7 +166,7 @@ void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		} else {
 			if( VN_PFDEV( VN_CHILD(enp,i) ) == NULL ){
 				// recursive call
-				update_pfdev_from_children(QSP_ARG  VN_CHILD(enp,i) );
+				update_pfdev_from_children(VN_CHILD(enp,i) );
 			}
 			if( VN_PFDEV( VN_CHILD(enp,i) ) != NULL && pdp == NULL ){
 				pdp = VN_PFDEV( VN_CHILD(enp,i) );
@@ -194,7 +198,9 @@ void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
 } // update_pfdev_from_children
 #endif // HAVE_ANY_GPU
 
-static Vec_Expr_Node * get_subrt_arg_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define get_subrt_arg_tree(enp) _get_subrt_arg_tree(QSP_ARG  enp)
+
+static Vec_Expr_Node * _get_subrt_arg_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Vec_Expr_Node *return_enp=NULL;
 	Vec_Expr_Node *enp1, *enp2;
@@ -202,16 +208,16 @@ static Vec_Expr_Node * get_subrt_arg_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	switch(VN_CODE(enp)){
 		case T_DECL_STAT:
 			assert( VN_CHILD(enp,0) != NULL );
-			return_enp = get_one_arg(QSP_ARG  VN_CHILD(enp,0), VN_DECL_PREC(enp));
+			return_enp = get_one_arg(VN_CHILD(enp,0), VN_DECL_PREC(enp));
 			break;
 		case T_DECL_STAT_LIST:
-			enp1 = get_subrt_arg_tree(QSP_ARG  VN_CHILD(enp,0));
-			enp2 = get_subrt_arg_tree(QSP_ARG  VN_CHILD(enp,1));
+			enp1 = get_subrt_arg_tree(VN_CHILD(enp,0));
+			enp2 = get_subrt_arg_tree(VN_CHILD(enp,1));
 			// BUG release good node if only one bad
 			if( enp1 != NULL && enp2 != NULL ){
 				return_enp = node2(T_ARGLIST,enp1,enp2);
 #ifdef HAVE_ANY_GPU
-				update_pfdev_from_children(QSP_ARG  return_enp);
+				update_pfdev_from_children(return_enp);
 #endif // HAVE_ANY_GPU
 			}
 			break;
@@ -224,11 +230,13 @@ static Vec_Expr_Node * get_subrt_arg_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	return return_enp;
 }
 
-static Vec_Expr_Node * get_subrt_args(QSP_ARG_DECL  Subrt *srp)
+#define get_subrt_args(srp) _get_subrt_args(QSP_ARG  srp)
+
+static Vec_Expr_Node * _get_subrt_args(QSP_ARG_DECL  Subrt *srp)
 {
 	Vec_Expr_Node *enp;
 
-	enp = get_subrt_arg_tree(QSP_ARG  SR_ARG_DECLS(srp));
+	enp = get_subrt_arg_tree(SR_ARG_DECLS(srp));
 	return enp;
 }
 
@@ -245,7 +253,7 @@ COMMAND_FUNC( do_run_subrt )
 	// What do we do if there is a fused kernel for this subrt???
 
 	push_vector_parser_data(SINGLE_QSP_ARG);
-	args_enp = get_subrt_args(QSP_ARG  srp);
+	args_enp = get_subrt_args(srp);
 	call_enp = node1(T_CALLFUNC,args_enp);
 
 	run_subrt_immed(srp,NULL,call_enp);
@@ -314,7 +322,7 @@ COMMAND_FUNC( do_tell_cost )
 
 	if( srp==NULL ) return;
 
-	tell_cost(QSP_ARG  srp);
+	tell_cost(srp);
 }
 
 COMMAND_FUNC( do_subrt_info )
@@ -396,7 +404,7 @@ COMMAND_FUNC( do_subrt_info )
 	*/
 }
 
-Subrt *create_script_subrt(QSP_ARG_DECL  const char *name,int nargs,const char *text)
+Subrt *_create_script_subrt(QSP_ARG_DECL  const char *name,int nargs,const char *text)
 {
 	Subrt *srp;
 
@@ -447,7 +455,9 @@ static const char *name_for_ctx_stack(SINGLE_QSP_ARG_DECL)
  * context (for each thread!)
  */
 
-static const char *get_subrt_id(QSP_ARG_DECL  const char *name)
+#define get_subrt_id(name) _get_subrt_id(QSP_ARG  name)
+
+static const char *_get_subrt_id(QSP_ARG_DECL  const char *name)
 {
 	Node *np;
 	const char *s;
@@ -477,16 +487,16 @@ static const char *get_subrt_id(QSP_ARG_DECL  const char *name)
  * are per-qsp!?  But they are!  (see ITCI - item type context info)
  */
 
-void set_subrt_ctx(QSP_ARG_DECL  const char *name)
+void _set_subrt_ctx(QSP_ARG_DECL  const char *name)
 {
 	const char *ctxname;
 	Item_Context *icp;	/* data_obj, identifier context */
 
-	ctxname = get_subrt_id(QSP_ARG  name);
+	ctxname = get_subrt_id(name);
 	icp=create_id_context(ctxname);
 	PUSH_ID_CONTEXT(icp);
 
-	icp=create_dobj_context(QSP_ARG  ctxname);
+	icp=create_dobj_context(ctxname);
 	push_dobj_context(icp);
 }
 
@@ -500,7 +510,7 @@ static void rls_reference(Reference *refp)
 //
 // really a memory release function...
 
-void delete_id(QSP_ARG_DECL  Item *ip)
+void _delete_id(QSP_ARG_DECL  Item *ip)
 {
 	Identifier *idp;
 
@@ -611,7 +621,9 @@ advise(ERROR_STRING);
 
 // Get the name of the current context for a given item_type
 
-static const char *get_subrt_ctx_name(QSP_ARG_DECL  const char *name,Item_Type *itp)
+#define get_subrt_ctx_name(name,itp) _get_subrt_ctx_name(QSP_ARG  name,itp)
+
+static const char *_get_subrt_ctx_name(QSP_ARG_DECL  const char *name,Item_Type *itp)
 {
 	/* having this static makes it not thread-safe!? BUG */
 	static char ctxname[LLEN];
@@ -638,7 +650,7 @@ Item_Context * pop_subrt_ctx(QSP_ARG_DECL  const char *name,Item_Type *itp)
 	const char *ctxname;
 	Item_Context *icp;
 
-	ctxname = get_subrt_ctx_name(QSP_ARG  name,itp);
+	ctxname = get_subrt_ctx_name(name,itp);
 
 //sprintf(ERROR_STRING,"Searching for context %s",ctxname);
 //advise(ERROR_STRING);
@@ -686,7 +698,7 @@ static Vec_Expr_Node *find_numbered_node_in_subrt(Subrt *srp,int n)
 	return enp;
 }
 
-Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int n)
+Vec_Expr_Node *_find_node_by_number(QSP_ARG_DECL  int n)
 {
 	List *lp;
 	Subrt *srp;

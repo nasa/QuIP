@@ -6238,7 +6238,7 @@ advise(ERROR_STRING);
 	SET_SR_FLAG_BITS(srp, SR_SCANNING);
 
 	/* set the context */
-	set_subrt_ctx(QSP_ARG  SR_NAME(srp));
+	set_subrt_ctx(SR_NAME(srp));
 
 	/* declare the arg variables */
 	eval_decl_tree(SR_ARG_DECLS(srp));
@@ -6460,7 +6460,7 @@ void init_fixed_nodes(SINGLE_QSP_ARG_DECL)
 	// code must be set before calling init_expr_node!
 	SET_VN_CODE(minus_one_enp, T_LIT_DBL);
 
-	init_expr_node(QSP_ARG  minus_one_enp);
+	init_expr_node(minus_one_enp);
 	SET_VN_DBLVAL(minus_one_enp, -1.0);
 	point_node_shape(minus_one_enp, scalar_shape(PREC_DP) );
 

@@ -10,7 +10,7 @@
  * For the present, this is only defined on row vectors...
  */
 
-void war_cumsum(QSP_ARG_DECL  Data_Obj *dp_to,Data_Obj *dp_fr)
+void _war_cumsum(QSP_ARG_DECL  Data_Obj *dp_to,Data_Obj *dp_fr)
 {
 	int i;
 

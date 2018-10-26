@@ -1047,7 +1047,7 @@ static PGR_Cam *setup_my_camera( QSP_ARG_DECL  dc1394camera_t * cam_p )
 	//pgcp->pc_policy = DC1394_CAPTURE_POLICY_WAIT;	// or POLL ...
 
 	// Make a data_obj context for the frames...
-	pgcp->pc_do_icp = create_dobj_context( QSP_ARG  pgcp->pc_name );
+	pgcp->pc_do_icp = create_dobj_context( pgcp->pc_name );
 
 	return(pgcp);
 }
@@ -1316,7 +1316,7 @@ static Data_Obj *dobj_for_frame(QSP_ARG_DECL  dc1394video_frame_t *framep)
 
 	// For speed, we could keep a table of the dobj's associated with the camera.  BUG
 	sprintf(fname,"_frame%d",framep->id);
-	dp = get_obj(QSP_ARG  fname);
+	dp = get_obj(fname);
 	return dp;
 }
 
@@ -1418,7 +1418,7 @@ Data_Obj * grab_firewire_frame(QSP_ARG_DECL  PGR_Cam * pgcp )
 
 	//sprintf(fname,"_frame%d",framep->id);
 	snprintf(fname,TMPSIZE,"_frame%d",framep->id);
-	dp = get_obj(QSP_ARG  fname);
+	dp = get_obj(fname);
 	if( dp == NULL ){
 		warn("grab_firewire_frame:  unable to create frame object");
 		return(NULL);

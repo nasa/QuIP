@@ -21,7 +21,7 @@ ITEM_CHECK_FUNC(Data_Obj,dobj)
 ITEM_NEW_FUNC(Data_Obj,dobj)		// what does this do?
 ITEM_DEL_FUNC(Data_Obj,dobj)		// what does this do?
 
-Item_Context *create_dobj_context(QSP_ARG_DECL  const char *name)
+Item_Context *_create_dobj_context(QSP_ARG_DECL  const char *name)
 {
 	return create_item_context(dobj_itp, name);
 }

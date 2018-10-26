@@ -56,7 +56,7 @@ static Vec_Expr_Node *alloc_node(void)
 //fprintf(stderr,"alloc_node returning new node at 0x%lx\n",(long)enp);
 
 	/* Do this after the code is set */
-	/* init_expr_node(QSP_ARG  enp); */
+	/* init_expr_node(enp); */
 
 	return(enp);
 }
@@ -65,7 +65,7 @@ static Vec_Expr_Node *alloc_node(void)
  * Here we initialize all the other fields.
  */
 
-void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
 
@@ -183,7 +183,7 @@ static Vec_Expr_Node *nother_node(QSP_ARG_DECL  Tree_Code code)
 	enp=alloc_node();
 	SET_VN_CODE(enp,code);
 	SET_LAST_NODE(NULL);
-	init_expr_node(QSP_ARG  enp);
+	init_expr_node(enp);
 	SET_LAST_NODE(enp);
 	return(enp);
 }

@@ -62,7 +62,7 @@ void make_contiguous(Data_Obj *dp)
  * or if an object with the requested name already exists.
  */
 
-int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
+int _obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 {
 	Data_Obj *dp2;
 

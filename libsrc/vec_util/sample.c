@@ -72,7 +72,7 @@ static int render_check(QSP_ARG_DECL  Data_Obj *image_dp,Data_Obj *coord_dp,Data
 	return(0);
 }
 
-void render_samples(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_Obj *intens_dp)
+void _render_samples(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_Obj *intens_dp)
 {
 	float *image, *coord, *intens;
 	dimension_t width, height;
@@ -121,7 +121,7 @@ void render_samples(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_O
  * to put the energy from the corresponding source pixel.
  */
 
-void render_samples2(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_Obj *intens_dp)
+void _render_samples2(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_Obj *intens_dp)
 {
 	float *image, *coord, *intens;
 	dimension_t width, height;
@@ -196,7 +196,7 @@ OBJ_NAME(image_dp),OBJ_NAME(coord_dp),OBJ_NAME(intens_dp));
 	}
 }
 
-void sample_image(QSP_ARG_DECL  Data_Obj *intens_dp, Data_Obj *image_dp, Data_Obj *coord_dp)
+void _sample_image(QSP_ARG_DECL  Data_Obj *intens_dp, Data_Obj *image_dp, Data_Obj *coord_dp)
 {
 	float *image, *coord, *intens;
 	dimension_t width, height;

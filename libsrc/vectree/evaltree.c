@@ -1954,7 +1954,7 @@ advise(ERROR_STRING);
 // BUG?  here we store the arg vals and the call node in the subroutine struct itself.
 // Better to have a call struct so we can support multi-threading...
 
-Subrt *runnable_subrt(QSP_ARG_DECL  Vec_Expr_Node *enp)
+Subrt *_runnable_subrt(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Subrt *srp;
 
@@ -1989,7 +1989,7 @@ void _exec_subrt(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 {
 	Subrt *srp;
 
-	srp = runnable_subrt(QSP_ARG  enp);
+	srp = runnable_subrt(enp);
 
 	if( srp != NULL ){
 		run_subrt(srp,dst_dp,enp);
@@ -2000,7 +2000,7 @@ void _exec_subrt(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 	}
 }
 
-Identifier *make_named_reference(QSP_ARG_DECL  const char *name)
+Identifier *_make_named_reference(QSP_ARG_DECL  const char *name)
 {
 	Identifier *idp;
 
@@ -2723,7 +2723,7 @@ static void wrapup_call(QSP_ARG_DECL  Run_Info *rip)
 	 * and uk shape automatic variables.
 	 */
 	forget_resolved_shapes(QSP_ARG  rip->ri_srp);
-	wrapup_context(QSP_ARG  rip);
+	wrapup_context(rip);
 }
 
 static void _run_reffunc(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *call_enp, Identifier *dst_idp)
@@ -2733,7 +2733,7 @@ static void _run_reffunc(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *call_enp, Ident
 	executing=1;
 	/* Run-time resolution of unknown shapes */
 
-	rip = setup_subrt_call(QSP_ARG  srp,call_enp,NULL);
+	rip = setup_subrt_call(srp,call_enp,NULL);
 	if( rip == NULL ){
 sprintf(ERROR_STRING,"run_reffunc %s:  no return info!?",SR_NAME(srp));
 warn(ERROR_STRING);
@@ -2758,12 +2758,12 @@ static Identifier * _exec_reffunc(QSP_ARG_DECL Vec_Expr_Node *enp)
 	char name[LLEN];
 	Subrt *srp;
 
-	srp = runnable_subrt(QSP_ARG  enp);
+	srp = runnable_subrt(enp);
 	if( srp==NULL ) return(NULL);
 
 	sprintf(name,"ref.%s",SR_NAME(srp));
 
-	idp = make_named_reference(QSP_ARG  name);
+	idp = make_named_reference(name);
 	/* BUG set ptr_type?? */
 
 	assert( idp != NULL ) ;
@@ -2883,7 +2883,7 @@ static Run_Info *new_rip()
  *	returns a run_info struct
  */
 
-Run_Info * setup_subrt_call(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *call_enp, Data_Obj *dst_dp)
+Run_Info * _setup_subrt_call(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *call_enp, Data_Obj *dst_dp)
 {
 	Run_Info *rip;
 	Vec_Expr_Node *args_enp;
@@ -2913,7 +2913,7 @@ Run_Info * setup_subrt_call(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *call_enp, Da
 
 	/* First, pop the context of the previous subroutine and push the new one */
 	rip->ri_prev_cpp = pop_previous(SINGLE_QSP_ARG);	/* what does pop_previous() do??? */
-	set_subrt_ctx(QSP_ARG  SR_NAME(srp));
+	set_subrt_ctx(SR_NAME(srp));
 
 	// We need to be sure that we use the correct platform when we
 	// declare any objects that we need here...
@@ -2943,7 +2943,7 @@ call_err:
  * called after subroutine execution to restore the context of the caller.
  */
 
-void wrapup_context(QSP_ARG_DECL  Run_Info *rip)
+void _wrapup_context(QSP_ARG_DECL  Run_Info *rip)
 {
 
 	curr_srp = rip->ri_old_srp;
@@ -2976,7 +2976,7 @@ static Platform_Device *pfdev_for_call(QSP_ARG_DECL  Vec_Expr_Node *args_enp)
 	// Normally, we determine this from the arg tree...
 	if( VN_PFDEV( args_enp ) == NULL ){
 		// try to figure it out
-		update_pfdev_from_children(QSP_ARG  args_enp);
+		update_pfdev_from_children(args_enp);
 	}
 	if( VN_PFDEV( args_enp ) == NULL ){
 		fprintf(stderr,"Arg values do not have platform set!?\n");
@@ -3000,7 +3000,7 @@ void _run_subrt(QSP_ARG_DECL Subrt *srp, Data_Obj *dst_dp, Vec_Expr_Node *call_e
 
 	// BUG - we probably don't want to do all the work in setup_subrt_call
 	// if we are calling a fused kernel???
-	rip = setup_subrt_call(QSP_ARG  srp, call_enp, dst_dp);
+	rip = setup_subrt_call(srp, call_enp, dst_dp);
 	if( rip == NULL ){
 		return;
 	}
@@ -3546,7 +3546,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 			if( REF_OBJ(ID_REF(idp)) == NULL ){
 				// Need to clean up!
 fprintf(stderr,"eval_decl_stat:  deleting identifier %s\n",ID_NAME(idp));
-				delete_id(QSP_ARG  (Item *)idp);
+				delete_id((Item *)idp);
 
 				node_error(enp);
 				sprintf(ERROR_STRING,
@@ -4258,7 +4258,7 @@ static int compare_arg_decls(Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
 	return 0;
 }
 
-void compare_arg_trees(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
+void _compare_arg_trees(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
 {
 	if( compare_arg_decls(enp1,enp2) < 0 )
 		prototype_mismatch(QSP_ARG  enp1,enp2);
@@ -4424,7 +4424,7 @@ static Identifier *_eval_obj_id(QSP_ARG_DECL Vec_Expr_Node *enp)
 			assert( dp != NULL );
 
 			/* now make an identifier to go with this thing */
-			idp = make_named_reference(QSP_ARG  OBJ_NAME(dp));
+			idp = make_named_reference(OBJ_NAME(dp));
 			SET_REF_OBJ(ID_REF(idp), dp );
 			set_id_shape(idp, OBJ_SHAPE(dp) );
 			return(idp);
@@ -4459,7 +4459,7 @@ find_obj:
 					return(NULL);
 				}
 				strcpy((char *)OBJ_DATA_PTR(dp),VN_STRING(enp));
-				idp = make_named_reference(QSP_ARG  OBJ_NAME(dp));
+				idp = make_named_reference(OBJ_NAME(dp));
 				SET_REF_TYPE(ID_REF(idp), STR_REFERENCE );
 				SET_REF_OBJ(ID_REF(idp), dp );
 				if( idp == NULL ){
@@ -4634,7 +4634,7 @@ static Data_Obj *create_matrix(QSP_ARG_DECL Vec_Expr_Node *enp,Shape_Info *shpp)
 
 		case T_DYN_OBJ:		/* create_matrix */
 			/* we need to create an identifier too! */
-			idp = make_named_reference(QSP_ARG  VN_STRING(enp));
+			idp = make_named_reference(VN_STRING(enp));
 			dp = make_dobj(VN_STRING(enp),SHP_TYPE_DIMS(shpp),SHP_PREC_PTR(shpp));
 			assert( dp != NULL );
 
@@ -5404,7 +5404,7 @@ return(0.0);
 			break;
 
 		case T_SUBSCRIPT1:			/* eval_flt_exp */
-			dp=GET_OBJ(VN_STRING(VN_CHILD(enp,0)));
+			dp=get_obj(VN_STRING(VN_CHILD(enp,0)));
 			index = (index_t) eval_flt_exp(VN_CHILD(enp,1));
 			dp2 = d_subscript(dp,index);
 			if( dp2 == NULL ){
@@ -5614,7 +5614,7 @@ dump_tree(enp);
 
 		case T_POINTER:
 		case T_DYN_OBJ:		/* eval_flt_exp */
-			dp=GET_OBJ(VN_STRING(enp));
+			dp=get_obj(VN_STRING(enp));
 			assert( dp != NULL );
 
 obj_flt_exp:
@@ -5648,7 +5648,7 @@ obj_flt_exp:
 
 		/* BUG need T_CURLY_SUBSCR too! */
 		case T_SQUARE_SUBSCR:			/* eval_flt_exp */
-			/* dp=GET_OBJ(VN_STRING(VN_CHILD(enp,0))); */
+			/* dp=get_obj(VN_STRING(VN_CHILD(enp,0))); */
 			dp = eval_obj_ref(VN_CHILD(enp,0));
 			index = (index_t) eval_int_exp(VN_CHILD(enp,1));
 			dp2 = d_subscript(dp,index);
@@ -5911,7 +5911,7 @@ Data_Obj *_eval_obj_exp(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 #ifdef MATLAB_FOOBAR
 		/* matlab */
 		case T_SUBSCRIPT1:	/* eval_obj_exp */
-			dp=GET_OBJ(VN_STRING(VN_CHILD(enp,0)));
+			dp=get_obj(VN_STRING(VN_CHILD(enp,0)));
 			index = eval_flt_exp(VN_CHILD(enp,1));
 			dp2 = d_subscript(dp,index);
 			return(dp2);
@@ -6229,7 +6229,7 @@ Data_Obj *mlab_reshape(QSP_ARG_DECL  Data_Obj *dp, Shape_Info *shpp, const char 
 	if( dp != NULL ){
 		delvec(dp);
 	}
-	obj_rename(QSP_ARG  dp_new,name);
+	obj_rename(dp_new,name);
 
 	/* We also need to fix the identifier pointer */
 
@@ -7629,7 +7629,7 @@ advise(ERROR_STRING);
 				 */
 				copy_node_shape( PTR_DECL_VN(ID_PTR(idp)),uk_shape(VN_PREC(VN_CHILD(enp,0))));
 				if( !UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) )
-					resolve_pointer(QSP_ARG  VN_CHILD(enp,0),VN_SHAPE(VN_CHILD(enp,1)));
+					resolve_pointer(VN_CHILD(enp,0),VN_SHAPE(VN_CHILD(enp,1)));
 			}
 			  else {
 				assert( AERROR("eval_work_tree:  rhs is neither ptr nor reference") );

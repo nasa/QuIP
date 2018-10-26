@@ -45,7 +45,8 @@ extern int lutmap(QSP_ARG_DECL  Data_Obj *dest_dp, Data_Obj *src_dp, Data_Obj *l
 void war_project(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
 
 /* cumsum.c */
-extern void war_cumsum(QSP_ARG_DECL  Data_Obj *dp_to,Data_Obj *dp_fr);
+extern void _war_cumsum(QSP_ARG_DECL  Data_Obj *dp_to,Data_Obj *dp_fr);
+#define war_cumsum(dp_to,dp_fr) _war_cumsum(QSP_ARG  dp_to,dp_fr)
 
 
 /* dct8.c */
@@ -63,9 +64,13 @@ extern void thinzs(QSP_ARG_DECL  Data_Obj *x, double val);
 extern void morph_process(QSP_ARG_DECL  Data_Obj *to, Data_Obj *fr, Data_Obj *tbl);
 
 /* sample.c */
-extern void render_samples(QSP_ARG_DECL  Data_Obj *img, Data_Obj *coord, Data_Obj *intens);
-extern void render_samples2(QSP_ARG_DECL  Data_Obj *image, Data_Obj *coord, Data_Obj *intens);
-extern void sample_image(QSP_ARG_DECL  Data_Obj *intens, Data_Obj *image, Data_Obj *coord);
+extern void _render_samples(QSP_ARG_DECL  Data_Obj *img, Data_Obj *coord, Data_Obj *intens);
+extern void _render_samples2(QSP_ARG_DECL  Data_Obj *image, Data_Obj *coord, Data_Obj *intens);
+extern void _sample_image(QSP_ARG_DECL  Data_Obj *intens, Data_Obj *image, Data_Obj *coord);
+
+#define render_samples(img, coord, intens) _render_samples(QSP_ARG  img, coord, intens)
+#define render_samples2(image, coord, intens) _render_samples2(QSP_ARG  image, coord, intens)
+#define sample_image(intens, image, coord) _sample_image(QSP_ARG  intens, image, coord)
 
 
 /* File bessel.c */

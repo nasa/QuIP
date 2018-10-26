@@ -474,7 +474,7 @@ static COMMAND_FUNC( do_cumsum )
 
 	if( dp_to==NULL || dp_fr==NULL ) return;
 
-	war_cumsum(QSP_ARG  dp_to,dp_fr);
+	war_cumsum(dp_to,dp_fr);
 }
 
 static COMMAND_FUNC( do_reduce )

@@ -58,7 +58,7 @@ static COMMAND_FUNC( do_create_area )
 	long n;
 	long siz;
 
-	area_name = NAMEOF("name for this area");
+	area_name = nameof("name for this area");
 	siz = (long) how_many("size of data area in bytes");
 	n = (long) how_many("maximum number of data objects for this area");
 
@@ -119,7 +119,7 @@ static COMMAND_FUNC( do_get_area )
 {
 	const char *s;
 
-	s=NAMEOF("script variable for area name");
+	s=nameof("script variable for area name");
 
 	assert( curr_ap != NULL );
 
@@ -155,7 +155,7 @@ static COMMAND_FUNC( do_push_context )
 	const char *s;
 	Item_Context *icp;
 
-	s=NAMEOF("name for new context");
+	s=nameof("name for new context");
 	NEW_ITEM_CONTEXT(icp);	// allocates memory and pts icp, but does not initalize?
 	SET_CTX_NAME(icp,savestr(s));
 	push_dobj_context(icp);
@@ -215,7 +215,7 @@ static COMMAND_FUNC( new_hyperseq )
 	long ns, nf, nr, nc, ncomps;
 	Precision *prec_p;
 
-	obj_name=NAMEOF("object name");
+	obj_name=nameof("object name");
 
 	ns = (long) how_many("number of sequences");
 	nf = (long) how_many("number of frames");
@@ -244,7 +244,7 @@ static COMMAND_FUNC( new_seq )
 	const char *obj_name;
 	Precision *prec_p;
 
-	obj_name=NAMEOF("object name");
+	obj_name=nameof("object name");
 
 	nf = (long) how_many("number of frames");
 	nr = (long) how_many("number of rows");
@@ -276,7 +276,7 @@ static COMMAND_FUNC( new_frame )
 	long nr, nc, ncomps;
 	Precision *prec_p;
 
-	obj_name=NAMEOF("object name");
+	obj_name=nameof("object name");
 
 	nr = (long) how_many("number of rows");
 	nc = (long) how_many("number of columns");
@@ -305,7 +305,7 @@ static COMMAND_FUNC( new_gen_obj )
 	long ns, nf, nr, nc, ncomps;
 	Precision *prec_p;
 
-	obj_name=NAMEOF("object name");
+	obj_name=nameof("object name");
 
 	ns = (long) how_many("number of sequences");
 	nf = (long) how_many("number of frames");
@@ -345,7 +345,7 @@ static COMMAND_FUNC( new_obj_list )
 	List *lp;
 	Node *np;
 
-	s=NAMEOF("object name");
+	s=nameof("object name");
 
 	n=how_many("number of objects in this list");
 	lp=new_list();
@@ -373,7 +373,7 @@ static COMMAND_FUNC( new_row )
 	long nc, ncomps;
 	Precision *prec_p;
 
-	obj_name=NAMEOF("object name");
+	obj_name=nameof("object name");
 
 	nc = (long) how_many("number of elements");
 	ncomps = (long) how_many("number of components");
@@ -400,7 +400,7 @@ static COMMAND_FUNC( new_col )
 	long nr, ncomps;
 	Precision *prec_p;
 
-	obj_name=NAMEOF("object name");
+	obj_name=nameof("object name");
 
 	nr = (long) how_many("number of elements");
 	ncomps = (long) how_many("number of components");
@@ -428,7 +428,7 @@ static COMMAND_FUNC( new_scalar )
 	long ncomps;
 	Precision *prec_p;
 
-	obj_name=NAMEOF("object name");
+	obj_name=nameof("object name");
 
 	ncomps = (long) how_many("number of components");
 	prec_p = get_precision(SINGLE_QSP_ARG);
@@ -471,7 +471,7 @@ static COMMAND_FUNC( mksubimg )
 	long rows, cols;
 	long xos, yos;
 
-	obj_name=NAMEOF("name for subimage");
+	obj_name=nameof("name for subimage");
 
 	dp=pick_obj(PARENT_PROMPT);
 
@@ -502,7 +502,7 @@ static COMMAND_FUNC( mksubsequence )
 	long x_offset, y_offset, t_offset;
 	long nr,nc,nf;
 
-	obj_name=NAMEOF("name for subsequence");
+	obj_name=nameof("name for subsequence");
 
 	dp=pick_obj(PARENT_PROMPT);
 
@@ -548,7 +548,7 @@ static COMMAND_FUNC( mksubstring )
 	long len;
 	long sos;
 
-	obj_name=NAMEOF("name for substring");
+	obj_name=nameof("name for substring");
 
 	dp=pick_obj(PARENT_PROMPT);
 
@@ -575,7 +575,7 @@ static COMMAND_FUNC( mksubvector )
 	long cols;
 	long xos;
 
-	obj_name=NAMEOF("name for subvector");
+	obj_name=nameof("name for subvector");
 
 	dp=pick_obj(PARENT_PROMPT);
 
@@ -603,7 +603,7 @@ static COMMAND_FUNC( mksubscalar )
 	Dimension_Set ds1, *dsp=(&ds1);
 	long ncomps, comp_offset;
 
-	obj_name=NAMEOF("name for subscalar");
+	obj_name=nameof("name for subscalar");
 
 	dp=pick_obj(PARENT_PROMPT);
 
@@ -638,9 +638,9 @@ static COMMAND_FUNC( do_ilace )
 	Data_Obj *dp, *newdp;
 	int parity;
 
-	obj_name=NAMEOF("name for subimage");
+	obj_name=nameof("name for subimage");
 
-	dp=get_img( QSP_ARG  NAMEOF("name of parent image") );
+	dp=get_img( QSP_ARG  nameof("name of parent image") );
 	if( dp==NULL ) return;
 
 	parity=WHICH_ONE("parity of selected lines",2,parlist);
@@ -658,7 +658,7 @@ static COMMAND_FUNC( mkcast )
 	long rows, cols, tdim;
 	long xos, yos;
 
-	obj_name=NAMEOF("name for cast");
+	obj_name=nameof("name for cast");
 
 	dp=pick_obj(PARENT_PROMPT);
 	if( dp==NULL ) return;
@@ -689,7 +689,7 @@ static COMMAND_FUNC( equivalence )
 	Dimension_Set ds1, *dsp=(&ds1);
 	long ns,nf,nr,nc,nd;
 
-	obj_name=NAMEOF("name for equivalent image");
+	obj_name=nameof("name for equivalent image");
 
 	dp=pick_obj(PARENT_PROMPT);
 
@@ -756,7 +756,7 @@ static COMMAND_FUNC( mk_subsample )
 	char pmpt[MAX_PMPT_LEN];
 	int i;
 
-	obj_name=NAMEOF("name for subsample object");
+	obj_name=nameof("name for subsample object");
 
 	dp=pick_obj(PARENT_PROMPT);
 
@@ -883,8 +883,8 @@ static COMMAND_FUNC( do_tellprec )
 	Data_Obj *dp;
 	const char *s;
 
-	dp = get_obj( QSP_ARG NAMEOF("data object") );
-	s = NAMEOF("variable name");
+	dp = get_obj( nameof("data object") );
+	s = nameof("variable name");
 	if( dp == NULL ) return;
 	assign_var(s,OBJ_PREC_NAME(dp));
 }
