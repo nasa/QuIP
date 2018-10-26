@@ -999,7 +999,7 @@ static int make_arg_evenly_spaced(Vec_Obj_Args *oap,int index)
 }
 #endif /* FOOBAR */
 
-int perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap)
+int _perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap)
 {
 	return( call_vfunc(QSP_ARG  FIND_VEC_FUNC(code), oap) );
 }

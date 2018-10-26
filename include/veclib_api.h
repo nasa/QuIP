@@ -34,7 +34,8 @@ extern void vl_init(SINGLE_QSP_ARG_DECL);
 extern void vl2_pf_init(SINGLE_QSP_ARG_DECL);
 
 /* vec_args.c */
-extern int perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap);
+extern int _perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap);
+#define perf_vfunc(code, oap) _perf_vfunc(QSP_ARG  code, oap)
 
 /* vec_call.c */
 #ifdef HAVE_ANY_GPU

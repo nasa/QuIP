@@ -114,7 +114,7 @@ static void _make_steps(SINGLE_QSP_ARG_DECL)
 		SET_OA_SRC1(&oa1, global_xval_dp);
 		set_obj_arg_flags(&oa1);
 
-		platform_dispatch_by_code( QSP_ARG  FVEXP, &oa1 );
+		platform_dispatch_by_code( FVEXP, &oa1 );
 	}
 }
 

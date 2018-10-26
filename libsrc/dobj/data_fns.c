@@ -203,7 +203,7 @@ Data_Obj *_mk_scalar(QSP_ARG_DECL  const char *name,Precision * prec_p)
 
 // Doesn't support CUDA???
 
-void assign_scalar_obj(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
+void _assign_scalar_obj(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 {
 	Precision *prec_p;
 
@@ -353,7 +353,7 @@ dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name)
  */
 
 Data_Obj *
-dup_obj(QSP_ARG_DECL  Data_Obj *dp,const char *name)
+_dup_obj(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 {
 	Data_Obj *dp2;
 
@@ -382,7 +382,7 @@ Data_Obj *
 dupdp(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Data_Obj *new_dp;
-	new_dp = dup_obj(QSP_ARG  dp,localname());
+	new_dp = dup_obj(dp,localname());
 	assert(new_dp!=NULL);
 	return new_dp;
 }

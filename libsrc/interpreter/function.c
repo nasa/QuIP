@@ -533,7 +533,7 @@ DECLARE_ADD_FUNCTION(subscriptable,Subscript_Functions)
 
 #define DECLARE_FIND_FUNCTION(type_stem)				\
 									\
-Item *find_##type_stem(QSP_ARG_DECL  const char *name )			\
+Item *_find_##type_stem(QSP_ARG_DECL  const char *name )		\
 {									\
 	if( type_stem##_icp == NULL )					\
 		init_##type_stem##_class(SINGLE_QSP_ARG);		\
@@ -759,7 +759,7 @@ static double _seqfunc(QSP_ARG_DECL  Item *ip)
 static const char *_precfunc(QSP_ARG_DECL  const char *s)
 {
 	Item *ip;
-	ip = find_sizable( DEFAULT_QSP_ARG  s );
+	ip = _find_sizable( DEFAULT_QSP_ARG  s );
 	return get_object_prec_string(QSP_ARG  ip);
 }
 

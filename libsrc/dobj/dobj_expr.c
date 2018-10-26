@@ -45,7 +45,7 @@ static Item * _eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_OBJNAME:
 			// Not necessarily a data object!?
 			s = eval_scalexp_string(enp);
-			szp = find_sizable( DEFAULT_QSP_ARG  s );
+			szp = _find_sizable( DEFAULT_QSP_ARG  s );
 			if( szp == NULL ){
 				sprintf(ERROR_STRING,
 					"No sizable object \"%s\"!?",s);

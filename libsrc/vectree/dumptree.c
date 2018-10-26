@@ -119,6 +119,8 @@ static void prt_node(Vec_Expr_Node *enp,char *buf)
 		);
 }
 
+#define dump_node_basic(enp) _dump_node_basic(QSP_ARG  enp)
+
 static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Tree_Code code;
@@ -320,6 +322,8 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 }
 
+#define dump_subtree(enp) _dump_subtree(QSP_ARG  enp)
+
 static void _dump_subtree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
@@ -328,7 +332,7 @@ static void _dump_subtree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	for(i=0;i<MAX_CHILDREN(enp);i++){
 		if( VN_CHILD(enp,i)!=NULL){
-			_dump_subtree(QSP_ARG  VN_CHILD(enp,i));
+			dump_subtree(VN_CHILD(enp,i));
 		}
 	}
 }
@@ -341,7 +345,7 @@ void _dump_tree_with_key(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		dump_flags &= ~SHOW_KEY;	/* clear flag bit */
 	}
 	dumping=1;
-	_dump_subtree(QSP_ARG  enp);
+	dump_subtree(enp);
 	dumping=0;
 }
 
@@ -352,7 +356,7 @@ void _dump_node_with_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		dump_flags &= ~SHOW_KEY;	/* clear flag bit */
 	}
 	dumping=1;
-	_dump_node_basic(QSP_ARG  enp);
+	dump_node_basic(enp);
 	dumping=0;
 }
 

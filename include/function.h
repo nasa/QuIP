@@ -236,9 +236,8 @@ extern Subscript_Functions *get_subscriptable_functions(QSP_ARG_DECL  Item *ip);
 
 
 // function.c
-//extern Item *find_sizable(QSP_ARG_DECL  const char *name);
 #define FIND_FUNC_PROTOTYPE(type_stem)				\
-extern Item *find_##type_stem(QSP_ARG_DECL  const char *name);
+extern Item *_find_##type_stem(QSP_ARG_DECL  const char *name);
 
 FIND_FUNC_PROTOTYPE(sizable)
 FIND_FUNC_PROTOTYPE(tsable)
@@ -246,10 +245,15 @@ FIND_FUNC_PROTOTYPE(positionable)
 FIND_FUNC_PROTOTYPE(interlaceable)
 FIND_FUNC_PROTOTYPE(subscriptable)
 
+#define find_sizable(name) _find_sizable(QSP_ARG  name)
+#define find_tsable(name) _find_tsable(QSP_ARG  name)
+#define find_positionable(name) _find_positionable(QSP_ARG  name)
+#define find_interlaceable(name) _find_interlaceable(QSP_ARG  name)
+#define find_subscriptable(name) _find_subscriptable(QSP_ARG  name)
+
 extern Item *check_sizable(QSP_ARG_DECL  const char *name);
 extern Item *sub_sizable(QSP_ARG_DECL  Item *ip,index_t index);
 extern Item *csub_sizable(QSP_ARG_DECL  Item *ip,index_t index);
-extern Item *find_tsable(QSP_ARG_DECL  const char *name);
 
 extern double erfinv(double);
 extern float erfinvf(float);

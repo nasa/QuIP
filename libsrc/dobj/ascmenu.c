@@ -87,7 +87,7 @@ static Data_Obj *create_ram_copy(QSP_ARG_DECL  Data_Obj *dp)
 
 	save_ap = curr_ap;
 	curr_ap = ram_area_p;
-	tmp_dp = dup_obj(QSP_ARG  dp, tmp_name);
+	tmp_dp = dup_obj(dp, tmp_name);
 	curr_ap = save_ap;
 
 	givbuf(tmp_name);
@@ -108,7 +108,7 @@ static Data_Obj *create_platform_copy(QSP_ARG_DECL  Data_Obj *dp)
 
 	save_ap = curr_ap;
 	curr_ap = OBJ_AREA( dp );
-	contig_dp = dup_obj(QSP_ARG  dp, tname );
+	contig_dp = dup_obj(dp, tname );
 	curr_ap = save_ap;
 
 	givbuf(tname);
@@ -467,7 +467,7 @@ static COMMAND_FUNC( do_disp_obj )
 				return;
 		list_dobj(ram_dp);
 	}
-	pntvec(QSP_ARG  ram_dp,fp);
+	pntvec(ram_dp,fp);
 	fflush(fp);
 
 	RELEASE_RAM_OBJ_FOR_READING_IF(dp)
@@ -516,7 +516,7 @@ static COMMAND_FUNC( do_wrt_obj )
 
 	INSURE_OK_FOR_READING(dp)
 
-	pntvec(QSP_ARG  ram_dp,fp);
+	pntvec(ram_dp,fp);
 	if( fp != stdout && QS_MSG_FILE(THIS_QSP)!=NULL && fp != QS_MSG_FILE(THIS_QSP) ) {
 		if( verbose ){
 			sprintf(MSG_STR,"closing file %s",filename);
@@ -546,7 +546,7 @@ static COMMAND_FUNC( do_append )
 
 	INSURE_OK_FOR_READING(dp)
 
-	pntvec(QSP_ARG  ram_dp,fp);
+	pntvec(ram_dp,fp);
 	fclose(fp);
 
 	RELEASE_RAM_OBJ_FOR_READING_IF(dp)

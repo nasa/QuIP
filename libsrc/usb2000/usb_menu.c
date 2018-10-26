@@ -487,7 +487,7 @@ static COMMAND_FUNC( do_save_spec )
 		fp = stdout;
 	}
 
-	pntvec(QSP_ARG  dp,fp);
+	pntvec(dp,fp);
 
 	if( fp != stdout ) {
 		fclose(fp);

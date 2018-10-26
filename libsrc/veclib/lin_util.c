@@ -11,7 +11,7 @@ static void vdot(/*HOST_CALL_ARG_DECLS*/ QSP_ARG_DECL  Vec_Obj_Args *oap )
 	// BUG determine proper platform
 	//h_vl2_vdot(HOST_CALL_ARGS);
 #ifdef HAVE_FVDOT
-	platform_dispatch_by_code(QSP_ARG  FVDOT, oap);
+	platform_dispatch_by_code(FVDOT, oap);
 #else // ! HAVE_FVDOT
 	warn("vdot:  FVDOT not defined!?");
 #endif // ! HAVE_FVDOT
@@ -20,7 +20,7 @@ static void vdot(/*HOST_CALL_ARG_DECLS*/ QSP_ARG_DECL  Vec_Obj_Args *oap )
 static void vmul(/*HOST_CALL_ARG_DECLS*/ QSP_ARG_DECL  Vec_Obj_Args *oap )
 {
 	//h_vl2_vmul(HOST_CALL_ARGS);
-	platform_dispatch_by_code(QSP_ARG  FVMUL, oap);
+	platform_dispatch_by_code(FVMUL, oap);
 }
 
 #define same_pixel_type(dp1,dp2) _same_pixel_type(QSP_ARG  dp1,dp2)
@@ -440,7 +440,7 @@ void transpose(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	gen_xpose(tmp_dp,1,2);		/* switch rows, cols */
 
 	setvarg2(oap,dpto,tmp_dp);
-	perf_vfunc(QSP_ARG  FVMOV,oap);
+	perf_vfunc(FVMOV,oap);
 
 	// tmp_dp has no resources except is shape...
 	rls_shape( OBJ_SHAPE(tmp_dp) );

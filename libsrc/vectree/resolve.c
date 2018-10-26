@@ -361,7 +361,7 @@ advise(ERROR_STRING);
  * the declaration trees...
  */
 
-void forget_resolved_shapes(QSP_ARG_DECL  Subrt *srp)
+void _forget_resolved_shapes(QSP_ARG_DECL  Subrt *srp)
 {
 	/* First check the arguments */
 

@@ -210,7 +210,8 @@ extern void init_ml_native_kw_tbl(void);
 extern void _delete_id(QSP_ARG_DECL  Item *);
 #define delete_id(ip) _delete_id(QSP_ARG  ip)
 
-extern void pop_subrt_cpair(QSP_ARG_DECL  Context_Pair *cpp,const char *name);
+extern void _pop_subrt_cpair(QSP_ARG_DECL  Context_Pair *cpp,const char *name);
+#define pop_subrt_cpair(cpp,name) _pop_subrt_cpair(QSP_ARG  cpp,name)
 extern void _dump_subrt(QSP_ARG_DECL  Subrt *);
 #define dump_subrt(srp)		_dump_subrt(QSP_ARG  srp)
 extern Vec_Expr_Node *_find_node_by_number(QSP_ARG_DECL  int);
@@ -368,7 +369,8 @@ extern int	_check_arg_shapes(QSP_ARG_DECL  Vec_Expr_Node *arg,Vec_Expr_Node *val
 extern void		check_resolution(Subrt *srp);
 extern void		_point_node_shape(QSP_ARG_DECL  Vec_Expr_Node *,Shape_Info *);
 #define point_node_shape( enp , sip )	_point_node_shape(QSP_ARG  enp , sip )
-extern int		decl_count(QSP_ARG_DECL  Vec_Expr_Node *);
+extern int		_decl_count(QSP_ARG_DECL  Vec_Expr_Node *);
+#define decl_count(enp) _decl_count(QSP_ARG  enp)
 extern int		arg_count(Vec_Expr_Node *);
 extern void		_resolve_subrt_call(QSP_ARG_DECL  Vec_Expr_Node *call_enp,List *uk_list, Shape_Info *ret_shpp);
 #define resolve_subrt_call(enp,uk_list,ret_shpp)	_resolve_subrt_call(QSP_ARG enp,uk_list,ret_shpp)
@@ -378,7 +380,8 @@ extern void		_resolve_subrt_call(QSP_ARG_DECL  Vec_Expr_Node *call_enp,List *uk_
 
 extern Vec_Expr_Node *	_resolve_node(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp);
 #define resolve_node(uk_enp,shpp)		_resolve_node(QSP_ARG uk_enp,shpp)
-extern void		forget_resolved_shapes(QSP_ARG_DECL  Subrt *srp);
+extern void		_forget_resolved_shapes(QSP_ARG_DECL  Subrt *srp);
+#define forget_resolved_shapes(srp) _forget_resolved_shapes(QSP_ARG  srp)
 extern void		_resolve_tree(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Expr_Node *whence);
 #define resolve_tree(enp,whence)		_resolve_tree(QSP_ARG enp,whence)
 extern void		_late_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Data_Obj *dst_dp);

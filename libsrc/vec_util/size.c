@@ -120,7 +120,7 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 
 						// This doesn't check for cuda obj...
 						//vmov(oap);
-						perf_vfunc(QSP_ARG  FVMOV, oap );
+						perf_vfunc(FVMOV, oap );
 					}
 				}
 			}

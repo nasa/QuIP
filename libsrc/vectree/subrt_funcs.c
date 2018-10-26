@@ -607,7 +607,7 @@ advise(ERROR_STRING);
 	rls_node(np);
 }
 
-void pop_subrt_cpair(QSP_ARG_DECL  Context_Pair *cpp,const char *name)
+void _pop_subrt_cpair(QSP_ARG_DECL  Context_Pair *cpp,const char *name)
 {
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){

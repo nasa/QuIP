@@ -447,7 +447,8 @@ extern int platform_dispatch(QSP_ARG_DECL  const Compute_Platform *cpp,
 				const struct vector_function *vfp,
 				Vec_Obj_Args *oap );
 
-extern int platform_dispatch_by_code(QSP_ARG_DECL  int code, Vec_Obj_Args *oap );
+extern int _platform_dispatch_by_code(QSP_ARG_DECL  int code, Vec_Obj_Args *oap );
+#define platform_dispatch_by_code(code, oap ) _platform_dispatch_by_code(QSP_ARG  code, oap )
 extern void _dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
 #define dp_convert(dst_dp, src_dp) _dp_convert(QSP_ARG  dst_dp, src_dp)
 

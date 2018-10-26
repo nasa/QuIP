@@ -651,7 +651,7 @@ static Item* eval_tsbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 	switch(enp->sen_code){
 		case N_TSABLE:
 			s = eval_scalexp_string(enp->sen_child[0]);
-			ip = find_tsable( QSP_ARG  s );
+			ip = find_tsable( s );
 			if( ip == NULL ){
 				sprintf(ERROR_STRING,
 					"No time-stampable object \"%s\"!?",s);
@@ -1084,7 +1084,7 @@ static Item * eval_positionable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_OBJNAME:
 			// Not necessarily a data object!?
 			s = eval_scalexp_string(enp);
-			szp = find_positionable( QSP_ARG  s );
+			szp = find_positionable( s );
 			break;
 #ifdef CAUTIOUS
 		default:
@@ -1115,7 +1115,7 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_OBJNAME:
 			// Not necessarily a data object!?
 			s = eval_scalexp_string(enp);
-			szp = find_interlaceable( QSP_ARG  s );
+			szp = find_interlaceable( s );
 			if( szp == NULL ){
 				sprintf(ERROR_STRING,
 					"No interlaceable object \"%s\"!?",s);

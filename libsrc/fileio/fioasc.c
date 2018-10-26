@@ -51,7 +51,7 @@ FIO_WT_FUNC( ascii )
 
 	/* Now write the data! */
 
-	pntvec(QSP_ARG  dp,ifp->if_fp);
+	pntvec(dp,ifp->if_fp);
 
 	return(0);
 }

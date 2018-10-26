@@ -854,7 +854,7 @@ advise(ERROR_STRING);
  * It seems we are confused about what to do about bitmaps - BUG?
  */
 
-void format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *data)
+void _format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *data)
 {
 	//int64_t l;
 	int c;
@@ -983,7 +983,7 @@ static void pnt_one(QSP_ARG_DECL  FILE *fp, Data_Obj *dp,  u_char *data )
 					fprintf(fp,"\n");
 					n_this_line = 0;
 				}
-				format_scalar_obj(QSP_ARG  buf,128,dp,data);
+				format_scalar_obj(buf,128,dp,data);
 				// put a space here, because format_scalar_obj does not include a separator
 				fprintf(fp," %s",buf);
 				data += inc;
@@ -991,7 +991,7 @@ static void pnt_one(QSP_ARG_DECL  FILE *fp, Data_Obj *dp,  u_char *data )
 			}
 		}
 	} else {
-		format_scalar_obj(QSP_ARG  buf,128,dp,data);
+		format_scalar_obj(buf,128,dp,data);
 		fprintf(fp," %s",buf);
 		n_this_line++;
 	}
@@ -1054,7 +1054,9 @@ advise(ERROR_STRING);
 
 /* This is a speeded-up version for floats - do we need it? */
 
-static void sp_pntvec( QSP_ARG_DECL  Data_Obj *dp, FILE *fp )
+#define sp_pntvec( dp, fp ) _sp_pntvec( QSP_ARG  dp, fp )
+
+static void _sp_pntvec( QSP_ARG_DECL  Data_Obj *dp, FILE *fp )
 {
 	float *base, *fbase, *rbase, *pbase;
 	dimension_t i3,i2,i1,i0;
@@ -1154,7 +1156,7 @@ static void display_bitmap(QSP_ARG_DECL  Data_Obj *dp, FILE *fp)
 	}
 }
 
-void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
+void _pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 {
 //	const char *save_ifmt;
 //	const char *save_ffmt;
@@ -1180,7 +1182,7 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 	sprintf(padded_flt_fmt_str,"%%%d.%dg",min_field_width,display_precision);
 
 	if( OBJ_MACH_PREC(dp) == PREC_SP ){
-		sp_pntvec(QSP_ARG  dp,fp);
+		sp_pntvec(dp,fp);
 	} else if( OBJ_PREC(dp) == PREC_BIT )
 		display_bitmap(QSP_ARG  dp,fp);
 	else {

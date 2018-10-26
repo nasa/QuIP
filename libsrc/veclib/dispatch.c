@@ -637,7 +637,7 @@ static Compute_Platform * set_oargs_platform(QSP_ARG_DECL  Vec_Obj_Args *oap)
 	return PFDEV_PLATFORM(pdp);
 }
 
-int platform_dispatch_by_code( QSP_ARG_DECL   int code, Vec_Obj_Args *oap )
+int _platform_dispatch_by_code( QSP_ARG_DECL   int code, Vec_Obj_Args *oap )
 {
 	Compute_Platform *cpp;
 	Vector_Function *vfp;
@@ -684,6 +684,6 @@ void _dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp )
 	setvarg2(oap,dst_dp,src_dp);
 	// Need to set argset precision to match source, not destination...
 	SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC( OBJ_PREC( src_dp ) ) );
-	platform_dispatch_by_code(QSP_ARG  code, oap );
+	platform_dispatch_by_code(code, oap );
 }
 

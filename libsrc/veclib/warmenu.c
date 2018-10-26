@@ -71,7 +71,7 @@ static COMMAND_FUNC( do_convert )
 			return;
 	}
 
-	perf_vfunc(QSP_ARG  code,&oa1);
+	perf_vfunc(code,&oa1);
 }
 
 static COMMAND_FUNC( do_ceil ) { DO_VCODE(FVCEIL); }

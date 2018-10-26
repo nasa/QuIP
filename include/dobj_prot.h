@@ -53,8 +53,10 @@ extern int		set_shape_flags(Shape_Info *shpp,uint32_t type_flags);
 extern int		auto_shape_flags(Shape_Info *shpp);
 extern void		show_space_used(QSP_ARG_DECL  Data_Obj * dp);
 extern void		dobj_iterate(Data_Obj * dp,void (*func)(Data_Obj * ,uint32_t));
-extern void		dpair_iterate(QSP_ARG_DECL  Data_Obj * dp,Data_Obj * dp2,
+extern void		_dpair_iterate(QSP_ARG_DECL  Data_Obj * dp,Data_Obj * dp2,
 				void (*func)(QSP_ARG_DECL  Data_Obj * ,uint32_t,Data_Obj * ,uint32_t));
+#define dpair_iterate(dp,dp2, func) _dpair_iterate(QSP_ARG  dp,dp2, func)
+
 extern void		_gen_xpose(QSP_ARG_DECL  Data_Obj * dp,int dim1,int dim2);
 #define gen_xpose(dp,dim1,dim2) _gen_xpose(QSP_ARG  dp,dim1,dim2)
 
@@ -147,7 +149,8 @@ extern int		set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *d
 extern int		_obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname);
 #define obj_rename(dp,newname) _obj_rename(QSP_ARG  dp,newname)
 extern Data_Obj *	_mk_scalar(QSP_ARG_DECL  const char *name,Precision *prec_p);
-extern void		assign_scalar_obj(QSP_ARG_DECL  Data_Obj *,Scalar_Value *);
+extern void		_assign_scalar_obj(QSP_ARG_DECL  Data_Obj *,Scalar_Value *);
+#define assign_scalar_obj(dp,svp) _assign_scalar_obj(QSP_ARG  dp,svp)
 
 extern void		_extract_scalar_value(QSP_ARG_DECL  Scalar_Value *, Data_Obj *);
 extern double		_cast_from_scalar_value(QSP_ARG_DECL  Scalar_Value *, Precision *prec_p);
@@ -169,7 +172,8 @@ extern Data_Obj *	_mk_vec(QSP_ARG_DECL  const char *,dimension_t, dimension_t,Pr
 #define mk_vec(name,n_elts,depth,prec_p) _mk_vec(QSP_ARG  name,n_elts,depth,prec_p)
 extern Data_Obj *	dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name);
 extern Data_Obj *	dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name);
-extern Data_Obj *	dup_obj(QSP_ARG_DECL  Data_Obj *dp,const char *name);
+extern Data_Obj *	_dup_obj(QSP_ARG_DECL  Data_Obj *dp,const char *name);
+#define dup_obj(dp,name) _dup_obj(QSP_ARG  dp,name)
 extern Data_Obj *	dupdp(QSP_ARG_DECL  Data_Obj *dp);
 extern int		is_valid_dname(QSP_ARG_DECL  const char *name);
 
@@ -366,12 +370,15 @@ extern Data_Obj *insure_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *dp);
 
 /* ascii.c */
 extern void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p);
-extern void format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *data);
+extern void _format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *data);
+#define format_scalar_obj(buf,buflen,dp,data) _format_scalar_obj(QSP_ARG  buf,buflen,dp,data)
+
 #define PAD_FOR_EVEN_COLUMNS	1
 #define NO_PADDING 		0
 extern void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision *prec_p,int pad_flag);
 extern char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p);
-extern void pntvec(QSP_ARG_DECL  Data_Obj *dp, FILE *fp);
+extern void _pntvec(QSP_ARG_DECL  Data_Obj *dp, FILE *fp);
+#define pntvec(dp, fp) _pntvec(QSP_ARG  dp, fp)
 extern void dptrace(QSP_ARG_DECL  Data_Obj *);
 //extern void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code);
 extern void set_max_per_line(QSP_ARG_DECL  int n);

@@ -543,7 +543,7 @@ void dobj_iterate(Data_Obj *dp,void (*func)(Data_Obj *,index_t))
 }
 
 
-void dpair_iterate(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,void (*func)(QSP_ARG_DECL  Data_Obj *,index_t,Data_Obj *,index_t))
+void _dpair_iterate(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,void (*func)(QSP_ARG_DECL  Data_Obj *,index_t,Data_Obj *,index_t))
 {
 	dimension_t comp,col,row,frm,seq;
 

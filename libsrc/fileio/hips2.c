@@ -366,7 +366,7 @@ FIO_RD_FUNC( hips2 )
 			return;
 		}
 if( verbose ) advise("transposing data to make interleaved components");
-		rd_dp = dup_obj(QSP_ARG  dp,"tmp_xpose_obj");
+		rd_dp = dup_obj(dp,"tmp_xpose_obj");
 		gen_xpose(rd_dp,3,0);
 		gen_xpose(rd_dp,3,4);
 	} else rd_dp = dp;

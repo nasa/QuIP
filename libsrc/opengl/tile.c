@@ -1401,7 +1401,7 @@ advise(ERROR_STRING);
 
 			/* now we need to create an object to hold the image */
 			sprintf(name,"elevation.%s.%d",mtp->mt_dem_name,i);
-			mtp->mt_dem_dp[i] = dup_obj(QSP_ARG  ifp->if_dp,name);
+			mtp->mt_dem_dp[i] = dup_obj(ifp->if_dp,name);
 
 			read_object_from_file(mtp->mt_dem_dp[i],ifp);
 		}
@@ -1470,7 +1470,7 @@ advise(ERROR_STRING);
 */
 			/* now we need to create an object to hold the image */
 			sprintf(name,"texture.%s.%d",mtp->mt_tex_name,i);
-			mtp->mt_tex_dp[i] = dup_obj(QSP_ARG  ifp->if_dp,name);
+			mtp->mt_tex_dp[i] = dup_obj(ifp->if_dp,name);
 
 			read_object_from_file(mtp->mt_tex_dp[i],ifp);
 		}
