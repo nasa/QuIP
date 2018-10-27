@@ -1,3 +1,4 @@
+#ifdef HAVE_OPENCL
 
 #ifdef __APPLE__ //Mac OSX has a different name for the header file
 #include <OpenCL/opencl.h>
@@ -10,9 +11,6 @@
 #include "item_obj.h"
 
 #include "veclib/vecgen.h"
-//#include "veclib/vec_func.h"
-//#include "veclib/obj_args.h"
-//#include "platform.h"
 
 #define BUILD_FOR_OPENCL
 
@@ -98,3 +96,4 @@ extern void h_ocl_set_seed(int seed);
 		return retval;					\
 	}
 
+#endif // HAVE_OPENCL
