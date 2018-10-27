@@ -51,7 +51,8 @@ extern void		sizinit(void);
 extern void		make_complex(Shape_Info *shpp);
 extern int		set_shape_flags(Shape_Info *shpp,uint32_t type_flags);
 extern int		auto_shape_flags(Shape_Info *shpp);
-extern void		show_space_used(QSP_ARG_DECL  Data_Obj * dp);
+extern void		_show_space_used(QSP_ARG_DECL  Data_Obj * dp);
+#define show_space_used(dp) _show_space_used(QSP_ARG  dp)
 extern void		dobj_iterate(Data_Obj * dp,void (*func)(Data_Obj * ,uint32_t));
 extern void		_dpair_iterate(QSP_ARG_DECL  Data_Obj * dp,Data_Obj * dp2,
 				void (*func)(QSP_ARG_DECL  Data_Obj * ,uint32_t,Data_Obj * ,uint32_t));
@@ -80,15 +81,17 @@ extern int		same_shape(Shape_Info *,Shape_Info *);
 
 //extern const char *	name_for_prec(int prec);
 extern Precision *	prec_for_code(prec_t prec);
-extern void		dump_shape(QSP_ARG_DECL  Shape_Info *shpp);
+extern void		_dump_shape(QSP_ARG_DECL  Shape_Info *shpp);
 extern void		_list_dobj(QSP_ARG_DECL  Data_Obj * dp);
 extern void		_longlist(QSP_ARG_DECL  Data_Obj * dp);
 
+#define dump_shape(shpp) _dump_shape(QSP_ARG  shpp)
 #define list_dobj(dp)	_list_dobj(QSP_ARG  dp)
 #define longlist(dp)	_longlist(QSP_ARG  dp)
 
 //extern void		describe_shape(Shape_Info *shpp);
-extern void show_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp, Dimension_Set *dsp, Increment_Set *isp);
+extern void _show_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp, Dimension_Set *dsp, Increment_Set *isp);
+#define show_obj_dimensions(dp, dsp, isp) _show_obj_dimensions(QSP_ARG  dp, dsp, isp)
 
 /* pars_obj.c */
 extern Data_Obj * pars_obj(const char *);
@@ -145,7 +148,9 @@ extern const char *	localname(void);
 extern void *		multiply_indexed_data(Data_Obj *dp, dimension_t *offset );
 extern void *		indexed_data(Data_Obj *dp, dimension_t offset );
 extern void		make_contiguous(Data_Obj *);
-extern int		set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dimensions,Precision *);
+extern int		_set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dimensions,Precision *);
+#define set_shape_dimensions(shpp,dimensions,prec_p) _set_shape_dimensions(QSP_ARG  shpp,dimensions,prec_p)
+
 extern int		_obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname);
 #define obj_rename(dp,newname) _obj_rename(QSP_ARG  dp,newname)
 extern Data_Obj *	_mk_scalar(QSP_ARG_DECL  const char *name,Precision *prec_p);
@@ -170,12 +175,17 @@ extern void		_cast_dbl_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *, 
 extern Data_Obj *	mk_cscalar(QSP_ARG_DECL  const char *name,double rval, double ival);
 extern Data_Obj *	_mk_vec(QSP_ARG_DECL  const char *,dimension_t, dimension_t,Precision *prec_p);
 #define mk_vec(name,n_elts,depth,prec_p) _mk_vec(QSP_ARG  name,n_elts,depth,prec_p)
-extern Data_Obj *	dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name);
-extern Data_Obj *	dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name);
+
 extern Data_Obj *	_dup_obj(QSP_ARG_DECL  Data_Obj *dp,const char *name);
+extern int		_is_valid_dname(QSP_ARG_DECL  const char *name);
+extern Data_Obj *	_dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name);
+extern Data_Obj *	_dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name);
+extern Data_Obj *	_dupdp(QSP_ARG_DECL  Data_Obj *dp);
 #define dup_obj(dp,name) _dup_obj(QSP_ARG  dp,name)
-extern Data_Obj *	dupdp(QSP_ARG_DECL  Data_Obj *dp);
-extern int		is_valid_dname(QSP_ARG_DECL  const char *name);
+#define is_valid_dname(name) _is_valid_dname(QSP_ARG  name)
+#define dup_half(dp,name) _dup_half(QSP_ARG  dp,name)
+#define dup_dbl(dp,name) _dup_dbl(QSP_ARG  dp,name)
+#define dupdp(dp) _dupdp(QSP_ARG  dp)
 
 extern Data_Obj *	_mk_img(QSP_ARG_DECL  const char *,dimension_t,dimension_t,dimension_t ,Precision *prec_p);
 extern int		_set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dimensions,Precision *);
@@ -363,28 +373,41 @@ extern void verdata(SINGLE_QSP_ARG_DECL);
 
 /* ascmenu.c */
 #ifdef HAVE_ANY_GPU
-extern Data_Obj *insure_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *dp);
-extern void release_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp);
-extern Data_Obj *insure_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *dp);
+extern Data_Obj *_insure_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *dp);
+extern void _release_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp);
+extern Data_Obj *_insure_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *dp);
+
+#define insure_ram_obj_for_reading(dp) _insure_ram_obj_for_reading(QSP_ARG  dp)
+#define release_ram_obj_for_reading(ram_dp, dp) _release_ram_obj_for_reading(QSP_ARG  ram_dp, dp)
+#define insure_ram_obj_for_writing(dp) _insure_ram_obj_for_writing(QSP_ARG  dp)
 #endif // HAVE_ANY_GPU
 
 /* ascii.c */
-extern void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p);
+extern void _init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p);
 extern void _format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *data);
 #define format_scalar_obj(buf,buflen,dp,data) _format_scalar_obj(QSP_ARG  buf,buflen,dp,data)
 
+#define init_dobj_ascii_info(dai_p) _init_dobj_ascii_info(QSP_ARG  dai_p)
+
 #define PAD_FOR_EVEN_COLUMNS	1
 #define NO_PADDING 		0
-extern void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision *prec_p,int pad_flag);
+extern void _format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision *prec_p,int pad_flag);
+#define format_scalar_value(buf,buflen,data,prec_p,pad_flag) _format_scalar_value(QSP_ARG  buf,buflen,data,prec_p,pad_flag)
 extern char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p);
 extern void _pntvec(QSP_ARG_DECL  Data_Obj *dp, FILE *fp);
 #define pntvec(dp, fp) _pntvec(QSP_ARG  dp, fp)
-extern void dptrace(QSP_ARG_DECL  Data_Obj *);
-//extern void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code);
-extern void set_max_per_line(QSP_ARG_DECL  int n);
-extern void set_input_format_string(QSP_ARG_DECL  const char *s);
-extern void set_display_precision(QSP_ARG_DECL  int);
-extern int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str);
+
+extern void _dptrace(QSP_ARG_DECL  Data_Obj *);
+extern void _set_max_per_line(QSP_ARG_DECL  int n);
+extern void _set_input_format_string(QSP_ARG_DECL  const char *s);
+extern void _set_display_precision(QSP_ARG_DECL  int);
+extern int _object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str);
+
+#define dptrace(dp) _dptrace(QSP_ARG  dp)
+#define set_max_per_line(n) _set_max_per_line(QSP_ARG  n)
+#define set_input_format_string(s) _set_input_format_string(QSP_ARG  s)
+#define set_display_precision(n) _set_display_precision(QSP_ARG  n)
+#define object_is_in_ram(dp, op_str) _object_is_in_ram(QSP_ARG  dp, op_str)
 
 extern void _read_obj(QSP_ARG_DECL Data_Obj *dp);
 extern void _read_ascii_data_from_pipe(QSP_ARG_DECL Data_Obj *dp, Pipe *pp, const char *s, int expect_exact_count);

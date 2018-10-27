@@ -36,7 +36,7 @@ u_long rn( u_long max ) /** returns a number between 0 and max (inclusive) */
 	float f;
 #endif
 
-	rninit(SGL_DEFAULT_QSP_ARG);
+	_rninit(SGL_DEFAULT_QSP_ARG);
 
 #ifdef HAVE_DRAND48
 
@@ -69,7 +69,7 @@ u_long rn( u_long max ) /** returns a number between 0 and max (inclusive) */
 	return(n);
 }
 
-void set_random_seed(SINGLE_QSP_ARG_DECL)
+void _set_random_seed(SINGLE_QSP_ARG_DECL)
 {
 	long seed_val;
 #ifdef HAVE_GETTIMEOFDAY
@@ -89,7 +89,7 @@ void set_random_seed(SINGLE_QSP_ARG_DECL)
 #endif
 }
 
-void set_seed(QSP_ARG_DECL  u_long seed)
+void _set_seed(QSP_ARG_DECL  u_long seed)
 {
 #ifdef HAVE_SRAND48
 
@@ -126,7 +126,7 @@ void set_seed(QSP_ARG_DECL  u_long seed)
 #define SECONDS_PER_HOUR	(SECONDS_PER_MINUTE * MINUTES_PER_HOUR)
 #define SECONDS_PER_DAY		(SECONDS_PER_HOUR * HOURS_PER_DAY)
 
-void rninit(SINGLE_QSP_ARG_DECL)        /** randomly seed the generator */
+void _rninit(SINGLE_QSP_ARG_DECL)        /** randomly seed the generator */
 {
 #ifdef HAVE_GETTIMEOFDAY
 	struct timeval tv;
@@ -171,7 +171,7 @@ void rninit(SINGLE_QSP_ARG_DECL)        /** randomly seed the generator */
 		advise(ERROR_STRING);
 	}
 
-	set_seed(QSP_ARG  seed);
+	set_seed(seed);
 }
 
 /*

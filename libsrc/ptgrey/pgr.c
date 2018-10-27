@@ -638,7 +638,7 @@ int get_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, PGR_Cam *pgcp )
 			strcpy(dst,src);
 		}
 	}
-	set_script_var_from_int(QSP_ARG  "n_video_modes",n);
+	set_script_var_from_int("n_video_modes",n);
 	return n;
 }
 
@@ -776,7 +776,7 @@ static int set_default_framerate(QSP_ARG_DECL  PGR_Cam *pgcp)
 	if( mode_is_format7(pgcp) ){
 		//warn("set_default_framerate:  No framerate associated with format7 video mode!?");
 		pgcp->pc_framerate = -1;
-		set_script_var_from_int(QSP_ARG "n_framerates",0);
+		set_script_var_from_int("n_framerates",0);
 		return 0;
 	}
 
@@ -797,8 +797,7 @@ advise(ERROR_STRING);
 
 	// stash the number of framerates in a script variable
 	// in case the user wants to fetch the strings...
-	set_script_var_from_int(QSP_ARG
-			"n_framerates",pgcp->pc_framerates.num);
+	set_script_var_from_int("n_framerates",pgcp->pc_framerates.num);
 
 	return 0;
 }
@@ -1129,8 +1128,7 @@ int init_firewire_system(SINGLE_QSP_ARG_DECL)
 		}
 	}
 
-	set_script_var_from_int(QSP_ARG  "n_cameras",
-				/*camera_list_p->num*/ n_good_cameras);
+	set_script_var_from_int("n_cameras", n_good_cameras);
 
 	// BUG make this a reserved var
 

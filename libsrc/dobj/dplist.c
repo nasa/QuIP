@@ -131,7 +131,7 @@ fprintf(stderr,"no categorization of shape at 0x%lx!?\n",(long)shpp);
 	prt_msg("");
 }
 
-void dump_shape(QSP_ARG_DECL  Shape_Info *shpp)
+void _dump_shape(QSP_ARG_DECL  Shape_Info *shpp)
 {
 	int i;
 
@@ -235,7 +235,9 @@ struct _flagtbl {
 	{	"bitmap GPU info present",	DT_HAS_BITMAP_GPU_INFO	},
 };
 
-static void list_dp_flags(QSP_ARG_DECL  Data_Obj *dp)
+#define list_dp_flags(dp) _list_dp_flags(QSP_ARG  dp)
+
+static void _list_dp_flags(QSP_ARG_DECL  Data_Obj *dp)
 {
 	int i;
 	shape_flag_t flags;
@@ -263,7 +265,7 @@ static void list_dp_flags(QSP_ARG_DECL  Data_Obj *dp)
 	assert( flags == 0 );
 }
 
-/*static*/ void show_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp, Dimension_Set *dsp, Increment_Set *isp)
+void _show_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp, Dimension_Set *dsp, Increment_Set *isp)
 {
 	int i;
 	char dn[32];
@@ -308,7 +310,9 @@ if( debug & debug_data ){
 
 } // show_obj_dimensions
 
-static void list_sizes(QSP_ARG_DECL  Data_Obj *dp)
+#define list_sizes(dp) _list_sizes(QSP_ARG  dp)
+
+static void _list_sizes(QSP_ARG_DECL  Data_Obj *dp)
 {
 	sprintf(MSG_STR,"\tmindim = %d, maxdim = %d",
 		OBJ_MINDIM(dp),OBJ_MAXDIM(dp));
@@ -318,17 +322,18 @@ static void list_sizes(QSP_ARG_DECL  Data_Obj *dp)
 		OBJ_RANGE_MINDIM(dp),OBJ_RANGE_MAXDIM(dp));
 	prt_msg(MSG_STR);
 
-	show_obj_dimensions(QSP_ARG  dp,OBJ_TYPE_DIMS(dp),OBJ_TYPE_INCS(dp));
+	show_obj_dimensions(dp,OBJ_TYPE_DIMS(dp),OBJ_TYPE_INCS(dp));
 #ifdef QUIP_DEBUG
 	if( debug & debug_data ){
 		prt_msg("machine type dimensions:");
-		show_obj_dimensions(QSP_ARG  dp,OBJ_MACH_DIMS(dp),OBJ_MACH_INCS(dp));
+		show_obj_dimensions(dp,OBJ_MACH_DIMS(dp),OBJ_MACH_INCS(dp));
 	}
 #endif // QUIP_DEBUG
 }
 
+#define list_relatives(dp) _list_relatives(QSP_ARG  dp)
 
-static void list_relatives(QSP_ARG_DECL  Data_Obj *dp)
+static void _list_relatives(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( OBJ_PARENT(dp) != NULL ){
 		sprintf(MSG_STR,"\tparent data object:  %s",
@@ -356,7 +361,9 @@ static void list_relatives(QSP_ARG_DECL  Data_Obj *dp)
 	}
 }
 
-static void list_device(QSP_ARG_DECL  Data_Obj *dp)
+#define list_device(dp) _list_device(QSP_ARG  dp)
+
+static void _list_device(QSP_ARG_DECL  Data_Obj *dp)
 {
 	sprintf(MSG_STR,"\tdevice:  %s",PFDEV_NAME(OBJ_PFDEV(dp)));
 	prt_msg(MSG_STR);
@@ -380,7 +387,9 @@ static void list_device(QSP_ARG_DECL  Data_Obj *dp)
 // Another solution would be to search ALL of the contexts, not
 // just those currently on the stack...
 
-static void show_dobj_context(QSP_ARG_DECL  Data_Obj *dp)
+#define show_dobj_context(dp) _show_dobj_context(QSP_ARG  dp)
+
+static void _show_dobj_context(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Item_Context *icp;
 	Node *np;
@@ -396,7 +405,7 @@ static void show_dobj_context(QSP_ARG_DECL  Data_Obj *dp)
 	 */
 
 	if( OBJ_PARENT(dp) != NULL ){
-		show_dobj_context(QSP_ARG  OBJ_PARENT( dp) );
+		show_dobj_context(OBJ_PARENT( dp) );
 		return;
 	}
 
@@ -432,7 +441,9 @@ show_context:
 
 } // list context
 
-static void list_data(QSP_ARG_DECL  Data_Obj *dp)
+#define list_data(dp) _list_data(QSP_ARG  dp)
+
+static void _list_data(QSP_ARG_DECL  Data_Obj *dp)
 {
 	bitnum_t n;
 
@@ -462,7 +473,9 @@ static void list_data(QSP_ARG_DECL  Data_Obj *dp)
 
 #ifdef QUIP_DEBUG
 
-static void list_increments(QSP_ARG_DECL  Data_Obj *dp)
+#define list_increments(dp) _list_increments(QSP_ARG  dp)
+
+static void _list_increments(QSP_ARG_DECL  Data_Obj *dp)
 {
 	int i;
 
@@ -476,16 +489,16 @@ static void list_increments(QSP_ARG_DECL  Data_Obj *dp)
 void _longlist(QSP_ARG_DECL  Data_Obj *dp)
 {
 	list_dobj(dp);
-	list_device(QSP_ARG  dp);
-	show_dobj_context(QSP_ARG  dp);
-	list_sizes(QSP_ARG  dp);
-	list_data(QSP_ARG  dp);
-	list_relatives(QSP_ARG  dp);
-	list_dp_flags(QSP_ARG  dp);
+	list_device(dp);
+	show_dobj_context(dp);
+	list_sizes(dp);
+	list_data(dp);
+	list_relatives(dp);
+	list_dp_flags(dp);
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
-list_increments(QSP_ARG  dp);
-dump_shape(QSP_ARG  OBJ_SHAPE(dp) );
+list_increments(dp);
+dump_shape(OBJ_SHAPE(dp) );
 }
 #endif /* QUIP_DEBUG */
 }
@@ -521,7 +534,7 @@ void info_all_dps(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-void show_space_used(QSP_ARG_DECL  Data_Obj *dp)
+void _show_space_used(QSP_ARG_DECL  Data_Obj *dp)
 {
 	sprintf(MSG_STR,"%s:\t\t0x%"PRIxPTR,OBJ_NAME(dp),(uintptr_t)OBJ_DATA_PTR(dp));
 	prt_msg(MSG_STR);

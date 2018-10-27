@@ -7,10 +7,13 @@
 #define SCRAMBLE_TYPE uint32_t
 
 extern u_long rn(u_long);
-extern void rninit(SINGLE_QSP_ARG_DECL);
-extern void set_seed(QSP_ARG_DECL  u_long seed);
+extern void _rninit(SINGLE_QSP_ARG_DECL);
+extern void _set_seed(QSP_ARG_DECL  u_long seed);
+#define rninit() _rninit(SINGLE_QSP_ARG)
+#define set_seed(seed) _set_seed(QSP_ARG  seed)
 
-extern void set_random_seed(SINGLE_QSP_ARG_DECL);
+extern void _set_random_seed(SINGLE_QSP_ARG_DECL);
+#define set_random_seed() _set_random_seed(SINGLE_QSP_ARG)
 
 #define SCRAMBLE_PREC PREC_UDI
 #define SCRAMBLE_TYPE uint32_t

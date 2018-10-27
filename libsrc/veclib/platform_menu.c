@@ -138,8 +138,7 @@ static COMMAND_FUNC( do_obj_dnload )
 
 	if( dpto == NULL || dpfr == NULL ) return;
 
-	//ocl_obj_dnload(QSP_ARG  dpto,dpfr);
-	gen_obj_dnload(QSP_ARG  dpto, dpfr);
+	gen_obj_dnload(dpto, dpfr);
 }
 
 static COMMAND_FUNC( do_obj_upload )
@@ -151,8 +150,7 @@ static COMMAND_FUNC( do_obj_upload )
 
 	if( dpto == NULL || dpfr == NULL ) return;
 
-	//ocl_obj_upload(QSP_ARG  dpto,dpfr);
-	gen_obj_upload(QSP_ARG  dpto,dpfr);
+	gen_obj_upload(dpto,dpfr);
 }
 
 static COMMAND_FUNC(do_show_pfdev)

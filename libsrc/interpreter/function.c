@@ -73,7 +73,7 @@ static const char * funcname(QSP_ARG_DECL  const char *s )				\
 	p=t;								\
 	while( *s ){							\
 		if( test_macro(*s) )					\
-			*p = (char) map_macro(*s);				\
+			*p = (char) map_macro(*s);			\
 		else							\
 			*p = *s;					\
 		p++;							\
@@ -160,7 +160,7 @@ static double is_portrait_dbl(void)
 static double rn_uni(double arg)		/* arg is not used... */
 {
 	double d;
-	rninit(SGL_DEFAULT_QSP_ARG);
+	_rninit(SGL_DEFAULT_QSP_ARG);
 #ifdef HAVE_DRAND48
 	d=drand48();
 #else
@@ -574,14 +574,14 @@ DECLARE_CHECK_FUNC(sizable)
 
 #define DECLARE_GETFUNCS_FUNC(type_stem,func_type)			\
 									\
-func_type *get_##type_stem##_functions(QSP_ARG_DECL  Item *ip)		\
+func_type *_get_##type_stem##_functions(QSP_ARG_DECL  Item *ip)		\
 {									\
 	Member_Info *mip;						\
-	if( type_stem##_icp == NULL )				\
+	if( type_stem##_icp == NULL )					\
 		init_##type_stem##_class(SINGLE_QSP_ARG);		\
-	mip = get_member_info(type_stem##_icp,ip->item_name);	\
+	mip = get_member_info(type_stem##_icp,ip->item_name);		\
 	/*MEMBER_CAUTIOUS_CHECK(type_stem)*/				\
-	assert( mip != NULL );				\
+	assert( mip != NULL );						\
 	return (func_type *) mip->mi_data;				\
 }
 
@@ -590,7 +590,6 @@ DECLARE_GETFUNCS_FUNC(tsable,Timestamp_Functions)	// get_tsable_functions
 DECLARE_GETFUNCS_FUNC(interlaceable,Interlace_Functions)	// get_interlaceable_functions
 DECLARE_GETFUNCS_FUNC(positionable,Position_Functions)	// get_positionable_functions
 DECLARE_GETFUNCS_FUNC(subscriptable,Subscript_Functions)	// get_subscriptable_functions
-
 
 #ifndef BUILD_FOR_OBJC
 
@@ -603,25 +602,25 @@ DECLARE_GETFUNCS_FUNC(subscriptable,Subscript_Functions)	// get_subscriptable_fu
 // (when they exist).
 // That approach burns a bit more memory, but probably insignificant?
 
-const char *get_object_prec_string(QSP_ARG_DECL  Item *ip )	// non-iOS
+const char *_get_object_prec_string(QSP_ARG_DECL  Item *ip )	// non-iOS
 {
 	Size_Functions *sfp;
 
 	if( ip == NULL ) return "u_byte";
 
-	sfp = get_sizable_functions(QSP_ARG  ip);
+	sfp = get_sizable_functions(ip);
 	assert( sfp != NULL );
 
 	return (*sfp->prec_func)(QSP_ARG  ip);
 }
 
-double get_object_size(QSP_ARG_DECL  Item *ip,int d_index)
+double _get_object_size(QSP_ARG_DECL  Item *ip,int d_index)
 {
 	Size_Functions *sfp;
 
 	if( ip == NULL ) return 0.0;
 
-	sfp = get_sizable_functions(QSP_ARG  ip);
+	sfp = get_sizable_functions(ip);
 	assert( sfp != NULL );
 
 	return (*sfp->sz_func)(QSP_ARG  ip,d_index);
@@ -633,7 +632,7 @@ static double get_posn(QSP_ARG_DECL  Item *ip, int index)
 {
 	Position_Functions *pfp;
 	if( ip == NULL ) return 0.0;
-	pfp = get_positionable_functions(QSP_ARG  ip);
+	pfp = get_positionable_functions(ip);
 	assert( pfp != NULL );
 	assert( index >= 0 && index <= 1 );
 
@@ -646,7 +645,7 @@ static double get_interlace_flag(QSP_ARG_DECL  Item *ip)
 
 	if( ip == NULL ) return 0.0;
 
-	ifp = get_interlaceable_functions(QSP_ARG  ip);
+	ifp = get_interlaceable_functions(ip);
 	assert( ifp != NULL );
 	assert( ifp->ilace_func != NULL );
 
@@ -742,25 +741,25 @@ static double _y_func(QSP_ARG_DECL  Item *ip)
 { return get_posn(QSP_ARG  ip,1); }
 
 static double _dpfunc(QSP_ARG_DECL  Item *ip)
-{ return get_object_size(QSP_ARG  ip,0); }
+{ return get_object_size(ip,0); }
 
 static double _colfunc(QSP_ARG_DECL  Item *ip)
-{ return get_object_size(QSP_ARG  ip,1); }
+{ return get_object_size(ip,1); }
 
 static double _rowfunc(QSP_ARG_DECL  Item *ip)
-{ return get_object_size(QSP_ARG  ip,2); }
+{ return get_object_size(ip,2); }
 
 static double _frmfunc(QSP_ARG_DECL  Item *ip)
-{ return get_object_size(QSP_ARG  ip,3); }
+{ return get_object_size(ip,3); }
 
 static double _seqfunc(QSP_ARG_DECL  Item *ip)
-{ return get_object_size(QSP_ARG  ip,4); }
+{ return get_object_size(ip,4); }
 
 static const char *_precfunc(QSP_ARG_DECL  const char *s)
 {
 	Item *ip;
 	ip = _find_sizable( DEFAULT_QSP_ARG  s );
-	return get_object_prec_string(QSP_ARG  ip);
+	return get_object_prec_string(ip);
 }
 
 static const char *strcat_func(QSP_ARG_DECL  const char *s1, const char *s2 )
@@ -779,7 +778,7 @@ static double _nefunc(QSP_ARG_DECL  Item *ip)
 
 	d=1;
 	for(i=0;i<N_DIMENSIONS;i++)
-		d *= get_object_size(QSP_ARG  ip,i);
+		d *= get_object_size(ip,i);
 
 	return d;
 }

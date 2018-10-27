@@ -119,7 +119,7 @@ void delete_platform(QSP_ARG_DECL  Compute_Platform *cpp)
 }
 
 
-void gen_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr)
+void _gen_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr)
 {
 	size_t siz;
 	index_t offset;
@@ -141,7 +141,7 @@ void gen_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr)
 		(QSP_ARG  OBJ_DATA_PTR(dpto), OBJ_DATA_PTR(dpfr), siz, offset, OBJ_PFDEV(dpto) );
 }
 
-void gen_obj_dnload(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
+void _gen_obj_dnload(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 {
 	size_t siz;
 	index_t offset;

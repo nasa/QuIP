@@ -114,7 +114,9 @@ int _cpu_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
  */
 
 
-static int get_data_space(QSP_ARG_DECL  Data_Obj *dp,dimension_t size, int min_align)
+#define get_data_space(dp,size, min_align) _get_data_space(QSP_ARG  dp,size, min_align)
+
+static int _get_data_space(QSP_ARG_DECL  Data_Obj *dp,dimension_t size, int min_align)
 {
 	int align=0;
 
@@ -139,7 +141,9 @@ advise(ERROR_STRING);
 
 /* stuff shared with sub_obj initialization */
 
-static Data_Obj *setup_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,Precision * prec_p,uint32_t type_flag)
+#define setup_dp_with_shape(dp,prec_p,type_flag) _setup_dp_with_shape(QSP_ARG  dp,prec_p,type_flag)
+
+static Data_Obj *_setup_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,Precision * prec_p,uint32_t type_flag)
 {
 	SET_OBJ_PREC_PTR(dp,prec_p);
 	SET_OBJ_REFCOUNT(dp,0);
@@ -168,12 +172,14 @@ static Data_Obj *setup_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,Precision * prec
 
 Data_Obj *_setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision * prec_p)
 {
-	return setup_dp_with_shape(QSP_ARG  dp,prec_p,AUTO_SHAPE);
+	return setup_dp_with_shape(dp,prec_p,AUTO_SHAPE);
 }
 
 /*
  * Initialize an existing header structure
  */
+
+#define init_dp_with_shape(dp, dsp,prec_p,type_flag) _init_dp_with_shape(QSP_ARG  dp, dsp,prec_p,type_flag)
 
 static Data_Obj *_init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 			Dimension_Set *dsp,Precision * prec_p,uint32_t type_flag)
@@ -221,7 +227,7 @@ static Data_Obj *_init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 
 	make_contiguous(dp);
 
-	if( setup_dp_with_shape(QSP_ARG  dp,prec_p,type_flag) == NULL ){
+	if( setup_dp_with_shape(dp,prec_p,type_flag) == NULL ){
 		/* set this flag so delvec doesn't free nonexistent mem */
 		SET_OBJ_FLAG_BITS(dp,DT_NO_DATA);
 		delvec(dp);
@@ -237,7 +243,7 @@ static Data_Obj *_init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 
 Data_Obj *_init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
 {
-	return _init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,AUTO_SHAPE);
+	return init_dp_with_shape(dp,dsp,prec_p,AUTO_SHAPE);
 }
 
 
@@ -250,6 +256,8 @@ Data_Obj *_init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * pre
  *  already in use, or if the name contains illegal characters.
  */
 
+#define make_dp_with_shape(name, dsp,prec_p, type_flag) _make_dp_with_shape(QSP_ARG  name, dsp,prec_p, type_flag)
+
 static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 			Dimension_Set *dsp,Precision * prec_p, uint32_t type_flag)
 {
@@ -261,7 +269,7 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 	}
 
 	/* make sure that the new name contains only legal chars */
-	if( !is_valid_dname(QSP_ARG  name) ){
+	if( !is_valid_dname(name) ){
 		sprintf(ERROR_STRING,"invalid data object name \"%s\"",name);
 		warn(ERROR_STRING);
 		return(NULL);
@@ -294,7 +302,7 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 		return(NULL);
 	}
 
-	if( _init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,type_flag) == NULL ){
+	if( init_dp_with_shape(dp,dsp,prec_p,type_flag) == NULL ){
 		delvec(dp);
 		return(NULL);
 	}
@@ -304,14 +312,15 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 
 Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision * prec_p)
 {
-	return _make_dp_with_shape(QSP_ARG  name,dsp,prec_p, AUTO_SHAPE);
+	return make_dp_with_shape(name,dsp,prec_p, AUTO_SHAPE);
 }
 
+#define make_device_alias( dp, type_flag ) _make_device_alias( QSP_ARG  dp, type_flag )
 
 // THIS NEEDS TO BE MOVED TO A CUDA LIBRARY!?
 #ifdef HAVE_CUDA
 #ifdef NOT_YET
-static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
+static void _make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 {
 	char name[LLEN];
 	Data_Obj *new_dp;
@@ -323,8 +332,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 
 	/* Find the pseudo-area for the device mapping */
 	sprintf(name,"%s_mapped",OBJ_AREA(dp)->da_name);
-	//ap = data_area_of(QSP_ARG  name);
-	ap = get_data_area(QSP_ARG  name);
+	ap = get_data_area(name);
 	if( ap == NULL ){
 		warn("Failed to find mapped data area");
 		return;
@@ -333,7 +341,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 	/* BUG check name length to make sure no buffer overrun */
 	sprintf(name,"dev_%s",OBJ_NAME(dp));
 
-	new_dp = new_dobj(QSP_ARG  name);
+	new_dp = new_dobj(name);
 	if( new_dp==NULL )
 		error1("make_device_alias:  error creating alias object");
 
@@ -347,7 +355,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 		SET_OBJ_MACH_INC(new_dp,i,OBJ_MACH_INC(dp,i));
 		SET_OBJ_TYPE_INC(new_dp,i,OBJ_TYPE_INC(dp,i));
 	}
-	new_dp = setup_dp_with_shape(QSP_ARG  new_dp,OBJ_PREC_PTR(dp),type_flag);
+	new_dp = setup_dp_with_shape(new_dp,OBJ_PREC_PTR(dp),type_flag);
 	if( new_dp==NULL )
 		error1("make_device_alias:  failure in setup_dp");
 
@@ -363,7 +371,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 	}
 }
 #else // ! NOT_YET
-static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
+static void _make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 {
 	error1("make_device_alias:  not implemented, check makedobj.c!?");
 }
@@ -413,7 +421,7 @@ _make_dobj_with_shape(QSP_ARG_DECL  const char *name,
 	Data_Obj *dp;
 	dimension_t size;
 
-	dp = _make_dp_with_shape(QSP_ARG  name,dsp,prec_p,type_flag);
+	dp = make_dp_with_shape(name,dsp,prec_p,type_flag);
 	if( dp == NULL ) return(dp);
 
 	// area should be set here
@@ -437,7 +445,7 @@ advise(ERROR_STRING);
 		/* Now that we pass the element size as an alignment requirement,
 		 * maybe the request should not be in terms of bytes??
 		 */
-		if( get_data_space(QSP_ARG  dp,size,ELEMENT_SIZE(dp) ) < 0 ){
+		if( get_data_space(dp,size,ELEMENT_SIZE(dp) ) < 0 ){
 			SET_OBJ_DATA_PTR(dp,NULL);
 			SET_OBJ_UNALIGNED_PTR(dp,NULL);
 			delvec(dp);
@@ -450,7 +458,7 @@ advise(ERROR_STRING);
 	 */
 
 	if( dp->dt_ap->da_flags & DA_CUDA_HOST )
-		make_device_alias(QSP_ARG  dp,type_flag);
+		make_device_alias(dp,type_flag);
 #endif /* HAVE_CUDA */
 
 	return(dp);
@@ -473,7 +481,7 @@ int _set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision 
 {
 //	int retval=0;
 
-	if( set_shape_dimensions(QSP_ARG  OBJ_SHAPE(dp),dsp,prec_p) < 0 ){
+	if( set_shape_dimensions(OBJ_SHAPE(dp),dsp,prec_p) < 0 ){
 //		sprintf(ERROR_STRING,
 //			"set_obj_dimensions:  error setting shape dimensions for object %s",
 //			OBJ_NAME(dp));
@@ -534,7 +542,7 @@ static inline void set_first_shape_dimension(Shape_Info *shpp, Dimension_Set *ds
  * If they are ALL 0 , then it flags it as unknown and doesn't squawk.
  */
 
-int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Precision * prec_p)
+int _set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Precision * prec_p)
 {
 	int i;
 //	int retval=0;
@@ -614,7 +622,7 @@ _comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data)
 		dp2=make_dobj(str,dsp,OBJ_PREC_PTR(dp));
 	else {
 		/* We call this from xsupp when we want to point to an XImage */
-		dp2 = _make_dp(QSP_ARG  str,dsp,OBJ_PREC_PTR(dp));
+		dp2 = make_dp(str,dsp,OBJ_PREC_PTR(dp));
 		SET_OBJ_FLAG_BITS(dp2,DT_NO_DATA);
 	}
 #ifdef HAVE_ANY_GPU

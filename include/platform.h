@@ -408,11 +408,14 @@ struct cuda_stream_info {
 ITEM_INTERFACE_PROTOTYPES( Platform_Stream , stream )
 
 extern void _select_pfdev(QSP_ARG_DECL  Platform_Device *pdp);
-extern void insure_obj_pfdev(QSP_ARG_DECL  Data_Obj *dp, Platform_Device *pdp);
-extern void gen_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr);
-extern void gen_obj_dnload(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
+extern void _insure_obj_pfdev(QSP_ARG_DECL  Data_Obj *dp, Platform_Device *pdp);
+extern void _gen_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr);
+extern void _gen_obj_dnload(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
 
 #define select_pfdev(pdp)	_select_pfdev(QSP_ARG  pdp)
+#define insure_obj_pfdev(dp, pdp) _insure_obj_pfdev(QSP_ARG  dp, pdp)
+#define gen_obj_upload(dpto, dpfr) _gen_obj_upload(QSP_ARG  dpto, dpfr)
+#define gen_obj_dnload(dpto,dpfr) _gen_obj_dnload(QSP_ARG  dpto,dpfr)
 
 extern Compute_Platform *creat_platform(QSP_ARG_DECL  const char *name, platform_type t);
 extern void delete_platform(QSP_ARG_DECL  Compute_Platform *cpp);

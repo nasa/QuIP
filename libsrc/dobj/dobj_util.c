@@ -48,7 +48,7 @@ Data_Obj *_pick_obj(QSP_ARG_DECL  const char *pmpt)
 						// That was done to get number formatting,
 						// but probably that should be pulled out of data objects...
 
-	if( intractive(SINGLE_QSP_ARG) ) init_item_hist(QSP_ARG  dobj_itp,pmpt);
+	if( intractive() ) init_item_hist(dobj_itp,pmpt);
 #endif /* HAVE_HISTORY */
 
 	s=NAMEOF(pmpt);
@@ -111,7 +111,9 @@ void _disown_child( QSP_ARG_DECL  Data_Obj *dp )
 	}
 }
 
-static void del_subs(QSP_ARG_DECL  Data_Obj *dp)			/** delete all subimages */
+#define delete_subobjects(dp) _delete_subobjects(QSP_ARG  dp)
+
+static void _delete_subobjects(QSP_ARG_DECL  Data_Obj *dp)			/** delete all subimages */
 {
 	Node *np;
 
@@ -131,7 +133,9 @@ static void del_subs(QSP_ARG_DECL  Data_Obj *dp)			/** delete all subimages */
 #ifdef ZOMBIE_SUPPORT
 /* give this object a new (hopefully unique) name */
 
-static void make_zombie(QSP_ARG_DECL  Data_Obj *dp)
+#define make_zombie(dp) _make_zombie(QSP_ARG  dp)
+
+static void _make_zombie(QSP_ARG_DECL  Data_Obj *dp)
 {
 	static int n_zombie=1;
 	char zname[LLEN];
@@ -148,7 +152,7 @@ static void make_zombie(QSP_ARG_DECL  Data_Obj *dp)
 	zombie_item(dobj_itp,(Item *)dp);
 
 	sprintf(zname,"Z.%s.%d",OBJ_NAME(dp),n_zombie++);
-fprintf(stderr,"make_zombine, changing object %s to %s\n",OBJ_NAME(dp),zname);
+fprintf(stderr,"make_zombie, changing object %s to %s\n",OBJ_NAME(dp),zname);
 	rls_str( (char *) OBJ_NAME(dp) );	/* unsave old name, make_zombie */
 	SET_OBJ_NAME(dp,savestr(zname));
 
@@ -182,7 +186,7 @@ void _delvec(QSP_ARG_DECL  Data_Obj *dp)
 	if( OBJ_FLAGS(dp) & DT_STATIC && OWNS_DATA(dp) ){
 sprintf(ERROR_STRING,"delvec:  static object %s will be made a zombie",OBJ_NAME(dp));
 advise(ERROR_STRING);
-		make_zombie(QSP_ARG  dp);
+		make_zombie(dp);
 		return;
 	}
 
@@ -203,7 +207,7 @@ advise(ERROR_STRING);
 
 sprintf(ERROR_STRING,"delvec:  object %s (refcount = %d) will be made a zombie",OBJ_NAME(dp),dp->dt_refcount);
 advise(ERROR_STRING);
-		make_zombie(QSP_ARG  dp);
+		make_zombie(dp);
 		return;
 	}
 #endif /* ZOMBIE_SUPPORT */
@@ -228,7 +232,7 @@ advise(ERROR_STRING);
 	}
 
 	if( OBJ_CHILDREN( dp ) != NULL ){
-		del_subs(QSP_ARG  dp);
+		delete_subobjects(dp);
 	}
 	if( OBJ_PARENT(dp) != NULL ){
 		disown_child(dp);
@@ -293,7 +297,6 @@ advise(ERROR_STRING);
 	}
 #else /* ! ZOMBIE_SUPPORT */
 
-	//del_item(QSP_ARG  dobj_itp, dp );
 	DELETE_OBJ_ITEM(dp);	// del_dobj - item function
 
 #endif /* ! ZOMBIE_SUPPORT */
@@ -754,12 +757,10 @@ void _dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 	// BUG?  this happens here on the main thread, but child threads
 	// will need to be initialized elsewhere!
 	INSURE_QS_DOBJ_ASCII_INFO(THIS_QSP)
-	init_dobj_ascii_info(QSP_ARG  QS_DOBJ_ASCII_INFO(THIS_QSP) );
+	init_dobj_ascii_info(QS_DOBJ_ASCII_INFO(THIS_QSP) );
     
 	init_dobjs();		/* initialize items */
 
-	// update to use platforms...
-	//ram_area_p=area_init(QSP_ARG  "ram",NULL,0L,MAX_RAM_CHUNKS,DA_RAM);
 	vl2_init_platform(SINGLE_QSP_ARG);	// this initializes ram_area_p
 
 	init_tmp_dps();

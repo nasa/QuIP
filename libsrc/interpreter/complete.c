@@ -169,7 +169,7 @@ void tty_reset(FILE *tty)
 	echoon(fileno(tty));
 }
 
-void sane_tty(SINGLE_QSP_ARG_DECL)	/** call this before exiting */
+void _sane_tty(SINGLE_QSP_ARG_DECL)	/** call this before exiting */
 {
 	FILE *fp;
 
@@ -362,7 +362,7 @@ warn("ioctl FIONREAD - EINVAL");
  * There are references to X11 here - what about the native Mac implementation???  BUG!
  */
 
-void check_events(QSP_ARG_DECL  FILE *tty_in)
+void _check_events(QSP_ARG_DECL  FILE *tty_in)
 {
 	int ready=0;
 	/* simulated_input=NULL; */
@@ -572,7 +572,9 @@ static const char * handle_completed_line(QSP_ARG_DECL  int c,Completion_Data *c
 	}
 } // handle_completed_line
 
-static void check_for_completion(QSP_ARG_DECL  Completion_Data *cdp)
+#define check_for_completion(cdp) _check_for_completion(QSP_ARG  cdp)
+
+static void _check_for_completion(QSP_ARG_DECL  Completion_Data *cdp)
 {
 	u_int l;
 	if( IS_PICKING_ITEM ){
@@ -628,10 +630,10 @@ static int handle_escape_sequence(QSP_ARG_DECL  Completion_Data *cdp)
 
 	/* what if the user simply typed ESC??? */
 	/* here we should see if we have more characters... */
-	check_events(QSP_ARG  TTY_IN);
+	check_events(TTY_IN);
 	c = next_character(TTY_IN);
 	if( c == '[' ){		/* what we expect for arrow keys */
-		check_events(QSP_ARG  TTY_IN);
+		check_events(TTY_IN);
 		c = next_character(TTY_IN);
 		if( c == 'A' )
 			c = UP_ARROW;
@@ -856,7 +858,7 @@ static void init_completion_data(Completion_Data *cdp,const char *prompt,FILE *t
 	cdp->chars_typed[0] = 0;
 }
 
-const char *get_response_from_user( QSP_ARG_DECL  const char *prompt, FILE *tty_in, FILE *tty_out )
+const char *_get_response_from_user( QSP_ARG_DECL  const char *prompt, FILE *tty_in, FILE *tty_out )
 {
 	int c;
 	// This has to be static because it is returned...
@@ -878,7 +880,7 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module("completion");
 	init_completion_data(&_this_completion,prompt,tty_out,tty_in);
 
 	if( !exit_func_set ){
-		do_on_exit(sane_tty);
+		do_on_exit(_sane_tty);
 		exit_func_set=1;
 	}
 
@@ -889,7 +891,7 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module("completion");
 
 	while(1){
 		if( strlen(_this_completion.chars_typed) > 0 ){	/* if something typed */
-			check_for_completion(QSP_ARG  &_this_completion);
+			check_for_completion(&_this_completion);
 		}
 
 nextchar:
@@ -899,7 +901,7 @@ nextchar:
 		 *  check_events won't return until there is either some simulated input,
 		 *  or a key has been typed in the console window.
 		 */
-		check_events(QSP_ARG  tty_in);
+		check_events(tty_in);
 
 		/* An event might have generated some simulated typing.
 		 * if so, we might want to forget any typing that has happened.

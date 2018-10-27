@@ -932,12 +932,12 @@ static Data_Obj *default_eval_dobj( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 
 static Data_Obj * (*eval_dobj_func)(QSP_ARG_DECL  Scalar_Expr_Node *enp) = default_eval_dobj;
 
-void set_eval_szbl_func(QSP_ARG_DECL  Item * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) )
+void _set_eval_szbl_func(QSP_ARG_DECL  Item * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) )
 {
 	eval_szbl_func = func;
 }
 
-void set_eval_dobj_func(QSP_ARG_DECL  Data_Obj * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) )
+void _set_eval_dobj_func(QSP_ARG_DECL  Data_Obj * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) )
 {
 	eval_dobj_func = func;
 }

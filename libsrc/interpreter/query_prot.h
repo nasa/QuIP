@@ -14,14 +14,20 @@ extern void sendto_pipe(QSP_ARG_DECL  Pipe *pp,const char* text);
 extern void readfr_pipe(QSP_ARG_DECL  Pipe *pp,const char* varname);
 */
 
-extern void call_funcs_from_list(QSP_ARG_DECL  List *lp );
+extern void _call_funcs_from_list(QSP_ARG_DECL  List *lp );
+#define call_funcs_from_list(lp ) _call_funcs_from_list(QSP_ARG  lp )
 
-extern void show_macro(QSP_ARG_DECL  Macro *mp);
-extern void dump_macro(QSP_ARG_DECL  Macro *mp);
-extern void macro_info(QSP_ARG_DECL  Macro *mp);
+extern void _show_macro(QSP_ARG_DECL  Macro *mp);
+extern void _dump_macro(QSP_ARG_DECL  Macro *mp);
+extern void _macro_info(QSP_ARG_DECL  Macro *mp);
+
+#define show_macro(mp) _show_macro(QSP_ARG  mp)
+#define dump_macro(mp) _dump_macro(QSP_ARG  mp)
+#define macro_info(mp) _macro_info(QSP_ARG  mp)
+
 extern int macro_is_invoked(Macro *);
 extern void allow_recursion_for_macro(Macro *);
-extern void rls_macro(QSP_ARG_DECL  Macro *);
+
 extern const char * macro_filename(Macro *);
 extern int macro_lineno(Macro *);
 extern void rls_macro_arg(Macro_Arg *);

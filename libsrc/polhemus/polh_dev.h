@@ -286,7 +286,9 @@ extern int _polhemus_output_data_format(QSP_ARG_DECL  Polh_Record_Format *prfp )
 
 extern void get_active_stations(SINGLE_QSP_ARG_DECL);
 
-extern void display_buffer(short *buf,int n);
+extern void _display_polh_buffer(QSP_ARG_DECL  short *buf,int n);
+#define display_polh_buffer(buf,n) _display_polh_buffer(QSP_ARG  buf,n)
+
 extern int read_polh_dev(short* databuf, int n_want);
 extern int read_polh_data(void* raw_pdp, int n_want);
 

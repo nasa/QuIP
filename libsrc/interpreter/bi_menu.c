@@ -41,13 +41,8 @@ static COMMAND_FUNC( list_types )
 
 static COMMAND_FUNC( select_type )
 {
-	//const char *s;
 	Item_Type *itp;
     
-	/*
-	s=nameof("item type name");
-	itp = get_item_type(QSP_ARG  s);
-	*/
 	itp = (Item_Type *) pick_item(ittyp_itp, "item type name");
 	if( itp != NULL )
 		curr_itp = itp;
@@ -176,7 +171,9 @@ static COMMAND_FUNC( do_find_mac )
 
 /* search macros for those whose text contains the fragment */
 
-static List *search_macros(QSP_ARG_DECL  const char *frag)
+#define search_macros(frag) _search_macros(QSP_ARG  frag)
+
+static List *_search_macros(QSP_ARG_DECL  const char *frag)
 {
 	List *lp, *newlp=NULL;
 	Node *np, *newnp;
@@ -217,7 +214,7 @@ static COMMAND_FUNC( do_search_macs )
 	List *lp;
 
 	s=nameof("macro fragment");
-	lp=search_macros(QSP_ARG  s);
+	lp=search_macros(s);
 	if( lp == NULL ) return;
 
 	sprintf(msg_str,"Fragment \"%s\" occurs in the following macros:",s);
@@ -232,7 +229,7 @@ static COMMAND_FUNC( do_show_mac )
 
 	mp=pick_macro("macro name");
 	if( mp!= NULL )
-		show_macro(QSP_ARG  mp);
+		show_macro(mp);
 }
 
 static COMMAND_FUNC( do_dump_mac )
@@ -241,7 +238,7 @@ static COMMAND_FUNC( do_dump_mac )
 
 	mp=pick_macro("macro name");
 	if( mp!= NULL )
-		dump_macro(QSP_ARG  mp);
+		dump_macro(mp);
 }
 
 static COMMAND_FUNC( do_dump_invoked )
@@ -262,7 +259,7 @@ no_macros:
 	while( np != NULL ){
 		mp = (Macro *) NODE_DATA(np);
 		if( macro_is_invoked(mp) ){
-			dump_macro(QSP_ARG  mp);
+			dump_macro(mp);
 		}
 		np = NODE_NEXT(np);
 	}
@@ -274,7 +271,7 @@ static COMMAND_FUNC( do_info_mac )
 
 	mp=pick_macro("macro name");
 	if( mp!= NULL )
-		macro_info(QSP_ARG  mp);
+		macro_info(mp);
 }
 
 static COMMAND_FUNC( do_allow_macro_recursion )
@@ -313,13 +310,13 @@ static COMMAND_FUNC( do_def_mac )
 		error1(ERROR_STRING);
 	}
 
-	ma_tbl = setup_macro_args(QSP_ARG  n);
+	ma_tbl = setup_macro_args(n);
 	// We want to store the line number of the file where the macro
 	// is declared...  We can read it now from the query stream...
 	//lineno = QRY_LINES_READ(CURR_QRY(THIS_QSP));
 	lineno = current_line_number(SINGLE_QSP_ARG);
 
-	sbp = read_macro_body(SINGLE_QSP_ARG);
+	sbp = read_macro_body();
 
 	// Now make sure this macro doesn't already exist
 	mp = macro_of(name);
@@ -331,7 +328,7 @@ static COMMAND_FUNC( do_def_mac )
 			name,macro_filename(mp),macro_lineno(mp) );
 		advise(ERROR_STRING);
 	} else {
-		mp=create_macro(QSP_ARG  name,n,ma_tbl,sbp,lineno);
+		mp=create_macro(name,n,ma_tbl,sbp,lineno);
 	}
 
 	rls_stringbuf(sbp);
@@ -349,7 +346,7 @@ static COMMAND_FUNC( do_del_mac )
 
 	if( mp == NULL ) return;
 
-	rls_macro(QSP_ARG  mp);
+	rls_macro(mp);
 }
 
 static COMMAND_FUNC( do_if )
@@ -433,17 +430,17 @@ static COMMAND_FUNC( do_expect_warning )
 	const char *s;
 
 	s=nameof("Beginning of warning message");
-	expect_warning(QSP_ARG  s);
+	expect_warning(s);
 }
 
 static COMMAND_FUNC( do_check_expected_warnings )
 {
-	check_expected_warnings(QSP_ARG  0);
+	check_expected_warnings(0);
 }
 
 static COMMAND_FUNC( do_clear_expected_warnings )
 {
-	check_expected_warnings(QSP_ARG  1);
+	check_expected_warnings(1);
 }
 
 /******************** variables menu ***********************/
@@ -499,7 +496,9 @@ exit(1);
 }
 #endif // SOLVE_FOR_MAX_ROUNDABLE
 
-static inline void ensure_assign_var_stringbuf(SINGLE_QSP_ARG_DECL)
+#define ensure_assign_var_stringbuf() _ensure_assign_var_stringbuf(SINGLE_QSP_ARG)
+
+static inline void _ensure_assign_var_stringbuf(SINGLE_QSP_ARG_DECL)
 {
 	// Make sure we have a free string buffer
 	if( QS_AV_STRINGBUF(THIS_QSP) == NULL ){
@@ -508,7 +507,9 @@ static inline void ensure_assign_var_stringbuf(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-static inline void assign_var_stringbuf_from_string(QSP_ARG_DECL  Typed_Scalar *tsp)
+#define assign_var_stringbuf_from_string(tsp) _assign_var_stringbuf_from_string(QSP_ARG  tsp)
+
+static inline void _assign_var_stringbuf_from_string(QSP_ARG_DECL  Typed_Scalar *tsp)
 {
 	// It is a string...
 	assert( tsp->ts_value.u_vp != NULL );
@@ -517,7 +518,9 @@ static inline void assign_var_stringbuf_from_string(QSP_ARG_DECL  Typed_Scalar *
 
 #define DEST	sb_buffer(QS_AV_STRINGBUF(THIS_QSP))
 
-static inline void assign_var_from_double(QSP_ARG_DECL  Typed_Scalar *tsp)
+#define assign_var_from_double(tsp) _assign_var_from_double(QSP_ARG  tsp)
+
+static inline void _assign_var_from_double(QSP_ARG_DECL  Typed_Scalar *tsp)
 {
 	/* We used to cast the value to integer if
 	 * the format string is an integer format -
@@ -586,10 +589,12 @@ static inline void assign_var_from_double(QSP_ARG_DECL  Typed_Scalar *tsp)
 					  (f) == QS_PFORMAT(THIS_QSP) ||	\
 					  (f) == QS_OFORMAT(THIS_QSP) )
 
-static inline void assign_var_stringbuf_from_number(QSP_ARG_DECL  Typed_Scalar *tsp)
+#define assign_var_stringbuf_from_number(tsp) _assign_var_stringbuf_from_number(QSP_ARG  tsp)
+
+static inline void _assign_var_stringbuf_from_number(QSP_ARG_DECL  Typed_Scalar *tsp)
 {
 	if( SCALAR_IS_DOUBLE(tsp) ){
-		assign_var_from_double(QSP_ARG  tsp);
+		assign_var_from_double(tsp);
 	} else	{
 		Integer_Output_Fmt *iof_p;
 
@@ -612,13 +617,13 @@ static COMMAND_FUNC( do_assign_var )
 	tsp=pexpr(estr);
 	if( tsp == NULL ) return;
 
-	ensure_assign_var_stringbuf(SINGLE_QSP_ARG);
+	ensure_assign_var_stringbuf();
 
 	// See if the expression is a string expression
 	if( tsp->ts_prec_code == PREC_STR ){
-		assign_var_stringbuf_from_string(QSP_ARG  tsp);
+		assign_var_stringbuf_from_string(tsp);
 	} else {
-		assign_var_stringbuf_from_number(QSP_ARG  tsp);
+		assign_var_stringbuf_from_number(tsp);
 	}
 
 	RELEASE_SCALAR(tsp);
@@ -753,7 +758,7 @@ static COMMAND_FUNC( do_find_vars )
 
 	s=nameof("name fragment");
 
-	find_vars(QSP_ARG  s);
+	find_vars(s);
 }
 
 static COMMAND_FUNC( do_search_vars )
@@ -762,7 +767,7 @@ static COMMAND_FUNC( do_search_vars )
 
 	s=nameof("value fragment");
 
-	search_vars(QSP_ARG  s);
+	search_vars(s);
 }
 
 #undef ADD_CMD
@@ -1252,7 +1257,9 @@ static const char *open_mode_string[2]={"w","a"};
 // This should also probably be per-qsp
 //static const char *output_file_name=NULL;
 
-static void set_output_file(QSP_ARG_DECL  const char *new_filename)
+#define set_output_file(new_filename) _set_output_file(QSP_ARG  new_filename)
+
+static void _set_output_file(QSP_ARG_DECL  const char *new_filename)
 {
 	FILE *fp;
 	const char *old_filename;
@@ -1278,7 +1285,7 @@ static void set_output_file(QSP_ARG_DECL  const char *new_filename)
 
 	if( !fp ) return;
 
-	output_redir(QSP_ARG  fp);
+	output_redir(fp);
 }
 
 static COMMAND_FUNC( do_output_redir )
@@ -1286,7 +1293,7 @@ static COMMAND_FUNC( do_output_redir )
 	const char *s;
 
 	s=nameof("output file");
-	set_output_file(QSP_ARG  s);
+	set_output_file(s);
 }
 
 
@@ -1313,7 +1320,7 @@ static COMMAND_FUNC( do_error_redir )
 
 	if( !fp ) return;
 
-	error_redir(QSP_ARG  fp);
+	error_redir(fp);
 }
 
 static COMMAND_FUNC( do_usleep )
@@ -1355,8 +1362,8 @@ static COMMAND_FUNC( do_alarm )
 	f=(float)how_much("number of seconds before alarm");
 	s=nameof("script to execute on alarm");
 
-	set_alarm_script(QSP_ARG  s);
-	set_alarm_time(QSP_ARG  f);
+	set_alarm_script(s);
+	set_alarm_time(f);
 }
 
 #ifdef FOOBAR
@@ -1505,7 +1512,7 @@ static COMMAND_FUNC( do_seed )
 	sprintf(msg_str,"Using user-supplied seed of %ld (0x%lx)",n,n);
 	advise(msg_str);
 
-	set_seed(QSP_ARG  n);
+	set_seed(n);
 }
 
 static COMMAND_FUNC( do_pmpttext )

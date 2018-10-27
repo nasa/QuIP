@@ -41,11 +41,15 @@ struct variable {
 				SET_VAR_NAME(vp,NULL); SET_VAR_VALUE(vp,NULL); }
 
 
-extern void find_vars(QSP_ARG_DECL  const char *s);
-extern void search_vars(QSP_ARG_DECL  const char *s);
+extern void _find_vars(QSP_ARG_DECL  const char *s);
+extern void _search_vars(QSP_ARG_DECL  const char *s);
 extern const char *_var_value(QSP_ARG_DECL  const char *vname);
+extern const char *_var_p_value(QSP_ARG_DECL  Variable *vp);
+
+#define find_vars(s) _find_vars(QSP_ARG  s)
+#define search_vars(s) _search_vars(QSP_ARG  s)
 #define var_value(vname) _var_value(QSP_ARG  vname)
-extern const char *var_p_value(QSP_ARG_DECL  Variable *vp);
+#define var_p_value(vp) _var_p_value(QSP_ARG  vp)
 
 ITEM_INIT_PROT(Variable,var_)
 ITEM_NEW_PROT(Variable,var_)

@@ -34,7 +34,7 @@ inline int macro_lineno(Macro *mp)
 	return MACRO_LINENO(mp);
 }
 
-void rls_macro(QSP_ARG_DECL  Macro *mp)
+void _rls_macro(QSP_ARG_DECL  Macro *mp)
 {
 	rls_str(MACRO_FILENAME(mp));	// first release the resources
 	rls_str(MACRO_TEXT(mp));	// free the stored text (body)
@@ -55,7 +55,7 @@ void rls_macro(QSP_ARG_DECL  Macro *mp)
 	del_macro(mp);
 }
 
-Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno)
+Macro * _create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno)
 {
 	Macro *mp;
 

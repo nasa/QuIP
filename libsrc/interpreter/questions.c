@@ -100,7 +100,7 @@ int _askif(QSP_ARG_DECL  const char *prompt)
 		inhibit_next_prompt_format(SINGLE_QSP_ARG);	// prompt already formatted!
 		n = which_one(pline,N_BOOL_CHOICES,bool_choices);
 		enable_prompt_format(SINGLE_QSP_ARG);
-	} while( n < 0 && intractive( SINGLE_QSP_ARG ) );
+	} while( n < 0 && intractive() );
 
 
 	switch(n){
@@ -116,7 +116,7 @@ int _askif(QSP_ARG_DECL  const char *prompt)
 
 int _confirm(QSP_ARG_DECL  const char *s)
 {
-	if( !intractive( SINGLE_QSP_ARG ) ) return(1);
+	if( !intractive() ) return(1);
 	return(askif(s));
 }
 
@@ -211,7 +211,7 @@ Item *_pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
  * the user to enter "all" instead of an object name
  */
 
-void init_item_hist( QSP_ARG_DECL  Item_Type *itp, const char* prompt )
+void _init_item_hist( QSP_ARG_DECL  Item_Type *itp, const char* prompt )
 {
 	List *lp;
 

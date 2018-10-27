@@ -7298,7 +7298,7 @@ static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	 */
 	ma_tbl = create_generic_macro_args(SR_N_ARGS(srp));
 	sbp = create_stringbuf(SR_TEXT(srp));
-	dummy_mp = create_macro(QSP_ARG  SR_NAME(srp), SR_N_ARGS(srp), ma_tbl, sbp,
+	dummy_mp = create_macro(SR_NAME(srp), SR_N_ARGS(srp), ma_tbl, sbp,
 		current_line_number(SINGLE_QSP_ARG) );
 
 	/* Any arguments to a script function
@@ -7339,7 +7339,7 @@ static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	unset_script_context(SINGLE_QSP_ARG);
 
-	rls_macro(QSP_ARG  dummy_mp);
+	rls_macro(dummy_mp);
 	// We don't need to call rls_script_args, because
 	// when the macro is exited the args are released.
 	// But we do need to zero n_stored_script_args!

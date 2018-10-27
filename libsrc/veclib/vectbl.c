@@ -382,7 +382,7 @@ advise(ERROR_STRING);
 	 * Would that be a good idea still?
 	 */
 
-	set_random_seed(SINGLE_QSP_ARG);	/* use low order bits of microsecond clock */
+	set_random_seed();	/* use low order bits of microsecond clock */
 
 	inited++;
 }

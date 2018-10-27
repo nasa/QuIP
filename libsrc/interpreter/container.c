@@ -371,8 +371,9 @@ static void _rb_tree_delete(QSP_ARG_DECL  Container *cnt_p)
 	release_container(cnt_p);
 }
 
+#define print_container_info_header(cnt_p) _print_container_info_header(QSP_ARG  cnt_p)
 
-static void print_container_info_header(QSP_ARG_DECL  Container *cnt_p)
+static void _print_container_info_header(QSP_ARG_DECL  Container *cnt_p)
 {
 	sprintf(MSG_STR,"Container %s:\n",
 		cnt_p->name==NULL?"<null>":cnt_p->name);
@@ -381,20 +382,20 @@ static void print_container_info_header(QSP_ARG_DECL  Container *cnt_p)
 
 static void _list_dump_info(QSP_ARG_DECL Container *cnt_p)
 {
-	print_container_info_header(QSP_ARG  cnt_p);
+	print_container_info_header(cnt_p);
 	sprintf(MSG_STR,"\tlist with %d elements\n",eltcount(cnt_p->cnt_lp));
 	prt_msg(MSG_STR);
 }
 
 static void _hash_tbl_dump_info(QSP_ARG_DECL Container *cnt_p)
 {
-	print_container_info_header(QSP_ARG  cnt_p);
+	print_container_info_header(cnt_p);
 	tell_hash_stats(QSP_ARG  cnt_p->cnt_htp );
 }
 
 static void _rb_tree_dump_info(QSP_ARG_DECL Container *cnt_p)
 {
-	print_container_info_header(QSP_ARG  cnt_p);
+	print_container_info_header(cnt_p);
 	prt_msg("\tRed-black tree, sorry no stats...");
 }
 

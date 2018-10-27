@@ -1759,7 +1759,7 @@ COMMAND_FUNC( set_completion )
 	} else {
 		advise("disabling automatic command completion");
 		CLEAR_QS_FLAG_BITS(THIS_QSP,QS_COMPLETING);
-		sane_tty(SINGLE_QSP_ARG);
+		sane_tty();
 	}
 }
 
@@ -1785,7 +1785,7 @@ static const char *hist_select(QSP_ARG_DECL const char* pline)
 
 	qp = CURR_QRY(THIS_QSP);
 
-	s=get_response_from_user(QSP_ARG  pline,QRY_FILE_PTR(qp),stderr);
+	s=get_response_from_user(pline,QRY_FILE_PTR(qp),stderr);
 	if( s==NULL ){			/* ^D */
 		if( QLEVEL > 0 ){
 			pop_file();
@@ -2024,7 +2024,7 @@ advise(ERROR_STRING);
 
 /* return the value of the INTERACTIVE flag - input is not a file or macro */
 
-int intractive(SINGLE_QSP_ARG_DECL)
+int _intractive(SINGLE_QSP_ARG_DECL)
 {
 	// We need to call lookahead to make sure
 	// that we really know what the current input file is.
@@ -2148,7 +2148,7 @@ static int get_next_macro_line(QSP_ARG_DECL  String_Buf *mac_sbp)
 	return 1;
 }
 
-String_Buf * read_macro_body(SINGLE_QSP_ARG_DECL)
+String_Buf * _read_macro_body(SINGLE_QSP_ARG_DECL)
 {
 	const char *instructions="Enter text of macro; terminate with line beginning with '.'";
 	Query *qp;
@@ -2278,7 +2278,7 @@ static inline void check_macro_def_line(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-Macro_Arg **setup_macro_args(QSP_ARG_DECL  int n)
+Macro_Arg **_setup_macro_args(QSP_ARG_DECL  int n)
 {
 	Macro_Arg **ma_tbl;
 
@@ -3297,7 +3297,7 @@ void _push_if(QSP_ARG_DECL const char *text)
  * Usually the first call from main().
  */
 
-void set_args(QSP_ARG_DECL  int ac,char** av)
+void _set_args(QSP_ARG_DECL  int ac,char** av)
 		/* ac = number of arguments */
 		/* av = pointer to arg strings */
 {
@@ -3729,7 +3729,7 @@ static void show_mflags(QSP_ARG_DECL  Macro *mp)
 	prt_msg(msg_str);
 }
 
-void macro_info(QSP_ARG_DECL  Macro *mp)
+void _macro_info(QSP_ARG_DECL  Macro *mp)
 {
 	sprintf(msg_str,"Macro \"%s\" (file \"%s\", line %d)",
 		MACRO_NAME(mp),MACRO_FILENAME(mp),MACRO_LINENO(mp));
@@ -3740,7 +3740,9 @@ void macro_info(QSP_ARG_DECL  Macro *mp)
 	prt_msg("\n");
 }
 
-static void macro_prolog(QSP_ARG_DECL  Macro *mp)
+#define macro_prolog(mp) _macro_prolog(QSP_ARG  mp)
+
+static void _macro_prolog(QSP_ARG_DECL  Macro *mp)
 {
 	int i;
 
@@ -3753,15 +3755,15 @@ static void macro_prolog(QSP_ARG_DECL  Macro *mp)
 	}
 }
 
-void show_macro(QSP_ARG_DECL  Macro *mp)		/** show macro text */
+void _show_macro(QSP_ARG_DECL  Macro *mp)		/** show macro text */
 {
-	macro_info(QSP_ARG  mp);
+	macro_info(mp);
 	prt_msg(MACRO_TEXT(mp));
 }
 
-void dump_macro(QSP_ARG_DECL  Macro *mp)		/** show macro text */
+void _dump_macro(QSP_ARG_DECL  Macro *mp)		/** show macro text */
 {
-	macro_prolog(QSP_ARG  mp);
+	macro_prolog(mp);
 	prt_msg_frag(MACRO_TEXT(mp));
 	prt_msg(".");
 }
@@ -4005,7 +4007,7 @@ inline void _reset_return_strings(SINGLE_QSP_ARG_DECL)
 }
 
 #ifdef HAVE_POPEN
-void redir_from_pipe(QSP_ARG_DECL  Pipe *pp, const char *cmd)
+void _redir_from_pipe(QSP_ARG_DECL  Pipe *pp, const char *cmd)
 {
 	redir(pp->p_fp, cmd);
 	SET_QRY_PIPE( CURR_QRY(THIS_QSP) , pp );

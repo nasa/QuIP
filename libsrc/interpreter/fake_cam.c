@@ -14,18 +14,17 @@ IOS_ITEM_CHECK_FUNC(Camera,camera)
 IOS_ITEM_PICK_FUNC(Camera,camera)
 IOS_ITEM_LIST_FUNC(Camera,camera)
 
-
 static COMMAND_FUNC( do_list_cams )
 {
 	prt_msg("A/V Capture Devices:");
-	_list_cameras(QSP_ARG  tell_msgfile());
+	list_cameras(tell_msgfile());
 }
 
 static COMMAND_FUNC( do_cam_info )
 {
 	Camera *cam;
 
-	cam = _pick_camera(QSP_ARG  "");
+	cam = pick_camera("");
 	if( cam == NULL ) return;
 
 	warn("do_cam_info:  not implemented!?");
@@ -117,7 +116,7 @@ COMMAND_FUNC(do_cam_menu)
 	static int inited=0;
 
 	if( ! inited ){
-		set_script_var_from_int(QSP_ARG  "n_cameras",0);
+		set_script_var_from_int("n_cameras",0);
 		inited=1;
 	}
 

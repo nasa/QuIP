@@ -233,7 +233,7 @@ static void quip_type_name##_set_value_from_input(QSP_ARG_DECL  void *vp, const 
 	if( ! HAS_FORMAT_LIST )									\
 		val = query_func(prompt );							\
 	else											\
-		val = next_input_func(QSP_ARG  prompt);						\
+		val = next_input_func(prompt);						\
 												\
 	if( val < type_min || val > type_max ){							\
 		sprintf(ERROR_STRING,								\
@@ -258,7 +258,7 @@ static void quip_type_name##_set_value_from_input(QSP_ARG_DECL  void *vp, const 
 	if( ! HAS_FORMAT_LIST )									\
 		val = query_func(prompt );							\
 	else											\
-		val = next_input_func(QSP_ARG  prompt);						\
+		val = next_input_func(prompt);						\
 												\
 	if( val < (-type_max) || val > type_max ){						\
 		sprintf(ERROR_STRING,"%s_set_value_from_input:  Truncation error converting %s to %s (%s)",#quip_type_name,#read_type,#quip_type_name,#type);		\

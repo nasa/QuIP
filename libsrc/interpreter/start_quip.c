@@ -53,7 +53,7 @@ void start_quip_with_menu(int argc, char **argv, Menu *initial_menu_p )
 
 	push_menu(initial_menu_p);
 
-	set_args(QSP_ARG  argc,argv);
+	set_args(argc,argv);
 	rcfile(qsp,argv[0]);
 
 	// If we have commands to create a widget in the startup file,

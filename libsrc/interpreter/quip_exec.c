@@ -41,7 +41,7 @@ static void perform_callbacks(SINGLE_QSP_ARG_DECL)
 	assert( QS_CALLBACK_LIST(THIS_QSP) != NULL );
 
 	reset_return_strings();
-	call_funcs_from_list(QSP_ARG  QS_CALLBACK_LIST(THIS_QSP) );
+	call_funcs_from_list(QS_CALLBACK_LIST(THIS_QSP) );
 }
 
 void qs_do_cmd( Query_Stack *qsp )
@@ -64,7 +64,7 @@ void qs_do_cmd( Query_Stack *qsp )
 	// we have been reading the startup files...
 	// Need to lookahead!
 
-	if( (! MENU_COMMANDS_STASHED(mp))  &&  intractive(SINGLE_QSP_ARG) ){
+	if( (! MENU_COMMANDS_STASHED(mp))  &&  intractive() ){
 		stash_menu_commands(QSP_ARG  mp);
 		stash_menu_commands(QSP_ARG  QS_BUILTIN_MENU(THIS_QSP));
 		SET_MENU_FLAG_BITS(mp,MENU_FLAG_CMDS_STASHED);
@@ -93,13 +93,9 @@ void qs_do_cmd( Query_Stack *qsp )
 
 #ifdef HAVE_HISTORY
 		/* make sure that a bad command doesn't get saved */
-		if( /* IS_INTERACTIVE( CURR_QRY(THIS_QSP) ) */
 			/* intractive() calls lookahead... */
-						/* what is/was HISTORY_FLAG? */
-			intractive(SINGLE_QSP_ARG) /* && HISTORY_FLAG */
-				){
-
-
+			/* what is/was HISTORY_FLAG? */
+		if( intractive() /* && HISTORY_FLAG */ ){
 			rem_def(QS_CMD_PROMPT_STR(qsp),cmd);	// erase from history list
 		}
 #endif /* HAVE_HISTORY */

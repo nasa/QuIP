@@ -148,7 +148,9 @@ static Data_Obj * _scalar_obj_for_id(QSP_ARG_DECL  Identifier *idp)
 
 /* Evaluate a parsed expression */
 
-static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
+#define eval_dobj_expr( enp ) _eval_dobj_expr( QSP_ARG  enp )
+
+static Data_Obj *_eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 {
 	Data_Obj *dp=NULL,*dp2;
 	Typed_Scalar *tsp;
@@ -174,7 +176,7 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			break;
 
 		case N_SCALAR_OBJ:
-			dp = eval_dobj_expr(QSP_ARG  enp->sen_child[0]);
+			dp = eval_dobj_expr(enp->sen_child[0]);
 			if( IS_SCALAR(dp) ) return(dp);
 			return NULL;
 			break;
@@ -204,14 +206,14 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 #endif // SCALARS_NOT_OBJECTS
 			break;
 		case N_SUBSCRIPT:
-			dp2=eval_dobj_expr(QSP_ARG  enp->sen_child[0]);
+			dp2=eval_dobj_expr(enp->sen_child[0]);
 			tsp = eval_expr(enp->sen_child[1]);
 			index=index_for_scalar( tsp );
 			RELEASE_SCALAR(tsp)
 			dp=(*sub_func)( QSP_ARG  dp2, index );
 			break;
 		case N_CSUBSCRIPT:
-			dp2=eval_dobj_expr(QSP_ARG  enp->sen_child[0]);
+			dp2=eval_dobj_expr(enp->sen_child[0]);
 			tsp=eval_expr(enp->sen_child[1]);
 			index=index_for_scalar(tsp);
 			RELEASE_SCALAR(tsp)
@@ -238,7 +240,7 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 
 void init_dobj_expr_funcs(SINGLE_QSP_ARG_DECL)
 {
-	set_eval_dobj_func(QSP_ARG  eval_dobj_expr );
-	set_eval_szbl_func(QSP_ARG  _eval_szbl_expr );
+	set_eval_dobj_func( _eval_dobj_expr );
+	set_eval_szbl_func( _eval_szbl_expr );
 }
 

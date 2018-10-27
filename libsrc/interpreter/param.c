@@ -182,7 +182,7 @@ static COMMAND_FUNC( do_chng_one )
 
 #ifdef HAVE_HISTORY
 
-	if( intractive(SINGLE_QSP_ARG) && IS_TRACKING_HISTORY(THIS_QSP) ){
+	if( intractive() && IS_TRACKING_HISTORY(THIS_QSP) ){
 		List *lp;
 		Node *np;
 
@@ -196,7 +196,7 @@ static COMMAND_FUNC( do_chng_one )
 		np = mk_node(&pnlist[i]);
 		addTail(lp,np);
 
-		if( intractive(SINGLE_QSP_ARG) ){
+		if( intractive() ){
 			const char *pline;
 			pline = format_prompt(PROMPT_FORMAT, PNAME_PMPT);
 			new_defs(pline);		/* is this needed? */

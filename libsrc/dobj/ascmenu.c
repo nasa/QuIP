@@ -36,18 +36,18 @@ static int expect_exact_count=1;
 
 #define INSURE_OK_FOR_READING(dp)					\
 									\
-	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);		\
+	ram_dp = insure_ram_obj_for_reading(dp);			\
 	assert( ram_dp != NULL );
 
 #define INSURE_OK_FOR_WRITING(dp)					\
-	ram_dp = insure_ram_obj_for_writing(QSP_ARG  dp);		\
+	ram_dp = insure_ram_obj_for_writing(dp);			\
 	assert(ram_dp!=NULL);
 
 #define RELEASE_RAM_OBJ_FOR_READING_IF(dp)				\
-	release_ram_obj_for_reading(QSP_ARG  ram_dp, dp);
+	release_ram_obj_for_reading(ram_dp, dp);
 
 #define RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)				\
-	release_ram_obj_for_writing(QSP_ARG  ram_dp, dp);
+	release_ram_obj_for_writing(ram_dp, dp);
 
 #define DNAME_PREFIX "downloaded_"
 #define CNAME_PREFIX "contiguous_"
@@ -71,13 +71,15 @@ static char *get_temp_name(const char *prefix, const char *name )
 	return buf;
 }
 
-void release_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
+void _release_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
 {
 	if( ram_dp == dp ) return;
 	delvec(ram_dp);
 }
 
-static Data_Obj *create_ram_copy(QSP_ARG_DECL  Data_Obj *dp)
+#define create_ram_copy(dp) _create_ram_copy(QSP_ARG  dp)
+
+static Data_Obj *_create_ram_copy(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Data_Area *save_ap;
 	Data_Obj *tmp_dp;
@@ -97,7 +99,9 @@ static Data_Obj *create_ram_copy(QSP_ARG_DECL  Data_Obj *dp)
 
 // for host-device tranfers, we need a contiguous object.
 
-static Data_Obj *create_platform_copy(QSP_ARG_DECL  Data_Obj *dp)
+#define create_platform_copy(dp) _create_platform_copy(QSP_ARG  dp)
+
+static Data_Obj *_create_platform_copy(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Data_Area *save_ap;
 	Data_Obj *contig_dp;
@@ -118,7 +122,9 @@ static Data_Obj *create_platform_copy(QSP_ARG_DECL  Data_Obj *dp)
 
 // Assume that the two objects are matched in shape
 
-static void copy_platform_data(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp)
+#define copy_platform_data(dst_dp, src_dp) _copy_platform_data(QSP_ARG  dst_dp, src_dp)
+
+static void _copy_platform_data(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp)
 {
 	Vec_Obj_Args oa1, *oap=&oa1;
 
@@ -141,7 +147,9 @@ static void copy_platform_data(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp)
 	call_vfunc( QSP_ARG  FIND_VEC_FUNC(FVMOV), oap );
 }
 
-static Data_Obj *contig_obj(QSP_ARG_DECL  Data_Obj *dp)
+#define contig_obj(dp) _contig_obj(QSP_ARG  dp)
+
+static Data_Obj *_contig_obj(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Data_Obj *copy_dp;
 
@@ -151,49 +159,55 @@ static Data_Obj *contig_obj(QSP_ARG_DECL  Data_Obj *dp)
 //advise("object is not contiguous, and does not have contiguous data, creating temp object for copy...");
 //longlist(dp);
 
-	copy_dp = create_platform_copy(QSP_ARG   dp);
+	copy_dp = create_platform_copy(dp);
 //longlist(copy_dp);
 	return copy_dp;
 }
 
-static Data_Obj *contig_obj_with_data(QSP_ARG_DECL  Data_Obj *dp)
+#define contig_obj_with_data(dp) _contig_obj_with_data(QSP_ARG  dp)
+
+static Data_Obj *_contig_obj_with_data(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Data_Obj *contig_dp;
 
-	contig_dp = contig_obj(QSP_ARG  dp);
+	contig_dp = contig_obj(dp);
 	if( contig_dp == dp ) return dp;
-	copy_platform_data(QSP_ARG  contig_dp, dp );
+	copy_platform_data(contig_dp, dp );
 	return contig_dp;
 }
 
-static void download_platform_data(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *pf_dp)
+#define download_platform_data(ram_dp, pf_dp) _download_platform_data(QSP_ARG  ram_dp, pf_dp)
+
+static void _download_platform_data(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *pf_dp)
 {
 	Data_Obj *contig_dp;
 
 	// We can't download if the source data is not contiguous...
 
-	contig_dp = contig_obj_with_data(QSP_ARG  pf_dp);
+	contig_dp = contig_obj_with_data(pf_dp);
 	assert( IS_CONTIGUOUS(ram_dp) );
 
-	gen_obj_dnload(QSP_ARG  ram_dp, contig_dp);
+	gen_obj_dnload(ram_dp, contig_dp);
 
 	if( contig_dp != pf_dp )
 		delvec(contig_dp);
 }
 
-static void upload_platform_data(QSP_ARG_DECL  Data_Obj *pf_dp, Data_Obj *ram_dp)
+#define upload_platform_data(pf_dp, ram_dp) _upload_platform_data(QSP_ARG  pf_dp, ram_dp)
+
+static void _upload_platform_data(QSP_ARG_DECL  Data_Obj *pf_dp, Data_Obj *ram_dp)
 {
 	Data_Obj *contig_dp;
 
 	// We can't upload if the destination data is not contiguous...
 	assert( IS_CONTIGUOUS(ram_dp) );
 
-	contig_dp = contig_obj(QSP_ARG  pf_dp);
+	contig_dp = contig_obj(pf_dp);
 
-	gen_obj_upload(QSP_ARG  contig_dp, ram_dp );
+	gen_obj_upload(contig_dp, ram_dp );
 
 	if( contig_dp != pf_dp ){
-		copy_platform_data(QSP_ARG  pf_dp,contig_dp);
+		copy_platform_data(pf_dp,contig_dp);
 		delvec(contig_dp);
 	}
 }
@@ -203,15 +217,15 @@ static void upload_platform_data(QSP_ARG_DECL  Data_Obj *pf_dp, Data_Obj *ram_dp
 // that we then transfer en-mass.  The copy must have the correct shape,
 // but doesn't need to contain the data, as we will be over-writing it anyway.
 
-Data_Obj *insure_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *dp)
+Data_Obj *_insure_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( OBJ_IS_RAM(dp) ) return dp;
-	return create_ram_copy(QSP_ARG  dp);
+	return create_ram_copy(dp);
 }
 
 // To read a platform object, the copies need to have the data copied along!
 
-Data_Obj *insure_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *dp)
+Data_Obj *_insure_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Data_Obj *ram_dp;
 
@@ -221,7 +235,7 @@ Data_Obj *insure_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *dp)
 	// We create a copy in RAM, and download the data
 	// using the platform download function.
 
-	ram_dp = create_ram_copy(QSP_ARG  dp);
+	ram_dp = create_ram_copy(dp);
 
 	if( ram_dp == NULL ){
 		// This can happen if the object is subscripted,
@@ -229,16 +243,18 @@ Data_Obj *insure_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *dp)
 		return NULL;
 	}
 
-	download_platform_data(QSP_ARG  ram_dp, dp);
+	download_platform_data(ram_dp, dp);
 
 	return ram_dp;
 }
 
-static void release_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
+#define release_ram_obj_for_writing(ram_dp, dp) _release_ram_obj_for_writing(QSP_ARG  ram_dp, dp)
+
+static void _release_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
 {
 	if( ram_dp == dp ) return;	// nothing to do
 
-	upload_platform_data(QSP_ARG  dp,ram_dp);
+	upload_platform_data(dp,ram_dp);
 	delvec(ram_dp);
 }
 #endif /* ! HAVE_ANY_GPU */
@@ -563,7 +579,7 @@ static COMMAND_FUNC( do_set_fmt )
 
 static COMMAND_FUNC( do_set_max )
 {
-	set_max_per_line( QSP_ARG  (int) HOW_MANY("max number of items per line") );
+	set_max_per_line( (int) HOW_MANY("max number of items per line") );
 }
 
 static COMMAND_FUNC( do_set_in_fmt )
@@ -571,7 +587,7 @@ static COMMAND_FUNC( do_set_in_fmt )
 	const char *s;
 
 	s=nameof("input line format string");
-	set_input_format_string(QSP_ARG  s);
+	set_input_format_string(s);
 }
 
 static COMMAND_FUNC( do_exact )
@@ -583,7 +599,7 @@ static COMMAND_FUNC( do_set_digits )
 {
 	int d;
 	d = (int)HOW_MANY("number of significant digits to print");
-	set_display_precision(QSP_ARG  d);
+	set_display_precision(d);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(ascii_menu,s,f,h)
