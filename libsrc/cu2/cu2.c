@@ -683,7 +683,7 @@ void cu2_init_platform(SINGLE_QSP_ARG_DECL)
 		 */
 		inited = -1;
 	}
-	if( pop_pfdev_context(SINGLE_QSP_ARG) == NULL )
+	if( pop_pfdev_context() == NULL )
 		error1("cu2_init_platform:  Failed to pop platform device context!?");
 
 	check_vfa_tbl(cu2_vfa_tbl, N_VEC_FUNCS);
