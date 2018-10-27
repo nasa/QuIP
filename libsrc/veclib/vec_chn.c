@@ -19,6 +19,8 @@ static ITEM_INIT_FUNC(Chain,vec_chain,0)
 ITEM_CHECK_FUNC(Chain,vec_chain)
 ITEM_LIST_FUNC(Chain,vec_chain)
 ITEM_PICK_FUNC(Chain,vec_chain)
+ITEM_NEW_FUNC(Chain,vec_chain)
+ITEM_DEL_FUNC(Chain,vec_chain)
 
 #ifdef NOT_USED
 
@@ -41,7 +43,7 @@ static void _del_chain(QSP_ARG_DECL  Chain *cp)
 	}
 	rls_list(CHAIN_LIST(cp) );
 
-	del_vec_chain(QSP_ARG  CHAIN_NAME(cp) );
+	del_vec_chain(CHAIN_NAME(cp) );
 }
 #endif /* NOT_USED */
 
@@ -62,13 +64,18 @@ void _exec_chain(QSP_ARG_DECL  Chain *cp)
 	}
 }
 
-void chain_info(QSP_ARG_DECL  Chain *cp)
+void _chain_info(QSP_ARG_DECL  Chain *cp)
 {
 	sprintf(msg_str,"Chain %s:  %d blocks",CHAIN_NAME(cp),eltcount(CHAIN_LIST(cp) ));
 	prt_msg(msg_str);
 }
 
-void start_chain(QSP_ARG_DECL  const char *name)
+static void init_vec_chain(Chain *cp)
+{
+	SET_VEC_CHAIN_LIST(cp,new_list());
+}
+
+void _start_chain(QSP_ARG_DECL  const char *name)
 {
 	Chain *cp;
 
@@ -76,7 +83,8 @@ void start_chain(QSP_ARG_DECL  const char *name)
 		warn("a chain buffer is already open");
 		return;
 	}
-	cp=new_chain(QSP_ARG  name);
+	cp=new_vec_chain(name);
+	init_vec_chain(cp);
 	curr_cp = cp;
 	is_chaining=1;
 }

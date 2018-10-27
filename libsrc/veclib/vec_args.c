@@ -18,7 +18,9 @@
 
 //#define JUST_FOR_DEBUGGING	// extra debugging
 
-static int get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
+#define get_dst(oap) _get_dst(QSP_ARG oap)
+
+static int _get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
 	SET_OA_DEST(oap, pick_obj( "destination vector" ) );
 	if( OA_DEST(oap) == NULL )
@@ -26,7 +28,9 @@ static int get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
 	return(0);
 }
 
-static int get_src1(QSP_ARG_DECL  Vec_Obj_Args *oap)
+#define get_src1(oap) _get_src1(QSP_ARG  oap)
+
+static int _get_src1(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	SET_OA_SRC1(oap,pick_obj( "first source vector" ) );
 	if( OA_SRC1(oap) == NULL )
@@ -34,7 +38,9 @@ static int get_src1(QSP_ARG_DECL  Vec_Obj_Args *oap)
 	return(0);
 }
 
-static int get_src2(QSP_ARG_DECL  Vec_Obj_Args *oap)
+#define get_src2(oap) _get_src2(QSP_ARG  oap)
+
+static int _get_src2(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	SET_OA_SRC2(oap,pick_obj( "second source vector" ));
 	if( OA_SRC2(oap) == NULL )
@@ -42,7 +48,9 @@ static int get_src2(QSP_ARG_DECL  Vec_Obj_Args *oap)
 	return(0);
 }
 
-static int get_src3(QSP_ARG_DECL  Vec_Obj_Args *oap)
+#define get_src3(oap) _get_src3(QSP_ARG  oap)
+
+static int _get_src3(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	SET_OA_SRC3(oap,pick_obj( "third source vector" ));
 	if( OA_SRC3(oap) == NULL )
@@ -50,8 +58,9 @@ static int get_src3(QSP_ARG_DECL  Vec_Obj_Args *oap)
 	return(0);
 }
 
+#define get_src4(oap) _get_src4(QSP_ARG  oap)
 
-static int get_src4(QSP_ARG_DECL  Vec_Obj_Args *oap)
+static int _get_src4(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	SET_OA_SRC4(oap,pick_obj( "fourth source vector" ));
 	if( OA_SRC4(oap) == NULL )
@@ -71,7 +80,9 @@ void show_vf(Vector_Function *vfp)
 }
 #endif /* NOT_YET */
 
-static int get_src_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
+#define get_src_bitmap(oap) _get_src_bitmap(QSP_ARG oap)
+
+static int _get_src_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
 	SET_OA_SBM( oap, pick_obj( "source bitmap object" ) );
 	if( OA_SBM(oap) == NULL ) return(-1);
@@ -86,7 +97,9 @@ static int get_src_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 	return(0);
 }
 
-static int get_dst_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
+#define get_dst_bitmap(oap) _get_dst_bitmap(QSP_ARG oap)
+
+static int _get_dst_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
 	SET_OA_DBM( oap, pick_obj( "destination bitmap object" ) );
 	if( OA_DBM(oap) == NULL ) return(-1);
@@ -182,7 +195,9 @@ advise(ERROR_STRING);
  * correct space.  (What about setting the value of scalars on the gpu?)
  */
 
-static Data_Area * set_arg_data_area(QSP_ARG_DECL  Vec_Obj_Args *oap)
+#define set_arg_data_area(oap) _set_arg_data_area(QSP_ARG  oap)
+
+static Data_Area * _set_arg_data_area(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	Data_Area *ap;
 
@@ -249,14 +264,10 @@ static Data_Area * set_arg_data_area(QSP_ARG_DECL  Vec_Obj_Args *oap)
 		prec_ptr = OBJ_PREC_PTR( dp );				\
 	}
 
-#ifdef FOOBAR
-#define SET_PREC							\
-									\
-	if( OA_DEST(oap) != NULL ) prec_p=OBJ_PREC_PTR( OA_DEST(oap) );\
-	else prec_p=prec_for_code(PREC_SP);
-#endif // FOOBAR
 
-static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
+#define get_scalar_args(oap, vfp) _get_scalar_args(QSP_ARG oap, vfp)
+
+static int _get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 {
 	Precision * prec_p;
 	int retval=0;
@@ -272,7 +283,7 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 
 #ifdef HAVE_ANY_GPU
 
-	ap = set_arg_data_area(QSP_ARG  oap);
+	ap = set_arg_data_area(oap);
 
 	// suppress compiler warning by checking return value
 	// This never should happen...
@@ -494,29 +505,31 @@ get_dummy:
 	}
 }
 
-static int get_args(QSP_ARG_DECL  Vec_Obj_Args *oap,Vector_Function *vfp)
+#define get_args(oap,vfp) _get_args(QSP_ARG  oap,vfp)
+
+static int _get_args(QSP_ARG_DECL  Vec_Obj_Args *oap,Vector_Function *vfp)
 {
 	int oops=0;
 
 	clear_obj_args(oap);
 
 	if( VF_FLAGS(vfp) & BITMAP_SRC )
-		oops|=get_src_bitmap(QSP_ARG  oap);
+		oops|=get_src_bitmap(oap);
 
 	if( VF_FLAGS(vfp) & BITMAP_DST )
-		oops|=get_dst_bitmap(QSP_ARG  oap);
+		oops|=get_dst_bitmap(oap);
 
 	if( VF_FLAGS(vfp) & DST_VEC )
-		oops|=get_dst(QSP_ARG  oap);
+		oops|=get_dst(oap);
 
 	if( VF_FLAGS(vfp) & SRC1_VEC )
-		oops|=get_src1(QSP_ARG  oap);
+		oops|=get_src1(oap);
 	if( VF_FLAGS(vfp) & SRC2_VEC )
-		oops|=get_src2(QSP_ARG  oap);
+		oops|=get_src2(oap);
 	if( VF_FLAGS(vfp) & SRC3_VEC )
-		oops|=get_src3(QSP_ARG  oap);
+		oops|=get_src3(oap);
 	if( VF_FLAGS(vfp) & SRC4_VEC )
-		oops|=get_src4(QSP_ARG  oap);
+		oops|=get_src4(oap);
 
 	// Now, for vmov and bitmaps, the destination bitmap
 	// is the same oap member as the normal dest, but a source
@@ -533,7 +546,7 @@ static int get_args(QSP_ARG_DECL  Vec_Obj_Args *oap,Vector_Function *vfp)
 		
 	/* BUG?  We should sort out passing a value vs. receiving a value in a scalar object... */
 	if( VF_FLAGS(vfp) & (SRC_SCALAR1|SRC_SCALAR2|TWO_SCALAR_RESULTS) ){
-		if( get_scalar_args(QSP_ARG  oap, vfp) == (-1) ) oops|=1;
+		if( get_scalar_args(oap, vfp) == (-1) ) oops|=1;
 #ifdef PROBABLY_NOT_NEEDED
 		/* Here we point the scalar value to the object data - why? */
 		for(i=0;i<MAX_RETSCAL_ARGS;i++){
@@ -655,35 +668,37 @@ int are_ram_args( Vec_Obj_Args *oap )
 	return 1;
 }
 
-static void report_obj_device(QSP_ARG_DECL  Data_Obj *dp)
+#define report_obj_device(dp) _report_obj_device(QSP_ARG  dp)
+
+static void _report_obj_device(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( dp == NULL ) return;
 	sprintf(ERROR_STRING,"\t%s:\t%s",OBJ_NAME(dp),PFDEV_NAME( OBJ_PFDEV(dp) ) );
 	advise(ERROR_STRING);
 }
 
-void mixed_location_error(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
+void _mixed_location_error(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
 {
 	int i;
 
 	sprintf(ERROR_STRING,"%s:  arguments must reside on a single device.",VF_NAME(vfp));
 	warn(ERROR_STRING);
 
-	report_obj_device(QSP_ARG  OA_DEST(oap) );
+	report_obj_device( OA_DEST(oap) );
 	for(i=0;i<MAX_N_ARGS;i++)
-		report_obj_device( QSP_ARG  OA_SRC_OBJ(oap,i) );
+		report_obj_device( OA_SRC_OBJ(oap,i) );
 	for(i=0;i<MAX_RETSCAL_ARGS;i++)
-		report_obj_device( QSP_ARG  OA_SCLR_OBJ(oap,i) );
+		report_obj_device( OA_SCLR_OBJ(oap,i) );
 }
 
-void do_vfunc( QSP_ARG_DECL  Vector_Function *vfp )
+void _do_vfunc( QSP_ARG_DECL  Vector_Function *vfp )
 {
 	Vec_Obj_Args oa1, *oap=&oa1;
 	int i;
 
 	clear_obj_args(oap);
 
-	if( get_args(QSP_ARG  oap, vfp) < 0 ){
+	if( get_args(oap, vfp) < 0 ){
 		sprintf(ERROR_STRING,"Error getting arguments for function %s",
 			VF_NAME(vfp));
 		warn(ERROR_STRING);
@@ -696,7 +711,7 @@ sprintf(ERROR_STRING,"%s:  Null destination!?!?", VF_NAME(vfp));
 warn(ERROR_STRING);
 }
 
-	call_vfunc(QSP_ARG  vfp,oap);
+	call_vfunc(vfp,oap);
 
 	/* Now free the scalars (if any) */
 

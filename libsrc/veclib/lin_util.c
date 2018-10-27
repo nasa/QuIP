@@ -43,7 +43,7 @@ static int _same_pixel_type(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2)		/* BUG? 
 
 /* BUG use call_wfunc to allow chaining */
 
-int prodimg(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *rowobj,Data_Obj *colobj)	/** make the product image */
+int _prodimg(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *rowobj,Data_Obj *colobj)	/** make the product image */
 {
 	Vec_Obj_Args oa1, *oap=&oa1;
 
@@ -68,16 +68,6 @@ int prodimg(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *rowobj,Data_Obj *colobj)	/** 
 		warn("type precision mismatch");
 		return(-1);
 	}
-#ifdef FOOBAR
-	else if( ! FLOATING_OBJ(dpto) ){
-		warn("sorry, only float and double supported for prodimg");
-		return(-1);
-	} else if( IS_COMPLEX(dpto) || IS_COMPLEX(colobj)
-			|| IS_COMPLEX(rowobj) ){
-		warn("Sorry, complex not supported");
-		return(-1);
-	}
-#endif /* FOOBAR */
 
 	setvarg3(oap,dpto,rowobj,colobj);
 
@@ -340,7 +330,7 @@ void xform_list(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
 /* like xform_list(), but vectorizes over list instead of matrix row */
 /* good for long lists or big images */
 
-void vec_xform(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
+void _vec_xform(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
 {
 	Vec_Obj_Args oa1,*oap=&oa1;
 
@@ -373,8 +363,9 @@ void vec_xform(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
  * like vec_xform, but does the division for homgenous coords
  */
 
-void homog_xform(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform_dp)
+void _homog_xform(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform_dp)
 {
+	warn("Oops - homog_xform not implemented!?!?");
 	/*
 	switch(OBJ_MACH_PREC(dpto)){
 		case PREC_SP:	sp_obj_homog_xform(QSP_ARG  dpto,dpfr,xform_dp); break;
@@ -423,7 +414,7 @@ void newmtrx(QSP_ARG_DECL  const char *s,int dim)
 	unity(mp);
 }
 
-void transpose(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
+void _transpose(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 {
 	/* new version using gen_xpose */
 

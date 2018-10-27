@@ -47,7 +47,7 @@ static void zero_dimension(Data_Obj *dp,float *base,int dim,long index);
 	}								\
 	}
 
-void compute_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,double bin_width,double min_limit)
+void _compute_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,double bin_width,double min_limit)
 {
 	dimension_t i,j,k;
 	float num;
@@ -113,7 +113,7 @@ static void zero_dimension(Data_Obj *dp,float *base,int dim,long index)
 	}
 }
 
-void multivariate_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,float *width_array,float *min_array)
+void _multivariate_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,float *width_array,float *min_array)
 {
 	dimension_t n_dimensions;
 	dimension_t i,j,k;

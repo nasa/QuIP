@@ -442,13 +442,18 @@ extern Platform_Device * _pop_pfdev(SINGLE_QSP_ARG_DECL);
 #define push_pfdev(pdp)	_push_pfdev(QSP_ARG  pdp)
 #define pop_pfdev()	_pop_pfdev(SINGLE_QSP_ARG)
 
-extern Item_Context *create_pfdev_context(QSP_ARG_DECL  const char *name);
-extern void push_pfdev_context(QSP_ARG_DECL  Item_Context *icp);
-extern Item_Context *pop_pfdev_context(SINGLE_QSP_ARG_DECL);
+extern Item_Context * _create_pfdev_context(QSP_ARG_DECL  const char *name);
+extern void _push_pfdev_context(QSP_ARG_DECL  Item_Context *icp);
+extern Item_Context * _pop_pfdev_context(SINGLE_QSP_ARG_DECL);
 
-extern int platform_dispatch(QSP_ARG_DECL  const Compute_Platform *cpp,
+#define create_pfdev_context(name) _create_pfdev_context(QSP_ARG  name)
+#define push_pfdev_context(icp) _push_pfdev_context(QSP_ARG  icp)
+#define pop_pfdev_context() _pop_pfdev_context(SINGLE_QSP_ARG)
+
+extern int _platform_dispatch(QSP_ARG_DECL  const Compute_Platform *cpp,
 				const struct vector_function *vfp,
 				Vec_Obj_Args *oap );
+#define platform_dispatch(cpp, vfp, oap ) _platform_dispatch(QSP_ARG  cpp, vfp, oap )
 
 extern int _platform_dispatch_by_code(QSP_ARG_DECL  int code, Vec_Obj_Args *oap );
 #define platform_dispatch_by_code(code, oap ) _platform_dispatch_by_code(QSP_ARG  code, oap )

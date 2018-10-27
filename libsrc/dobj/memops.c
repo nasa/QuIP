@@ -363,8 +363,8 @@ void _dp_uni( QSP_ARG_DECL  Data_Obj *dp )
 		return;
 	}
 
-	rninit(SINGLE_QSP_ARG);	/* initialize random number generator */
-				/* BUG this assumes lib support compiled for drand48() */
+	rninit();	/* initialize random number generator */
+			/* BUG this assumes lib support compiled for drand48() */
 
 	set_max_vectorizable(N_DIMENSIONS-1);     /* default: vectorize over all */
 	check_vectorization(dp);

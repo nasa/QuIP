@@ -483,7 +483,7 @@ static void mk_stair_array(SINGLE_QSP_ARG_DECL)
 
 void _run_init(SINGLE_QSP_ARG_DECL)	/* general runtime initialization */
 {
-	rninit(SINGLE_QSP_ARG);		// seed random number generator
+	rninit();		// seed random number generator
 
 #ifdef CATCH_SIGS
 	sig_set(SIGINT,icatch);

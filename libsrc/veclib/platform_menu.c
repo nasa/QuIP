@@ -24,10 +24,7 @@ static COMMAND_FUNC( do_list_pfdevs )
 	if( cpp == NULL ) return;
 
 	// should we list devices for a single platform?
-	//push_pfdev_context(QSP_ARG  PF_CONTEXT(cpp) );
 	list_item_context(PF_CONTEXT(cpp));
-	//if( pop_pfdev_context(SINGLE_QSP_ARG) == NULL )
-	//	ERROR1("do_list_pfdevs:  Failed to pop platform device context!?");
 }
 
 static COMMAND_FUNC( do_list_all_pfdevs )
@@ -114,9 +111,9 @@ static Platform_Device *_pick_platform_device(SINGLE_QSP_ARG_DECL)
 		return NULL;
 	}
 
-	push_pfdev_context( QSP_ARG  PF_CONTEXT(cpp) );
+	push_pfdev_context( PF_CONTEXT(cpp) );
 	pdp = pick_pfdev("");
-	pop_pfdev_context( SINGLE_QSP_ARG );
+	pop_pfdev_context();
 	return pdp;
 }
 
@@ -166,7 +163,9 @@ static COMMAND_FUNC(do_show_pfdev)
 	}
 }
 
-static Platform_Device *find_pfdev( QSP_ARG_DECL  platform_type typ )
+#define find_pfdev( typ ) _find_pfdev( QSP_ARG  typ )
+
+static Platform_Device *_find_pfdev( QSP_ARG_DECL  platform_type typ )
 {
 	List *cp_lp, *pfd_lp;
 	Node *cp_np, *pfd_np;
@@ -178,7 +177,7 @@ static Platform_Device *find_pfdev( QSP_ARG_DECL  platform_type typ )
 	while( cp_np != NULL ){
 		cpp = NODE_DATA(cp_np);
 		// We need to push a context before we can get a list of devices...
-		push_pfdev_context( QSP_ARG  PF_CONTEXT(cpp) );
+		push_pfdev_context( PF_CONTEXT(cpp) );
 
 		pfd_lp = pfdev_list();
 		if( pfd_lp == NULL ) return NULL;
@@ -193,14 +192,14 @@ static Platform_Device *find_pfdev( QSP_ARG_DECL  platform_type typ )
 				// and AMD gpu (which we use), and something
 				// called Iris_Pro - which is not usable!?
 				// But Iris_Pro comes up first in the list...
-				pop_pfdev_context( SINGLE_QSP_ARG );
+				pop_pfdev_context();
 				return pdp;
 			}
 			//pfd_np = NODE_NEXT(pfd_np);
 			pfd_np = NODE_PREV(pfd_np);
 		}
 
-		pop_pfdev_context( SINGLE_QSP_ARG );
+		pop_pfdev_context();
 		cp_np = NODE_NEXT(cp_np);
 	}
 
@@ -219,9 +218,9 @@ static COMMAND_FUNC(do_set_dev_type)
 	if( i < 0 ) return;
 
 	if( i == 0 )
-		pdp = find_pfdev(QSP_ARG  PLATFORM_CUDA);
+		pdp = find_pfdev(PLATFORM_CUDA);
 	else if( i == 1 )
-		pdp = find_pfdev(QSP_ARG  PLATFORM_OPENCL);
+		pdp = find_pfdev(PLATFORM_OPENCL);
 
 	if( pdp == NULL ){
 		sprintf(ERROR_STRING,"No %s device found!?",dev_type_names[i]);
@@ -258,8 +257,8 @@ static void check_platform_defaults(SINGLE_QSP_ARG_DECL)
 		warn(ERROR_STRING);
 	}
 
-	pdp = find_pfdev(QSP_ARG  PLATFORM_OPENCL);
-	if( pdp == NULL ) pdp = find_pfdev(QSP_ARG  PLATFORM_CUDA);
+	pdp = find_pfdev(PLATFORM_OPENCL);
+	if( pdp == NULL ) pdp = find_pfdev(PLATFORM_CUDA);
 	if( pdp == NULL ) return;
 
 	if( vp1 == NULL )

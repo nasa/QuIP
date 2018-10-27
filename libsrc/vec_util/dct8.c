@@ -215,7 +215,7 @@ static void setup(void)
 	done_once = 1;
 }
 
-void compute_dct(QSP_ARG_DECL  Data_Obj *dp,int direction)
+void _compute_dct(QSP_ARG_DECL  Data_Obj *dp,int direction)
 {
 	dimension_t nx,ny;		/* number of blocks in x and y */
 	dimension_t i,j;

@@ -124,7 +124,7 @@ int _setup_requantize3d(SINGLE_QSP_ARG_DECL)
 	}
 	_feptr = (float *) OBJ_DATA_PTR(_fedp);
 
-	setup_ffilter3d(QSP_ARG  _fdp);
+	setup_ffilter3d(_fdp);
 
 	/* We used to seed the random number generator here
 	 * (using the time), but this was eliminated because
@@ -160,7 +160,7 @@ void set_halftone3d(Data_Obj *hdp)
 		os[level] = var[level] * OBJ_TYPE_INC(fdp,level);				\
 		posn[level] = var[level] + EDGE_OFFSET(level);
 
-void setup_ffilter3d(QSP_ARG_DECL  Data_Obj *fdp)
+void _setup_ffilter3d(QSP_ARG_DECL  Data_Obj *fdp)
 {
 	incr_t var[N_DIMENSIONS];
 	incr_t os[N_DIMENSIONS];
@@ -317,7 +317,7 @@ void _init_requant3d(SINGLE_QSP_ARG_DECL)
 		}
 	}
 
-	convolve3d(QSP_ARG  _fedp,_edp,_ffdp);
+	convolve3d(_fedp,_edp,_ffdp);
 }
 
 int _scan_requant3d(QSP_ARG_DECL  int ntimes)

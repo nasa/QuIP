@@ -276,7 +276,7 @@ static int vfa_cmp(const void *vfp1,const void *vfp2)
 	else return(-1);
 }
 
-int check_vfa_tbl_size(QSP_ARG_DECL  Vec_Func_Array vfa_tbl[], int size)
+int _check_vfa_tbl_size(QSP_ARG_DECL  Vec_Func_Array vfa_tbl[], int size)
 {
 	assert( size == N_VEC_FUNCS );
 	return 0;

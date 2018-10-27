@@ -18,7 +18,7 @@ const char *type_strings[N_ARGSET_PRECISIONS]={
 
 /* This version takes a buffer, so it can be used by different threads simultaneously */
 
-void private_show_obj_args(QSP_ARG_DECL  char *buf, const Vec_Obj_Args *oap, void (*report_func)(QSP_ARG_DECL  const char *))
+void _private_show_obj_args(QSP_ARG_DECL  char *buf, const Vec_Obj_Args *oap, void (*report_func)(QSP_ARG_DECL  const char *))
 {
 	int i;
 
@@ -125,7 +125,7 @@ longlist(OA_SRC_OBJ(oap,i) );
 
 void _show_obj_args(QSP_ARG_DECL  const Vec_Obj_Args *oap)
 {
-	private_show_obj_args(QSP_ARG  ERROR_STRING,oap,_advise);
+	private_show_obj_args(ERROR_STRING,oap,_advise);
 }
 
 void set_obj_arg_flags(Vec_Obj_Args *oap)

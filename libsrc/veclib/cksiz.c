@@ -16,7 +16,7 @@
  * How is the return value used? 
  */
 
-int cksiz(QSP_ARG_DECL  int argtyp,Data_Obj *src_dp,Data_Obj *dst_dp)
+int _cksiz(QSP_ARG_DECL  int argtyp,Data_Obj *src_dp,Data_Obj *dst_dp)
 {
 	int i;
 
@@ -131,7 +131,7 @@ int old_cksiz(QSP_ARG_DECL  int argtyp,Data_Obj *src_dp,Data_Obj *dst_dp)
 
 // BUG - Please add a comment concerning the purpose of this function!
 
-int check_bitmap(QSP_ARG_DECL  Data_Obj *bitmap,Data_Obj *dst_dp)
+int _check_bitmap(QSP_ARG_DECL  Data_Obj *bitmap,Data_Obj *dst_dp)
 {
 	if( bitmap==NULL ) {
 		error1("no bitmap???");

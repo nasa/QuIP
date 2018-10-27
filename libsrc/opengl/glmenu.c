@@ -1553,10 +1553,10 @@ static COMMAND_FUNC( do_new_gl_buffer )
 	s = NAMEOF("name for GL buffer object");
 	cdp = pick_platform("platform");
 	if( cdp != NULL )
-		push_pfdev_context(QSP_ARG  PF_CONTEXT(cdp) );
+		push_pfdev_context(PF_CONTEXT(cdp) );
 	pdp = pick_pfdev("device");
 	if( cdp != NULL )
-		pop_pfdev_context(SINGLE_QSP_ARG);
+		pop_pfdev_context();
 
 	w = (int)HOW_MANY("width");
 	h = (int)HOW_MANY("height");

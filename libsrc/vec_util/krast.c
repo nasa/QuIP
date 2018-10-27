@@ -86,7 +86,7 @@ static int my_log2( u_long n )
 	return(-1);
 }
 
-void mk_krast(QSP_ARG_DECL  Data_Obj *dp)
+void _mk_krast(QSP_ARG_DECL  Data_Obj *dp)
 {
 	u_long i;
 	u_short *sp;

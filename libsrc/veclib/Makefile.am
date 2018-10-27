@@ -30,8 +30,7 @@ libvec_a_SOURCES =				\
 				vec_func.c	\
 				dispatch.c	\
 				platform.c	\
-				platform_menu.c	\
-				vec_chain.c
+				platform_menu.c
 
 
 # included files (not compiled themselves

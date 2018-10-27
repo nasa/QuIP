@@ -1397,7 +1397,7 @@ static COMMAND_FUNC( do_yuv2gray )
 
 	/* BUG Here we need to check sizes, etc */
 
-	yuv422_to_gray(QSP_ARG  dst_dp,src_dp);
+	yuv422_to_gray(dst_dp,src_dp);
 }
 
 #ifdef HAVE_V4L2

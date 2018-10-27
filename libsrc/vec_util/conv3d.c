@@ -89,7 +89,7 @@ void add_impulse3d(double amp,Data_Obj *image_dp,Data_Obj *ir_dp,posn_t *positio
 		os[level] = var[level] * OBJ_TYPE_INC(dpfr,level);
 
 
-void convolve3d(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpfilt)
+void _convolve3d(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpfilt)
 {
 	float val, *frptr;
 	dimension_t offset;

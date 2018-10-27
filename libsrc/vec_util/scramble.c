@@ -32,7 +32,7 @@
 		}					\
 	}
 
-void dp_scramble(QSP_ARG_DECL  Data_Obj *dp)
+void _dp_scramble(QSP_ARG_DECL  Data_Obj *dp)
 {
 	unsigned long i,j;
 

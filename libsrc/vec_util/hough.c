@@ -18,7 +18,7 @@
 static int tbl_size=0;
 static float *sin_tbl=NULL, *cos_tbl=NULL;
 
-void hough( QSP_ARG_DECL  Data_Obj *xform_dp, Data_Obj *src_dp, float threshold, float x0, float y0 )
+void _hough( QSP_ARG_DECL  Data_Obj *xform_dp, Data_Obj *src_dp, float threshold, float x0, float y0 )
 {
 	int n_angles;
 	int n_distances;

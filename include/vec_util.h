@@ -29,20 +29,25 @@ extern void (*scan_func3d)(QSP_ARG_DECL  dimension_t index,Dimension_Set *sizes,
 
 
 /* integral.c */
-extern void cum_sum(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
+extern void _cum_sum(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
+#define cum_sum(dst_dp, src_dp) _cum_sum(QSP_ARG  dst_dp, src_dp)
 
 /* scramble.c */
-extern void dp_scramble(QSP_ARG_DECL  Data_Obj *dp);
+extern void _dp_scramble(QSP_ARG_DECL  Data_Obj *dp);
+#define dp_scramble(dp) _dp_scramble(QSP_ARG  dp)
 
 /* vinterp.c */
-extern void vinterp(QSP_ARG_DECL  Data_Obj *target, Data_Obj *source, Data_Obj *control );
+extern void _vinterp(QSP_ARG_DECL  Data_Obj *target, Data_Obj *source, Data_Obj *control );
+#define vinterp(target, source, control ) _vinterp(QSP_ARG  target, source, control )
 
 /* lutmap.c */
 
-extern int lutmap(QSP_ARG_DECL  Data_Obj *dest_dp, Data_Obj *src_dp, Data_Obj *lut_dp );
+extern int _lutmap(QSP_ARG_DECL  Data_Obj *dest_dp, Data_Obj *src_dp, Data_Obj *lut_dp );
+#define lutmap(dest_dp, src_dp, lut_dp ) _lutmap(QSP_ARG  dest_dp, src_dp, lut_dp )
 
 /* project.c */
-void war_project(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
+void _war_project(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
+#define war_project(dpto,dpfr) _war_project(QSP_ARG  dpto,dpfr)
 
 /* cumsum.c */
 extern void _war_cumsum(QSP_ARG_DECL  Data_Obj *dp_to,Data_Obj *dp_fr);
@@ -51,17 +56,26 @@ extern void _war_cumsum(QSP_ARG_DECL  Data_Obj *dp_to,Data_Obj *dp_fr);
 
 /* dct8.c */
 
-extern void compute_dct(QSP_ARG_DECL  Data_Obj *,int);
+extern void _compute_dct(QSP_ARG_DECL  Data_Obj *,int);
+#define compute_dct(dp,code) _compute_dct(QSP_ARG  dp,code)
 
 /* morph.c */
 
-extern void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
-extern void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
 extern int pixelread(int,int);
 extern void pixelwrite(int,int,int);
-extern void ifl(QSP_ARG_DECL  Data_Obj *dp,index_t x,index_t y,double color,double tolerance);
-extern void thinzs(QSP_ARG_DECL  Data_Obj *x, double val);
-extern void morph_process(QSP_ARG_DECL  Data_Obj *to, Data_Obj *fr, Data_Obj *tbl);
+
+extern void _dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
+extern void _erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
+extern void _ifl(QSP_ARG_DECL  Data_Obj *dp,index_t x,index_t y,double color,double tolerance);
+extern void _thinzs(QSP_ARG_DECL  Data_Obj *x, double val);
+extern void _morph_process(QSP_ARG_DECL  Data_Obj *to, Data_Obj *fr, Data_Obj *tbl);
+
+#define dilate(dpto,dpfr) _dilate(QSP_ARG  dpto,dpfr)
+#define erode(dpto,dpfr) _erode(QSP_ARG  dpto,dpfr)
+#define ifl(dp,x,y,color,tolerance) _ifl(QSP_ARG  dp,x,y,color,tolerance)
+#define thinzs(x, val) _thinzs(QSP_ARG  x, val)
+#define morph_process(to, fr, tbl) _morph_process(QSP_ARG  to, fr, tbl)
+
 
 /* sample.c */
 extern void _render_samples(QSP_ARG_DECL  Data_Obj *img, Data_Obj *coord, Data_Obj *intens);
@@ -75,27 +89,34 @@ extern void _sample_image(QSP_ARG_DECL  Data_Obj *intens, Data_Obj *image, Data_
 
 /* File bessel.c */
 
-extern int bessel_of(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,int order);
-extern int acos_of(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
-extern int asin_of(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
+extern int _bessel_of(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,int order);
+extern int _acos_of(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
+extern int _asin_of(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
+
+#define bessel_of(dpto,dpfr,order) _bessel_of(QSP_ARG  dpto,dpfr,order)
+#define acos_of(dpto,dpfr) _acos_of(QSP_ARG  dpto,dpfr)
+#define asin_of(dpto,dpfr) _asin_of(QSP_ARG  dpto,dpfr)
 
 
 
 /* dither.c */
 
-extern void odither(QSP_ARG_DECL  Data_Obj *dp,int size);
+extern void _odither(QSP_ARG_DECL  Data_Obj *dp,int size);
 
+#define odither(dp,size) _odither(QSP_ARG  dp,size)
 
 /* dpinvert.c */
 
 extern double _dt_invert(QSP_ARG_DECL  Data_Obj *dp);
+extern double _invert_sq_matrix(QSP_ARG_DECL  float *,dimension_t);
 #define dt_invert(dp) _dt_invert(QSP_ARG  dp)
-extern double invert_sq_matrix(QSP_ARG_DECL  float *,dimension_t);
+#define invert_sq_matrix(p,s) _invert_sq_matrix(QSP_ARG  p,s)
 
 
 /* dptone.c */
 
-extern void dp_halftone(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,dimension_t n,float *levels);
+extern void _dp_halftone(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,dimension_t n,float *levels);
+#define dp_halftone(dpto,dpfr,n,levels) _dp_halftone(QSP_ARG  dpto,dpfr,n,levels)
 
 
 /* File gj.c */
@@ -109,14 +130,21 @@ extern int _dp_gauss_jordan(QSP_ARG_DECL  double *matrix,dimension_t size);
 
 /* File histo.c */
 
-extern void compute_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,double bin_width,double min);
-extern void multivariate_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,float *,float *);
+extern void _compute_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,double bin_width,double min);
+extern void _multivariate_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,float *,float *);
+
+#define compute_histo(histo_dp,data_dp,bin_width,min) _compute_histo(QSP_ARG  histo_dp,data_dp,bin_width,min)
+#define multivariate_histo(histo_dp,data_dp,wp,mp) _multivariate_histo(QSP_ARG  histo_dp,data_dp,wp,mp)
 
 /* file hough.c */
-extern void hough(QSP_ARG_DECL  Data_Obj *xform_dp, Data_Obj *src_dp, float threshold , float x0 , float y0);
+extern void _hough(QSP_ARG_DECL  Data_Obj *xform_dp, Data_Obj *src_dp, float threshold , float x0 , float y0);
+
+#define hough(xform_dp, src_dp, threshold , x0 , y0) _hough(QSP_ARG  xform_dp, src_dp, threshold , x0 , y0)
 
 /* file local_max.c */
-extern long local_maxima(QSP_ARG_DECL  Data_Obj *val_dp, Data_Obj *coord_dp, Data_Obj *src_dp);
+extern long _local_maxima(QSP_ARG_DECL  Data_Obj *val_dp, Data_Obj *coord_dp, Data_Obj *src_dp);
+
+#define local_maxima(val_dp, coord_dp, src_dp) _local_maxima(QSP_ARG  val_dp, coord_dp, src_dp)
 
 /* File inittbls.c */
 
@@ -140,59 +168,96 @@ extern void mkeven(Data_Obj *dp);
 
 /* File quads.c */
 
-extern void make_all_quads(QSP_ARG_DECL  Data_Obj *target,Data_Obj *source);
+extern void _make_all_quads(QSP_ARG_DECL  Data_Obj *target,Data_Obj *source);
+
+#define make_all_quads(target,source) _make_all_quads(QSP_ARG  target,source)
 
 
 /* File radavg.c */
 
-extern int rad_avg(QSP_ARG_DECL  Data_Obj *mean_dp,Data_Obj *var_dp,Data_Obj *count_dp,
+extern int _rad_avg(QSP_ARG_DECL  Data_Obj *mean_dp,Data_Obj *var_dp,Data_Obj *count_dp,
 			Data_Obj *img_dp);
-extern int ori_avg(QSP_ARG_DECL  Data_Obj *mean_dp,Data_Obj *var_dp,Data_Obj *count_dp,
+extern int _ori_avg(QSP_ARG_DECL  Data_Obj *mean_dp,Data_Obj *var_dp,Data_Obj *count_dp,
 			Data_Obj *img_dp);
+
+#define rad_avg(mean_dp,var_dp,count_dp, img_dp) _rad_avg(QSP_ARG  mean_dp,var_dp,count_dp, img_dp)
+#define ori_avg(mean_dp,var_dp,count_dp, img_dp) _ori_avg(QSP_ARG  mean_dp,var_dp,count_dp, img_dp)
 
 
 /* File resample.c */
 
 extern void set_resample_wrap(int flag);
-extern void resample(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp);
-extern void bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp);
-extern void new_bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp);
+extern void _resample(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp);
+extern void _bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp);
+extern void _new_bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp);
+
+#define resample(dpto,dpfr,dpwarp) _resample(QSP_ARG  dpto,dpfr,dpwarp)
+#define bilinear_warp(dpto,dpfr,dpwarp) _bilinear_warp(QSP_ARG  dpto,dpfr,dpwarp)
+#define new_bilinear_warp(dpto,dpfr,dpwarp) _new_bilinear_warp(QSP_ARG  dpto,dpfr,dpwarp)
+
+
+
+/* File tspread.c */
+// BUG?  these should go in a module-specific include file?
+
+extern void _setup_ffilter3d(QSP_ARG_DECL  Data_Obj *fdp);
+extern void _get_3d_scattered_point(QSP_ARG_DECL  dimension_t n,Dimension_Set *sizes,posn_t *posn );
+extern void _get_3d_raster_point(QSP_ARG_DECL  dimension_t n,Dimension_Set *sizes,posn_t *posn );
+
+#define setup_ffilter3d(fdp) _setup_ffilter3d(QSP_ARG  fdp)
+#define get_3d_scattered_point(n,sizes,posn ) _get_3d_scattered_point(QSP_ARG  n,sizes,posn )
+#define get_3d_raster_point(n,sizes,posn ) _get_3d_raster_point(QSP_ARG  n,sizes,posn )
+
+/* File resample.c */
+
+extern void set_resample_wrap(int flag);
+extern void _resample(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp);
+extern void _bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp);
+extern void _new_bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp);
+
+#define resample(dpto,dpfr,dpwarp) _resample(QSP_ARG  dpto,dpfr,dpwarp)
+#define bilinear_warp(dpto,dpfr,dpwarp) _bilinear_warp(QSP_ARG  dpto,dpfr,dpwarp)
+#define new_bilinear_warp(dpto,dpfr,dpwarp) _new_bilinear_warp(QSP_ARG  dpto,dpfr,dpwarp)
 
 
 /* File convolve.c */
 
 extern void add_impulse(double amp,Data_Obj *image_dp,Data_Obj *ir_dp,incr_t x,incr_t y);
 extern void img_clear(Data_Obj *dp);
-extern void convolve(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpfilt);
+extern void _convolve(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpfilt);
+
+#define convolve(dpto,dpfr,dpfilt) _convolve(QSP_ARG  dpto,dpfr,dpfilt)
 
 
 /* File conv3d.c */
 
 extern void add_impulse3d(double amp,Data_Obj *image_dp,Data_Obj *ir_dp,posn_t *posns);
 extern void img_clear3d(Data_Obj *dp);
-extern void convolve3d(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpfilt);
+extern void _convolve3d(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpfilt);
+#define convolve3d(dpto,dpfr,dpfilt) _convolve3d(QSP_ARG  dpto,dpfr,dpfilt)
 
 
 /* File tspread.c */
 // BUG?  these should go in a module-specific include file?
 
-extern void setup_ffilter3d(QSP_ARG_DECL  Data_Obj *fdp);
+extern void _setup_ffilter3d(QSP_ARG_DECL  Data_Obj *fdp);
 extern void _get_3d_scattered_point(QSP_ARG_DECL  dimension_t n,Dimension_Set *sizes,posn_t *posn );
 extern void _get_3d_raster_point(QSP_ARG_DECL  dimension_t n,Dimension_Set *sizes,posn_t *posn );
 extern void _get_3d_random_point(QSP_ARG_DECL  dimension_t n,Dimension_Set *sizes,posn_t *posn );
 extern int _redo_pixel3d(QSP_ARG_DECL  posn_t *posn);
 extern void _redo_two_pixels3d(QSP_ARG_DECL  posn_t *posn);
+
 extern double get_sos3d(Data_Obj *edp,Data_Obj *fdp);
 extern float get_delta3d(posn_t *posn);
 extern void set_filter3d(Data_Obj *fdp);
 extern void set_grayscale3d(Data_Obj *gdp);
 extern void set_halftone3d(Data_Obj *hdp);
+extern void set_temp3d(double temp);
+
 extern int _scan_requant3d(QSP_ARG_DECL  int ntimes);
 extern void _scan2_requant3d(QSP_ARG_DECL  int ntimes);
 extern void _scan_anneal3d(QSP_ARG_DECL  double temp,int ntimes);
-extern void set_temp3d(double temp);
 extern void _normalize_filter3d(QSP_ARG_DECL  Data_Obj *fdp);
-
 extern double _add_to_sos3d(QSP_ARG_DECL  posn_t *posn,Data_Obj *edp,Data_Obj *fdp,int factor);
 extern int _setup_requantize3d(SINGLE_QSP_ARG_DECL);
 extern void _init_requant3d(SINGLE_QSP_ARG_DECL);
@@ -219,15 +284,16 @@ extern void set_filter(Data_Obj *fdp);
 extern void set_grayscale(Data_Obj *gdp);
 extern void set_halftone(Data_Obj *hdp);
 extern double get_volume(Data_Obj *dp);
+extern float get_delta(dimension_t x,dimension_t y);
+extern void set_temp(double temp);
+extern void insist_pixel(dimension_t x,dimension_t y);
+
 extern void _normalize_filter(QSP_ARG_DECL  Data_Obj *fdp);
 extern void _init_requant(SINGLE_QSP_ARG_DECL);
 extern int _scan_requant(QSP_ARG_DECL  int ntimes);
 extern void _scan_anneal(QSP_ARG_DECL  double temp,int ntimes);
-extern float get_delta(dimension_t x,dimension_t y);
 extern int _redo_pixel(QSP_ARG_DECL  dimension_t x,dimension_t y);
 extern int _redo_two_pixels(QSP_ARG_DECL  dimension_t x,dimension_t y);
-extern void set_temp(double temp);
-extern void insist_pixel(dimension_t x,dimension_t y);
 extern void _get_xy_scattered_point(QSP_ARG_DECL  dimension_t n,dimension_t xsize,dimension_t ysize,
 							dimension_t *xp,dimension_t *yp);
 extern void _get_xy_raster_point(QSP_ARG_DECL  dimension_t n,dimension_t xsize,dimension_t ysize,
@@ -310,35 +376,50 @@ extern void _dich_scan_migrate(QSP_ARG_DECL  index_t ntimes);
 
 /* File median.c */
 
-extern void median_1D(QSP_ARG_DECL  Data_Obj *,Data_Obj *,int radius);
-extern void median(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
-extern void median_clip(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
-extern void sort_data(QSP_ARG_DECL  Data_Obj *dp);
-extern void sort_indices(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2);
+extern void _median_1D(QSP_ARG_DECL  Data_Obj *,Data_Obj *,int radius);
+extern void _median(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
+extern void _median_clip(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
+extern void _sort_data(QSP_ARG_DECL  Data_Obj *dp);
+extern void _sort_indices(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2);
+
+#define median_1D(dst,src,radius) _median_1D(QSP_ARG  dst,src,radius)
+#define median(dst,src) _median(QSP_ARG  dst,src)
+#define median_clip(dst,src) _median_clip(QSP_ARG  dst,src)
+#define sort_data(dp) _sort_data(QSP_ARG  dp)
+#define sort_indices(dp1,dp2) _sort_indices(QSP_ARG  dp1,dp2)
 
 /* krast.c */
 
-extern void mk_krast(QSP_ARG_DECL  Data_Obj *);
+extern void _mk_krast(QSP_ARG_DECL  Data_Obj *);
+#define mk_krast(dp) _mk_krast(QSP_ARG  dp)
 
 /* graph_path.c */
 
-extern void extend_shortest_paths(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
+extern void _extend_shortest_paths(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
+#define extend_shortest_paths(dst,src) _extend_shortest_paths(QSP_ARG  dst,src)
 
 
 /* yuv2rgb.c */
-extern void yuv422_to_rgb24(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
-extern void yuv422_to_gray(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
+extern void _yuv422_to_rgb24(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
+extern void _yuv422_to_gray(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
+#define yuv422_to_rgb24(dst_dp, src_dp) _yuv422_to_rgb24(QSP_ARG  dst_dp, src_dp)
+#define yuv422_to_gray(dst_dp, src_dp) _yuv422_to_gray(QSP_ARG  dst_dp, src_dp)
 
 /* size.c */
-extern int reduce(QSP_ARG_DECL  Data_Obj *lil_dp,Data_Obj *big_dp);
-extern int enlarge(QSP_ARG_DECL  Data_Obj *big_dp,Data_Obj *lil_dp);
+extern int _reduce(QSP_ARG_DECL  Data_Obj *lil_dp,Data_Obj *big_dp);
+extern int _enlarge(QSP_ARG_DECL  Data_Obj *big_dp,Data_Obj *lil_dp);
+#define reduce(lil_dp,big_dp) _reduce(QSP_ARG  lil_dp,big_dp)
+#define enlarge(big_dp,lil_dp) _enlarge(QSP_ARG  big_dp,lil_dp)
 
 /* wrap.c */
-extern void dp_scroll(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp,incr_t dx,incr_t dy);
-extern void wrap(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp);
+extern void _dp_scroll(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp,incr_t dx,incr_t dy);
+extern void _wrap(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp);
+#define dp_scroll(dst_dp,src_dp,dx,dy) _dp_scroll(QSP_ARG  dst_dp,src_dp,dx,dy)
+#define wrap(dst_dp,src_dp) _wrap(QSP_ARG  dst_dp,src_dp)
 
 /* scale.c */
-extern void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax);
+extern void _scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax);
+#define scale(dp,desmin,desmax) _scale(QSP_ARG  dp,desmin,desmax)
 
 
 #endif /* _VEC_UTIL_H_ */

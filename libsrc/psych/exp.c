@@ -705,7 +705,7 @@ static COMMAND_FUNC( do_staircase_menu )
 {
 	if( !rsp_inited ){
 		do_rspinit();
-		rninit(SINGLE_QSP_ARG);
+		rninit();
 		new_exp(SINGLE_QSP_ARG);
 	}
 	CHECK_AND_PUSH_MENU( staircases );
@@ -739,7 +739,7 @@ COMMAND_FUNC( do_exp_menu )
 {
 	if( !rsp_inited ){
 		do_rspinit();
-		rninit(SINGLE_QSP_ARG);
+		rninit();
 		new_exp(SINGLE_QSP_ARG);
 	}
 	CHECK_AND_PUSH_MENU(experiment);

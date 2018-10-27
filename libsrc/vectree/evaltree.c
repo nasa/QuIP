@@ -5853,7 +5853,7 @@ Data_Obj *_eval_obj_exp(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 
 			/* BUG? do we need to make sure that dp is not dst_dp? */
 			INSURE_DESTINATION
-			dp_scroll(QSP_ARG  dst_dp,dp,(incr_t)ldx,(incr_t)ldy);
+			dp_scroll(dst_dp,dp,(incr_t)ldx,(incr_t)ldy);
 			return(dst_dp);
 
 
@@ -5868,7 +5868,7 @@ Data_Obj *_eval_obj_exp(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 					SHP_PREC_PTR(VN_SHAPE(enp)),
 					OBJ_PFDEV(dp));
 			}
-			wrap(QSP_ARG  dst_dp,dp);
+			wrap(dst_dp,dp);
 			return(dst_dp);
 
 		case T_TYPECAST:			/* eval_obj_exp */
@@ -6639,11 +6639,11 @@ dump_tree(enp);
 
 		case T_DILATE:
 			dp1=eval_obj_exp(VN_CHILD(enp,0),NULL);
-			dilate(QSP_ARG  dst_dp,dp1);
+			dilate(dst_dp,dp1);
 			break;
 		case T_ERODE:
 			dp1=eval_obj_exp(VN_CHILD(enp,0),NULL);
-			erode(QSP_ARG  dst_dp,dp1);
+			erode(dst_dp,dp1);
 			break;
 		/* COnditional assignment:  a<b ? v : w
 		 * If the conditional is a scalar, then
@@ -6874,12 +6874,12 @@ dump_tree(enp);
 
 		case T_REDUCE:						/* eval_obj_assignment */
 			dp1 = eval_obj_exp(VN_CHILD(enp,0),NULL);
-			reduce(QSP_ARG  dst_dp,dp1);
+			reduce(dst_dp,dp1);
 			break;
 
 		case T_ENLARGE:						/* eval_obj_assignment */
 			dp1 = eval_obj_exp(VN_CHILD(enp,0),NULL);
-			enlarge(QSP_ARG  dst_dp,dp1);
+			enlarge(dst_dp,dp1);
 			break;
 
 		case T_TYPECAST:		/* eval_obj_assignment */
@@ -7128,14 +7128,14 @@ advise(ERROR_STRING);
 			dp1=eval_obj_exp(VN_CHILD(enp,0),NULL);
 			assert( dp1 != NULL );
 
-			wrap(QSP_ARG  dst_dp,dp1);
+			wrap(dst_dp,dp1);
 			break;
 
 		case T_SCROLL:
 			dp1=eval_obj_exp(VN_CHILD(enp,0),NULL);
 			ldx=eval_int_exp(VN_CHILD(enp,1));
 			ldy=eval_int_exp(VN_CHILD(enp,2));
-			dp_scroll(QSP_ARG  dst_dp,dp1,(incr_t)ldx,(incr_t)ldy);
+			dp_scroll(dst_dp,dp1,(incr_t)ldx,(incr_t)ldy);
 			break;
 
 		/* 2 argument operations */

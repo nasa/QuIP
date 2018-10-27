@@ -76,7 +76,7 @@ static float exclip(QSP_ARG_DECL  Data_Obj *dp,Data_Obj *val_sp,
 }
 #endif /* SOLARIS or SGI */
 
-void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an image (to byte range?) */
+void _scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an image (to byte range?) */
 {
 	double omn,omx,rf,offset;
 	Vec_Obj_Args oa1, *oap=&oa1;

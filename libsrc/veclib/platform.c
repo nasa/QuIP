@@ -22,7 +22,7 @@ void set_default_pfdev(Platform_Device *pdp)
 }
 
 
-Item_Context *create_pfdev_context(QSP_ARG_DECL  const char *name)
+Item_Context * _create_pfdev_context(QSP_ARG_DECL  const char *name)
 {
 	if( pfdev_itp == NULL )
 		init_pfdevs();
@@ -30,18 +30,19 @@ Item_Context *create_pfdev_context(QSP_ARG_DECL  const char *name)
 	return create_item_context(pfdev_itp, name );
 }
 
-void push_pfdev_context(QSP_ARG_DECL  Item_Context *icp )
+void _push_pfdev_context(QSP_ARG_DECL  Item_Context *icp )
 {
 	push_item_context(pfdev_itp, icp );
 }
 
-Item_Context *pop_pfdev_context(SINGLE_QSP_ARG_DECL)
+Item_Context * _pop_pfdev_context(SINGLE_QSP_ARG_DECL)
 {
 	return pop_item_context(pfdev_itp);
 }
 
+#define init_platform_defaults( cpp, t ) _init_platform_defaults(QSP_ARG  cpp, t )
 
-static void init_platform_defaults(QSP_ARG_DECL  Compute_Platform *cpp, platform_type t )
+static void _init_platform_defaults(QSP_ARG_DECL  Compute_Platform *cpp, platform_type t )
 {
 	SET_PF_TYPE(cpp,t);
 
@@ -101,12 +102,12 @@ Compute_Platform *creat_platform(QSP_ARG_DECL  const char *name, platform_type t
 	cpp = new_platform(name);
 	assert( cpp != NULL );
 
-	icp = create_pfdev_context(QSP_ARG  name );
+	icp = create_pfdev_context(name );
 	assert( icp != NULL );
 
 	SET_PF_CONTEXT(cpp,icp);
 
-	init_platform_defaults(QSP_ARG  cpp, t );
+	init_platform_defaults( cpp, t );
 
 	return cpp;
 

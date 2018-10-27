@@ -144,7 +144,7 @@ static void _copy_platform_data(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp
 	else
 		assert( AERROR("copy_platform_data:  bad argset type!?") );
 
-	call_vfunc( QSP_ARG  FIND_VEC_FUNC(FVMOV), oap );
+	call_vfunc( FIND_VEC_FUNC(FVMOV), oap );
 }
 
 #define contig_obj(dp) _contig_obj(QSP_ARG  dp)

@@ -14,7 +14,7 @@
 
 /* Put a pixel to 0 if ANY of it's neighbors are 1 */
 
-void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
+void _erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 {
 	float *dstp,*srcp;
 	u_long i,j;
@@ -218,7 +218,7 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 
 /* set a pixel to 0 if ANY of it's neighbors are 0 */
 
-void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
+void _dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 {
 	float *dstp,*srcp;
 	u_long i,j;
@@ -475,7 +475,7 @@ static void flt_fill(long x, long y)
 /* Uses the graphics gems fill only for byte images?
  */
 
-void ifl(QSP_ARG_DECL  Data_Obj *dp,dimension_t x,dimension_t y,double color,double tol)
+void _ifl(QSP_ARG_DECL  Data_Obj *dp,dimension_t x,dimension_t y,double color,double tol)
 {
 
 #ifdef CAUTIOUS
@@ -568,7 +568,7 @@ advise(ERROR_STRING);
 		bit <<= 1;					\
 	}
 
-void morph_process( QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *tbl_dp )
+void _morph_process( QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *tbl_dp )
 {
 	dimension_t i,j;
 	u_long *to, *from1, *from2, *from3;

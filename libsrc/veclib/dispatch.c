@@ -185,7 +185,7 @@ if( debug & veclib_debug ){
 sprintf(mystring,"thread[%d]:  func = 0x%"PRIxPTR,pip->pi_index,(uintptr_t)pip->pi_func);
 mpnadvise(myindex,mystring);
 /* show_obj_args is not thread safe */
-private_show_obj_args(QSP_ARG  mystring,pip->pi_oap,_advise);
+private_show_obj_args(mystring,pip->pi_oap,_advise);
 }
 #endif /* QUIP_DEBUG */
 			(*(pip->pi_func))(QSP_ARG  pip->pi_vf_code,pip->pi_oap);
@@ -298,7 +298,7 @@ static void init_tmp_obj_names(void)
 	tmp_obj_names_inited=1;
 }
 
-void launch_threads(QSP_ARG_DECL
+void _launch_threads(QSP_ARG_DECL
 	void (*func)(HOST_CALL_ARG_DECLS),
 	int vf_code, Vec_Obj_Args oa[])
 {
@@ -374,7 +374,9 @@ static Scalar_Value private_scalar[N_PROCESSORS];
 
 // We want to do this, only for the cpu platform!
 
-static int multiprocessor_dispatch(QSP_ARG_DECL  const Vector_Function *vfp,
+#define multiprocessor_dispatch(vfp, oap) _multiprocessor_dispatch(QSP_ARG  vfp, oap )
+
+static int _multiprocessor_dispatch(QSP_ARG_DECL  const Vector_Function *vfp,
 		Vec_Obj_Args *oap )
 {
 	int i, i_dim;
@@ -511,12 +513,12 @@ warn("Arghh - probably botching vramp scalar args for multiple processors...");
 //NADVISE(DEFAULT_ERROR_STRING);
 	// We can use vl2_vfa_tbl here because we know we are on
 	// the cpu platform...
-	launch_threads(QSP_ARG  vl2_vfa_tbl[VF_CODE(vfp)].vfa_func[OA_FUNCTYPE(oap)],VF_CODE(vfp),oa_tbl);
+	launch_threads(vl2_vfa_tbl[VF_CODE(vfp)].vfa_func[OA_FUNCTYPE(oap)],VF_CODE(vfp),oa_tbl);
 	return 0;
 }
 #endif /* N_PROCESSORS > 1 */
 
-int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
+int _platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 				const Vector_Function *vfp,
 				Vec_Obj_Args *oap )
 {
@@ -552,7 +554,7 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 	// then call multiprocessor_dispatch
 
 	if( IS_CPU_DEVICE( OA_PFDEV(oap) ) && n_processors > 1 ){
-		if( multiprocessor_dispatch(QSP_ARG  vfp, oap ) == 0 )
+		if( multiprocessor_dispatch( vfp, oap ) == 0 )
 			return 0;
 	}
 #endif	/* N_PROCESSORS > 1 */
@@ -596,7 +598,6 @@ fprintf(stderr,"Calling function at 0x%"PRIxPTR"\n",
 #endif // MAX_DEBUG
 
 	// Do it!
-//fprintf(stderr,"platform_dispatch calling function %s from vfa_tbl...\n",VF_NAME(vfp));
 	(*(PF_FUNC_TBL(cpp)[VF_CODE(vfp)].vfa_func[OA_FUNCTYPE(oap)]))(QSP_ARG  VF_CODE(vfp),oap);
 	return 0;
 
@@ -620,7 +621,9 @@ fprintf(stderr,"Calling function at 0x%"PRIxPTR"\n",
 		}						\
 	}
 				
-static Compute_Platform * set_oargs_platform(QSP_ARG_DECL  Vec_Obj_Args *oap)
+#define set_oargs_platform(oap) _set_oargs_platform(QSP_ARG  oap)
+
+static Compute_Platform * _set_oargs_platform(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	Platform_Device *pdp=NULL;
 	int i;
@@ -645,8 +648,8 @@ int _platform_dispatch_by_code( QSP_ARG_DECL   int code, Vec_Obj_Args *oap )
 	assert( code >= 0 && code < N_VEC_FUNCS );
 
 	vfp = &(vec_func_tbl[code]);
-	cpp = set_oargs_platform(QSP_ARG  oap);
-	return platform_dispatch( QSP_ARG  cpp, vfp, oap );
+	cpp = set_oargs_platform(oap);
+	return platform_dispatch( cpp, vfp, oap );
 }
 
 void _dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp )

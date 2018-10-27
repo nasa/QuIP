@@ -42,7 +42,8 @@ extern int _perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap);
 extern void set_gpu_dispatch_func( int (*)(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap) );
 #endif /* HAVE_ANY_GPU */
 
-extern int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap );
+extern int _call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap );
+#define call_vfunc( vfp, oap ) _call_vfunc( QSP_ARG  vfp, oap )
 
 /* warmenu.c */
 extern void set_perf(int);

@@ -69,7 +69,7 @@ advise(ERROR_STRING);
 	return(0);
 }
 
-void resample(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
+void _resample(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 {
 	float x_fr,y_fr;
 	u_long ii,jj;
@@ -168,7 +168,7 @@ void resample(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 
 /* this old bilinear warp uses the warp map for perturbations */
 
-void bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
+void _bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 {
 	float x_fr,y_fr;
 	register dimension_t ii,jj,ii2,jj2;
@@ -218,7 +218,7 @@ void bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 
 /* this new bilinear warp uses the warp map for coords */
 
-void new_bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
+void _new_bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 {
 	float x_fr,y_fr;
 	register dimension_t ii,jj,ii2,jj2;

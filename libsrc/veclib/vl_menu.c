@@ -14,7 +14,7 @@ static COMMAND_FUNC( do_vf_exec )
 
 	if( vfp == NULL ) return;
 
-	do_vfunc(QSP_ARG  vfp);
+	do_vfunc(vfp);
 }
 
 static const char *number_type_name[/* N_ARGSET_TYPES */]={
@@ -26,7 +26,9 @@ static const char *number_type_name[/* N_ARGSET_TYPES */]={
 	"mixed_R/Q"
 };
 
-static void vf_info(QSP_ARG_DECL  Vector_Function *vfp)
+#define vf_info(vfp) _vf_info(QSP_ARG  vfp)
+
+static void _vf_info(QSP_ARG_DECL  Vector_Function *vfp)
 {
 	int i;
 	int n_printed=0;
@@ -69,7 +71,7 @@ static COMMAND_FUNC( do_vf_info )
 
 	vfp=pick_vec_func("");
 	if( vfp==NULL ) return;
-	vf_info(QSP_ARG  vfp);
+	vf_info(vfp);
 }
 
 static COMMAND_FUNC( do_list_vfs )
