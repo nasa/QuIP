@@ -175,7 +175,7 @@ advise(ERROR_STRING);
 
 #ifndef BUILD_FOR_OBJC
 	if( VW_LINTBL_OBJ(vp) != NULL )
-		set_lintbl(QSP_ARG  VW_LINTBL_OBJ(vp));
+		set_lintbl(VW_LINTBL_OBJ(vp));
 #endif /* ! BUILD_FOR_OBJC */
 }
 
@@ -203,11 +203,6 @@ void _delete_viewer(QSP_ARG_DECL  Viewer *vp)
 		release_image(VW_CMAP_OBJ(vp));
 //}
 	/* BUG the linearization table is owned by the display, not the viewer */
-	/*
-	if( VW_LINTBL_OBJ(vp) != NULL )
-		release_image(QSP_ARG  VW_LINTBL_OBJ(vp));
-	*/
-
 #endif /* ! BUILD_FOR_OBJC */
 
 	if( VW_LABEL(vp) != NULL )
@@ -273,7 +268,7 @@ Viewer *_viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 		sprintf(ERROR_STRING,
 	"Dimensions for viewer %s (%d,%d) must be positive",
 			name,dx,dy);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -330,10 +325,10 @@ Viewer *_viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 	 */
 #ifdef HAVE_X11
 	window_sys_init(SINGLE_QSP_ARG);/* make sure that the_dop is not NULL */
-	set_viewer_display(QSP_ARG  vp);		/* sets vw_dop... */
+	set_viewer_display(vp);		/* sets vw_dop... */
 	cmap_setup(vp);		/* refers to vw_dop, but that's not set until later? */
 
-	install_default_lintbl(QSP_ARG  VW_DPYABLE(vp) );
+	install_default_lintbl(VW_DPYABLE(vp) );
 	sprintf(str,"colormap.%s",name);
 
 	VW_CMAP_OBJ(vp) = new_colormap(str);

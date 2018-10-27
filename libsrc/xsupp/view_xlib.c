@@ -507,7 +507,7 @@ static Window _creat_window(QSP_ARG_DECL  const char *name,int w,int h,long even
 	return(scrW);
 } /* end creat_window */
 
-void set_viewer_display(QSP_ARG_DECL  Viewer *vp)
+void _set_viewer_display(QSP_ARG_DECL  Viewer *vp)
 {
 	Disp_Obj *dop;
 
@@ -515,7 +515,7 @@ void set_viewer_display(QSP_ARG_DECL  Viewer *vp)
 
 	// dop can be null if user doesn't own the X display!
 	if( dop == NULL ){
-		WARN("set_viewer_display:  no current display object");
+		warn("set_viewer_display:  no current display object");
 		return;
 	}
 

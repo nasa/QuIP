@@ -359,7 +359,7 @@ void _xplot_setup(QSP_ARG_DECL  Viewer *vp)
 	if( ! IS_PLOTTER(vp) ){
 		sprintf(ERROR_STRING,"xp_setup:  viewer %s is not a plotter!?",
 			VW_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	plot_vp = vp;
