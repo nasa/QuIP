@@ -411,7 +411,7 @@ int _color_index_out_of_range(QSP_ARG_DECL  unsigned int index)
 
 		sprintf(str,"color index %d out of range for colormap %s",
 			index,OBJ_NAME( DPA_CMAP_OBJ(current_dpyp)));
-		WARN(str);
+		warn(str);
 		return(1);
 	}
 #endif /* HAVE_X11 */

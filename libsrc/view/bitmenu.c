@@ -14,9 +14,9 @@ static COMMAND_FUNC( do_setwhite )
 {
 	float white[3];
 
-	white[0]=(float)HOW_MUCH("white point red component");
-	white[1]=(float)HOW_MUCH("white point green component");
-	white[2]=(float)HOW_MUCH("white point blue component");
+	white[0]=(float)how_much("white point red component");
+	white[1]=(float)how_much("white point green component");
+	white[2]=(float)how_much("white point blue component");
 	setwhite(white);
 }
 
@@ -24,7 +24,7 @@ static COMMAND_FUNC( do_lvlspercomp )
 {
 	int n;
 
-	n=(int)HOW_MANY("number of levels per component");
+	n=(int)how_many("number of levels per component");
 	set_lvls_per_comp(n);
 }
 
@@ -36,9 +36,9 @@ static COMMAND_FUNC( do_set_bitvecs )
 
 	nplanes=get_ncomps();
 	for(i=0;i<nplanes;i++){
-		vectbl[i][0] = (float)HOW_MUCH("red component");
-		vectbl[i][1] = (float)HOW_MUCH("green component");
-		vectbl[i][2] = (float)HOW_MUCH("blue component");
+		vectbl[i][0] = (float)how_much("red component");
+		vectbl[i][1] = (float)how_much("green component");
+		vectbl[i][2] = (float)how_much("blue component");
 	}
 	set_bit_vecs(vectbl);
 }
@@ -49,9 +49,9 @@ static COMMAND_FUNC( do_bitplanes )
 	int i;
 	float amplist[MAX_BIT_PLANES];
 
-	nplanes = (int)HOW_MANY("number of image components");
+	nplanes = (int)how_many("number of image components");
 	for(i=0;i<nplanes;i++)
-		amplist[i]=(float)HOW_MUCH("vector amplitude");
+		amplist[i]=(float)how_much("vector amplitude");
 	set_bitplanes(nplanes, amplist);
 }
 
@@ -59,9 +59,9 @@ static COMMAND_FUNC( do_set_base )
 {
 	int i;
 
-	i=(int)HOW_MANY("index of base color");
+	i=(int)how_many("index of base color");
 	if( i< 0 || i > (N_COLORS-1) ){
-		WARN("invalid base index");
+		warn("invalid base index");
 		return;
 	}
 	set_base_index(i);
@@ -80,12 +80,12 @@ static COMMAND_FUNC( do_drift_plane )
 	/* Set white point r,g,b */
 	do_setwhite();
 
-	dp.ndirections	= HOW_MANY("number of directions");
+	dp.ndirections	= how_many("number of directions");
 
 	if (dp.ndirections > MAX_DIRECTIONS) {
 		sprintf(w.w_str,"ndirections set to max value of %d",
 			MAX_DIRECTIONS);
-		WARN(w.w_str);
+		warn(w.w_str);
 		dp.ndirections = MAX_DIRECTIONS;
 	}
 
@@ -93,13 +93,13 @@ static COMMAND_FUNC( do_drift_plane )
 		advise("");
 		sprintf(w.w_str,"For direction #%d enter:",k);
 		advise(w.w_str);
-		dp.direction[k] = (float)HOW_MUCH("direction");
-		dp.segprefix[k] = savestr(NAMEOF(
+		dp.direction[k] = (float)how_much("direction");
+		dp.segprefix[k] = savestr(nameof(
 			"direction segment buffer name (sans extension)"));
 	}
 	advise("");
 
-	dp.ngratings = HOW_MANY("number of gratings");
+	dp.ngratings = how_many("number of gratings");
 
 	dp.nplanes	= 2 * dp.ngratings;
 	for(k=0;k<dp.nplanes;k++) {
@@ -110,14 +110,14 @@ static COMMAND_FUNC( do_drift_plane )
 
 	set_bit_vecs(dp.nplanes,vectbl);
 
-	dp.rduration  = HOW_MANY("ramp duration (time in frames)");
-	dp.pduration  = HOW_MANY("peek duration (time in frames)");
-	dp.nrefresh  = HOW_MANY("number of refreshes (vblanks, delays)");
+	dp.rduration  = how_many("ramp duration (time in frames)");
+	dp.pduration  = how_many("peek duration (time in frames)");
+	dp.nrefresh  = how_many("number of refreshes (vblanks, delays)");
 
 	if (dp.nplanes > MAX_BIT_PLANES) {
 		sprintf(w.w_str,
 		"nplanes set to max value of %d", MAX_BIT_PLANES);
-		WARN(w.w_str);
+		warn(w.w_str);
 		dp.nplanes = MAX_BIT_PLANES;
 	}
 
@@ -125,9 +125,9 @@ static COMMAND_FUNC( do_drift_plane )
 		advise("");
 		sprintf(w.w_str,"For grating #%d enter:",k);
 		advise(w.w_str);
-		dp.period[k] = HOW_MANY("period of grating in frames");
-		dp.contrast[k] = (float)HOW_MUCH("amplitude contrast");
-		dp.start_phase[k] = (float)HOW_MUCH("start phase in degs.");
+		dp.period[k] = how_many("period of grating in frames");
+		dp.contrast[k] = (float)how_much("amplitude contrast");
+		dp.start_phase[k] = (float)how_much("start phase in degs.");
 	}
 
 	make_drift_plane(&dp);
@@ -144,9 +144,9 @@ static COMMAND_FUNC( do_sine_mod )
 	const char *s;
 	int i;
 
-	nf=(int)HOW_MANY("number of frames");
-	per=(int)HOW_MANY("period in frames");
-	s=NAMEOF("lut buffer name stem");
+	nf=(int)how_many("number of frames");
+	per=(int)how_many("period in frames");
+	s=nameof("lut buffer name stem");
 
 	nc=get_ncomps();
 	for(i=0;i<nc;i++)
@@ -159,7 +159,7 @@ static COMMAND_FUNC( do_set_ncomps )
 {
 	int nc;
 
-	nc=(int)HOW_MANY("number of image components");
+	nc=(int)how_many("number of image components");
 	set_ncomps(nc);
 }
 

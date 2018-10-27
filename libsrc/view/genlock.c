@@ -105,10 +105,6 @@ static double delta_accum[MAX_HEADS];
 static double delta_avg[MAX_HEADS][MAX_STAMPS];
 static struct timezone tz;
 
-/* WHERE IS THIS DEFINED??? */
-//int wait_til_vblank_transition(QSP_ARG  int fd);
-
-
 static pthread_mutex_t genlock_mutex;
 static ParPort *the_ppp=NULL;
 static pthread_t vboard_thr, pport_thr;
@@ -137,25 +133,29 @@ static u_long delta_usecs()
 	return( compute_latency(&tv1,&tv0) );
 }
 
-static int read_vbl_state(QSP_ARG_DECL  int fd)
+#define read_vbl_state(fd) _read_vbl_state(QSP_ARG  fd)
+
+static int _read_vbl_state(QSP_ARG_DECL  int fd)
 {
 	struct fb_vblank vbl_info;
 
 	if(ioctl(fd, FBIOGET_VBLANK, &vbl_info)<0) {
 		perror("ioctl");
-		WARN("ioctl FBIOGET_VBLANK failed!\n");
+		warn("ioctl FBIOGET_VBLANK failed!\n");
 		return -1;
 	}
 	return( vbl_info.flags & FB_VBLANK_VBLANKING );
 }
 
-static int wait_til_vblank_transition(QSP_ARG_DECL  int fd)
+#define wait_til_vblank_transition(fd) _wait_til_vblank_transition(QSP_ARG  fd)
+
+static int _wait_til_vblank_transition(QSP_ARG_DECL  int fd)
 {
 	int original_state, current_state;
-	original_state = read_vbl_state(QSP_ARG  fd);
+	original_state = read_vbl_state(fd);
 
 	do {
-		current_state = read_vbl_state(QSP_ARG  fd);
+		current_state = read_vbl_state(fd);
 	} while( current_state == original_state );
 
 	return current_state;
@@ -178,7 +178,7 @@ static void *vboard_daemon(void *argp)
 #endif // THREAD_SAFE_QUERY
 
 	while(n--){
-		wait_til_vblank_transition(QSP_ARG  vbip->vbi_fbip->fbi_fd);
+		wait_til_vblank_transition(vbip->vbi_fbip->fbi_fd);
 		*lp = delta_usecs();
 		lp += vbip->vbi_inc;
 	}
@@ -204,7 +204,9 @@ static void *pport_logger(void *argp)
 	return(NULL);
 }
 
-static void decrease_frame_time(QSP_ARG_DECL  FB_Info *fbip)
+#define decrease_frame_time(fbip) _decrease_frame_time(QSP_ARG  fbip)
+
+static void _decrease_frame_time(QSP_ARG_DECL  FB_Info *fbip)
 {
 	/* get_genlock_mutex(); */
 	if (ioctl(fbip->fbi_fd,FBIOGET_VSCREENINFO, &fbip->fbi_var_info)<0) {
@@ -212,9 +214,9 @@ static void decrease_frame_time(QSP_ARG_DECL  FB_Info *fbip)
 	} else {	
 		if( fbip->fbi_var_info.lower_margin == 0 ){
 			/* we could decrease upper */
-			WARN("decrease_frame_time:  lower_margin is already 0!?");
+			warn("decrease_frame_time:  lower_margin is already 0!?");
 		} else if(fbip->fbi_var_info.lower_margin < 0 ){
-			WARN("decrease_frame_time:  lower_margin is negative!?!?!?");
+			warn("decrease_frame_time:  lower_margin is negative!?!?!?");
 		} else {
 			fbip->fbi_var_info.lower_margin --;
 /*
@@ -231,7 +233,9 @@ printf("decrease_frame_time:  lower_margin reduced to %d\n",fbip->fbi_var_info.l
 	/* rls_genlock_mutex(); */
 }
 
-static void increase_frame_time(QSP_ARG_DECL  FB_Info *fbip)
+#define increase_frame_time(fbip) _increase_frame_time(QSP_ARG  fbip)
+
+static void _increase_frame_time(QSP_ARG_DECL  FB_Info *fbip)
 {
 	/* get_genlock_mutex(); */
 	if (ioctl(fbip->fbi_fd,FBIOGET_VSCREENINFO, &fbip->fbi_var_info)<0) {
@@ -239,7 +243,7 @@ static void increase_frame_time(QSP_ARG_DECL  FB_Info *fbip)
 	} else {	
 		if( fbip->fbi_var_info.lower_margin >= 20 ){
 			/* we could decrease upper */
-			WARN("increase_frame_time:  lower_margin is already >= 20!?");
+			warn("increase_frame_time:  lower_margin is already >= 20!?");
 		} else {
 			fbip->fbi_var_info.lower_margin ++;
 /*
@@ -257,7 +261,9 @@ printf("increase_frame_time:  lower_margin increased to %d\n",fbip->fbi_var_info
 }
 
 
-static void adjust_genlock(QSP_ARG_DECL  Genlock_Info *glip,int index)
+#define adjust_genlock(glip,index) _adjust_genlock(QSP_ARG  glip,index)
+
+static void _adjust_genlock(QSP_ARG_DECL  Genlock_Info *glip,int index)
 {
 	/* We want to keep the fb latency close to zero,
 	 * but because we measure drift with a fading average,
@@ -281,7 +287,7 @@ printf("adjust_genlock:  latency = %ld, drift = %ld\n",latency,drift);
 			/* wait before adjusting */
 			glip->gli_refractory[index]=GL_REFRACTORY;
 
-			decrease_frame_time(QSP_ARG  glip->gli_fbip[index]);
+			decrease_frame_time(glip->gli_fbip[index]);
 		} else {
 			/* negative drift is improving lock */
 
@@ -292,7 +298,7 @@ printf("adjust_genlock:  latency = %ld, drift = %ld\n",latency,drift);
 		/* need to retard vbl */
 		if( drift < 0 ){
 			/* need to increase frame time */
-			increase_frame_time(QSP_ARG  glip->gli_fbip[index]);
+			increase_frame_time(glip->gli_fbip[index]);
 
 			/* wait before adjusting */
 			glip->gli_refractory[index]=GL_REFRACTORY;
@@ -329,7 +335,7 @@ static void *genlock_daemon(void *argp)
 
 	original_pp_value = read_parport_status(glip->gli_ppp) & PARPORT_SYNC_MASK;
 	for(i=0;i<glip->gli_n_heads;i++)
-		original_vbl_state[i] = read_vbl_state(QSP_ARG  glip->gli_fbip[i]->fbi_fd);
+		original_vbl_state[i] = read_vbl_state(glip->gli_fbip[i]->fbi_fd);
 
 	while(genlock_active){
 		current_pp_value = read_parport_status(glip->gli_ppp) & PARPORT_SYNC_MASK;
@@ -347,7 +353,7 @@ static void *genlock_daemon(void *argp)
 			original_pp_value = current_pp_value;
 		}
 		for(i=0;i<glip->gli_n_heads;i++){
-			current_vbl_state[i] = read_vbl_state(QSP_ARG  glip->gli_fbip[i]->fbi_fd);
+			current_vbl_state[i] = read_vbl_state(glip->gli_fbip[i]->fbi_fd);
 			if( current_vbl_state[i] != original_vbl_state[i] ){
 				gettimeofday(&tv_now,&tz);
 				if( current_vbl_state[i] == 0 )
@@ -376,7 +382,7 @@ fflush(stdout);
 							(1-DRIFT_MEMORY) * drift;
 						glip->gli_refractory[i] --;
 						if( glip->gli_refractory[i] <= 0 )
-							adjust_genlock(QSP_ARG  glip,i);
+							adjust_genlock(glip,i);
 					}
 				}
 				original_vbl_state[i] = current_vbl_state[i];
@@ -406,14 +412,14 @@ void genlock_vblank(Genlock_Info *glip)
 #endif // THREAD_SAFE_QUERY
 
 	if( ! genlock_active ){
-		WARN("genlock_vblank:  genlock is not initialized");
+		warn("genlock_vblank:  genlock is not initialized");
 		return;
 	}
 
 	original_pp_value = read_parport_status(glip->gli_ppp) & PARPORT_SYNC_MASK;
 	all_in_blanking=0;
 	for(i=0;i<glip->gli_n_heads;i++){
-		original_vbl_state[i] = read_vbl_state(QSP_ARG  glip->gli_fbip[i]->fbi_fd);
+		original_vbl_state[i] = read_vbl_state(glip->gli_fbip[i]->fbi_fd);
 		in_blanking[i]=0;
 	}
 
@@ -433,7 +439,7 @@ void genlock_vblank(Genlock_Info *glip)
 			original_pp_value = current_pp_value;
 		}
 		for(i=0;i<glip->gli_n_heads;i++){
-			current_vbl_state[i] = read_vbl_state(QSP_ARG  glip->gli_fbip[i]->fbi_fd);
+			current_vbl_state[i] = read_vbl_state(glip->gli_fbip[i]->fbi_fd);
 			if( current_vbl_state[i] != original_vbl_state[i] ){
 				gettimeofday(&tv_now,&tz);
 				if( current_vbl_state[i] == 0 )
@@ -458,7 +464,7 @@ void genlock_vblank(Genlock_Info *glip)
 							(1-DRIFT_MEMORY) * drift;
 						glip->gli_refractory[i] --;
 						if( glip->gli_refractory[i] <= 0 )
-							adjust_genlock(QSP_ARG  glip,i);
+							adjust_genlock(glip,i);
 					}
 					in_blanking[i]=1;
 				}
@@ -498,20 +504,20 @@ static void test_parport(void)
 		sprintf(ERROR_STRING,"latency vector %s (%s) should have precision %s",
 			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)),
 				NAME_FOR_PREC_CODE(PREC_UDI));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( OBJ_COMPS(dp) != 2 ){
 		sprintf(ERROR_STRING,"latency vector %s (%d) should have 2 components",
 			OBJ_NAME(dp),OBJ_COMPS(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( ! IS_CONTIGUOUS(dp) ){
 		sprintf(ERROR_STRING,"latency vector %s should be contiguous",OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -554,11 +560,11 @@ static void test_parport(void)
 	/* should wait for threads here... */
 	if( pthread_join(vboard_thr,NULL) != 0 ){
 		perror("pthread_join");
-		WARN("error joining video board thread");
+		warn("error joining video board thread");
 	}
 	if( pthread_join(pport_thr,NULL) != 0 ){
 		perror("pthread_join");
-		WARN("error joining parallel port thread");
+		warn("error joining parallel port thread");
 	}
 }
 
@@ -567,14 +573,14 @@ int init_genlock(SINGLE_QSP_ARG_DECL)
 	int n,i;
 
 	if( genlock_active ){
-		WARN("init_genlock:  genlock is already active!?");
+		warn("init_genlock:  genlock is already active!?");
 		return -1;
 	}
 
-	n=HOW_MANY("number of frame buffers to genlock");
+	n=how_many("number of frame buffers to genlock");
 	if( n < 1 || n > MAX_HEADS ){
 		sprintf(ERROR_STRING,"do_genlock:  number of frame buffers (%d) must be between 1 and %d",n,MAX_HEADS);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 	gli1.gli_n_heads = n;
@@ -616,7 +622,7 @@ static void start_genlock_daemon(void)
 void get_genlock_mutex(SINGLE_QSP_ARG_DECL)
 {
 	if( !genlock_active ){
-		WARN("get_genlock_mutex:  genlock is not active");
+		warn("get_genlock_mutex:  genlock is not active");
 		return;
 	}
 	pthread_mutex_lock(&genlock_mutex);
@@ -625,7 +631,7 @@ void get_genlock_mutex(SINGLE_QSP_ARG_DECL)
 void rls_genlock_mutex(SINGLE_QSP_ARG_DECL)
 {
 	if( !genlock_active ){
-		WARN("rls_genlock_mutex:  genlock is not active");
+		warn("rls_genlock_mutex:  genlock is not active");
 		return;
 	}
 	pthread_mutex_unlock(&genlock_mutex);
@@ -637,7 +643,7 @@ static void report_genlock_status( FB_Info *fbip )
 	float l2,l3;
 
 	if( ! genlock_active ){
-		WARN("report_genlock_status:  genlock is not active!?");
+		warn("report_genlock_status:  genlock is not active!?");
 		return;
 	}
 	index = -1;
@@ -646,7 +652,7 @@ static void report_genlock_status( FB_Info *fbip )
 
 	if( index < 0 ){
 		sprintf(ERROR_STRING,"report_genlock_status:  genlock is not active for frame buffer %s!?",fbip->fbi_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -681,8 +687,8 @@ static void *fb_pair_daemon(void *argp)
 
 		usleep(1000);	/* yield processor */
 
-		s=wait_til_vblank_transition(QSP_ARG  fd);		/* wait for current interval to end */
-		s=wait_til_vblank_transition(QSP_ARG  fd);		/* wait for next interval to start */
+		s=wait_til_vblank_transition(fd);		/* wait for current interval to end */
+		s=wait_til_vblank_transition(fd);		/* wait for next interval to start */
 
 		tv_prev[i] = tv_now[i];
 		gettimeofday(&tv_now[i],&tz);
@@ -724,7 +730,9 @@ fflush(stderr);
 
 } /* end fb_pair_daemon() */
 
-static void start_fb_threads(QSP_ARG_DECL  int n_frame_buffers,int* fd_arr)
+#define start_fb_threads(n_frame_buffers,fd_arr) _start_fb_threads(QSP_ARG  n_frame_buffers,fd_arr)
+
+static void _start_fb_threads(QSP_ARG_DECL  int n_frame_buffers,int* fd_arr)
 {
 	int i;
 
@@ -748,7 +756,7 @@ static void fbpair_monitor( FB_Info *fbip1, FB_Info *fbip2 )
 	fd_arr[0] = fbip1->fbi_fd;
 	fd_arr[1] = fbip2->fbi_fd;
 
-	start_fb_threads(QSP_ARG  2,fd_arr);
+	start_fb_threads(2,fd_arr);
 }
 
 
@@ -758,7 +766,7 @@ COMMAND_FUNC( halt_genlock )
 {
 #ifdef HAVE_GENLOCK
 	if( ! genlock_active ){
-		WARN("genlock_halt:  genlock is not active!?");
+		warn("genlock_halt:  genlock is not active!?");
 		return;
 	}
 
@@ -766,10 +774,10 @@ COMMAND_FUNC( halt_genlock )
 
 	if( pthread_join(gl_thr,NULL) != 0 ){
 		perror("pthread_join");
-		WARN("error joining genlock thread");
+		warn("error joining genlock thread");
 	}
 #else /* ! HAVE_GENLOCK */
-	WARN("No genlock capability for this installation");
+	warn("No genlock capability for this installation");
 #endif /* ! HAVE_GENLOCK */
 }
 

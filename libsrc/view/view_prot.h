@@ -10,8 +10,8 @@ extern void set_font_by_name(Viewer *vp,const char *s);
 extern void set_backlight(CGFloat l);
 #endif /* BUILD_FOR_IOS */
 
-extern void bring_image_to_front(QSP_ARG_DECL
-	Viewer *vp, Data_Obj *dp, int x, int y );
+extern void _bring_image_to_front(QSP_ARG_DECL Viewer *vp, Data_Obj *dp, int x, int y );
+#define bring_image_to_front(vp, dp, x, y ) _bring_image_to_front(QSP_ARG vp, dp, x, y )
 
 #ifdef BUILD_FOR_MACOS
 extern void _posn_genwin(QSP_ARG_DECL  IOS_Item *ip, int x, int y);

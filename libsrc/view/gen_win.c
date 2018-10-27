@@ -33,7 +33,7 @@ static double get_genwin_size(QSP_ARG_DECL  IOS_Item *ip, int index)
 		case 4: return 1.0; break;
 #ifdef CAUTIOUS
 		default:
-			WARN("CAUTIOUS:  bad index passed to get_genwin_size!?");
+			warn("CAUTIOUS:  bad index passed to get_genwin_size!?");
 			return 0.0;
 			break;
 #endif /* CAUTIOUS */
@@ -51,7 +51,7 @@ static double get_genwin_posn(QSP_ARG_DECL  IOS_Item *ip, int index)
 
 	gwp = (Gen_Win *)ip;
 
-	WARN("get_genwin_posn:  NOT IMPLEMENTED YET!?");
+	warn("get_genwin_posn:  NOT IMPLEMENTED YET!?");
     return 0.0;
 }
 
@@ -120,7 +120,7 @@ Gen_Win *find_genwin(QSP_ARG_DECL  const char *name)
  * Where does the window actually get created?
  */
 
-Gen_Win *make_genwin(QSP_ARG_DECL  const char *name,int width,int height)
+Gen_Win * _make_genwin(QSP_ARG_DECL  const char *name,int width,int height)
 {
 	Gen_Win *gwp;
 	CGSize s;
@@ -245,7 +245,7 @@ static void init_genwin_class(SINGLE_QSP_ARG_DECL)
 {
 #ifdef CAUTIOUS
 	if( gw_iclp != NULL ){
-		WARN("CAUTIOUS:  redundant call to init_genwin_class");
+		warn("CAUTIOUS:  redundant call to init_genwin_class");
 		return;
 	}
 #endif /* CAUTIOUS */
@@ -477,7 +477,7 @@ void _show_genwin(QSP_ARG_DECL  Gen_Win *gwp)
 		default:
 			sprintf(ERROR_STRING,
 	"show_genwin:  unexpected type code %d!?",GW_TYPE(gwp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 }
@@ -501,7 +501,7 @@ void _unshow_genwin(QSP_ARG_DECL  Gen_Win *gwp)
 		default:
 			sprintf(ERROR_STRING,
 	"show_genwin:  unexpected type code %d!?",GW_TYPE(gwp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 }
@@ -543,9 +543,9 @@ static COMMAND_FUNC( do_posn_func )
 	const char *s;
 	int x, y;
 
-	s = NAMEOF("genwin");
-	x = (int)HOW_MANY("x position");
-	y = (int)HOW_MANY("y position");
+	s = nameof("genwin");
+	x = (int)how_many("x position");
+	y = (int)how_many("y position");
 
 	gwp = find_genwin(s);
 	if( gwp != NULL ) posn_genwin(gwp, x, y);
@@ -556,7 +556,7 @@ static COMMAND_FUNC( do_show_func )
 	Gen_Win *gwp;
 	const char *s;
 
-	s = NAMEOF("genwin");
+	s = nameof("genwin");
 	gwp = find_genwin(s);
 	if( gwp != NULL ) show_genwin(gwp);
 }
@@ -566,7 +566,7 @@ static COMMAND_FUNC( do_unshow_func )
 	Gen_Win *gwp;
 	const char *s;
 
-	s = NAMEOF("genwin");
+	s = nameof("genwin");
 	gwp = find_genwin(s);
 	if( gwp != NULL ) unshow_genwin(gwp);
 }
@@ -576,7 +576,7 @@ static COMMAND_FUNC( do_delete_func )
 	Gen_Win *gwp;
 	const char *s;
 
-	s = NAMEOF("genwin");
+	s = nameof("genwin");
 	gwp = find_genwin(s);
 	if( gwp != NULL ) delete_genwin(gwp);
 }
@@ -598,7 +598,7 @@ static COMMAND_FUNC( do_genwin_info )
 	Gen_Win *gwp;
 	const char *s;
 
-	s = NAMEOF("genwin");
+	s = nameof("genwin");
 	gwp = find_genwin(s);
 	if( gwp == NULL ) return;
 

@@ -21,11 +21,11 @@ static COMMAND_FUNC( do_new_do )
 {
 	const char *s;
 
-	s=NAMEOF("display");
+	s=nameof("display");
 #ifdef HAVE_X11
 	if( open_display(s,8) == NULL ){
 		sprintf(ERROR_STRING,"unable to open %s",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #endif /* HAVE_X11 */
 }
@@ -35,12 +35,12 @@ static COMMAND_FUNC( do_open_do )
 	const char *s;
 	int d;
 
-	s=NAMEOF("display");
-	d=HOW_MANY("desired bit depth");
+	s=nameof("display");
+	d=how_many("desired bit depth");
 #ifdef HAVE_X11
 	if( open_display(s,d) == NULL ){
 		sprintf(ERROR_STRING,"unable to open %s",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #endif /* HAVE_X11 */
 }
@@ -61,11 +61,11 @@ static COMMAND_FUNC( do_tell_dpy )
 	Disp_Obj *dop;
 	const char *s;
 
-	s=NAMEOF("name of variable in which to deposit name of current display");
+	s=nameof("name of variable in which to deposit name of current display");
 
 	dop = curr_dop();
 	if( dop == NULL ){
-		WARN("do_tell_dpy:  no current display!?");
+		warn("do_tell_dpy:  no current display!?");
 		return;
 	}
 

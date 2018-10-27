@@ -541,8 +541,9 @@ extern void _info_viewer(QSP_ARG_DECL  Viewer *vp);
 extern int add_image(Viewer *vp,Data_Obj *dp,int x,int y);
 extern void insert_image(Data_Obj *dpto,Data_Obj *dpfr,int x,int y,int frameno);
 extern void update_image(Viewer *vp);
-extern void load_viewer(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp);
+extern void _load_viewer(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp);
 extern void _old_load_viewer(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp);
+#define load_viewer(vp,dp) _load_viewer(QSP_ARG  vp,dp)
 #define old_load_viewer(vp,dp) _old_load_viewer(QSP_ARG  vp,dp)
 
 /* xplot.c */
@@ -609,7 +610,8 @@ extern void _dump_drawlist(QSP_ARG_DECL  Viewer *vp);
 
 extern void getpair(FILE *fp,int *px,int *py);
 extern void getone(FILE *fp,int *p);
-extern void rdplot(QSP_ARG_DECL  FILE *fp);
+extern void _rdplot(QSP_ARG_DECL  FILE *fp);
+#define rdplot(fp) _rdplot(QSP_ARG  fp)
 
 /* drag.c */
 
@@ -618,7 +620,9 @@ ITEM_INTERFACE_PROTOTYPES(Draggable,dragg)
 #define pick_dragg(pmpt)	_pick_dragg(QSP_ARG  pmpt)
 #define list_draggs(fp)		_list_draggs(QSP_ARG  fp)
 
-extern void make_dragg(QSP_ARG_DECL  const char *name,Data_Obj *bm,Data_Obj *dp);
+extern void _make_dragg(QSP_ARG_DECL  const char *name,Data_Obj *bm,Data_Obj *dp);
+#define make_dragg(name,bm,dp) _make_dragg(QSP_ARG  name,bm,dp)
+
 extern Draggable *in_draggable(Viewer *vp,int x,int y);
 extern void extract_image(Data_Obj *dpto,Data_Obj *dpfr,int x,int y);
 
@@ -630,9 +634,14 @@ ITEM_INTERFACE_PROTOTYPES(View_Cursor,cursor)
 #define new_cursor(s)		_new_cursor(QSP_ARG  s)
 #define list_cursors(fp)	_list_cursors(QSP_ARG  fp)
 
-extern void default_cursors(SINGLE_QSP_ARG_DECL);
-extern void make_cursor(QSP_ARG_DECL  const char *name,Data_Obj *bitmap_dp,int x,int y);
-extern void mk_cursor(QSP_ARG_DECL  const char *name,u_short *data,dimension_t dx,dimension_t dy,dimension_t x,dimension_t y);
+extern void _default_cursors(SINGLE_QSP_ARG_DECL);
+extern void _make_cursor(QSP_ARG_DECL  const char *name,Data_Obj *bitmap_dp,int x,int y);
+extern void _mk_cursor(QSP_ARG_DECL  const char *name,u_short *data,dimension_t dx,dimension_t dy,dimension_t x,dimension_t y);
+
+#define default_cursors() _default_cursors(SINGLE_QSP_ARG)
+#define make_cursor(name,bitmap_dp,x,y) _make_cursor(QSP_ARG  name,bitmap_dp,x,y)
+#define mk_cursor(name,data,dx,dy,x,y) _mk_cursor(QSP_ARG  name,data,dx,dy,x,y)
+
 extern void root_cursor(View_Cursor *vcp);
 extern void assign_cursor(Viewer *vp,View_Cursor *vcp);
 
@@ -708,7 +717,9 @@ extern void _right_justify(QSP_ARG_DECL  Viewer *vp);
 #define left_justify(vp) _left_justify(QSP_ARG  vp)
 #define right_justify(vp) _right_justify(QSP_ARG  vp)
 
-extern void	set_viewer_display(QSP_ARG_DECL  Viewer *vp);
+extern void	_set_viewer_display(QSP_ARG_DECL  Viewer *vp);
+#define set_viewer_display(vp) _set_viewer_display(QSP_ARG  vp)
+
 extern void	cmap_setup(Viewer *);
 extern void set_action_for_event(Viewer *vp,Canvas_Event *cep,const char *s);
 

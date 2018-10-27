@@ -21,7 +21,7 @@ static int viewer_name_in_use(QSP_ARG_DECL const char *s)
 	vp = vwr_of(s);
 	if( vp != NULL){
 		sprintf(ERROR_STRING,"viewer name \"%s\" in use",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(1);
 	}
 	return(0);
@@ -34,13 +34,13 @@ static Viewer * mk_new_viewer(QSP_ARG_DECL int viewer_type)
 	int dx,dy;
 	Viewer *vp;
 
-	s=NAMEOF("viewer name");
+	s=nameof("viewer name");
 	strcpy(name,s);
-	dx=(int)HOW_MANY("width");
-	dy=(int)HOW_MANY("height");
+	dx=(int)how_many("width");
+	dy=(int)how_many("height");
 	if( viewer_name_in_use(QSP_ARG name) ) return NULL;
 	if( dx <= 0 || dy <= 0 ){
-		WARN("viewer sizes must be positive");
+		warn("viewer sizes must be positive");
 		return NULL;
 	}
 	vp = viewer_init(name,dx,dy,viewer_type);
@@ -63,13 +63,13 @@ static Viewer * mk_new_viewer(QSP_ARG_DECL int viewer_type)
 COMMAND_FUNC( mk_viewer )
 {
 	if( mk_new_viewer(QSP_ARG 0) == NULL )
-		WARN("Error creating viewer!?");
+		warn("Error creating viewer!?");
 }
 
 COMMAND_FUNC( mk_pixmap )
 {
 	if( mk_new_viewer(QSP_ARG VIEW_PIXMAP) == NULL )
-		WARN("Error creating pixmap!?");
+		warn("Error creating pixmap!?");
 }
 
 COMMAND_FUNC( mk_plotter )
@@ -77,7 +77,7 @@ COMMAND_FUNC( mk_plotter )
 	Viewer *vp;
 
 	if( (vp=mk_new_viewer(QSP_ARG VIEW_PLOTTER)) == NULL )
-		WARN("Error creating plotter!?");
+		warn("Error creating plotter!?");
 #ifdef BUILD_FOR_IOS
 	else
 		init_viewer_canvas(vp);
@@ -90,7 +90,7 @@ COMMAND_FUNC( mk_2d_adjuster )
 	const char *s;
 
 	vp=mk_new_viewer(QSP_ARG VIEW_ADJUSTER);
-	s=NAMEOF("action text");
+	s=nameof("action text");
 	if( vp == NULL ) return;
 	SET_VW_TEXT(vp, savestr(s) );
 }
@@ -98,7 +98,7 @@ COMMAND_FUNC( mk_2d_adjuster )
 COMMAND_FUNC( mk_gl_window )
 {
 	if( mk_new_viewer(QSP_ARG VIEW_GL) == NULL )
-		WARN("Error creating gl_window!?");
+		warn("Error creating gl_window!?");
 }
 
 //#define MAX_ACTION_LEN		512	// BUG check for overrun or use string buffer...
@@ -111,9 +111,9 @@ COMMAND_FUNC( mk_button_arena )
 
 	vp=mk_new_viewer(QSP_ARG VIEW_BUTTON_ARENA);
 	// Do we really have to copy these?
-	b1=savestr(NAMEOF("left button text"));
-	b2=savestr(NAMEOF("middle button text"));
-	b3=savestr(NAMEOF("right button text"));
+	b1=savestr(nameof("left button text"));
+	b2=savestr(nameof("middle button text"));
+	b3=savestr(nameof("right button text"));
 	if( vp == NULL ){
 		rls_str(b1);
 		rls_str(b2);
@@ -139,9 +139,9 @@ COMMAND_FUNC( reset_button_funcs )
 
 	vp = pick_vwr("");
 
-	b1=savestr(NAMEOF("left button text"));
-	b2=savestr(NAMEOF("middle button text"));
-	b3=savestr(NAMEOF("right button text"));
+	b1=savestr(nameof("left button text"));
+	b2=savestr(nameof("middle button text"));
+	b3=savestr(nameof("right button text"));
 
 advise("NOTE:  reset_button_funcs:  actions command is deprecated, use event_action instead");
 	if( vp == NULL ){
@@ -168,7 +168,7 @@ COMMAND_FUNC( do_set_event_action )
 
 	vp = pick_vwr("");
 	cep = pick_canvas_event("event type");
-	action_text = NAMEOF("action text");
+	action_text = nameof("action text");
 
 	if( vp == NULL ) return;
 	if( cep == NULL ) return;
@@ -182,7 +182,7 @@ COMMAND_FUNC( mk_mousescape )
 	const char *s;
 
 	vp=mk_new_viewer(QSP_ARG VIEW_MOUSESCAPE);
-	s=NAMEOF("action text");
+	s=nameof("action text");
 	if( vp == NULL ) return;
 	SET_VW_TEXT(vp, savestr(s));
 }
@@ -193,7 +193,7 @@ COMMAND_FUNC( reset_window_text )
 	Viewer *vp;
 
 	vp=pick_vwr("");
-	s=NAMEOF("window action text");
+	s=nameof("window action text");
 
 	if( vp == NULL) return;
 	if( VW_TEXT(vp) != NULL ) rls_str((char *)VW_TEXT(vp));
@@ -204,7 +204,7 @@ COMMAND_FUNC( reset_window_text )
 COMMAND_FUNC( mk_dragscape )
 {
 	if( mk_new_viewer(QSP_ARG VIEW_DRAGSCAPE) == NULL )
-		WARN("Error creating dragscape!?");
+		warn("Error creating dragscape!?");
 }
 
 COMMAND_FUNC( do_redraw )
@@ -227,11 +227,11 @@ COMMAND_FUNC( do_embed_image )
 
 	vp = pick_vwr("");
 	dp = pick_obj("image");
-	x=(int)HOW_MANY("x position");
-	y=(int)HOW_MANY("y position");
+	x=(int)how_many("x position");
+	y=(int)how_many("y position");
 
 	if( vp == NULL || dp == NULL ){
-		WARN("can't embed image");
+		warn("can't embed image");
 		return;
 	}
 
@@ -247,7 +247,7 @@ COMMAND_FUNC( do_embed_image )
 	if( add_image(vp,dp,x,y) ){
 		embed_image(vp,dp,x,y);
 	} else {
-		bring_image_to_front(QSP_ARG  vp,dp,x,y);
+		bring_image_to_front(vp,dp,x,y);
 	}
 
 #endif /* ! BUILD_FOR_IOS */
@@ -265,11 +265,11 @@ COMMAND_FUNC( do_unembed_image )
 
 	dp = pick_obj("image");
 	vp = pick_vwr("");
-	x=(int)HOW_MANY("x position");
-	y=(int)HOW_MANY("y position");
+	x=(int)how_many("x position");
+	y=(int)how_many("y position");
 
 	if( vp == NULL || dp == NULL ){
-		WARN("can't unembed image");
+		warn("can't unembed image");
 		return;
 	}
 
@@ -293,7 +293,7 @@ COMMAND_FUNC( do_load_viewer )
 
 	INSURE_X11_SERVER
 //fprintf(stderr,"Calling load_viewer %s %s\n",VW_NAME(vp),OBJ_NAME(dp));
-	load_viewer(QSP_ARG  vp,dp);
+	load_viewer(vp,dp);
 	select_viewer(vp);
 }
 

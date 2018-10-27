@@ -25,10 +25,10 @@ static COMMAND_FUNC( do_setcolor )
 {
 	int c,r,g,b;
 
-	c=(int)HOW_MANY("lut index");
-	r=(int)HOW_MANY("red value");
-	g=(int)HOW_MANY("green value");
-	b=(int)HOW_MANY("blue value");
+	c=(int)how_many("lut index");
+	r=(int)how_many("red value");
+	g=(int)how_many("green value");
+	b=(int)how_many("blue value");
 
 	CHECK_DPYP("do_setcolor")
 	setcolor(c,r,g,b);
@@ -38,8 +38,8 @@ static COMMAND_FUNC( do_grayscale )
 {
 	int base,n;
 
-	base=(int)HOW_MANY("base index");
-	n=(int)HOW_MANY("number of colors");
+	base=(int)how_many("base index");
+	n=(int)how_many("number of colors");
 
 	CHECK_DPYP("do_grayscale")
 	make_grayscale(base,n);
@@ -49,7 +49,7 @@ static COMMAND_FUNC( do_const_alpha )
 {
 	int value;
 
-	value=(int)HOW_MANY("value");
+	value=(int)how_many("value");
 	CHECK_DPYP("do_const_alpha")
 	const_alpha(value);
 }
@@ -59,11 +59,11 @@ static COMMAND_FUNC( do_const_cmap )
 	int r,g,b;
 	int base,n;
 
-	base=(int)HOW_MANY("start color");
-	n=(int)HOW_MANY("number of colors");
-	r=(int)HOW_MANY("red");
-	g=(int)HOW_MANY("green");
-	b=(int)HOW_MANY("blue");
+	base=(int)how_many("start color");
+	n=(int)how_many("number of colors");
+	r=(int)how_many("red");
+	g=(int)how_many("green");
+	b=(int)how_many("blue");
 	CHECK_DPYP("do_const_cmap")
 	const_cmap(base,n,r,g,b);
 }
@@ -72,10 +72,10 @@ static COMMAND_FUNC( do_make_rgb )
 {
 	int r,g,b,base;
 
-	base=(int)HOW_MANY("base color index");
-	r=(int)HOW_MANY("number of red levels");
-	g=(int)HOW_MANY("number of green levels");
-	b=(int)HOW_MANY("number of blue levels");
+	base=(int)how_many("base color index");
+	r=(int)how_many("number of red levels");
+	g=(int)how_many("number of green levels");
+	b=(int)how_many("number of blue levels");
 
 	CHECK_DPYP("do_make_rgb")
 	make_rgb(base,r,g,b);
@@ -85,10 +85,10 @@ static COMMAND_FUNC( do_poke )
 {
 	int c,r,g,b;
 
-	c=(int)HOW_MANY("color index");
-	r=(int)HOW_MANY("red value");
-	g=(int)HOW_MANY("green value");
-	b=(int)HOW_MANY("blue value");
+	c=(int)how_many("color index");
+	r=(int)how_many("red value");
+	g=(int)how_many("green value");
+	b=(int)how_many("blue value");
 
 	CHECK_DPYP("do_poke")
 	poke_lut(c,r,g,b);
@@ -138,7 +138,7 @@ static COMMAND_FUNC( do_cm_imm )
 	} else {
 		if( verbose ) advise("old state was deferred");
 	}
-	cm_immediate( ASKIF("update colors immediately") );
+	cm_immediate( askif("update colors immediately") );
 }
 
 static COMMAND_FUNC( do_index_alpha )
@@ -147,9 +147,9 @@ static COMMAND_FUNC( do_index_alpha )
 
 	/* set alpha entries */
 
-	index = (int)HOW_MANY("index to display");
-	lv = (int)HOW_MANY("alpha value for zero bit");
-	hv = (int)HOW_MANY("alpha value for one bit");
+	index = (int)how_many("index to display");
+	lv = (int)how_many("alpha value for zero bit");
+	hv = (int)how_many("alpha value for one bit");
 	CHECK_DPYP("do_index_alpha")
 	index_alpha(index,lv,hv);
 }
@@ -158,8 +158,8 @@ static COMMAND_FUNC( do_setalpha )
 {
 	int index,val;
 
-	index=(int)HOW_MANY("index");
-	val=(int)HOW_MANY("alpha value");
+	index=(int)how_many("index");
+	val=(int)how_many("alpha value");
 	CHECK_DPYP("do_setalpha")
 	set_alpha(index,val);
 }
@@ -224,13 +224,13 @@ COMMAND_FUNC( do_lut_menu )
 		lut_inited=TRUE;
 	}
 
-	s=NAMEOF("name of viewer or panel");
+	s=nameof("name of viewer or panel");
 	gwp = find_genwin(s);
 
 	if( gwp == NULL ){
 		/* find_genwin() has already printed an error msg? */
 		sprintf(ERROR_STRING,"No viewer or panel named \"%s\"!?",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	} else {
 #ifdef HAVE_X11
 		Dpyable *dpyp;
