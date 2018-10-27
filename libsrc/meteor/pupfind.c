@@ -92,7 +92,7 @@ static void setup_frame_ptrs(SINGLE_QSP_ARG_DECL)
 
 	for(i=0;i<NF;i++){
 		sprintf(name,"f%d",i);
-		dp = GET_OBJ(name);
+		dp = get_obj(name);
 		if( dp == NULL ) error1("missing frame object");
 		frame_base[i] = OBJ_DATA_PTR(dp);
 	}
@@ -103,7 +103,7 @@ COMMAND_FUNC( setup_diff_computation )
 {
 	Data_Obj *dp;
 
-	dp=GET_OBJ("pdiff");
+	dp=get_obj("pdiff");
 	if( dp == NULL ) error1("missing destination object 'pdiff'");
 
 	if( OBJ_COLS(dp) != 320 ){
@@ -232,12 +232,12 @@ COMMAND_FUNC( setup_curv_computation )
 {
 	Data_Obj *dp;
 
-	dp=GET_OBJ("curv");
+	dp=get_obj("curv");
 	if( dp == NULL ) error1("setup_curv_computation:  missing curvature object");
 
 	curv_dst = (float *)OBJ_DATA_PTR(dp);
 
-	dp=GET_OBJ("fcurv");
+	dp=get_obj("fcurv");
 	if( dp == NULL ) error1("setup_curv_computation:  missing filtered curvature object");
 
 	fcurv_dst = (float *)OBJ_DATA_PTR(dp);

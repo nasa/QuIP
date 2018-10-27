@@ -54,13 +54,13 @@ typedef struct summary_datum {
 #define SET_DATUM_NTOTAL(dtm,v)	(dtm).ntotal = v
 #define SET_DATUM_NCORR(dtm,v)	(dtm).ncorr = v
 
-typedef struct summary_data_tbl {
+struct summary_data_tbl {
 	int			sdt_size;	// number of allocated entries (x values)
 	int			sdt_npts;	// number that have non-zero n trials
 	Summary_Datum *		sdt_data;
 	Trial_Class *		sdt_tc_p;	// may be invalid if lumped...
 	Data_Obj *		sdt_xval_dp;	// should match class
-} Summary_Data_Tbl;
+};
 
 #define SUMM_DTBL_SIZE(sdt_p)		(sdt_p)->sdt_size
 #define SUMM_DTBL_N(sdt_p)		(sdt_p)->sdt_npts
@@ -95,11 +95,11 @@ typedef struct sequence_datum {
 #define SET_SEQ_DATUM_RESPONSE(qd_p,v)	(qd_p)->sqd_response = v
 #define SET_SEQ_DATUM_CRCT_RSP(qd_p,v)	(qd_p)->sqd_correct_response = v
 
-typedef struct sequential_data_tbl {
+struct sequential_data_tbl {
 	List *		qdt_lp;
 	Data_Obj *	qdt_xval_dp;	// should match class
 	Trial_Class *	qdt_tc_p;	// may be invalid if lumped...
-} Sequential_Data_Tbl;
+} ;
 
 #define SEQ_DTBL_LIST(qdt_p)	(qdt_p)->qdt_lp
 #define SEQ_DTBL_CLASS(qdt_p)	(qdt_p)->qdt_tc_p
