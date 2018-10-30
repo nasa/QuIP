@@ -326,6 +326,7 @@ static void set_class_xval_obj( Trial_Class *tc_p, Data_Obj *dp )
 Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
 {
 	Trial_Class *tc_p;
+	Summary_Data_Tbl *sdt_p;
 
 	// Make sure not in use
 	tc_p = trial_class_of(name);
@@ -343,8 +344,8 @@ Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
 	SET_CLASS_XVAL_OBJ(tc_p,NULL);			// so we don't un-reference garbage
 	set_class_xval_obj(tc_p,global_xval_dp);	// may be null
 
-	SET_CLASS_SUMM_DTBL(tc_p,new_summary_data_tbl(CLASS_XVAL_OBJ(tc_p)));
-	SET_SUMM_DTBL_CLASS( CLASS_SUMM_DTBL(tc_p), tc_p );
+	sdt_p = new_summary_data_tbl();
+	init_summ_dtbl_for_class(sdt_p,tc_p);
 
 	SET_CLASS_SEQ_DTBL(tc_p,new_sequential_data_tbl());
 	SET_SEQ_DTBL_CLASS( CLASS_SEQ_DTBL(tc_p), tc_p );
@@ -396,6 +397,11 @@ static COMMAND_FUNC( do_run_exp )
 	run_stairs(n_prel,n_data);
 }
 
+COMMAND_FUNC( do_clear_all_classes )
+{
+	clear_all_data_tables();
+}
+
 COMMAND_FUNC( do_delete_all_classes )
 {
 	List *lp;
@@ -413,7 +419,6 @@ COMMAND_FUNC( do_delete_all_classes )
 		np=next;
 	}
 	assign_reserved_var( "n_classes" , "0" );
-	/* new_exp(); */
 }
 
 static COMMAND_FUNC( set_dribble_flag )
@@ -550,6 +555,7 @@ ADD_CMD( list,		do_list_classes,	list all stimulus classes )
 ADD_CMD( info,		do_class_info,		print info about a class )
 ADD_CMD( summary_data,	do_show_class_summ,	print summary data from a class )
 ADD_CMD( sequential_data,	do_show_class_seq,	print sequential data from a class )
+ADD_CMD( clear_all,	do_clear_all_classes,	clear data for all conditions )
 ADD_CMD( delete_all,	do_delete_all_classes,	delete all conditions )
 MENU_END(class)
 

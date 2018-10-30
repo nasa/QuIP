@@ -242,7 +242,7 @@ static COMMAND_FUNC( do_pnt_bars )
 	fp=try_nice( nameof("output file"), "w" );
 	if( fp == NULL || tcp == NULL ) return;
 
-	pnt_bars( QSP_ARG  fp, tcp );
+	print_error_bars( fp, tcp );
 }
 
 #undef ADD_CMD

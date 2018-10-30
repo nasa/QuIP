@@ -368,7 +368,7 @@ static int _rd_dribble(QSP_ARG_DECL  FILE *fp)
 		return(0);
 	}
 	return(-1);
-}
+} // rd_dribble
 
 /* Read the bottom half of a data file.
  * This may be either a dribble file or a summary file.

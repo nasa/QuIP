@@ -24,8 +24,10 @@ void update_summary(Summary_Data_Tbl *sdt_p,Staircase *st_p,int rsp)
 	int val;
 
 	assert( sdt_p != NULL );
+fprintf(stderr,"update_summary:  data table at 0x%lx, size = %d\n",(long)sdt_p,SUMM_DTBL_SIZE(sdt_p));
 
 	val = STAIR_VAL(st_p);
+	assert( SUMM_DTBL_SIZE(sdt_p) > 0 );
 	assert( val >= 0 && val < SUMM_DTBL_SIZE(sdt_p) );
 
 	if( rsp == STAIR_CRCT_RSP(st_p) )

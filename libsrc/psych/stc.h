@@ -39,12 +39,15 @@ typedef struct trial_class {
 #define SET_CLASS_SEQ_DTBL(tc_p,v)	(tc_p)->tc_qdt_p = v
 #define SET_CLASS_XVAL_OBJ(tc_p,v)	(tc_p)->tc_xval_dp = v
 
-
+#define summ_data_t	short
+#define SUMM_DATA_PREC	PREC_IN
 
 typedef struct summary_datum {
-	int ntotal;
-	int ncorr;
+	summ_data_t ntotal;
+	summ_data_t ncorr;
 } Summary_Datum;
+
+#define N_SUMMARY_DATA_COMPS	2
 
 #define DATUM_NTOTAL(dtm)	(dtm).ntotal
 #define DATUM_NCORR(dtm)	(dtm).ncorr
@@ -57,21 +60,24 @@ typedef struct summary_datum {
 struct summary_data_tbl {
 	int			sdt_size;	// number of allocated entries (x values)
 	int			sdt_npts;	// number that have non-zero n trials
-	Summary_Datum *		sdt_data;
+	Data_Obj *		sdt_data_dp;
+	Summary_Datum *		sdt_data_ptr;	// points to data in the object...
 	Trial_Class *		sdt_tc_p;	// may be invalid if lumped...
 	Data_Obj *		sdt_xval_dp;	// should match class
 };
 
 #define SUMM_DTBL_SIZE(sdt_p)		(sdt_p)->sdt_size
 #define SUMM_DTBL_N(sdt_p)		(sdt_p)->sdt_npts
-#define SUMM_DTBL_DATA(sdt_p)		(sdt_p)->sdt_data
-#define SUMM_DTBL_ENTRY(sdt_p,idx)	(sdt_p)->sdt_data[idx]
+#define SUMM_DTBL_ENTRY(sdt_p,idx)	(sdt_p)->sdt_data_ptr[idx]
+#define SUMM_DTBL_DATA_PTR(sdt_p)	(sdt_p)->sdt_data_ptr
+#define SUMM_DTBL_DATA_OBJ(sdt_p)	(sdt_p)->sdt_data_dp
 #define SUMM_DTBL_CLASS(sdt_p)		(sdt_p)->sdt_tc_p
 #define SUMM_DTBL_XVAL_OBJ(sdt_p)	(sdt_p)->sdt_xval_dp
 
 #define SET_SUMM_DTBL_SIZE(sdt_p,v)	(sdt_p)->sdt_size = v
 #define SET_SUMM_DTBL_N(sdt_p,v)		(sdt_p)->sdt_npts = v
-#define SET_SUMM_DTBL_DATA(sdt_p,v)	(sdt_p)->sdt_data = v
+#define SET_SUMM_DTBL_DATA_OBJ(sdt_p,v)	(sdt_p)->sdt_data_dp = v
+#define SET_SUMM_DTBL_DATA_PTR(sdt_p,v)	(sdt_p)->sdt_data_ptr = v
 #define SET_SUMM_DTBL_CLASS(sdt_p,v)	(sdt_p)->sdt_tc_p = v
 #define SET_SUMM_DTBL_XVAL_OBJ(sdt_p,v)	(sdt_p)->sdt_xval_dp = v
 
@@ -231,12 +237,14 @@ ITEM_INTERFACE_PROTOTYPES(Staircase,stair)
 #define stair_list()	_stair_list(SINGLE_QSP_ARG)
 
 
-extern Summary_Data_Tbl *_new_summary_data_tbl(QSP_ARG_DECL Data_Obj *dp);
+extern Summary_Data_Tbl *_new_summary_data_tbl(SINGLE_QSP_ARG_DECL);
 extern void rls_summ_dtbl(Summary_Data_Tbl *sdt_p);
 extern  Sequential_Data_Tbl *_new_sequential_data_tbl(SINGLE_QSP_ARG_DECL);
-#define new_summary_data_tbl(dp) _new_summary_data_tbl(QSP_ARG  dp)
+#define new_summary_data_tbl() _new_summary_data_tbl(SINGLE_QSP_ARG)
 #define new_sequential_data_tbl() _new_sequential_data_tbl(SINGLE_QSP_ARG)
 
+extern void _init_summ_dtbl_for_class( QSP_ARG_DECL  Summary_Data_Tbl * sdt_p, Trial_Class *tc_p );
+#define init_summ_dtbl_for_class( sdt_p, tc_p ) _init_summ_dtbl_for_class( QSP_ARG  sdt_p, tc_p )
 extern void clear_summary_data( Summary_Data_Tbl *sdt_p );
 extern Trial_Class *_new_class_for_index(QSP_ARG_DECL  int index);
 #define new_class_for_index(index) _new_class_for_index(QSP_ARG  index)
@@ -279,10 +287,17 @@ extern Trial_Class *new_class(SINGLE_QSP_ARG_DECL);
 extern void _del_class(QSP_ARG_DECL  Trial_Class *tc_p);
 #define del_class(tc_p) _del_class(QSP_ARG  tc_p)
 
+extern void _clear_all_data_tables(SINGLE_QSP_ARG_DECL);
+#define clear_all_data_tables() _clear_all_data_tables(SINGLE_QSP_ARG)
+
+extern void update_summary(Summary_Data_Tbl *sdt_p,Staircase *st_p,int rsp);
+extern void append_trial( Sequential_Data_Tbl *qdt_p, Staircase *st_p , int rsp );
+
 /* exp.c */
 extern Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name);
 #define create_named_class(name) _create_named_class(QSP_ARG  name)
 extern COMMAND_FUNC( do_delete_all_classes );
+extern COMMAND_FUNC( do_clear_all_classes );
 extern void nullrt(void);
 //extern void make_staircases(SINGLE_QSP_ARG_DECL);
 extern COMMAND_FUNC( do_exp_init );
@@ -353,16 +368,11 @@ extern int  _read_exp_data(QSP_ARG_DECL  FILE *fp);
 #define write_exp_data(fp) _write_exp_data(QSP_ARG  fp)
 #define read_exp_data(fp) _read_exp_data(QSP_ARG  fp)
 
-/* clrdat.c */
-
-extern void clrdat(SINGLE_QSP_ARG_DECL);
-extern void update_summary(Summary_Data_Tbl *sdt_p,Staircase *st_p,int rsp);
-extern void append_trial( Sequential_Data_Tbl *qdt_p, Staircase *st_p , int rsp );
-
 
 /* errbars.c */
 
-void pnt_bars(QSP_ARG_DECL  FILE *fp,Trial_Class *tc_p);
+void _print_error_bars(QSP_ARG_DECL  FILE *fp,Trial_Class *tc_p);
+#define print_error_bars(fp,tc_p) _print_error_bars(QSP_ARG  fp,tc_p)
 
 
 /* stc_menu.c */

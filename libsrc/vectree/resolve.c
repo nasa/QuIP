@@ -1714,7 +1714,9 @@ static Vec_Expr_Node *_resolve_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_
 /* What is the difference between resolve_unknown_parent and resolve_parent???
  */
 
-static Vec_Expr_Node * resolve_unknown_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_Node *enp)
+#define resolve_unknown_parent(uk_enp,enp) _resolve_unknown_parent(QSP_ARG  uk_enp,enp)
+
+static Vec_Expr_Node * _resolve_unknown_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_Node *enp)
 {
 	Shape_Info *shpp;
 
@@ -1972,7 +1974,7 @@ describe_shape(VN_SHAPE(enp));
 	 * other - which one is which ?
 	 */
 	
-	if( VN_PARENT(enp) == uk_enp ) ret_enp=resolve_unknown_parent(QSP_ARG  uk_enp,enp);
+	if( VN_PARENT(enp) == uk_enp ) ret_enp=resolve_unknown_parent(uk_enp,enp);
 	else if( VN_PARENT(uk_enp) == enp ) ret_enp=resolve_unknown_child(uk_enp,enp);
 	else {
 		resolve_node(uk_enp,VN_SHAPE(enp));

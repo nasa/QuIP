@@ -13,7 +13,6 @@ libpsych_a_SOURCES = 				\
 		asc_data.c	lookmenu.c	\
 		mlfit.c		lump.c		\
 		weibull.c			\
-		errbars.c	stc_edit.c	\
-		clrdat.c
+		errbars.c	stc_edit.c
 
 noinst_HEADERS = stc.h
