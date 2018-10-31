@@ -25,7 +25,6 @@ static int caught;
 
 //static int nullstim(QSP_ARG_DECL  int,int,Staircase *);
 
-static void tally(Staircase *st_p,int rsp);
 static int iftrans(Staircase *st_p,int rsp);
 static void adj_inc(Staircase *st_p);
 static void adj_val(Staircase *st_p);
@@ -323,11 +322,9 @@ static void tally(Staircase *st_p,int rsp)			/* record new data */
 	assert(STAIR_CLASS(st_p)!=NULL);
 
 	assert(CLASS_SUMM_DTBL(STAIR_CLASS(st_p))!=NULL);
-fprintf(stderr,"tally:  calling update_summary for class data table\n");
 	update_summary(CLASS_SUMM_DTBL(STAIR_CLASS(st_p)),st_p,rsp);
 
 	if( STAIR_SUMM_DTBL(st_p) != NULL ){
-fprintf(stderr,"tally:  calling update_summary for stair data table\n");
 		update_summary(STAIR_SUMM_DTBL(st_p),st_p,rsp);
 	}
 
@@ -798,7 +795,6 @@ void update_summary(Summary_Data_Tbl *sdt_p,Staircase *st_p,int rsp)
 	int val;
 
 	assert( sdt_p != NULL );
-fprintf(stderr,"update_summary:  data table at 0x%lx, size = %d\n",(long)sdt_p,SUMM_DTBL_SIZE(sdt_p));
 
 	val = STAIR_VAL(st_p);
 	assert( SUMM_DTBL_SIZE(sdt_p) > 0 );

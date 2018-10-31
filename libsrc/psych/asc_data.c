@@ -68,13 +68,11 @@ static void _write_class_summ_data(QSP_ARG_DECL  Trial_Class *tc_p,void *_fp)
 	fp = (FILE *) _fp;
 	assert(fp!=NULL);
 	assert(CLASS_SUMM_DTBL(tc_p)!=NULL);
-fprintf(stderr,"write_class_summ_data calling write_summary_data...\n");
 	write_summary_data( CLASS_SUMM_DTBL(tc_p), fp );
 }
 
 void _print_class_summary(QSP_ARG_DECL  Trial_Class * tcp)
 {
-fprintf(stderr,"print_class_summary BEGIN\n");
 	if( verbose ){
 		sprintf(msg_str,"class = %s, %d points",
 			CLASS_NAME(tcp),SUMM_DTBL_N(CLASS_SUMM_DTBL(tcp)));
@@ -170,8 +168,6 @@ void print_class_summary(QSP_ARG_DECL  Trial_Class * tcp)
 void write_summary_data( Summary_Data_Tbl *sdt_p, FILE *fp )
 {
 	int j;
-
-fprintf(stderr,"write_summary_data BEGIN\n");
 
 	// count the number of points with at least one trial
 	for(j=0;j<SUMM_DTBL_SIZE(sdt_p);j++)
