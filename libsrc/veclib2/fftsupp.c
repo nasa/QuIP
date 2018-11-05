@@ -67,7 +67,9 @@ static int log_2(dimension_t n)
 	else return(w);
 }
 
-static int fft_row_size_ok(QSP_ARG_DECL  Data_Obj *dp, const char * funcname )
+#define fft_row_size_ok(dp, funcname) _fft_row_size_ok(QSP_ARG  dp, funcname)
+
+static int _fft_row_size_ok(QSP_ARG_DECL  Data_Obj *dp, const char * funcname )
 {
 	if( log_2(OBJ_COLS(dp)) == -1 ){
 		sprintf(ERROR_STRING,
@@ -81,7 +83,9 @@ static int fft_row_size_ok(QSP_ARG_DECL  Data_Obj *dp, const char * funcname )
 	return(0);
 }
 
-static int dim_is_power_of_two( QSP_ARG_DECL  Data_Obj *dp, int dim_idx, const char *funcname )
+#define dim_is_power_of_two(dp, dim_idx, funcname) _dim_is_power_of_two( QSP_ARG  dp, dim_idx, funcname )
+
+static int _dim_is_power_of_two( QSP_ARG_DECL  Data_Obj *dp, int dim_idx, const char *funcname )
 {
 	if( log_2( OBJ_DIMENSION(dp,dim_idx) ) == -1 ){
 		sprintf(ERROR_STRING,
@@ -96,9 +100,11 @@ static int dim_is_power_of_two( QSP_ARG_DECL  Data_Obj *dp, int dim_idx, const c
 
 // Some day we may want to relax the restriction of power-of-2...
 
-static int fft_col_size_ok(QSP_ARG_DECL  Data_Obj *dp, const char *funcname )
+#define fft_col_size_ok(dp, funcname) _fft_col_size_ok(QSP_ARG  dp, funcname)
+
+static int _fft_col_size_ok(QSP_ARG_DECL  Data_Obj *dp, const char *funcname )
 {
-	return dim_is_power_of_two(QSP_ARG  dp, 2, funcname );
+	return dim_is_power_of_two(dp, 2, funcname );
 	/*
 	if( log_2(OBJ_ROWS(dp)) == -1 ){
 		sprintf(ERROR_STRING,
@@ -112,14 +118,18 @@ static int fft_col_size_ok(QSP_ARG_DECL  Data_Obj *dp, const char *funcname )
 	*/
 }
 
-static int fft_size_ok(QSP_ARG_DECL  Data_Obj *dp, const char * funcname )
+#define fft_size_ok(dp, funcname) _fft_size_ok(QSP_ARG  dp, funcname)
+
+static int _fft_size_ok(QSP_ARG_DECL  Data_Obj *dp, const char * funcname )
 {
-	if( ! fft_row_size_ok(QSP_ARG  dp, funcname ) ) return FALSE;
-	if( ! fft_col_size_ok(QSP_ARG  dp, funcname ) ) return FALSE;
+	if( ! fft_row_size_ok(dp, funcname ) ) return FALSE;
+	if( ! fft_col_size_ok(dp, funcname ) ) return FALSE;
 	return TRUE;
 }
 
-static int good_xform_size( QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp, int dim_idx, const char *funcname)
+#define good_xform_size(real_dp,cpx_dp, dim_idx, funcname) _good_xform_size( QSP_ARG  real_dp,cpx_dp, dim_idx, funcname)
+
+static int _good_xform_size( QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp, int dim_idx, const char *funcname)
 {
 	if( (OBJ_DIMENSION(cpx_dp,dim_idx)-1) != (OBJ_DIMENSION(real_dp,dim_idx)/2) ){
 		sprintf(ERROR_STRING,
@@ -132,7 +142,9 @@ static int good_xform_size( QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp, in
 	return TRUE;
 }
 
-static int real_cpx_objs_ok( QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp, const char *funcname )
+#define real_cpx_objs_ok(real_dp,cpx_dp, funcname) _real_cpx_objs_ok( QSP_ARG  real_dp,cpx_dp, funcname )
+
+static int _real_cpx_objs_ok( QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp, const char *funcname )
 {
 	if( ! IS_COMPLEX(cpx_dp) ){
 		sprintf(ERROR_STRING,
@@ -166,7 +178,7 @@ static int real_cpx_objs_ok( QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp, c
 
 int real_row_fft_ok(QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp,const char *funcname)
 {
-	if( ! good_xform_size( QSP_ARG  real_dp, cpx_dp, 1, funcname ) ) return FALSE;
+	if( ! good_xform_size( real_dp, cpx_dp, 1, funcname ) ) return FALSE;
 	if( OBJ_ROWS(cpx_dp) != OBJ_ROWS(real_dp) ){
 		sprintf(ERROR_STRING,
 			"%s:  row count mismatch, %s (%d) and %s (%d)",
@@ -175,8 +187,8 @@ int real_row_fft_ok(QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp,const char 
 		WARN(ERROR_STRING);
 		return FALSE;
 	}
-	if( ! real_cpx_objs_ok( QSP_ARG  real_dp, cpx_dp, funcname ) ) return FALSE;
-	if( ! fft_row_size_ok(QSP_ARG  real_dp, funcname ) ) return FALSE;
+	if( ! real_cpx_objs_ok( real_dp, cpx_dp, funcname ) ) return FALSE;
+	if( ! fft_row_size_ok(real_dp, funcname ) ) return FALSE;
 	return TRUE;
 }
 
@@ -188,16 +200,16 @@ int real_row_fft_ok(QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp,const char 
 int real_fft_type(QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp,const char *funcname)
 {
 	// First make sure the objects match in precision and are of the correct type
-	if( ! real_cpx_objs_ok( QSP_ARG  real_dp, cpx_dp, funcname ) ) return -1;
+	if( ! real_cpx_objs_ok( real_dp, cpx_dp, funcname ) ) return -1;
 
 
 	if( OBJ_ROWS(real_dp) == OBJ_ROWS(cpx_dp) ){
-		if( ! good_xform_size( QSP_ARG  real_dp, cpx_dp, 1, funcname ) ) return -1;
-		if( ! dim_is_power_of_two(QSP_ARG  real_dp, 2, funcname ) ) return -1;
+		if( ! good_xform_size( real_dp, cpx_dp, 1, funcname ) ) return -1;
+		if( ! dim_is_power_of_two(real_dp, 2, funcname ) ) return -1;
 		return 1;
 	} else if( OBJ_COLS(real_dp) == OBJ_COLS(cpx_dp) ){
-		if( ! good_xform_size( QSP_ARG  real_dp, cpx_dp, 2, funcname ) ) return -1;
-		if( ! dim_is_power_of_two(QSP_ARG  real_dp, 1, funcname ) ) return -1;
+		if( ! good_xform_size( real_dp, cpx_dp, 2, funcname ) ) return -1;
+		if( ! dim_is_power_of_two(real_dp, 1, funcname ) ) return -1;
 		return 2;
 	} else {
 		sprintf(ERROR_STRING,
@@ -221,7 +233,7 @@ int row_fft_ok(QSP_ARG_DECL  Data_Obj *dp, const char * funcname )
 		return FALSE;
 	}
 
-	if( fft_row_size_ok(QSP_ARG  dp, funcname ) < 0 )
+	if( fft_row_size_ok(dp, funcname ) < 0 )
 		return FALSE;
 
 	return TRUE;
@@ -236,7 +248,7 @@ int cpx_fft_ok(QSP_ARG_DECL  Data_Obj *dp, const char *funcname )
 		return FALSE;
 	}
 
-	if( fft_size_ok(QSP_ARG  dp, funcname ) < 0 )
+	if( fft_size_ok(dp, funcname ) < 0 )
 		return FALSE;
 
 	return TRUE;

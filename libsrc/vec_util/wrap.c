@@ -18,7 +18,7 @@ void _wrap(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp)
 
 	vfp=FIND_VEC_FUNC(FVMOV);
 
-	if( (status=old_cksiz(QSP_ARG  VF_FLAGS(vfp),dst_dp,src_dp))==(-1)) return;
+	if( (status=old_cksiz(VF_FLAGS(vfp),dst_dp,src_dp))==(-1)) return;
 #ifdef CAUTIOUS
 	if( status!=0){
 		sprintf(ERROR_STRING,"CAUTIOUS:  wrap:  old_cksiz() error...");
@@ -50,7 +50,7 @@ Data_Obj *dst_dp, *src_dp;
 	long finc,tinc;
 	Vec_Args args;
 
-	if( (status=old_cksiz(QSP_ARG  vec_func_tbl[FVMOV].vf_flags,dst_dp,src_dp))==(-1)) return;
+	if( (status=old_cksiz(vec_func_tbl[FVMOV].vf_flags,dst_dp,src_dp))==(-1)) return;
 #ifdef CAUTIOUS
 	if( status!=0){
 		sprintf(ERROR_STRING,"CAUTIOUS:  wrap:  old_cksiz() error...");
@@ -152,7 +152,7 @@ void _dp_scroll(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp,incr_t dx,incr_t
 	Data_Obj *sub_dst_dp, *sub_src_dp;
 
 	// What is "old" cksiz???
-	if( (status=old_cksiz(QSP_ARG  VF_FLAGS( FIND_VEC_FUNC(FVMOV) ), dst_dp,src_dp))==(-1)) return;
+	if( (status=old_cksiz(VF_FLAGS( FIND_VEC_FUNC(FVMOV) ), dst_dp,src_dp))==(-1)) return;
 #ifdef CAUTIOUS
 	if( status!=0){
 		sprintf(ERROR_STRING,"CAUTIOUS:  dp_scroll:  old_cksiz() error...");
