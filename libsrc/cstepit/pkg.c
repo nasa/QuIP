@@ -27,7 +27,9 @@ void insure_opt_pkg(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-static void init_one_pkg( QSP_ARG_DECL
+#define init_one_pkg( name, scr_func, c_func, h_func ) _init_one_pkg( QSP_ARG name, scr_func, c_func, h_func )
+
+static void _init_one_pkg( QSP_ARG_DECL
 	const char *name,
 	void (*scr_func)(SINGLE_QSP_ARG_DECL),
 	void (*c_func)(QSP_ARG_DECL  float (*f)(SINGLE_QSP_ARG_DECL)),
@@ -45,12 +47,12 @@ static void init_one_pkg( QSP_ARG_DECL
 
 static void init_all_opt_pkgs(SINGLE_QSP_ARG_DECL)
 {
-	init_one_pkg(QSP_ARG  "cstepit",	run_cstepit_scr,run_cstepit_c,halt_cstepit);
+	init_one_pkg("cstepit",	run_cstepit_scr,run_cstepit_c,halt_cstepit);
 	/* init_one_pkg(QSP_ARG  "stepit",run_stepit_scr,run_stepit_c); */
 #ifdef HAVE_NUMREC
 #ifdef USE_NUMREC
-	init_one_pkg(QSP_ARG  AMOEBA_PKG_NAME,run_amoeba_scr,run_amoeba_c,halt_amoeba);
-	init_one_pkg(QSP_ARG  FRPRMN_PKG_NAME,run_frprmn_scr,run_frprmn_c,halt_frprmn);
+	init_one_pkg(AMOEBA_PKG_NAME,run_amoeba_scr,run_amoeba_c,halt_amoeba);
+	init_one_pkg(FRPRMN_PKG_NAME,run_frprmn_scr,run_frprmn_c,halt_frprmn);
 #endif /* USE_NUMREC */
 #endif /* HAVE_NUMREC */
 }

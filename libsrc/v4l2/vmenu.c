@@ -1428,7 +1428,9 @@ static int query_control(QSP_ARG_DECL  struct v4l2_queryctrl *ctlp)
 	return(0);
 }
 
-static void set_integer_control(QSP_ARG_DECL uint32_t id)
+#define set_integer_control(id) _set_integer_control(QSP_ARG id)
+
+static void _set_integer_control(QSP_ARG_DECL uint32_t id)
 {
 	uint32_t v;
 	char prompt[LLEN];
@@ -1486,7 +1488,7 @@ static int get_integer_control(QSP_ARG_DECL uint32_t id)
 #ifdef HAVE_V4L2
 
 #define SET_INTEGER_CONTROL(control)					\
-	set_integer_control(QSP_ARG  control);
+	set_integer_control(control);
 
 #else // ! HAVE_V4L2
 #define SET_INTEGER_CONTROL(control)					\

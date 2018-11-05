@@ -108,7 +108,7 @@ static COMMAND_FUNC( do_opt_param_info )
 
 	opp = pick_opt_param("");
 	if( opp == NULL ) return;
-	opt_param_info(QSP_ARG  opp);
+	opt_param_info(opp);
 }
 
 static COMMAND_FUNC(do_list_opt_params){list_opt_params(tell_msgfile());}

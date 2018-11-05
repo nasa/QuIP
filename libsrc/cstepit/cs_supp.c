@@ -48,7 +48,7 @@ static void init_cstepit_params(SINGLE_QSP_ARG_DECL)
 	if( lp == NULL ) return;
 
 	n_prms=eltcount(lp);
-	n=reset_n_params(n_prms);
+	n=reset_n_opt_params(n_prms);
 	if( n != n_prms ) n_prms = n;
 
 	np=QLIST_HEAD(lp);
@@ -69,9 +69,9 @@ static void init_cstepit_params(SINGLE_QSP_ARG_DECL)
 
 	/* copy to fortran */
 
-	setvals(QSP_ARG  ans,n_prms);
-	setminmax(QSP_ARG  xmin,xmax,n_prms);
-	setdelta(QSP_ARG  deltx,delmn,n_prms);
+	set_opt_param_vals(ans,n_prms);
+	set_opt_param_minmax(xmin,xmax,n_prms);
+	set_opt_param_delta(deltx,delmn,n_prms);
 //advise("SETTING ntrace to 1 FOR MAX DEBUG!");
 //	settrace(1);
 	setmaxcalls(nfmax);
@@ -156,7 +156,7 @@ static void cstepit_scr_funk(void)
 COMMAND_FUNC( run_cstepit_scr )
 {
 	init_cstepit_params(SINGLE_QSP_ARG);
-	stepit(QSP_ARG  cstepit_scr_funk);
+	stepit(cstepit_scr_funk);
 }
 
 static void evaluate_error_c(void)
@@ -199,6 +199,6 @@ void run_cstepit_c(QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL))
 
 	stept_user_func = func;
 
-	stepit(QSP_ARG  evaluate_error_c);
+	stepit(evaluate_error_c);
 }
 
