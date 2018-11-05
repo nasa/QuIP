@@ -45,6 +45,15 @@ void set_chance_rate( double r )
 	chance_rate = r;
 }
 
+#define set_float_var(name, v) _set_float_var(QSP_ARG  name, v)
+
+static void _set_float_var(QSP_ARG_DECL  const char *name, double v)
+{
+	char val_str[LLEN];
+	sprintf(val_str,"%g",v);
+	assign_reserved_var(name,val_str);
+}
+
 void set_fcflag(int flg)
 { fc_flag=flg; }
 
@@ -286,9 +295,12 @@ void _ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the it
                 siqd = ( ptoz(.25) - y_int )/slope;
                 if( siqd > _x_ ) siqd-=_x_;
                 else siqd = _x_-siqd;
+		set_float_var("ogive_siqd",siqd);
+		set_float_var("ogive_threshold",_x_);
         }
 	else {
 		_x_=ptoz(.75)/slope;
+		set_float_var("ogive_threshold",_x_);
 	}
 }
 

@@ -134,7 +134,7 @@ static void _get_error_bar(QSP_ARG_DECL  int index, float (*func)(SINGLE_QSP_ARG
 	*ptr = opp->ans;
 }
 
-void pnt_bars(QSP_ARG_DECL  FILE *fp, Trial_Class *tcp)
+void _print_error_bars(QSP_ARG_DECL  FILE *fp, Trial_Class *tcp)
 {
         int j;
         Summary_Data_Tbl *dtp;

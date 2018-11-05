@@ -49,7 +49,7 @@ void _old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 		sprintf(ERROR_STRING,
 		"Size mismatch between viewer %s and image %s",
 			vp->vw_name, OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	*/
@@ -59,7 +59,7 @@ void _old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 		sprintf(ERROR_STRING,
 		"Depth mismatch between image %s (%ld) and viewer %s (%d)",
 			OBJ_NAME(dp),8*OBJ_COMPS(dp),vp->vw_name,vp->vw_depth);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	*/
@@ -68,14 +68,14 @@ void _old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 		sprintf(ERROR_STRING,
 		"Can't display non-contiguous image %s (viewer %s)",
 			OBJ_NAME(dp),VW_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		longlist(dp);
 		return;
 	}
 	if( OBJ_MACH_PREC(dp) != PREC_BY && OBJ_MACH_PREC(dp) != PREC_UBY ){
 		sprintf(ERROR_STRING,"Bad pixel format (%s), image %s",
 				OBJ_PREC_NAME(dp),OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		advise("Only byte images may be displayed in viewers");
 		return;
 	}
@@ -104,7 +104,7 @@ void _old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 } // end old_load_viewer
 
 #ifndef BUILD_FOR_IOS
-void bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp, int x, int y )
+void _bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp, int x, int y )
 {
 	Node *np;
 	Window_Image *wip;
@@ -133,21 +133,21 @@ void bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp, int x, int y )
 		n_tried ++;
 	}
 	sprintf(ERROR_STRING,"bring_image_to_front:  image %s not found attached to viewer %s!?",OBJ_NAME(dp),VW_NAME(vp));
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 } // end bring_image_to_front
 
 #endif // ! BUILD_FOR_IOS
 
-void load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
+void _load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 {
 	if( OBJ_FRAMES(dp) != 1 ){
 #ifdef NOT_USED_NOW
 		sprintf(ERROR_STRING,"load_viewer:  Object %s has %d frames, calling old_load_viewer().",
 		OBJ_NAME(dp),OBJ_FRAMES(dp));
 		advise(ERROR_STRING);
-		old_load_viewer(QSP_ARG  vp,dp);
+		old_load_viewer(vp,dp);
 #else /* ! NOT_USED_NOW */
-		WARN("load_viewer:  don't know what to do with sequence object...");
+		warn("load_viewer:  don't know what to do with sequence object...");
 #endif /* ! NOT_USED_NOW */
 		return;
 	}
@@ -169,7 +169,7 @@ void load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 	} else {
 		// This image has already been displayed...
 //fprintf(stderr,"load_viewer:  bringing old image %s to front\n",OBJ_NAME(dp));
-		bring_image_to_front(QSP_ARG  vp,dp,0,0);
+		bring_image_to_front(vp,dp,0,0);
 	}
 
 #endif /* ! BUILD_FOR_IOS */

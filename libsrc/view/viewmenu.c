@@ -71,10 +71,10 @@ COMMAND_FUNC( do_posn_viewer )
 
 	GET_VIEWER("do_posn_viewer")
 
-	x = (int)HOW_MANY("x");
-	y = (int)HOW_MANY("y");
+	x = (int)how_many("x");
+	y = (int)how_many("y");
 
-WARN("do_posn_viewer is deprecated, please use position function from genwin menu");
+warn("do_posn_viewer is deprecated, please use position function from genwin menu");
 
 	if( vp == NULL ) return;
 
@@ -89,12 +89,12 @@ COMMAND_FUNC( do_xsync )
     
 	INSURE_X11_SERVER
     
-	yesno = ASKIF("synchronize Xlib execution");
+	yesno = askif("synchronize Xlib execution");
     
 	if( yesno ) x_sync_on();
 	else        x_sync_off();
 #else /* ! HAVE_X11 */
-	ASKIF("synchronize Xlib execution (ineffective!)");
+	askif("synchronize Xlib execution (ineffective!)");
 #endif /* ! HAVE_X11 */
 }
 
@@ -104,7 +104,7 @@ COMMAND_FUNC( do_relabel )
 	const char *s;
 
 	GET_VIEWER("do_relabel")
-	s=NAMEOF("new label");
+	s=nameof("new label");
 	if( vp == NULL ) return;
 
 	INSURE_X11_SERVER
@@ -120,7 +120,7 @@ COMMAND_FUNC( do_track )
 	if( !IS_ADJUSTER(vp) ){
 		sprintf(ERROR_STRING,
 			"viewer %s is not an adjuster",VW_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	SET_VW_FLAG_BITS(vp, VIEW_TRACK);
@@ -168,8 +168,8 @@ static COMMAND_FUNC( do_shm_update )
 
 	GET_VIEWER("do_shm_update")
 	dp=pick_obj("");
-	x0 = HOW_MANY("x location");
-	y0 = HOW_MANY("y location");
+	x0 = how_many("x location");
+	y0 = how_many("y location");
 
 	if( vp == NULL || dp == NULL ) return;
 
@@ -239,7 +239,7 @@ static COMMAND_FUNC( do_vblank )
 #ifdef HAVE_VBL
 	int n;
 
-	n=(int)HOW_MANY("number of fields to wait");
+	n=(int)how_many("number of fields to wait");
 	
 	INSURE_X11_SERVER
 	
@@ -248,9 +248,9 @@ static COMMAND_FUNC( do_vblank )
 
 #else /* ! HAVE_VBL */
 
-	HOW_MANY("number of fields to wait (ineffective)");
+	how_many("number of fields to wait (ineffective)");
 	if( ! no_vbl_warning_given ) {
-		WARN("Sorry, no vblank support in this build.");
+		warn("Sorry, no vblank support in this build.");
 		no_vbl_warning_given = 1;
 	}
 
@@ -280,7 +280,7 @@ static COMMAND_FUNC( do_discard_images )
 #ifdef BUILD_FOR_IOS
 	[ VW_IMAGES(vp) discard_subviews];
 #else
-	WARN("stored images not implemented for this platform");
+	warn("stored images not implemented for this platform");
 #endif
 }
 
@@ -296,12 +296,12 @@ static COMMAND_FUNC( do_cycle_viewer )
 		sprintf(ERROR_STRING,
 			"do_cycle_viewer:  viewer %s does not have an associated image viewer!?",
 			VW_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	[ VW_IMAGES(vp) cycle_images];
 #else
-	WARN("refresh event handling not implemented for this platform");
+	warn("refresh event handling not implemented for this platform");
 #endif
 
 }
@@ -322,12 +322,12 @@ static COMMAND_FUNC( do_bring_fwd )
 		sprintf(ERROR_STRING,
 			"do_bring_fwd:  viewer %s does not have an associated image viewer!?",
 			VW_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	[ VW_IMAGES(vp) bring_to_front:dp ];
 #else
-	WARN("do_bring_fwd:  image stacking not implemented for this platform");
+	warn("do_bring_fwd:  image stacking not implemented for this platform");
 #endif
 
 }
@@ -348,12 +348,12 @@ static COMMAND_FUNC( do_send_back )
 		sprintf(ERROR_STRING,
 			"do_send_back:  viewer %s does not have an associated image viewer!?",
 			VW_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	[ VW_IMAGES(vp) send_to_back:dp ];
 #else
-	WARN("do_send_back:  image stacking not implemented for this platform");
+	warn("do_send_back:  image stacking not implemented for this platform");
 #endif
 
 }
@@ -371,12 +371,12 @@ static COMMAND_FUNC( do_hide_imgs )
 		sprintf(ERROR_STRING,
 			"do_send_back:  viewer %s does not have an associated image viewer!?",
 			VW_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	[ VW_IMAGES(vp) hide ];
 #else
-	//WARN("do_hide_imgs:  image stacking not implemented for this platform");
+	//warn("do_hide_imgs:  image stacking not implemented for this platform");
 #endif
 
 }
@@ -396,12 +396,12 @@ static COMMAND_FUNC( do_reveal_imgs )
 		sprintf(ERROR_STRING,
 			"do_send_back:  viewer %s does not have an associated image viewer!?",
 			VW_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	[ VW_IMAGES(vp) reveal ];
 #else
-	//WARN("do_reveal_imgs:  image stacking not implemented for this platform");
+	//warn("do_reveal_imgs:  image stacking not implemented for this platform");
 #endif
 
 }
@@ -412,7 +412,7 @@ static COMMAND_FUNC( do_cycle_func )
 	Viewer *vp;
 
 	GET_VIEWER("do_cycle_viewer");
-	s=NAMEOF("text to interpret at next image flip");
+	s=nameof("text to interpret at next image flip");
 
 	if( vp == NULL ) return;
 
@@ -421,12 +421,12 @@ static COMMAND_FUNC( do_cycle_func )
 		sprintf(ERROR_STRING,
 			"do_cycle_viewer:  viewer %s does not have an associated image viewer!?",
 			VW_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	[ VW_IMAGES(vp) set_cycle_func:s];
 #else
-	WARN("image cycle functions not implemented for this platform");
+	warn("image cycle functions not implemented for this platform");
 	// suppress warning
 	sprintf(ERROR_STRING,"Not interpreting \"%s\" in viewer 0x%lx",
 		s,(long)vp);
@@ -441,7 +441,7 @@ static COMMAND_FUNC( do_refresh_viewer )
 	int frame_duration;
 
 	GET_VIEWER("do_refresh_viewer");
-	frame_duration = (int)HOW_MANY("Number of refreshes per frame (<=0 to disable)");
+	frame_duration = (int)how_many("Number of refreshes per frame (<=0 to disable)");
 	if( vp == NULL ) return;
 
 #ifdef BUILD_FOR_OBJC
@@ -451,12 +451,12 @@ static COMMAND_FUNC( do_refresh_viewer )
 		sprintf(ERROR_STRING,
 			"do_refresh_viewer:  viewer %s does not have an associated image viewer!?",
 			VW_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	[ VW_IMAGES(vp) set_refresh:frame_duration];
 #else // ! BUILD_FOR_OBJC
-	//WARN("do_refresh_viewer:  refresh event handling not implemented for this platform");
+	//warn("do_refresh_viewer:  refresh event handling not implemented for this platform");
 
 	// The goal of this is to cycle the loaded images every refresh...
 	// For unix we ought to give a duration?
@@ -483,17 +483,17 @@ static COMMAND_FUNC( do_set_backlight )
 {
         float level;
 
-        level = (float) HOW_MUCH("backlight (0.0-1.0)");
+        level = (float) how_much("backlight (0.0-1.0)");
 
         if( level < 0.0 || level > 1.0 ){
 		sprintf(ERROR_STRING,"Backlight level (%g) must be between 0 and 1",level);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
         }
 #ifdef BUILD_FOR_IOS
         set_backlight((CGFloat)level);
 #else // ! BUILD_FOR_IOS
-        WARN("Oops, can't set backlight, not an iOS device!?");
+        warn("Oops, can't set backlight, not an iOS device!?");
 #endif // ! BUILD_FOR_IOS
 }
 
@@ -600,7 +600,7 @@ COMMAND_FUNC( do_view_menu )
 //
 //COMMAND_FUNC( do_view_menu )
 //{
-//	WARN("Program was not configured with X11 support.");
+//	warn("Program was not configured with X11 support.");
 //}
 
 //#endif /* ! HAVE_X11 */

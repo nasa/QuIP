@@ -55,12 +55,12 @@ static COMMAND_FUNC( do_xp_arc )
 {
 	std_type cx,cy,x1,y1,x2,y2;
 
-	cx=(std_type)HOW_MUCH("center x");
-	cy=(std_type)HOW_MUCH("center y");
-	x1=(std_type)HOW_MUCH("arc start x");
-	y1=(std_type)HOW_MUCH("arc start y");
-	x2=(std_type)HOW_MUCH("arc end x");
-	y2=(std_type)HOW_MUCH("arc end y");
+	cx=(std_type)how_much("center x");
+	cy=(std_type)how_much("center y");
+	x1=(std_type)how_much("arc start x");
+	y1=(std_type)how_much("arc start y");
+	x2=(std_type)how_much("arc end x");
+	y2=(std_type)how_much("arc end y");
 	xplot_farc(cx,cy,x1,y1,x2,y2);
 }
 
@@ -68,12 +68,12 @@ static COMMAND_FUNC( do_xp_fill_arc )
 {
 	std_type cx,cy,x1,y1,x2,y2;
 
-	cx=(std_type)HOW_MUCH("center x");
-	cy=(std_type)HOW_MUCH("center y");
-	x1=(std_type)HOW_MUCH("arc start x");
-	y1=(std_type)HOW_MUCH("arc start y");
-	x2=(std_type)HOW_MUCH("arc end x");
-	y2=(std_type)HOW_MUCH("arc end y");
+	cx=(std_type)how_much("center x");
+	cy=(std_type)how_much("center y");
+	x1=(std_type)how_much("arc start x");
+	y1=(std_type)how_much("arc start y");
+	x2=(std_type)how_much("arc end x");
+	y2=(std_type)how_much("arc end y");
 	xplot_ffill_arc(cx,cy,x1,y1,x2,y2);
 }
 
@@ -83,16 +83,16 @@ static COMMAND_FUNC( do_xp_fill_polygon )
 	int num_points;
 	int i;
 
-	num_points = (int)HOW_MANY("number of polygon points");
+	num_points = (int)how_many("number of polygon points");
 	x_vals = (float *) getbuf(sizeof(float) * num_points);
 	y_vals = (float *) getbuf(sizeof(float) * num_points);
 	
 	for (i=0; i < num_points; i++) {
 		char s[100];
 		sprintf(s, "point %d x value", i+1);
-		x_vals[i] = (float)HOW_MUCH(s);
+		x_vals[i] = (float)how_much(s);
 		sprintf(s, "point %d y value", i+1);
-		y_vals[i] = (float)HOW_MUCH(s);
+		y_vals[i] = (float)how_much(s);
 	}
 
 	xplot_fill_polygon(num_points, x_vals, y_vals);
@@ -103,10 +103,10 @@ static COMMAND_FUNC( do_xp_fill_polygon )
 
 static COMMAND_FUNC( do_xp_space )
 {
-	sx1=(std_type)HOW_MUCH("minimum x coord");
-	sy1=(std_type)HOW_MUCH("minimum y coord");
-	sx2=(std_type)HOW_MUCH("maximum x coord");
-	sy2=(std_type)HOW_MUCH("maximum y coord");
+	sx1=(std_type)how_much("minimum x coord");
+	sy1=(std_type)how_much("minimum y coord");
+	sx2=(std_type)how_much("maximum x coord");
+	sy2=(std_type)how_much("maximum y coord");
 
 	/* There is no real reason to require this, except that
 	 * we assumed it must have been a mistake if the user did this...
@@ -115,20 +115,20 @@ static COMMAND_FUNC( do_xp_space )
 	 */
 	/*
 	if( sx2 <= sx1 ){
-	WARN("do_xp_space:  x max coord must be larger than x min coord");
+	warn("do_xp_space:  x max coord must be larger than x min coord");
 		return;
 	}
 	if( sy2 <= sy1 ){
-	WARN("do_xp_space:  y max coord must be larger than y min coord");
+	warn("do_xp_space:  y max coord must be larger than y min coord");
 		return;
 	}
 	*/
 	if( sx2 == sx1 ){
-	WARN("do_xp_space:  x max coord must be different from x min coord");
+	warn("do_xp_space:  x max coord must be different from x min coord");
 		return;
 	}
 	if( sy2 == sy1 ){
-	WARN("do_xp_space:  y max coord must be different from y min coord");
+	warn("do_xp_space:  y max coord must be different from y min coord");
 		return;
 	}
 
@@ -139,8 +139,8 @@ static COMMAND_FUNC( do_xp_move )
 {
 	std_type x,y;
 
-	x=(std_type)HOW_MUCH("x coord");
-	y=(std_type)HOW_MUCH("y coord");
+	x=(std_type)how_much("x coord");
+	y=(std_type)how_much("y coord");
 	xplot_fmove(x,y);
 }
 
@@ -148,8 +148,8 @@ static COMMAND_FUNC( do_xp_cont )
 {
 	std_type x,y;
 
-	x=(std_type)HOW_MUCH("x coord");
-	y=(std_type)HOW_MUCH("y coord");
+	x=(std_type)how_much("x coord");
+	y=(std_type)how_much("y coord");
 	xplot_fcont(x,y);
 }
 
@@ -157,8 +157,8 @@ static COMMAND_FUNC( do_xp_point )
 {
 	std_type x,y;
 
-	x=(std_type)HOW_MUCH("x coord");
-	y=(std_type)HOW_MUCH("y coord");
+	x=(std_type)how_much("x coord");
+	y=(std_type)how_much("y coord");
 	xplot_fpoint(x,y);
 }
 
@@ -166,10 +166,10 @@ static COMMAND_FUNC( do_xp_line )
 {
 	std_type x1,x2,y1,y2;
 
-	x1=(std_type)HOW_MUCH("first x coord");
-	y1=(std_type)HOW_MUCH("first y coord");
-	x2=(std_type)HOW_MUCH("second x coord");
-	y2=(std_type)HOW_MUCH("second y coord");
+	x1=(std_type)how_much("first x coord");
+	y1=(std_type)how_much("first y coord");
+	x2=(std_type)how_much("second x coord");
+	y2=(std_type)how_much("second y coord");
 	xplot_fline(x1,y1,x2,y2);
 }
 
@@ -177,7 +177,7 @@ static COMMAND_FUNC( do_xp_select )
 {
 	int color;
 	
-	color=(int)HOW_MANY("color index");
+	color=(int)how_many("color index");
 	xplot_select(color);
 }
 
@@ -185,9 +185,9 @@ static COMMAND_FUNC( do_rdplot )
 {
 	FILE *fp;
 
-	fp=try_open( NAMEOF("filename"), "r") ;
+	fp=try_open( nameof("filename"), "r") ;
 	if( !fp ) return;
-	rdplot(QSP_ARG  fp);
+	rdplot(fp);
 }
 
 static COMMAND_FUNC( do_xp_erase )
@@ -222,13 +222,13 @@ static int bad_plot_vec2(QSP_ARG_DECL Data_Obj *dp,dimension_t n_comps_expected,
 			"%s:  data vector %s (%s) should have float or double precision",
 			funcname,
 			OBJ_NAME(dp),OBJ_MACH_PREC_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return 1;
 	}
 	if( OBJ_COMPS(dp) != n_comps_expected ){
 		sprintf(ERROR_STRING,"%s:  data vector %s (%d) should have %d components",
 			funcname,OBJ_NAME(dp),OBJ_COMPS(dp),n_comps_expected);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return 1;
 	}
 	return 0;
@@ -243,13 +243,13 @@ static int bad_plot_vec(QSP_ARG_DECL Data_Obj *dp,dimension_t n_comps_expected,c
 			"%s:  data vector %s (%s) should have float precision",
 			funcname,
 			OBJ_NAME(dp),OBJ_MACH_PREC_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return 1;
 	}
 	if( OBJ_COMPS(dp) != n_comps_expected ){
 		sprintf(ERROR_STRING,"%s:  data vector %s (%d) should have %d components",
 			funcname,OBJ_NAME(dp),OBJ_COMPS(dp),n_comps_expected);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return 1;
 	}
 	return 0;
@@ -326,17 +326,17 @@ static COMMAND_FUNC( do_cyplot )
 	INSIST_RAM_OBJ(cdp,"cyplot")
 
 	if( OBJ_PREC(dp) != PREC_SP ){
-		WARN("do_cyplot:  data vector should be float");
+		warn("do_cyplot:  data vector should be float");
 		return;
 	}
 	if( OBJ_PREC(cdp) != PREC_BY ){
-		WARN("color vector should be byte");
+		warn("color vector should be byte");
 		return;
 	}
 	if( !dp_same_size(dp,cdp,"do_cyplot") ){
 		sprintf(ERROR_STRING,"data vector %s and color vector %s must have identical sizes",
 			OBJ_NAME(dp),OBJ_NAME(cdp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -411,7 +411,7 @@ static COMMAND_FUNC( do_xyplot )
 		default:
 			sprintf(ERROR_STRING,"do_xyplot:  unhandled precision %s (object %s)",
 				OBJ_PREC_NAME(dp),OBJ_NAME(dp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 }
@@ -487,7 +487,7 @@ static COMMAND_FUNC( do_xp_circ )
 {
 	std_type rad;
 
-	rad = (std_type)HOW_MUCH("radius");
+	rad = (std_type)how_much("radius");
 	xplot_circle(rad);
 }
 
@@ -495,7 +495,7 @@ static COMMAND_FUNC( do_plot_string )
 {
 	const char *s;
 
-	s=NAMEOF("string");
+	s=nameof("string");
 	xplot_text(s);
 }
 

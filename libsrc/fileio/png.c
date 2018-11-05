@@ -883,7 +883,7 @@ FIO_WT_FUNC( pngfio )		// unix version
 	}
 
 //	/* close the file */
-//	pngfio_close(QSP_ARG  ifp);
+//	pngfio_close(ifp);
 
 	return(0);
 }
@@ -1079,7 +1079,7 @@ FIO_WT_FUNC( pngfio )		// iOS version
 
 	// just one image
 	// BUG could make sure user did not request multiple frames...
-	close_image_file(QSP_ARG  ifp);
+	close_image_file(ifp);
 
 	return(0);
 }
@@ -1222,7 +1222,7 @@ FIO_RD_FUNC( pngfio )		// iOS version
 	memcpy(OBJ_DATA_PTR(dp),bytes,OBJ_N_MACH_ELTS(dp));
 
 	// what if there is more than one image in the file???
-	close_image_file(QSP_ARG  ifp);
+	close_image_file(ifp);
 }
 
 FIO_INFO_FUNC(pngfio)

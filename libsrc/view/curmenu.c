@@ -14,17 +14,17 @@ COMMAND_FUNC( do_make_cursor )
 	char cname[64];
 	int x,y;
 
-	strcpy(cname,NAMEOF("cursor name"));
+	strcpy(cname,nameof("cursor name"));
 	dp = pick_obj( "bitmap image" );
-	x=HOW_MANY("x coordinate of hot spot");
-	y=HOW_MANY("y coordinate of hot spot");
+	x=how_many("x coordinate of hot spot");
+	y=how_many("y coordinate of hot spot");
 
 	if( dp == NULL ) return;
 
 	/* BUG should verify that dp is the right kind of image here */
 
 	/* BUG should verify that x and y are within range */
-	make_cursor(QSP_ARG  cname,dp,x,y);
+	make_cursor(cname,dp,x,y);
 }
 
 COMMAND_FUNC( do_assign_cursor )

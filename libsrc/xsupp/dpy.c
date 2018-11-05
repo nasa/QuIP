@@ -420,7 +420,7 @@ static double get_dpy_size( QSP_ARG_DECL  Item *ip, int index)
 		default:
 			sprintf(ERROR_STRING,
 	"get_dpy_size:  unsupported display size function (index = %d)",index);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(0.0);
 	}
 }

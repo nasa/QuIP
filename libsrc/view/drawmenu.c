@@ -28,7 +28,7 @@ static Viewer *draw_vp=NULL;
 									\
 	if( draw_vp == NULL ){						\
 		sprintf(ERROR_STRING,"%s:  no drawing viewer selected!?",#s);	\
-		WARN(ERROR_STRING);					\
+		warn(ERROR_STRING);					\
 		return;							\
 	}
 
@@ -36,7 +36,7 @@ static Viewer *draw_vp=NULL;
 									\
 	if( draw_vp == NULL ){						\
 		sprintf(ERROR_STRING,"%s:  no drawing viewer selected!?",#s);	\
-		WARN(ERROR_STRING);					\
+		warn(ERROR_STRING);					\
 		return error_ret_val;					\
 	}
 
@@ -65,12 +65,14 @@ static int curr_y=0;
 ITEM_INTERFACE_DECLARATIONS(XFont,xfont,0)
 #endif /* HAVE_X11 */
 
-static void get_cpair(QSP_ARG_DECL  int *px, int *py)
+#define get_cpair(px, py) _get_cpair(QSP_ARG  px, py)
+
+static void _get_cpair(QSP_ARG_DECL  int *px, int *py)
 {
 	float fx,fy;
 
-	fx=(float)HOW_MUCH("x");
-	fy=(float)HOW_MUCH("y");
+	fx=(float)how_much("x");
+	fy=(float)how_much("y");
 
 	if( XFORMING_COORDS(draw_vp) )
 		scale_fxy(draw_vp,&fx,&fy);
@@ -104,7 +106,7 @@ static int ios_check_font(const char *fontname)
 	}
 	if( ! found ){
 		sprintf(ERROR_STRING,"Font %s not found!?",fontname);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		fprintf(stderr,"Font %s not found!?",fontname);
 		fprintf(stderr,"Available fonts:\n");
 		for(i=0;i<a.count;i++){
@@ -225,7 +227,7 @@ static void _load_font(QSP_ARG_DECL  const char *fontname)
 		}
 	} else if( nfonts != 1 ){
 		sprintf(ERROR_STRING,"Font %s is not available",fontname);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		XFreeFontNames(flist);
 		return;
 	}
@@ -282,7 +284,7 @@ static COMMAND_FUNC( do_set_font )
 
 	/* xfp=pick_xfont(""); */
 
-	s=NAMEOF("font name");
+	s=nameof("font name");
 
 #ifdef HAVE_X11
 	xfp = xfont_of(s);
@@ -290,7 +292,7 @@ static COMMAND_FUNC( do_set_font )
 		load_font(s);
 		xfp = xfont_of(s);
 		if( xfp == NULL ){
-			WARN("Unable to load font!?");
+			warn("Unable to load font!?");
 			return;
 		}
 	}
@@ -312,7 +314,7 @@ static COMMAND_FUNC( do_load_font )
 {
 	const char *s;
 
-	s=NAMEOF("font");
+	s=nameof("font");
 	load_font(s);
 }
 
@@ -320,7 +322,7 @@ static COMMAND_FUNC( do_load_font_set )
 {
 	const char *s;
 
-	s=NAMEOF("match pattern");
+	s=nameof("match pattern");
 	load_font_set(s);
 }
 
@@ -329,7 +331,7 @@ static COMMAND_FUNC( do_set_fg )
 {
 	u_long val;
 
-	val = (u_long) HOW_MANY("foreground");
+	val = (u_long) how_many("foreground");
 
 	DRAW_CHECK(do_set_fg)
 
@@ -340,7 +342,7 @@ static COMMAND_FUNC( do_set_bg )
 {
 	u_long val;
 
-	val = (u_long) HOW_MANY("background");
+	val = (u_long) how_many("background");
 
 	DRAW_CHECK(do_set_bg)
 
@@ -352,8 +354,8 @@ static COMMAND_FUNC( do_draw_string )
 	const char *s;
 	int x,y;
 
-	s=NAMEOF("string");
-	get_cpair(QSP_ARG  &x,&y);
+	s=nameof("string");
+	get_cpair(&x,&y);
 
 	DRAW_CHECK(do_draw_string)
 
@@ -385,14 +387,14 @@ static COMMAND_FUNC( do_show_gc )
 
 static COMMAND_FUNC( do_move )
 {
-	get_cpair(QSP_ARG  &curr_x,&curr_y);
+	get_cpair(&curr_x,&curr_y);
 }
 
 static COMMAND_FUNC( do_cont )
 {
 	int x,y;
 
-	get_cpair(QSP_ARG  &x,&y);
+	get_cpair(&x,&y);
 
 	DRAW_CHECK(do_cont)
 
@@ -406,7 +408,7 @@ static COMMAND_FUNC( do_linewidth )
 #ifdef BUILD_FOR_IOS	// BUILD_FOR_OBJC ?
 	CGFloat w;
 
-	w = HOW_MUCH("line width in points");
+	w = how_much("line width in points");
 
 	DRAW_CHECK(do_linewidth)
 
@@ -414,7 +416,7 @@ static COMMAND_FUNC( do_linewidth )
 #else // ! BUILD_FOR_IOS
 	int w;
 
-	w = (int) HOW_MANY("line width in pixels");
+	w = (int) how_many("line width in pixels");
 
 	DRAW_CHECK(do_linewidth)
 
@@ -427,12 +429,12 @@ static COMMAND_FUNC( do_arc )
 {
 	int xl,yu,w,h,a1,a2;
 
-	xl = (int)HOW_MANY("xl");
-	yu = (int)HOW_MANY("yu");
-	w = (int)HOW_MANY("w");
-	h = (int)HOW_MANY("h");
-	a1 = (int)HOW_MANY("a1");
-	a2 = (int)HOW_MANY("a2");
+	xl = (int)how_many("xl");
+	yu = (int)how_many("yu");
+	w = (int)how_many("w");
+	h = (int)how_many("h");
+	a1 = (int)how_many("a1");
+	a2 = (int)how_many("a2");
 
 	DRAW_CHECK(do_arc)
 
@@ -457,7 +459,7 @@ static COMMAND_FUNC( do_scale )
 {
 	int scal_flag;
 
-	scal_flag = ASKIF("scale coordinates in using plotting space");
+	scal_flag = askif("scale coordinates in using plotting space");
 
 	DRAW_CHECK(do_scale)
 
@@ -471,7 +473,7 @@ static COMMAND_FUNC( do_remem_gfx )
 {
 	int flag;
 
-	flag = ASKIF("remember draw ops to allow refresh on expose events");
+	flag = askif("remember draw ops to allow refresh on expose events");
 	set_remember_gfx(flag);
 }
 
@@ -479,12 +481,12 @@ static COMMAND_FUNC( do_fill_arc )
 {
 	int xl,yu,w,h,a1,a2;
 
-	xl = (int)HOW_MANY("xl");
-	yu = (int)HOW_MANY("yu");
-	w = (int)HOW_MANY("w");
-	h = (int)HOW_MANY("h");
-	a1 = (int)HOW_MANY("a1");
-	a2 = (int)HOW_MANY("a2");
+	xl = (int)how_many("xl");
+	yu = (int)how_many("yu");
+	w = (int)how_many("w");
+	h = (int)how_many("h");
+	a1 = (int)how_many("a1");
+	a2 = (int)how_many("a2");
 
 	DRAW_CHECK(do_fill_arc)
 
@@ -497,16 +499,16 @@ static COMMAND_FUNC( do_fill_poly )
 	unsigned int num_points;
 	unsigned int i;
 
-	num_points = (int)HOW_MANY("number of polygon points");
+	num_points = (int)how_many("number of polygon points");
 	x_vals = (int *) getbuf(sizeof(int) * num_points);
 	y_vals = (int *) getbuf(sizeof(int) * num_points);
 
 	for (i=0; i < num_points; i++) {
 		char s[100];
 		sprintf(s, "point %d x value", i+1);
-		x_vals[i] = (int)HOW_MANY(s);
+		x_vals[i] = (int)how_many(s);
 		sprintf(s, "point %d y value", i+1);
-		y_vals[i] = (int)HOW_MANY(s);
+		y_vals[i] = (int)how_many(s);
 	}
 
 	_xp_fill_polygon(draw_vp,num_points, x_vals, y_vals);
@@ -543,7 +545,7 @@ static COMMAND_FUNC( do_set_font_size )
 {
 	int s;
 
-	s=(int)HOW_MANY("font size");
+	s=(int)how_many("font size");
 	set_font_size(draw_vp,s);
 }
 
@@ -573,7 +575,7 @@ static COMMAND_FUNC( do_set_text_angle )
 {
 	float a;
 
-	a=(float)HOW_MUCH("text angle in degrees");
+	a=(float)how_much("text angle in degrees");
 	if( radians_per_degree == 0.0 )
 		radians_per_degree = (float)(atan(1.0)/45.0);
 
@@ -592,8 +594,8 @@ static COMMAND_FUNC( do_get_string_width )
 	const char *v, *s;
 	int n;
 
-	v=savestr(NAMEOF("variable name for string width"));
-	s=NAMEOF("string");
+	v=savestr(nameof("variable name for string width"));
+	s=nameof("string");
 
 	n = get_string_width(draw_vp,s);
 	sprintf(msg_str,"%d",n);

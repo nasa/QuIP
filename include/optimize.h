@@ -80,8 +80,9 @@ extern void _optimize( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) );
 #define optimize( func ) _optimize( QSP_ARG  func )
 
 //extern List *opt_param_list(SINGLE_QSP_ARG_DECL);
-extern void opt_param_info(QSP_ARG_DECL  Opt_Param *);
+extern void _opt_param_info(QSP_ARG_DECL  Opt_Param *);
 extern float _get_opt_param_value(QSP_ARG_DECL  const char *);
+#define opt_param_info(opp) _opt_param_info(QSP_ARG  opp)
 #define get_opt_param_value(s) _get_opt_param_value(QSP_ARG  s)
 
 

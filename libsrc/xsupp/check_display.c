@@ -33,9 +33,9 @@ const char *_check_display(SINGLE_QSP_ARG_DECL)
 	}
 
 	if( display_name == NULL )
-		WARN("environment variable DISPLAY not set, using :0");
+		warn("environment variable DISPLAY not set, using :0");
 	else if( *display_name == 0 )
-		WARN("environment variable DISPLAY set to null string, using :0");
+		warn("environment variable DISPLAY set to null string, using :0");
 	display_name=":0";
 
 	return(display_name);

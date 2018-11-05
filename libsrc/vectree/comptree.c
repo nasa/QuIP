@@ -298,7 +298,9 @@ advise(DEFAULT_ERROR_STRING);
  * for this node if needed.
  */
 
-static Shape_Info * get_child_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,int child_index)
+#define get_child_shape(enp,child_index) _get_child_shape(QSP_ARG  enp,child_index)
+
+static Shape_Info * _get_child_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,int child_index)
 {
 	Shape_Info *shpp;
 	Vec_Expr_Node *enp2;
@@ -597,7 +599,9 @@ advise(DEFAULT_ERROR_STRING);
  * With the new scheme, is this different from compute_assign_shape??
  */
 
-static void update_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define update_assign_shape(enp) _update_assign_shape(QSP_ARG  enp)
+
+static void _update_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 //	prec_t prec;
 
@@ -654,7 +658,9 @@ static void update_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 } /* update_assign_shape */
 
-static void insert_typecast_node(QSP_ARG_DECL  Vec_Expr_Node *enp, int index, Precision *prec_p)
+#define insert_typecast_node(enp, index, prec_p) _insert_typecast_node(QSP_ARG  enp, index, prec_p)
+
+static void _insert_typecast_node(QSP_ARG_DECL  Vec_Expr_Node *enp, int index, Precision *prec_p)
 {
 	Vec_Expr_Node *new_enp;
 
@@ -795,7 +801,7 @@ describe_shape(VN_SHAPE(VN_CHILD(enp,index)));
 }
 #endif /* QUIP_DEBUG */
 
-	insert_typecast_node(QSP_ARG  enp,index,prec_p);
+	insert_typecast_node(enp,index,prec_p);
 } /* typecast_child */
 
 /* Return the dominant precision (the other will be promoted to it... */
@@ -865,7 +871,9 @@ static void _promote_child(QSP_ARG_DECL   Vec_Expr_Node *enp, int i1, int i2)
 
 // helper function for check_typecast
 
-static void check_int_binop(QSP_ARG_DECL  Vec_Expr_Node *enp, int i1, int i2)
+#define check_int_binop(enp, i1, i2) _check_int_binop(QSP_ARG  enp, i1, i2)
+
+static void _check_int_binop(QSP_ARG_DECL  Vec_Expr_Node *enp, int i1, int i2)
 {
 	// assert node is the correct type?
 
@@ -927,7 +935,7 @@ dump_tree(enp);
 		// the operands match each other, but do they match the parent?
 		switch(VN_CODE(enp)){
 			ALL_SCALINT_BINOP_CASES		/* check_typecast */
-				check_int_binop(QSP_ARG  enp,i1,i2);
+				check_int_binop(enp,i1,i2);
 				break;
 			default:
 				break;
@@ -969,7 +977,7 @@ dump_tree(enp);
 		ALL_SCALINT_BINOP_CASES		/* check_typecast */
 			/* modulo, bitwise operators and shifts... */
 integer_only_cases:
-			check_int_binop(QSP_ARG  enp,i1,i2);
+			check_int_binop(enp,i1,i2);
 			return;
 
 
@@ -1049,7 +1057,9 @@ not_integer_only:
  * which have bitmap precision if they are vector.
  */
 
-static Shape_Info * check_mating_shapes(QSP_ARG_DECL  Vec_Expr_Node *enp,int index1,int index2)
+#define check_mating_shapes(enp,index1,index2) _check_mating_shapes(QSP_ARG  enp,index1,index2)
+
+static Shape_Info * _check_mating_shapes(QSP_ARG_DECL  Vec_Expr_Node *enp,int index1,int index2)
 {
 	Shape_Info *shpp;
 
@@ -1164,7 +1174,7 @@ advise("check_mating_shapes:  no mating shapes");
 static Shape_Info * _get_mating_shapes(QSP_ARG_DECL   Vec_Expr_Node *enp,int i1, int i2)
 {
 	check_typecast(enp,i1,i2);
-	return( check_mating_shapes(QSP_ARG  enp,i1,i2) );
+	return( check_mating_shapes(enp,i1,i2) );
 }
 
 /* Set the shape of this node based on its children.
@@ -1454,7 +1464,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			break;
 
 		case T_TRANSPOSE:		/* update_node_shape */
-			VN_CHILD_SHAPE(enp,0) = get_child_shape(QSP_ARG  enp,0);
+			VN_CHILD_SHAPE(enp,0) = get_child_shape(enp,0);
 			COPY_SHAPE(tmp_shpp,VN_CHILD_SHAPE(enp,0));
 			i1                    = SHP_ROWS(tmp_shpp);
 			SET_SHP_ROWS(tmp_shpp, SHP_COLS(tmp_shpp) );
@@ -1576,7 +1586,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			ifp = img_file_of(str);
 
 			if( ifp == NULL ){
-				ifp = read_image_file(QSP_ARG  str);
+				ifp = read_image_file(str);
 				if( ifp==NULL ){
 					node_error(enp);
 					sprintf(ERROR_STRING,
@@ -1790,7 +1800,7 @@ no_file:
 			break;
 
 		case T_ASSIGN:			/* update_node_shape */
-			update_assign_shape(QSP_ARG  enp);
+			update_assign_shape(enp);
 			break;
 
 
@@ -2631,7 +2641,9 @@ static void _commute_bool_test(QSP_ARG_DECL  Vec_Expr_Node *enp)
  *
  */
 
-static void set_bool_vecop_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define set_bool_vecop_code(enp) _set_bool_vecop_code(QSP_ARG  enp)
+
+static void _set_bool_vecop_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	//int vector_scalar;
 
@@ -3003,7 +3015,9 @@ static void _check_bitmap_arg(QSP_ARG_DECL Vec_Expr_Node *enp,int index)
  * We insert a new node between this node and its second child.
  */
 
-static void invert_op(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Func_Code wc,Tree_Code new_tc)
+#define invert_op(enp,wc,new_tc) _invert_op(QSP_ARG  enp,wc,new_tc)
+
+static void _invert_op(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Func_Code wc,Tree_Code new_tc)
 {
 	Vec_Expr_Node *new_enp;
 
@@ -3030,7 +3044,9 @@ static void invert_op(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Func_Code wc,Tree_Cod
  * and insert a typecast node if necessary...
  */
 
-static void check_arith_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define check_arith_code(enp) _check_arith_code(QSP_ARG  enp)
+
+static void _check_arith_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int vector_scalar;
 
@@ -3103,7 +3119,7 @@ static void check_arith_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			if( vector_scalar==1 ){	/* scalar is 1st op */
 				SET_VN_VFUNC_CODE(enp, FVSSUB);
 			} else {
-				invert_op(QSP_ARG  enp,FVSADD,T_UMINUS);
+				invert_op(enp,FVSADD,T_UMINUS);
 			}
 		} else if( VN_CODE(enp) == T_TIMES ){
 			SET_VN_VFUNC_CODE(enp, FVSMUL);
@@ -3117,7 +3133,7 @@ static void check_arith_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			if( vector_scalar==1 ){	/* scalar is 1st op */
 				SET_VN_VFUNC_CODE(enp, FVSDIV);
 			} else {
-				/* invert_op(QSP_ARG  enp,FVSMUL,T_RECIP); */
+				/* invert_op(enp,FVSMUL,T_RECIP); */
 				SET_VN_VFUNC_CODE(enp, FVSDIV2);
 			}
 		} else if ( VN_CODE(enp) == T_MODULO ){
@@ -3979,7 +3995,7 @@ excise_uminus:
 			 * need to change the node code
 			 */
 
-			check_arith_code(QSP_ARG  enp);
+			check_arith_code(enp);
 /*
 sprintf(ERROR_STRING,"compile_node binop:  %s",node_desc(enp));
 advise(ERROR_STRING);
@@ -4030,7 +4046,7 @@ dump_tree(enp);
 					copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 //fprintf(stderr,"compile_node:  calling xform_from_bitmap #1\n");
 //dump_tree(enp);
-//dump_shape(QSP_ARG  VN_SHAPE(enp));
+//dump_shape(VN_SHAPE(enp));
 					xform_from_bitmap(VN_SHAPE(enp),VN_CHILD_PREC(enp,1));
 					SET_VN_CODE(enp, T_SS_B_CONDASS);
 				} else {
@@ -4375,7 +4391,7 @@ dump_tree(enp);
 			/* Check for vector subscripts on LSH */
 			if( has_vector_subscript(VN_CHILD(enp,0)) ){
 #ifdef NOT_YET
-				enp=fix_render_code(QSP_ARG  enp);
+				enp=fix_render_code(enp);
 #else /* ! NOT_YET */
 				warn("Sorry, vector subscripts not implemented for objC yet...");
 #endif /* NOT_YET */
@@ -5492,7 +5508,7 @@ dump_tree(enp);
 				return;
 }
 			if( ! SCALAR_SHAPE(VN_SHAPE(enp)) )
-				set_bool_vecop_code(QSP_ARG  enp);
+				set_bool_vecop_code(enp);
 			check_binop_links(enp);
 			break;
 
@@ -6402,7 +6418,7 @@ Vec_Expr_Node * _compile_prog(QSP_ARG_DECL   Vec_Expr_Node *enp)
  * The goal here is to transform the node to one which is render(&a,&coords,&samples)
  */
 
-static Vec_Expr_Node * fix_render_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
+static Vec_Expr_Node * _fix_render_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Vec_Expr_Node *new_enp, *a1_enp, *lhs_enp;
 	Vec_Expr_Node *l1_enp, *l2_enp;

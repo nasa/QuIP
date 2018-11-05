@@ -100,7 +100,9 @@ static void drag_to( int x, int y, Viewer *vp )
 	carried->dg_y=y-carried->dg_ry;
 }
 
-static void put_down( QSP_ARG_DECL  int x, int y, Viewer *vp )
+#define put_down( x, y, vp ) _put_down( QSP_ARG  x, y, vp )
+
+static void _put_down( QSP_ARG_DECL  int x, int y, Viewer *vp )
 {
 	/* place the object */
 	drag_to(x,y,vp);
@@ -120,7 +122,9 @@ static void put_down( QSP_ARG_DECL  int x, int y, Viewer *vp )
 	XDestroyImage(bg_xim);
 }
 
-static void pickup( QSP_ARG_DECL  Draggable *dgp, Viewer *vp )
+#define pick_up( dgp, vp ) _pick_up( QSP_ARG  dgp, vp )
+
+static void _pick_up( QSP_ARG_DECL  Draggable *dgp, Viewer *vp )
 {
 	assert( vp->vw_dp != NULL );
 
@@ -184,7 +188,9 @@ static void show_configure_notify( XEvent *event )
 }
 #endif // FOOBAR
 
-static int HandleEvent( QSP_ARG_DECL  XEvent *event, int *donep )
+#define HandleEvent( event, donep ) _HandleEvent( QSP_ARG  event, donep )
+
+static int _HandleEvent( QSP_ARG_DECL  XEvent *event, int *donep )
 {
 	int done=0, retval=0;
 	Viewer *vp;
@@ -393,7 +399,7 @@ advise(ERROR_STRING);
 				if( t == ButtonRelease && carried != NULL ){
 					x=event->xbutton.x;
 					y=event->xbutton.y;
-					put_down(QSP_ARG  x,y,vp);
+					put_down(x,y,vp);
 				} else if( t == ButtonPress ){
 					Draggable *dgp;
 
@@ -404,7 +410,7 @@ advise(ERROR_STRING);
 
 					if( (dgp=in_draggable(vp,x,y))
 						!= NULL ){
-						pickup(QSP_ARG  dgp,vp);
+						pick_up(dgp,vp);
 					}
 				}
 			}
@@ -663,7 +669,9 @@ void _init_reserved_vars(SINGLE_QSP_ARG_DECL)
 	assign_reserved_var("event_type","no_event");
 }
 
-static int check_one_display( QSP_ARG_DECL  Disp_Obj *dop )
+#define check_one_display( dop ) _check_one_display( QSP_ARG  dop )
+
+static int _check_one_display( QSP_ARG_DECL  Disp_Obj *dop )
 {
 	XEvent event;
 	long mask;
@@ -691,7 +699,7 @@ static int check_one_display( QSP_ARG_DECL  Disp_Obj *dop )
 	 */
 
 	if( XCheckMaskEvent(DO_DISPLAY(dop),mask,&event) == True ){
-		retval = HandleEvent(QSP_ARG  &event,&done);
+		retval = HandleEvent(&event,&done);
 	} else {
 		return(NOTHING_HAPPENED);
 	}
@@ -714,7 +722,7 @@ int event_loop(SINGLE_QSP_ARG_DECL)
 	np=QLIST_HEAD(lp);
 	while( np != NULL ){
 		dop = (Disp_Obj *)np->n_data;
-		stat=check_one_display(QSP_ARG  dop);
+		stat=check_one_display(dop);
 		if( stat != NOTHING_HAPPENED ) return(stat);
 		np = np->n_next;
 	}

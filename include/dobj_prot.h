@@ -61,10 +61,13 @@ extern void		_dpair_iterate(QSP_ARG_DECL  Data_Obj * dp,Data_Obj * dp2,
 extern void		_gen_xpose(QSP_ARG_DECL  Data_Obj * dp,int dim1,int dim2);
 #define gen_xpose(dp,dim1,dim2) _gen_xpose(QSP_ARG  dp,dim1,dim2)
 
-extern double		get_dobj_size(QSP_ARG_DECL  Data_Obj * dp,int index);
-extern const char *	get_dobj_prec_name(QSP_ARG_DECL  Data_Obj * dp);
-extern double		get_dobj_il_flg(QSP_ARG_DECL  Data_Obj * dp);
+extern double		_get_dobj_size(QSP_ARG_DECL  Data_Obj * dp,int index);
+extern const char *	_get_dobj_prec_name(QSP_ARG_DECL  Data_Obj * dp);
+extern double		_get_dobj_il_flg(QSP_ARG_DECL  Data_Obj * dp);
 extern void		_dataobj_init(SINGLE_QSP_ARG_DECL);
+#define get_dobj_size(dp,index) _get_dobj_size(QSP_ARG  dp,index)
+#define get_dobj_prec_name(dp) _get_dobj_prec_name(QSP_ARG  dp)
+#define get_dobj_il_flg(dp) _get_dobj_il_flg(QSP_ARG  dp)
 #define dataobj_init() _dataobj_init(SINGLE_QSP_ARG)
 
 extern void		init_dfuncs(SINGLE_QSP_ARG_DECL);
@@ -456,6 +459,7 @@ extern COMMAND_FUNC( do_fio_menu );
 
 
 // from evaltree.c, but should be moved!?!?
-extern void easy_ramp2d(QSP_ARG_DECL  Data_Obj *dst_dp,double start,double dx,double dy);
+extern void _easy_ramp2d(QSP_ARG_DECL  Data_Obj *dst_dp,double start,double dx,double dy);
+#define easy_ramp2d(dst_dp,start,dx,dy) _easy_ramp2d(QSP_ARG  dst_dp,start,dx,dy)
 
 #endif // ! _DOBJ_PROT_H_

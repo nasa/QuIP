@@ -12,7 +12,7 @@ static COMMAND_FUNC( do_read_file_from_server )
 
 	url=NAMEOF("remote file name or URL");
 
-	file_content_sbp = get_url_contents(QSP_ARG  url);
+	file_content_sbp = get_url_contents(url);
 
 	if( file_content_sbp == NULL ) return;
 
@@ -53,7 +53,7 @@ static COMMAND_FUNC( do_get_file_from_server )
 	fp_out = try_open(s,"w");
 	if( fp_out == NULL ) return;
 
-	write_file_from_url( QSP_ARG  fp_out, url );
+	write_file_from_url( fp_out, url );
 
 #ifndef BUILD_FOR_IOS
 	// in iOS, data is received asynchronously, so we have to
@@ -77,7 +77,7 @@ COMMAND_FUNC( do_http_menu )
 	static int inited=0;
 
 	if( ! inited ){
-		init_http_subsystem(SINGLE_QSP_ARG);
+		init_http_subsystem();
 		inited=1;
 	}
 

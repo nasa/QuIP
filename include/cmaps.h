@@ -144,7 +144,8 @@ extern void		_default_cmap(QSP_ARG_DECL  Dpyable *);
 extern void	dump_lut(Data_Obj *cm_dp);
 
 /* linear.c */
-extern void	lin_setup(QSP_ARG_DECL  Data_Obj *,double gam,double vz);
+extern void	_lin_setup(QSP_ARG_DECL  Data_Obj *,double gam,double vz);
+#define lin_setup(dp,gam,vz) _lin_setup(QSP_ARG  dp,gam,vz)
 
 
 /* bplanes.c */

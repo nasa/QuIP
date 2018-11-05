@@ -153,24 +153,24 @@ COMMAND_FUNC( fitsine )
 	delete_opt_params(SINGLE_QSP_ARG);
 
 	if( vary_flag[FREQ_INDEX] )
-		prm_pp[FREQ_INDEX]  = add_opt_param(QSP_ARG  &default_freq);
+		prm_pp[FREQ_INDEX]  = add_opt_param(&default_freq);
 	else
 		prm_pp[FREQ_INDEX] = &default_freq;
 
 	if( vary_flag[PHASE_INDEX] )
-		prm_pp[PHASE_INDEX]  = add_opt_param(QSP_ARG  &default_phase);
+		prm_pp[PHASE_INDEX]  = add_opt_param(&default_phase);
 	else
 		prm_pp[PHASE_INDEX]  = &default_phase;
 
 	if( vary_flag[AMP_INDEX] )
-		prm_pp[AMP_INDEX]  = add_opt_param(QSP_ARG  &default_amp);
+		prm_pp[AMP_INDEX]  = add_opt_param(&default_amp);
 	else
 		prm_pp[AMP_INDEX]  = &default_amp;
 
 	nsamps = OBJ_COLS(dp);
 	target = (float *)(OBJ_DATA_PTR(dp));
 
-	optimize(QSP_ARG  fitsine_error);
+	optimize(fitsine_error);
 
 	the_freq = prm_pp[FREQ_INDEX]->ans;
 	the_amp = prm_pp[AMP_INDEX]->ans;

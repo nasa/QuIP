@@ -396,7 +396,6 @@ void insure_object_size(QSP_ARG_DECL  Data_Obj *dp,index_t index);
 
 extern void		note_assignment(Data_Obj *dp);
 extern Data_Obj *	_make_local_dobj(QSP_ARG_DECL  Dimension_Set *,Precision *prec_p, Platform_Device *pdp);
-extern int		zero_dp(QSP_ARG_DECL  Data_Obj *);
 extern Data_Obj *	mlab_reshape(QSP_ARG_DECL  Data_Obj *,Shape_Info *,const char *);
 extern void		_eval_immediate(QSP_ARG_DECL  Vec_Expr_Node *enp);
 extern void		_wrapup_context(QSP_ARG_DECL  Run_Info *rip);

@@ -106,7 +106,7 @@ OBJ_NAME(src_dp),OBJ_COLS(src_dp),OBJ_NAME(dst_dp),OBJ_COLS(dst_dp));
  * This is still used so we should find a better name - UGLY
  */
 
-int old_cksiz(QSP_ARG_DECL  int argtyp,Data_Obj *src_dp,Data_Obj *dst_dp)
+int _old_cksiz(QSP_ARG_DECL  int argtyp,Data_Obj *src_dp,Data_Obj *dst_dp)
 {
 	int i;
 

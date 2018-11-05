@@ -26,7 +26,7 @@ void getpair( FILE *fp, int *px, int *py )
 	getone(fp,py);
 }
 
-void rdplot(QSP_ARG_DECL  FILE *fp )
+void _rdplot(QSP_ARG_DECL  FILE *fp )
 {
 	int x1,x2,x3,y1,y2,y3,c;
 	char modstr[32];
@@ -98,7 +98,7 @@ void rdplot(QSP_ARG_DECL  FILE *fp )
 					xplot_select(4);
 				else if( !strcmp(modstr,"longdashed") )
 					xplot_select(5);
-				else WARN("unsupported line color");
+				else warn("unsupported line color");
 				break;
 			default:
 				sprintf(ERROR_STRING,

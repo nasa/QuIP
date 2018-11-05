@@ -14,7 +14,7 @@ const char *opt_func_string=NULL;
 
 Opt_Pkg *curr_opt_pkg=NULL;
 
-void opt_param_info(QSP_ARG_DECL  Opt_Param *opp)
+void _opt_param_info(QSP_ARG_DECL  Opt_Param *opp)
 {
 	sprintf(msg_str,"Parameter %s:",opp->op_name);
 	prt_msg(msg_str);

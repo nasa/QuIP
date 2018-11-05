@@ -90,7 +90,7 @@ static void _linsteps(SINGLE_QSP_ARG_DECL)	/** make linear steps */
 
 	inc=xval_n - xval_1;
 	inc /= (n_xvals-1);
-	easy_ramp2d(QSP_ARG  global_xval_dp, xval_1, inc, 0);
+	easy_ramp2d(global_xval_dp, xval_1, inc, 0);
 }
 
 #define make_steps() _make_steps(SINGLE_QSP_ARG)
@@ -153,7 +153,6 @@ static COMMAND_FUNC( do_import_xvals )
 		return;
 	}
 	global_xval_dp = dp;
-fprintf(stderr,"do_import_xvals:  global_xval_dp at 0x%lx %s\n",(long)dp,OBJ_NAME(dp));
 }
 
 static COMMAND_FUNC( do_set_nxvals )

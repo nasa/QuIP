@@ -42,7 +42,6 @@ static Summary_Data_Tbl *the_dtp;
 #define N_WPARMS	2	/* number of variable paramters */
 
 /* local prototypes */
-static void weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp, int ntrac);
 
 static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return likelihood of guess */
 {
@@ -102,7 +101,9 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 	return(lh);
 }
 
-static void weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac)		/** maximum liklihood fit */
+#define weibull_fit(dp,ntrac) _weibull_fit(QSP_ARG  dp,ntrac)
+
+static void _weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac)		/** maximum liklihood fit */
 {
 	Opt_Param tmp_param;
 	Opt_Param *alpha_param_p=NULL;
@@ -184,7 +185,7 @@ void _w_analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the it
 {
 	int ntrac=(-1);
 
-	weibull_fit( QSP_ARG  CLASS_SUMM_DTBL(tcp), ntrac );
+	weibull_fit( CLASS_SUMM_DTBL(tcp), ntrac );
 }
 
 void _weibull_out(QSP_ARG_DECL  Trial_Class * tcp)			/** verbose analysis report */

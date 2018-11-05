@@ -717,7 +717,7 @@ fprintf(stderr,"exec_drawlist returning after error\n");
 
 // A "viewer" is just another view that we are going to load with images...
 
-int make_viewer(QSP_ARG_DECL  Viewer *vp,int width,int height)
+int _make_viewer(QSP_ARG_DECL  Viewer *vp,int width,int height)
 {
 	// For now we disregard what size the user has requested...
 	// All viewers are full-screen
@@ -726,7 +726,7 @@ int make_viewer(QSP_ARG_DECL  Viewer *vp,int width,int height)
 	Gen_Win *gwp=genwin_of( QSP_ARG  VW_NAME(vp) );
 	if( gwp == NULL ){
 //fprintf(stderr,"make_viewer calling make_genwin %s\n",VW_NAME(vp));
-		gwp=make_genwin(QSP_ARG  VW_NAME(vp), width, height );
+		gwp=make_genwin(VW_NAME(vp), width, height );
 	}
 
 	// BUG?  reference cycle?
@@ -743,12 +743,12 @@ void show_viewer(QSP_ARG_DECL  Viewer *vp)
 	// Showing a panel is more complicated than showing
 	// a viewer, because we have to push the name context
 	// for the widgets.
-	push_nav(QSP_ARG  VW_GW(vp));
+	push_nav(VW_GW(vp));
 }
 
 void unshow_viewer(QSP_ARG_DECL  Viewer *vp)
 {
-	pop_nav(QSP_ARG 1);
+	pop_nav(1);
 }
 
 int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
@@ -758,11 +758,11 @@ int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
 		case GW_VC_QVC:		return 1;
 		case GW_VC_QTVC:	return 0;
 		default:
-			WARN("Unhandled view controller case in is_image_viewer!?");
+			warn("Unhandled view controller case in is_image_viewer!?");
 			return 0;
 	}
 #else // ! BUILD_FOR_IOS
-	WARN("is_image_viewer:  need to implement!?");
+	warn("is_image_viewer:  need to implement!?");
 	return 1;
 #endif // ! BUILD_FOR_IOS
 }
@@ -1143,7 +1143,7 @@ void posn_viewer(Viewer *vp, int x, int y)
 #endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
-	posn_genwin(QSP_ARG  VW_GW(vp),x,y);
+	_posn_genwin(DEFAULT_QSP_ARG  VW_GW(vp),x,y);
 #endif // BUILD_FOR_MACOS
 }
 
@@ -1153,19 +1153,19 @@ void posn_viewer(Viewer *vp, int x, int y)
 
 int make_button_arena(QSP_ARG_DECL  Viewer *vp,int w,int h)
 {
-	return make_viewer(QSP_ARG  vp,w,h);
+	return make_viewer(vp,w,h);
 }
 
 int make_dragscape(QSP_ARG_DECL  Viewer *vp,int w,int h)
 {
 	// BUG?  do something special here???
-	return make_viewer(QSP_ARG  vp,w,h);
+	return make_viewer(vp,w,h);
 }
 
 int make_mousescape(QSP_ARG_DECL  Viewer *vp,int w,int h)
 {
 	// BUG?  do something special here???
-	return make_viewer(QSP_ARG  vp,w,h);
+	return make_viewer(vp,w,h);
 }
 
 void relabel_viewer(Viewer *vp,const char *s)
@@ -1325,7 +1325,7 @@ void init_viewer_images(Viewer *vp)
 #ifdef BUILD_FOR_IOS
 void bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp,int x,int y)
 {
-	WARN("bring_image_to_front not implemented for iOS!?");
+	warn("bring_image_to_front not implemented for iOS!?");
 }
 #endif // BUILD_FOR_IOS
 

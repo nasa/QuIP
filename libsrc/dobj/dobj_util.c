@@ -71,7 +71,9 @@ void _cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 	givbuf(dp->dt_unaligned_ptr);
 }
 
-static void release_data(QSP_ARG_DECL  Data_Obj *dp )
+#define release_data(dp ) _release_data(QSP_ARG  dp )
+
+static void _release_data(QSP_ARG_DECL  Data_Obj *dp )
 {
 	if( OBJ_DATA_PTR(dp) != (unsigned char *)NULL ){
 		assert( PF_OBJ_FREE_FN( OBJ_PLATFORM(dp) ) != NULL );
@@ -261,7 +263,7 @@ advise(ERROR_STRING);
 
 	if( OWNS_DATA(dp) ){
 		if( ! UNKNOWN_SHAPE(OBJ_SHAPE(dp)) ){
-			release_data(QSP_ARG  dp);
+			release_data(dp);
 		}
 	}
 	// In the first OpenCL implementation, we used subbuffers, which had
@@ -656,20 +658,20 @@ void _gen_xpose(QSP_ARG_DECL  Data_Obj *dp,int dim1,int dim2)
 	check_contiguity(dp);
 }
 
-double get_dobj_il_flg(QSP_ARG_DECL  Data_Obj *dp)
+double _get_dobj_il_flg(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( INTERLACED_SHAPE( OBJ_SHAPE(dp) ) ) return(1.0);
 	else return(0.0);
 }
 
-const char *get_dobj_prec_name(QSP_ARG_DECL  Data_Obj *dp)
+const char *_get_dobj_prec_name(QSP_ARG_DECL  Data_Obj *dp)
 {
 	assert( dp != NULL );
 
 	return OBJ_PREC_NAME(dp);
 }
 
-double get_dobj_size(QSP_ARG_DECL  Data_Obj *dp,int index)
+double _get_dobj_size(QSP_ARG_DECL  Data_Obj *dp,int index)
 {
 	assert( dp != NULL );
 	assert( index >= 0 && index < N_DIMENSIONS );
@@ -679,7 +681,9 @@ double get_dobj_size(QSP_ARG_DECL  Data_Obj *dp,int index)
 
 // We give the position relative to the parent object...
 
-static double get_dobj_posn(QSP_ARG_DECL  Item *ip, int index )
+#define get_dobj_posn(ip, index ) _get_dobj_posn(QSP_ARG  ip, index )
+
+static double _get_dobj_posn(QSP_ARG_DECL  Item *ip, int index )
 {
 	double d=(-1);
 	Data_Obj *dp;
@@ -722,16 +726,16 @@ static double get_dobj_posn(QSP_ARG_DECL  Item *ip, int index )
 }
 
 static Size_Functions dobj_sf={
-	(double (*)(QSP_ARG_DECL  Item *,int))		get_dobj_size,
-	(const char * (*)(QSP_ARG_DECL  Item *))	get_dobj_prec_name
+	(double (*)(QSP_ARG_DECL  Item *,int))		_get_dobj_size,
+	(const char * (*)(QSP_ARG_DECL  Item *))	_get_dobj_prec_name
 };
 
 static Interlace_Functions dobj_if={
-	(double (*)(QSP_ARG_DECL  Item *))		get_dobj_il_flg
+	(double (*)(QSP_ARG_DECL  Item *))		_get_dobj_il_flg
 };
 
 static Position_Functions dobj_pf={
-	get_dobj_posn
+	_get_dobj_posn
 };
 
 static Subscript_Functions dobj_ssf={

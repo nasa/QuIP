@@ -175,7 +175,8 @@ extern int default_hide_back_button;
 		init_gw_lut(gwp);
 
 extern void init_gw_lut(Gen_Win *gwp);
-extern Gen_Win *make_genwin(QSP_ARG_DECL  const char *name,int width,int height);
+extern Gen_Win * _make_genwin(QSP_ARG_DECL  const char *name,int width,int height);
+#define make_genwin(name,width,height) _make_genwin(QSP_ARG  name,width,height)
 
 #ifdef BUILD_FOR_IOS
 extern UIViewController *current_view_controller;

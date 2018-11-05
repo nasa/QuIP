@@ -98,9 +98,13 @@ extern void	ios_set_del_method(QSP_ARG_DECL  IOS_Item_Type *,void (*func)(QSP_AR
 extern void del_ios_item(QSP_ARG_DECL IOS_Item_Type *itp, IOS_Item *ip );
 extern void delete_ios_item_context(QSP_ARG_DECL IOS_Item_Context *icp );
 
-extern IOS_Item_Type *new_ios_item_type(QSP_ARG_DECL  const char *name);
-extern IOS_Item_Context *new_ctx(QSP_ARG_DECL  const char *name);
-extern IOS_Item *new_ios_item(QSP_ARG_DECL  IOS_Item_Type *itp, const char *name, int size);
+//extern IOS_Item_Type *_new_ios_item_type(QSP_ARG_DECL  const char *name);
+extern IOS_Item_Context *_new_ctx(QSP_ARG_DECL  const char *name);
+extern IOS_Item *_new_ios_item(QSP_ARG_DECL  IOS_Item_Type *itp, const char *name, int size);
+
+//#define new_ios_item_type(name) _new_ios_item_type(QSP_ARG  name)
+#define new_ctx(name) _new_ctx(QSP_ARG  name)
+#define new_ios_item(itp, name, size) _new_ios_item(QSP_ARG  itp, name, size)
 
 
 #define IOS_ITEM_INIT_PROT(type,stem)		\

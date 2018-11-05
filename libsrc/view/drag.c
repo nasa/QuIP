@@ -11,19 +11,19 @@
 
 ITEM_INTERFACE_DECLARATIONS(Draggable,dragg,0)
 
-void make_dragg(QSP_ARG_DECL  const char *name,Data_Obj *bm,Data_Obj *dp)
+void _make_dragg(QSP_ARG_DECL  const char *name,Data_Obj *bm,Data_Obj *dp)
 {
 	Draggable *dgp;
 
 	if( !dp_same_size(bm,dp,"make_dragg") ){
-		WARN("image/bitmap size mismatch");
+		warn("image/bitmap size mismatch");
 		return;
 	}
 	if( OBJ_PREC(bm) != PREC_BIT ){
 		sprintf(ERROR_STRING,"Object %s has precision %s, should be %s",
 			OBJ_NAME(bm),PREC_NAME(OBJ_PREC_PTR(bm)),
 			PREC_NAME(PREC_FOR_CODE(PREC_BIT)));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( OBJ_PREC(dp) != PREC_BY && OBJ_PREC(dp) != PREC_UBY ){
@@ -31,7 +31,7 @@ void make_dragg(QSP_ARG_DECL  const char *name,Data_Obj *bm,Data_Obj *dp)
 			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)),
 			PREC_NAME(PREC_FOR_CODE(PREC_BY)),
 			PREC_NAME(PREC_FOR_CODE(PREC_UBY)) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 

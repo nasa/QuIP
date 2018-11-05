@@ -153,31 +153,14 @@
 @end
 #endif /* USE_HTTP_DELEGATE */
 
-void init_http_subsystem(void)
+void _init_http_subsystem(void)
 {
 	// nop
 }
 
-// This function is started in a different queue...
-#ifdef FOOBAR
-static void _write_file_from_url_helper(void *arg)
-{
-	quipHttpDelegate *qhd;
+#define fetch_url_contents(url) _fetch_url_contents(QSP_ARG  url)
 
-//advise("helper func BEGIN");
-
-	qhd = (__bridge quipHttpDelegate *)(arg);
-
-	// The file will be closed when we return, so we shouldn't return
-	// until all the data has been received and written.
-	// BUT control won't be given up as long as we stay here!?!?
-
-//advise("starting transfer...");
-//	[qhd start];
-}
-#endif /* FOOBAR */
-
-static NSData *fetch_url_contents(QSP_ARG_DECL  NSString *url)
+static NSData *_fetch_url_contents(QSP_ARG_DECL  NSString *url)
 {
 	NSURLResponse *theResponse;
 	NSError *theError;
@@ -198,20 +181,20 @@ static NSData *fetch_url_contents(QSP_ARG_DECL  NSString *url)
 	return data;
 }
 
-void write_file_from_url( QSP_ARG_DECL  FILE *fp, const char *url )
+void _write_file_from_url( QSP_ARG_DECL  FILE *fp, const char *url )
 {
 	NSData *data;
 
-	data = fetch_url_contents(QSP_ARG  STRINGOBJ(url) );
+	data = fetch_url_contents( STRINGOBJ(url) );
 
 	if( data == NULL ){
-		WARN("problem with synchronous connection");
+		warn("problem with synchronous connection");
 		return;
 	}
 advise("got some data!");
 	if( fwrite( data.bytes, 1, data.length, fp)
 		!= data.length ){
-		WARN("Error writing downloaded data!?");
+		warn("Error writing downloaded data!?");
 	}
 	fclose(fp);
 
@@ -226,7 +209,7 @@ advise("got some data!");
 	qhd = [[quipHttpDelegate alloc] initWithURL: STRINGOBJ(url) ];
 #ifdef CAUTIOUS
 	if( qhd == NULL ){
-		WARN("CAUTIOUS:  write_file_from_url:  error creating quipHttpDelegate!?");
+		warn("CAUTIOUS:  write_file_from_url:  error creating quipHttpDelegate!?");
 		return;
 	}
 #endif /* CAUTIOUS */

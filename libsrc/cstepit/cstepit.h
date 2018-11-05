@@ -1,9 +1,5 @@
 
 
-#ifdef INC_VERSION
-char VersionId_inc_cstepit[] = QUIP_VERSION_STRING;
-#endif /* INC_VERSION */
-
 #ifndef VARS
 
 #include "optimize.h"
@@ -18,17 +14,24 @@ char VersionId_inc_cstepit[] = QUIP_VERSION_STRING;
 
 /* stepit.c */
 
-extern int stepit(QSP_ARG_DECL  void (*func)(void));
+extern int _stepit(QSP_ARG_DECL  void (*func)(void));
+#define stepit(func) _stepit(QSP_ARG  func)
+
 extern void halt_cstepit(void);
 extern void getvals(double *,int);
-extern void setvals(QSP_ARG_DECL  double *,int);
 extern void setfobj(double);
-extern void setminmax(QSP_ARG_DECL  double *,double *,int);
-extern void setdelta(QSP_ARG_DECL  double *,double *,int);
 extern void settrace(int);
 extern void setmaxcalls(int);
-extern int _reset_n_params(QSP_ARG_DECL  int);
-#define reset_n_params(n) _reset_n_params(QSP_ARG  n)
+
+extern void _set_opt_param_vals(QSP_ARG_DECL  double *,int);
+extern void _set_opt_param_minmax(QSP_ARG_DECL  double *,double *,int);
+extern void _set_opt_param_delta(QSP_ARG_DECL  double *,double *,int);
+extern int _reset_n_opt_params(QSP_ARG_DECL  int);
+
+#define set_opt_param_vals(d,n) _set_opt_param_vals(QSP_ARG  d,n)
+#define set_opt_param_minmax(d1,d2,n) _set_opt_param_minmax(QSP_ARG  d1,d2,n)
+#define set_opt_param_delta(d1,d2,n) _set_opt_param_delta(QSP_ARG  d1,d2,n)
+#define reset_n_opt_params(n) _reset_n_opt_params(QSP_ARG  n)
 
 /* quick.c */
 
