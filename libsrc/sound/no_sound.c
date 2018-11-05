@@ -31,8 +31,8 @@ void set_sound_volume(QSP_ARG_DECL  int g)
 
 int set_playback_nchan(QSP_ARG_DECL  int channels)
 {
-    advise_no_sound(SINGLE_QSP_ARG);
-    return 0;
+	advise_no_sound(SINGLE_QSP_ARG);
+	return 0;
 }
 
 void set_samp_freq(QSP_ARG_DECL  unsigned int req_rate)
@@ -47,12 +47,12 @@ void audio_init(QSP_ARG_DECL  int mode)
 
 void set_stereo_output(QSP_ARG_DECL  int is_stereo)
 {
-    advise_no_sound(SINGLE_QSP_ARG);
+	advise_no_sound(SINGLE_QSP_ARG);
 }
 
 void halt_play_stream(SINGLE_QSP_ARG_DECL)
 {
-    advise_no_sound(SINGLE_QSP_ARG);
+	advise_no_sound(SINGLE_QSP_ARG);
 }
 
 void play_stream(QSP_ARG_DECL  int fd)
@@ -119,6 +119,18 @@ void halt_rec_stream(SINGLE_QSP_ARG_DECL)
 void set_stereo_input(QSP_ARG_DECL  int is_stereo)
 {
 	advise_no_sound(SINGLE_QSP_ARG);
+}
+
+int _sound_seek(QSP_ARG_DECL  index_t idx)
+{
+	advise_no_sound(SINGLE_QSP_ARG);
+	return 0;
+}
+
+int _async_play_sound(QSP_ARG_DECL  Data_Obj *dp)
+{
+	advise_no_sound(SINGLE_QSP_ARG);
+	return 0;
 }
 
 

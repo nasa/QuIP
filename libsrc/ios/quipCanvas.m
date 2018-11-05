@@ -22,9 +22,9 @@
 	r.size = size;
 #ifdef BUILD_FOR_IOS
 	self = [super initWithFrame:r];
+    self.opaque = NO;
 #endif // BUILD_FOR_IOS
 
-	self.opaque = NO;
 
 	return self;
 }

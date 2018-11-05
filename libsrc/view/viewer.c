@@ -65,7 +65,7 @@ static void rls_vw_lists(Viewer *);
 
 +(void) initClass
 {
-	canvas_event_itp = new_ios_item_type(DEFAULT_QSP_ARG  "Canvas_Event");
+	canvas_event_itp = _new_ios_item_type(DEFAULT_QSP_ARG  "Canvas_Event");
 }
 
 @end
@@ -95,7 +95,7 @@ static void rls_vw_lists(Viewer *);
 
 +(void) initClass
 {
-	vwr_itp = new_ios_item_type(DEFAULT_QSP_ARG  "Viewer");
+	vwr_itp = _new_ios_item_type(DEFAULT_QSP_ARG  "Viewer");
 
 	// Somewhere we need to declare the event types!
 	declare_canvas_events(SGL_DEFAULT_QSP_ARG);

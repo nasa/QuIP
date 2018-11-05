@@ -66,5 +66,15 @@ void _record_sound(QSP_ARG_DECL  Data_Obj *dp)
 void record_stream(QSP_ARG_DECL  int sound_fd, int timestamp_fd)
 {}
 
+int _sound_seek(QSP_ARG_DECL  index_t idx)
+{
+    return 0;
+}
+
+int _async_play_sound(QSP_ARG_DECL  Data_Obj *dp)
+{
+    return 0;
+}
+
 #endif // HAVE_APPLE_CORE_AUDIO
 
