@@ -1,9 +1,9 @@
 #! /bin/sh
 # ylwrap - wrapper for lex/yacc invocations.
 
-scriptversion=2013-01-12.17; # UTC
+scriptversion=2018-03-07.03; # UTC
 
-# Copyright (C) 1996-2014 Free Software Foundation, Inc.
+# Copyright (C) 1996-2018 Free Software Foundation, Inc.
 #
 # Written by Tom Tromey <tromey@cygnus.com>.
 #
@@ -18,7 +18,7 @@ scriptversion=2013-01-12.17; # UTC
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # As a special exception to the GNU General Public License, if you
 # distribute this file as part of a program that contains a
@@ -97,7 +97,6 @@ esac
 
 # The input.
 input=$1
-echo input = $input
 shift
 # We'll later need for a correct munging of "#line" directives.
 input_sub_rx=`get_dirname "$input" | quote_for_sed`
@@ -123,7 +122,6 @@ fi
 # The parser itself, the first file, is the destination of the .y.c
 # rule in the Makefile.
 parser=$1
-echo parser = $parser
 
 # A sed program to s/FROM/TO/g for all the FROM/TO so that, for
 # instance, we rename #include "y.tab.h" into #include "parse.h"
@@ -136,12 +134,10 @@ sed_fix_header_guards=
 
 while test $# -ne 0; do
   if test x"$1" = x"--"; then
-    echo Shifting $1
     shift
     break
   fi
   from=$1
-  echo from = $from
   # Handle y_tab.c and y_tab.h output by DOS
   if $y_tab_nodot; then
     case $from in
@@ -151,7 +147,6 @@ while test $# -ne 0; do
   fi
   shift
   to=$1
-  echo to = $to
   shift
   sed_fix_filenames="${sed_fix_filenames}s|"`quote_for_sed "$from"`"|$to|g;"
   sed_fix_header_guards="${sed_fix_header_guards}s|"`guard "$from"`"|"`guard "$to"`"|g;"
@@ -159,7 +154,6 @@ done
 
 # The program to run.
 prog=$1
-echo prog = $prog
 shift
 # Make any relative path in $prog absolute.
 case $prog in
@@ -176,9 +170,6 @@ trap "ret=143; $do_exit" 15
 mkdir $dirname || exit 1
 
 cd $dirname
-
-echo prog = $prog
-echo input = $input
 
 case $# in
   0) "$prog" "$input" ;;
@@ -248,9 +239,9 @@ exit $ret
 # Local Variables:
 # mode: shell-script
 # sh-indentation: 2
-# eval: (add-hook 'write-file-hooks 'time-stamp)
+# eval: (add-hook 'before-save-hook 'time-stamp)
 # time-stamp-start: "scriptversion="
 # time-stamp-format: "%:y-%02m-%02d.%02H"
-# time-stamp-time-zone: "UTC"
+# time-stamp-time-zone: "UTC0"
 # time-stamp-end: "; # UTC"
 # End:
