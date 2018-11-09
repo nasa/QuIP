@@ -617,7 +617,7 @@ FIO_RD_FUNC( pngfio )
 
 #ifdef HAVE_ANY_GPU
 	// BUG it would be nice to create a temp object, and fetch the data...
-	if( ! object_is_in_ram(QSP_ARG  dp, "read object from png file") )
+	if( ! object_is_in_ram(dp, "read object from png file") )
 		return;
 #endif // HAVE_ANY_GPU
 
@@ -713,7 +713,7 @@ FIO_WT_FUNC( pngfio )		// unix version
 
 #ifdef HAVE_ANY_GPU
 	// BUG it would be nice to create a temp object, and fetch the data...
-	if( ! object_is_in_ram(QSP_ARG  dp, "write object to png file") )
+	if( ! object_is_in_ram(dp, "write object to png file") )
 		return(-1);
 #endif // HAVE_ANY_GPU
 
@@ -883,7 +883,7 @@ FIO_WT_FUNC( pngfio )		// unix version
 	}
 
 //	/* close the file */
-//	pngfio_close(QSP_ARG  ifp);
+//	pngfio_close(ifp);
 
 	return(0);
 }
@@ -1079,7 +1079,7 @@ FIO_WT_FUNC( pngfio )		// iOS version
 
 	// just one image
 	// BUG could make sure user did not request multiple frames...
-	close_image_file(QSP_ARG  ifp);
+	close_image_file(ifp);
 
 	return(0);
 }
@@ -1222,7 +1222,7 @@ FIO_RD_FUNC( pngfio )		// iOS version
 	memcpy(OBJ_DATA_PTR(dp),bytes,OBJ_N_MACH_ELTS(dp));
 
 	// what if there is more than one image in the file???
-	close_image_file(QSP_ARG  ifp);
+	close_image_file(ifp);
 }
 
 FIO_INFO_FUNC(pngfio)

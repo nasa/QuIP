@@ -298,7 +298,9 @@ advise(DEFAULT_ERROR_STRING);
  * for this node if needed.
  */
 
-static Shape_Info * get_child_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,int child_index)
+#define get_child_shape(enp,child_index) _get_child_shape(QSP_ARG  enp,child_index)
+
+static Shape_Info * _get_child_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,int child_index)
 {
 	Shape_Info *shpp;
 	Vec_Expr_Node *enp2;
@@ -597,7 +599,9 @@ advise(DEFAULT_ERROR_STRING);
  * With the new scheme, is this different from compute_assign_shape??
  */
 
-static void update_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define update_assign_shape(enp) _update_assign_shape(QSP_ARG  enp)
+
+static void _update_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 //	prec_t prec;
 
@@ -654,7 +658,9 @@ static void update_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 } /* update_assign_shape */
 
-static void insert_typecast_node(QSP_ARG_DECL  Vec_Expr_Node *enp, int index, Precision *prec_p)
+#define insert_typecast_node(enp, index, prec_p) _insert_typecast_node(QSP_ARG  enp, index, prec_p)
+
+static void _insert_typecast_node(QSP_ARG_DECL  Vec_Expr_Node *enp, int index, Precision *prec_p)
 {
 	Vec_Expr_Node *new_enp;
 
@@ -795,7 +801,7 @@ describe_shape(VN_SHAPE(VN_CHILD(enp,index)));
 }
 #endif /* QUIP_DEBUG */
 
-	insert_typecast_node(QSP_ARG  enp,index,prec_p);
+	insert_typecast_node(enp,index,prec_p);
 } /* typecast_child */
 
 /* Return the dominant precision (the other will be promoted to it... */
@@ -865,7 +871,9 @@ static void _promote_child(QSP_ARG_DECL   Vec_Expr_Node *enp, int i1, int i2)
 
 // helper function for check_typecast
 
-static void check_int_binop(QSP_ARG_DECL  Vec_Expr_Node *enp, int i1, int i2)
+#define check_int_binop(enp, i1, i2) _check_int_binop(QSP_ARG  enp, i1, i2)
+
+static void _check_int_binop(QSP_ARG_DECL  Vec_Expr_Node *enp, int i1, int i2)
 {
 	// assert node is the correct type?
 
@@ -927,7 +935,7 @@ dump_tree(enp);
 		// the operands match each other, but do they match the parent?
 		switch(VN_CODE(enp)){
 			ALL_SCALINT_BINOP_CASES		/* check_typecast */
-				check_int_binop(QSP_ARG  enp,i1,i2);
+				check_int_binop(enp,i1,i2);
 				break;
 			default:
 				break;
@@ -969,7 +977,7 @@ dump_tree(enp);
 		ALL_SCALINT_BINOP_CASES		/* check_typecast */
 			/* modulo, bitwise operators and shifts... */
 integer_only_cases:
-			check_int_binop(QSP_ARG  enp,i1,i2);
+			check_int_binop(enp,i1,i2);
 			return;
 
 
@@ -1049,7 +1057,9 @@ not_integer_only:
  * which have bitmap precision if they are vector.
  */
 
-static Shape_Info * check_mating_shapes(QSP_ARG_DECL  Vec_Expr_Node *enp,int index1,int index2)
+#define check_mating_shapes(enp,index1,index2) _check_mating_shapes(QSP_ARG  enp,index1,index2)
+
+static Shape_Info * _check_mating_shapes(QSP_ARG_DECL  Vec_Expr_Node *enp,int index1,int index2)
 {
 	Shape_Info *shpp;
 
@@ -1164,7 +1174,7 @@ advise("check_mating_shapes:  no mating shapes");
 static Shape_Info * _get_mating_shapes(QSP_ARG_DECL   Vec_Expr_Node *enp,int i1, int i2)
 {
 	check_typecast(enp,i1,i2);
-	return( check_mating_shapes(QSP_ARG  enp,i1,i2) );
+	return( check_mating_shapes(enp,i1,i2) );
 }
 
 /* Set the shape of this node based on its children.
@@ -1454,7 +1464,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			break;
 
 		case T_TRANSPOSE:		/* update_node_shape */
-			VN_CHILD_SHAPE(enp,0) = get_child_shape(QSP_ARG  enp,0);
+			VN_CHILD_SHAPE(enp,0) = get_child_shape(enp,0);
 			COPY_SHAPE(tmp_shpp,VN_CHILD_SHAPE(enp,0));
 			i1                    = SHP_ROWS(tmp_shpp);
 			SET_SHP_ROWS(tmp_shpp, SHP_COLS(tmp_shpp) );
@@ -1573,10 +1583,10 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 			str=eval_string(VN_CHILD(enp,0));
 			if( str == NULL ) goto no_file;	/* probably a variable that we can't know until runtime */
-			ifp = img_file_of(QSP_ARG  str);
+			ifp = img_file_of(str);
 
 			if( ifp == NULL ){
-				ifp = read_image_file(QSP_ARG  str);
+				ifp = read_image_file(str);
 				if( ifp==NULL ){
 					node_error(enp);
 					sprintf(ERROR_STRING,
@@ -1790,7 +1800,7 @@ no_file:
 			break;
 
 		case T_ASSIGN:			/* update_node_shape */
-			update_assign_shape(QSP_ARG  enp);
+			update_assign_shape(enp);
 			break;
 
 
@@ -1982,7 +1992,9 @@ static void link_one_uk_arg(Vec_Expr_Node *call_enp, Vec_Expr_Node *arg_enp)
  * I'm not sure exatly how this is going to work???
  */
 
-static void link_uk_args(QSP_ARG_DECL  Vec_Expr_Node *call_enp,Vec_Expr_Node *arg_enp)
+#define link_uk_args(call_enp,arg_enp) _link_uk_args(QSP_ARG  call_enp,arg_enp)
+
+static void _link_uk_args(QSP_ARG_DECL  Vec_Expr_Node *call_enp,Vec_Expr_Node *arg_enp)
 {
 	Data_Obj *dp;
 
@@ -2039,8 +2051,8 @@ static void link_uk_args(QSP_ARG_DECL  Vec_Expr_Node *call_enp,Vec_Expr_Node *ar
 		case T_ARGLIST:
 		case T_ROW:
 		/* case T_ROWLIST: */
-			link_uk_args(QSP_ARG  call_enp,VN_CHILD(arg_enp,0));
-			link_uk_args(QSP_ARG  call_enp,VN_CHILD(arg_enp,1));
+			link_uk_args(call_enp,VN_CHILD(arg_enp,0));
+			link_uk_args(call_enp,VN_CHILD(arg_enp,1));
 			break;
 
 		/* only one child to descend
@@ -2050,7 +2062,7 @@ static void link_uk_args(QSP_ARG_DECL  Vec_Expr_Node *call_enp,Vec_Expr_Node *ar
 		case T_TRANSPOSE:
 		case T_TYPECAST:
 		case T_CURLY_SUBSCR:
-			link_uk_args(QSP_ARG  call_enp,VN_CHILD(arg_enp,0));
+			link_uk_args(call_enp,VN_CHILD(arg_enp,0));
 			break;
 
 		default:
@@ -2145,7 +2157,9 @@ _describe_shape(DEFAULT_QSP_ARG  VN_SHAPE(enp2));
  * If both are known, then we check for a match.
  */
 
-static void compute_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define compute_assign_shape(enp) _compute_assign_shape(QSP_ARG  enp)
+
+static void _compute_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Shape_Info *shpp;
 //	prec_t prec;
@@ -2283,14 +2297,16 @@ advise(ERROR_STRING);
 } /* end compute_assign_shape */
 
 
-static const char *struct_name(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define struct_name(enp) _struct_name(QSP_ARG  enp)
+
+static const char *_struct_name(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	char buf[LLEN];
 	static char sn[LLEN];
 
 	switch(VN_CODE(enp)){
 		case T_STRUCT:
-			sprintf(buf,"%s.%s",VN_STRING(enp),struct_name(QSP_ARG  VN_CHILD(enp,0)));
+			sprintf(buf,"%s.%s",VN_STRING(enp),struct_name(VN_CHILD(enp,0)));
 			strcpy(sn,buf);
 			return(sn);
 
@@ -2320,7 +2336,7 @@ static int _count_name_refs(QSP_ARG_DECL  Vec_Expr_Node *enp,const char *lhs_nam
 			 * This is probably wrong, but we do it
 			 * until we understand...
 			 */
-			if( strcmp( struct_name(QSP_ARG  enp), lhs_name ) ){
+			if( strcmp( struct_name(enp), lhs_name ) ){
 				SET_VN_LHS_REFS(enp,0);
 			} else {
 				SET_VN_LHS_REFS(enp,1);
@@ -2535,7 +2551,9 @@ static void _count_lhs_refs(QSP_ARG_DECL Vec_Expr_Node *enp)
 	SET_VN_LHS_REFS(enp, count_name_refs(VN_CHILD(enp,1),lhs_name));
 }
 
-static void set_vv_bool_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define set_vv_bool_code(enp) _set_vv_bool_code(QSP_ARG  enp)
+
+static void _set_vv_bool_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	//VERIFY_DATA_TYPE(enp,ND_FUNC,"set_vv_bool_code")
 	ASSERT_NODE_DATA_TYPE( enp, ND_FUNC )
@@ -2568,7 +2586,9 @@ static void set_vv_bool_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 /* Set the code field for a boolean test node */
 
-static void set_vs_bool_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define set_vs_bool_code(enp) _set_vs_bool_code(QSP_ARG  enp)
+
+static void _set_vs_bool_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	switch(VN_CODE(enp)){
 		case T_BOOL_NOT:
@@ -2600,7 +2620,9 @@ static void set_vs_bool_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 } /* end set_vs_bool_code */
 
-static void commute_bool_test(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define commute_bool_test(enp) _commute_bool_test(QSP_ARG  enp)
+
+static void _commute_bool_test(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	switch(VN_CODE(enp)){
 		case T_BOOL_GT:  SET_VN_CODE(enp, T_BOOL_LT); break;
@@ -2619,7 +2641,9 @@ static void commute_bool_test(QSP_ARG_DECL  Vec_Expr_Node *enp)
  *
  */
 
-static void set_bool_vecop_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define set_bool_vecop_code(enp) _set_bool_vecop_code(QSP_ARG  enp)
+
+static void _set_bool_vecop_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	//int vector_scalar;
 
@@ -2628,13 +2652,13 @@ static void set_bool_vecop_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(enp,1)) ){
 			/* vector-vector op */
 			/* BUT could be an outer op - we should have already checked this... */
-			set_vv_bool_code(QSP_ARG  enp);
+			set_vv_bool_code(enp);
 		} else {
 			/* vector scalar operation,
 			 * second operand is the scalar,
 			 * so we leave the order unchanged.
 			 */
-			set_vs_bool_code(QSP_ARG  enp);
+			set_vs_bool_code(enp);
 		}
 	} else if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(enp,1)) ){
 		/* vector scalar op, first node is
@@ -2647,16 +2671,18 @@ static void set_bool_vecop_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		SET_VN_CHILD(enp,0, VN_CHILD(enp,1));
 		SET_VN_CHILD(enp,1, tmp_enp);
 //dump_tree(enp);
-		commute_bool_test(QSP_ARG  enp);
+		commute_bool_test(enp);
 
-		set_vs_bool_code(QSP_ARG  enp);
+		set_vs_bool_code(enp);
 	}
 	else {
 		assert( AERROR("set_bool_vecop_code:  no vector shapes!?") );
 	}
 }
 
-static void note_uk_objref(QSP_ARG_DECL  Vec_Expr_Node *decl_enp, Vec_Expr_Node *enp)
+#define note_uk_objref(decl_enp, enp) _note_uk_objref(QSP_ARG  decl_enp, enp)
+
+static void _note_uk_objref(QSP_ARG_DECL  Vec_Expr_Node *decl_enp, Vec_Expr_Node *enp)
 {
 	Node *np;
 
@@ -2696,7 +2722,9 @@ static Identifier *get_named_ptr(QSP_ARG_DECL  Vec_Expr_Node *enp)
  * Returns 0 for a good tree, -1 otherwise.
  */
 
-static int check_curds(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define check_curds(enp) _check_curds(QSP_ARG  enp)
+
+static int _check_curds(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
 
@@ -2987,7 +3015,9 @@ static void _check_bitmap_arg(QSP_ARG_DECL Vec_Expr_Node *enp,int index)
  * We insert a new node between this node and its second child.
  */
 
-static void invert_op(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Func_Code wc,Tree_Code new_tc)
+#define invert_op(enp,wc,new_tc) _invert_op(QSP_ARG  enp,wc,new_tc)
+
+static void _invert_op(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Func_Code wc,Tree_Code new_tc)
 {
 	Vec_Expr_Node *new_enp;
 
@@ -3014,7 +3044,9 @@ static void invert_op(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Func_Code wc,Tree_Cod
  * and insert a typecast node if necessary...
  */
 
-static void check_arith_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define check_arith_code(enp) _check_arith_code(QSP_ARG  enp)
+
+static void _check_arith_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int vector_scalar;
 
@@ -3087,7 +3119,7 @@ static void check_arith_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			if( vector_scalar==1 ){	/* scalar is 1st op */
 				SET_VN_VFUNC_CODE(enp, FVSSUB);
 			} else {
-				invert_op(QSP_ARG  enp,FVSADD,T_UMINUS);
+				invert_op(enp,FVSADD,T_UMINUS);
 			}
 		} else if( VN_CODE(enp) == T_TIMES ){
 			SET_VN_VFUNC_CODE(enp, FVSMUL);
@@ -3101,7 +3133,7 @@ static void check_arith_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			if( vector_scalar==1 ){	/* scalar is 1st op */
 				SET_VN_VFUNC_CODE(enp, FVSDIV);
 			} else {
-				/* invert_op(QSP_ARG  enp,FVSMUL,T_RECIP); */
+				/* invert_op(enp,FVSMUL,T_RECIP); */
 				SET_VN_VFUNC_CODE(enp, FVSDIV2);
 			}
 		} else if ( VN_CODE(enp) == T_MODULO ){
@@ -3376,13 +3408,15 @@ static Vec_Func_Code vs_vs_test_code(Tree_Code bool_code)
 	SET_VN_PARENT(VN_CHILD(enp,2),enp);		\
 	SET_VN_CHILD(enp,3, VN_CHILD(test_enp,idx2));	\
 	SET_VN_PARENT(VN_CHILD(enp,3),enp);		\
-	fix_resolver_references(QSP_ARG  test_enp);
+	fix_resolver_references(test_enp);
 
 #define FIX_CONDASS_CHILDREN_1		FIX_CONDASS_CHILDREN(0,1)
 #define FIX_CONDASS_CHILDREN_2		FIX_CONDASS_CHILDREN(1,0)
 
 
-static void remove_resolver(QSP_ARG_DECL  Vec_Expr_Node *enp, Vec_Expr_Node *enp_to_remove)
+#define remove_resolver(enp, enp_to_remove) _remove_resolver(QSP_ARG  enp, enp_to_remove)
+
+static void _remove_resolver(QSP_ARG_DECL  Vec_Expr_Node *enp, Vec_Expr_Node *enp_to_remove)
 {
 	Node *np;
 	List *lp;
@@ -3414,7 +3448,9 @@ static void remove_resolver(QSP_ARG_DECL  Vec_Expr_Node *enp, Vec_Expr_Node *enp
 // We need to remove these references, but we need to replace them with links to the other
 // resolver nodes.
 
-static void fix_resolver_references(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define fix_resolver_references(enp) _fix_resolver_references(QSP_ARG  enp)
+
+static void _fix_resolver_references(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	List *lp;
 	Node *np;
@@ -3427,7 +3463,7 @@ static void fix_resolver_references(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		enp_to_fix = NODE_DATA(np);
 //fprintf(stderr,"fix_resolver_references:  removing reference to %s from node %s\n",
 //node_desc(enp),node_desc(enp_to_fix));
-		remove_resolver(QSP_ARG  enp_to_fix,enp);
+		remove_resolver(enp_to_fix,enp);
 		np = NODE_NEXT(np);
 	}
 }
@@ -3569,7 +3605,7 @@ static void _check_xx_v_condass_code(QSP_ARG_DECL Vec_Expr_Node *enp)
 			SET_VN_CHILD(enp,2, tmp_enp);
 			SET_VN_CODE(enp, T_VS_B_CONDASS);
 			invert_bool_test(QSP_ARG VN_CHILD(enp,0));
-			set_vs_bool_code(QSP_ARG  VN_CHILD(enp,0));
+			set_vs_bool_code(VN_CHILD(enp,0));
 		} else {	/* scalar-scalar */
 			SET_VN_CODE(enp, T_SS_B_CONDASS);
 		}
@@ -3618,7 +3654,7 @@ static void _check_xx_s_condass_code(QSP_ARG_DECL Vec_Expr_Node *enp)
 			SET_VN_CODE(enp, T_VS_S_CONDASS);
 
 			invert_bool_test(QSP_ARG VN_CHILD(enp,0));
-			set_vs_bool_code(QSP_ARG  VN_CHILD(enp,0));
+			set_vs_bool_code(VN_CHILD(enp,0));
 		} else {	/* scalar-scalar */
 			/* don't think we ever get here... */
 			SET_VN_CODE(enp, T_SS_S_CONDASS);
@@ -3799,7 +3835,7 @@ static Vec_Expr_Node * _compile_node(QSP_ARG_DECL   Vec_Expr_Node *enp)
 	/* now all the child nodes have been scanned, process this one */
 
 	/* check for CURDLED children */
-	if( MAX_CHILDREN(enp)>0 && check_curds(QSP_ARG  enp) < 0 ) return(enp);
+	if( MAX_CHILDREN(enp)>0 && check_curds(enp) < 0 ) return(enp);
 
 	assert( ! OWNS_SHAPE(enp) );
 
@@ -3959,7 +3995,7 @@ excise_uminus:
 			 * need to change the node code
 			 */
 
-			check_arith_code(QSP_ARG  enp);
+			check_arith_code(enp);
 /*
 sprintf(ERROR_STRING,"compile_node binop:  %s",node_desc(enp));
 advise(ERROR_STRING);
@@ -4010,7 +4046,7 @@ dump_tree(enp);
 					copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 //fprintf(stderr,"compile_node:  calling xform_from_bitmap #1\n");
 //dump_tree(enp);
-//dump_shape(QSP_ARG  VN_SHAPE(enp));
+//dump_shape(VN_SHAPE(enp));
 					xform_from_bitmap(VN_SHAPE(enp),VN_CHILD_PREC(enp,1));
 					SET_VN_CODE(enp, T_SS_B_CONDASS);
 				} else {
@@ -4355,7 +4391,7 @@ dump_tree(enp);
 			/* Check for vector subscripts on LSH */
 			if( has_vector_subscript(VN_CHILD(enp,0)) ){
 #ifdef NOT_YET
-				enp=fix_render_code(QSP_ARG  enp);
+				enp=fix_render_code(enp);
 #else /* ! NOT_YET */
 				warn("Sorry, vector subscripts not implemented for objC yet...");
 #endif /* NOT_YET */
@@ -5135,7 +5171,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			/* link any unknown shape args to the callfunc node */
 			/* what is the child?  the arg list? */
 			if( ! NULL_CHILD(enp,0) )
-				link_uk_args(QSP_ARG  enp,VN_CHILD(enp,0));
+				link_uk_args(enp,VN_CHILD(enp,0));
 
 			/* void subrt's never need to have a shape */
 			if( SR_PREC_CODE(srp) == PREC_VOID ){
@@ -5432,7 +5468,7 @@ fprintf(stderr,"prelim_node_shape T_ASSIGN:  curdled child!?\n");
 			 * determine the shape of this node
 			 */
 
-			compute_assign_shape(QSP_ARG  enp);
+			compute_assign_shape(enp);
 
 			/* search the rhs for refs to the lhs object,
 			 *
@@ -5472,7 +5508,7 @@ dump_tree(enp);
 				return;
 }
 			if( ! SCALAR_SHAPE(VN_SHAPE(enp)) )
-				set_bool_vecop_code(QSP_ARG  enp);
+				set_bool_vecop_code(enp);
 			check_binop_links(enp);
 			break;
 
@@ -5615,7 +5651,7 @@ describe_shape(VN_SHAPE(decl_enp));
 			 * when we resolve the object we can get to all the other occurrences.
 			 */
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) )
-				note_uk_objref(QSP_ARG  decl_enp,enp);
+				note_uk_objref(decl_enp,enp);
 
 			break;
 
@@ -5861,7 +5897,9 @@ describe_shape(VN_SHAPE(decl_enp));
 
 // link_node_to_node - add the first node to the resolver list of the second
 
-static void link_node_to_node(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
+#define link_node_to_node(enp1,enp2) _link_node_to_node(QSP_ARG  enp1,enp2)
+
+static void _link_node_to_node(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
 {
 	Node *np;
 
@@ -5879,13 +5917,13 @@ static void link_node_to_node(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *e
 
 void _link_uk_nodes(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
 {
-	link_node_to_node(QSP_ARG  enp1, enp2);
-	link_node_to_node(QSP_ARG  enp2, enp1);
+	link_node_to_node(enp1, enp2);
+	link_node_to_node(enp2, enp1);
 }
 
 
 
-int decl_count(QSP_ARG_DECL  Vec_Expr_Node *enp)
+int _decl_count(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i1,i2;
 
@@ -5893,12 +5931,12 @@ int decl_count(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	switch(VN_CODE(enp)){
 		case T_DECL_STAT_LIST:
-			i1=decl_count(QSP_ARG  VN_CHILD(enp,0));
-			i2=decl_count(QSP_ARG  VN_CHILD(enp,1));
+			i1=decl_count(VN_CHILD(enp,0));
+			i2=decl_count(VN_CHILD(enp,1));
 			return(i1+i2);
 
 		case T_DECL_STAT:
-			i1=decl_count(QSP_ARG  VN_CHILD(enp,0));
+			i1=decl_count(VN_CHILD(enp,0));
 			return(i1);
 
 		/* We don't need a case for T_EXTERN_DECL
@@ -5921,7 +5959,9 @@ int decl_count(QSP_ARG_DECL  Vec_Expr_Node *enp)
 /* final_return() returns 1 if the subroutine ends with a return node.
  */
 
-static int final_return(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define final_return(enp) _final_return(QSP_ARG  enp)
+
+static int _final_return(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 
 	while(enp!=NULL){
@@ -5945,9 +5985,9 @@ static int final_return(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 			/* BUG probably need other loops here ? */
 			case T_IFTHEN:
-				if( ! final_return(QSP_ARG  VN_CHILD(enp,1)) ) return(0);
+				if( ! final_return(VN_CHILD(enp,1)) ) return(0);
 				if( VN_CHILD(enp,2) == NULL ) return(1);
-				return( final_return(QSP_ARG  VN_CHILD(enp,2)) );
+				return( final_return(VN_CHILD(enp,2)) );
 
 			default:
 				missing_case(enp,"final_return");
@@ -6229,7 +6269,7 @@ advise(ERROR_STRING);
 	save_srp = curr_srp;
 	curr_srp = srp;
 
-	SET_SR_N_ARGS(srp, decl_count(QSP_ARG  SR_ARG_DECLS(srp)) );	/* set # args */
+	SET_SR_N_ARGS(srp, decl_count(SR_ARG_DECLS(srp)) );	/* set # args */
 
 /*
 sprintf(ERROR_STRING,"compile_subrt %s setting SCANNING flag",SR_NAME(srp));
@@ -6238,7 +6278,7 @@ advise(ERROR_STRING);
 	SET_SR_FLAG_BITS(srp, SR_SCANNING);
 
 	/* set the context */
-	set_subrt_ctx(QSP_ARG  SR_NAME(srp));
+	set_subrt_ctx(SR_NAME(srp));
 
 	/* declare the arg variables */
 	eval_decl_tree(SR_ARG_DECLS(srp));
@@ -6262,7 +6302,7 @@ dump_tree(SR_BODY(srp));
 
 	delete_subrt_ctx(SR_NAME(srp));
 
-	if( SR_PREC_CODE(srp) != PREC_VOID && ! final_return(QSP_ARG  SR_BODY(srp)) ){
+	if( SR_PREC_CODE(srp) != PREC_VOID && ! final_return(SR_BODY(srp)) ){
 		/* what node should we report the error at ? */
 		sprintf(ERROR_STRING,"subroutine %s does not end with a return statement",SR_NAME(srp));
 		warn(ERROR_STRING);
@@ -6378,7 +6418,7 @@ Vec_Expr_Node * _compile_prog(QSP_ARG_DECL   Vec_Expr_Node *enp)
  * The goal here is to transform the node to one which is render(&a,&coords,&samples)
  */
 
-static Vec_Expr_Node * fix_render_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
+static Vec_Expr_Node * _fix_render_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Vec_Expr_Node *new_enp, *a1_enp, *lhs_enp;
 	Vec_Expr_Node *l1_enp, *l2_enp;
@@ -6437,7 +6477,7 @@ static void check_vx_vx_condass_code(QSP_ARG_DECL Vec_Expr_Node *enp)
 			SET_VN_CHILD(enp,2, tmp_enp);
 			SET_VN_CODE(enp, T_VS_B_CONDASS);
 			invert_bool_test(QSP_ARG VN_CHILD(enp,0));
-			set_vs_bool_code(QSP_ARG  VN_CHILD(enp,0));
+			set_vs_bool_code(VN_CHILD(enp,0));
 		} else {	/* scalar-scalar */
 			SET_VN_CODE(enp, T_SS_B_CONDASS);
 		}
@@ -6460,7 +6500,7 @@ void init_fixed_nodes(SINGLE_QSP_ARG_DECL)
 	// code must be set before calling init_expr_node!
 	SET_VN_CODE(minus_one_enp, T_LIT_DBL);
 
-	init_expr_node(QSP_ARG  minus_one_enp);
+	init_expr_node(minus_one_enp);
 	SET_VN_DBLVAL(minus_one_enp, -1.0);
 	point_node_shape(minus_one_enp, scalar_shape(PREC_DP) );
 

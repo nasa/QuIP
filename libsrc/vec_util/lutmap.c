@@ -46,7 +46,7 @@
 			}						\
 		} 
 
-int lutmap( QSP_ARG_DECL  Data_Obj *dest_dp, Data_Obj *src_dp, Data_Obj *lut_dp )
+int _lutmap( QSP_ARG_DECL  Data_Obj *dest_dp, Data_Obj *src_dp, Data_Obj *lut_dp )
 {
 	dimension_t i,j;
 

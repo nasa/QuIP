@@ -20,21 +20,13 @@
 
 static const char *timer_script = NULL;
 
-#ifdef NOT_USED
-static void my_alarm(int x)
-{
-	sprintf(DEFAULT_ERROR_STRING,"my_alarm:  arg is %d",x);
-	NADVISE(DEFAULT_ERROR_STRING);
-}
-#endif // NOT_USED
-
-void set_alarm_script(QSP_ARG_DECL  const char *s)
+void _set_alarm_script(QSP_ARG_DECL  const char *s)
 {
 	if( timer_script != NULL ) rls_str(timer_script);
 	timer_script = savestr(s);
 }
 
-void set_alarm_time(QSP_ARG_DECL  float f)
+void _set_alarm_time(QSP_ARG_DECL  float f)
 {
 #ifdef HAVE_SETITIMER
 	struct itimerval itv;

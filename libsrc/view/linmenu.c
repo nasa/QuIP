@@ -12,29 +12,29 @@ static COMMAND_FUNC( do_set_n_linear )
 {
 	int n;
 
-	n=(int)HOW_MANY("number of linearization table entries");
-	set_n_linear(QSP_ARG  n);
+	n=(int)how_many("number of linearization table entries");
+	set_n_linear(n);
 	CHECK_DPYP("do_set_n_linear")
 #ifdef HAVE_X11
-	lin_setup(QSP_ARG  DPA_LINTBL_OBJ(current_dpyp),crt_gamma,crt_vzero);
+	lin_setup(DPA_LINTBL_OBJ(current_dpyp),crt_gamma,crt_vzero);
 #endif /* HAVE_X11 */
 }
 
 static COMMAND_FUNC( do_set_gamma )
 {
-	crt_gamma=HOW_MUCH("exponent for linearization");
+	crt_gamma=how_much("exponent for linearization");
 	CHECK_DPYP("do_set_gamma")
 #ifdef HAVE_X11
-	lin_setup(QSP_ARG  DPA_LINTBL_OBJ(current_dpyp),crt_gamma,crt_vzero);
+	lin_setup(DPA_LINTBL_OBJ(current_dpyp),crt_gamma,crt_vzero);
 #endif /* HAVE_X11 */
 }
 
 static COMMAND_FUNC( do_set_vzero )
 {
-	crt_vzero=(float)HOW_MUCH("voltage offset for linearization");
+	crt_vzero=(float)how_much("voltage offset for linearization");
 	CHECK_DPYP("do_set_vzero")
 #ifdef HAVE_X11
-	lin_setup(QSP_ARG  DPA_LINTBL_OBJ(current_dpyp),crt_gamma,crt_vzero);
+	lin_setup(DPA_LINTBL_OBJ(current_dpyp),crt_gamma,crt_vzero);
 #endif /* HAVE_X11 */
 }
 
@@ -44,7 +44,7 @@ static COMMAND_FUNC( do_default_lin )
 	crt_vzero= DEF_VZ;
 	CHECK_DPYP("do_default_lin")
 #ifdef HAVE_X11
-	lin_setup(QSP_ARG  DPA_LINTBL_OBJ(current_dpyp),crt_gamma,crt_vzero);
+	lin_setup(DPA_LINTBL_OBJ(current_dpyp),crt_gamma,crt_vzero);
 #endif /* HAVE_X11 */
 }
 
@@ -53,8 +53,8 @@ static COMMAND_FUNC( do_new_lintbl )
 	Data_Obj *lt_dp;
 	const char *s;
 
-	s=NAMEOF("name for new linearization table");
-	lt_dp = new_lintbl(QSP_ARG  s);
+	s=nameof("name for new linearization table");
+	lt_dp = new_lintbl(s);
 	if( lt_dp == NULL ) return;
 
 	CHECK_DPYP("do_new_lintbl")

@@ -16,7 +16,7 @@ static COMMAND_FUNC( do_samp_image )
 	if( intens_dp==NULL || image_dp==NULL || coord_dp==NULL )
 		return;
 
-	sample_image(QSP_ARG  intens_dp,image_dp,coord_dp);
+	sample_image(intens_dp,image_dp,coord_dp);
 }
 
 static COMMAND_FUNC( do_render )
@@ -29,7 +29,7 @@ static COMMAND_FUNC( do_render )
 	if( intens_dp==NULL || image_dp==NULL || coord_dp==NULL )
 		return;
 
-	render_samples(QSP_ARG  image_dp,coord_dp,intens_dp);
+	render_samples(image_dp,coord_dp,intens_dp);
 }
 
 static COMMAND_FUNC( do_render2 )
@@ -42,7 +42,7 @@ static COMMAND_FUNC( do_render2 )
 	if( intens_dp==NULL || image_dp==NULL || coord_dp==NULL )
 		return;
 
-	render_samples2(QSP_ARG  image_dp,coord_dp,intens_dp);
+	render_samples2(image_dp,coord_dp,intens_dp);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(sample_menu,s,f,h)

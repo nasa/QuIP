@@ -95,8 +95,8 @@ void thinzs (QSP_ARG_DECL  Data_Obj *x,double value)
 		return;
 	}
 	bckgrd = 0.0;
-	y = dup_obj(QSP_ARG  x,"x.bak");
-	dp_copy(QSP_ARG  y,x);
+	y = dup_obj(x,"x.bak");
+	dp_copy(y,x);
 	do{
 		again = 0;
 		for (i=1; i<(OBJ_ROWS(x)-1); i++){
@@ -124,7 +124,7 @@ void thinzs (QSP_ARG_DECL  Data_Obj *x,double value)
 				} 
 			}
 		}
-		dp_copy(QSP_ARG  y,x);
+		dp_copy(y,x);
 		ri = OBJ_ROW_INC(x);
 
 		for (i=1; i<(OBJ_ROWS(x)-1); i++){
@@ -151,10 +151,10 @@ void thinzs (QSP_ARG_DECL  Data_Obj *x,double value)
 				}
 			}
 		}
-		dp_copy (QSP_ARG  x,y);
+		dp_copy(x,y);
 	} 
 	while (again);
-	delvec(QSP_ARG  y);
+	delvec(y);
 }
 
 

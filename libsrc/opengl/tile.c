@@ -950,13 +950,15 @@ void _draw_tile(QSP_ARG_DECL  Tile *tp)
 {
 	if( tp->t_level == tp->t_max ){
 		/* this is just a quadrilateral, a fan with two triangles. */
-		if( debug & gl_debug ) advise("glBegin");
+
+		DEBUG_MSG(gl_debug,"glBegin");
+
 #ifdef HAVE_OPENGL
 		glBegin(GL_TRIANGLE_FAN);
 
 		/* opengl appears to use a left-handed coordinate system, so we flip the sign on z... */
 		/* OR DOES IT??? */
-		if( debug & gl_debug ) advise("glVertex3f (4)");
+		DEBUG_MSG(gl_debug,"glVertex3f (4)");
 		glVertex3f(	tp->t_v[NW]->v_x,
 			tp->t_v[NW]->v_y, tp->t_v[NW]->v_z );
 		glVertex3f(	tp->t_v[NE]->v_x,
@@ -965,7 +967,7 @@ void _draw_tile(QSP_ARG_DECL  Tile *tp)
 			tp->t_v[SE]->v_y, tp->t_v[SE]->v_z );
 		glVertex3f(	tp->t_v[SW]->v_x,
 			tp->t_v[SW]->v_y, tp->t_v[SW]->v_z );
-		if( debug & gl_debug ) advise("glEnd");
+		DEBUG_MSG(gl_debug,"glEnd");
 			glEnd();
 #endif /* HAVE_OPENGL */
 	} else if( tp->t_level == tp->t_max - 1 ){
@@ -973,9 +975,9 @@ void _draw_tile(QSP_ARG_DECL  Tile *tp)
 		 * We can therefore do the whole tile as a triangle fan.
 		 */
 #ifdef HAVE_OPENGL
-		if( debug & gl_debug ) advise("glBegin GL_TRIANGLE_FAN");
+		DEBUG_MSG(gl_debug,"glBegin GL_TRIANGLE_FAN");
 		glBegin(GL_TRIANGLE_FAN);
-		if( debug & gl_debug ) advise("glVertex3f (9)");
+		DEBUG_MSG(gl_debug,"glVertex3f (9)");
 
 		glVertex3f(	tp->t_q[NW]->t_v[SE]->v_x,
 				tp->t_q[NW]->t_v[SE]->v_y, tp->t_q[NW]->t_v[SE]->v_z );
@@ -997,7 +999,7 @@ void _draw_tile(QSP_ARG_DECL  Tile *tp)
 				tp->t_q[SW]->t_v[SW]->v_y, tp->t_q[SW]->t_v[SW]->v_z );
 		glVertex3f(	tp->t_q[SW]->t_v[NW]->v_x,
 				tp->t_q[SW]->t_v[NW]->v_y, tp->t_q[SW]->t_v[NW]->v_z );	/* same as first vertex */
-		if( debug & gl_debug ) advise("glEnd");
+		DEBUG_MSG(gl_debug,"glEnd");
 		glEnd();
 #endif /* HAVE_OPENGL */
 	} else {
@@ -1032,6 +1034,8 @@ void xdraw_master( QSP_ARG_DECL  Master_Tile *mtp )
 	qc.qc_dely=1;
 	xdraw_tile(mtp->mt_tp,&qc);
 }
+
+#ifdef QUIP_DEBUG
 
 #define VERTEX(a,b)	if( debug & gl_debug ){				\
 				sprintf(ERROR_STRING,"glVertex3f %s %s quadrant %s vertex    %g %g %g",\
@@ -1071,6 +1075,20 @@ void xdraw_master( QSP_ARG_DECL  Master_Tile *mtp )
 				}						\
 				glTexCoord2f(x,y);				\
 			}
+
+#else // ! QUIP_DEBUG
+
+#define VERTEX(a,b)	glVertex3f(	tp->t_q[a]->t_v[b]->v_xf.p_x,	\
+					tp->t_q[a]->t_v[b]->v_xf.p_y,	\
+					tp->t_q[a]->t_v[b]->v_xf.p_z );
+
+#define QVERTEX(b)	glVertex3f(	tp->t_v[b]->v_xf.p_x,	\
+					tp->t_v[b]->v_xf.p_y,	\
+					tp->t_v[b]->v_xf.p_z );
+
+#define TEX_COORD(x,y)	if( texturing ) glTexCoord2f(x,y);
+
+#endif // ! QUIP_DEBUG
 
 /* Draw the tile using the transformed vertices.
  *
@@ -1124,14 +1142,16 @@ sprintf(ERROR_STRING,"xdraw_tile %s:  drawing 2-fan",tp->t_name);
 advise(ERROR_STRING);
 }
 #endif // QUIP_DEBUG
-		if( debug & gl_debug ) advise("xdraw_tile:  glBegin (2-fan)");
+
+		DEBUG_MSG(gl_debug,"xdraw_tile:  glBegin (2-fan)");
+
 #ifdef HAVE_OPENGL
 		glBegin(GL_TRIANGLE_FAN);
 		TEX_COORD(x_l,y_u); QVERTEX(NW)
 		TEX_COORD(x_r,y_u); QVERTEX(NE)
 		TEX_COORD(x_r,y_l); QVERTEX(SE)
 		TEX_COORD(x_l,y_l); QVERTEX(SW)
-		if( debug & gl_debug ) advise("glEnd");
+		DEBUG_MSG(gl_debug,"glEnd");
 		glEnd();
 #endif /* HAVE_OPENGL */
 	} else if( tp->t_level == tp->t_max - 1 ){
@@ -1174,7 +1194,7 @@ advise(ERROR_STRING);
 #endif /* CAUTIOUS */
 
 
-if( debug & gl_debug ) advise("glBegin GL_TRIANGLE_FAN");
+DEBUG_MSG(gl_debug,"glBegin GL_TRIANGLE_FAN");
 #ifdef HAVE_OPENGL
 		glBegin(GL_TRIANGLE_FAN);
 
@@ -1192,7 +1212,7 @@ if( debug & gl_debug ) advise("glBegin GL_TRIANGLE_FAN");
 		TEX_COORD(x_l,y_l); VERTEX(SW,SW)		/* seventh triangle */
 		TEX_COORD(x_l,y_c); VERTEX(SW,NW)		/* eigth triangle */
 
-if( debug & gl_debug ) advise("glEnd GL_TRIANGLE_FAN");
+DEBUG_MSG(gl_debug,"glEnd GL_TRIANGLE_FAN");
 		glEnd();
 #endif /* HAVE_OPENGL */
 
@@ -1381,7 +1401,7 @@ advise(ERROR_STRING);
 
 			/* now we need to create an object to hold the image */
 			sprintf(name,"elevation.%s.%d",mtp->mt_dem_name,i);
-			mtp->mt_dem_dp[i] = dup_obj(QSP_ARG  ifp->if_dp,name);
+			mtp->mt_dem_dp[i] = dup_obj(ifp->if_dp,name);
 
 			read_object_from_file(mtp->mt_dem_dp[i],ifp);
 		}
@@ -1450,7 +1470,7 @@ advise(ERROR_STRING);
 */
 			/* now we need to create an object to hold the image */
 			sprintf(name,"texture.%s.%d",mtp->mt_tex_name,i);
-			mtp->mt_tex_dp[i] = dup_obj(QSP_ARG  ifp->if_dp,name);
+			mtp->mt_tex_dp[i] = dup_obj(ifp->if_dp,name);
 
 			read_object_from_file(mtp->mt_tex_dp[i],ifp);
 		}

@@ -84,7 +84,7 @@ static void evenline(dimension_t cols)
 	}
 }
 
-void dp_halftone(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,dimension_t n,float *levels)
+void _dp_halftone(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,dimension_t n,float *levels)
 {
 	dimension_t i,j;
 	dimension_t rows, cols;

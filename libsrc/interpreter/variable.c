@@ -31,11 +31,12 @@ const char *_var_value(QSP_ARG_DECL  const char *s)
 	
 	vp=var_of(s);
 	if( vp == NULL ) return NULL;
-	return var_p_value(QSP_ARG  vp);
+	return var_p_value(vp);
 }
 
-const char *var_p_value(QSP_ARG_DECL  Variable *vp)
-{ if( IS_DYNAMIC_VAR(vp) ){
+const char *_var_p_value(QSP_ARG_DECL  Variable *vp)
+{
+	if( IS_DYNAMIC_VAR(vp) ){
 		return (*(VAR_FUNC(vp)))(SINGLE_QSP_ARG);
 	} else {
 		return VAR_VALUE(vp);
@@ -331,7 +332,7 @@ void init_variables(SINGLE_QSP_ARG_DECL)
 	assign_var("program_version",tell_version());
 }
 
-void find_vars(QSP_ARG_DECL  const char *s)
+void _find_vars(QSP_ARG_DECL  const char *s)
 {
 	List *lp;
 
@@ -342,7 +343,7 @@ void find_vars(QSP_ARG_DECL  const char *s)
 
 #define N_EXTRA_CHARS	20
 
-void search_vars(QSP_ARG_DECL  const char *frag)
+void _search_vars(QSP_ARG_DECL  const char *frag)
 {
 	List *lp;
 	Node *np;
@@ -446,7 +447,7 @@ void _show_var(QSP_ARG_DECL  Variable *vp)
 		sprintf(MSG_STR,"$%s = %s",VAR_NAME(vp),VAR_VALUE(vp));
 	} else if( IS_DYNAMIC_VAR(vp) ){
 		sprintf(MSG_STR,"$%s = %s (dynamic value, function at 0x%lx)",
-			VAR_NAME(vp),var_p_value(QSP_ARG  vp), (long)VAR_FUNC(vp));
+			VAR_NAME(vp),var_p_value(vp), (long)VAR_FUNC(vp));
 	} else if( IS_RESERVED_VAR(vp) ){
 		sprintf(MSG_STR,"$%s = %s (reserved)",VAR_NAME(vp),VAR_VALUE(vp));
 	}
@@ -455,7 +456,7 @@ void _show_var(QSP_ARG_DECL  Variable *vp)
 
 #define MAX_INT_STRING_LEN	80	// BUG should check...
 
-void set_script_var_from_int(QSP_ARG_DECL  const char *varname, long val )
+void _set_script_var_from_int(QSP_ARG_DECL  const char *varname, long val )
 {
 	char str[MAX_INT_STRING_LEN];
 

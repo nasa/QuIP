@@ -232,7 +232,9 @@ debug_flag_t resolve_debug=0;
  * When we find one, we add it to the list.
  */
 
-static void find_uk_nodes(QSP_ARG_DECL  Vec_Expr_Node *enp,List *lp)
+#define find_uk_nodes(enp,lp) _find_uk_nodes(QSP_ARG  enp,lp)
+
+static void _find_uk_nodes(QSP_ARG_DECL  Vec_Expr_Node *enp,List *lp)
 {
 	Node *np;
 	int i;
@@ -294,15 +296,17 @@ static void find_uk_nodes(QSP_ARG_DECL  Vec_Expr_Node *enp,List *lp)
 	}
 	for(i=0;i<MAX_CHILDREN(enp);i++)
 		if( VN_CHILD(enp,i) != NULL )
-			find_uk_nodes(QSP_ARG  VN_CHILD(enp,i),lp);
+			find_uk_nodes(VN_CHILD(enp,i),lp);
 }
 
-static List *get_uk_list(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define get_uk_list(enp) _get_uk_list(QSP_ARG  enp)
+
+static List *_get_uk_list(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	List *lp;
 
 	lp=new_list();
-	find_uk_nodes(QSP_ARG  enp,lp);
+	find_uk_nodes(enp,lp);
 	if( eltcount(lp) == 0 ){
 		dellist(lp);
 		return(NULL);
@@ -315,7 +319,9 @@ static List *get_uk_list(QSP_ARG_DECL  Vec_Expr_Node *enp)
  * Descend a tree (arg decls or body), looking for declarations of unknown shape objects.
  */
 
-void forget_resolved_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define forget_resolved_tree(enp) _forget_resolved_tree(QSP_ARG  enp)
+
+static void _forget_resolved_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
 
@@ -345,7 +351,7 @@ advise(ERROR_STRING);
 
 	for(i=0;i<MAX_CHILDREN(enp);i++)
 		if( VN_CHILD(enp,i) != NULL )
-			forget_resolved_tree(QSP_ARG  VN_CHILD(enp,i));
+			forget_resolved_tree(VN_CHILD(enp,i));
 } /* end forget_resolved_tree */
 
 /* forget_resolved_shapes
@@ -355,7 +361,7 @@ advise(ERROR_STRING);
  * the declaration trees...
  */
 
-void forget_resolved_shapes(QSP_ARG_DECL  Subrt *srp)
+void _forget_resolved_shapes(QSP_ARG_DECL  Subrt *srp)
 {
 	/* First check the arguments */
 
@@ -368,9 +374,9 @@ dump_tree(SR_BODY(srp));
 #endif /* QUIP_DEBUG */
 
 	if( SR_ARG_DECLS(srp) != NULL )
-		forget_resolved_tree(QSP_ARG  SR_ARG_DECLS(srp));
+		forget_resolved_tree(SR_ARG_DECLS(srp));
 	if( SR_BODY(srp) != NULL )
-		forget_resolved_tree(QSP_ARG  SR_BODY(srp));
+		forget_resolved_tree(SR_BODY(srp));
 
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
@@ -389,7 +395,9 @@ dump_tree(SR_BODY(srp));
  * that all the nodes on the list actually need resolution.
  */
 
-static void resolve_uk_nodes(QSP_ARG_DECL  List *lp)
+#define resolve_uk_nodes(lp) _resolve_uk_nodes(QSP_ARG  lp)
+
+static void _resolve_uk_nodes(QSP_ARG_DECL  List *lp)
 {
 	Node *np;
 
@@ -451,9 +459,9 @@ dump_subrt(srp);
 }
 #endif /* QUIP_DEBUG */
 
-	lp = get_uk_list(QSP_ARG  SR_BODY(srp));
+	lp = get_uk_list(SR_BODY(srp));
 	if( lp != NULL ){
-		resolve_uk_nodes(QSP_ARG  lp);
+		resolve_uk_nodes(lp);
 
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
@@ -702,7 +710,7 @@ advise(ERROR_STRING);
 describe_shape(OBJ_SHAPE(REF_OBJ(PTR_REF(ID_PTR(idp)))));
 }
 #endif /* QUIP_DEBUG */
-				resolve_pointer(QSP_ARG  enp,OBJ_SHAPE(REF_OBJ(PTR_REF(ID_PTR(idp)))));
+				resolve_pointer(enp,OBJ_SHAPE(REF_OBJ(PTR_REF(ID_PTR(idp)))));
 				return;
 /*
 advise("after resolution pointer:");
@@ -724,7 +732,7 @@ advise(ERROR_STRING);
 }
 */
 
-			srp = runnable_subrt(QSP_ARG  enp);
+			srp = runnable_subrt(enp);
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"resolve_tree %s:  before setup_call %s:",node_desc(enp),SR_NAME(srp));
@@ -733,7 +741,7 @@ dump_tree(enp);
 }
 #endif /* QUIP_DEBUG */
 			/* BUG how can we get dst_dp?? */
-			rip = setup_subrt_call(QSP_ARG  srp,enp,NULL);
+			rip = setup_subrt_call(srp,enp,NULL);
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"resolve_tree %s:  after setup_call %s:",node_desc(enp),SR_NAME(srp));
@@ -756,7 +764,7 @@ dump_tree(SR_BODY(srp));
 #endif /* QUIP_DEBUG */
 			}
 
-			wrapup_context(QSP_ARG  rip);
+			wrapup_context(rip);
 
 			ret_enp = find_known_return(SR_BODY(VN_SUBRT(enp)));
 
@@ -911,12 +919,12 @@ sprintf(ERROR_STRING,"resolve_tree %s:  effecting resolution using %s",node_desc
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-				/*resolved_enp=*/EFFECT_RESOLUTION(enp,resolver_enp);
+				/*resolved_enp=*/effect_resolution(enp,resolver_enp);
 				if(VN_RESOLVERS(enp) != NULL ){
 					/* careful - we dont want a recursive call, we may
 					 * have gotten here from resolve_uk_nodes!
 					 */
-					resolve_uk_nodes(QSP_ARG  VN_RESOLVERS(enp));
+					resolve_uk_nodes(VN_RESOLVERS(enp));
 				}
 				return;
 			}
@@ -960,7 +968,7 @@ warn(ERROR_STRING);
 
 	/* set the context */
 
-	set_subrt_ctx(QSP_ARG  SR_NAME(srp));
+	set_subrt_ctx(SR_NAME(srp));
 
 	/* declare the arg variables */
 	eval_decl_tree(SR_ARG_DECLS(srp));	/* resolve_subrt_call() */
@@ -980,7 +988,7 @@ warn(ERROR_STRING);
 //	// I Don't understand why we set this and the set it back to NULL???
 //	SET_SC_DEST_SHAPE(scp, ret_shpp);
 
-	resolve_uk_nodes(QSP_ARG  uk_list);
+	resolve_uk_nodes(uk_list);
 
 	/* now try for the args */
 	/* resolve_uk_args( */
@@ -1010,7 +1018,7 @@ advise(ERROR_STRING);
 	 */
 
 	if( argval_tree != NULL ){
-		resolve_argval_shapes(QSP_ARG  argval_tree,SR_ARG_DECLS(srp),srp);
+		resolve_argval_shapes(argval_tree,SR_ARG_DECLS(srp),srp);
 	}
 
 } /* end resolve_subrt_call() */
@@ -1049,7 +1057,7 @@ dump_subrt(srp);
 	 * that need to be resolved...  Then we attempt to resolve each one.
 	 */
 
-	lp = get_uk_list(QSP_ARG  SR_BODY(srp));
+	lp = get_uk_list(SR_BODY(srp));
 	if( lp == NULL ){
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
@@ -1161,7 +1169,9 @@ static void setup_xform_shape(Shape_Info *xf_shpp,Shape_Info *im_shpp)
 
 /* Reshape this object.  for now, we don't worry about preserving any data... */
 
-static Data_Obj * reshape_obj(QSP_ARG_DECL  Data_Obj *dp,Shape_Info *shpp)
+#define reshape_obj(dp,shpp) _reshape_obj(QSP_ARG  dp,shpp)
+
+static Data_Obj * _reshape_obj(QSP_ARG_DECL  Data_Obj *dp,Shape_Info *shpp)
 {
 	Data_Obj *tmp_dp;
 	char s[LLEN];
@@ -1178,7 +1188,7 @@ static Data_Obj * reshape_obj(QSP_ARG_DECL  Data_Obj *dp,Shape_Info *shpp)
 
 	strcpy(s,OBJ_NAME(dp));
 	delvec(dp);
-	obj_rename(QSP_ARG  tmp_dp,s);
+	obj_rename(tmp_dp,s);
 	return(tmp_dp);
 }
 
@@ -1188,7 +1198,9 @@ static Data_Obj * reshape_obj(QSP_ARG_DECL  Data_Obj *dp,Shape_Info *shpp)
  * resolve an object given its identifier
  */
 
-static void resolve_obj_id(QSP_ARG_DECL  Identifier *idp, Shape_Info *shpp)
+#define resolve_obj_id(idp, shpp) _resolve_obj_id(QSP_ARG  idp, shpp)
+
+static void _resolve_obj_id(QSP_ARG_DECL  Identifier *idp, Shape_Info *shpp)
 {
 	Vec_Expr_Node *decl_enp;
 	Shape_Info *tmp_shpp;
@@ -1207,11 +1219,11 @@ static void resolve_obj_id(QSP_ARG_DECL  Identifier *idp, Shape_Info *shpp)
 sprintf(ERROR_STRING,"resolve_obj_id %s:  mode is matlab",ID_NAME(idp));
 advise(ERROR_STRING);
 */
-		dp = GET_OBJ(ID_NAME(idp));
+		dp = get_obj(ID_NAME(idp));
 
 		assert( dp != NULL );
 
-		REF_OBJ(ID_REF(idp)) = reshape_obj(QSP_ARG  dp,shpp);
+		REF_OBJ(ID_REF(idp)) = reshape_obj(dp,shpp);
 
 		return;
 	}
@@ -1296,7 +1308,7 @@ static int rc_match(Shape_Info *shpp1,Shape_Info *shpp2)
  * siblings etc) is unknown.
  */
 
-void resolve_pointer(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
+void _resolve_pointer(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 {
 	Identifier *idp;
 	Data_Obj *dp;
@@ -1348,7 +1360,7 @@ advise(ERROR_STRING);
 		/* now we try to resolve the pointed-to object */
 sprintf(ERROR_STRING,"resolve_pointer %s:  resolving pointer target object",node_desc(uk_enp));
 advise(ERROR_STRING);
-		resolve_obj_id(QSP_ARG  REF_ID(PTR_REF(ID_PTR(idp))),shpp);
+		resolve_obj_id(REF_ID(PTR_REF(ID_PTR(idp))),shpp);
 	} else {
 		/* make sure that the shapes are the same */
 		if( ! same_shape(OBJ_SHAPE(dp),shpp) ){
@@ -1376,7 +1388,9 @@ advise(ERROR_STRING);
  * The shape pointer should point to a valid shape...
  */
 
-static void resolve_object(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
+#define resolve_object(uk_enp,shpp) _resolve_object(QSP_ARG  uk_enp,shpp)
+
+static void _resolve_object(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 {
 	Identifier *idp;
 	Data_Obj *dp;
@@ -1422,7 +1436,7 @@ fprintf(stderr,"resolve_object passed unknown dynamic object %s\n",VN_STRING(uk_
 	}
 
 fprintf(stderr,"resolve_object calling resolve_obj_id, idp = 0x%lx\n",(long)idp);
-	resolve_obj_id(QSP_ARG  idp,shpp);
+	resolve_obj_id(idp,shpp);
 
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
@@ -1437,12 +1451,14 @@ describe_shape(VN_SHAPE(uk_enp));
 
 /* here we pass a shape with which to resolve the children (scalar) nodes */
 
-static void resolve_obj_list(QSP_ARG_DECL  Vec_Expr_Node *enp, Shape_Info *shpp)
+#define resolve_obj_list(enp, shpp) _resolve_obj_list(QSP_ARG  enp, shpp)
+
+static void _resolve_obj_list(QSP_ARG_DECL  Vec_Expr_Node *enp, Shape_Info *shpp)
 {
 	switch(VN_CODE(enp)){
 		case T_RET_LIST:
-			resolve_obj_list(QSP_ARG  VN_CHILD(enp,0),shpp);
-			resolve_obj_list(QSP_ARG  VN_CHILD(enp,1),shpp);
+			resolve_obj_list(VN_CHILD(enp,0),shpp);
+			resolve_obj_list(VN_CHILD(enp,1),shpp);
 			break;
 
 		case T_DYN_OBJ:
@@ -1545,7 +1561,7 @@ Vec_Expr_Node *_resolve_node(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shp
 			return(uk_enp);
 
 		case T_POINTER:			/* resolve_node */
-			resolve_pointer(QSP_ARG  uk_enp,shpp);
+			resolve_pointer(uk_enp,shpp);
 
 			/* We can't propagate from the pointer node... */
 			return(NULL);
@@ -1556,12 +1572,12 @@ Vec_Expr_Node *_resolve_node(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shp
 		*/
 		case T_STATIC_OBJ:
 		case T_DYN_OBJ:			/* resolve_node */
-			resolve_object(QSP_ARG  uk_enp,shpp);
+			resolve_object(uk_enp,shpp);
 			return(uk_enp);
 
 		case T_RET_LIST:		/* a list of objects */
 			if( ROWVEC_SHAPE(shpp) ){	/* a list of scalars? */
-				resolve_obj_list(QSP_ARG  uk_enp,scalar_shape(SHP_PREC(shpp)));
+				resolve_obj_list(uk_enp,scalar_shape(SHP_PREC(shpp)));
 			} else {
 sprintf(ERROR_STRING,"resolve_node %s:  oops, only know how to resolve from rowvec!?",node_desc(uk_enp));
 warn(ERROR_STRING);
@@ -1597,7 +1613,9 @@ warn(ERROR_STRING);
 
 /* The parent is the unknown node? */
 
-static Vec_Expr_Node *resolve_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
+#define resolve_parent(uk_enp,shpp) _resolve_parent(QSP_ARG  uk_enp,shpp)
+
+static Vec_Expr_Node *_resolve_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 {
 	prec_t prec;
 
@@ -1696,7 +1714,9 @@ static Vec_Expr_Node *resolve_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_I
 /* What is the difference between resolve_unknown_parent and resolve_parent???
  */
 
-static Vec_Expr_Node * resolve_unknown_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_Node *enp)
+#define resolve_unknown_parent(uk_enp,enp) _resolve_unknown_parent(QSP_ARG  uk_enp,enp)
+
+static Vec_Expr_Node * _resolve_unknown_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_Node *enp)
 {
 	Shape_Info *shpp;
 
@@ -1758,14 +1778,16 @@ advise(ERROR_STRING);
 
 	/* BUG we'd like to merge this with resolve_node... */
 
-	return( resolve_parent(QSP_ARG  uk_enp,shpp));
+	return( resolve_parent(uk_enp,shpp));
 } /* end resolve_unknown_parent */
 
 
 /* shape_for_child - what does this do???
  */
 
-static Shape_Info *shape_for_child(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_Node *enp)
+#define shape_for_child(uk_enp,enp) _shape_for_child(QSP_ARG  uk_enp,enp)
+
+static Shape_Info *_shape_for_child(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_Node *enp)
 {
 	Shape_Info *shpp;
 
@@ -1866,7 +1888,9 @@ static Shape_Info *shape_for_child(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_
 	}
 } /* end shape_for_child */
 
-static Vec_Expr_Node * resolve_unknown_child(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_Node *enp)
+#define resolve_unknown_child(uk_enp,enp) _resolve_unknown_child(QSP_ARG  uk_enp,enp)
+
+static Vec_Expr_Node * _resolve_unknown_child(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_Node *enp)
 {
 	Shape_Info *shpp;
 
@@ -1877,7 +1901,7 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	shpp = shape_for_child(QSP_ARG  uk_enp,enp);
+	shpp = shape_for_child(uk_enp,enp);
 
 	if( mode_is_matlab && VN_CODE(uk_enp) == T_RET_LIST ){
 		//Data_Obj *dp;
@@ -1929,7 +1953,7 @@ void resolve_return(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
  * Returns a ptr to the resolved node, or NULL
  */
 
-Vec_Expr_Node * effect_resolution(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_Node *enp)
+Vec_Expr_Node * _effect_resolution(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_Node *enp)
 {
 	Vec_Expr_Node *ret_enp=NULL;
 
@@ -1950,8 +1974,8 @@ describe_shape(VN_SHAPE(enp));
 	 * other - which one is which ?
 	 */
 	
-	if( VN_PARENT(enp) == uk_enp ) ret_enp=resolve_unknown_parent(QSP_ARG  uk_enp,enp);
-	else if( VN_PARENT(uk_enp) == enp ) ret_enp=resolve_unknown_child(QSP_ARG  uk_enp,enp);
+	if( VN_PARENT(enp) == uk_enp ) ret_enp=resolve_unknown_parent(uk_enp,enp);
+	else if( VN_PARENT(uk_enp) == enp ) ret_enp=resolve_unknown_child(uk_enp,enp);
 	else {
 		resolve_node(uk_enp,VN_SHAPE(enp));
 	}
@@ -1998,19 +2022,19 @@ static int same_outline(Shape_Info *shpp1,Shape_Info *shpp2)
  * What is the context here???
  */
 
-void resolve_argval_shapes(QSP_ARG_DECL  Vec_Expr_Node *val_enp,Vec_Expr_Node *decl_enp,Subrt *srp)
+void _resolve_argval_shapes(QSP_ARG_DECL  Vec_Expr_Node *val_enp,Vec_Expr_Node *decl_enp,Subrt *srp)
 {
 	if( decl_enp == NULL ) return;
 
 	switch(VN_CODE(decl_enp)){
 		case T_DECL_STAT_LIST:
-			resolve_argval_shapes(QSP_ARG  VN_CHILD(val_enp,0),
+			resolve_argval_shapes(VN_CHILD(val_enp,0),
 				VN_CHILD(decl_enp,0),srp);
-			resolve_argval_shapes(QSP_ARG  VN_CHILD(val_enp,1),
+			resolve_argval_shapes(VN_CHILD(val_enp,1),
 				VN_CHILD(decl_enp,1),srp);
 			break;
 		case T_DECL_STAT:
-			resolve_argval_shapes(QSP_ARG  val_enp,
+			resolve_argval_shapes(val_enp,
 				VN_CHILD(decl_enp,0),srp);
 			break;
 
@@ -2042,7 +2066,7 @@ advise("resolve_argval_shapes:  propagating a shape!!");
 describe_shape(VN_SHAPE(decl_enp));
 }
 #endif /* QUIP_DEBUG */
-			PROPAGATE_SHAPE(val_enp,VN_SHAPE(decl_enp));
+			propagate_shape(val_enp,VN_SHAPE(decl_enp));
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 advise("resolve_argval_shapes:  DONE");
@@ -2063,7 +2087,7 @@ describe_shape(VN_SHAPE(val_enp));
  * Descend a tree, assigning shapes when possible.
  */
 
-void propagate_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
+void _propagate_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
 {
 	Shape_Info *tmp_shpp;
 
@@ -2073,12 +2097,12 @@ void propagate_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
 
 	switch(VN_CODE(enp)){
 		case T_POINTER:		/* propagate_shape */
-			resolve_pointer(QSP_ARG  enp,shpp);
+			resolve_pointer(enp,shpp);
 			break;
 
 		case T_STR_PTR:
 		case T_DYN_OBJ:
-			resolve_object(QSP_ARG  enp,shpp);
+			resolve_object(enp,shpp);
 			break;
 
 		case T_CURLY_SUBSCR:
@@ -2087,7 +2111,7 @@ void propagate_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
 			SET_SHP_MACH_DIM(tmp_shpp,SHP_MINDIM(tmp_shpp),1);
 			SET_SHP_MINDIM(tmp_shpp,
 				SHP_MINDIM(tmp_shpp) + 1 );
-			PROPAGATE_SHAPE(VN_CHILD(enp,0),tmp_shpp);
+			propagate_shape(VN_CHILD(enp,0),tmp_shpp);
 			break;
 
 		case T_SQUARE_SUBSCR:
@@ -2096,12 +2120,12 @@ void propagate_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
 			SET_SHP_MACH_DIM(tmp_shpp,SHP_MAXDIM(tmp_shpp),1);
 			SET_SHP_MAXDIM(tmp_shpp,
 				SHP_MAXDIM(tmp_shpp) - 1 );
-			PROPAGATE_SHAPE(VN_CHILD(enp,0),tmp_shpp);
+			propagate_shape(VN_CHILD(enp,0),tmp_shpp);
 			break;
 
 		case T_VV_FUNC:
-			PROPAGATE_SHAPE(VN_CHILD(enp,0),shpp);
-			PROPAGATE_SHAPE(VN_CHILD(enp,1),shpp);
+			propagate_shape(VN_CHILD(enp,0),shpp);
+			propagate_shape(VN_CHILD(enp,1),shpp);
 			break;
 
 		default:
@@ -2284,7 +2308,7 @@ advise(ERROR_STRING);
 				/* here the arg decl has known shape, but the arg val is unknown;
 				 * We'd like to propagate upwards...
 				 */
-				PROPAGATE_SHAPE(val_enp,VN_SHAPE(arg_enp));
+				propagate_shape(val_enp,VN_SHAPE(arg_enp));
 			} else {	/* everything is known */
 				if( !shapes_match(VN_SHAPE(arg_enp),
 							VN_SHAPE(val_enp)) ){

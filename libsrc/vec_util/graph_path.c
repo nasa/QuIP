@@ -10,7 +10,7 @@
 #include "data_obj.h"
 #include "vec_util.h"
 
-void extend_shortest_paths(QSP_ARG_DECL   Data_Obj *dst_dp, Data_Obj *src_dp )
+void _extend_shortest_paths(QSP_ARG_DECL   Data_Obj *dst_dp, Data_Obj *src_dp )
 {
 	float *dstp, *dst_base, *srcp;
 	int n;

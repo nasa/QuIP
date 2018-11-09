@@ -22,16 +22,18 @@
 
 #define max( n1 , n2 )		(n1>n2?n1:n2)
 
-void tell_cost(QSP_ARG_DECL  Subrt *srp)
+void _tell_cost(QSP_ARG_DECL  Subrt *srp)
 {
-	cost_tree(QSP_ARG  SR_BODY(srp) );
+	cost_tree(SR_BODY(srp) );
 	warn("Sorry, cost reporting not implemented");
 }
 
 // count the number of flops and math library calls
 // for this node, and all of its children
 
-static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define cost_node(enp) _cost_node(QSP_ARG  enp)
+
+static void _cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	uint32_t nf_here,nf1,nf2;
 
@@ -283,7 +285,7 @@ static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 }
 
-void cost_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _cost_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
 
@@ -291,11 +293,11 @@ void cost_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	for(i=0;i<MAX_CHILDREN(enp);i++){
 		if( VN_CHILD(enp,i) != NULL )
-			cost_tree(QSP_ARG  VN_CHILD(enp,i));
+			cost_tree(VN_CHILD(enp,i));
 	}
 
 	/* now all the child nodes have been scanned, process this one */
 
-	cost_node(QSP_ARG  enp);	/* code shared w/ rescan_tree() */
+	cost_node(enp);	/* code shared w/ rescan_tree() */
 }
 

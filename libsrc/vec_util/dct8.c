@@ -23,96 +23,69 @@ static dct_type sqrt2, sqrt8;  	/* (see Figures 1 & 2, Equation 2) */
 #define PI (3.14159267)
 
 static void setup(void);
-static void mat8_1D(QSP_ARG_DECL  dct_type *f);
-static void imat8_1D(QSP_ARG_DECL  dct_type *f);
 static void dct8_1D(dct_type *f);
-static void dct8_2D(QSP_ARG_DECL  Data_Obj *dp,int);
 static void init_mat(SINGLE_QSP_ARG_DECL);
 
+/* static dct_type dct_mat[DCT_SIZE][DCT_SIZE]; */
+static Data_Obj *mat_dp;
+static int mat_inited=0;
 
-/* Take the dct of an 8x8 block.
- * Typically, this will be a subimage of a larger image.
- */
 
-static void dct8_2D(QSP_ARG_DECL  Data_Obj *dp,int direction)
+#define mat8_1D(f) _mat8_1D(QSP_ARG  f)
+
+static void _mat8_1D(QSP_ARG_DECL  dct_type *f)
 {
-	int row, col;
+	dct_type tmpvec[DCT_SIZE];
+	int i,j;
 	float *ptr;
-	dct_type g[DCT_SIZE];
 
-#ifdef CAUTIOUS
-	if( OBJ_COLS(dp) != DCT_SIZE || OBJ_ROWS(dp) != DCT_SIZE ){
-		sprintf(ERROR_STRING,"Object %s should be 8x8 for DCT",OBJ_NAME(dp));
-		WARN(ERROR_STRING);
-		return;
+	if( ! mat_inited ) init_mat(SINGLE_QSP_ARG);
+
+	/* multiply by the matrix */
+
+	ptr = (float *)OBJ_DATA_PTR(mat_dp);
+
+	for(i=0;i<DCT_SIZE;i++){
+		tmpvec[i] = 0.0;
+		for(j=0;j<DCT_SIZE;j++){
+			tmpvec[i] += f[j] * /* dct_mat[i][j] */
+					ptr[i*DCT_SIZE+j] ;
+		}
 	}
-	if( OBJ_PREC(dp) != PREC_SP ){
-		sprintf(ERROR_STRING,"Object %s has prec %s, should be float for DCT",
-			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)));
-		WARN(ERROR_STRING);
-		return;
-	}
-	if( OBJ_COMPS(dp) != 1 ){
-		sprintf(ERROR_STRING,"Object %s has %d components, should be 1 for DCT",
-			OBJ_NAME(dp),OBJ_COMPS(dp));
-		WARN(ERROR_STRING);
-		return;
-	}
-#endif	/* CAUTIOUS */
-
-	setup();		/* initialize constants if necessary */
-
-	/* apply 1D dct to each row */
-
-	ptr = (float *)OBJ_DATA_PTR(dp);
-
-	for (row=0 ; row < DCT_SIZE ; row++) {
-		/* copy row */
-		for (col=0 ; col < DCT_SIZE ; col++)
-			g[col] = *(ptr+col*OBJ_PXL_INC(dp));
-
-		if( direction == OLD_DCT )
-			dct8_1D(g);
-
-		else if( direction == FWD_DCT )
-			mat8_1D(QSP_ARG  g);
-		else
-			imat8_1D(QSP_ARG  g);
-
-		/* copy back */
-		for (col=0 ; col < DCT_SIZE ; col++)
-			*(ptr+col*OBJ_PXL_INC(dp)) = (float)g[col];
-
-		/* next row */
-		ptr += OBJ_ROW_INC(dp);
-	}
-
-	/* apply 1D dct to each col */
-
-	ptr = (float *)OBJ_DATA_PTR(dp);
-
-	for (col=0 ; col < DCT_SIZE ; col++) {
-		for (row=0; row < DCT_SIZE ; row++)
-			g[row] = *(ptr+row*OBJ_ROW_INC(dp));
-
-		/* dct8_1D(g); */
-
-		if( direction == OLD_DCT )
-			dct8_1D(g);
-
-		else if( direction == FWD_DCT )
-			mat8_1D(QSP_ARG  g);
-		else
-			imat8_1D(QSP_ARG  g);
-
-
-		for (row=0; row < DCT_SIZE ; row++)
-			*(ptr+row*OBJ_ROW_INC(dp)) = (float) g[row];
-
-		/* next col */
-		ptr += OBJ_PXL_INC(dp);
-	}
+	for(i=0;i<DCT_SIZE;i++)
+		f[i] = tmpvec[i];	/* do it in-place */
 }
+
+/* inverse transform */
+
+#define imat8_1D(f) _imat8_1D(QSP_ARG  f)
+
+static void _imat8_1D(QSP_ARG_DECL  dct_type *f)
+{
+	dct_type tmpvec[DCT_SIZE];
+	int i,j;
+	float *ptr;
+
+	if( ! mat_inited ) init_mat(SINGLE_QSP_ARG);
+
+	/* multiply by the matrix */
+
+
+	ptr = (float *)OBJ_DATA_PTR(mat_dp);
+
+	for(i=0;i<DCT_SIZE;i++){
+		tmpvec[i] = 0.0;
+		for(j=0;j<DCT_SIZE;j++){
+			/* note reversal of i and j */
+			tmpvec[i] += f[j] * /* dct_mat[j][i] */
+				ptr[j*DCT_SIZE+i] ;
+/* printf("f[%d] %g  mat %g   sum %g\n", i,f[i], ptr[j*DCT_SIZE+i], tmpvec[i] ); */
+		}
+	}
+	for(i=0;i<DCT_SIZE;i++)
+		f[i] = tmpvec[i];	/* do it in-place */
+}
+
 
 static void dct8_1D(dct_type *f)
 {
@@ -215,7 +188,94 @@ static void setup(void)
 	done_once = 1;
 }
 
-void compute_dct(QSP_ARG_DECL  Data_Obj *dp,int direction)
+
+/* Take the dct of an 8x8 block.
+ * Typically, this will be a subimage of a larger image.
+ */
+
+#define dct8_2D(dp,direction) _dct8_2D(QSP_ARG  dp,direction)
+
+static void _dct8_2D(QSP_ARG_DECL  Data_Obj *dp,int direction)
+{
+	int row, col;
+	float *ptr;
+	dct_type g[DCT_SIZE];
+
+#ifdef CAUTIOUS
+	if( OBJ_COLS(dp) != DCT_SIZE || OBJ_ROWS(dp) != DCT_SIZE ){
+		sprintf(ERROR_STRING,"Object %s should be 8x8 for DCT",OBJ_NAME(dp));
+		WARN(ERROR_STRING);
+		return;
+	}
+	if( OBJ_PREC(dp) != PREC_SP ){
+		sprintf(ERROR_STRING,"Object %s has prec %s, should be float for DCT",
+			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)));
+		WARN(ERROR_STRING);
+		return;
+	}
+	if( OBJ_COMPS(dp) != 1 ){
+		sprintf(ERROR_STRING,"Object %s has %d components, should be 1 for DCT",
+			OBJ_NAME(dp),OBJ_COMPS(dp));
+		WARN(ERROR_STRING);
+		return;
+	}
+#endif	/* CAUTIOUS */
+
+	setup();		/* initialize constants if necessary */
+
+	/* apply 1D dct to each row */
+
+	ptr = (float *)OBJ_DATA_PTR(dp);
+
+	for (row=0 ; row < DCT_SIZE ; row++) {
+		/* copy row */
+		for (col=0 ; col < DCT_SIZE ; col++)
+			g[col] = *(ptr+col*OBJ_PXL_INC(dp));
+
+		if( direction == OLD_DCT )
+			dct8_1D(g);
+
+		else if( direction == FWD_DCT )
+			mat8_1D(g);
+		else
+			imat8_1D(g);
+
+		/* copy back */
+		for (col=0 ; col < DCT_SIZE ; col++)
+			*(ptr+col*OBJ_PXL_INC(dp)) = (float)g[col];
+
+		/* next row */
+		ptr += OBJ_ROW_INC(dp);
+	}
+
+	/* apply 1D dct to each col */
+
+	ptr = (float *)OBJ_DATA_PTR(dp);
+
+	for (col=0 ; col < DCT_SIZE ; col++) {
+		for (row=0; row < DCT_SIZE ; row++)
+			g[row] = *(ptr+row*OBJ_ROW_INC(dp));
+
+		/* dct8_1D(g); */
+
+		if( direction == OLD_DCT )
+			dct8_1D(g);
+
+		else if( direction == FWD_DCT )
+			mat8_1D(g);
+		else
+			imat8_1D(g);
+
+
+		for (row=0; row < DCT_SIZE ; row++)
+			*(ptr+row*OBJ_ROW_INC(dp)) = (float) g[row];
+
+		/* next col */
+		ptr += OBJ_PXL_INC(dp);
+	}
+}
+
+void _compute_dct(QSP_ARG_DECL  Data_Obj *dp,int direction)
 {
 	dimension_t nx,ny;		/* number of blocks in x and y */
 	dimension_t i,j;
@@ -267,7 +327,7 @@ void compute_dct(QSP_ARG_DECL  Data_Obj *dp,int direction)
 	for(i=0;i<nx;i++){
 		for(j=0;j<ny;j++){
 			relocate(block_dp,i*DCT_SIZE,j*DCT_SIZE,0);
-			dct8_2D(QSP_ARG  block_dp,direction);
+			dct8_2D(block_dp,direction);
 		}
 	}
 
@@ -276,11 +336,6 @@ void compute_dct(QSP_ARG_DECL  Data_Obj *dp,int direction)
 
 
 /* Here is a dct algorithm based on a matrix multiplication */
-
-/* static dct_type dct_mat[DCT_SIZE][DCT_SIZE]; */
-static Data_Obj *mat_dp;
-
-static int mat_inited=0;
 
 static void init_mat(SINGLE_QSP_ARG_DECL)
 {
@@ -312,55 +367,5 @@ static void init_mat(SINGLE_QSP_ARG_DECL)
 			(v * cos( pi*(2*j+1)*i/(2.0*DCT_SIZE) ));
 
 	mat_inited++;
-}
-
-static void mat8_1D(QSP_ARG_DECL  dct_type *f)
-{
-	dct_type tmpvec[DCT_SIZE];
-	int i,j;
-	float *ptr;
-
-	if( ! mat_inited ) init_mat(SINGLE_QSP_ARG);
-
-	/* multiply by the matrix */
-
-	ptr = (float *)OBJ_DATA_PTR(mat_dp);
-
-	for(i=0;i<DCT_SIZE;i++){
-		tmpvec[i] = 0.0;
-		for(j=0;j<DCT_SIZE;j++){
-			tmpvec[i] += f[j] * /* dct_mat[i][j] */
-					ptr[i*DCT_SIZE+j] ;
-		}
-	}
-	for(i=0;i<DCT_SIZE;i++)
-		f[i] = tmpvec[i];	/* do it in-place */
-}
-
-/* inverse transform */
-static void imat8_1D(QSP_ARG_DECL  dct_type *f)
-{
-	dct_type tmpvec[DCT_SIZE];
-	int i,j;
-	float *ptr;
-
-	if( ! mat_inited ) init_mat(SINGLE_QSP_ARG);
-
-	/* multiply by the matrix */
-
-
-	ptr = (float *)OBJ_DATA_PTR(mat_dp);
-
-	for(i=0;i<DCT_SIZE;i++){
-		tmpvec[i] = 0.0;
-		for(j=0;j<DCT_SIZE;j++){
-			/* note reversal of i and j */
-			tmpvec[i] += f[j] * /* dct_mat[j][i] */
-				ptr[j*DCT_SIZE+i] ;
-/* printf("f[%d] %g  mat %g   sum %g\n", i,f[i], ptr[j*DCT_SIZE+i], tmpvec[i] ); */
-		}
-	}
-	for(i=0;i<DCT_SIZE;i++)
-		f[i] = tmpvec[i];	/* do it in-place */
 }
 

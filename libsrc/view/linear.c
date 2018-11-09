@@ -30,7 +30,7 @@ static u_int n_lin_lvls=N_LIN_LVLS;
 
 #define CURR_LIN_DATA(comp,index)	LT_DATA( DPA_LINTBL_OBJ(current_dpyp),comp,index)
 
-Data_Obj *new_lintbl( QSP_ARG_DECL  const char * name )
+Data_Obj * _new_lintbl( QSP_ARG_DECL  const char * name )
 {
 	Data_Obj *lt_dp;
 
@@ -39,27 +39,26 @@ Data_Obj *new_lintbl( QSP_ARG_DECL  const char * name )
 #ifdef HAVE_CUDA
 	push_data_area(ram_area_p);
 #endif
-	lt_dp = mk_vec(QSP_ARG  name,n_lin_lvls,N_COMPS,PREC_FOR_CODE(PREC_UIN));
+	lt_dp = mk_vec(name,n_lin_lvls,N_COMPS,PREC_FOR_CODE(PREC_UIN));
 #ifdef HAVE_CUDA
 	pop_data_area();
 #endif
 	if( lt_dp == NULL ) return(lt_dp);
 
-	/*lin_setup(lt_dp,DEF_GAM,DEF_VZ); */		/* seems a bit wasteful? */
 	return(lt_dp);
 }
 
-void set_n_linear(QSP_ARG_DECL  int n)
+void _set_n_linear(QSP_ARG_DECL  int n)
 {
 	if( n < 2 ){
-		WARN("number of linearization levels must be > 1");
+		warn("number of linearization levels must be > 1");
 		return;
 	}
 	if( n >= MAX_LIN_LVLS ){
 		sprintf(ERROR_STRING,
 	"Number of linearization levels resetricted to a max of %d",
 			MAX_LIN_LVLS);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		n = MAX_LIN_LVLS;
 	}
 	sprintf(ERROR_STRING,
@@ -69,7 +68,7 @@ void set_n_linear(QSP_ARG_DECL  int n)
 	phosmax = n-1;
 }
 
-void lin_setup(QSP_ARG_DECL  Data_Obj *lt_dp,double gam,double vz)
+void _lin_setup(QSP_ARG_DECL  Data_Obj *lt_dp,double gam,double vz)
 {
 	double b,e,k,x;
 	u_int i,j;
@@ -105,7 +104,7 @@ void lin_setup(QSP_ARG_DECL  Data_Obj *lt_dp,double gam,double vz)
 		/* used to check for positive, but now d is unsigned */
 		if( d > DACMAX ){
 			sprintf(ERROR_STRING,"lin_setup value out of range:  i=%d  tbl=%d",i,d);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			stat=0;
 		}
 		for(j=0;j<N_COMPS;j++)
@@ -120,17 +119,17 @@ void lininit(SINGLE_QSP_ARG_DECL)
 	CHECK_DPYP("lininit")
 
 #ifdef HAVE_X11
-	lin_setup(QSP_ARG   DPA_LINTBL_OBJ(current_dpyp),DEF_GAM,DEF_VZ);
+	lin_setup(DPA_LINTBL_OBJ(current_dpyp),DEF_GAM,DEF_VZ);
 #endif /* HAVE_X11 */
 }
 #endif /* NOT_USED */
 
 #ifdef HAVE_X11
-void install_default_lintbl(QSP_ARG_DECL  Dpyable *dpyp)
+void _install_default_lintbl(QSP_ARG_DECL  Dpyable *dpyp)
 {
 	if(default_lt_dp==NULL){
-		default_lt_dp = new_lintbl(QSP_ARG  "default_lintbl");
-		lin_setup(QSP_ARG  default_lt_dp,DEF_GAM,DEF_VZ);		/* seems a bit wasteful? */
+		default_lt_dp = new_lintbl("default_lintbl");
+		lin_setup(default_lt_dp,DEF_GAM,DEF_VZ);		/* seems a bit wasteful? */
 	}
 	 DPA_LINTBL_OBJ(dpyp) = default_lt_dp;
 	default_lt_dp->dt_refcount ++;
@@ -270,7 +269,7 @@ void insure_linearization()
 #endif /* FOOBAR */
 
 
-void set_lintbl(QSP_ARG_DECL  Data_Obj *lt_dp)
+void _set_lintbl(QSP_ARG_DECL  Data_Obj *lt_dp)
 {
 	CHECK_DPYP("set_lintbl")
 

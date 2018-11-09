@@ -87,7 +87,7 @@ int _check_polh_data(QSP_ARG_DECL  char *rawdata, Polh_Record_Format *prfp)
 if( debug & debug_polhemus ){
 	sprintf(ERROR_STRING,"check_polh_data:  station = %d, nwords = %d",prfp->rf_station,prfp->rf_n_words);
 	_advise(DEFAULT_QSP_ARG  ERROR_STRING);
-	display_buffer((short *)rawdata,prfp->rf_n_words);
+	display_polh_buffer((short *)rawdata,prfp->rf_n_words);
 }
 #endif /* QUIP_DEBUG */
 
@@ -132,7 +132,7 @@ int _check_polh_output(QSP_ARG_DECL  char *out, int expected_station, Ph_Cmd_Cod
 #ifdef QUIP_DEBUG
 if( debug & debug_polhemus ){
 sprintf(ERROR_STRING,"check_polh_output:  cmd=%d, expect station %d, checking \"%s\"",
-cmd,expected_station,show_printable(DEFAULT_QSP_ARG  out));
+cmd,expected_station,show_printable(out));
 _advise(DEFAULT_QSP_ARG  ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */

@@ -1,6 +1,9 @@
 //
 //  quipCanvas.m
 //
+//  The canvas is intended to be a layer that sits on top of images, that we can draw overlays on.
+//  We are having trouble getting it to erase!?
+
 #import <QuartzCore/QuartzCore.h>
 
 #include "quip_config.h"
@@ -19,7 +22,10 @@
 	r.size = size;
 #ifdef BUILD_FOR_IOS
 	self = [super initWithFrame:r];
+    self.opaque = NO;
 #endif // BUILD_FOR_IOS
+
+
 	return self;
 }
 
@@ -41,6 +47,7 @@
 
  - (void)drawRect:(CGRect)rect
 {
+//fprintf(stderr,"quipCanvas drawRect BEGIN\n");
 #ifdef BUILD_FOR_IOS
 	SET_VW_GFX_CTX( CANVAS_VW(self), UIGraphicsGetCurrentContext());
 
@@ -57,27 +64,15 @@
 #endif /* CAUTIOUS */
 	// Drawing code
 
-//sprintf(DEFAULT_ERROR_STRING,"drawRect:  canvas = 0x%lx",(long)self);
-//advise(DEFAULT_ERROR_STRING);
 	// This is a quip viewer
 	if( VW_DRAW_LIST(CANVAS_VW(self)) != NULL ){
-//		fprintf(stderr,"drawRect %s calling exec_drawlist\n",VW_NAME(CANVAS_VW(self)));
-		// erasure is implemented by merely clearing the drawlist.
-		// But nothing gets erased until drawRect is called again!?
-		// How can we force drawRect to be called??
-//sprintf(DEFAULT_ERROR_STRING,"drawRect:  canvas = 0x%lx, calling exec_drawlist",(long)self);
-//advise(DEFAULT_ERROR_STRING);
 		if( exec_drawlist(CANVAS_VW(self)) < 0 ){
-			// negative return value indicates erasure requested...
+			// Before, a negative return meant that an erase and redraw was needed -
+			// But now erase is executed, so it shouldn't need to be called twice!?
 
-			// Calling MAKE_NEEDY here seems to have no effect, it is probably
-			// cleared when the delegate returns.
-			//FLAG_NEEDY(CANVAS_VW(self));
+			// canvasFire2 causes drawrect to be called again???
 
-			// What is canvasFire2 for???
-
-			/*NSTimer *nst;
-			nst =*/ [NSTimer scheduledTimerWithTimeInterval:0.050
+			[NSTimer scheduledTimerWithTimeInterval:0.050
 				target:self
 				selector:@selector(canvasFire2)
 				userInfo:NULL
@@ -90,6 +85,7 @@
 	}
 #endif // BUILD_FOR_IOS
 	// Need to do more stuff here??
+//fprintf(stderr,"drawRect DONE\n");
 }
 
 @end

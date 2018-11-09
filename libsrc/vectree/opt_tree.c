@@ -253,12 +253,12 @@ void _optimize_subrt(QSP_ARG_DECL Subrt *srp)
 {
 	u_long nf_before, nf_after;
 
-	cost_tree(QSP_ARG  SR_BODY(srp));
+	cost_tree(SR_BODY(srp));
 	nf_before = VN_FLOPS(SR_BODY(srp));
 
 	OPTIMIZE_TREE(SR_BODY(srp));
 
-	cost_tree(QSP_ARG  SR_BODY(srp));
+	cost_tree(SR_BODY(srp));
 	nf_after = VN_FLOPS(SR_BODY(srp));
 
 	if( nf_before == nf_after ){

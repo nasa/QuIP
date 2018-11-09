@@ -7,7 +7,9 @@
 #include "debug.h"
 #include "quip_prot.h"
 
-static int render_check(QSP_ARG_DECL  Data_Obj *image_dp,Data_Obj *coord_dp,Data_Obj *intens_dp)
+#define render_check(image_dp,coord_dp,intens_dp) _render_check(QSP_ARG  image_dp,coord_dp,intens_dp)
+
+static int _render_check(QSP_ARG_DECL  Data_Obj *image_dp,Data_Obj *coord_dp,Data_Obj *intens_dp)
 {
 	if( OBJ_PREC(image_dp) != PREC_SP ){
 		sprintf(ERROR_STRING,"render_check:  source image %s must be float",OBJ_NAME(image_dp));
@@ -72,7 +74,7 @@ static int render_check(QSP_ARG_DECL  Data_Obj *image_dp,Data_Obj *coord_dp,Data
 	return(0);
 }
 
-void render_samples(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_Obj *intens_dp)
+void _render_samples(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_Obj *intens_dp)
 {
 	float *image, *coord, *intens;
 	dimension_t width, height;
@@ -80,7 +82,7 @@ void render_samples(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_O
 	incr_t ix,iy;
 	dimension_t i,k;
 
-	if( render_check(QSP_ARG  image_dp,coord_dp,intens_dp) < 0 )
+	if( render_check(image_dp,coord_dp,intens_dp) < 0 )
 		return;
 
 	image  = (float *) OBJ_DATA_PTR(image_dp);
@@ -121,7 +123,7 @@ void render_samples(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_O
  * to put the energy from the corresponding source pixel.
  */
 
-void render_samples2(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_Obj *intens_dp)
+void _render_samples2(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_Obj *intens_dp)
 {
 	float *image, *coord, *intens;
 	dimension_t width, height;
@@ -130,7 +132,7 @@ void render_samples2(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_
 	dimension_t i,k;
 	float dx,dy,dxy;
 
-	if( render_check(QSP_ARG  image_dp,coord_dp,intens_dp) < 0 )
+	if( render_check(image_dp,coord_dp,intens_dp) < 0 )
 		return;
 
 fprintf(stderr,"render_samples2 %s %s %s BEGIN\n",
@@ -196,7 +198,7 @@ OBJ_NAME(image_dp),OBJ_NAME(coord_dp),OBJ_NAME(intens_dp));
 	}
 }
 
-void sample_image(QSP_ARG_DECL  Data_Obj *intens_dp, Data_Obj *image_dp, Data_Obj *coord_dp)
+void _sample_image(QSP_ARG_DECL  Data_Obj *intens_dp, Data_Obj *image_dp, Data_Obj *coord_dp)
 {
 	float *image, *coord, *intens;
 	dimension_t width, height;
@@ -205,7 +207,7 @@ void sample_image(QSP_ARG_DECL  Data_Obj *intens_dp, Data_Obj *image_dp, Data_Ob
 	dimension_t i,k;
 	float dx,dy,dxy;
 
-	if( render_check(QSP_ARG  image_dp,coord_dp,intens_dp) < 0 )
+	if( render_check(image_dp,coord_dp,intens_dp) < 0 )
 		return;
 
 	image  = (float *) OBJ_DATA_PTR(image_dp);

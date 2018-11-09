@@ -1,0 +1,21 @@
+
+Vector v 4 1 float
+VSet v -1
+
+advise "\nReading file with too few elements..."
+expect_warning 'premature end of data'
+expect_warning 'expected 4 elements'
+Get_Ascii v tests/file_with_3_elts.txt
+Display v
+
+advise "\nReading file with too many elements..."
+expect_warning 'Needed 4 values'
+Get_Ascii v tests/file_with_5_elts.txt
+Display v
+
+advise "\nReading file with correct number of elements..."
+Get_Ascii v tests/file_with_4_elts.txt
+Display v
+
+exit
+

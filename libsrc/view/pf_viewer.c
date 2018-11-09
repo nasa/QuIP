@@ -68,7 +68,9 @@ static void init_pf_viewer(Platform_Viewer *pvp)
 }
 
 // This is the normal display path
-static void update_pf_viewer(QSP_ARG_DECL  Platform_Viewer *pvp, Data_Obj *dp) 
+#define update_pf_viewer(pvp, dp) _update_pf_viewer(QSP_ARG  pvp, dp) 
+
+static void _update_pf_viewer(QSP_ARG_DECL  Platform_Viewer *pvp, Data_Obj *dp) 
 {
 #ifdef HAVE_OPENGL
 	int t;
@@ -159,7 +161,9 @@ static void _init_pf_viewer_subsystem(SINGLE_QSP_ARG_DECL)
 	pf_viewer_subsystem_inited=1;
 }
 
-static Platform_Viewer * new_pf_viewer(QSP_ARG_DECL  Viewer *vp)
+#define new_pf_viewer(vp) _new_pf_viewer(QSP_ARG  vp)
+
+static Platform_Viewer * _new_pf_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	Platform_Viewer *pvp;
 
@@ -199,7 +203,7 @@ COMMAND_FUNC( do_new_pf_vwr )
 	glew_check(SINGLE_QSP_ARG);	/* without this, we get a segmentation violation on glGenBuffers??? */
 #endif // HAVE_OPENGL
 
-	if( new_pf_viewer(QSP_ARG  vp) == NULL ){
+	if( new_pf_viewer(vp) == NULL ){
 		sprintf(ERROR_STRING,"Error making %s a cuda viewer!?",VW_NAME(vp));
 		warn(ERROR_STRING);
 	}
@@ -236,7 +240,7 @@ COMMAND_FUNC( do_load_pf_vwr )
 	warn("do_load_pf_viewer:  Sorry, no OpenGL support in this build!?");
 #endif // ! HAVE_OPENGL
 		
-	update_pf_viewer(QSP_ARG  pvp,dp);
+	update_pf_viewer(pvp,dp);
 }
 #endif // BUILD_FOR_IOS
 

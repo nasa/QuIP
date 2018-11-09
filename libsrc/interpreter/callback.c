@@ -37,7 +37,7 @@ static void relinquish_to_ios(SINGLE_QSP_ARG_DECL)
 
 #endif // BUILD_FOR_IOS
 
-void call_funcs_from_list(QSP_ARG_DECL  List *lp )
+void _call_funcs_from_list(QSP_ARG_DECL  List *lp )
 {
 	Node *np;
 	void (*func)(SINGLE_QSP_ARG_DECL);
@@ -58,7 +58,7 @@ void call_event_funcs(SINGLE_QSP_ARG_DECL)
 	static int relinquishing=0;
 
 	if( ! relinquishing ){
-		add_event_func(QSP_ARG  relinquish_to_ios);
+		add_event_func(relinquish_to_ios);
 		relinquishing=1;
 	}
 #endif // BUILD_FOR_IOS
@@ -66,6 +66,6 @@ void call_event_funcs(SINGLE_QSP_ARG_DECL)
 	if( QS_EVENT_LIST(THIS_QSP) == NULL )
 		return;
 
-	call_funcs_from_list(QSP_ARG  QS_EVENT_LIST(THIS_QSP) );
+	call_funcs_from_list(QS_EVENT_LIST(THIS_QSP) );
 }
 

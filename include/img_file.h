@@ -143,19 +143,6 @@ struct image_file {
 #define if_tiff	if_file_u.u_tiff
 #endif /* HAVE_TIFF */
 
-#ifdef FOOBAR
-// Moved to fio_api.h
-ITEM_INIT_PROT(Image_File,img_file)
-ITEM_NEW_PROT(Image_File,img_file)
-ITEM_CHECK_PROT(Image_File,img_file)
-ITEM_PICK_PROT(Image_File,img_file)
-
-#define init_img_files(s)	_init_img_files(SINGLE_QSP_ARG)
-#define new_img_file(s)		_new_img_file(QSP_ARG  s)
-#define img_file_of(s)		_img_file_of(QSP_ARG  s)
-#define pick_img_file(pmpt)	_pick_img_file(QSP_ARG  pmpt)
-#endif // FOOBAR
-
 /* flag values for ifp's & filetype's */
 
 #define FILE_READ	1

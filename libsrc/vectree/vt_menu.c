@@ -31,12 +31,12 @@ static COMMAND_FUNC( do_fileparse )
 	const char *s;
 
 	/* disable_lookahead(); */
-	s=NAMEOF("expression file");
+	s=nameof("expression file");
 	if( strcmp(s,"-") ){
 		fp=try_open( s, "r" );
 		if( !fp ) return;
 fprintf(stderr,"Parsing contents of file %s\n",s);
-		//push_input_file(QSP_ARG  s);
+		//push_input_file(s);
 		redir(fp, s );
 	}
 	expr_file(SINGLE_QSP_ARG);
@@ -87,11 +87,11 @@ static COMMAND_FUNC( do_mk_scr )
 	const char *name;
 	int n;
 
-	name = NAMEOF("subroutine name");
-	n = (int) HOW_MANY("number of arguments");
-	txt = NAMEOF("subroutine text");
+	name = nameof("subroutine name");
+	n = (int) how_many("number of arguments");
+	txt = nameof("subroutine text");
 
-	/*srp =*/ create_script_subrt(QSP_ARG  name,n,txt);
+	/*srp =*/ create_script_subrt(name,n,txt);
 }
 
 static COMMAND_FUNC( do_dump_tree )
@@ -99,8 +99,8 @@ static COMMAND_FUNC( do_dump_tree )
 	int n;
 	Vec_Expr_Node *enp;
 
-	n= (int) HOW_MANY("node serial number");
-	enp = find_node_by_number(QSP_ARG  n);
+	n= (int) how_many("node serial number");
+	enp = find_node_by_number(n);
 	if( enp == NULL ) return;
 
 	dump_tree(enp);
@@ -121,7 +121,7 @@ static COMMAND_FUNC( do_unexport )
 		return;
 	}
 	/* now remove it */
-	delete_id(QSP_ARG  (Item *)idp);
+	delete_id((Item *)idp);
 	CLEAR_OBJ_FLAG_BITS(dp,DT_EXPORTED);
 }
 
@@ -173,20 +173,22 @@ static COMMAND_FUNC( do_export )
 		warn(ERROR_STRING);
 		return;
 	}
-	idp = make_named_reference(QSP_ARG  OBJ_NAME(dp));
+	idp = make_named_reference(OBJ_NAME(dp));
 	assert( idp != NULL );
 
 	SET_REF_OBJ(ID_REF(idp), dp);
 	SET_OBJ_FLAG_BITS(dp, DT_EXPORTED);
 }
 
-static void node_info(QSP_ARG_DECL  Vec_Expr_Node *enp)
+#define node_info(enp) _node_info(QSP_ARG  enp)
+
+static void _node_info(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int save_flags;
 
 	save_flags = dump_flags;
 	dump_flags = SHOW_ALL;
-	_dump_node_with_shape(QSP_ARG  enp);
+	dump_node_with_shape(enp);
 	dump_flags = save_flags;
 }
 
@@ -195,11 +197,11 @@ static COMMAND_FUNC( do_node_info )
 	Vec_Expr_Node *enp;
 	int n;
 
-	n= (int) HOW_MANY("node serial number");
-	enp = find_node_by_number(QSP_ARG  n);
+	n= (int) how_many("node serial number");
+	enp = find_node_by_number(n);
 	if( enp == NULL ) return;
 
-	node_info(QSP_ARG  enp);
+	node_info(enp);
 }
 
 static COMMAND_FUNC( do_list_subrts )
@@ -261,7 +263,7 @@ void vt_init(SINGLE_QSP_ARG_DECL)
 	init_ids();		// init other item types too???
 	// BUG need to figure out how to do this without referencing itp
 	// why?
-	set_del_method(id_itp,delete_id);
+	set_del_method(id_itp,_delete_id);
 	DECLARE_STR1_FUNCTION(	id_exists,	id_exists )
 
 #ifdef QUIP_DEBUG

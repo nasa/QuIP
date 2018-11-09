@@ -81,8 +81,6 @@ extern void _advise(QSP_ARG_DECL  const char *msg);
 extern void _prt_msg_frag(QSP_ARG_DECL  const char *msg);
 extern void _prt_msg(QSP_ARG_DECL  const char *msg);
 
-extern void tty_advise(QSP_ARG_DECL  const char *s);
-
 #define tell_sys_error(s)	_tell_sys_error(QSP_ARG  s)
 
 extern void _tell_sys_error(QSP_ARG_DECL  const char* s);

@@ -20,7 +20,9 @@ const char *argset_type_name[N_ARGSET_TYPES]={
 	"mixed (quaternion/real)"
 };
 
-static void shape_error(QSP_ARG_DECL  Vector_Function *vfp, Data_Obj *dp)
+#define shape_error(vfp, dp) _shape_error(QSP_ARG  vfp, dp)
+
+static void _shape_error(QSP_ARG_DECL  Vector_Function *vfp, Data_Obj *dp)
 {
 	sprintf(ERROR_STRING,"shape_error:  Vector function %s:  argument %s has unknown shape!?",
 		VF_NAME(vfp),OBJ_NAME(dp));
@@ -28,22 +30,24 @@ static void shape_error(QSP_ARG_DECL  Vector_Function *vfp, Data_Obj *dp)
 }
 
 
-static int chk_uk(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
+#define chk_uk(vfp, oap) _chk_uk(QSP_ARG  vfp, oap)
+
+static int _chk_uk(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
 {
 	int i;
 
 	if( OA_DEST(oap)  != NULL && UNKNOWN_OBJ_SHAPE(OA_DEST(oap)) ){
-		shape_error(QSP_ARG  vfp,OA_DEST(oap) );
+		shape_error(vfp,OA_DEST(oap) );
 		return -1;
 	}
 	for(i=0;i<MAX_N_ARGS;i++){
 		if( OA_SRC_OBJ(oap,i) != NULL && UNKNOWN_OBJ_SHAPE( OA_SRC_OBJ(oap,i) ) ){
-			shape_error(QSP_ARG  vfp,OA_SRC_OBJ(oap,i));
+			shape_error(vfp,OA_SRC_OBJ(oap,i));
 			return -1;
 		}
 	}
 	if( OA_SBM(oap) != NULL && UNKNOWN_OBJ_SHAPE(OA_SBM(oap)) ){
-		shape_error(QSP_ARG  vfp,OA_SBM(oap) );
+		shape_error(vfp,OA_SBM(oap) );
 		return -1;
 	}
 	/* BUG check the scalar objects too? */
@@ -64,7 +68,9 @@ static const char *name_for_type(Data_Obj *dp)
 				 VF_CODE(vfp)==FVFFT2D || \
 				 VF_CODE(vfp)==FVFFTROWS )
 
-static int chktyp_fft(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
+#define chktyp_fft(vfp,oap) _chktyp_fft(QSP_ARG  vfp,oap)
+
+static int _chktyp_fft(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 {
 	assert( OA_SRC1(oap) != NULL );
 
@@ -107,12 +113,14 @@ static int chktyp_fft(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
  * independent of "precision" (byte/short/float etc)
  */
 
-static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
+#define chktyp(vfp,oap) _chktyp(QSP_ARG  vfp,oap)
+
+static int _chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 {
 	SET_OA_ARGSTYPE(oap, UNKNOWN_ARGS);
 
 	if( IS_FFT_FUNC(vfp) ){
-		return chktyp_fft(QSP_ARG  vfp, oap);
+		return chktyp_fft(vfp, oap);
 	}
 
 	/* Set the type based on the destination vector */
@@ -463,7 +471,9 @@ return -1;							\
  * to have all different types...
  */
 
-static int chkprec(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
+#define chkprec(vfp,oap) _chkprec(QSP_ARG  vfp,oap)
+
+static int _chkprec(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 {
     // We initialize these prec vars to silence a compiler warning,
     // but probably not necessary...
@@ -762,14 +772,16 @@ next1:
 //TELL_FUNCTYPE( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) )
 } /* end chkprec() */
 
-static int check_size_match(QSP_ARG_DECL  Vector_Function *vfp, Data_Obj *dp1, Data_Obj *dp2 )
+#define check_size_match(vfp, dp1, dp2 ) _check_size_match(QSP_ARG  vfp, dp1, dp2 )
+
+static int _check_size_match(QSP_ARG_DECL  Vector_Function *vfp, Data_Obj *dp1, Data_Obj *dp2 )
 {
 	int status;
 
 	if( dp1 == NULL ) return 0;
 	if( dp2 == NULL ) return 0;
 
-	if( (status=cksiz(QSP_ARG  VF_FLAGS(vfp), dp1 ,dp2 )) == (-1) ){
+	if( (status=cksiz(VF_FLAGS(vfp), dp1 ,dp2 )) == (-1) ){
 		sprintf(ERROR_STRING,
 	"check_size_match:  Size mismatch between objects %s and %s, function %s",
 			OBJ_NAME( dp1 ) ,OBJ_NAME( dp2 ), VF_NAME(vfp) );
@@ -780,7 +792,9 @@ static int check_size_match(QSP_ARG_DECL  Vector_Function *vfp, Data_Obj *dp1, D
 	return 0;
 }
 
-static int chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check for argument size match */
+#define chksiz(vfp,oap) _chksiz(QSP_ARG  vfp,oap)
+
+static int _chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check for argument size match */
 {
 	int status=0;
 
@@ -800,11 +814,7 @@ static int chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check
 			 * but that is not necessary...
 			 */
 
-			/*
-			if( (status=old_cksiz(VF_FLAGS(vfp),OA_SBM(oap) ,OA_DEST(oap) ))
-					== (-1) )
-			*/
-			if( (status=cksiz(QSP_ARG  VF_FLAGS(vfp),OA_SBM(oap) ,OA_DEST(oap) ))
+			if( (status=cksiz(VF_FLAGS(vfp),OA_SBM(oap) ,OA_DEST(oap) ))
 				== (-1) )
 			{
 				sprintf(ERROR_STRING,
@@ -839,7 +849,7 @@ advise(ERROR_STRING);
 	 * this may not match...
 	 */
 	if( VF_CODE(vfp) == FVDOT ){
-		if( (status=cksiz(QSP_ARG  VF_FLAGS(vfp), OA_SRC1(oap) ,OA_SRC2(oap) )) == (-1) ){
+		if( (status=cksiz(VF_FLAGS(vfp), OA_SRC1(oap) ,OA_SRC2(oap) )) == (-1) ){
 			sprintf(ERROR_STRING,"chksiz:  Size mismatch between arg1 (%s) and arg2 (%s), function %s",
 				OBJ_NAME( OA_SRC1(oap) ) ,OBJ_NAME(OA_SRC2(oap) ) ,VF_NAME(vfp) );
 			advise(ERROR_STRING);
@@ -849,7 +859,7 @@ advise(ERROR_STRING);
 	}
 #endif // FVDOT
 
-	if( check_size_match(QSP_ARG  vfp, OA_SRC1(oap), OA_DEST(oap) ) < 0 )
+	if( check_size_match(vfp, OA_SRC1(oap), OA_DEST(oap) ) < 0 )
 		return -1;
 
 	if( IS_LUTMAP_FUNC(vfp) ){
@@ -871,14 +881,14 @@ advise(ERROR_STRING);
 			return -1;
 		}
 	} else {
-		if( check_size_match(QSP_ARG  vfp, OA_SRC2(oap), OA_DEST(oap) ) < 0 )
+		if( check_size_match(vfp, OA_SRC2(oap), OA_DEST(oap) ) < 0 )
 			return -1;
 	}
 
-	if( check_size_match(QSP_ARG  vfp, OA_SRC3(oap), OA_DEST(oap) ) < 0 )
+	if( check_size_match(vfp, OA_SRC3(oap), OA_DEST(oap) ) < 0 )
 		return -1;
 
-	if( check_size_match(QSP_ARG  vfp, OA_SRC4(oap), OA_DEST(oap) ) < 0 )
+	if( check_size_match(vfp, OA_SRC4(oap), OA_DEST(oap) ) < 0 )
 		return -1;
 
 	// SRC5 ???
@@ -893,14 +903,16 @@ advise(ERROR_STRING);
 /* check that all of the arguments match (when they should) */
 
 
-static int chkargs( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
+#define chkargs(vfp, oap) _chkargs( QSP_ARG  vfp, oap)
+
+static int _chkargs( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
 {
 	assert( OA_DEST(oap) != NULL || (VF_FLAGS(vfp) & BITMAP_DST)==0 );
 
-	if( chk_uk(QSP_ARG  vfp,oap) == (-1) ) return -1;
-	if( chktyp(QSP_ARG  vfp,oap) == (-1) ) return -1;
-	if( chkprec(QSP_ARG  vfp,oap) == (-1) ) return -1;
-	if( chksiz(QSP_ARG  vfp,oap) == (-1) ) return -1;
+	if( chk_uk(vfp,oap) == (-1) ) return -1;
+	if( chktyp(vfp,oap) == (-1) ) return -1;
+	if( chkprec(vfp,oap) == (-1) ) return -1;
+	if( chksiz(vfp,oap) == (-1) ) return -1;
 
 	/* Now we have to set the function type */
 
@@ -999,9 +1011,9 @@ static int make_arg_evenly_spaced(Vec_Obj_Args *oap,int index)
 }
 #endif /* FOOBAR */
 
-int perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap)
+int _perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap)
 {
-	return( call_vfunc(QSP_ARG  FIND_VEC_FUNC(code), oap) );
+	return( call_vfunc(FIND_VEC_FUNC(code), oap) );
 }
 
 #ifdef HAVE_ANY_GPU
@@ -1026,7 +1038,7 @@ void set_gpu_dispatch_func( int (*func)(QSP_ARG_DECL  Vector_Function *vfp, Vec_
 
 #endif /* HAVE_ANY_GPU */
 
-int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
+int _call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 {
 	int retval;
 
@@ -1045,9 +1057,6 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 		error1("call_vfunc:  no prototype vector!?");
 	}
 
-//sprintf(ERROR_STRING,"call_vfunc:  function %s",VF_NAME(vfp));
-//advise(ERROR_STRING);
-//show_obj_args(QSP_ARG  oap);
 	/* If we are performing a conversion, we assume that the proper
 	 * conversion function has already been selected.
 	 * We want to do this efficiently...
@@ -1055,11 +1064,10 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 	/* if( IS_CONVERSION(vfp) ) return 0; */
 
 	/* check for precision, type, size matches */
-	if( chkargs(QSP_ARG  vfp,oap) == (-1) ) return -1;	/* make set vslct_fake */
+	if( chkargs(vfp,oap) == (-1) ) return -1;	/* make set vslct_fake */
 
 	/* argstype has been set from within chkargs */
 	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) ) );
-//TELL_FUNCTYPE( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) )
 
 	/* We don't worry here about vectorization on CUDA... */
 
@@ -1068,10 +1076,9 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 		return -1;
 
 	assert( OA_PFDEV(oap) != NULL );
-//fprintf(stderr,"call_vfunc:  oap = 0x%lx  vfp = 0x%lx\n", (long)oap,(long)vfp );
-//fprintf(stderr,"call_vfunc:  func at 0x%lx\n",(long)OA_DISPATCH_FUNC(oap));
-	//return (* OA_DISPATCH_FUNC( oap ) )(QSP_ARG  vfp,oap);
-	retval = platform_dispatch( QSP_ARG  PFDEV_PLATFORM(OA_PFDEV(oap)), vfp,oap);
+
+	retval = platform_dispatch( PFDEV_PLATFORM(OA_PFDEV(oap)), vfp, oap );
+
 	return retval;
 } // call_vfunc
 

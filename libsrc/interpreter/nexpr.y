@@ -651,7 +651,7 @@ static Item* eval_tsbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 	switch(enp->sen_code){
 		case N_TSABLE:
 			s = eval_scalexp_string(enp->sen_child[0]);
-			ip = find_tsable( QSP_ARG  s );
+			ip = find_tsable( s );
 			if( ip == NULL ){
 				sprintf(ERROR_STRING,
 					"No time-stampable object \"%s\"!?",s);
@@ -932,12 +932,12 @@ static Data_Obj *default_eval_dobj( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 
 static Data_Obj * (*eval_dobj_func)(QSP_ARG_DECL  Scalar_Expr_Node *enp) = default_eval_dobj;
 
-void set_eval_szbl_func(QSP_ARG_DECL  Item * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) )
+void _set_eval_szbl_func(QSP_ARG_DECL  Item * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) )
 {
 	eval_szbl_func = func;
 }
 
-void set_eval_dobj_func(QSP_ARG_DECL  Data_Obj * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) )
+void _set_eval_dobj_func(QSP_ARG_DECL  Data_Obj * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) )
 {
 	eval_dobj_func = func;
 }
@@ -1084,7 +1084,7 @@ static Item * eval_positionable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_OBJNAME:
 			// Not necessarily a data object!?
 			s = eval_scalexp_string(enp);
-			szp = find_positionable( QSP_ARG  s );
+			szp = find_positionable( s );
 			break;
 #ifdef CAUTIOUS
 		default:
@@ -1115,7 +1115,7 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_OBJNAME:
 			// Not necessarily a data object!?
 			s = eval_scalexp_string(enp);
-			szp = find_interlaceable( QSP_ARG  s );
+			szp = find_interlaceable( s );
 			if( szp == NULL ){
 				sprintf(ERROR_STRING,
 					"No interlaceable object \"%s\"!?",s);
@@ -1394,7 +1394,7 @@ dump_enode(QSP_ARG  enp);
 
 	case N_STRV3FUNC:		// eval_expr
 		tsp2 = eval_expr(enp->sen_child[0]); 
-		s = (*enp->sen_func_p->fn_u.strv3_func)( QSP_ARG llong_for_scalar(tsp2) );
+		s = (*enp->sen_func_p->fn_u.strv3_func)( QSP_ARG (time_t) llong_for_scalar(tsp2) );
 		tsp = scalar_for_string(s);
 		break;
 

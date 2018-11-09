@@ -74,9 +74,9 @@ static COMMAND_FUNC( do_packed_mseq )
 	u_long start_val;
 
 	dp = pick_obj("mseq vector");
-	n = (int) HOW_MANY("register length");
-	t = (int) HOW_MANY("tap bit index");
-	start_val = (u_long)HOW_MANY("start value");
+	n = (int) how_many("register length");
+	t = (int) how_many("tap bit index");
+	start_val = (u_long)how_many("start value");
 
 	if( dp == NULL ) return;
 
@@ -103,9 +103,9 @@ static COMMAND_FUNC( do_mseq )
 	u_long start_val;
 
 	dp = pick_obj("mseq vector");
-	n = (int) HOW_MANY("register length");
-	t = (int) HOW_MANY("tap bit index");
-	start_val = (u_long) HOW_MANY("start value");
+	n = (int) how_many("register length");
+	t = (int) how_many("tap bit index");
+	start_val = (u_long) how_many("start value");
 
 	if( dp == NULL ) return;
 
@@ -139,7 +139,7 @@ static COMMAND_FUNC( do_pack )
 	dst_dp = pick_obj("destination vector");
 	src_dp = pick_obj("source vector");
 	
-	reg_len = (int) HOW_MANY("source register length");
+	reg_len = (int) how_many("source register length");
 	total_bits = (1<<reg_len)-1;
 	//nwords = (int) floor((total_bits+31)/32);
 

@@ -9,10 +9,11 @@
 #include "node.h"
 #include "warn.h"
 #include "getbuf.h"
+#include "debug.h"
 
-debug_flag_t debug=0;
 int quip_verbose=0;
 
+#ifdef QUIP_DEBUG
 /*
  * Because the debug modules use the item package, subsystems
  * which support this (getbuf, hash) need to have their bit masks
@@ -20,11 +21,8 @@ int quip_verbose=0;
  */
 
 
+debug_flag_t debug=0;
 static int  n_debug_modules=(-1);
-
-#ifdef QUIP_DEBUG_SYSTEM
-//static Debug_Module auto_dbm_tbl[N_AUTO_DEBUG_MODULES];
-#endif /* QUIP_DEBUG_SYSTEM */
 
 /* local prototypes */
 #define init_dbm()	_init_dbm(SINGLE_QSP_ARG)
@@ -146,16 +144,6 @@ void _set_debug(QSP_ARG_DECL  Debug_Module *dbmp)
 //advise(ERROR_STRING);
 }
 
-#ifdef NOT_NEEDED
-void clr_debug(QSP_ARG_DECL  Debug_Module *dbmp)
-{
-	sprintf(ERROR_STRING,"suppressing debugging messages for %s module",
-		DEBUG_NAME(dbmp));
-	advise(ERROR_STRING);
-	debug &= ~ QUIP_DEBUG_MASK(dbmp);
-}
-#endif /* NOT_NEEDED */
-
 debug_flag_t _add_debug_module(QSP_ARG_DECL  const char *name)
 {
 	Debug_Module *dmp;
@@ -182,18 +170,20 @@ debug_flag_t _add_debug_module(QSP_ARG_DECL  const char *name)
 	return(DEBUG_MASK(dmp));
 }
 
+#endif // QUIP_DEBUG
+
 // We don't need to call assign_var (or assign_reserved_var)
 // here, because $verbose is a dynamic variable...
 
 void clr_verbose(SINGLE_QSP_ARG_DECL)
 {
-	if( debug )  advise("suppressing verbose messages");
+	if( verbose )  advise("suppressing verbose messages");
 	quip_verbose=0;
 }
 
 void set_verbose(SINGLE_QSP_ARG_DECL)
 {
-	if( debug ) advise("printing verbose messages");
+	advise("printing verbose messages");
 	quip_verbose=1;
 }
 

@@ -1,0 +1,18 @@
+# set indirect variables
+
+Set x_1	a
+Set x_2	b
+Set y_1	c
+Set y_2	d
+
+Define Show12 1 stem
+echo "${1}_1 = ${${1}_1}"
+echo "${1}_2 = ${${1}_2}"
+.
+
+Print x_1
+Print x_2
+echo "concatenating variables x_1 and x_2:  $x_1$x_2"
+Show12 x
+exit
+

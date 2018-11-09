@@ -282,7 +282,7 @@ static COMMAND_FUNC( do_err_frms )
 		delvec(dp);
 	}
 
-	dp = mk_vec(QSP_ARG  s,FRAME_INFO_N_SAVED(fi_p),1,PREC_FOR_CODE(PREC_DI));
+	dp = mk_vec(s,FRAME_INFO_N_SAVED(fi_p),1,PREC_FOR_CODE(PREC_DI));
 	if( dp == NULL ){
 		sprintf(ERROR_STRING,"do_err_frms:  unable to create data vector %s",s);
 		warn(ERROR_STRING);

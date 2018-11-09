@@ -21,6 +21,8 @@
 
 #include "item_type.h"
 
+#ifdef QUIP_DEBUG
+
 /* change to uint64_t if we run out of modules... */
 #define ALL_DEBUG_MODULES	0xffffffff
 
@@ -70,7 +72,16 @@
 
 #endif /* ! DEBUG_SYSTEM */
 
+#define DEBUG_MSG(flag,msg)	if( debug & flag ) advise("msg");
+
+#else /* ! QUIP_DEBUG */
+
+#define DEBUG_MSG(flag,msg)
+
+#endif /* ! QUIP_DEBUG */
+
 #include <string.h>
+
 // helper macro for assertions with nothing but a message...
 // We used to write assert( ! "message" )
 // but this produces warnings in xcode...

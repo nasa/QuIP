@@ -87,7 +87,8 @@ extern void decap(char *,const char *);
 
 
 #ifdef HAVE_HISTORY
-void init_item_hist( QSP_ARG_DECL  Item_Type *itp, const char* prompt );
+void _init_item_hist( QSP_ARG_DECL  Item_Type *itp, const char* prompt );
+#define init_item_hist( itp, prompt ) _init_item_hist( QSP_ARG  itp, prompt )
 #endif /* HAVE_HISTORY */
 
 #ifdef __cplusplus

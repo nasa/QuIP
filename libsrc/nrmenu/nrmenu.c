@@ -75,7 +75,7 @@ static COMMAND_FUNC( do_jacobi )
 
 	if( v_dp == NULL || d_dp == NULL || a_dp == NULL ) return;
 
-	dp_jacobi(QSP_ARG  v_dp,d_dp,a_dp,&nrot);
+	dp_jacobi(v_dp,d_dp,a_dp,&nrot);
 
 	// sprintf(msg_str,"%d rotations performed",nrot);
 	// prt_msg(msg_str);
@@ -90,7 +90,7 @@ static COMMAND_FUNC( do_eigsrt )
 
 	if( v_dp == NULL || d_dp == NULL ) return;
 
-	dp_eigsrt(QSP_ARG  v_dp,d_dp);
+	dp_eigsrt(v_dp,d_dp);
 }
 
 static COMMAND_FUNC( do_moment )
@@ -99,7 +99,7 @@ static COMMAND_FUNC( do_moment )
 	
 	d_dp = pick_obj("array of data");
 	/* How to get the values of ave and sdev??? */
-	dp_moment(QSP_ARG  d_dp);
+	dp_moment(d_dp);
 }
 
 static COMMAND_FUNC( do_plgndr )
@@ -107,18 +107,18 @@ static COMMAND_FUNC( do_plgndr )
 	float x,r;
 	int l,m;
 
-	l=(int)HOW_MANY("l");
-	m=(int)HOW_MANY("m");
-	x=(float)HOW_MUCH("x");
+	l=(int)how_many("l");
+	m=(int)how_many("m");
+	x=(float)how_much("x");
 
 	if( m < 0 || m > l ){
 		sprintf(ERROR_STRING,"parameter m (%d) must be between 0 and l (%d)",m,l);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( x < -1 || x > 1 ){
 		sprintf(ERROR_STRING,"parameter x (%g) must be between -1 and 1",x);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 

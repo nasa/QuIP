@@ -7,7 +7,7 @@
 
 static int matrix[2][2]={{0,2},{3,1}};
 
-void odither(QSP_ARG_DECL  Data_Obj *dp,int size)/* ordered dither matrix order n */
+void _odither(QSP_ARG_DECL  Data_Obj *dp,int size)/* ordered dither matrix order n */
 {
 	dimension_t x,y;
 	int i;

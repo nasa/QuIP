@@ -68,11 +68,17 @@ extern void tty_reset(FILE *tty);
 extern void save_keystroke(int c);
 extern int get_keystroke(void);
 extern void hist_bis(const char *pmpt);
-extern const char *get_response_from_user( QSP_ARG_DECL  const char *prompt, FILE *tty_in, FILE *tty_out );
-extern void sane_tty(SINGLE_QSP_ARG_DECL);
-extern void check_events(QSP_ARG_DECL  FILE *);
+
+extern const char *_get_response_from_user( QSP_ARG_DECL  const char *prompt, FILE *tty_in, FILE *tty_out );
+extern void _sane_tty(SINGLE_QSP_ARG_DECL);
+extern void _check_events(QSP_ARG_DECL  FILE *);
 extern int _keyboard_hit(QSP_ARG_DECL  FILE *);
+
+#define get_response_from_user( prompt, tty_in, tty_out ) _get_response_from_user( QSP_ARG  prompt, tty_in, tty_out )
+#define sane_tty() _sane_tty(SINGLE_QSP_ARG)
+#define check_events(fp) _check_events(QSP_ARG  fp)
 #define keyboard_hit(fp)	_keyboard_hit(QSP_ARG  fp)
+
 #endif /* TTY_CTL */
 
 #endif /* HAVE_HISTORY */

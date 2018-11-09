@@ -171,7 +171,7 @@ static void print_string(short *buf,int n)
 
 #endif // NOT_USED
 
-void display_buffer(short *buf,int n)
+void _display_polh_buffer(QSP_ARG_DECL  short *buf,int n)
 {
 	char *cp;
 	char str[4],*s;
@@ -185,16 +185,16 @@ void display_buffer(short *buf,int n)
 
 		str[0]=(*cp);
 		str[1]=0;
-		s=show_printable(DEFAULT_QSP_ARG  str);
-		sprintf(DEFAULT_MSG_STR,"\t0x%x\t\t0x%x\t%s", *buf, *cp, s);
-		_prt_msg_frag(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
+		s=show_printable(str);
+		sprintf(MSG_STR,"\t0x%x\t\t0x%x\t%s", *buf, *cp, s);
+		prt_msg_frag(MSG_STR);
 
 		cp++;
 		str[0]=(*cp);
 		str[1]=0;
-		s=show_printable(DEFAULT_QSP_ARG  str);
-		sprintf(DEFAULT_MSG_STR,"\t0x%x\t%s", *cp, s);
-		_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
+		s=show_printable(str);
+		sprintf(MSG_STR,"\t0x%x\t%s", *cp, s);
+		prt_msg(MSG_STR);
 
 		buf++;
  	}
@@ -390,7 +390,7 @@ void _read_response(QSP_ARG_DECL  int display_flag)
 		}
 	}
 	if( display_flag )
-		display_buffer(resp_buf,(int)n_response_chars/2);
+		display_polh_buffer(resp_buf,(int)n_response_chars/2);
 }
 
 void _clear_polh_dev(SINGLE_QSP_ARG_DECL)
@@ -640,7 +640,7 @@ int read_polh_data( void *raw_pdp, int n_want )
 		sprintf(ERROR_STRING,"Expected to find string \"%s\" at position %d",	\
 				str,posn);						\
 		warn(ERROR_STRING);							\
-		display_buffer(&resp_buf[0],n_response_chars/2);			\
+		display_polh_buffer(&resp_buf[0],n_response_chars/2);			\
 		return;									\
 	}										\
 	posn += strlen(str);
@@ -667,7 +667,7 @@ static void parse_error()
 	if( resp_chars[posn] != '-' ){
 		sprintf(ERROR_STRING,"parse_error:  expected '-' at position %d",posn);
 		warn(ERROR_STRING);
-		display_buffer(resp_buf,n_response_chars/2);
+		display_polh_buffer(resp_buf,n_response_chars/2);
 		return;
 	}
 	posn++;
@@ -687,13 +687,13 @@ static void parse_error()
 		default:
 				sprintf(ERROR_STRING,"Unrecognized error code %d",error_code);
 				warn(ERROR_STRING);
-				display_buffer(resp_buf,n_response_chars/2);
+				display_polh_buffer(resp_buf,n_response_chars/2);
 				return;
 	}
 
 
-advise("parse_error: calling display_buffer");
-	display_buffer(&resp_buf[0],n_response_chars/2);			\
+advise("parse_error: calling display_polh_buffer");
+	display_polh_buffer(&resp_buf[0],n_response_chars/2);			\
 }
 
 #endif /* INSIDE_TRACK */
@@ -728,7 +728,9 @@ advise(ERROR_STRING);
 	return(NULL);
 }
 
-static int recv_polh_data(QSP_ARG_DECL  Ph_Cmd_Code cmd)
+#define recv_polh_data(cmd) _recv_polh_data(QSP_ARG  cmd)
+
+static int _recv_polh_data(QSP_ARG_DECL  Ph_Cmd_Code cmd)
 {
 	char *s;
 	char expected[8];
@@ -742,7 +744,7 @@ fprintf(stderr,"recv_polh_data:  line read:  \"%s\".\n",s);
 			/* "2 y0\r" */
 			if( strncmp(s,"2 y",3) ){
 				sprintf(ERROR_STRING,"recv_polh_data PH_SYNC_MODE:  read \"%s\", expected \"2 y...\"",
-					show_printable(DEFAULT_QSP_ARG  s));
+					show_printable(s));
 				warn(ERROR_STRING);
 			} else {
 				switch(s[3]){
@@ -762,7 +764,7 @@ fprintf(stderr,"recv_polh_data:  line read:  \"%s\".\n",s);
 					default:
 						sprintf(ERROR_STRING,
 					"CAUTIOUS:  recv_polh_data:  read \"%s\", unhandled sync mode",
-							show_printable(DEFAULT_QSP_ARG  s));
+							show_printable(s));
 						warn(ERROR_STRING);
 						break;
 #endif /* CAUTIOUS */
@@ -771,7 +773,7 @@ fprintf(stderr,"recv_polh_data:  line read:  \"%s\".\n",s);
 			break;
 
 		case PH_STATUS:
-sprintf(ERROR_STRING,"PH_STATUS recv_polh_data received \"%s\", NOT parsing...",show_printable(DEFAULT_QSP_ARG  s));
+sprintf(ERROR_STRING,"PH_STATUS recv_polh_data received \"%s\", NOT parsing...",show_printable(s));
 advise(ERROR_STRING);
 			break;
 		case PH_STATION:
@@ -779,7 +781,7 @@ advise(ERROR_STRING);
 			sprintf(expected,"2%cl",'1'+curr_station_idx);
 			if( strncmp(s,expected,3) ){
 				sprintf(ERROR_STRING,"recv_polh_data PH_STATION:  read \"%s\", expected \"%s...\"",
-					show_printable(DEFAULT_QSP_ARG  s),
+					show_printable(s),
 					expected);
 				warn(ERROR_STRING);
 			} else {
@@ -798,7 +800,7 @@ advise(ERROR_STRING);
 						default:
 							sprintf(ERROR_STRING,
 			"CAUTIOUS:  recv_polh_data PH_STATION:  read \"%s\", unexpected status char in position %d",
-								show_printable(DEFAULT_QSP_ARG  s),i);
+								show_printable(s),i);
 							warn(ERROR_STRING);
 							break;
 					}
@@ -811,7 +813,7 @@ advise(ERROR_STRING);
 			}
 			break;
 		case PH_ALIGNMENT:
-sprintf(ERROR_STRING,"PH_ALIGNMENT recv_polh_data received \"%s\", NOT parsing...",show_printable(DEFAULT_QSP_ARG  s));
+sprintf(ERROR_STRING,"PH_ALIGNMENT recv_polh_data received \"%s\", NOT parsing...",show_printable(s));
 advise(ERROR_STRING);
 			break;
 		case PH_XMTR_ANGLES:
@@ -824,11 +826,11 @@ advise(ERROR_STRING);
 		case PH_HEMISPHERE:
 #ifdef QUIP_DEBUG
 if( debug & debug_polhemus ){
-sprintf(ERROR_STRING,"recv_polh_data received \"%s\", NOT parsing...",show_printable(DEFAULT_QSP_ARG  s));
+sprintf(ERROR_STRING,"recv_polh_data received \"%s\", NOT parsing...",show_printable(s));
 advise(ERROR_STRING);
 }
 #endif // QUIP_DEBUG
-sprintf(ERROR_STRING,"recv_polh_data received \"%s\", NOT parsing...",show_printable(DEFAULT_QSP_ARG  s));
+sprintf(ERROR_STRING,"recv_polh_data received \"%s\", NOT parsing...",show_printable(s));
 advise(ERROR_STRING);
 			/* BUG - need to parse the string */
 			break;
@@ -836,7 +838,7 @@ advise(ERROR_STRING);
 			sprintf(ERROR_STRING,"Unhandled case in recv_polh_data for %s command",
 				polh_cmds[cmd].pc_name);
 			warn(ERROR_STRING);
-sprintf(ERROR_STRING,"recv_polh_data received \"%s\"",show_printable(DEFAULT_QSP_ARG  s));
+sprintf(ERROR_STRING,"recv_polh_data received \"%s\"",show_printable(s));
 advise(ERROR_STRING);
 			return(-1);
 			break;
@@ -892,7 +894,7 @@ int _send_polh_cmd(QSP_ARG_DECL  Ph_Cmd_Code cmd, const char * cmdargs)
 	 */ 
 	if(cmdargs) {
 //sprintf(ERROR_STRING,"Appending command args \"%s\" to %s command",
-//show_printable(DEFAULT_QSP_ARG  cmdargs),polh_cmds[cmd].pc_name);
+//show_printable(cmdargs),polh_cmds[cmd].pc_name);
 //advise(ERROR_STRING);
 		switch(cmd){
 			case PH_STATION:
@@ -912,7 +914,7 @@ int _send_polh_cmd(QSP_ARG_DECL  Ph_Cmd_Code cmd, const char * cmdargs)
 				break;
 			default:
 				sprintf(ERROR_STRING,"Unhandled Case in send_polh_cmd:  %s, cmd_args = \"%s\"",
-					polh_cmds[cmd].pc_name,show_printable(DEFAULT_QSP_ARG  cmdargs));
+					polh_cmds[cmd].pc_name,show_printable(cmdargs));
 				warn(ERROR_STRING);
 				sprintf(command, "%s,%s", code_id, cmdargs);
 				break;
@@ -957,7 +959,7 @@ int _send_polh_cmd(QSP_ARG_DECL  Ph_Cmd_Code cmd, const char * cmdargs)
 
 #ifdef QUIP_DEBUG
 if( debug & debug_polhemus ){
-sprintf(ERROR_STRING,"Ready to send command string \"%s\"",show_printable(DEFAULT_QSP_ARG  command));
+sprintf(ERROR_STRING,"Ready to send command string \"%s\"",show_printable(command));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -1082,7 +1084,7 @@ warn(ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 //if( debug & debug_polhemus ){
-sprintf(ERROR_STRING,"ready to send command string \"%s\"",show_printable(DEFAULT_QSP_ARG  command));
+sprintf(ERROR_STRING,"ready to send command string \"%s\"",show_printable(command));
 advise(ERROR_STRING);
 //}
 #endif /* QUIP_DEBUG */
@@ -1099,7 +1101,7 @@ advise(ERROR_STRING);
 	}
 
 fprintf(stderr,"get_polh_info:  command sent, calling recv_polh_data\n");
-	return recv_polh_data(QSP_ARG  cmd);	
+	return recv_polh_data(cmd);	
 } /* end get_polh_info */
 
 int _send_string(QSP_ARG_DECL  const char *cmd)
@@ -1114,7 +1116,7 @@ int _send_string(QSP_ARG_DECL  const char *cmd)
 
 #ifdef QUIP_DEBUG
 if( debug & debug_polhemus ){
-	sprintf(DEFAULT_MSG_STR, "send_string: %s", show_printable(DEFAULT_QSP_ARG  cmd) );
+	sprintf(DEFAULT_MSG_STR, "send_string: %s", show_printable(cmd) );
 	advise(DEFAULT_MSG_STR);
 }
 #endif
@@ -1467,25 +1469,25 @@ fprintf(stderr,"get_active_stations:  getting active station...\n");
 		return;
 	}
 fprintf(stderr,"get_active_stations:  response buffer:\n");
-display_buffer(&resp_buf[0],(int)n_response_chars/2);
+display_polh_buffer(&resp_buf[0],(int)n_response_chars/2);
 
 	s=(char *)resp_buf;
 
 	if( *s != '2' ){
 		sprintf(ERROR_STRING,"get_active_stations:  expected first char to be 2 (\"%s\")",
-			show_printable(DEFAULT_QSP_ARG  s));
+			show_printable(s));
 		warn(ERROR_STRING);
 	}
 
 	if( s[1] != '1' && s[1] != '2' ){
 		sprintf(ERROR_STRING,"get_active_stations:  expected second char to be 1 or 2 (\"%s\")",
-			show_printable(DEFAULT_QSP_ARG  s));
+			show_printable(s));
 		warn(ERROR_STRING);
 	}
 
 	if( s[2] != 'l' ){
 		sprintf(ERROR_STRING,"get_active_stations:  expected third char to be l (\"%s\")",
-			show_printable(DEFAULT_QSP_ARG  s));
+			show_printable(s));
 		warn(ERROR_STRING);
 	}
 

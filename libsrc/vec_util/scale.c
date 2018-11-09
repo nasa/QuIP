@@ -36,7 +36,7 @@ static float exclip(QSP_ARG_DECL  Data_Obj *dp,Data_Obj *val_sp,
 	oargs.oa_s1 = val_sp;
 
 
-	perf_vfunc(QSP_ARG  FVCLIP,&oargs);
+	perf_vfunc(FVCLIP,&oargs);
 	extremum = clipval;
 
 	index_p=mk_scalar("___index",PREC_DI);
@@ -47,7 +47,7 @@ static float exclip(QSP_ARG_DECL  Data_Obj *dp,Data_Obj *val_sp,
 
 		setvarg1(&oargs,dp);
 		oargs.oa_s1 = index_p;
-		perf_vfunc(QSP_ARG  ifunc,&oargs);
+		perf_vfunc(ifunc,&oargs);
 
 		/* now we have the index ??  */
 		i = *((long *)OBJ_DATA_PTR(index_p));
@@ -68,7 +68,7 @@ static float exclip(QSP_ARG_DECL  Data_Obj *dp,Data_Obj *val_sp,
 
 		/* get the new extremum to see if we're done */
 		oargs.oa_s1 = val_sp;
-		perf_vfunc(QSP_ARG  vfunc,&oargs);
+		perf_vfunc(vfunc,&oargs);
 		extremum = *((float *)OBJ_DATA_PTR(val_sp));
 	}
 	delvec(index_p);
@@ -76,7 +76,7 @@ static float exclip(QSP_ARG_DECL  Data_Obj *dp,Data_Obj *val_sp,
 }
 #endif /* SOLARIS or SGI */
 
-void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an image (to byte range?) */
+void _scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an image (to byte range?) */
 {
 	double omn,omx,rf,offset;
 	Vec_Obj_Args oa1, *oap=&oa1;
@@ -98,12 +98,12 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 	OA_DEST(oap) = scratch_scalar_dp;
 
 
-	perf_vfunc(QSP_ARG  FVMINV, oap);
+	perf_vfunc(FVMINV, oap);
 
 	extract_scalar_value(&scratch_scalar_val, scratch_scalar_dp);
 	omn = cast_from_scalar_value(&scratch_scalar_val,OBJ_PREC_PTR(dp));
 
-	perf_vfunc(QSP_ARG  FVMAXV, oap);
+	perf_vfunc(FVMAXV, oap);
 
 	extract_scalar_value(&scratch_scalar_val, scratch_scalar_dp);
 	omx = cast_from_scalar_value(&scratch_scalar_val,OBJ_PREC_PTR(dp));
@@ -138,12 +138,12 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 	SET_OA_SVAL(oap,0,&scratch_scalar_val);
 	cast_dbl_to_scalar_value(&scratch_scalar_val,OBJ_PREC_PTR(dp),rf);
 	OA_DEST(oap) = dp;
-	perf_vfunc(QSP_ARG  FVSMUL, oap);
+	perf_vfunc(FVSMUL, oap);
 
 	offset = desmin - omn*rf;
 	if( offset != 0 ){
 		cast_dbl_to_scalar_value(&scratch_scalar_val,OBJ_PREC_PTR(dp),offset);
-		perf_vfunc(QSP_ARG  FVSADD, oap);
+		perf_vfunc(FVSADD, oap);
 	}
 }
 

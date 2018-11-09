@@ -977,48 +977,66 @@ static inline void sync_lbptrs(SINGLE_QSP_ARG_DECL)
 	}
 }
 
+#define get_varval(spp) _get_varval(QSP_ARG  spp)
 
+static char * _get_varval(QSP_ARG_DECL  char **spp);	// forward declaration, some recursion...
+
+#define concat_expanded_varname(buf, spp, n_p) _concat_expanded_varname(QSP_ARG  buf, spp, n_p)
+
+static int _concat_expanded_varname(QSP_ARG_DECL  char *buf, char **spp, int *n_p)
+{
+	char *vname;
+
+	vname = get_varval(spp);
+
+	if( vname==NULL ) return -1;
+	*n_p += strlen(vname);
+	// check for string overflow
+	if( *n_p >= LLEN ){
+		warn("Variable name too long!?");
+	} else {
+		strcat(buf,vname);
+	}
+	return 0;
+}
 
 #define LEFT_CURLY	'{'
 #define RIGHT_CURLY	'}'
 
-// get_varval is called when a var delimiter '$' is encountered
+#define read_variable_name(tmp_vnam, spp) _read_variable_name(QSP_ARG  tmp_vnam, spp)
 
-static char * get_varval(QSP_ARG_DECL  char **spp)			/** see if buf containts a variable */
+static int _read_variable_name(QSP_ARG_DECL  char *tmp_vnam, char **spp)
 {
-	const char *val_str;
 	char *sp;
-	char *vname;
-	char tmp_vnam[LLEN];
 	int had_curly=0;
+	int n_stored_chars=0;
 
 	sp = *spp;
-
-	assert( *sp == VAR_DELIM );
-
-	sp++;		/* skip over $ sign */
+	tmp_vnam[0]=0;	// clear initial value
 
 	if( *sp == LEFT_CURLY ){
 		sp++;
 		had_curly=1;
+	} else if( *sp == VAR_DELIM ){
+		// *spp = sp;		// not necessary, sp hasn't changed yet
+		return concat_expanded_varname(tmp_vnam,spp,&n_stored_chars);
 	}
-
-	if( *sp == VAR_DELIM ){		/* variable recursion? */
-		vname = get_varval(QSP_ARG  &sp);
-		if( vname==NULL ) return(NULL);
-	} else {			/* read in a varaible name */
-		int i;
-
-		i=0;
-		while( IS_LEGAL_VAR_CHAR(*sp) && i < LLEN )
-			tmp_vnam[i++] = *sp++;
-		if( i == LLEN ){
-			warn("Variable name too long");
-			i--;
+	while( ( (had_curly && *sp == VAR_DELIM) || IS_LEGAL_VAR_CHAR(*sp) )
+			&& n_stored_chars < LLEN-1 ){
+		if( *sp == VAR_DELIM ){		/* variable recursion? */
+			if( concat_expanded_varname(tmp_vnam,&sp,&n_stored_chars) < 0 )
+				return -1;
+		} else {
+			if( n_stored_chars >= LLEN ){
+				warn("Variable name too long!?");
+			} else {
+				tmp_vnam[n_stored_chars++] = *sp++;
+			}
 		}
-		tmp_vnam[i]=0;
-		vname = tmp_vnam;
 	}
+	// BUG make sure size is still good
+	assert(n_stored_chars < LLEN-1 );
+	tmp_vnam[n_stored_chars]=0;
 
 	if( had_curly ){
 		if( *sp != RIGHT_CURLY ){
@@ -1031,7 +1049,35 @@ static char * get_varval(QSP_ARG_DECL  char **spp)			/** see if buf containts a 
 	}
 
 	*spp = sp;
+	return 0;
+}
 
+
+
+// get_varval is called when a var delimiter '$' is encountered
+// We want to allow variable concatenation, e.g. $a$b, but also allow variable
+// names expanded from variable expressions: ${a$b}
+// We don't want to require curly braces for simple double indirection, e.g. $$a...
+
+static char * _get_varval(QSP_ARG_DECL  char **spp)			/** see if buf containts a variable */
+{
+	const char *val_str;
+	char *sp;
+	char *vname;
+	char tmp_vnam[LLEN];	// BUG?  should we used an unlimited length String_Buf?
+
+	sp = *spp;
+
+	assert( *sp == VAR_DELIM );
+
+	sp++;		/* skip over $ sign */
+
+	if( read_variable_name(tmp_vnam,&sp) < 0 )
+		return NULL;
+
+	*spp = sp;
+
+	vname = tmp_vnam;
 	if( strlen(vname) <= 0 ){
 		sprintf(ERROR_STRING,"null invalid variable name \"%s\"",sp);
 		advise(ERROR_STRING);
@@ -1173,7 +1219,7 @@ static void var_expand(QSP_ARG_DECL  String_Buf *sbp)
 				cat_string(RESULT,sb_buffer(SCRATCHBUF));
 			}
 
-			vv = get_varval(QSP_ARG  &sp);
+			vv = get_varval(&sp);
 
 #ifdef QUIP_DEBUG
 if( debug&qldebug ){
@@ -1713,7 +1759,7 @@ COMMAND_FUNC( set_completion )
 	} else {
 		advise("disabling automatic command completion");
 		CLEAR_QS_FLAG_BITS(THIS_QSP,QS_COMPLETING);
-		sane_tty(SINGLE_QSP_ARG);
+		sane_tty();
 	}
 }
 
@@ -1739,7 +1785,7 @@ static const char *hist_select(QSP_ARG_DECL const char* pline)
 
 	qp = CURR_QRY(THIS_QSP);
 
-	s=get_response_from_user(QSP_ARG  pline,QRY_FILE_PTR(qp),stderr);
+	s=get_response_from_user(pline,QRY_FILE_PTR(qp),stderr);
 	if( s==NULL ){			/* ^D */
 		if( QLEVEL > 0 ){
 			pop_file();
@@ -1978,7 +2024,7 @@ advise(ERROR_STRING);
 
 /* return the value of the INTERACTIVE flag - input is not a file or macro */
 
-int intractive(SINGLE_QSP_ARG_DECL)
+int _intractive(SINGLE_QSP_ARG_DECL)
 {
 	// We need to call lookahead to make sure
 	// that we really know what the current input file is.
@@ -2102,7 +2148,7 @@ static int get_next_macro_line(QSP_ARG_DECL  String_Buf *mac_sbp)
 	return 1;
 }
 
-String_Buf * read_macro_body(SINGLE_QSP_ARG_DECL)
+String_Buf * _read_macro_body(SINGLE_QSP_ARG_DECL)
 {
 	const char *instructions="Enter text of macro; terminate with line beginning with '.'";
 	Query *qp;
@@ -2232,7 +2278,7 @@ static inline void check_macro_def_line(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-Macro_Arg **setup_macro_args(QSP_ARG_DECL  int n)
+Macro_Arg **_setup_macro_args(QSP_ARG_DECL  int n)
 {
 	Macro_Arg **ma_tbl;
 
@@ -2960,6 +3006,7 @@ static inline void close_query_file(QSP_ARG_DECL  Query *qp)
 
 #ifdef HAVE_POPEN
 	if( IS_PIPE(qp) ){
+		// Should we test PREV_QRY as is done below???
 		assert(QRY_PIPE(qp)!=NULL);
 		close_pipe(QSP_ARG  QRY_PIPE(qp));
 		return;
@@ -3250,7 +3297,7 @@ void _push_if(QSP_ARG_DECL const char *text)
  * Usually the first call from main().
  */
 
-void set_args(QSP_ARG_DECL  int ac,char** av)
+void _set_args(QSP_ARG_DECL  int ac,char** av)
 		/* ac = number of arguments */
 		/* av = pointer to arg strings */
 {
@@ -3682,7 +3729,7 @@ static void show_mflags(QSP_ARG_DECL  Macro *mp)
 	prt_msg(msg_str);
 }
 
-void macro_info(QSP_ARG_DECL  Macro *mp)
+void _macro_info(QSP_ARG_DECL  Macro *mp)
 {
 	sprintf(msg_str,"Macro \"%s\" (file \"%s\", line %d)",
 		MACRO_NAME(mp),MACRO_FILENAME(mp),MACRO_LINENO(mp));
@@ -3693,7 +3740,9 @@ void macro_info(QSP_ARG_DECL  Macro *mp)
 	prt_msg("\n");
 }
 
-static void macro_prolog(QSP_ARG_DECL  Macro *mp)
+#define macro_prolog(mp) _macro_prolog(QSP_ARG  mp)
+
+static void _macro_prolog(QSP_ARG_DECL  Macro *mp)
 {
 	int i;
 
@@ -3706,15 +3755,15 @@ static void macro_prolog(QSP_ARG_DECL  Macro *mp)
 	}
 }
 
-void show_macro(QSP_ARG_DECL  Macro *mp)		/** show macro text */
+void _show_macro(QSP_ARG_DECL  Macro *mp)		/** show macro text */
 {
-	macro_info(QSP_ARG  mp);
+	macro_info(mp);
 	prt_msg(MACRO_TEXT(mp));
 }
 
-void dump_macro(QSP_ARG_DECL  Macro *mp)		/** show macro text */
+void _dump_macro(QSP_ARG_DECL  Macro *mp)		/** show macro text */
 {
-	macro_prolog(QSP_ARG  mp);
+	macro_prolog(mp);
 	prt_msg_frag(MACRO_TEXT(mp));
 	prt_msg(".");
 }
@@ -3949,11 +3998,16 @@ inline const char *current_filename(SINGLE_QSP_ARG_DECL)
 
 inline void _reset_return_strings(SINGLE_QSP_ARG_DECL)
 {
+	if( CURR_QRY(THIS_QSP) == NULL ){
+		sprintf(ERROR_STRING,"reset_return_strings:  NULL current query!?");
+		advise(ERROR_STRING);
+		return;
+	}
 	SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),0);
 }
 
 #ifdef HAVE_POPEN
-void redir_from_pipe(QSP_ARG_DECL  Pipe *pp, const char *cmd)
+void _redir_from_pipe(QSP_ARG_DECL  Pipe *pp, const char *cmd)
 {
 	redir(pp->p_fp, cmd);
 	SET_QRY_PIPE( CURR_QRY(THIS_QSP) , pp );

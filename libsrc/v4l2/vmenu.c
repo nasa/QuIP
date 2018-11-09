@@ -746,17 +746,22 @@ static inline int _enqueue_buffer(QSP_ARG_DECL  My_Buffer *mbp)
 	}
 	// documentation says MAPPED and QUEUED flags should be set,
 	// but this does not seem to be the case!?!?
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 fprintf(stderr,"enqueue_buffer:  buffer %d queued, flgs = 0x%x\n",
 bufp->index,bufp->flags);
 }
+#endif // QUIP_DEBUG
 
 	// We keep our own flags because the driver doesn't seem
 	// to do this correctly!?
 	mbp->mb_flags |= V4L2_BUF_FLAG_QUEUED;
+
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 print_buf_info("enqueue_buffer",mbp);
 }
+#endif // QUIP_DEBUG
 
 	return 0;
 }
@@ -782,9 +787,11 @@ int _start_capturing(QSP_ARG_DECL  Video_Device *vdp)
 		sprintf(ERROR_STRING,"start_capturing:  starting video device %s.",vdp->vd_name);
 		advise(ERROR_STRING);
 	}
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 fprintf(stderr,"start_capturing:  starting video device %s.",vdp->vd_name);
 }
+#endif // QUIP_DEBUG
 	/* Queue all the buffers, then start streaming... */
 
 	for(i = 0; i < vdp->vd_n_buffers; ++i) {
@@ -852,19 +859,25 @@ int dq_buf(QSP_ARG_DECL  Video_Device *vdp,struct v4l2_buffer *bufp)
 	bufp->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	bufp->memory = V4L2_MEMORY_MMAP;
 
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 fprintf(stderr,"dq_buf:  dequeueing buffer %d at 0x%lx, flags = 0x%x\n",
 bufp->index,(long)bufp,bufp->flags);
 }
+#endif // QUIP_DEBUG
+
 	if( xioctl (vdp->vd_fd, VIDIOC_DQBUF, bufp) < 0 ) {
 		/* original code had special cases for EAGAIN and EIO */
 		ERRNO_WARN ("VIDIOC_DQBUF #2");		/* dq_buf */
 		return -1;
 	}
+
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 fprintf(stderr,"dq_buf:  dequeued buffer %d at 0x%lx, flags = 0x%x\n",
 bufp->index,(long)bufp,bufp->flags);
 }
+#endif // QUIP_DEBUG
 
 #ifdef CAUTIOUS
 	if( bufp->index >= (unsigned int) vdp->vd_n_buffers ){
@@ -926,9 +939,12 @@ static inline void note_dequeued(Video_Device *vdp, int idx)
 	assert(idx>=0 && idx < vdp->vd_n_buffers);
 	mbp = &(vdp->vd_buf_tbl[idx]);
 	mbp->mb_flags |= V4L2_BUF_FLAG_DONE;
+
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 print_buf_info("note_dequeued",mbp);
 }
+#endif // QUIP_DEBUG
 
 }
 
@@ -948,9 +964,13 @@ static inline int _dequeue_ready_buffers(QSP_ARG_DECL  My_Buffer *mbp)
 			ERRNO_WARN ("VIDIOC_DQBUF (dequeue_ready_buffers)");		/* dq_buf */
 			return -1;
 		}
+
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 fprintf(stderr,"update_buf_status:  Buffer %d is done, dequeued buffer %d\n",mbp->mb_index,buf.index);
 }
+#endif // QUIP_DEBUG
+
 		// The dequeued buffer may not be the one that is done now!?
 		note_dequeued(mbp->mb_vdp,buf.index);
 		n++;
@@ -987,9 +1007,13 @@ static inline int _update_buf_status(QSP_ARG_DECL  My_Buffer *mbp )
 //fprintf(stderr,"update_buf_status:  buffer %d flags = 0x%x\n",bufp->index,bufp->flags);
 	if( bufp->flags & V4L2_BUF_FLAG_DONE ){	/* data is ready */
 		mbp->mb_flags |= V4L2_BUF_FLAG_DONE;	// ready flag
+
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 print_buf_info("update_buf_status",mbp);
 }
+#endif // QUIP_DEBUG
+
 		return dequeue_ready_buffers(mbp);
 	} else {
 		return 0;
@@ -1035,15 +1059,22 @@ static inline void check_newest(My_Buffer *mbp)
 
 	if( mbp == vdp->vd_oldest_mbp || mbp == vdp->vd_newest_mbp ) return;
 
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 fprintf(stderr,"check_newest:  comparing old newest buffer %d with buffer %d\n",
 vdp->vd_newest_mbp->mb_index,bufp->index);
 }
+#endif // QUIP_DEBUG
+
 	if( is_after(&(bufp->timestamp),&(vdp->vd_newest_mbp->mb_buf.timestamp)) ){
 		vdp->vd_newest_mbp = mbp;
+
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 fprintf(stderr,"check_newest:  newest buffer reset to %d\n",mbp->mb_index);
 }
+#endif // QUIP_DEBUG
+
 	}
 }
 
@@ -1066,15 +1097,22 @@ static inline void check_oldest(My_Buffer *mbp)
 
 	if( mbp == vdp->vd_oldest_mbp || mbp == vdp->vd_newest_mbp ) return;
 
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 fprintf(stderr,"check_oldest:  comparing old oldest buffer %d with buffer %d\n",
 vdp->vd_oldest_mbp->mb_index,bufp->index);
 }
+#endif // QUIP_DEBUG
+
 	if( is_before(&(bufp->timestamp),&(vdp->vd_oldest_mbp->mb_buf.timestamp)) ){
 		vdp->vd_oldest_mbp = mbp;
+
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 fprintf(stderr,"check_oldest:  oldest buffer reset to %d\n",mbp->mb_index);
 }
+#endif // QUIP_DEBUG
+
 	}
 }
 
@@ -1088,12 +1126,14 @@ static void find_newest_buffer(Video_Device *vdp)
 		if( buffer_is_ready(mbp) )
 			check_newest(mbp);
 	}
+
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 if( vdp->vd_newest_mbp != NULL )
 fprintf(stderr,"find_newest_buffer:  newest buffer is %d\n",vdp->vd_newest_mbp->mb_index);
 }
-//else
-//fprintf(stderr,"find_newest_buffer:  no newest buffer\n");
+#endif // QUIP_DEBUG
+
 }
 
 void _find_oldest_buffer(QSP_ARG_DECL  Video_Device *vdp)
@@ -1106,12 +1146,13 @@ void _find_oldest_buffer(QSP_ARG_DECL  Video_Device *vdp)
 		if( buffer_is_ready(mbp) )
 			check_oldest(mbp);
 	}
+
+#ifdef QUIP_DEBUG
 if( debug & v4l2_debug ){
 if( vdp->vd_oldest_mbp != NULL )
 fprintf(stderr,"find_oldest_buffer:  oldest buffer is %d\n",vdp->vd_oldest_mbp->mb_index);
-//else
-//fprintf(stderr,"find_oldest_buffer:  no oldest buffer\n");
 }
+#endif // QUIP_DEBUG
 
 }
 
@@ -1356,7 +1397,7 @@ static COMMAND_FUNC( do_yuv2gray )
 
 	/* BUG Here we need to check sizes, etc */
 
-	yuv422_to_gray(QSP_ARG  dst_dp,src_dp);
+	yuv422_to_gray(dst_dp,src_dp);
 }
 
 #ifdef HAVE_V4L2
@@ -1837,6 +1878,8 @@ ADD_CMD( store_times,	print_grab_times,	print store times )
 #endif /* RECORD_TIMESTAMPS */
 MENU_END(stream)
 
+#ifdef QUIP_DEBUG
+#endif // QUIP_DEBUG
 debug_flag_t v4l2_debug=0;
 
 static COMMAND_FUNC( do_stream_menu )
@@ -1921,7 +1964,10 @@ void v4l2_init(SINGLE_QSP_ARG_DECL)
 
 fprintf(stderr,"v4l2_init performing one-time initializations\n");
 
+#ifdef QUIP_DEBUG
 	v4l2_debug=add_debug_module("v4l2");
+#endif // QUIP_DEBUG
+
 #ifdef HAVE_RAWVOL
 	if( insure_default_rv(SINGLE_QSP_ARG) < 0 ){
 		warn("error opening default raw volume");

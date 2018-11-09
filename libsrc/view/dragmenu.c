@@ -16,7 +16,7 @@ COMMAND_FUNC( do_make_dragg )
 	Data_Obj *dp;
 	char s[256];
 
-	strcpy(s,NAMEOF("name for draggable"));
+	strcpy(s,nameof("name for draggable"));
 	bm=pick_obj( "mask bitmap" );
 	dp=pick_obj( "image" );
 
@@ -25,7 +25,7 @@ COMMAND_FUNC( do_make_dragg )
 	INSIST_RAM_OBJ(bm,"make_dragg")
 	INSIST_RAM_OBJ(dp,"make_dragg")
 
-	make_dragg(QSP_ARG  s,bm,dp);
+	make_dragg(s,bm,dp);
 }
 
 COMMAND_FUNC( do_embed_draggable )
@@ -37,8 +37,8 @@ COMMAND_FUNC( do_embed_draggable )
 	dgp = pick_dragg("");
 	vp = pick_vwr("");
 
-	x=(int)HOW_MANY("x position");
-	y=(int)HOW_MANY("y position");
+	x=(int)how_many("x position");
+	y=(int)how_many("y position");
 
 	if( dgp == NULL || vp == NULL ) return;
 

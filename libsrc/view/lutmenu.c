@@ -34,9 +34,9 @@ static COMMAND_FUNC( do_newlut )
 {
 	const char *name;
 
-	name = NAMEOF("Name of new colormap");
+	name = nameof("Name of new colormap");
 	if( new_colormap(name) == NULL )
-		WARN("error making new colormap");
+		warn("error making new colormap");
 }
  
 static COMMAND_FUNC( do_setlut )

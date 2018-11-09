@@ -147,7 +147,7 @@ static void _yuv422_to_rgb24(unsigned char* dest, unsigned char* s, int p)
 
 /* This function assumes that src_dp points to an image w/ YUYV samples... */
 
-void yuv422_to_rgb24(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj * src_dp )
+void _yuv422_to_rgb24(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj * src_dp )
 {
 	unsigned char *y_p, *u_p, *v_p, *d_p;
 	unsigned char *dst_p;
@@ -206,7 +206,7 @@ void yuv422_to_rgb24(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj * src_dp )
 
 /* This function assumes that src_dp points to an image w/ YUYV samples... */
 
-void yuv422_to_gray(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj * src_dp )
+void _yuv422_to_gray(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj * src_dp )
 {
 	unsigned char *y_p, *d_p;
 	unsigned char *dst_p;

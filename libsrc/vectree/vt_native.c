@@ -101,7 +101,7 @@ void _eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 				break;
 			}
 
-			war_cumsum(QSP_ARG  dst_dp, src_dp );
+			war_cumsum(dst_dp, src_dp );
 			break;
 			}
 		case NATIVE_RENDER:
@@ -129,9 +129,9 @@ void _eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 				break;
 			}
 			if( IS_FLOATING_PREC_CODE(OBJ_PREC(coord_dp)) )
-				render_samples2(QSP_ARG  dst_dp,coord_dp,src_dp);
+				render_samples2(dst_dp,coord_dp,src_dp);
 			else
-				render_samples(QSP_ARG  dst_dp,coord_dp,src_dp);
+				render_samples(dst_dp,coord_dp,src_dp);
 			}
 			break;
 
@@ -319,7 +319,7 @@ advise("evaluating choldc...");
 
 #ifdef HAVE_NUMREC
 #ifdef USE_NUMREC
-			dp_jacobi(QSP_ARG  v_dp,d_dp,a_dp,&nrot);
+			dp_jacobi(v_dp,d_dp,a_dp,&nrot);
 			if( verbose ){
 				sprintf(ERROR_STRING,"jacobi(%s,%s,%s) done after %d rotations",
 					OBJ_NAME(v_dp),OBJ_NAME(d_dp),OBJ_NAME(a_dp),nrot);
@@ -350,7 +350,7 @@ advise("evaluating choldc...");
 
 #ifdef HAVE_NUMREC
 #ifdef USE_NUMREC
-			dp_eigsrt(QSP_ARG  v_dp,d_dp);
+			dp_eigsrt(v_dp,d_dp);
 #else // ! USE_NUMREC
 			warn("Program not configured to use numerical recipes library, can't compute EIGSRT");
 #endif // ! USE_NUMREC
@@ -379,7 +379,7 @@ advise("evaluating choldc...");
 				return;
 
 			// OLD
-			// h_vl2_xform_list(QSP_ARG  dst_dp,src_dp,mat_dp);
+			// h_vl2_xform_list(dst_dp,src_dp,mat_dp);
 			setvarg3(oap,dst_dp,src_dp,mat_dp);
 			h_vl2_xform_list(HOST_CALL_ARGS);
 			//SET_OBJ_FLAG_BITS(dst_dp, DT_ASSIGNED);

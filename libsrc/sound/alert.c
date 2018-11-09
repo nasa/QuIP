@@ -12,7 +12,7 @@ static Data_Obj *warning_dp=NULL;
 
 static void audio_warn(QSP_ARG_DECL  const char *s)
 {
-	tty_warn(QSP_ARG  s);
+	tty_warn(s);
 	if( warning_dp != NULL )
 		play_sound(warning_dp);
 }

@@ -34,14 +34,14 @@ double _dt_invert(QSP_ARG_DECL  Data_Obj *dp)
 	size=OBJ_COLS(dp);
 	matrix=(float *)OBJ_DATA_PTR(dp);
 
-	return( invert_sq_matrix(QSP_ARG  matrix,size) );
+	return( invert_sq_matrix(matrix,size) );
 }
 
 /* BUG it would be nice to have a comment here saying what algorithm
  * is implemented, plus a reference with page numbers!!!
  */
 
-double invert_sq_matrix(QSP_ARG_DECL  float *matrix,dimension_t size)
+double _invert_sq_matrix(QSP_ARG_DECL  float *matrix,dimension_t size)
 {
 	dimension_t	j,k,l;
 	double	pivot;

@@ -361,6 +361,7 @@ static void rebalance(qrb_tree *tree_p, qrb_node *n_p, qrb_node *parent)
 	assert( IS_BLACK(n_p) );
 
 	s_p = sibling(n_p,parent);	// we have to pass the parent because n_p may be NULL
+    assert(s_p!=NULL);
 
 	if( IS_RED(s_p) ){		// wikipedia case 2 : sibling is red
 		MAKE_RED(/*n_p->*/parent);

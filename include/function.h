@@ -219,26 +219,37 @@ ITEM_CHECK_PROT(Quip_Function,function)
 extern int func_serial;
 
 #ifdef BUILD_FOR_OBJC
-extern double get_object_size(QSP_ARG_DECL  void *ip,int d_index);
-extern const char * get_object_prec_string(QSP_ARG_DECL  void *ip);
-//extern const char * precision_string(QSP_ARG_DECL  void *ip);	// IOS_Item or Item
-extern Size_Functions *get_size_functions(QSP_ARG_DECL  Item *ip);
+
+extern double _get_object_size(QSP_ARG_DECL  void *ip,int d_index);
+extern const char * _get_object_prec_string(QSP_ARG_DECL  void *ip);
+extern Size_Functions * _get_size_functions(QSP_ARG_DECL  Item *ip);
+
 #else // ! BUILD_FOR_OBJC
-extern double get_object_size(QSP_ARG_DECL  Item *ip,int d_index);
-extern const char * get_object_prec_string(QSP_ARG_DECL  Item *ip);
+
+extern double _get_object_size(QSP_ARG_DECL  Item *ip,int d_index);
+extern const char * _get_object_prec_string(QSP_ARG_DECL  Item *ip);
+
 #endif // ! BUILD_FOR_OBJC
 
-extern Size_Functions *get_sizable_functions(QSP_ARG_DECL  Item *ip);
-extern Interlace_Functions *get_interlaceable_functions(QSP_ARG_DECL  Item *ip);
-extern Timestamp_Functions *get_tsable_functions(QSP_ARG_DECL  Item *ip);
-extern Position_Functions *get_positionable_functions(QSP_ARG_DECL  Item *ip);
-extern Subscript_Functions *get_subscriptable_functions(QSP_ARG_DECL  Item *ip);
+#define get_object_size(ip,d_index) _get_object_size(QSP_ARG  ip,d_index)
+#define get_object_prec_string(ip) _get_object_prec_string(QSP_ARG  ip)
+
+extern Size_Functions *_get_sizable_functions(QSP_ARG_DECL  Item *ip);
+extern Interlace_Functions *_get_interlaceable_functions(QSP_ARG_DECL  Item *ip);
+extern Timestamp_Functions *_get_tsable_functions(QSP_ARG_DECL  Item *ip);
+extern Position_Functions *_get_positionable_functions(QSP_ARG_DECL  Item *ip);
+extern Subscript_Functions *_get_subscriptable_functions(QSP_ARG_DECL  Item *ip);
+
+#define get_sizable_functions(ip)	_get_sizable_functions(QSP_ARG  ip)
+#define get_tsable_functions(ip)	_get_tsable_functions(QSP_ARG  ip)
+#define get_interlaceable_functions(ip)	_get_interlaceable_functions(QSP_ARG  ip)
+#define get_positionable_functions(ip)	_get_positionable_functions(QSP_ARG  ip)
+#define get_subscriptable_functions(ip)	_get_subscriptable_functions(QSP_ARG  ip)
 
 
 // function.c
-//extern Item *find_sizable(QSP_ARG_DECL  const char *name);
 #define FIND_FUNC_PROTOTYPE(type_stem)				\
-extern Item *find_##type_stem(QSP_ARG_DECL  const char *name);
+extern Item *_find_##type_stem(QSP_ARG_DECL  const char *name);
 
 FIND_FUNC_PROTOTYPE(sizable)
 FIND_FUNC_PROTOTYPE(tsable)
@@ -246,10 +257,15 @@ FIND_FUNC_PROTOTYPE(positionable)
 FIND_FUNC_PROTOTYPE(interlaceable)
 FIND_FUNC_PROTOTYPE(subscriptable)
 
+#define find_sizable(name) _find_sizable(QSP_ARG  name)
+#define find_tsable(name) _find_tsable(QSP_ARG  name)
+#define find_positionable(name) _find_positionable(QSP_ARG  name)
+#define find_interlaceable(name) _find_interlaceable(QSP_ARG  name)
+#define find_subscriptable(name) _find_subscriptable(QSP_ARG  name)
+
 extern Item *check_sizable(QSP_ARG_DECL  const char *name);
 extern Item *sub_sizable(QSP_ARG_DECL  Item *ip,index_t index);
 extern Item *csub_sizable(QSP_ARG_DECL  Item *ip,index_t index);
-extern Item *find_tsable(QSP_ARG_DECL  const char *name);
 
 extern double erfinv(double);
 extern float erfinvf(float);

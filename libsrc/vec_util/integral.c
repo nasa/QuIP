@@ -13,7 +13,7 @@
  * Should implement for different precisions!?
  */
 
-void cum_sum( QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp )
+void _cum_sum( QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp )
 {
 	int32_t *lp;
 	u_char *cp;

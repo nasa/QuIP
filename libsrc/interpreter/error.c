@@ -51,15 +51,20 @@ static const char *_progname=NULL;
 static int n_exit_funcs=0;
 
 // local prototypes needed for auto-initialization
-static void tty_error1(QSP_ARG_DECL  const char *);
-static void tty_prt_msg_frag(QSP_ARG_DECL  const char *);
+static void _tty_error1(QSP_ARG_DECL  const char *);
+static void _tty_advise(QSP_ARG_DECL  const char *);
+static void _tty_prt_msg_frag(QSP_ARG_DECL  const char *);
+
+#define tty_error1(s) _tty_error1(QSP_ARG  s)
+#define tty_advise(s) _tty_advise(QSP_ARG  s)
+#define tty_prt_msg_frag(s) _tty_prt_msg_frag(QSP_ARG  s)
 
 // function ptr variables
 static void (*exit_func_tbl[MAX_EXIT_FUNCS])(SINGLE_QSP_ARG_DECL);
-static void (*warn_vec)(QSP_ARG_DECL  const char *)=tty_warn;
-static void (*error_vec)(QSP_ARG_DECL  const char *)=tty_error1;
-static void (*advise_vec)(QSP_ARG_DECL  const char *)=tty_advise;
-static void (*prt_msg_frag_vec)(QSP_ARG_DECL  const char *)=tty_prt_msg_frag;
+static void (*warn_vec)(QSP_ARG_DECL  const char *)=_tty_warn;
+static void (*error_vec)(QSP_ARG_DECL  const char *)=_tty_error1;
+static void (*advise_vec)(QSP_ARG_DECL  const char *)=_tty_advise;
+static void (*prt_msg_frag_vec)(QSP_ARG_DECL  const char *)=_tty_prt_msg_frag;
 
 static void check_silent(SINGLE_QSP_ARG_DECL)
 {
@@ -152,7 +157,7 @@ void set_prt_msg_frag_func(void (*func)(QSP_ARG_DECL  const char *))
 	prt_msg_frag_vec=func;
 }
 
-void set_max_warnings(QSP_ARG_DECL  int n)
+void _set_max_warnings(QSP_ARG_DECL  int n)
 {
 	SET_QS_MAX_WARNINGS( THIS_QSP, n );
 }
@@ -190,7 +195,9 @@ static void _deliver_warning(QSP_ARG_DECL  const char* msg)
 	check_max_warnings(SINGLE_QSP_ARG);
 }
 
-static void format_expected(QSP_ARG_DECL  char *dest, const char *msg)
+#define format_expected(dest, msg) _format_expected(QSP_ARG  dest, msg)
+
+static void _format_expected(QSP_ARG_DECL  char *dest, const char *msg)
 {
 	// BUG - possible buffer overrun
 	sprintf( dest, "%s%s", EXPECTED_PREFIX, msg );
@@ -202,7 +209,7 @@ static void format_expected(QSP_ARG_DECL  char *dest, const char *msg)
 static void _deliver_expected(QSP_ARG_DECL  const char *msg)
 {
 	char msg_to_print[LLEN];	// BUG use String_Buf?
-	format_expected(QSP_ARG  msg_to_print,msg);
+	format_expected(msg_to_print,msg);
 	if( ! silent(SINGLE_QSP_ARG) ){
 		(*advise_vec)(QSP_ARG  msg_to_print);
 	}
@@ -389,7 +396,7 @@ int string_is_printable(const char *s)
 	return(1);
 }
 	
-char *show_printable(QSP_ARG_DECL  const char* s)
+char * _show_printable(QSP_ARG_DECL  const char* s)
 {
 	char *to;
 	const char *fr;
@@ -509,7 +516,7 @@ void _nice_exit(QSP_ARG_DECL  int status)
  * stderr, the file will be closed.
  */
 
-void error_redir(QSP_ARG_DECL  FILE *fp)
+void _error_redir(QSP_ARG_DECL  FILE *fp)
      /* file pointer for messages */
 {
 #ifndef NO_STDIO
@@ -544,7 +551,7 @@ FILE *_tell_errfile(SINGLE_QSP_ARG_DECL)
 	return(QS_ERROR_FILE(THIS_QSP));
 }
 
-void output_redir(QSP_ARG_DECL  FILE *fp)
+void _output_redir(QSP_ARG_DECL  FILE *fp)
      /* file pointer for messages */
 {
 #ifndef NO_STDIO
@@ -570,7 +577,7 @@ void error_wait()
 }
 #endif /* MAC */
 
-static void tty_error1(QSP_ARG_DECL  const char *s1)
+static void _tty_error1(QSP_ARG_DECL  const char *s1)
 {
 	const char *pn;
 	char msg[LLEN];
@@ -612,7 +619,7 @@ static void tty_error1(QSP_ARG_DECL  const char *s1)
 
 // Some errors may generate more than one warning
 
-void expect_warning(QSP_ARG_DECL  const char *msg)
+void _expect_warning(QSP_ARG_DECL  const char *msg)
 {
 	List *lp;
 	Node *np;
@@ -647,7 +654,7 @@ static void _remove_expected_warning(QSP_ARG_DECL  Node *np)
 
 // Call this to confirm that a warning has been issued as expected
 
-void check_expected_warnings(QSP_ARG_DECL  int clear_flag)
+void _check_expected_warnings(QSP_ARG_DECL  int clear_flag)
 {
 	List *lp;
 	Node *np;
@@ -694,25 +701,27 @@ static int is_expected(QSP_ARG_DECL  const char *warning_msg)
 	return 0;
 }
 
-static void format_warning(QSP_ARG_DECL  char *dest, const char *msg)
+#define format_warning(dest, msg) _format_warning(QSP_ARG  dest, msg)
+
+static void _format_warning(QSP_ARG_DECL  char *dest, const char *msg)
 {
 	// BUG - possible buffer overrun
 	sprintf(dest,"%s%s",WARNING_PREFIX,msg);
 	assert(strlen(dest)<LLEN);	// at this point, it's too late!?
 }
 
-void tty_warn(QSP_ARG_DECL  const char *warning_message)
+void _tty_warn(QSP_ARG_DECL  const char *warning_message)
 {
 	char msg_to_print[LLEN];	// BUG use String_Buf?
-	format_warning(QSP_ARG  msg_to_print,warning_message);
-	tty_advise(QSP_ARG  msg_to_print);
+	format_warning(msg_to_print,warning_message);
+	tty_advise(msg_to_print);
 
 #ifdef MAIL_BUGS
 	report_bug("warning",msg_to_print);
 #endif /* MAIL_BUGS */
 }
 
-static void tty_prt_msg_frag(QSP_ARG_DECL  const char *s)
+static void _tty_prt_msg_frag(QSP_ARG_DECL  const char *s)
 {
 #ifndef NO_STDIO
 	if( QS_MSG_FILE(THIS_QSP)==NULL ){
@@ -723,7 +732,7 @@ static void tty_prt_msg_frag(QSP_ARG_DECL  const char *s)
 #endif
 }
 
-void tty_advise(QSP_ARG_DECL  const char *s)
+void _tty_advise(QSP_ARG_DECL  const char *s)
 {
 #ifndef NO_STDIO
 	const char *pn;
@@ -767,10 +776,10 @@ void error2(QSP_ARG_DECL  const char *progname,const char* msg)
 
 void revert_tty()
 {
- 	set_error_func(tty_error1);
- 	set_warn_func(tty_warn);
- 	set_advise_func(tty_advise);
- 	set_prt_msg_frag_func(tty_prt_msg_frag);
+ 	set_error_func(_tty_error1);
+ 	set_warn_func(_tty_warn);
+ 	set_advise_func(_tty_advise);
+ 	set_prt_msg_frag_func(_tty_prt_msg_frag);
 }
 #endif /* NOT_USED */
 

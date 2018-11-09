@@ -4,7 +4,7 @@
 									\
 	if( current_dpyp == NULL ){				\
 		sprintf(ERROR_STRING,"%s:  no display set",funcname);	\
-		WARN(ERROR_STRING);					\
+		warn(ERROR_STRING);					\
 		return;							\
 	}
 #else

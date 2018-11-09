@@ -13,9 +13,9 @@ static COMMAND_FUNC( do_chain_info )
 {
 	Chain *cp;
 
-	cp=pick_chain( "chain buffer" );
+	cp=pick_vec_chain( "chain buffer" );
 	if( cp==NULL ) return;
-	chain_info(QSP_ARG  cp);
+	chain_info(cp);
 }
 
 static COMMAND_FUNC( do_start_chain )
@@ -30,7 +30,7 @@ static COMMAND_FUNC( do_start_chain )
 		return;
 	}
 
-	start_chain(QSP_ARG  s);
+	start_chain(s);
 }
 
 static COMMAND_FUNC( do_end_chain )
@@ -42,7 +42,7 @@ static COMMAND_FUNC( do_exec_chain )
 {
 	Chain *cp;
 
-	cp=pick_chain( "name of chain buffer" );
+	cp=pick_vec_chain( "name of chain buffer" );
 	if( cp==NULL ) return;
 	exec_chain(cp);
 }

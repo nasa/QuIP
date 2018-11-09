@@ -255,7 +255,6 @@ static int _process_chunk(QSP_ARG_DECL  Image_File *ifp, Wav_Chunk_Hdr *wch_p)
 	if( !strncmp(wch_p->wch_label,"fmt ",4) ){
 fprintf(stderr,"format chunk seen!\n");
 		return read_format_chunk(ifp,wch_p);
-fprintf(stderr,"back from read_format_chunk\n");
 	} else if( !strncmp(wch_p->wch_label,"data",4) ){
 fprintf(stderr,"data chunk seen!\n");
 		if( read_data_chunk(ifp,wch_p) != 0 )

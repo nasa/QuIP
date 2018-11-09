@@ -1093,7 +1093,7 @@ stat_block	: '{' stat_list '}'
 
 new_func_decl	: NEWNAME '(' arg_decl_list ')'
 			{
-			set_subrt_ctx(QSP_ARG  $1);		/* when do we unset??? */
+			set_subrt_ctx($1);		/* when do we unset??? */
 			/* We evaluate the declarations here so we can parse the body, but
 			 * the declarations get interpreted a second time when we compile the nodes -
 			 * at least, for prototype declarations!?  Not a problem for regular declarations?
@@ -1112,12 +1112,12 @@ old_func_decl	: FUNCNAME '(' arg_decl_list ')'
 				yyerror(THIS_QSP,  YY_ERR_STR);
 				/* now what??? */
 			}
-			set_subrt_ctx(QSP_ARG  SR_NAME($1));		/* when do we unset??? */
+			set_subrt_ctx(SR_NAME($1));		/* when do we unset??? */
 
 			/* compare the two arg decl trees
 			 * and issue a warning if they do not match.
 			 */
-			compare_arg_trees(QSP_ARG  $3,SR_ARG_DECLS($1));
+			compare_arg_trees($3,SR_ARG_DECLS($1));
 
 			/* use the new ones */
 			SET_SR_ARG_DECLS($1, $3);
@@ -1172,7 +1172,7 @@ subroutine_decl	: data_type new_func_decl stat_block
 			srp=subrt_of(VN_STRING($2));
 			assert( srp != NULL );
 
-			update_subrt(QSP_ARG  srp,$3);
+			update_subrt(srp,$3);
 			$$=node0(T_SUBRT_DECL);
 			SET_VN_SUBRT($$,srp);
 			delete_subrt_ctx(VN_STRING($2));
@@ -2029,7 +2029,9 @@ Keyword kw_tbl[]={
 
 static int decimal_seen;
 
-static double parse_num(QSP_ARG_DECL  const char **strptr)
+#define parse_num(strptr) _parse_num(QSP_ARG  strptr)
+
+static double _parse_num(QSP_ARG_DECL  const char **strptr)
 {
 	const char *ptr;
 	double place, value=0.0;
@@ -2153,7 +2155,9 @@ static int whkeyword(Keyword *table,const char *str)
 
 /* Read text up to a matching quote, and update the pointer */
 
-static const char *match_quote(QSP_ARG_DECL  const char **spp)
+#define match_quote(spp) _match_quote(QSP_ARG  spp)
+
+static const char *_match_quote(QSP_ARG_DECL  const char **spp)
 {
 	String_Buf *sbp;
 	int c;
@@ -2324,7 +2328,7 @@ if( debug & parser_debug ){ advise("yylex returning DOT"); }
 
 		// In objC, we can't take the address of a property...
 		s=YY_CP;
-		yylvp->dval= parse_num(QSP_ARG  &s) ;
+		yylvp->dval= parse_num(&s) ;
 		SET_YY_CP(s);
 
 		if( decimal_seen ){
@@ -2343,7 +2347,7 @@ if( debug & parser_debug ){ advise("yylex returning INT_NUM"); }
 		//SET_YY_CP( YY_CP + 1 );
 		// objC can't take the address of a property...
 		s=YY_CP+1;
-		yylvp->e_string=match_quote(QSP_ARG  &s);
+		yylvp->e_string=match_quote(&s);
 		SET_YY_CP(s);
 #ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning LEX_STRING"); }
@@ -2576,7 +2580,9 @@ if( debug & parser_debug ){ sprintf(ERROR_STRING,"yylex returning char '%c' (0x%
 	return(0);
 }
 
-static const char *read_word(QSP_ARG_DECL  const char **spp)
+#define read_word(spp) _read_word(QSP_ARG  spp)
+
+static const char *_read_word(QSP_ARG_DECL  const char **spp)
 {
 	//char *s;
 	String_Buf *sbp;
@@ -2622,7 +2628,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 	// a little kludgy for objC...
 	sptr=YY_CP;
 	// read_word is saved, must be freed somewhere!?
-	s=read_word(QSP_ARG  &sptr);
+	s=read_word(&sptr);
 	SET_YY_CP(sptr);
 
 	SET_CURR_STRING(s);

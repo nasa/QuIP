@@ -37,6 +37,10 @@ typedef struct chain {
 	List	*ch_op_lp;
 } Chain;
 
+#define VEC_CHAIN_NAME(vcp)	(vcp)->ch_item.item_name
+#define VEC_CHAIN_LIST(vcp)	(vcp)->ch_op_lp
+
+#define SET_VEC_CHAIN_LIST(vcp,v)	(vcp)->ch_op_lp = v
 
 #define CH_MAGIC	0x5798
 #define MAX_CHAIN_LEN	1024
@@ -47,35 +51,37 @@ typedef struct chain {
 
 /* vec_chn.c */
 
-extern Chain *load_chain(QSP_ARG_DECL  const char *,const char *);
 extern int save_chain(Chain *,FILE *);
 extern void dump_chain(Chain *);
 extern void terse_dump_chain(Chain *);
-extern void chain_info(QSP_ARG_DECL  Chain *);
-extern void start_chain(QSP_ARG_DECL  const char *);
+
+extern Chain * _load_chain(QSP_ARG_DECL  const char *,const char *);
+extern void _chain_info(QSP_ARG_DECL  Chain *);
+extern void _start_chain(QSP_ARG_DECL  const char *);
 extern void _exec_chain(QSP_ARG_DECL  Chain *);
+
+#define load_chain(s1,s2) _load_chain(QSP_ARG  s1,s2)
+#define chain_info(cp) _chain_info(QSP_ARG  cp)
+#define start_chain(s) _start_chain(QSP_ARG  s)
 #define exec_chain(chp) _exec_chain(QSP_ARG  chp)
 
 extern void _end_chain(SINGLE_QSP_ARG_DECL);
-
 #define end_chain() _end_chain(SINGLE_QSP_ARG)
 
 ITEM_CHECK_PROT(Chain, vec_chain)
 ITEM_LIST_PROT(Chain, vec_chain)
 ITEM_PICK_PROT(Chain, vec_chain)
+ITEM_NEW_PROT(Chain, vec_chain)
+ITEM_DEL_PROT(Chain, vec_chain)
 
-#define vec_chain_of(s)	_vec_chain_of(QSP_ARG  s)
+#define vec_chain_of(s)		_vec_chain_of(QSP_ARG  s)
 #define list_vec_chains(fp)	_list_vec_chains(QSP_ARG  fp)
-#define pick_chain(p)	_pick_vec_chain(QSP_ARG   p)
-
-
+#define pick_vec_chain(p)	_pick_vec_chain(QSP_ARG   p)
+#define new_vec_chain(s)	_new_vec_chain(QSP_ARG  s)
+#define del_vec_chain(p)	_del_vec_chain(QSP_ARG   p)
 
 /* chn_menu.c */
 extern COMMAND_FUNC( do_chains );
-
-
-extern Chain *new_vec_chain(const char *name);
-extern void del_vec_chain(QSP_ARG_DECL  const char *s);
 
 extern Chain *new_chain( QSP_ARG_DECL  const char *s );
 

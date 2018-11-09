@@ -90,11 +90,23 @@ void readfr_pipe(QSP_ARG_DECL  Pipe *pp,const char* varname)
 	}
 
 	if( fgets(buf,LLEN,pp->p_fp) == NULL ){
-		if( verbose ){
+		// error or EOF?
+		if( ferror(pp->p_fp) ){
+			sprintf(ERROR_STRING,
+		"error reading pipe \"%s\"",pp->p_name);
+			advise(ERROR_STRING);
+		}
+		if( feof(pp->p_fp) ){
+			sprintf(ERROR_STRING,
+		"EOF reading pipe \"%s\"",pp->p_name);
+			advise(ERROR_STRING);
+		}
+			
+	//	if( verbose ){
 			sprintf(ERROR_STRING,
 		"read failed on pipe \"%s\"",pp->p_name);
 			advise(ERROR_STRING);
-		}
+	//	}
 		close_pipe(QSP_ARG  pp);
 		assign_var(varname,"pipe_read_error");
 	} else {

@@ -201,11 +201,13 @@ show_tmr(&tmr1);
 
 /* These don't seem to be used anywhere in this module??? */
 
+#ifdef NOT_USED
 void set_v4l2_async_record(int flag)
 { async_v4l2_capture = flag; }
 
 int get_v4l2_async_record()
 { return async_v4l2_capture; }
+#endif // NOT_USED
 
 /* Get the next frame from whichever device might be ready.  We want to store
  * the frames we get in device order, so we don't necessarily deliver up the frame

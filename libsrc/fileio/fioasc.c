@@ -51,7 +51,7 @@ FIO_WT_FUNC( ascii )
 
 	/* Now write the data! */
 
-	pntvec(QSP_ARG  dp,ifp->if_fp);
+	pntvec(dp,ifp->if_fp);
 
 	return(0);
 }
@@ -59,7 +59,7 @@ FIO_WT_FUNC( ascii )
 FIO_RD_FUNC( ascii )
 {
 	/* BUG how do we handle the offsets?? */
-	read_ascii_data(dp, ifp->if_fp, ifp->if_name, 1 /* expect_exact_count */ );
+	read_ascii_data_from_file(dp, ifp->if_fp, ifp->if_name, 1 /* expect_exact_count */ );
 }
 
 FIO_SEEK_FUNC( ascii )

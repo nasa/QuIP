@@ -38,41 +38,41 @@ static void swap_bytes( u_short *arr, int n )
 
 }
 
-void default_cursors(SINGLE_QSP_ARG_DECL)
+void _default_cursors(SINGLE_QSP_ARG_DECL)
 {
 	swap_bytes(bullseye_bitmap,16);
-	mk_cursor(QSP_ARG  "bullseye",bullseye_bitmap,16,16,0,0);
+	mk_cursor("bullseye",bullseye_bitmap,16,16,0,0);
 
 	swap_bytes(glass_bitmap,16);
-	mk_cursor(QSP_ARG  "glass",glass_bitmap,16,16,0,0);
+	mk_cursor("glass",glass_bitmap,16,16,0,0);
 
 	swap_bytes(hglass_bitmap,16);
-	mk_cursor(QSP_ARG  "hglass",hglass_bitmap,16,16,0,0);
+	mk_cursor("hglass",hglass_bitmap,16,16,0,0);
 
 	swap_bytes(busy_bitmap,16);
-	mk_cursor(QSP_ARG  "busy",busy_bitmap,16,16,0,0);
+	mk_cursor("busy",busy_bitmap,16,16,0,0);
 }
 
 /* mess around with the cursor */
 
-void make_cursor( QSP_ARG_DECL  const char *name, Data_Obj *bitmap_dp, int x, int y )
+void _make_cursor( QSP_ARG_DECL  const char *name, Data_Obj *bitmap_dp, int x, int y )
 {
 	if( OBJ_PREC(bitmap_dp) == PREC_DI )
-		mk_cursor(QSP_ARG  name,(u_short *)OBJ_DATA_PTR(bitmap_dp),OBJ_COLS(bitmap_dp) * 32,
+		mk_cursor(name,(u_short *)OBJ_DATA_PTR(bitmap_dp),OBJ_COLS(bitmap_dp) * 32,
 			OBJ_ROWS(bitmap_dp),x,y);
 	else if( OBJ_PREC(bitmap_dp) == PREC_IN )
-		mk_cursor(QSP_ARG  name,(u_short *)OBJ_DATA_PTR(bitmap_dp),OBJ_COLS(bitmap_dp) * 16,
+		mk_cursor(name,(u_short *)OBJ_DATA_PTR(bitmap_dp),OBJ_COLS(bitmap_dp) * 16,
 			OBJ_ROWS(bitmap_dp),x,y);
 	else {
 		sprintf(ERROR_STRING,"make_cursor:  bitmap object %s (%s) should have %s or %s precision",
 			OBJ_NAME(bitmap_dp),OBJ_PREC_NAME(bitmap_dp),
 			PREC_NAME(PREC_FOR_CODE(PREC_IN)),
 			PREC_NAME(PREC_FOR_CODE(PREC_DI)) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
-void mk_cursor( QSP_ARG_DECL  const char *name, u_short *data, dimension_t dx,dimension_t dy,dimension_t x,dimension_t y )
+void _mk_cursor( QSP_ARG_DECL  const char *name, u_short *data, dimension_t dx,dimension_t dy,dimension_t x,dimension_t y )
 {
 #ifdef HAVE_X11
 	Pixmap src_pixmap;

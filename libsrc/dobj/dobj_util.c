@@ -48,11 +48,11 @@ Data_Obj *_pick_obj(QSP_ARG_DECL  const char *pmpt)
 						// That was done to get number formatting,
 						// but probably that should be pulled out of data objects...
 
-	if( intractive(SINGLE_QSP_ARG) ) init_item_hist(QSP_ARG  dobj_itp,pmpt);
+	if( intractive() ) init_item_hist(dobj_itp,pmpt);
 #endif /* HAVE_HISTORY */
 
 	s=NAMEOF(pmpt);
-	return( get_obj(QSP_ARG  s) );
+	return( get_obj(s) );
 }
 
 // free function for ram data area
@@ -71,7 +71,9 @@ void _cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 	givbuf(dp->dt_unaligned_ptr);
 }
 
-static void release_data(QSP_ARG_DECL  Data_Obj *dp )
+#define release_data(dp ) _release_data(QSP_ARG  dp )
+
+static void _release_data(QSP_ARG_DECL  Data_Obj *dp )
 {
 	if( OBJ_DATA_PTR(dp) != (unsigned char *)NULL ){
 		assert( PF_OBJ_FREE_FN( OBJ_PLATFORM(dp) ) != NULL );
@@ -111,7 +113,9 @@ void _disown_child( QSP_ARG_DECL  Data_Obj *dp )
 	}
 }
 
-static void del_subs(QSP_ARG_DECL  Data_Obj *dp)			/** delete all subimages */
+#define delete_subobjects(dp) _delete_subobjects(QSP_ARG  dp)
+
+static void _delete_subobjects(QSP_ARG_DECL  Data_Obj *dp)			/** delete all subimages */
 {
 	Node *np;
 
@@ -131,7 +135,9 @@ static void del_subs(QSP_ARG_DECL  Data_Obj *dp)			/** delete all subimages */
 #ifdef ZOMBIE_SUPPORT
 /* give this object a new (hopefully unique) name */
 
-static void make_zombie(QSP_ARG_DECL  Data_Obj *dp)
+#define make_zombie(dp) _make_zombie(QSP_ARG  dp)
+
+static void _make_zombie(QSP_ARG_DECL  Data_Obj *dp)
 {
 	static int n_zombie=1;
 	char zname[LLEN];
@@ -148,7 +154,7 @@ static void make_zombie(QSP_ARG_DECL  Data_Obj *dp)
 	zombie_item(dobj_itp,(Item *)dp);
 
 	sprintf(zname,"Z.%s.%d",OBJ_NAME(dp),n_zombie++);
-fprintf(stderr,"make_zombine, changing object %s to %s\n",OBJ_NAME(dp),zname);
+fprintf(stderr,"make_zombie, changing object %s to %s\n",OBJ_NAME(dp),zname);
 	rls_str( (char *) OBJ_NAME(dp) );	/* unsave old name, make_zombie */
 	SET_OBJ_NAME(dp,savestr(zname));
 
@@ -182,7 +188,7 @@ void _delvec(QSP_ARG_DECL  Data_Obj *dp)
 	if( OBJ_FLAGS(dp) & DT_STATIC && OWNS_DATA(dp) ){
 sprintf(ERROR_STRING,"delvec:  static object %s will be made a zombie",OBJ_NAME(dp));
 advise(ERROR_STRING);
-		make_zombie(QSP_ARG  dp);
+		make_zombie(dp);
 		return;
 	}
 
@@ -203,7 +209,7 @@ advise(ERROR_STRING);
 
 sprintf(ERROR_STRING,"delvec:  object %s (refcount = %d) will be made a zombie",OBJ_NAME(dp),dp->dt_refcount);
 advise(ERROR_STRING);
-		make_zombie(QSP_ARG  dp);
+		make_zombie(dp);
 		return;
 	}
 #endif /* ZOMBIE_SUPPORT */
@@ -224,11 +230,11 @@ advise(ERROR_STRING);
 
 		idp = id_of(OBJ_NAME(dp));
 		assert( idp != NULL );
-		delete_id(QSP_ARG  (Item *)idp);
+		delete_id((Item *)idp);
 	}
 
 	if( OBJ_CHILDREN( dp ) != NULL ){
-		del_subs(QSP_ARG  dp);
+		delete_subobjects(dp);
 	}
 	if( OBJ_PARENT(dp) != NULL ){
 		disown_child(dp);
@@ -257,7 +263,7 @@ advise(ERROR_STRING);
 
 	if( OWNS_DATA(dp) ){
 		if( ! UNKNOWN_SHAPE(OBJ_SHAPE(dp)) ){
-			release_data(QSP_ARG  dp);
+			release_data(dp);
 		}
 	}
 	// In the first OpenCL implementation, we used subbuffers, which had
@@ -293,13 +299,25 @@ advise(ERROR_STRING);
 	}
 #else /* ! ZOMBIE_SUPPORT */
 
-	//del_item(QSP_ARG  dobj_itp, dp );
 	DELETE_OBJ_ITEM(dp);	// del_dobj - item function
 
 #endif /* ! ZOMBIE_SUPPORT */
 
 	// used to release the name here
 	// and set to null, but that is done in del_item
+}
+
+void add_reference(Data_Obj *dp)
+{
+	// BUG - this should be atomic for a multi-threaded environment!
+	SET_OBJ_REFCOUNT(dp, 1 + OBJ_REFCOUNT(dp) );
+}
+
+void remove_reference(Data_Obj *dp)
+{
+	assert(OBJ_REFCOUNT(dp)>0);
+	// BUG - this should be atomic for a multi-threaded environment!
+	SET_OBJ_REFCOUNT(dp, OBJ_REFCOUNT(dp) - 1 );
 }
 
 
@@ -530,7 +548,7 @@ void dobj_iterate(Data_Obj *dp,void (*func)(Data_Obj *,index_t))
 }
 
 
-void dpair_iterate(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,void (*func)(QSP_ARG_DECL  Data_Obj *,index_t,Data_Obj *,index_t))
+void _dpair_iterate(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,void (*func)(QSP_ARG_DECL  Data_Obj *,index_t,Data_Obj *,index_t))
 {
 	dimension_t comp,col,row,frm,seq;
 
@@ -640,20 +658,20 @@ void _gen_xpose(QSP_ARG_DECL  Data_Obj *dp,int dim1,int dim2)
 	check_contiguity(dp);
 }
 
-double get_dobj_il_flg(QSP_ARG_DECL  Data_Obj *dp)
+double _get_dobj_il_flg(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( INTERLACED_SHAPE( OBJ_SHAPE(dp) ) ) return(1.0);
 	else return(0.0);
 }
 
-const char *get_dobj_prec_name(QSP_ARG_DECL  Data_Obj *dp)
+const char *_get_dobj_prec_name(QSP_ARG_DECL  Data_Obj *dp)
 {
 	assert( dp != NULL );
 
 	return OBJ_PREC_NAME(dp);
 }
 
-double get_dobj_size(QSP_ARG_DECL  Data_Obj *dp,int index)
+double _get_dobj_size(QSP_ARG_DECL  Data_Obj *dp,int index)
 {
 	assert( dp != NULL );
 	assert( index >= 0 && index < N_DIMENSIONS );
@@ -663,7 +681,9 @@ double get_dobj_size(QSP_ARG_DECL  Data_Obj *dp,int index)
 
 // We give the position relative to the parent object...
 
-static double get_dobj_posn(QSP_ARG_DECL  Item *ip, int index )
+#define get_dobj_posn(ip, index ) _get_dobj_posn(QSP_ARG  ip, index )
+
+static double _get_dobj_posn(QSP_ARG_DECL  Item *ip, int index )
 {
 	double d=(-1);
 	Data_Obj *dp;
@@ -706,16 +726,16 @@ static double get_dobj_posn(QSP_ARG_DECL  Item *ip, int index )
 }
 
 static Size_Functions dobj_sf={
-	(double (*)(QSP_ARG_DECL  Item *,int))		get_dobj_size,
-	(const char * (*)(QSP_ARG_DECL  Item *))	get_dobj_prec_name
+	(double (*)(QSP_ARG_DECL  Item *,int))		_get_dobj_size,
+	(const char * (*)(QSP_ARG_DECL  Item *))	_get_dobj_prec_name
 };
 
 static Interlace_Functions dobj_if={
-	(double (*)(QSP_ARG_DECL  Item *))		get_dobj_il_flg
+	(double (*)(QSP_ARG_DECL  Item *))		_get_dobj_il_flg
 };
 
 static Position_Functions dobj_pf={
-	get_dobj_posn
+	_get_dobj_posn
 };
 
 static Subscript_Functions dobj_ssf={
@@ -734,17 +754,17 @@ void _dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 		return;
 	}
 
+#ifdef QUIP_DEBUG
 	debug_data = add_debug_module("data");
+#endif // QUIP_DEBUG
 
 	// BUG?  this happens here on the main thread, but child threads
 	// will need to be initialized elsewhere!
 	INSURE_QS_DOBJ_ASCII_INFO(THIS_QSP)
-	init_dobj_ascii_info(QSP_ARG  QS_DOBJ_ASCII_INFO(THIS_QSP) );
+	init_dobj_ascii_info(QS_DOBJ_ASCII_INFO(THIS_QSP) );
     
 	init_dobjs();		/* initialize items */
 
-	// update to use platforms...
-	//ram_area_p=area_init(QSP_ARG  "ram",NULL,0L,MAX_RAM_CHUNKS,DA_RAM);
 	vl2_init_platform(SINGLE_QSP_ARG);	// this initializes ram_area_p
 
 	init_tmp_dps();
@@ -754,7 +774,7 @@ void _dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 	init_dfuncs(SINGLE_QSP_ARG);
 
 	set_obj_funcs(
-                  get_obj,
+                  _get_obj,
                   _dobj_of,
                   _d_subscript,
                   _c_subscript);

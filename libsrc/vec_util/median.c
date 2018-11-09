@@ -227,7 +227,9 @@ static void uby_median(Data_Obj *dpto,Data_Obj *dpfr)
 	(*median_pix_func)(dst,src);
 }
 
-static void process_median(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
+#define process_median(dpto,dpfr) _process_median(QSP_ARG  dpto,dpfr)
+
+static void _process_median(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 {
 	INSIST_RAM_OBJ(dpto,process_median)
 	INSIST_RAM_OBJ(dpfr,process_median)
@@ -264,10 +266,10 @@ static void process_median(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	}
 }
 
-void median(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
+void _median(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 {
 	median_pix_func=median_of_pix;
-	process_median(QSP_ARG  dpto,dpfr);
+	process_median(dpto,dpfr);
 }
 
 static int fpix_comp(const void *ip1,const void *ip2) /* args are pointers into the order array */
@@ -298,17 +300,17 @@ static void median_clip_pix(u_char *dst,u_char *src)
 		*dst = *src;
 }
 
-void median_clip(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
+void _median_clip(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 {
 	median_pix_func=median_clip_pix;
-	process_median(QSP_ARG  dpto,dpfr);
+	process_median(dpto,dpfr);
 }
 
 
 /* one dimensional median filter */
 /* This may be useful for saccade elimination! */
 
-void median_1D(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,int median_radius)
+void _median_1D(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,int median_radius)
 {
 	incr_t i,j;
 	int k;
@@ -432,7 +434,7 @@ static int _good_for_sorting(QSP_ARG_DECL  Data_Obj *dp)
  * the median value of an array, we can sort in place and then sample the middle value.
  */
 
-void sort_data(QSP_ARG_DECL  Data_Obj *dp)
+void _sort_data(QSP_ARG_DECL  Data_Obj *dp)
 {
 	INSIST_RAM_OBJ(dp,sort_data)
 
@@ -466,7 +468,7 @@ Data_Obj *index_sort_data_dp=NULL;
 #endif // ! HAVE_QSORT_R
 
 
-void sort_indices(QSP_ARG_DECL  Data_Obj *index_dp,Data_Obj *data_dp)
+void _sort_indices(QSP_ARG_DECL  Data_Obj *index_dp,Data_Obj *data_dp)
 {
 	INSIST_RAM_OBJ(index_dp,sort_indices)
 	INSIST_RAM_OBJ(data_dp,sort_indices)

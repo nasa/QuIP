@@ -86,8 +86,9 @@ Data_Area *_default_data_area(SINGLE_QSP_ARG_DECL)
 
 // Now use pf_area_init please.
 
-static Data_Area *			/**/
-area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, unsigned int n_chunks, uint32_t flags )
+#define area_init( name, buffer, siz, n_chunks, flags ) _area_init( QSP_ARG  name, buffer, siz, n_chunks, flags )
+
+static Data_Area *_area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, unsigned int n_chunks, uint32_t flags )
 {
 	Data_Area *ap;
 
@@ -118,8 +119,6 @@ area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, unsigne
 	// Should we have the platform device first???
 	ap->da_pdp=NULL;
 
-	/* curr_ap=ap; */	// area_init
-
 	return(ap);
 
 }	// end area_init
@@ -129,7 +128,7 @@ _pf_area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, int
 {
 	Data_Area *ap;
 
-	ap = area_init(QSP_ARG  name, buffer, siz, n_chunks, flags );
+	ap = area_init(name, buffer, siz, n_chunks, flags );
 	if( ap == NULL ) return ap;
 
 	SET_AREA_PFDEV( ap , pdp );
@@ -150,7 +149,7 @@ _new_area( QSP_ARG_DECL  const char *s, uint32_t siz, unsigned int n )
 	assert( buf != NULL );
 	assert( n > 0 );
 
-	ap=area_init(QSP_ARG  s,buf,siz,n,DA_RAM);
+	ap=area_init(s,buf,siz,n,DA_RAM);
 	if( ap==NULL ) givbuf((char *)buf);
 
 	return(ap);
@@ -278,7 +277,7 @@ void _show_area_space( QSP_ARG_DECL  Data_Area *ap )
 #endif /* PC */
 
 	for(i=0;i<n;i++)
-		show_space_used(QSP_ARG  dp_list[i] );
+		show_space_used(dp_list[i]);
 	
 	givbuf(dp_list);
 }

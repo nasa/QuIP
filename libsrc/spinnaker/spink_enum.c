@@ -97,7 +97,7 @@ int _get_spink_cam_list(QSP_ARG_DECL spinInterface hInterface, spinCameraList *h
 
 int _release_spink_cam_list(QSP_ARG_DECL  spinCameraList *hCamList_p )
 {
-DEBUG_MSG(release_spin_cam_list BEGIN)
+SPINK_DEBUG_MSG(release_spin_cam_list BEGIN)
 	if( *hCamList_p == NULL ){
 		fprintf(stderr,"release_spink_cam_list:  null list!?\n");
 		return -1;
@@ -107,13 +107,13 @@ DEBUG_MSG(release_spin_cam_list BEGIN)
 	if( destroy_cam_list(*hCamList_p) < 0 ) return -1;
 
 	*hCamList_p = NULL;
-DEBUG_MSG(release_spin_cam_list DONE)
+SPINK_DEBUG_MSG(release_spin_cam_list DONE)
 	return 0;
 }
 
 int _release_spink_interface_list(QSP_ARG_DECL  spinInterfaceList *hInterfaceList_p )
 {
-DEBUG_MSG(release_spink_interfacelist BEGIN)
+SPINK_DEBUG_MSG(release_spink_interfacelist BEGIN)
 	if( *hInterfaceList_p == NULL ){
 		fprintf(stderr,"release_spink_interface_list:  null list!?\n");
 		return -1;
@@ -124,7 +124,7 @@ DEBUG_MSG(release_spink_interfacelist BEGIN)
 	if( destroy_iface_list(*hInterfaceList_p) < 0 ) return -1;
 
 	*hInterfaceList_p = NULL;
-DEBUG_MSG(release_spink_interfacelist DONE)
+SPINK_DEBUG_MSG(release_spink_interfacelist DONE)
 	return 0;
 }
 

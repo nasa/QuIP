@@ -31,6 +31,8 @@ extern "C" {
 #include <stdio.h>
 #include "quip_fwd.h"	// forward definitions of structs and typedefs
 
+#include "debug.h"	// to pick up AERROR...
+
 // BUG - this really should be eliminated?
 #include "llen.h"
 
@@ -46,7 +48,8 @@ extern int query_has_text(Query *);
 extern void exit_current_file(SINGLE_QSP_ARG_DECL);
 extern void exit_current_macro(SINGLE_QSP_ARG_DECL);
 extern void set_query_arg_at_index(Query *qp,int index,const char *s);
-extern void rls_macro(QSP_ARG_DECL  Macro *mp);
+extern void _rls_macro(QSP_ARG_DECL  Macro *mp);
+#define rls_macro(mp) _rls_macro(QSP_ARG  mp)
 
 extern int qs_level(SINGLE_QSP_ARG_DECL);
 extern FILE * qs_msg_file(SINGLE_QSP_ARG_DECL);
@@ -282,8 +285,12 @@ extern void		_dump_dict_info(QSP_ARG_DECL  Dictionary *dict_p);
 extern char *qpfgets(QSP_ARG_DECL  void *buf, int size, void *fp);
 extern void input_on_stdin(void);
 extern void _warn(QSP_ARG_DECL  const char *);
-extern void expect_warning(QSP_ARG_DECL  const char *);
-extern void check_expected_warnings(QSP_ARG_DECL  int clear_flag);
+extern void _expect_warning(QSP_ARG_DECL  const char *);
+#define expect_warning(s) _expect_warning(QSP_ARG  s)
+
+extern void _check_expected_warnings(QSP_ARG_DECL  int clear_flag);
+#define check_expected_warnings(clear_flag) _check_expected_warnings(QSP_ARG  clear_flag)
+
 #ifdef BUILD_FOR_IOS
 extern void q_error1(QSP_ARG_DECL  const char *);
 #else // ! BUILD_FOR_IOS
@@ -296,17 +303,24 @@ extern COMMAND_FUNC( tog_pmpt );
 extern void qdump( SINGLE_QSP_ARG_DECL );
 extern FILE * _tfile(SINGLE_QSP_ARG_DECL);
 #define tfile()					_tfile(SINGLE_QSP_ARG)
-extern int intractive(SINGLE_QSP_ARG_DECL);
-extern void set_args(QSP_ARG_DECL  int ac,char** av);
-extern String_Buf * read_macro_body(SINGLE_QSP_ARG_DECL);
-extern Macro_Arg ** setup_macro_args(QSP_ARG_DECL int n);
+extern int _intractive(SINGLE_QSP_ARG_DECL);
+#define intractive() _intractive(SINGLE_QSP_ARG)
+
+extern void _set_args(QSP_ARG_DECL  int ac,char** av);
+extern String_Buf * _read_macro_body(SINGLE_QSP_ARG_DECL);
+extern Macro_Arg ** _setup_macro_args(QSP_ARG_DECL int n);
 extern Macro_Arg ** _create_generic_macro_args(QSP_ARG_DECL  int n);
+
+#define set_args(ac,av) _set_args(QSP_ARG  ac,av)
+#define read_macro_body() _read_macro_body(SINGLE_QSP_ARG)
+#define setup_macro_args(n) _setup_macro_args(QSP_ARG n)
 #define create_generic_macro_args(n) _create_generic_macro_args(QSP_ARG  n)
 
-extern Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno);
+extern Macro * _create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno);
+#define create_macro(name, n, ma_tbl, sbp, lineno) _create_macro(QSP_ARG  name, n, ma_tbl, sbp, lineno)
+
 extern void set_query_readfunc( QSP_ARG_DECL
 	char * (*func)(QSP_ARG_DECL  void *buf, int size, void *fp ) );
-//extern void resume_chewing(SINGLE_QSP_ARG_DECL);
 extern void resume_execution(SINGLE_QSP_ARG_DECL);
 extern void resume_quip(SINGLE_QSP_ARG_DECL);
 extern const char *query_filename(SINGLE_QSP_ARG_DECL);
@@ -352,15 +366,25 @@ extern Variable *_get_var(QSP_ARG_DECL  const char *name);
 
 // error.c
 extern const char *tell_version(void);
-extern void tty_warn(QSP_ARG_DECL  const char *s);
 extern void set_error_func(void (*func)(QSP_ARG_DECL  const char *));
 extern void set_advise_func(void (*func)(QSP_ARG_DECL  const char *));
 extern void set_prt_msg_frag_func(void (*func)(QSP_ARG_DECL  const char *));
-extern void set_max_warnings(QSP_ARG_DECL  int n);
 extern int string_is_printable(const char *s);
-extern char *show_printable(QSP_ARG_DECL  const char* s);
-extern void error_redir(QSP_ARG_DECL  FILE *fp);
-extern void output_redir(QSP_ARG_DECL  FILE *fp);
+
+extern void _tty_warn(QSP_ARG_DECL  const char *s);
+extern void _set_max_warnings(QSP_ARG_DECL  int n);
+extern char *_show_printable(QSP_ARG_DECL  const char* s);
+
+#define tty_warn(s) _tty_warn(QSP_ARG  s)
+#define set_max_warnings(n) _set_max_warnings(QSP_ARG  n)
+#define show_printable(s) _show_printable(QSP_ARG  s)
+
+extern void _error_redir(QSP_ARG_DECL  FILE *fp);
+extern void _output_redir(QSP_ARG_DECL  FILE *fp);
+
+#define error_redir(fp) _error_redir(QSP_ARG  fp)
+#define output_redir(fp) _output_redir(QSP_ARG  fp)
+
 extern const char *get_date_string(SINGLE_QSP_ARG_DECL);
 
 extern void _log_message(QSP_ARG_DECL  const char *msg);
@@ -454,8 +478,10 @@ extern COMMAND_FUNC( do_fann_menu );
 extern COMMAND_FUNC( heap_report );
 
 // these are part of OS support - where should they really go?
-extern void set_alarm_script(QSP_ARG_DECL  const char *s);
-extern void set_alarm_time(QSP_ARG_DECL  float f);
+extern void _set_alarm_script(QSP_ARG_DECL  const char *s);
+extern void _set_alarm_time(QSP_ARG_DECL  float f);
+#define set_alarm_script(s) _set_alarm_script(QSP_ARG  s)
+#define set_alarm_time(f) _set_alarm_time(QSP_ARG  f)
 
 // macro.c
 extern const char *macro_text(Macro *);
@@ -488,9 +514,10 @@ extern Query * _pop_file( SINGLE_QSP_ARG_DECL );
 
 extern void redir_with_flags( QSP_ARG_DECL  FILE *fp, const char *filename, uint32_t flags );
 extern void _redir( QSP_ARG_DECL  FILE *fp, const char *filename );
-extern void redir_from_pipe( QSP_ARG_DECL  Pipe *pp, const char *cmd );
+extern void _redir_from_pipe( QSP_ARG_DECL  Pipe *pp, const char *cmd );
 
 #define redir(fp,s)	_redir(QSP_ARG  fp,s)
+#define redir_from_pipe( pp, cmd ) _redir_from_pipe( QSP_ARG  pp, cmd )
 
 extern void add_cmd_callback(QSP_ARG_DECL  void (*f)(SINGLE_QSP_ARG_DECL) );
 
@@ -537,7 +564,9 @@ extern void _list_builtin_menu(SINGLE_QSP_ARG_DECL);
 
 // variable.c
 extern void init_variables(SINGLE_QSP_ARG_DECL);
-extern void set_script_var_from_int(QSP_ARG_DECL  const char *varname, long val );
+extern void _set_script_var_from_int(QSP_ARG_DECL  const char *varname, long val );
+#define set_script_var_from_int(varname, val ) _set_script_var_from_int(QSP_ARG  varname, val )
+
 extern Variable *_assign_var(QSP_ARG_DECL  const char *name, const char *value);
 extern Variable *_assign_reserved_var(QSP_ARG_DECL  const char *name, const char *value);
 #define assign_var( s1 , s2 )	_assign_var(QSP_ARG  s1 , s2 )

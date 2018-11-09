@@ -43,9 +43,13 @@ Setup_Y_Axis
 Setup_X_Axis
 .
 
+# Using Check_Var lets us override the default by pre-setting the variable,
+# but it does the wrong thing when there is an old value from a previous plotter...
+# We address this by having New_Plotter clear (unset) these values...
+
 Define Setup_Y_Axis 0
 Set vars_ok 1
-Require_Var xmin
+Require_Var xmin	# need x axis limits to draw y legend?
 Require_Var ymin
 Require_Var xmax
 Require_Var ymax
@@ -83,10 +87,27 @@ If !var_exists('$1')
   "Set $1 $2 Tell_If 'Check_Var:  $1 set to default value $2'"
 .
 
+Define Clear_Axis_Vars 0
+UnSet_If xmin
+UnSet_If xmax
+UnSet_If ymin
+UnSet_If ymax
+UnSet_If x_tick_spacing
+UnSet_If y_tick_spacing
+UnSet_If x_tick_offset
+UnSet_If y_tick_offset
+UnSet_If x_legend
+UnSet_If y_legend
+UnSet_If y_tick_last
+UnSet_If y_tick_first
+UnSet_If x_tick_last
+UnSet_If x_tick_first
+.
+
 Define Setup_X_Axis 0
 Set vars_ok 1
 Require_Var xmin
-Require_Var ymin
+Require_Var ymin	# need y axis limits to draw x legend?
 Require_Var xmax
 Require_Var ymax
 Require_Var x_legend
@@ -198,7 +219,7 @@ Set param_vec_name ${nospacename}_params
 Define Init_New_Plotter 1 name
 #advise "Init_New_Plotter $1"
 If strcmp('$the_plotter','no_plotter')
-  "advise 'the_plotter = $the_plotter' Remember_Plotter_Params"
+  "Remember_Plotter_Params"
 # Here we need to forget everything about the old plotter...
 
 Set minmax_set 0		# this is now a plotter param...
@@ -217,6 +238,7 @@ Select_Pen $default_fg
 Assign_Margins			# margins by default...
 Grid_Color $gray
 Erase_Plot
+Clear_Axis_Vars
 #advise "Init_New_Plotter:  '$1'"
 # This causes trouble if we allow spaces in the plotter name
 Get_Param_Vec_Name $1
@@ -241,7 +263,6 @@ data ascii
 .
 
 Define Delete_Plotter 1 plotter_name
-advise "Delete_Plotter BEGIN"
 Push_Var the_plotter
 Push_Var current_window
 Select_Plotter $1
@@ -252,7 +273,6 @@ Pop_Var the_plotter
 Pop_Var current_window
 If strcmp('$the_plotter','no_plotter')
   "advise 'Delete_Plotter setting the_plotter to no_plotter' Set the_plotter no_plotter"
-advise "Delete_Plotter DONE"
 .
 
 # Remember_Plotter_Params:	store script vars to memory data structure
@@ -835,7 +855,6 @@ Mul_Var x_tick_len -1
 .
 
 Define Plot_Y_Axis 4 ymin ymax tick_spacing xpos
-advise "Plot_Y_Axis $1 $2 $3 $4 BEGIN"
 Plot_Y_Axis_With_Ticks $1 $2 $4 $1 $2 $3
 .
 
@@ -855,9 +874,10 @@ PCont $3 $2
 .
 
 Define Plot_Y_Axis_With_Ticks 6 ymin ymax xpos first_tick last_tick tick_spacing
-advise "Plot_Y_Axis_With_Ticks $1 $2 $3 $4 $5 $6 BEGIN"
 Draw_Y_Axis $1 $2 $3
-Draw_Y_Ticks $4 $5 $3 $6
+If $1<$2
+  Then "Draw_Y_Ticks_Ascending $4 $5 $3 $6"
+  Else "Draw_Y_Ticks_Descending $4 $5 $3 $6"
 .
 
 Define Draw_Y_Tick_At 2 x y
@@ -870,15 +890,22 @@ PMove $1 $2
 PCont $1+$y_tick_len $2
 .
 
-Define Draw_Y_Ticks 4 y_first_tick y_last_tick xpos tick_spacing
-advise "Draw_Y_Ticks $1 $2 $3 $4 BEGIN"
-If $4==0 "error_exit 'Draw_Y_Ticks:  tick spacing cannot be zero!?'"
+Define Draw_Y_Ticks_Ascending 4 y_first_tick y_last_tick xpos tick_spacing
+If $4==0 "error_exit 'Draw_Y_Ticks_Ascending:  tick spacing cannot be zero!?'"
 Assign _y $1
 do
   Draw_Y_Tick_At $3 $_y
   Add_Var _y $4
   while $_y<=$2
-advise "Draw_Y_Ticks $1 $2 $3 $4 DONE"
+.
+
+Define Draw_Y_Ticks_Descending 4 y_first_tick y_last_tick xpos tick_spacing
+If $4==0 "error_exit 'Draw_Y_Ticks_Descending:  tick spacing cannot be zero!?'"
+Assign _y $1
+do
+  Draw_Y_Tick_At $3 $_y
+  Add_Var _y -$4
+  while $_y>=$2
 .
 
 Define Plot_Grid 6 xmin ymin xmax ymax x_spacing y_spacing
@@ -1426,13 +1453,13 @@ repeat $n_x_ticks
 
 Define Label_Y_Ticks 3 first last delta 
 If !$allow_color_tick_labels "Push_Var pen_color Select_Pen $label_color"
-Assign n_y_ticks 1+floor($tiny+($2-($1))/$3)
+Assign n_y_ticks 1+floor($tiny+abs($2-($1))/$3)
 #advise "Label_Y_Ticks $1 $2 $3"
 #Print n_y_ticks
 Assign tick_y $1
 repeat $n_y_ticks
   Label_Y_Tick $tick_y	$tick_y
-  Add_Var tick_y $3
+  Add_Var tick_y sign($2-$1)*$3
   end
 If !$allow_color_tick_labels "Pop_Var pen_color"
 

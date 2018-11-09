@@ -140,11 +140,11 @@ void vl2_init_platform(SINGLE_QSP_ARG_DECL)
 	SET_PLATFORM_FUNCTIONS(cpp,vl2)
 	SET_PF_FUNC_TBL(cpp,vl2_vfa_tbl);
 
-	push_pfdev_context(QSP_ARG  PF_CONTEXT(cpp) );
+	push_pfdev_context( PF_CONTEXT(cpp) );
 
 	init_vl2_pfdevs(QSP_ARG  cpp);
 
-	if( pop_pfdev_context(SINGLE_QSP_ARG) == NULL )
+	if( pop_pfdev_context() == NULL )
 		error1("init_ocl_platform:  Failed to pop platform device context!?");
 
 	check_vl2_vfa_tbl(SINGLE_QSP_ARG);

@@ -20,7 +20,7 @@ static void _check_preload(QSP_ARG_DECL  const char *prompt, int n, const char *
 	const char *pline;
 
 	if( ! IS_COMPLETING(THIS_QSP) ) return;
-	if( ! intractive(SINGLE_QSP_ARG) ) return;
+	if( ! intractive() ) return;
 	if( *prompt == 0 ) return;
 
 // Need to format the prompt!
@@ -79,7 +79,7 @@ int _which_one(QSP_ARG_DECL  const char *prompt, int n, const char** choices)
 		advise(ERROR_STRING);
 	}
 #ifdef HAVE_HISTORY
-	if( intractive(SINGLE_QSP_ARG) ) rem_def(prompt,user_response) ;
+	if( intractive() ) rem_def(prompt,user_response) ;
 #endif /* HAVE_HISTORY */
 
 	return(-1);

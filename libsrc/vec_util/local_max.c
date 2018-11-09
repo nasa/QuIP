@@ -11,7 +11,7 @@
 #include "vec_util.h"
 #include "quip_prot.h"
 
-long local_maxima(QSP_ARG_DECL  Data_Obj *val_dp, Data_Obj *coord_dp, Data_Obj *src_dp )
+long _local_maxima(QSP_ARG_DECL  Data_Obj *val_dp, Data_Obj *coord_dp, Data_Obj *src_dp )
 {
 	float *nw_p, *w_p, *sw_p;
 	float v,*src_p;

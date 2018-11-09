@@ -5,13 +5,15 @@
 #include "requant.h"
 #include "ctone.h"
 
+#ifdef QUIP_DEBUG
 debug_flag_t spread_debug=0;
+#endif // QUIP_DEBUG
 
 static COMMAND_FUNC( do_scan2_requant )
 {
 	int n;
 
-	n=(int)HOW_MANY("number of passes");
+	n=(int)how_many("number of passes");
 	scan2_requant(n);
 }
 
@@ -19,7 +21,7 @@ static COMMAND_FUNC( do_scan2_requant3d )
 {
 	int n;
 
-	n=(int)HOW_MANY("number of passes");
+	n=(int)how_many("number of passes");
 	scan2_requant3d(n);
 }
 
@@ -27,7 +29,7 @@ static COMMAND_FUNC( do_scan_requant )
 {
 	int n;
 
-	n=(int)HOW_MANY("number of passes");
+	n=(int)how_many("number of passes");
 	scan_requant(n);
 }
 
@@ -36,8 +38,8 @@ static COMMAND_FUNC( do_anneal )
 	double temp;
 	int n;
 
-	temp = HOW_MUCH("temperature");
-	n=(int)HOW_MANY("number of passes");
+	temp = how_much("temperature");
+	n=(int)how_many("number of passes");
 	scan_anneal(temp,n);
 }
 
@@ -45,7 +47,7 @@ static COMMAND_FUNC( do_scan_requant3d )
 {
 	int n;
 
-	n=(int)HOW_MANY("number of passes");
+	n=(int)how_many("number of passes");
 	scan_requant3d(n);
 }
 
@@ -54,8 +56,8 @@ static COMMAND_FUNC( do_anneal3d )
 	double temp;
 	int n;
 
-	temp = HOW_MUCH("temperature");
-	n=(int)HOW_MANY("number of passes");
+	temp = how_much("temperature");
+	n=(int)how_many("number of passes");
 	scan_anneal3d(temp,n);
 }
 
@@ -64,9 +66,9 @@ static COMMAND_FUNC( do_dich_anneal )
 	double temp1,temp2;
 	index_t n;
 
-	n=(index_t)HOW_MANY("number of passes");
-	temp1=HOW_MUCH("initial temperature");
-	temp2=HOW_MUCH("final temperature");
+	n=(index_t)how_many("number of passes");
+	temp1=how_much("initial temperature");
+	temp2=how_much("final temperature");
 	dich_scan_anneal(n,temp1,temp2);
 }
 
@@ -176,8 +178,8 @@ static COMMAND_FUNC( do_tweak )
 {
 	int x,y;
 
-	x=(int)HOW_MANY("x coord");
-	y=(int)HOW_MANY("y coord");
+	x=(int)how_many("x coord");
+	y=(int)how_many("y coord");
 
 	redo_two_pixels(x,y);
 }
@@ -187,9 +189,9 @@ static COMMAND_FUNC( do_tweak3d )
 
 	posn[0]=posn[4]=0;
 
-	posn[1] = (int)HOW_MANY("x coord");
-	posn[2] = (int)HOW_MANY("y coord");
-	posn[3] = (int)HOW_MANY("t coord");
+	posn[1] = (int)how_many("x coord");
+	posn[2] = (int)how_many("y coord");
+	posn[3] = (int)how_many("t coord");
 
 	redo_two_pixels3d(posn);
 }
@@ -266,8 +268,8 @@ static COMMAND_FUNC( do_clr_migrate_pixel )
 {
 	int x,y;
 
-	x=(int)HOW_MANY("x coordinate");
-	y=(int)HOW_MANY("y coordinate");
+	x=(int)how_many("x coordinate");
+	y=(int)how_many("y coordinate");
 	clr_migrate_pixel(x,y);
 }
 
@@ -276,8 +278,8 @@ static COMMAND_FUNC( do_clr_redo_pixel )
 {
 	int x,y;
 
-	x=(int)HOW_MANY("x coordinate");
-	y=(int)HOW_MANY("y coordinate");
+	x=(int)how_many("x coordinate");
+	y=(int)how_many("y coordinate");
 	clr_redo_pixel(x,y);
 }
 
@@ -285,8 +287,8 @@ static COMMAND_FUNC( do_dich_migrate_pixel )
 {
 	int x,y;
 
-	x=(int)HOW_MANY("x coordinate");
-	y=(int)HOW_MANY("y coordinate");
+	x=(int)how_many("x coordinate");
+	y=(int)how_many("y coordinate");
 	dich_migrate_pixel(x,y);
 }
 
@@ -295,8 +297,8 @@ static COMMAND_FUNC( do_dich_redo_pixel )
 {
 	int x,y;
 
-	x=(int)HOW_MANY("x coordinate");
-	y=(int)HOW_MANY("y coordinate");
+	x=(int)how_many("x coordinate");
+	y=(int)how_many("y coordinate");
 	dich_redo_pixel(x,y);
 }
 
@@ -406,8 +408,8 @@ static COMMAND_FUNC( do_dich_set_weights )
 {
 	float l,r;
 
-	l=(float)HOW_MUCH("weighting factor for filtered luma errors");
-	r=(float)HOW_MUCH("weighting factor for filtered chroma errors");
+	l=(float)how_much("weighting factor for filtered luma errors");
+	r=(float)how_much("weighting factor for filtered chroma errors");
 	set_dich_weights(l,r);
 }
 
@@ -454,8 +456,10 @@ MENU_END(requantize)
 
 COMMAND_FUNC( do_requant )
 {
+#ifdef QUIP_DEBUG
 	if( spread_debug == 0 )
 		spread_debug=add_debug_module("requantize");
+#endif // QUIP_DEBUG
 
 	CHECK_AND_PUSH_MENU(requantize);
 }

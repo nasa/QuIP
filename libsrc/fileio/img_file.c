@@ -268,7 +268,7 @@ static double get_if_size(QSP_ARG_DECL  Item *ip,int index)
 	ifp = (Image_File *)ip;
 	assert( ifp->if_dp != NULL );
 
-	return( get_dobj_size(QSP_ARG  ifp->if_dp,index) );
+	return( get_dobj_size(ifp->if_dp,index) );
 }
 
 static const char * get_if_prec_name(QSP_ARG_DECL  Item *ip)
@@ -279,7 +279,7 @@ static const char * get_if_prec_name(QSP_ARG_DECL  Item *ip)
 	assert( ifp != NULL );
 	assert( ifp->if_dp != NULL );
 
-	return( get_dobj_prec_name(QSP_ARG  ifp->if_dp) );
+	return( get_dobj_prec_name(ifp->if_dp) );
 }
 
 static Size_Functions imgfile_sf={
@@ -294,7 +294,7 @@ static double get_if_il_flg(QSP_ARG_DECL  Item *ip)
 	ifp = (Image_File *)ip;
 	assert( ifp->if_dp != NULL );
 
-	return( get_dobj_il_flg(QSP_ARG  ifp->if_dp) );
+	return( get_dobj_il_flg(ifp->if_dp) );
 }
 
 static Interlace_Functions imgfile_if={

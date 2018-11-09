@@ -276,7 +276,7 @@ static int vfa_cmp(const void *vfp1,const void *vfp2)
 	else return(-1);
 }
 
-int check_vfa_tbl_size(QSP_ARG_DECL  Vec_Func_Array vfa_tbl[], int size)
+int _check_vfa_tbl_size(QSP_ARG_DECL  Vec_Func_Array vfa_tbl[], int size)
 {
 	assert( size == N_VEC_FUNCS );
 	return 0;
@@ -332,8 +332,10 @@ void vl_init(SINGLE_QSP_ARG_DECL)
 		return;
 	}
 
+#ifdef QUIP_DEBUG
 	if( veclib_debug == 0 )
 		veclib_debug = add_debug_module("veclib");
+#endif // QUIP_DEBUG
 
 	/* sort the table to insure that each entry is at the location of its code */
 #ifdef CAUTIOUS
@@ -380,7 +382,7 @@ advise(ERROR_STRING);
 	 * Would that be a good idea still?
 	 */
 
-	set_random_seed(SINGLE_QSP_ARG);	/* use low order bits of microsecond clock */
+	set_random_seed();	/* use low order bits of microsecond clock */
 
 	inited++;
 }

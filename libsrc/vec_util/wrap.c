@@ -11,14 +11,14 @@
 /** wrap subroutine */
 /* BUG it would be nice to merge this with wrap3d() */
 
-void wrap(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp)
+void _wrap(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp)
 {
 	int status;
 	Vector_Function *vfp;
 
 	vfp=FIND_VEC_FUNC(FVMOV);
 
-	if( (status=old_cksiz(QSP_ARG  VF_FLAGS(vfp),dst_dp,src_dp))==(-1)) return;
+	if( (status=old_cksiz(VF_FLAGS(vfp),dst_dp,src_dp))==(-1)) return;
 #ifdef CAUTIOUS
 	if( status!=0){
 		sprintf(ERROR_STRING,"CAUTIOUS:  wrap:  old_cksiz() error...");
@@ -31,7 +31,7 @@ void wrap(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp)
 	if( cktype(dst_dp,src_dp)==(-1)) return;
 #endif /* FOOBAR */
 
-	dp_scroll(QSP_ARG  dst_dp,src_dp,(incr_t)(OBJ_COLS(dst_dp)/2),(incr_t)(OBJ_ROWS(dst_dp)/2));
+	dp_scroll(dst_dp,src_dp,(incr_t)(OBJ_COLS(dst_dp)/2),(incr_t)(OBJ_ROWS(dst_dp)/2));
 }
 
 #ifdef FOOBAR
@@ -50,7 +50,7 @@ Data_Obj *dst_dp, *src_dp;
 	long finc,tinc;
 	Vec_Args args;
 
-	if( (status=old_cksiz(QSP_ARG  vec_func_tbl[FVMOV].vf_flags,dst_dp,src_dp))==(-1)) return;
+	if( (status=old_cksiz(vec_func_tbl[FVMOV].vf_flags,dst_dp,src_dp))==(-1)) return;
 #ifdef CAUTIOUS
 	if( status!=0){
 		sprintf(ERROR_STRING,"CAUTIOUS:  wrap:  old_cksiz() error...");
@@ -145,14 +145,14 @@ Data_Obj *dst_dp, *src_dp;
  * Need to call call_vfunc...
  */
 
-void dp_scroll(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp,incr_t dx,incr_t dy)
+void _dp_scroll(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp,incr_t dx,incr_t dy)
 {
 	Vec_Obj_Args oa1, *oap=&oa1;
 	int status;
 	Data_Obj *sub_dst_dp, *sub_src_dp;
 
 	// What is "old" cksiz???
-	if( (status=old_cksiz(QSP_ARG  VF_FLAGS( FIND_VEC_FUNC(FVMOV) ), dst_dp,src_dp))==(-1)) return;
+	if( (status=old_cksiz(VF_FLAGS( FIND_VEC_FUNC(FVMOV) ), dst_dp,src_dp))==(-1)) return;
 #ifdef CAUTIOUS
 	if( status!=0){
 		sprintf(ERROR_STRING,"CAUTIOUS:  dp_scroll:  old_cksiz() error...");
@@ -206,7 +206,7 @@ advise(ERROR_STRING);
 	else										\
 		OA_ARGSTYPE(oap) = REAL_ARGS; 						\
 	/* vmov(oap); */								\
-	call_vfunc( QSP_ARG  FIND_VEC_FUNC(FVMOV), oap );				\
+	call_vfunc( FIND_VEC_FUNC(FVMOV), oap );					\
 	delvec(sub_dst_dp);								\
 	delvec(sub_src_dp);
 

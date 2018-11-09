@@ -35,14 +35,13 @@ static double	alpha,		/* threshold parameter */
 #define MIN_DELTA	0.0001		/* minumum finger error rate */
 static double error_rate=DELTA;
 
-static Data_Tbl *the_dtp;
+static Summary_Data_Tbl *the_dtp;
 
 #define ALPHA_INDEX	0
 #define BETA_INDEX	1
 #define N_WPARMS	2	/* number of variable paramters */
 
 /* local prototypes */
-static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp, int ntrac);
 
 static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return likelihood of guess */
 {
@@ -55,6 +54,7 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 
 	float t_alpha, t_beta;	/* trial slope and int */
 	Opt_Param *opp;
+	int n_xvals;
 
 	/* compute the likelihood for this guess */
 
@@ -68,15 +68,21 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 
 	t_beta = opp->ans;
 
-	for(i=0;i<_nvals;i++){
+	assert(global_xval_dp!=NULL);
+	n_xvals = OBJ_COLS(global_xval_dp);
+	assert(n_xvals>1);
+
+	for(i=0;i<n_xvals;i++){
+		float *xv_p;
 
 		/* calculate theoretical percent correct with this guess */
 
-		if( (ntt=DATUM_NTOTAL(DTBL_ENTRY(the_dtp,i)) ) <= 0 )
+		if( (ntt=DATUM_NTOTAL(SUMM_DTBL_ENTRY(the_dtp,i)) ) <= 0 )
 			continue;
 
-		nc=DATUM_NCORR( DTBL_ENTRY(the_dtp,i) );
-		xv = xval_array[ i ];
+		nc=DATUM_NCORR( SUMM_DTBL_ENTRY(the_dtp,i) );
+		xv_p = indexed_data(global_xval_dp,i);
+		xv = *xv_p;
 
 		if( xv == 0.0 ) pc = (float) w_gamma;
 		else {
@@ -95,11 +101,15 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 	return(lh);
 }
 
-static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum liklihood fit */
+#define weibull_fit(dp,ntrac) _weibull_fit(QSP_ARG  dp,ntrac)
+
+static void _weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac)		/** maximum liklihood fit */
 {
 	Opt_Param tmp_param;
 	Opt_Param *alpha_param_p=NULL;
 	Opt_Param *beta_param_p=NULL;
+	int n_xvals;
+	float *first_xv_p, *last_xv_p, *mid_xv_p, *mid2_xv_p;
 
 	/* initialize global */
 
@@ -109,23 +119,33 @@ static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum likli
 
 	delete_opt_params(SINGLE_QSP_ARG);	/* clear any existing parameters */
 
+	assert(global_xval_dp!=NULL);
+	n_xvals = OBJ_COLS(global_xval_dp);
+	assert(n_xvals>1);
+
 	tmp_param.op_name = ALPHA_NAME;
-	tmp_param.ans = xval_array[ _nvals/2 ];
-	if( xval_array[0] < xval_array[_nvals-1] ){
-		tmp_param.maxv =  xval_array[_nvals-1];
-		tmp_param.minv =  xval_array[0];
+
+	mid_xv_p = indexed_data(global_xval_dp,n_xvals/2);
+	mid2_xv_p = indexed_data(global_xval_dp,n_xvals/2+1);
+	first_xv_p = indexed_data(global_xval_dp,0);
+	last_xv_p = indexed_data(global_xval_dp,n_xvals-1);
+
+	tmp_param.ans = *mid_xv_p;
+	if( *first_xv_p < *last_xv_p ){
+		tmp_param.maxv =  *last_xv_p;
+		tmp_param.minv =  *first_xv_p;
 	} else {
-		tmp_param.maxv = xval_array[0];
-		tmp_param.minv = xval_array[_nvals-1];
+		tmp_param.maxv = *first_xv_p;
+		tmp_param.minv = *last_xv_p;
 	}
 	if( tmp_param.minv < 0.0 ){
-		WARN("wiebull fit will blow up for negative x values");
+		warn("wiebull fit will blow up for negative x values");
 		return;
 	}
-	tmp_param.delta = (float) fabs( xval_array[_nvals/2] - xval_array[ (_nvals/2)+1 ] );
+	tmp_param.delta = (float) fabs( *mid_xv_p - *mid2_xv_p );
 	tmp_param.mindel = (float) 1.0e-30;
 
-	alpha_param_p = add_opt_param(QSP_ARG  &tmp_param);
+	alpha_param_p = add_opt_param(&tmp_param);
 
 
 	tmp_param.op_name = BETA_NAME;
@@ -135,7 +155,7 @@ static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum likli
 	tmp_param.delta = 0.5;
 	tmp_param.mindel = (float) 1.0e-30;
 
-	beta_param_p = add_opt_param(QSP_ARG  &tmp_param);
+	beta_param_p = add_opt_param(&tmp_param);
 
 	if( fc_flag ){
 		w_gamma = 0.5;
@@ -144,7 +164,7 @@ static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum likli
 	}
 
 
-	optimize(QSP_ARG  w_likelihood);
+	optimize(w_likelihood);
 
 	alpha_param_p=get_opt_param(ALPHA_NAME);
 	assert( alpha_param_p != NULL );
@@ -161,14 +181,14 @@ static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum likli
 	del_opt_param(alpha_param_p);
 }
 
-void w_analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */
+void _w_analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */
 {
 	int ntrac=(-1);
 
-	weibull_fit( QSP_ARG  CLASS_DATA_TBL(tcp), ntrac );
+	weibull_fit( CLASS_SUMM_DTBL(tcp), ntrac );
 }
 
-void weibull_out(QSP_ARG_DECL  Trial_Class * tcp)			/** verbose analysis report */
+void _weibull_out(QSP_ARG_DECL  Trial_Class * tcp)			/** verbose analysis report */
 {
         sprintf(msg_str,"\nTrial_Class %s\n",CLASS_NAME(tcp));
 	prt_msg(msg_str);
@@ -180,7 +200,7 @@ void weibull_out(QSP_ARG_DECL  Trial_Class * tcp)			/** verbose analysis report 
 	/* BUG print out chi-square like statistic */
 }
 
-void w_tersout(QSP_ARG_DECL  Trial_Class * tcp)
+void _w_tersout(QSP_ARG_DECL  Trial_Class * tcp)
 {
 	sprintf(msg_str,"%s\t%f\t%f",CLASS_NAME(tcp),alpha,beta);
 	prt_msg(msg_str);

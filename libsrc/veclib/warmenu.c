@@ -19,16 +19,14 @@
 						\
 	warn("Sorry, function " #func " is temporarily unimplemented.");
 
-#define DO_VCODE(code)	do_vcode(QSP_ARG  code)
+static COMMAND_FUNC( getabs )	{ do_vcode(FVABS); }
+static COMMAND_FUNC( getconj )	{ do_vcode(FVCONJ); }
+static COMMAND_FUNC( domov )	{ do_vcode(FVMOV); }
+static COMMAND_FUNC( getneg )	{ do_vcode(FVNEG); }
+static COMMAND_FUNC( do_vset )	{ do_vcode(FVSET); }
+static COMMAND_FUNC( do_uni )	{ do_vcode(FVUNI); }
 
-static COMMAND_FUNC( getabs )	{ DO_VCODE(FVABS); }
-static COMMAND_FUNC( getconj )	{ DO_VCODE(FVCONJ); }
-static COMMAND_FUNC( domov )	{ DO_VCODE(FVMOV); }
-static COMMAND_FUNC( getneg )	{ DO_VCODE(FVNEG); }
-static COMMAND_FUNC( do_vset )	{ DO_VCODE(FVSET); }
-static COMMAND_FUNC( do_uni )	{ DO_VCODE(FVUNI); }
-
-static COMMAND_FUNC( getsum )	{ DO_VCODE(FVSUM); }
+static COMMAND_FUNC( getsum )	{ do_vcode(FVSUM); }
 /* static COMMAND_FUNC( getsum )	{ do_projection(FVSUM); } */
 
 static COMMAND_FUNC( do_convert )
@@ -42,8 +40,8 @@ static COMMAND_FUNC( do_convert )
 
 	if( dst==NULL || src == NULL ) return;
 
-	//convert(QSP_ARG  dst,src);
-	//h_vl2_convert(QSP_ARG  dst,src);
+	//convert(dst,src);
+	//h_vl2_convert(dst,src);
 	// BUG need to choose platform based on args!
 	if( IS_BITMAP(dst) ){
 		warn("do_convert:  Sorry, forgot how to convert to bit!?");
@@ -71,14 +69,14 @@ static COMMAND_FUNC( do_convert )
 			return;
 	}
 
-	perf_vfunc(QSP_ARG  code,&oa1);
+	perf_vfunc(code,&oa1);
 }
 
-static COMMAND_FUNC( do_ceil ) { DO_VCODE(FVCEIL); }
-static COMMAND_FUNC( do_floor ) { DO_VCODE(FVFLOOR); }
-static COMMAND_FUNC( do_round ) { DO_VCODE(FVROUND); }
-static COMMAND_FUNC( do_rint ) { DO_VCODE(FVRINT); }
-static COMMAND_FUNC( do_sign ) { DO_VCODE(FVSIGN); }
+static COMMAND_FUNC( do_ceil ) { do_vcode(FVCEIL); }
+static COMMAND_FUNC( do_floor ) { do_vcode(FVFLOOR); }
+static COMMAND_FUNC( do_round ) { do_vcode(FVROUND); }
+static COMMAND_FUNC( do_rint ) { do_vcode(FVRINT); }
+static COMMAND_FUNC( do_sign ) { do_vcode(FVSIGN); }
 
 #ifdef NOT_YET
 COMMAND_FUNC( dowheel )
@@ -251,29 +249,29 @@ static COMMAND_FUNC( do_unary )
 	CHECK_AND_PUSH_MENU(unary);
 }
 
-static COMMAND_FUNC( doatan ){	DO_VCODE(FVATAN); }
-static COMMAND_FUNC( doatn2 ){	DO_VCODE(FVATN2); }
-static COMMAND_FUNC( doatan2 ){	DO_VCODE(FVATAN2); }
-static COMMAND_FUNC( getmagsq ){	DO_VCODE(FVMGSQ); }
-static COMMAND_FUNC( docos ){	DO_VCODE(FVCOS); }
-static COMMAND_FUNC( doerf ){	DO_VCODE(FVERF); }
-static COMMAND_FUNC( doerfinv ){DO_VCODE(FVERFINV); }
-static COMMAND_FUNC( doexp ){	DO_VCODE(FVEXP); }
-static COMMAND_FUNC( dolog ){	DO_VCODE(FVLOG); }
-static COMMAND_FUNC( dolog10 ){	DO_VCODE(FVLOG10); }
-static COMMAND_FUNC( dosin ){	DO_VCODE(FVSIN); }
-static COMMAND_FUNC( dosqr ){	DO_VCODE(FVSQR); }
-static COMMAND_FUNC( dosqrt ){	DO_VCODE(FVSQRT); }
-static COMMAND_FUNC( dotan ){	DO_VCODE(FVTAN); }
-static COMMAND_FUNC( doacos ){	DO_VCODE(FVACOS); }
-static COMMAND_FUNC( dopow ){	DO_VCODE(FVPOW); }
-static COMMAND_FUNC( doasin ){	DO_VCODE(FVASIN); }
+static COMMAND_FUNC( doatan ){	do_vcode(FVATAN); }
+static COMMAND_FUNC( doatn2 ){	do_vcode(FVATN2); }
+static COMMAND_FUNC( doatan2 ){	do_vcode(FVATAN2); }
+static COMMAND_FUNC( getmagsq ){	do_vcode(FVMGSQ); }
+static COMMAND_FUNC( docos ){	do_vcode(FVCOS); }
+static COMMAND_FUNC( doerf ){	do_vcode(FVERF); }
+static COMMAND_FUNC( doerfinv ){do_vcode(FVERFINV); }
+static COMMAND_FUNC( doexp ){	do_vcode(FVEXP); }
+static COMMAND_FUNC( dolog ){	do_vcode(FVLOG); }
+static COMMAND_FUNC( dolog10 ){	do_vcode(FVLOG10); }
+static COMMAND_FUNC( dosin ){	do_vcode(FVSIN); }
+static COMMAND_FUNC( dosqr ){	do_vcode(FVSQR); }
+static COMMAND_FUNC( dosqrt ){	do_vcode(FVSQRT); }
+static COMMAND_FUNC( dotan ){	do_vcode(FVTAN); }
+static COMMAND_FUNC( doacos ){	do_vcode(FVACOS); }
+static COMMAND_FUNC( dopow ){	do_vcode(FVPOW); }
+static COMMAND_FUNC( doasin ){	do_vcode(FVASIN); }
 // BUG - need to add configure tests for these?
 //#ifdef HAVE_BESSEL
-static COMMAND_FUNC( do_j0 ){	DO_VCODE(FVJ0); }
-static COMMAND_FUNC( do_j1 ){	DO_VCODE(FVJ1); }
-static COMMAND_FUNC( do_gamma ){	DO_VCODE(FVGAMMA); }
-static COMMAND_FUNC( do_lngamma ){	DO_VCODE(FVLNGAMMA); }
+static COMMAND_FUNC( do_j0 ){	do_vcode(FVJ0); }
+static COMMAND_FUNC( do_j1 ){	do_vcode(FVJ1); }
+static COMMAND_FUNC( do_gamma ){	do_vcode(FVGAMMA); }
+static COMMAND_FUNC( do_lngamma ){	do_vcode(FVLNGAMMA); }
 //#endif /* HAVE_BESSEL */
 
 #undef ADD_CMD
@@ -311,21 +309,21 @@ static COMMAND_FUNC( do_trig )
 	CHECK_AND_PUSH_MENU(trig);
 }
 
-static COMMAND_FUNC( do_and ){	DO_VCODE(FVAND); }
-static COMMAND_FUNC( do_nand ){	DO_VCODE(FVNAND); }
-static COMMAND_FUNC( do_not ){	DO_VCODE(FVNOT); }
-static COMMAND_FUNC( do_or ){	DO_VCODE(FVOR); }
-static COMMAND_FUNC( do_xor ){	DO_VCODE(FVXOR); }
-static COMMAND_FUNC( do_sand ){	DO_VCODE(FVSAND); }
-static COMMAND_FUNC( do_sor ){	DO_VCODE(FVSOR); }
-static COMMAND_FUNC( do_sxor ){	DO_VCODE(FVSXOR); }
-static COMMAND_FUNC( do_shr ){	DO_VCODE(FVSHR); }
-static COMMAND_FUNC( do_shl ){	DO_VCODE(FVSHL); }
-static COMMAND_FUNC( do_sshr ){	DO_VCODE(FVSSHR); }
-static COMMAND_FUNC( do_sshl ){	DO_VCODE(FVSSHL); }
-static COMMAND_FUNC( do_sshr2 ){	DO_VCODE(FVSSHR2); }
-static COMMAND_FUNC( do_sshl2 ){	DO_VCODE(FVSSHL2); }
-static COMMAND_FUNC( do_comp ){	DO_VCODE(FVCOMP); }
+static COMMAND_FUNC( do_and ){	do_vcode(FVAND); }
+static COMMAND_FUNC( do_nand ){	do_vcode(FVNAND); }
+static COMMAND_FUNC( do_not ){	do_vcode(FVNOT); }
+static COMMAND_FUNC( do_or ){	do_vcode(FVOR); }
+static COMMAND_FUNC( do_xor ){	do_vcode(FVXOR); }
+static COMMAND_FUNC( do_sand ){	do_vcode(FVSAND); }
+static COMMAND_FUNC( do_sor ){	do_vcode(FVSOR); }
+static COMMAND_FUNC( do_sxor ){	do_vcode(FVSXOR); }
+static COMMAND_FUNC( do_shr ){	do_vcode(FVSHR); }
+static COMMAND_FUNC( do_shl ){	do_vcode(FVSHL); }
+static COMMAND_FUNC( do_sshr ){	do_vcode(FVSSHR); }
+static COMMAND_FUNC( do_sshl ){	do_vcode(FVSSHL); }
+static COMMAND_FUNC( do_sshr2 ){	do_vcode(FVSSHR2); }
+static COMMAND_FUNC( do_sshl2 ){	do_vcode(FVSSHL2); }
+static COMMAND_FUNC( do_comp ){	do_vcode(FVCOMP); }
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(logical_menu,s,f,h)
@@ -356,11 +354,11 @@ static COMMAND_FUNC( do_logic )
 	CHECK_AND_PUSH_MENU(logical);
 }
 
-static COMMAND_FUNC( do_vvadd ){	DO_VCODE(FVADD); }
-static COMMAND_FUNC( do_vvcmul ){	DO_VCODE(FVCMUL); }
-static COMMAND_FUNC( do_vvdiv ){	DO_VCODE(FVDIV); }
-static COMMAND_FUNC( do_vvmul ){	DO_VCODE(FVMUL); }
-static COMMAND_FUNC( do_vvsub ){	DO_VCODE(FVSUB); }
+static COMMAND_FUNC( do_vvadd ){	do_vcode(FVADD); }
+static COMMAND_FUNC( do_vvcmul ){	do_vcode(FVCMUL); }
+static COMMAND_FUNC( do_vvdiv ){	do_vcode(FVDIV); }
+static COMMAND_FUNC( do_vvmul ){	do_vcode(FVMUL); }
+static COMMAND_FUNC( do_vvsub ){	do_vcode(FVSUB); }
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(vvector_menu,s,f,h)
@@ -380,24 +378,24 @@ static COMMAND_FUNC( do_vv )
 	CHECK_AND_PUSH_MENU(vvector);
 }
 
-static COMMAND_FUNC( do_vsadd )		{	DO_VCODE(FVSADD); }
-static COMMAND_FUNC( do_vssub )		{	DO_VCODE(FVSSUB); }
-static COMMAND_FUNC( do_vsmul )		{	DO_VCODE(FVSMUL); }
-static COMMAND_FUNC( do_vsdiv )		{	DO_VCODE(FVSDIV); }
-static COMMAND_FUNC( do_vsdiv2 )	{	DO_VCODE(FVSDIV2); }
+static COMMAND_FUNC( do_vsadd )		{	do_vcode(FVSADD); }
+static COMMAND_FUNC( do_vssub )		{	do_vcode(FVSSUB); }
+static COMMAND_FUNC( do_vsmul )		{	do_vcode(FVSMUL); }
+static COMMAND_FUNC( do_vsdiv )		{	do_vcode(FVSDIV); }
+static COMMAND_FUNC( do_vsdiv2 )	{	do_vcode(FVSDIV2); }
 
-/* static COMMAND_FUNC( do_vscml )	{	DO_VCODE(FVSCML); } */
+/* static COMMAND_FUNC( do_vscml )	{	do_vcode(FVSCML); } */
 
-static COMMAND_FUNC( do_vsmod )		{	DO_VCODE(FVSMOD); }
-static COMMAND_FUNC( do_vsmod2 )	{	DO_VCODE(FVSMOD2); }
+static COMMAND_FUNC( do_vsmod )		{	do_vcode(FVSMOD); }
+static COMMAND_FUNC( do_vsmod2 )	{	do_vcode(FVSMOD2); }
 
-static COMMAND_FUNC( do_vspow )		{	DO_VCODE(FVSPOW); }
-static COMMAND_FUNC( do_vspow2 )	{	DO_VCODE(FVSPOW2); }
-static COMMAND_FUNC( do_vsatan2 )	{	DO_VCODE(FVSATAN2); }
-static COMMAND_FUNC( do_vsatan22 )	{	DO_VCODE(FVSATAN22); }
-static COMMAND_FUNC( do_vsand )		{	DO_VCODE(FVSAND); }
-static COMMAND_FUNC( do_vsor )		{	DO_VCODE(FVSOR); }
-static COMMAND_FUNC( do_vsxor )		{	DO_VCODE(FVSXOR); }
+static COMMAND_FUNC( do_vspow )		{	do_vcode(FVSPOW); }
+static COMMAND_FUNC( do_vspow2 )	{	do_vcode(FVSPOW2); }
+static COMMAND_FUNC( do_vsatan2 )	{	do_vcode(FVSATAN2); }
+static COMMAND_FUNC( do_vsatan22 )	{	do_vcode(FVSATAN22); }
+static COMMAND_FUNC( do_vsand )		{	do_vcode(FVSAND); }
+static COMMAND_FUNC( do_vsor )		{	do_vcode(FVSOR); }
+static COMMAND_FUNC( do_vsxor )		{	do_vcode(FVSXOR); }
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(svector_menu,s,f,h)
@@ -425,20 +423,20 @@ MENU_END(svector)
 static COMMAND_FUNC( do_vs ) { CHECK_AND_PUSH_MENU(svector); }
 
 /* These return a single scalar, and can be used as projection operators */
-static COMMAND_FUNC( domaxv ){	DO_VCODE(FVMAXV); }
-static COMMAND_FUNC( dominv ){	DO_VCODE(FVMINV); }
-static COMMAND_FUNC( domxmv ){	DO_VCODE(FVMXMV); }
-static COMMAND_FUNC( domnmv ){	DO_VCODE(FVMNMV); }
+static COMMAND_FUNC( domaxv ){	do_vcode(FVMAXV); }
+static COMMAND_FUNC( dominv ){	do_vcode(FVMINV); }
+static COMMAND_FUNC( domxmv ){	do_vcode(FVMXMV); }
+static COMMAND_FUNC( domnmv ){	do_vcode(FVMNMV); }
 
-static COMMAND_FUNC( domaxi ){	DO_VCODE(FVMAXI); }
-static COMMAND_FUNC( domini ){	DO_VCODE(FVMINI); }
-static COMMAND_FUNC( domnmi ){	DO_VCODE(FVMNMI); }
-static COMMAND_FUNC( domxmi ){	DO_VCODE(FVMXMI); }
+static COMMAND_FUNC( domaxi ){	do_vcode(FVMAXI); }
+static COMMAND_FUNC( domini ){	do_vcode(FVMINI); }
+static COMMAND_FUNC( domnmi ){	do_vcode(FVMNMI); }
+static COMMAND_FUNC( domxmi ){	do_vcode(FVMXMI); }
 
-static COMMAND_FUNC( domaxg ){	DO_VCODE(FVMAXG); }
-static COMMAND_FUNC( doming ){	DO_VCODE(FVMING); }
-static COMMAND_FUNC( domnmg ){	DO_VCODE(FVMNMG); }
-static COMMAND_FUNC( domxmg ){	DO_VCODE(FVMXMG); }
+static COMMAND_FUNC( domaxg ){	do_vcode(FVMAXG); }
+static COMMAND_FUNC( doming ){	do_vcode(FVMING); }
+static COMMAND_FUNC( domnmg ){	do_vcode(FVMNMG); }
+static COMMAND_FUNC( domxmg ){	do_vcode(FVMXMG); }
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(minmax_menu,s,f,h)
@@ -474,7 +472,7 @@ static COMMAND_FUNC( do_cumsum )
 
 	if( dp_to==NULL || dp_fr==NULL ) return;
 
-	war_cumsum(QSP_ARG  dp_to,dp_fr);
+	war_cumsum(dp_to,dp_fr);
 }
 
 static COMMAND_FUNC( do_reduce )
@@ -484,7 +482,7 @@ static COMMAND_FUNC( do_reduce )
 	dp2=pick_obj( "destination image" );
 	dp=pick_obj( "source image" );
 	if( dp2==NULL || dp == NULL ) return;
-	reduce(QSP_ARG  dp2,dp);
+	reduce(dp2,dp);
 }
 
 static COMMAND_FUNC( do_enlarge )
@@ -494,7 +492,7 @@ static COMMAND_FUNC( do_enlarge )
 	dp2=pick_obj( "destination image" );
 	dp=pick_obj( "source image" );
 	if( dp2==NULL || dp == NULL ) return;
-	enlarge(QSP_ARG  dp2,dp);
+	enlarge(dp2,dp);
 }
 
 static COMMAND_FUNC( do_fwdfft )
@@ -508,7 +506,7 @@ static COMMAND_FUNC( do_fwdfft )
 
 	(*PF_FFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
 	*/
-	DO_VCODE(FVFFT2D);
+	do_vcode(FVFFT2D);
 }
 
 static COMMAND_FUNC( do_fwdrowfft )
@@ -522,7 +520,7 @@ static COMMAND_FUNC( do_fwdrowfft )
 
 	(*PF_FFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
 	*/
-	DO_VCODE(FVFFTROWS);
+	do_vcode(FVFFTROWS);
 }
 
 static COMMAND_FUNC( do_invfft )
@@ -535,7 +533,7 @@ static COMMAND_FUNC( do_invfft )
 	if( dp == NULL ) return;
 	(*PF_IFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
 	*/
-	DO_VCODE(FVIFT2D);
+	do_vcode(FVIFT2D);
 }
 
 static COMMAND_FUNC( do_invrowfft )
@@ -548,7 +546,7 @@ static COMMAND_FUNC( do_invrowfft )
 	if( dp == NULL ) return;
 	(*PF_IFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
 	*/
-	DO_VCODE(FVIFTROWS);
+	do_vcode(FVIFTROWS);
 }
 
 #ifdef FOOBAR
@@ -838,7 +836,7 @@ static COMMAND_FUNC( do_scale )
 	mx=HOW_MUCH("desired max value");
 	if( dp==NULL ) return;
 
-	scale(QSP_ARG  dp,mn,mx);
+	scale(dp,mn,mx);
 }
 
 static COMMAND_FUNC( do_dither )
@@ -849,11 +847,11 @@ static COMMAND_FUNC( do_dither )
 	dp=pick_obj( "float image" );
 	size=(int)HOW_MANY("size of dither matrix");
 	if( dp==NULL ) return;
-	odither(QSP_ARG  dp,size);
+	odither(dp,size);
 }
 
-static COMMAND_FUNC( do_1dramp ) { DO_VCODE(FVRAMP1D); }
-static COMMAND_FUNC( do_2dramp ) { DO_VCODE(FVRAMP2D); }
+static COMMAND_FUNC( do_1dramp ) { do_vcode(FVRAMP1D); }
+static COMMAND_FUNC( do_2dramp ) { do_vcode(FVRAMP2D); }
 
 #ifdef FOOBAR
 static COMMAND_FUNC( do_2dramp )
@@ -905,7 +903,7 @@ static COMMAND_FUNC( do_wrap )
 	dpto=pick_obj("destination image");
 	dpfr=pick_obj("source image");
 	if( dpto==NULL || dpfr==NULL ) return;
-	wrap(QSP_ARG  dpto,dpfr);
+	wrap(dpto,dpfr);
 }
 
 static COMMAND_FUNC( do_wrap3d )
@@ -916,7 +914,7 @@ static COMMAND_FUNC( do_wrap3d )
 	dpfr=pick_obj("source image");
 	if( dpto==NULL || dpfr==NULL ) return;
 #ifdef FOOBAR
-	wrap3d(QSP_ARG  dpto,dpfr);
+	wrap3d(dpto,dpfr);
 #else
 	warn("no wrap3d yet");
 #endif
@@ -932,7 +930,7 @@ static COMMAND_FUNC( do_scroll )
 	dx=(int)HOW_MANY("x displacement");
 	dy=(int)HOW_MANY("y displacement");
 	if( dpto==NULL || dpfr==NULL ) return;
-	dp_scroll(QSP_ARG  dpto,dpfr,dx,dy);
+	dp_scroll(dpto,dpfr,dx,dy);
 }
 
 #ifdef NOT_YET
@@ -958,10 +956,10 @@ static COMMAND_FUNC( doeven )
 #endif /* NOT_YET */
 
 static COMMAND_FUNC( do_lutmap_b )
-{ DO_VCODE(FVLUTMAPB); }
+{ do_vcode(FVLUTMAPB); }
 
 static COMMAND_FUNC( do_lutmap_s )
-{ DO_VCODE(FVLUTMAPS); }
+{ do_vcode(FVLUTMAPS); }
 
 #ifdef FOOBAR
 {
@@ -972,7 +970,7 @@ static COMMAND_FUNC( do_lutmap_s )
 	map=pick_obj( "lut vector" );
 	if( dst==NULL || src==NULL || map==NULL )
 		return;
-	if( lutmap(QSP_ARG  dst,src,map) == (-1) )
+	if( lutmap(dst,src,map) == (-1) )
 		warn("mapping failed");
 }
 #endif // FOOBAR
@@ -998,7 +996,7 @@ static COMMAND_FUNC( do_fsdither )
 
 	if( dpto == NULL || dpfr == NULL )
 		return;
-	dp_halftone(QSP_ARG  dpto,dpfr,n,lvl);
+	dp_halftone(dpto,dpfr,n,lvl);
 }
 
 static COMMAND_FUNC( do_udither )		/* uniform quantization */
@@ -1024,7 +1022,7 @@ static COMMAND_FUNC( do_udither )		/* uniform quantization */
 
 	if( dpto == NULL || dpfr == NULL )
 		return;
-	dp_halftone(QSP_ARG  dpto,dpfr,n,lvl);
+	dp_halftone(dpto,dpfr,n,lvl);
 }
 
 static COMMAND_FUNC( do_resample )
@@ -1037,7 +1035,7 @@ static COMMAND_FUNC( do_resample )
 	if( dpto==NULL || dpfr==NULL || dpwarp==NULL )
 		return;
 
-	resample(QSP_ARG  dpto,dpfr,dpwarp);
+	resample(dpto,dpfr,dpwarp);
 }
 
 static COMMAND_FUNC( do_bilinear )
@@ -1050,7 +1048,7 @@ static COMMAND_FUNC( do_bilinear )
 	if( dpto==NULL || dpfr==NULL || dpwarp==NULL )
 		return;
 
-	bilinear_warp(QSP_ARG  dpto,dpfr,dpwarp);
+	bilinear_warp(dpto,dpfr,dpwarp);
 }
 
 static COMMAND_FUNC( do_new_bilinear )
@@ -1063,7 +1061,7 @@ static COMMAND_FUNC( do_new_bilinear )
 	if( dpto==NULL || dpfr==NULL || dpwarp==NULL )
 		return;
 
-	new_bilinear_warp(QSP_ARG  dpto,dpfr,dpwarp);
+	new_bilinear_warp(dpto,dpfr,dpwarp);
 }
 
 static COMMAND_FUNC( do_iconv )
@@ -1077,7 +1075,7 @@ static COMMAND_FUNC( do_iconv )
 	if( dpto==NULL || dpfr==NULL || dpfilt==NULL )
 		return;
 
-	convolve(QSP_ARG  dpto,dpfr,dpfilt);
+	convolve(dpto,dpfr,dpfilt);
 }
 
 #ifdef NOT_YET
@@ -1092,7 +1090,7 @@ static COMMAND_FUNC( do_iconv3d )
 	if( dpto==NULL || dpfr==NULL || dpfilt==NULL )
 		return;
 
-	convolve3d(QSP_ARG  dpto,dpfr,dpfilt);
+	convolve3d(dpto,dpfr,dpfilt);
 }
 #endif /* NOT_YET */
 
@@ -1108,7 +1106,7 @@ static COMMAND_FUNC( do_histo )
 
 	if( hdp == NULL || dp == NULL ) return;
 
-	compute_histo(QSP_ARG  hdp,dp,bw,minbin);
+	compute_histo(hdp,dp,bw,minbin);
 }
 
 static COMMAND_FUNC( do_integral )
@@ -1120,7 +1118,7 @@ static COMMAND_FUNC( do_integral )
 
 	if( dst == NULL || src == NULL ) return;
 
-	cum_sum(QSP_ARG  dst,src);
+	cum_sum(dst,src);
 }
 
 static COMMAND_FUNC( do_hough )
@@ -1136,7 +1134,7 @@ static COMMAND_FUNC( do_hough )
 
 	if( dst == NULL || src == NULL ) return;
 
-	hough(QSP_ARG  dst,src,thresh,x0,y0);
+	hough(dst,src,thresh,x0,y0);
 }
 
 static COMMAND_FUNC( do_local_max )
@@ -1149,7 +1147,7 @@ static COMMAND_FUNC( do_local_max )
 	src = pick_obj("source image");
 
 	if( val_dp != NULL && coord_dp != NULL && src != NULL )
-		n = local_maxima(QSP_ARG  val_dp,coord_dp,src);
+		n = local_maxima(val_dp,coord_dp,src);
 	else
 		n = 0;
 
@@ -1176,7 +1174,7 @@ static COMMAND_FUNC( do_mhisto )
 
 	if( hdp == NULL || dp == NULL ) return;
 
-	multivariate_histo(QSP_ARG  hdp,dp,bw,minbin);
+	multivariate_histo(hdp,dp,bw,minbin);
 }
 
 #ifdef HAVE_MORPH
@@ -1200,7 +1198,7 @@ static COMMAND_FUNC( do_fill )
 		return;
 	}
 
-	ifl(QSP_ARG  dp,x,y,val,tol);
+	ifl(dp,x,y,val,tol);
 }
 #endif /* HAVE_MORPH */
 
@@ -1215,7 +1213,7 @@ static COMMAND_FUNC( do_quads )
 	src=pick_obj( "source image" );
 	if( dst == NULL || src == NULL ) return;
 
-	make_all_quads(QSP_ARG  dst,src);
+	make_all_quads(dst,src);
 }
 
 static COMMAND_FUNC( do_ext_paths )
@@ -1226,7 +1224,7 @@ static COMMAND_FUNC( do_ext_paths )
 	src=pick_obj( "source matrix" );
 	if( dst == NULL || src == NULL ) return;
 
-	extend_shortest_paths(QSP_ARG  dst,src);
+	extend_shortest_paths(dst,src);
 }
 
 #ifdef FOOBAR
@@ -1239,7 +1237,7 @@ static COMMAND_FUNC( do_vstitch )
 	fr=pick_obj( "source float vector" );
 	co=pick_obj( "control float vector" );
 	if( to==NULL || fr==NULL || co==NULL ) return;
-	n=vstitch(QSP_ARG  to,fr,co);
+	n=vstitch(to,fr,co);
 	if( verbose ){
 		sprintf(ERROR_STRING,"%d elements copied",n);
 		advise(ERROR_STRING);
@@ -1257,7 +1255,7 @@ static COMMAND_FUNC( do_vinterp )
 	fr=pick_obj( "source float vector" );
 	co=pick_obj( "control float vector" );
 	if( to==NULL || fr==NULL || co==NULL ) return;
-	vinterp(QSP_ARG  to,fr,co);
+	vinterp(to,fr,co);
 }
 
 static COMMAND_FUNC( do_median )
@@ -1267,7 +1265,7 @@ static COMMAND_FUNC( do_median )
 	to=pick_obj("target");
 	fr=pick_obj("source");
 	if( to==NULL || fr==NULL ) return;
-	median(QSP_ARG  to,fr);
+	median(to,fr);
 }
 
 static COMMAND_FUNC( do_median_clip )
@@ -1277,7 +1275,7 @@ static COMMAND_FUNC( do_median_clip )
 	to=pick_obj("target");
 	fr=pick_obj("source");
 	if( to==NULL || fr==NULL ) return;
-	median_clip(QSP_ARG  to,fr);
+	median_clip(to,fr);
 }
 
 static COMMAND_FUNC( do_median_1D )
@@ -1291,7 +1289,7 @@ static COMMAND_FUNC( do_median_1D )
 
 	if( to==NULL || fr==NULL ) return;
 
-	median_1D(QSP_ARG  to,fr,rad);
+	median_1D(to,fr,rad);
 }
 
 static COMMAND_FUNC( do_krast )
@@ -1300,7 +1298,7 @@ static COMMAND_FUNC( do_krast )
 
 	dp=pick_obj("coord list");
 	if( dp != NULL )
-		mk_krast(QSP_ARG  dp);
+		mk_krast(dp);
 }
 
 #undef ADD_CMD
@@ -1335,7 +1333,7 @@ static COMMAND_FUNC( do_sort )
 	dp=pick_obj("");
 	if( dp == NULL ) return;
 
-	sort_data(QSP_ARG  dp);
+	sort_data(dp);
 }
 
 static COMMAND_FUNC( do_sort_indices )
@@ -1345,7 +1343,7 @@ static COMMAND_FUNC( do_sort_indices )
 	dp1=pick_obj("array of indices");
 	dp2=pick_obj("data array");
 	if( dp1 == NULL || dp2 == NULL ) return;
-	sort_indices(QSP_ARG  dp1,dp2);
+	sort_indices(dp1,dp2);
 }
 
 static COMMAND_FUNC( do_scramble )
@@ -1355,7 +1353,7 @@ static COMMAND_FUNC( do_scramble )
 	dp = pick_obj("");
 	if( dp == NULL ) return;
 
-	dp_scramble(QSP_ARG  dp);
+	dp_scramble(dp);
 }
 
 COMMAND_FUNC( do_yuv2rgb )
@@ -1367,7 +1365,7 @@ COMMAND_FUNC( do_yuv2rgb )
 
 	if( dst_dp == NULL || src_dp == NULL ) return;
 
-	yuv422_to_rgb24(QSP_ARG   dst_dp, src_dp );
+	yuv422_to_rgb24(dst_dp, src_dp );
 }
 
 static COMMAND_FUNC( do_yuv2gray )
@@ -1379,7 +1377,7 @@ static COMMAND_FUNC( do_yuv2gray )
 
 	if( dst_dp == NULL || src_dp == NULL ) return;
 
-	yuv422_to_gray(QSP_ARG   dst_dp, src_dp );
+	yuv422_to_gray(dst_dp, src_dp );
 }
 
 #undef ADD_CMD
@@ -1473,24 +1471,28 @@ static COMMAND_FUNC( do_misc )
 							\
 	n=size;						\
 	while(n--){					\
-		op1(QSP_ARG  to,fr);			\
+		op1(to,fr);				\
 		EXCHANGE(to,fr);			\
 	}						\
 	n=size;						\
 	while(n--){					\
-		op2(QSP_ARG  to,fr);			\
+		op2(to,fr);				\
 		EXCHANGE(to,fr);			\
 	}						\
 	dp_copy(to,fr);
 
 #ifdef HAVE_MORPH
 
-static void image_close(QSP_ARG_DECL  Data_Obj *to,Data_Obj *fr,int size)
+#define image_close(to,fr,size) _image_close(QSP_ARG  to,fr,size)
+
+static void _image_close(QSP_ARG_DECL  Data_Obj *to,Data_Obj *fr,int size)
 {
 	CYCLE_OPS( dilate, erode )
 }
 
-static void image_open(QSP_ARG_DECL  Data_Obj *to,Data_Obj *fr,int size)
+#define image_open(to,fr,size) _image_open(QSP_ARG  to,fr,size)
+
+static void _image_open(QSP_ARG_DECL  Data_Obj *to,Data_Obj *fr,int size)
 {
 	CYCLE_OPS( erode, dilate )
 }
@@ -1512,7 +1514,7 @@ static COMMAND_FUNC( do_closing )
 		return;
 	}
 
-	image_close(QSP_ARG  to,fr,size);
+	image_close(to,fr,size);
 }
 
 static COMMAND_FUNC( do_opening )   /* Should choose the size of the opening */
@@ -1531,7 +1533,7 @@ static COMMAND_FUNC( do_opening )   /* Should choose the size of the opening */
 		return;
 	}
 
-	image_open(QSP_ARG  to,fr,size);
+	image_open(to,fr,size);
 }
 
 static COMMAND_FUNC( do_dilate )
@@ -1542,7 +1544,7 @@ static COMMAND_FUNC( do_dilate )
 	fr=pick_obj("source");
 	if( to==NULL || fr==NULL ) return;
 
-	dilate(QSP_ARG  to,fr);
+	dilate(to,fr);
 }
 
 static COMMAND_FUNC( do_erode )
@@ -1553,7 +1555,7 @@ static COMMAND_FUNC( do_erode )
 	fr=pick_obj("source");
 	if( to==NULL || fr==NULL ) return;
 
-	erode(QSP_ARG  to,fr);
+	erode(to,fr);
 }
 
 static COMMAND_FUNC( gen_morph )
@@ -1565,7 +1567,7 @@ static COMMAND_FUNC( gen_morph )
 	tbl=pick_obj("function look-up table");
 	if( to==NULL || fr==NULL || tbl == NULL ) return;
 
-	morph_process(QSP_ARG  to,fr,tbl);
+	morph_process(to,fr,tbl);
 }
 
 #undef ADD_CMD
@@ -1602,7 +1604,7 @@ static COMMAND_FUNC( do_radavg )
 	if( m_dp == NULL || v_dp == NULL || c_dp == NULL || i_dp == NULL )
 		return;
 
-	rad_avg(QSP_ARG  m_dp,v_dp,c_dp,i_dp);
+	rad_avg(m_dp,v_dp,c_dp,i_dp);
 }
 
 static COMMAND_FUNC( do_oriavg )
@@ -1617,7 +1619,7 @@ static COMMAND_FUNC( do_oriavg )
 	if( m_dp == NULL || v_dp == NULL || c_dp == NULL || i_dp == NULL )
 		return;
 
-	ori_avg(QSP_ARG  m_dp,v_dp,c_dp,i_dp);
+	ori_avg(m_dp,v_dp,c_dp,i_dp);
 }
 #endif /* NOT_YET */
 
@@ -1630,7 +1632,7 @@ static COMMAND_FUNC( do_dct )
 	dp = pick_obj("");
 	if( dp==NULL ) return;
 
-	compute_dct(QSP_ARG  dp,FWD_DCT);
+	compute_dct(dp,FWD_DCT);
 }
 
 static COMMAND_FUNC( do_idct )
@@ -1640,7 +1642,7 @@ static COMMAND_FUNC( do_idct )
 	dp = pick_obj("");
 	if( dp==NULL ) return;
 
-	compute_dct(QSP_ARG  dp,INV_DCT);
+	compute_dct(dp,INV_DCT);
 }
 
 static COMMAND_FUNC( do_odct )
@@ -1650,7 +1652,7 @@ static COMMAND_FUNC( do_odct )
 	dp = pick_obj("");
 	if( dp==NULL ) return;
 
-	compute_dct(QSP_ARG  dp,OLD_DCT);
+	compute_dct(dp,OLD_DCT);
 }
 
 #undef ADD_CMD
@@ -1700,54 +1702,54 @@ static COMMAND_FUNC( do_fft )
 }
 
 
-static COMMAND_FUNC( do_clip ){	DO_VCODE(FVCLIP);	}
-static COMMAND_FUNC( do_iclip ){	DO_VCODE(FVICLP);	}
-static COMMAND_FUNC( do_vscmp ){	DO_VCODE(FVSCMP);	}
-static COMMAND_FUNC( do_vscmp2 ){DO_VCODE(FVSCMP2);	}
+static COMMAND_FUNC( do_clip ){	do_vcode(FVCLIP);	}
+static COMMAND_FUNC( do_iclip ){	do_vcode(FVICLP);	}
+static COMMAND_FUNC( do_vscmp ){	do_vcode(FVSCMP);	}
+static COMMAND_FUNC( do_vscmp2 ){do_vcode(FVSCMP2);	}
 
-static COMMAND_FUNC( do_bnd ){	DO_VCODE(FVBND);	}
-static COMMAND_FUNC( do_ibnd ){	DO_VCODE(FVIBND);	}
-static COMMAND_FUNC( do_vcmp ){	DO_VCODE(FVCMP);	}
+static COMMAND_FUNC( do_bnd ){	do_vcode(FVBND);	}
+static COMMAND_FUNC( do_ibnd ){	do_vcode(FVIBND);	}
+static COMMAND_FUNC( do_vcmp ){	do_vcode(FVCMP);	}
 
-/* static COMMAND_FUNC( do_vcmpm ){	DO_VCODE(FVCMPM);	} */
-/* static COMMAND_FUNC( do_vscmm ){	DO_VCODE(FVSCMM);	} */
+/* static COMMAND_FUNC( do_vcmpm ){	do_vcode(FVCMPM);	} */
+/* static COMMAND_FUNC( do_vscmm ){	do_vcode(FVSCMM);	} */
 
-static COMMAND_FUNC( do_vsmax ){	DO_VCODE(FVSMAX);	}
-static COMMAND_FUNC( do_vsmxm ){	DO_VCODE(FVSMXM);	}
-static COMMAND_FUNC( do_vsmin ){	DO_VCODE(FVSMIN);	}
-static COMMAND_FUNC( do_vsmnm ){	DO_VCODE(FVSMNM);	}
+static COMMAND_FUNC( do_vsmax ){	do_vcode(FVSMAX);	}
+static COMMAND_FUNC( do_vsmxm ){	do_vcode(FVSMXM);	}
+static COMMAND_FUNC( do_vsmin ){	do_vcode(FVSMIN);	}
+static COMMAND_FUNC( do_vsmnm ){	do_vcode(FVSMNM);	}
 
-/* static COMMAND_FUNC( do_vmcmm ){	DO_VCODE(FVMCMM);	} */
+/* static COMMAND_FUNC( do_vmcmm ){	do_vcode(FVMCMM);	} */
 
-static COMMAND_FUNC( do_vsm_lt ){	DO_VCODE(FVSMLT);	}
-static COMMAND_FUNC( do_vsm_gt ){	DO_VCODE(FVSMGT);	}
-static COMMAND_FUNC( do_vsm_le ){	DO_VCODE(FVSMLE);	}
-static COMMAND_FUNC( do_vsm_ge ){	DO_VCODE(FVSMGE);	}
-static COMMAND_FUNC( do_vsm_ne ){	DO_VCODE(FVSMNE);	}
-static COMMAND_FUNC( do_vsm_eq ){	DO_VCODE(FVSMEQ);	}
+static COMMAND_FUNC( do_vsm_lt ){	do_vcode(FVSMLT);	}
+static COMMAND_FUNC( do_vsm_gt ){	do_vcode(FVSMGT);	}
+static COMMAND_FUNC( do_vsm_le ){	do_vcode(FVSMLE);	}
+static COMMAND_FUNC( do_vsm_ge ){	do_vcode(FVSMGE);	}
+static COMMAND_FUNC( do_vsm_ne ){	do_vcode(FVSMNE);	}
+static COMMAND_FUNC( do_vsm_eq ){	do_vcode(FVSMEQ);	}
 
-static COMMAND_FUNC( do_vvm_lt ){	DO_VCODE(FVVMLT);	}
-static COMMAND_FUNC( do_vvm_gt ){	DO_VCODE(FVVMGT);	}
-static COMMAND_FUNC( do_vvm_le ){	DO_VCODE(FVVMLE);	}
-static COMMAND_FUNC( do_vvm_ge ){	DO_VCODE(FVVMGE);	}
-static COMMAND_FUNC( do_vvm_ne ){	DO_VCODE(FVVMNE);	}
-static COMMAND_FUNC( do_vvm_eq ){	DO_VCODE(FVVMEQ);	}
+static COMMAND_FUNC( do_vvm_lt ){	do_vcode(FVVMLT);	}
+static COMMAND_FUNC( do_vvm_gt ){	do_vcode(FVVMGT);	}
+static COMMAND_FUNC( do_vvm_le ){	do_vcode(FVVMLE);	}
+static COMMAND_FUNC( do_vvm_ge ){	do_vcode(FVVMGE);	}
+static COMMAND_FUNC( do_vvm_ne ){	do_vcode(FVVMNE);	}
+static COMMAND_FUNC( do_vvm_eq ){	do_vcode(FVVMEQ);	}
 
-/* static COMMAND_FUNC( do_vmcmp ){	DO_VCODE(FVMCMP);	} */
+/* static COMMAND_FUNC( do_vmcmp ){	do_vcode(FVMCMP);	} */
 
 #ifdef FOOBAR
-static COMMAND_FUNC( do_vmscm ){	DO_VCODE(FVMSCM);	}
-static COMMAND_FUNC( do_vmscp ){	DO_VCODE(FVMSCP);	}
+static COMMAND_FUNC( do_vmscm ){	do_vcode(FVMSCM);	}
+static COMMAND_FUNC( do_vmscp ){	do_vcode(FVMSCP);	}
 #endif /* FOOBAR */
 
-static COMMAND_FUNC( do_vvvslct ){ DO_VCODE(FVVVSLCT);	}
-static COMMAND_FUNC( do_vvsslct ){ DO_VCODE(FVVSSLCT);	}
-static COMMAND_FUNC( do_vssslct ){ DO_VCODE(FVSSSLCT);	}
+static COMMAND_FUNC( do_vvvslct ){ do_vcode(FVVVSLCT);	}
+static COMMAND_FUNC( do_vvsslct ){ do_vcode(FVVSSLCT);	}
+static COMMAND_FUNC( do_vssslct ){ do_vcode(FVSSSLCT);	}
 
-static COMMAND_FUNC( do_vmax ){		DO_VCODE(FVMAX);	}
-static COMMAND_FUNC( do_vmin ){		DO_VCODE(FVMIN);	}
-static COMMAND_FUNC( do_vmaxm ){	DO_VCODE(FVMAXM);	}
-static COMMAND_FUNC( do_vminm ){	DO_VCODE(FVMINM);	}
+static COMMAND_FUNC( do_vmax ){		do_vcode(FVMAX);	}
+static COMMAND_FUNC( do_vmin ){		do_vcode(FVMIN);	}
+static COMMAND_FUNC( do_vmaxm ){	do_vcode(FVMAXM);	}
+static COMMAND_FUNC( do_vminm ){	do_vcode(FVMINM);	}
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(compare_menu,s,f,h)
@@ -1805,12 +1807,12 @@ static COMMAND_FUNC( docmp )
 	CHECK_AND_PUSH_MENU(compare);
 }
 
-/* static COMMAND_FUNC( do_corr ) { DO_VCODE(FVCONV); } */
+/* static COMMAND_FUNC( do_corr ) { do_vcode(FVCONV); } */
 static COMMAND_FUNC( do_dot )
 {
-	DO_VCODE(FVDOT);
+	do_vcode(FVDOT);
 }
-/* static COMMAND_FUNC( do_cdot ) { DO_VCODE(FVCDOT); } */
+/* static COMMAND_FUNC( do_cdot ) { do_vcode(FVCDOT); } */
 
 static COMMAND_FUNC( do_xpose )
 {
@@ -1819,7 +1821,7 @@ static COMMAND_FUNC( do_xpose )
 	dpto=pick_obj( "target image" );
 	dpfr=pick_obj( "source image" );
 	if( dpto == NULL || dpfr == NULL ) return;
-	transpose(QSP_ARG  dpto,dpfr);
+	transpose(dpto,dpfr);
 
 	//TEMP_UNIMP(transpose)
 }
@@ -1952,7 +1954,7 @@ static COMMAND_FUNC( do_vec_xform )
 
 	if( dpto==NULL || dpfr==NULL || xform==NULL ) return;
 
-	//vec_xform(QSP_ARG  dpto,dpfr,xform);
+	//vec_xform(dpto,dpfr,xform);
 	TEMP_UNIMP(vec_xform)
 }
 
@@ -1966,7 +1968,7 @@ static COMMAND_FUNC( do_homog_xform )
 
 	if( dpto==NULL || dpfr==NULL || xform==NULL ) return;
 
-	//homog_xform(QSP_ARG  dpto,dpfr,xform);
+	//homog_xform(dpto,dpfr,xform);
 	TEMP_UNIMP(homog_xform)
 }
 
@@ -2161,8 +2163,8 @@ COMMAND_FUNC(do_comp_menu )
 
 #define VFUNC_FOR_CODE(code)		(&vec_func_tbl[code])
 
-void do_vcode(QSP_ARG_DECL  Vec_Func_Code code)
+void _do_vcode(QSP_ARG_DECL  Vec_Func_Code code)
 {
-	do_vfunc(QSP_ARG  VFUNC_FOR_CODE(code) );
+	do_vfunc( VFUNC_FOR_CODE(code) );
 }
 

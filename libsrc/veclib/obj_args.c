@@ -18,7 +18,7 @@ const char *type_strings[N_ARGSET_PRECISIONS]={
 
 /* This version takes a buffer, so it can be used by different threads simultaneously */
 
-void private_show_obj_args(QSP_ARG_DECL  char *buf, const Vec_Obj_Args *oap, void (*report_func)(QSP_ARG_DECL  const char *))
+void _private_show_obj_args(QSP_ARG_DECL  char *buf, const Vec_Obj_Args *oap, void (*report_func)(QSP_ARG_DECL  const char *))
 {
 	int i;
 
@@ -48,7 +48,7 @@ longlist(OA_SRC_OBJ(oap,i) );
 			prec = PREC_FOR_ARGSET( OA_ARGSPREC_CODE(oap) );
 //fprintf(stderr,"formatting as float:  %g\n",*((float *)OA_SVAL(oap,i)) );
 			if( prec != PREC_NONE ){
-				format_scalar_value(QSP_ARG  msgbuf,MSG_LEN,(void *)OA_SVAL(oap,i),prec_for_code(prec),NO_PADDING);
+				format_scalar_value(msgbuf,MSG_LEN,(void *)OA_SVAL(oap,i),prec_for_code(prec),NO_PADDING);
 			}
 			else	strcpy(msgbuf,"(invalid precision)");
 				
@@ -125,7 +125,7 @@ longlist(OA_SRC_OBJ(oap,i) );
 
 void _show_obj_args(QSP_ARG_DECL  const Vec_Obj_Args *oap)
 {
-	private_show_obj_args(QSP_ARG  ERROR_STRING,oap,_advise);
+	private_show_obj_args(ERROR_STRING,oap,_advise);
 }
 
 void set_obj_arg_flags(Vec_Obj_Args *oap)

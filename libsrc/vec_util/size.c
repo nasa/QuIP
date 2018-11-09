@@ -25,7 +25,9 @@
  * but at least it should work!?
  */
 
-static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
+#define change_size(dst_dp,src_dp) _change_size(QSP_ARG  dst_dp,src_dp)
+
+static int _change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 {
 	Dimension_Set ef, *enlargement_factor=&ef;
 	Dimension_Set rf, *reduction_factor=&rf;
@@ -120,7 +122,7 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 
 						// This doesn't check for cuda obj...
 						//vmov(oap);
-						perf_vfunc(QSP_ARG  FVMOV, oap );
+						perf_vfunc(FVMOV, oap );
 					}
 				}
 			}
@@ -134,9 +136,9 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 	return(0);
 }
 
-int reduce(QSP_ARG_DECL  Data_Obj *lil_dp,Data_Obj *big_dp)		/* reduce into lil_dp */
+int _reduce(QSP_ARG_DECL  Data_Obj *lil_dp,Data_Obj *big_dp)		/* reduce into lil_dp */
 {
-	if( change_size(QSP_ARG  lil_dp,big_dp) < 0 )
+	if( change_size(lil_dp,big_dp) < 0 )
 		return(-1);
 
 	SET_OBJ_FLAG_BITS(lil_dp, DT_ASSIGNED);
@@ -144,9 +146,9 @@ int reduce(QSP_ARG_DECL  Data_Obj *lil_dp,Data_Obj *big_dp)		/* reduce into lil_
 	return(0);
 }
 
-int enlarge(QSP_ARG_DECL  Data_Obj *big_dp,Data_Obj *lil_dp)		/* reduce into lil_dp */
+int _enlarge(QSP_ARG_DECL  Data_Obj *big_dp,Data_Obj *lil_dp)		/* reduce into lil_dp */
 {
-	if( change_size(QSP_ARG  big_dp,lil_dp) < 0 )
+	if( change_size(big_dp,lil_dp) < 0 )
 		return(-1);
 
 	SET_OBJ_FLAG_BITS(big_dp, DT_ASSIGNED);

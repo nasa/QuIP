@@ -72,7 +72,7 @@ static void format_chunk(Fmt_Pt *fpp, short *pdp, Polh_Output_Type type )
 #ifdef QUIP_DEBUG
 if( debug & debug_polhemus ){
 advise("raw buffer for XYZ_INT:");
-display_buffer(pdp,3);
+display_polh_buffer(pdp,3);
 }
 #endif /* QUIP_DEBUG */
 			/* coordinates */
@@ -198,7 +198,7 @@ int format_polh_data(Fmt_Pt *fpp, short *pdp, Polh_Record_Format *prfp)
 	/*
 if( debug & debug_polhemus ){
 advise("raw buffer for single record:");
-display_buffer(pdp,station_info[ curr_station_idx ].sd_single_prf.rf_n_words);
+display_polh_buffer(pdp,station_info[ curr_station_idx ].sd_single_prf.rf_n_words);
 }
 */
 #endif /* QUIP_DEBUG */
@@ -234,7 +234,7 @@ static int parse_polh_reading( QSP_ARG_DECL  Data_Obj *dp, char * s )
 
 #ifdef QUIP_DEBUG
 if( debug & debug_polhemus ){
-sprintf(ERROR_STRING,"parse_polh_reading \"%s\"",show_printable(DEFAULT_QSP_ARG  s));
+sprintf(ERROR_STRING,"parse_polh_reading \"%s\"",show_printable(s));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -270,7 +270,7 @@ advise(ERROR_STRING);
 		) != 7 ){
 		sprintf(ERROR_STRING,"Error scanning polhemus data string");
 		warn(ERROR_STRING);
-		sprintf(ERROR_STRING,"String:  \"%s\"",show_printable(DEFAULT_QSP_ARG  s));
+		sprintf(ERROR_STRING,"String:  \"%s\"",show_printable(s));
 		advise(ERROR_STRING);
 		return(-1);
 	}

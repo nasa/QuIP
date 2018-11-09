@@ -62,7 +62,7 @@ void add_impulse(double amp,Data_Obj *image_dp,Data_Obj *ir_dp,posn_t x,posn_t y
 	}
 }
 
-void convolve(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpfilt)
+void _convolve(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpfilt)
 {
 	dimension_t i,j;
 	float val, *frptr;

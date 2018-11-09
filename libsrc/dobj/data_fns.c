@@ -62,11 +62,11 @@ void make_contiguous(Data_Obj *dp)
  * or if an object with the requested name already exists.
  */
 
-int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
+int _obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 {
 	Data_Obj *dp2;
 
-	if( !is_valid_dname(QSP_ARG  newname) ) return(-1);
+	if( !is_valid_dname(newname) ) return(-1);
 
 	// We expect that the passed object is in the namespace.
 	assert( dobj_of(OBJ_NAME(dp)) != NULL );
@@ -203,7 +203,7 @@ Data_Obj *_mk_scalar(QSP_ARG_DECL  const char *name,Precision * prec_p)
 
 // Doesn't support CUDA???
 
-void assign_scalar_obj(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
+void _assign_scalar_obj(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 {
 	Precision *prec_p;
 
@@ -308,15 +308,14 @@ _mk_img(QSP_ARG_DECL  const char *name,dimension_t rows,dimension_t cols,dimensi
 
 
 Data_Obj *
-mk_vec(QSP_ARG_DECL  const char *name,dimension_t dim,dimension_t type_dim,Precision *prec_p)		/**/
+_mk_vec(QSP_ARG_DECL  const char *name,dimension_t dim,dimension_t type_dim,Precision *prec_p)		/**/
 {
 	return( make_obj(name,1,1,dim,type_dim,prec_p) );
 }
 
 /* what is this for? half size?? */
 
-Data_Obj *
-dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name)
+Data_Obj * _dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 {
 	Data_Obj *dp2;
 
@@ -331,8 +330,7 @@ dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 	return(dp2);
 }
 
-Data_Obj *
-dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name)
+Data_Obj * _dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 {
 	Data_Obj *dp2;
 
@@ -353,7 +351,7 @@ dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name)
  */
 
 Data_Obj *
-dup_obj(QSP_ARG_DECL  Data_Obj *dp,const char *name)
+_dup_obj(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 {
 	Data_Obj *dp2;
 
@@ -378,16 +376,15 @@ const char *localname(void)
  * Returns a pointer to the new object.
  */
 
-Data_Obj *
-dupdp(QSP_ARG_DECL  Data_Obj *dp)
+Data_Obj * _dupdp(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Data_Obj *new_dp;
-	new_dp = dup_obj(QSP_ARG  dp,localname());
+	new_dp = dup_obj(dp,localname());
 	assert(new_dp!=NULL);
 	return new_dp;
 }
 
-int is_valid_dname(QSP_ARG_DECL  const char *name)
+int _is_valid_dname(QSP_ARG_DECL  const char *name)
 {
 	const char *s=name;
 	while( *s ){

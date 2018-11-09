@@ -29,7 +29,9 @@ void set_resample_wrap(int flag)
 	wrap_resample=flag;
 }
 
-static int resamp_check(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
+#define resamp_check(dpto,dpfr,dpwarp) _resamp_check(QSP_ARG  dpto,dpfr,dpwarp)
+
+static int _resamp_check(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 {
 	VINSIST_RAM_OBJ(dpto,resample,-1)
 	VINSIST_RAM_OBJ(dpfr,resample,-1)
@@ -69,7 +71,7 @@ advise(ERROR_STRING);
 	return(0);
 }
 
-void resample(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
+void _resample(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 {
 	float x_fr,y_fr;
 	u_long ii,jj;
@@ -80,7 +82,7 @@ void resample(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 	incr_t src_rowinc;
     //incr_t src_pinc;
 
-	if( resamp_check(QSP_ARG  dpto,dpfr,dpwarp) < 0 ) return;
+	if( resamp_check(dpto,dpfr,dpwarp) < 0 ) return;
 
 	out_rows=OBJ_ROWS(dpto);
 	out_cols=OBJ_COLS(dpto);
@@ -168,7 +170,7 @@ void resample(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 
 /* this old bilinear warp uses the warp map for perturbations */
 
-void bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
+void _bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 {
 	float x_fr,y_fr;
 	register dimension_t ii,jj,ii2,jj2;
@@ -183,7 +185,7 @@ void bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 	float dx,dy,dxy;
 	int map_sample;
 
-	if( resamp_check(QSP_ARG  dpto,dpfr,dpwarp) < 0 ) return;
+	if( resamp_check(dpto,dpfr,dpwarp) < 0 ) return;
 
 	out_rows=OBJ_ROWS(dpto);
 	out_cols=OBJ_COLS(dpto);
@@ -218,7 +220,7 @@ void bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 
 /* this new bilinear warp uses the warp map for coords */
 
-void new_bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
+void _new_bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 {
 	float x_fr,y_fr;
 	register dimension_t ii,jj,ii2,jj2;
@@ -233,7 +235,7 @@ void new_bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpw
 	float dx,dy,dxy;
 	int map_sample;
 
-	if( resamp_check(QSP_ARG  dpto,dpfr,dpwarp) < 0 ) return;
+	if( resamp_check(dpto,dpfr,dpwarp) < 0 ) return;
 
 
 	out_rows=OBJ_ROWS(dpto);

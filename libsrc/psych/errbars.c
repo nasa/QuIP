@@ -21,7 +21,6 @@ static float alpha;
 
 
 /* local prototypes */
-static void get_bar(QSP_ARG_DECL  int index, float (*func)(SINGLE_QSP_ARG_DECL), float *ptr );
 static float u_confidence(SINGLE_QSP_ARG_DECL);
 static float l_confidence(SINGLE_QSP_ARG_DECL);
 
@@ -62,7 +61,7 @@ static float u_confidence(SINGLE_QSP_ARG_DECL)	/* return sq. deviation from .975
 			pk *= num / denom;
 			sum += pk;
 		}
-	} else WARN("zero observations!?");
+	} else warn("zero observations!?");
 	/* sum is the probability of observing n_obs or more */
 
 	fit_err = ((1-alpha)-sum)*((1-alpha)-sum);
@@ -111,7 +110,9 @@ static float l_confidence(SINGLE_QSP_ARG_DECL)
 	return(fit_err);
 }
 
-static void get_bar(QSP_ARG_DECL  int index, float (*func)(SINGLE_QSP_ARG_DECL), float *ptr )
+#define get_error_bar(index, func, ptr) _get_error_bar(QSP_ARG  index, func, ptr )
+
+static void _get_error_bar(QSP_ARG_DECL  int index, float (*func)(SINGLE_QSP_ARG_DECL), float *ptr )
 {
 	Opt_Param op1, *opp=(&op1);
 
@@ -126,39 +127,47 @@ static void get_bar(QSP_ARG_DECL  int index, float (*func)(SINGLE_QSP_ARG_DECL),
 	opp->delta= (float) 0.2;
 	opp->mindel= (float) 1.0e-30;
 
-	opp=add_opt_param(QSP_ARG  opp);
+	opp=add_opt_param(opp);
 
-	optimize(QSP_ARG  func);
+	optimize(func);
 
 	*ptr = opp->ans;
 }
 
-void pnt_bars(QSP_ARG_DECL  FILE *fp, Trial_Class *tcp)
+void _print_error_bars(QSP_ARG_DECL  FILE *fp, Trial_Class *tcp)
 {
         int j;
-        Data_Tbl *dtp;
+        Summary_Data_Tbl *dtp;
 	float upper_bar, lower_bar;
+	int n_xvals;
 
 	if( tcp == NULL ) return;
 
-	dtp=CLASS_DATA_TBL(tcp);
-	for(j=0;j<_nvals;j++){
-		if( DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) > 0 ){
-			fprintf(fp,"%f\t", xval_array[ j ]);
-			n_obs = DATUM_NTOTAL(DTBL_ENTRY(dtp,j));
-			n_seen = DATUM_NCORR(DTBL_ENTRY(dtp,j));
+	assert(CLASS_XVAL_OBJ(tcp)!=NULL);
+	n_xvals = OBJ_COLS( CLASS_XVAL_OBJ(tcp) );
+	assert(n_xvals>1);
+
+	dtp=CLASS_SUMM_DTBL(tcp);
+	for(j=0;j<n_xvals;j++){
+		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) > 0 ){
+			float *xv_p;
+
+			xv_p = indexed_data(CLASS_XVAL_OBJ(tcp),j);
+			fprintf(fp,"%f\t", *xv_p);
+			n_obs = DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j));
+			n_seen = DATUM_NCORR(SUMM_DTBL_ENTRY(dtp,j));
 			fprintf(fp,"%f\t",(double) n_seen / (double) n_obs );
 			if( n_obs == n_seen ) upper_bar=1.0;
 			else {
 				if( n_seen == 0 ) alpha = (float) ALPHA;
 				else alpha = (float) ALPHA/2;
-				get_bar(QSP_ARG  j,u_confidence,&upper_bar);
+				get_error_bar(j,u_confidence,&upper_bar);
 			}
 			if( n_seen == 0 ) lower_bar=0.0;
 			else {
 				if( n_obs == n_seen ) alpha = (float) ALPHA;
 				else alpha = (float) ALPHA/2;
-				get_bar(QSP_ARG  j,l_confidence,&lower_bar);
+				get_error_bar(j,l_confidence,&lower_bar);
 			}
 			fprintf(fp,"%f\t%f\n",lower_bar,upper_bar);
 		}

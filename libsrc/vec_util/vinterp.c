@@ -70,7 +70,7 @@ NADVISE(DEFAULT_ERROR_STRING);
  * data, otherwise we interpolate linearly...
  */
 
-void vinterp(QSP_ARG_DECL  Data_Obj *target,Data_Obj *source,Data_Obj *control)
+void _vinterp(QSP_ARG_DECL  Data_Obj *target,Data_Obj *source,Data_Obj *control)
 {
 	float *to, *fr, *c;
 	dimension_t i;

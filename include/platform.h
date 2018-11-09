@@ -408,11 +408,14 @@ struct cuda_stream_info {
 ITEM_INTERFACE_PROTOTYPES( Platform_Stream , stream )
 
 extern void _select_pfdev(QSP_ARG_DECL  Platform_Device *pdp);
-extern void insure_obj_pfdev(QSP_ARG_DECL  Data_Obj *dp, Platform_Device *pdp);
-extern void gen_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr);
-extern void gen_obj_dnload(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
+extern void _insure_obj_pfdev(QSP_ARG_DECL  Data_Obj *dp, Platform_Device *pdp);
+extern void _gen_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr);
+extern void _gen_obj_dnload(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
 
 #define select_pfdev(pdp)	_select_pfdev(QSP_ARG  pdp)
+#define insure_obj_pfdev(dp, pdp) _insure_obj_pfdev(QSP_ARG  dp, pdp)
+#define gen_obj_upload(dpto, dpfr) _gen_obj_upload(QSP_ARG  dpto, dpfr)
+#define gen_obj_dnload(dpto,dpfr) _gen_obj_dnload(QSP_ARG  dpto,dpfr)
 
 extern Compute_Platform *creat_platform(QSP_ARG_DECL  const char *name, platform_type t);
 extern void delete_platform(QSP_ARG_DECL  Compute_Platform *cpp);
@@ -439,15 +442,21 @@ extern Platform_Device * _pop_pfdev(SINGLE_QSP_ARG_DECL);
 #define push_pfdev(pdp)	_push_pfdev(QSP_ARG  pdp)
 #define pop_pfdev()	_pop_pfdev(SINGLE_QSP_ARG)
 
-extern Item_Context *create_pfdev_context(QSP_ARG_DECL  const char *name);
-extern void push_pfdev_context(QSP_ARG_DECL  Item_Context *icp);
-extern Item_Context *pop_pfdev_context(SINGLE_QSP_ARG_DECL);
+extern Item_Context * _create_pfdev_context(QSP_ARG_DECL  const char *name);
+extern void _push_pfdev_context(QSP_ARG_DECL  Item_Context *icp);
+extern Item_Context * _pop_pfdev_context(SINGLE_QSP_ARG_DECL);
 
-extern int platform_dispatch(QSP_ARG_DECL  const Compute_Platform *cpp,
+#define create_pfdev_context(name) _create_pfdev_context(QSP_ARG  name)
+#define push_pfdev_context(icp) _push_pfdev_context(QSP_ARG  icp)
+#define pop_pfdev_context() _pop_pfdev_context(SINGLE_QSP_ARG)
+
+extern int _platform_dispatch(QSP_ARG_DECL  const Compute_Platform *cpp,
 				const struct vector_function *vfp,
 				Vec_Obj_Args *oap );
+#define platform_dispatch(cpp, vfp, oap ) _platform_dispatch(QSP_ARG  cpp, vfp, oap )
 
-extern int platform_dispatch_by_code(QSP_ARG_DECL  int code, Vec_Obj_Args *oap );
+extern int _platform_dispatch_by_code(QSP_ARG_DECL  int code, Vec_Obj_Args *oap );
+#define platform_dispatch_by_code(code, oap ) _platform_dispatch_by_code(QSP_ARG  code, oap )
 extern void _dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
 #define dp_convert(dst_dp, src_dp) _dp_convert(QSP_ARG  dst_dp, src_dp)
 

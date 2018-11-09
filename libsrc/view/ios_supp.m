@@ -81,7 +81,7 @@ typedef struct pt_arg {
 -(id) init
 {
 	self=[super init];
-    
+
 	color=NULL;
 	point.x = point.y = 0.0;
 	string=NULL;
@@ -216,7 +216,7 @@ void init_gw_lut(Gen_Win *gwp)
 #ifdef BUILD_FOR_MACOS
 		c = [NSColor colorWithSRGBRed:l  green:l blue:l alpha:1.0 ];
 #endif // BUILD_FOR_MACOS
-        
+
 //printf("Inserting color at 0x%lx at table index %d\n",(long)c,i);
 		[GW_CMAP(gwp) insertObject: c atIndex:i];
 	}
@@ -246,9 +246,6 @@ static Draw_Op* new_drawop(Draw_Op_Code c)
 	return(do_p);
 }
 
-#ifdef MAX_DEBUG
-#define REPORT_DRAWOP(vp,do_p)	report_drawop(vp,do_p);
-
 static void report_drawop(Viewer *vp, Draw_Op *do_p)
 {
 	switch( do_p.code ){
@@ -256,7 +253,7 @@ static void report_drawop(Viewer *vp, Draw_Op *do_p)
 			fprintf(stderr,"DO_CONT %s  %g %g\n",VW_NAME(vp),DOA_X(do_p),DOA_Y(do_p));
 			break;
 		case DO_LINEWIDTH:
-			fprintf(stderr,"DO_LINEWIDTH %s  %d\n",VW_NAME(vp),DOA_LINEWIDTH(do_p));
+			fprintf(stderr,"DO_LINEWIDTH %s  %g\n",VW_NAME(vp),DOA_LINEWIDTH(do_p));
 			break;
 		case DO_MOVE:
 			fprintf(stderr,"DO_MOVE %s  %g %g\n",VW_NAME(vp),DOA_X(do_p),DOA_Y(do_p));
@@ -296,18 +293,25 @@ static void report_drawop(Viewer *vp, Draw_Op *do_p)
 			break;
 		case DO_UNUSED:
 			fprintf(stderr,"DO_UNUSED %s  shouldn't happen!?\n",VW_NAME(vp));
+NWARN("bad drawop #1!?");
 			break;
 		case N_DRAWOP_CODES:
-			fprintf(stderr,"DO_UNUSED %s  shouldn't happen!?\n",VW_NAME(vp));
+			fprintf(stderr,"N_DRAWOP_CODES %s  shouldn't happen!?\n",VW_NAME(vp));
+NWARN("bad drawop #2!?");
+			break;
+		default:
+			fprintf(stderr,"report_drawop:  OOPS - unhandled code %d (0x%x)\n",
+				do_p.code, do_p.code);
+NWARN("bad drawop #3!?");
 			break;
 	}
 //fprintf(stderr,"\t\ttext_mode = 0x%x\n",VW_FLAGS(vp)&VW_JUSTIFY_MASK);
 }
 
+#ifdef MAX_DEBUG
+#define REPORT_DRAWOP(vp,do_p)	report_drawop(vp,do_p);
 #else // ! MAX_DEBUG
-
 #define REPORT_DRAWOP(vp,do_p)
-
 #endif // ! MAX_DEBUG
 
 static CGPoint get_string_offset(CGContextRef ctx, const char *str)
@@ -374,6 +378,7 @@ static int _exec_drawop(QSP_ARG_DECL  Viewer *vp, Draw_Op *do_p)
 	QUIP_COLOR_TYPE *c;
 	static CGFloat x=0.0;
 	static CGFloat y=0.0;
+	CGRect rect;
 
 	REPORT_DRAWOP(vp,do_p)
 
@@ -452,14 +457,6 @@ static int _exec_drawop(QSP_ARG_DECL  Viewer *vp, Draw_Op *do_p)
 			// the first time if the flag is not set,
 			// then nothing seems to display!?
 
-#ifdef FOOBAR
-		// We do this at the beginning of exec_drawlist instead!
-			//if( ! VW_TXT_MTRX_READY(vp) ){
-//fprintf(stderr,"exec_drawop calling init_text_font\n");
-				init_text_font(vp);
-			//}
-#endif // FOOBAR
-
 	// no other text draw modes?
 
 			// Make sure a default justification mode is set
@@ -522,22 +519,42 @@ CGSize drawn_size =
 #ifdef BUILD_FOR_IOS
 			[VW_QV(vp) setBackgroundColor: DOA_COLOR(do_p)];
 #endif // BUILD_FOR_IOS
-            break;
+			break;
 		case DO_SELECT_PEN:
 			c =  DOA_COLOR(do_p) ;
 			CGContextSetStrokeColorWithColor( VW_GFX_CTX(vp), c.CGColor );
 			CGContextSetFillColorWithColor( VW_GFX_CTX(vp), c.CGColor );
 			break;
+
 		case DO_ERASE:
-			// Because we are executing the drawlist when we call this,
-			// we don't need to re-interpret the preceding nodes, we can just release
-			// them.  And we shouldn't release the following nodes, because
-			// we haven't interpreted them yet!?
-			// We don't have access to the drawlist here, so we return a special code...
-			//
-			// This approach removes the previous commands from the drawing list,
-			// but it doesn't cause the window to be redrawn from scratch???
-			return -1;
+//fprintf(stderr,"DO_ERASE:  clearing %s (w = %d, h = %d)\n",VW_NAME(vp),VW_WIDTH(vp),VW_HEIGHT(vp));
+
+			rect = CGRectMake(0,0,VW_WIDTH(vp),VW_HEIGHT(vp));
+			// what about CGContextClearRect???
+			CGContextClearRect( VW_GFX_CTX(vp), rect );
+			// ClearRect doesn't seem to work, try fill rect...
+
+			//c = [UIColor clearColor]; // BUG - user should select!
+
+			//CGContextSetAlpha( VW_GFX_CTX(vp), 0.0 );	// fully transparent
+			/*
+			CGContextSetAlpha( VW_GFX_CTX(vp), 0.1 );	// half transparent
+			c = [UIColor whiteColor]; // BUG - user should select!
+			CGContextSetFillColorWithColor( VW_GFX_CTX(vp), c.CGColor );
+			CGContextFillRect( VW_GFX_CTX(vp), rect );
+			CGContextSetAlpha( VW_GFX_CTX(vp), 1.0 );	// fully opaque
+
+// this does nothing!?
+//			c = [UIColor clearColor];
+//			CGContextSetFillColorWithColor( VW_GFX_CTX(vp), c.CGColor );
+//			CGContextFillRect( VW_GFX_CTX(vp), rect );
+
+			// BUG drawing color is not reset to user selection...?
+			c = [UIColor blackColor]; // BUG - user should be cached!
+			CGContextSetFillColorWithColor( VW_GFX_CTX(vp), c.CGColor );
+			*/
+
+
 			break;
 		default:
 			warn("Unexpected code in exec_drawop!?");
@@ -546,24 +563,132 @@ CGSize drawn_size =
 	return 0;
 }
 
+// BUG it would be a lot more efficient to do this when the erase command is issued!?
+
+static IOS_Node *find_erase_node(Viewer *vp)
+{
+	IOS_Node *np;
+	Draw_Op *do_p;
+
+	np = IOS_LIST_HEAD( VW_DRAW_LIST(vp) );
+	while( np != NULL ){
+		do_p = IOS_NODE_DATA(np);
+		if( do_p.code == DO_ERASE ){
+			return np;
+		}
+		np = IOS_NODE_NEXT(np);
+	}
+	return NULL;
+}
+
+static int is_drawing_node( IOS_Node *np )
+{
+	Draw_Op *do_p;
+
+	do_p = (Draw_Op *) IOS_NODE_DATA(np);
+
+	switch( do_p.code ){
+		case DO_CONT:
+		case DO_TEXT:
+		case DO_ERASE:
+			return 1;
+			break;
+
+		case DO_LINEWIDTH:
+		case DO_MOVE:
+		case DO_FONT_SIZE:
+		case DO_CHAR_SPACING:
+		case DO_FONT:
+		case DO_SELECT_PEN:
+		case DO_LJUST:
+		case DO_CJUST:
+		case DO_RJUST:
+		case DO_TEXT_ANGLE:
+		case DO_SET_BG:
+			return 0;
+			break;
+
+		case DO_UNUSED:
+            fprintf(stderr,"is_drawing_node:  DO_UNUSED shouldn't occur!?\n");
+			break;
+		case N_DRAWOP_CODES:
+            fprintf(stderr,"is_drawing_node:  N_DRAWOP_CODES shouldn't occur!?\n");
+			break;
+		default:
+			fprintf(stderr,"report_drawop:  OOPS - unhandled code %d (0x%x)\n",
+				do_p.code, do_p.code);
+			break;
+	}
+	return 1;
+}
+
+static void erase_drawlist_to_node( Viewer *vp, IOS_Node *erase_np)
+{
+	IOS_Node *np, *next;
+
+	np = IOS_LIST_HEAD( VW_DRAW_LIST(vp) );
+
+	do {
+		next = IOS_NODE_NEXT(np);
+		if( np == erase_np ){
+			ios_remNode(VW_DRAW_LIST(vp),np);
+			return;
+		} else if( is_drawing_node(np) ){
+			ios_remNode(VW_DRAW_LIST(vp),np);
+		}
+		np = next;
+	} while( np != NULL );
+
+	NERROR1("erase_drawlist_to_node:  CAUTIOUS:  should never happen!?");
+}
+
+static void scan_drawlist_for_erasures(Viewer *vp)
+{
+	IOS_Node *np;
+	int found_erasure=0;
+
+	if( VW_DRAW_LIST(vp) == NULL ) return;
+
+	do {
+		np = find_erase_node(vp);
+		if( np != NULL ){
+			erase_drawlist_to_node(vp,np);
+			found_erasure=1;
+		}
+	} while( np != NULL );
+
+	if( found_erasure ){
+		Draw_Op *do_p;
+		// put an erase node at the beginning of what's left
+		do_p = new_drawop(DO_ERASE);
+		np = mk_ios_node(do_p);
+		ios_addHead(VW_DRAW_LIST(vp),np);
+	}
+}
+
 int _exec_drawlist(QSP_ARG_DECL  Viewer *vp)
 {
 	IOS_Node *np;
 	int retval=0;
 
 //fprintf(stderr,"exec_drawlist BEGIN\n");
+//dump_drawlist(vp);
+
+	scan_drawlist_for_erasures(vp);
+
+//fprintf(stderr,"exec_drawlist: after scanning:\n");
+//dump_drawlist(vp);
 
 #ifdef BUILD_FOR_IOS
 	if( VW_GFX_CTX(vp) != UIGraphicsGetCurrentContext() )
 		warn("viewer context does not match UIGraphicsGetCurrentContext !?");
 #endif // BUILD_FOR_IOS
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 	CGContextSetStrokeColorSpace( VW_GFX_CTX(vp), colorSpace );
-    CGColorSpaceRelease(colorSpace);
+	CGColorSpaceRelease(colorSpace);
 
 	// We do this in exec_draw_op too!?!?
 	//if( ! VW_TXT_MTRX_READY(vp) ){
-//fprintf(stderr,"exec_drawlist calling init_text_font...");
 		init_text_font(vp);
 	//}
 
@@ -573,25 +698,12 @@ int _exec_drawlist(QSP_ARG_DECL  Viewer *vp)
 	}
 	np = IOS_LIST_HEAD(VW_DRAW_LIST(vp));
 
-//	fprintf(stderr,"exec_drawlist %s:  drawlist has %d elements\n",
-//			VW_NAME(vp),ios_eltcount(VW_DRAW_LIST(vp)) );
-
 	while(np!=NULL){
 		Draw_Op *do_p;
 		do_p = (Draw_Op *) IOS_NODE_DATA(np);
-//		fprintf(stderr,"exec_drawlist %s:  calling exec_drawop\n",VW_NAME(vp));
-		if( exec_drawop(vp,do_p) < 0 ){	// erase
-			IOS_Node *tnp;
-			do {
-				tnp = ios_remHead(VW_DRAW_LIST(vp));
-			} while( tnp != np );
-			// Now we've removed every node up to and including the erase node
-			np = IOS_LIST_HEAD(VW_DRAW_LIST(vp));
-//fprintf(stderr,"exec_drawlist %s:  after erase, drawlist has %d elements\n",
-//VW_NAME(vp),ios_eltcount(VW_DRAW_LIST(vp)) );
-			/* Somehow, we need to make the window redraw again... */
-			/* retval of -1 flags the need for a redraw... */
-			retval=(-1);
+		if( exec_drawop(vp,do_p) < 0 ){	// error
+fprintf(stderr,"exec_drawlist returning after error\n");
+			return retval;
 		} else {
 			np = IOS_NODE_NEXT(np);
 		}
@@ -605,7 +717,7 @@ int _exec_drawlist(QSP_ARG_DECL  Viewer *vp)
 
 // A "viewer" is just another view that we are going to load with images...
 
-int make_viewer(QSP_ARG_DECL  Viewer *vp,int width,int height)
+int _make_viewer(QSP_ARG_DECL  Viewer *vp,int width,int height)
 {
 	// For now we disregard what size the user has requested...
 	// All viewers are full-screen
@@ -614,7 +726,7 @@ int make_viewer(QSP_ARG_DECL  Viewer *vp,int width,int height)
 	Gen_Win *gwp=genwin_of( QSP_ARG  VW_NAME(vp) );
 	if( gwp == NULL ){
 //fprintf(stderr,"make_viewer calling make_genwin %s\n",VW_NAME(vp));
-		gwp=make_genwin(QSP_ARG  VW_NAME(vp), width, height );
+		gwp=make_genwin(VW_NAME(vp), width, height );
 	}
 
 	// BUG?  reference cycle?
@@ -631,27 +743,12 @@ void show_viewer(QSP_ARG_DECL  Viewer *vp)
 	// Showing a panel is more complicated than showing
 	// a viewer, because we have to push the name context
 	// for the widgets.
-	push_nav(QSP_ARG  VW_GW(vp));
-
-#ifdef FOOBAR
-	Panel_Obj *po=panel_obj_of(QSP_ARG  VW_NAME(vp));
-	if( po != NULL ){
-		show_panel(QSP_ARG  po);
-	} else {
-		quipView *qv = VW_QV(vp);
-		[qv.superview bringSubviewToFront:qv];
-	}
-#endif /* FOOBAR */
+	push_nav(VW_GW(vp));
 }
 
 void unshow_viewer(QSP_ARG_DECL  Viewer *vp)
 {
-	/*
-	quipView *qv = VW_QV(vp);
-	[VW_IMAGES(vp) set_refresh:0];
-	[qv.superview sendSubviewToBack:qv];
-	*/
-	pop_nav(QSP_ARG 1);
+	pop_nav(1);
 }
 
 int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
@@ -661,12 +758,12 @@ int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
 		case GW_VC_QVC:		return 1;
 		case GW_VC_QTVC:	return 0;
 		default:
-			WARN("Unhandled view controller case in is_image_viewer!?");
+			warn("Unhandled view controller case in is_image_viewer!?");
 			return 0;
 	}
 #else // ! BUILD_FOR_IOS
-	WARN("is_image_viewer:  need to implement!?");
-    return 1;
+	warn("is_image_viewer:  need to implement!?");
+	return 1;
 #endif // ! BUILD_FOR_IOS
 }
 
@@ -682,14 +779,18 @@ void embed_image(QSP_ARG_DECL Viewer *vp, Data_Obj *dp,int x,int y)
 
 	INSIST_IMAGE_VIEWER(embed_image)
 
+	// BUG?  it seems kind of ineffiecient to create a new object
+	// every time we reload an image...  can't we simply reset the
+	// image data property of a quipImageView associated with the viewer?
 	qiv_p = [[quipImageView alloc] initWithDataObj:dp];
+
 //fprintf(stderr,"embed_image:  quipImageView = 0x%lx\n",
 //(long)qiv_p);
 
 #ifdef BUILD_FOR_IOS
 	qiv_p.contentMode = UIViewContentModeTopLeft;
 #endif // BUILD_FOR_IOS
-    
+
 	// BUG?  make the view the size of the viewer, not the image
 	qiv_p.frame = CGRectMake(x,y,VW_WIDTH(vp),VW_HEIGHT(vp));
 
@@ -714,7 +815,7 @@ void embed_image(QSP_ARG_DECL Viewer *vp, Data_Obj *dp,int x,int y)
 
 
 // new, more efficient
-    /*
+	/*
 	int idx;
 
 	if( (idx=[VW_IMAGES(vp) indexForDataObject:dp]) >= 0 ){
@@ -723,7 +824,7 @@ void embed_image(QSP_ARG_DECL Viewer *vp, Data_Obj *dp,int x,int y)
 		qiv_p = [[VW_IMAGES(vp) subviews] objectAtIndex:i];
 		[qiv_p removeFromSuperview];
 	}
-     */
+	 */
 
 	[VW_IMAGES(vp) addSubview:qiv_p];
 
@@ -743,7 +844,7 @@ void embed_image(QSP_ARG_DECL Viewer *vp, Data_Obj *dp,int x,int y)
 #ifdef BUILD_FOR_IOS
 	[VW_IMAGES(vp) bringSubviewToFront:qiv_p];
 #endif // BUILD_FOR_IOS
-    
+
 	/* This implementation creates a new view every time we load an image!?
 	 * It would probably be better to have a single image view that
 	 * we reload.  But would this work for different size images?
@@ -772,7 +873,7 @@ fprintf(stderr,"image_view_for_viewer returing existing image view 0x%lx for vie
 #ifdef BUILD_FOR_IOS
 	qiv_p.contentMode = UIViewContentModeTopLeft;
 #endif // BUILD_FOR_IOS
-    
+
 	// We add the new imageView as a subview of the viewer view...
 	if( VW_IMAGES(vp) == NULL )
 		init_viewer_images(vp);
@@ -842,11 +943,6 @@ void _xp_erase(QSP_ARG_DECL  Viewer *vp)
 	// what would be best would be to make the viewer needy here,
 	// and then wait until it has been redrawn, and THEN release
 	// the list...  Or we could have a non-drawing scan of the list first?
-
-//	if( VW_DRAW_LIST(vp) == NULL ) return;
-//	fprintf(stderr,"_xp_erase %s:  releasing nodes\n",VW_NAME(vp));
-//	rls_nodes_from_ios_list(VW_DRAW_LIST(vp));
-
 	Draw_Op *do_p;
 	do_p = new_drawop(DO_ERASE);
 	ADD_DRAW_OP(vp,do_p);
@@ -998,8 +1094,20 @@ void _xp_fill_polygon(QSP_ARG_DECL  Viewer* vp, int num_points, int* px_vals, in
 
 void _dump_drawlist(QSP_ARG_DECL  Viewer *vp)
 {
-	advise("dump_drawlist:  UNIMPLEMENTED!?");
+	IOS_Node *np;
+	Draw_Op *do_p;
 
+	if( VW_DRAW_LIST(vp) == NULL ) {
+		fprintf(stderr,"dump_drawlist %s:  null draw list!?\n",VW_NAME(vp));
+		return;
+	}
+
+	np = IOS_LIST_HEAD(VW_DRAW_LIST(vp));
+	while(np!=NULL){
+		do_p = (Draw_Op *) IOS_NODE_DATA(np);
+		report_drawop(vp,do_p);
+		np = IOS_NODE_NEXT(np);
+	}
 }
 
 void _left_justify(QSP_ARG_DECL  Viewer *vp)
@@ -1035,7 +1143,7 @@ void posn_viewer(Viewer *vp, int x, int y)
 #endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
-	posn_genwin(QSP_ARG  VW_GW(vp),x,y);
+	_posn_genwin(DEFAULT_QSP_ARG  VW_GW(vp),x,y);
 #endif // BUILD_FOR_MACOS
 }
 
@@ -1045,19 +1153,19 @@ void posn_viewer(Viewer *vp, int x, int y)
 
 int make_button_arena(QSP_ARG_DECL  Viewer *vp,int w,int h)
 {
-	return make_viewer(QSP_ARG  vp,w,h);
+	return make_viewer(vp,w,h);
 }
 
 int make_dragscape(QSP_ARG_DECL  Viewer *vp,int w,int h)
 {
 	// BUG?  do something special here???
-	return make_viewer(QSP_ARG  vp,w,h);
+	return make_viewer(vp,w,h);
 }
 
 int make_mousescape(QSP_ARG_DECL  Viewer *vp,int w,int h)
 {
 	// BUG?  do something special here???
-	return make_viewer(QSP_ARG  vp,w,h);
+	return make_viewer(vp,w,h);
 }
 
 void relabel_viewer(Viewer *vp,const char *s)
@@ -1142,13 +1250,20 @@ void init_viewer_canvas(Viewer *vp)
 
 	qc=[[quipCanvas alloc]initWithSize:size];
 #ifdef BUILD_FOR_IOS
-	SET_QV_CANVAS(VW_QV(vp),qc);
+	//SET_QV_CANVAS(VW_QV(vp),qc);
+	SET_VW_CANVAS(vp,qc);
+
+	// YES is the default value - why is this not happening???
+	qc.clearsContextBeforeDrawing = YES;	// doesn't work!?
 
 	[VW_QV(vp) addSubview:qc];
 	// We want the canvas to be in front of the images,
 	// but behind the controls...
 	[VW_QV(vp) bringSubviewToFront:qc];
+// background color set to clear for canvas!
+// But we are having trouble erasing non-clear stuff to clear!?
 	qc.backgroundColor = [QUIP_COLOR_TYPE clearColor];
+	qc.opaque = YES;	// drawn content should be opaque!?
 
 #endif // BUILD_FOR_IOS
 
@@ -1157,14 +1272,10 @@ void init_viewer_canvas(Viewer *vp)
 
 	// set context here?
 	if( VW_GFX_CTX(vp) == NULL ){
-		//SET_VW_GFX_CTX(vp, [[CGContext alloc] init] );
-		//SET_VW_GFX_CTX(vp, getbuf( sizeof(*CGContextRef) ) );
-		//SET_VW_GFX_CTX(vp, ((GW_WINDOW(VW_GW(vp))).contentView) );
 		SET_VW_GFX_CTX(vp, (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort ] );
-	//	ERROR1("init_viewer_canvas:  need to set drawing context!?");
 	}
 #endif // BUILD_FOR_MACOS
-    
+
 	// We can't do this here because
 	// the context is set by drawRect
 	//init_text_font(vp);
@@ -1179,7 +1290,7 @@ void init_viewer_images(Viewer *vp)
 	size.height = VW_HEIGHT(vp);
 
 	qip=[[quipImages alloc]initWithSize:size];
-    
+
 #ifdef BUILD_FOR_IOS
 	SET_QV_IMAGES(VW_QV(vp),qip);
 
@@ -1202,10 +1313,10 @@ void init_viewer_images(Viewer *vp)
 
 	// this puts it behind the default background!
 	//[VW_QV(vp) sendSubviewToBack:qip];
-    
+
 	// this puts it just in front of the default background?
 	[VW_QV(vp) insertSubview:qip aboveSubview:QV_BG_IMG(VW_QV(vp))];
-    
+
 	qip.backgroundColor = [UIColor clearColor];
 #endif // BUILD_FOR_IOS
 
@@ -1214,7 +1325,7 @@ void init_viewer_images(Viewer *vp)
 #ifdef BUILD_FOR_IOS
 void bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp,int x,int y)
 {
-	WARN("bring_image_to_front not implemented for iOS!?");
+	warn("bring_image_to_front not implemented for iOS!?");
 }
 #endif // BUILD_FOR_IOS
 

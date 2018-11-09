@@ -34,14 +34,16 @@ extern void vl_init(SINGLE_QSP_ARG_DECL);
 extern void vl2_pf_init(SINGLE_QSP_ARG_DECL);
 
 /* vec_args.c */
-extern int perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap);
+extern int _perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap);
+#define perf_vfunc(code, oap) _perf_vfunc(QSP_ARG  code, oap)
 
 /* vec_call.c */
 #ifdef HAVE_ANY_GPU
 extern void set_gpu_dispatch_func( int (*)(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap) );
 #endif /* HAVE_ANY_GPU */
 
-extern int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap );
+extern int _call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap );
+#define call_vfunc( vfp, oap ) _call_vfunc( QSP_ARG  vfp, oap )
 
 /* warmenu.c */
 extern void set_perf(int);
@@ -55,7 +57,8 @@ extern void set_obj_arg_flags(Vec_Obj_Args *);
 #define show_obj_args(oap) _show_obj_args(QSP_ARG  oap)
 
 /* cksiz.c */
-extern int old_cksiz(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *);
+extern int _old_cksiz(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *);
+#define old_cksiz(idx,dp1,dp2) _old_cksiz(QSP_ARG  idx,dp1,dp2)
 
 extern debug_flag_t veclib_debug;
 
