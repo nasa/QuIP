@@ -263,7 +263,7 @@ static struct v4l2_buffer *_next_frame(QSP_ARG_DECL  int n_devices, Video_Device
 
 	if(r == -1) {
 		/* original code repeated if EINTR */
-		ERRNO_WARN("select");
+		errno_warn("select");
 		return(NULL);
 	}
 
@@ -323,7 +323,7 @@ static struct v4l2_buffer *_next_frame(QSP_ARG_DECL  int n_devices, Video_Device
 
 	if(r == -1) {
 		/* original code repeated if EINTR */
-		ERRNO_WARN("select");
+		errno_warn("select");
 		return(NULL);
 	}
 
@@ -345,7 +345,7 @@ static struct v4l2_buffer *_next_frame(QSP_ARG_DECL  int n_devices, Video_Device
 	/* DQBUF pulls a buffer out and locks it up while we use it... */
 	if( xioctl(ready_vdp->vd_fd, VIDIOC_DQBUF, &nf_buf) < 0 ) {
 		/* original code had special cases for EAGAIN and EIO */
-		ERRNO_WARN ("VIDIOC_DQBUF #1");
+		errno_warn ("VIDIOC_DQBUF #1");
 		return(NULL);
 	}
 
@@ -515,7 +515,7 @@ if( really_writing ){
 
 		/* QBUG releases this buffer to be used again */
 		if( xioctl(vd_tbl[which_device]->vd_fd, VIDIOC_QBUF, bufp) < 0 )
-			ERRNO_WARN ("v4l2_stream_record:  error queueing frame");
+			errno_warn ("v4l2_stream_record:  error queueing frame");
 
 		if( n_so_far >= n_frames )
 			bufp = NULL;
@@ -524,7 +524,7 @@ if( really_writing ){
 	}
 	if( bufp != NULL ){
 		if( xioctl(vd_tbl[which_device]->vd_fd, VIDIOC_QBUF, bufp) < 0 )
-			ERRNO_WARN ("v4l2_stream_record:  error queueing frame");
+			errno_warn ("v4l2_stream_record:  error queueing frame");
 	}
 
 	for(i=0;i<n_cameras;i++)

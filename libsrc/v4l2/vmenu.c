@@ -64,7 +64,7 @@ int xioctl(int fd, int request, void *arg)
 	return r;
 }
 
-void errno_warn(QSP_ARG_DECL  const char *s)
+void _errno_warn(QSP_ARG_DECL  const char *s)
 {
 	sprintf(ERROR_STRING,"%s:  %s",s,strerror(errno));
 	warn(ERROR_STRING);
@@ -264,7 +264,7 @@ static inline int _init_video_buffer(QSP_ARG_DECL  My_Buffer *mbp )
 	mbp->mb_buf.index	= mbp->mb_index;
 
 	if(-1 == xioctl( mbp->mb_vdp->vd_fd, VIDIOC_QUERYBUF, &(mbp->mb_buf))){
-		errno_warn(QSP_ARG  "VIDIOC_QUERYBUF");
+		errno_warn("VIDIOC_QUERYBUF");
 		return -1;
 	}
 
@@ -277,7 +277,7 @@ static inline int _init_video_buffer(QSP_ARG_DECL  My_Buffer *mbp )
 			mbp->mb_buf.m.offset);
 
 	if(MAP_FAILED == mbp->mb_start){
-		ERRNO_WARN("mmap");
+		errno_warn("mmap");
 		return -1;
 	}
 	return 0;
@@ -291,7 +291,7 @@ static void _create_object_for_buffer(QSP_ARG_DECL  My_Buffer *mbp, Dimension_Se
 	Data_Obj *dp;
 
 	get_name_for_buffer(name,mbp);
-	dp = _make_dp(QSP_ARG  name,dsp,PREC_FOR_CODE(PREC_UBY));
+	dp = make_dp(name,dsp,PREC_FOR_CODE(PREC_UBY));
 #ifdef CAUTIOUS
 	if( dp == NULL ) error1("CAUTIOUS:  error creating data_obj for video buffer");
 #endif /* CAUTIOUS */
@@ -696,7 +696,10 @@ static int _init_video_device(QSP_ARG_DECL  Video_Device *vdp, int fd)
 	prt_msg(msg_str);					\
 	flags &= ~(bit);
 
-static void report_status(QSP_ARG_DECL  Video_Device *vdp)
+
+#define report_status(vdp) _report_status(QSP_ARG  vdp)
+
+static void _report_status(QSP_ARG_DECL  Video_Device *vdp)
 {
 	int flags;
 
@@ -741,7 +744,7 @@ static inline int _enqueue_buffer(QSP_ARG_DECL  My_Buffer *mbp)
 	assert(bufp->index	== mbp->mb_index );
 
 	if(-1 == xioctl(mbp->mb_vdp->vd_fd, VIDIOC_QBUF, bufp)){
-		ERRNO_WARN("VIDIOC_QBUF (enqueue_buffer)");
+		errno_warn("VIDIOC_QBUF (enqueue_buffer)");
 		return -1;
 	}
 	// documentation says MAPPED and QUEUED flags should be set,
@@ -806,7 +809,7 @@ fprintf(stderr,"start_capturing:  starting video device %s.",vdp->vd_name);
 	type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
 	if(-1 == xioctl(vdp->vd_fd, VIDIOC_STREAMON, &type))
-		ERRNO_WARN("VIDIOC_STREAMON");
+		errno_warn("VIDIOC_STREAMON");
 
 	vdp->vd_flags |= VD_CAPTURING;
 
@@ -839,7 +842,7 @@ static inline int _wait_for_video_data(QSP_ARG_DECL  Video_Device *vdp)
 
 	if(r == -1) {
 		/* original code repeated if EINTR */
-		ERRNO_WARN("select");
+		errno_warn("select");
 		return -1;
 	}
 
@@ -851,7 +854,9 @@ static inline int _wait_for_video_data(QSP_ARG_DECL  Video_Device *vdp)
 	return 0;
 }
 
-int dq_buf(QSP_ARG_DECL  Video_Device *vdp,struct v4l2_buffer *bufp)
+#define dq_buf(vdp,bufp) _dq_buf(QSP_ARG  vdp,bufp)
+
+static int _dq_buf(QSP_ARG_DECL  Video_Device *vdp,struct v4l2_buffer *bufp)
 {
 	if( wait_for_video_data(vdp) < 0 )
 		return -1;
@@ -868,7 +873,7 @@ bufp->index,(long)bufp,bufp->flags);
 
 	if( xioctl (vdp->vd_fd, VIDIOC_DQBUF, bufp) < 0 ) {
 		/* original code had special cases for EAGAIN and EIO */
-		ERRNO_WARN ("VIDIOC_DQBUF #2");		/* dq_buf */
+		errno_warn ("VIDIOC_DQBUF #2");		/* dq_buf */
 		return -1;
 	}
 
@@ -896,7 +901,9 @@ advise(ERROR_STRING);
 
 /* based on main_loop() and read_frame() in capture.c */
 
-static void get_next_frame(QSP_ARG_DECL  Video_Device *vdp)
+#define get_next_frame(vdp) _get_next_frame(QSP_ARG  vdp)
+
+static void _get_next_frame(QSP_ARG_DECL  Video_Device *vdp)
 {
 	struct v4l2_buffer buf;
 
@@ -907,11 +914,13 @@ static void get_next_frame(QSP_ARG_DECL  Video_Device *vdp)
 		return;
 	}
 
-	if( dq_buf(QSP_ARG  vdp,&buf) < 0 ) return;	/* de-queue a buffer - release? */
+	if( dq_buf(vdp,&buf) < 0 ) return;	/* de-queue a buffer - release? */
 print_v4l2_buf_info(&buf);
 }
 
-static void enqueue_indexed_buffer(QSP_ARG_DECL  Video_Device *vdp, int idx)
+#define enqueue_indexed_buffer(vdp, idx) _enqueue_indexed_buffer(QSP_ARG  vdp, idx)
+
+static void _enqueue_indexed_buffer(QSP_ARG_DECL  Video_Device *vdp, int idx)
 {
 	struct v4l2_buffer buf;
 
@@ -920,7 +929,7 @@ static void enqueue_indexed_buffer(QSP_ARG_DECL  Video_Device *vdp, int idx)
 	buf.index = idx;
 
 	if( xioctl(vdp->vd_fd, VIDIOC_QBUF, &buf) < 0 )
-		ERRNO_WARN ("VIDIOC_QBUF (enqueue_indexed_buffer)");
+		errno_warn ("VIDIOC_QBUF (enqueue_indexed_buffer)");
 
 }
 
@@ -961,7 +970,7 @@ static inline int _dequeue_ready_buffers(QSP_ARG_DECL  My_Buffer *mbp)
 		buf.memory = V4L2_MEMORY_MMAP ;
 		if( xioctl (mbp->mb_vdp->vd_fd, VIDIOC_DQBUF, &buf) < 0 ) {
 			/* original code had special cases for EAGAIN and EIO */
-			ERRNO_WARN ("VIDIOC_DQBUF (dequeue_ready_buffers)");		/* dq_buf */
+			errno_warn ("VIDIOC_DQBUF (dequeue_ready_buffers)");		/* dq_buf */
 			return -1;
 		}
 
@@ -1001,7 +1010,7 @@ static inline int _update_buf_status(QSP_ARG_DECL  My_Buffer *mbp )
 	assert(	bufp->index	== mbp->mb_index );
 
 	if(-1 == xioctl( mbp->mb_vdp->vd_fd, VIDIOC_QUERYBUF, bufp)){
-		ERRNO_WARN("VIDIOC_QUERYBUF");
+		errno_warn("VIDIOC_QUERYBUF");
 		return -1;
 	}
 //fprintf(stderr,"update_buf_status:  buffer %d flags = 0x%x\n",bufp->index,bufp->flags);
@@ -1158,7 +1167,7 @@ fprintf(stderr,"find_oldest_buffer:  oldest buffer is %d\n",vdp->vd_oldest_mbp->
 
 // returns the number of available (dequeued) frames
 
-int check_queue_status(QSP_ARG_DECL  Video_Device *vdp)
+int _check_queue_status(QSP_ARG_DECL  Video_Device *vdp)
 {
 	int buf_idx;
 	int n_ready=0;
@@ -1208,7 +1217,7 @@ int _stop_capturing(QSP_ARG_DECL  Video_Device *vdp)
 	type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
 	if( xioctl(vdp->vd_fd, VIDIOC_STREAMOFF, &type) < 0 ){
-		ERRNO_WARN("VIDIOC_STREAMOFF");
+		errno_warn("VIDIOC_STREAMOFF");
 		return -1;
 	}
 	vdp->vd_flags &= ~VD_CAPTURING;
@@ -1224,7 +1233,9 @@ int _stop_capturing(QSP_ARG_DECL  Video_Device *vdp)
 
 /* based on open_device() from capture.c */
 
-static int open_video_device(QSP_ARG_DECL  const char *dev_name)
+#define open_video_device(dev_name) _open_video_device(QSP_ARG  dev_name)
+
+static int _open_video_device(QSP_ARG_DECL  const char *dev_name)
 {
 	struct stat st; 
 	Video_Device *vdp;
@@ -1305,7 +1316,7 @@ static COMMAND_FUNC( do_open )
 	const char *s;
 
 	s=NAMEOF("video device");
-	if( open_video_device(QSP_ARG  s) < 0 ){
+	if( open_video_device(s) < 0 ){
 		sprintf(ERROR_STRING,"Error opening video device %s",s);
 		warn(ERROR_STRING);
 	}
@@ -1342,7 +1353,7 @@ static COMMAND_FUNC( do_select_device )
 static COMMAND_FUNC( do_status )
 {
 	CHECK_DEVICE(status)
-	report_status(QSP_ARG  curr_vdp);
+	report_status(curr_vdp);
 }
 
 static COMMAND_FUNC( do_start )
@@ -1368,7 +1379,7 @@ static COMMAND_FUNC( do_dq_next )
 {
 	CHECK_DEVICE(dq_next)
 #ifdef HAVE_V4L2
-	get_next_frame(QSP_ARG  curr_vdp);
+	get_next_frame(curr_vdp);
 #endif // HAVE_V4L2
 }
 
@@ -1381,7 +1392,7 @@ static COMMAND_FUNC( do_q_buf )
 	idx = how_many("buffer index");
 	// BUG check for valid value
 #ifdef HAVE_V4L2
-	enqueue_indexed_buffer(QSP_ARG  curr_vdp, idx);
+	enqueue_indexed_buffer(curr_vdp, idx);
 #endif // HAVE_V4L2
 }
 
@@ -1401,7 +1412,10 @@ static COMMAND_FUNC( do_yuv2gray )
 }
 
 #ifdef HAVE_V4L2
-static int query_control(QSP_ARG_DECL  struct v4l2_queryctrl *ctlp)
+
+#define query_control(ctlp) _query_control(QSP_ARG  ctlp)
+
+static int _query_control(QSP_ARG_DECL  struct v4l2_queryctrl *ctlp)
 {
 	if( ioctl(curr_vdp->vd_fd,VIDIOC_QUERYCTRL,ctlp) < 0 ){
 		warn("error querying control");
@@ -1439,7 +1453,7 @@ static void _set_integer_control(QSP_ARG_DECL uint32_t id)
 
 	qry.id = id;
 
-	if( query_control(QSP_ARG  &qry) < 0 ) return;
+	if( query_control(&qry) < 0 ) return;
 
 	ctrl.id = id;
 	if( ioctl(curr_vdp->vd_fd,VIDIOC_G_CTRL,&ctrl) < 0 ){
@@ -1471,7 +1485,7 @@ static int get_integer_control(QSP_ARG_DECL uint32_t id)
 
 	qry.id = id;
 
-	if( query_control(QSP_ARG  &qry) < 0 ) return(0);
+	if( query_control(&qry) < 0 ) return(0);
 
 	ctrl.id = id;
 	if( ioctl(curr_vdp->vd_fd,VIDIOC_G_CTRL,&ctrl) < 0 ){
@@ -1708,7 +1722,10 @@ static COMMAND_FUNC( do_list_stds )
 
 
 #ifdef HAVE_V4L2
-static int count_standards(QSP_ARG_DECL  Video_Device *vdp)
+
+#define count_standards(vdp) _count_standards(QSP_ARG  vdp)
+
+static int _count_standards(QSP_ARG_DECL  Video_Device *vdp)
 {
 	struct v4l2_standard standard;
 
@@ -1732,13 +1749,15 @@ static int count_standards(QSP_ARG_DECL  Video_Device *vdp)
 	return(standard.index);
 }
 
-static void init_std_choices(QSP_ARG_DECL  Video_Device *vdp)
+#define init_std_choices(vdp) _init_std_choices(QSP_ARG  vdp)
+
+static void _init_std_choices(QSP_ARG_DECL  Video_Device *vdp)
 {
 	int i;
 	struct v4l2_standard standard;
 	Choice *cp;
 
-	vdp->vd_n_standards = count_standards(QSP_ARG  vdp);
+	vdp->vd_n_standards = count_standards(vdp);
 
 	if( vdp->vd_std_choices != NULL )
 		givbuf(vdp->vd_std_choices);
@@ -1760,7 +1779,9 @@ static void init_std_choices(QSP_ARG_DECL  Video_Device *vdp)
 	}
 }
 
-static void set_standard( QSP_ARG_DECL  int id )
+#define set_standard( id ) _set_standard( QSP_ARG  id )
+
+static void _set_standard( QSP_ARG_DECL  int id )
 {
 	v4l2_std_id std_id;
 	struct v4l2_input input;
@@ -1805,7 +1826,7 @@ static COMMAND_FUNC( do_set_std )
 	CHECK_DEVICE(set_std)
 
 	if( curr_vdp->vd_n_standards <= 0 )
-		init_std_choices(QSP_ARG  curr_vdp);
+		init_std_choices(curr_vdp);
 	
 	choices = (const char **)getbuf( sizeof(char *) *
 					curr_vdp->vd_n_standards );
@@ -1815,7 +1836,7 @@ static COMMAND_FUNC( do_set_std )
 
 	i = WHICH_ONE("video standard",curr_vdp->vd_n_standards,choices);
 
-	set_standard(QSP_ARG  curr_vdp->vd_std_choices[i].ch_id );
+	set_standard(curr_vdp->vd_std_choices[i].ch_id );
 
 	for(i=0;i<curr_vdp->vd_n_standards;i++)
 		rls_str(choices[i]);
@@ -1903,7 +1924,7 @@ static COMMAND_FUNC( do_list_devs )
 	np = QLIST_HEAD(lp);
 	while( np != NULL ){
 		vdp = (Video_Device *)np->n_data;
-		report_status(QSP_ARG  vdp);
+		report_status(vdp);
 		np=np->n_next;
 	}
 }

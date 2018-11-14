@@ -117,15 +117,12 @@ extern unsigned int n_buffers;
 extern int _start_capturing(QSP_ARG_DECL  Video_Device *);
 #define start_capturing(vdp) _start_capturing(QSP_ARG  vdp)
 
-#ifdef HAVE_V4L2
-extern int dq_buf(QSP_ARG_DECL  Video_Device *vdp,struct v4l2_buffer *bufp);
-#endif /* HAVE_V4L2 */
 extern int xioctl(int fd, int request, void *arg);
-extern void errno_warn(QSP_ARG_DECL  const char *s);
+extern void _errno_warn(QSP_ARG_DECL  const char *s);
 
 extern void print_buf_info(const char *msg, My_Buffer *mbp);
 
-#define ERRNO_WARN(s)	errno_warn(QSP_ARG  s)
+#define errno_warn(s)	_errno_warn(QSP_ARG  s)
 
 
 extern COMMAND_FUNC( do_flow_menu );
