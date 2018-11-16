@@ -40,6 +40,7 @@ static int default_cuda_dev_found=0;
 #include "my_cu2.h"	// 
 #include "quip_prot.h"	// needs dim3...
 #include "cu2_func_tbl.h"
+#include "platform.h"
 
 
 /* On the host 1L<<33 gets us bit 33 - but 1<<33 does not,
@@ -51,30 +52,6 @@ static int default_cuda_dev_found=0;
 
 
 #ifdef HAVE_CUDA
-// BUG move to platform support file!
-static const char * available_pfdev_name(QSP_ARG_DECL  const char *name,char *scratch_string, Compute_Platform *cpp, int max_devices)
-{
-	Platform_Device *pdp;
-	const char *s;
-	int n=1;
-
-	s=name;
-	while(n<=max_devices){
-		pdp = pfdev_of(s);
-		if( pdp == NULL ) return(s);
-
-		// This name is in use
-		n++;
-		sprintf(scratch_string,"%s_%d",name,n);
-		s=scratch_string;
-	}
-	sprintf(ERROR_STRING,"Number of %s %s devices exceed configured maximum %d!?",
-		name,PLATFORM_NAME(cpp),max_devices);
-	WARN(ERROR_STRING);
-	error1(ERROR_STRING);
-	return(NULL);	// NOTREACHED - quiet compiler
-}
-
 static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 {
 	struct cudaDeviceProp deviceProp;
@@ -150,7 +127,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	 * make sure that the name is not in use already.  If it is, then we append
 	 * a number to the string...
 	 */
-	name_p = available_pfdev_name(QSP_ARG  name,dev_name,cpp,MAX_CUDA_DEVICES);	// reuse name as scratch string
+	name_p = available_pfdev_name(name,dev_name,cpp,MAX_CUDA_DEVICES);	// reuse name as scratch string
 	pdp = new_pfdev(name_p);
 	assert( pdp != NULL );
 
@@ -677,7 +654,7 @@ void cu2_init_platform(SINGLE_QSP_ARG_DECL)
 	cpp = creat_platform(QSP_ARG  "CUDA", PLATFORM_CUDA );
 	assert( cpp != NULL );
 
-	push_pfdev_context(QSP_ARG  PF_CONTEXT(cpp) );
+	push_pfdev_context(PF_CONTEXT(cpp) );
 	if( init_cu2_devices(QSP_ARG  cpp) < 0 ){
 		/*	/dev/nvidia_ctl may be missing after a reboot
 		 */
