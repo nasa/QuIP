@@ -67,3 +67,6 @@ git checkout test
 git fetch origin
 git checkout test
 
+
+11/16/2018	Chris fixed up the gitolite key situation!
+
