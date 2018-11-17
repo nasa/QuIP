@@ -262,6 +262,7 @@ advise("v4l2_add_frame");
 
 void v4l2_end_assemble(QSP_ARG_DECL  Movie *mvip)
 {
+#ifdef HAVE_V4L2
 #ifdef HAVE_RAWVOL
 	RV_Inode *inp;
 
@@ -299,6 +300,7 @@ advise(ERROR_STRING);
 
 	update_movie_database(inp);
 #endif // HAVE_RAWVOL
+#endif // HAVE_V4L2
 }
 
 void v4l2_get_frame(QSP_ARG_DECL  Movie *mvip, uint32_t n, Data_Obj *dp)
