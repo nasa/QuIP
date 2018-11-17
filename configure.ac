@@ -358,6 +358,11 @@ fi
 
 # a hack to get around the fact that jbm is not allowed to administer his own machines...
 AC_CHECK_FILE([/home/ardent/jbm/inst/usr/local/lib],[LDFLAGS="$LDFLAGS -L/home/ardent/jbm/inst/usr/local/lib"],[])
+AC_CHECK_FILE([/home/ardent/jbm/inst/usr/local/include],[CFLAGS="$CFLAGS -I/home/ardent/jbm/inst/usr/local/include"],[])
+
+AC_CHECK_FILE([/home/craik/jbm/inst/usr/local/lib],[LDFLAGS="$LDFLAGS -L/home/craik/jbm/inst/usr/local/lib"],[])
+AC_CHECK_FILE([/home/craik/jbm/inst/usr/local/include],[CFLAGS="$CFLAGS -I/home/craik/jbm/inst/usr/local/include"],[])
+
 
 #################################################
 #
