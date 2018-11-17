@@ -356,6 +356,9 @@ if test "x${minimal_build}" = xyes; then
 	use_dv=no
 fi
 
+# a hack to get around the fact that jbm is not allowed to administer his own machines...
+AC_CHECK_FILE([/home/ardent/jbm/inst/usr/local/lib],[LDFLAGS="$LDFLAGS -L/home/ardent/jbm/inst/usr/local/lib"],[])
+
 #################################################
 #
 # cuda CUDA checks
