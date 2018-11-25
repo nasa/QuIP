@@ -1091,6 +1091,7 @@ static Item * eval_positionable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			sprintf(ERROR_STRING,
 		"unexpected case in eval_szbl_expr %d",enp->sen_code);
 			warn(ERROR_STRING);
+			s = "(not a string)";
 			//assert(0);
 			break;
 #endif /* CAUTIOUS */

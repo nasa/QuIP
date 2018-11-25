@@ -468,4 +468,8 @@ extern long _set_fused_kernel_args(QSP_ARG_DECL  void *kernel, int *idx_p, Vec_E
 
 extern Platform_Device *default_pfdev(void);
 extern void set_default_pfdev(Platform_Device *pdp);
+
+extern const char * _available_pfdev_name(QSP_ARG_DECL  const char *name,char *scratch_string, Compute_Platform *cpp, int max_devices);
+#define available_pfdev_name(name,scratch_string, cpp, max_devices) _available_pfdev_name(QSP_ARG  name,scratch_string, cpp, max_devices)
+
 #endif // _PLATFORM_H_

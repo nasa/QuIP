@@ -252,7 +252,6 @@
 		7C1BD1C21C4ECA170093125D /* alert.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C1BD1C11C4ECA170093125D /* alert.c */; };
 		7C1BD1C41C4ECA6B0093125D /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C31C4ECA6B0093125D /* CoreAudio.framework */; };
 		7C1BD1C61C4ECA740093125D /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C51C4ECA740093125D /* AudioToolbox.framework */; };
-		7C1BD1C81C4ECAB90093125D /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C1BD1C71C4ECAB90093125D /* no_sound.c */; };
 		7C1BD1CA1C5017F90093125D /* fftsupp.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C1BD1C91C5017F90093125D /* fftsupp.c */; };
 		7C3904BB17F64787005163CD /* fbmenu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C3904BA17F64787005163CD /* fbmenu.m */; };
 		7C3904BD17F647BB005163CD /* mouse.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C3904BC17F647BB005163CD /* mouse.c */; };
@@ -425,7 +424,6 @@
 		7C4332371D4D43FC0033687C /* mseq.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE61726195400F7CB35 /* mseq.c */; };
 		7C4332381D4D43FC0033687C /* nodetbl.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE71726195400F7CB35 /* nodetbl.c */; };
 		7C4332391D4D43FC0033687C /* opt_tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE81726195400F7CB35 /* opt_tree.c */; };
-		7C43323A1D4D43FC0033687C /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C1BD1C71C4ECAB90093125D /* no_sound.c */; };
 		7C43323B1D4D43FC0033687C /* pointer.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE91726195400F7CB35 /* pointer.c */; };
 		7C43323C1D4D43FC0033687C /* reference.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FEB1726195400F7CB35 /* reference.c */; };
 		7C43323D1D4D43FC0033687C /* soundmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C79F9E41A2D47F1005EE8B8 /* soundmenu.c */; };
@@ -700,7 +698,6 @@
 		7C43335E1D4D49450033687C /* mseq.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE61726195400F7CB35 /* mseq.c */; };
 		7C43335F1D4D49450033687C /* nodetbl.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE71726195400F7CB35 /* nodetbl.c */; };
 		7C4333601D4D49450033687C /* opt_tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE81726195400F7CB35 /* opt_tree.c */; };
-		7C4333611D4D49450033687C /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C1BD1C71C4ECAB90093125D /* no_sound.c */; };
 		7C4333621D4D49450033687C /* pointer.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE91726195400F7CB35 /* pointer.c */; };
 		7C4333631D4D49450033687C /* reference.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FEB1726195400F7CB35 /* reference.c */; };
 		7C4333641D4D49450033687C /* soundmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C79F9E41A2D47F1005EE8B8 /* soundmenu.c */; };
@@ -980,7 +977,6 @@
 		7C4D6E2A1D5111A400D34AC4 /* mseq.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE61726195400F7CB35 /* mseq.c */; };
 		7C4D6E2B1D5111A400D34AC4 /* nodetbl.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE71726195400F7CB35 /* nodetbl.c */; };
 		7C4D6E2C1D5111A400D34AC4 /* opt_tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE81726195400F7CB35 /* opt_tree.c */; };
-		7C4D6E2D1D5111A400D34AC4 /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C1BD1C71C4ECAB90093125D /* no_sound.c */; };
 		7C4D6E2E1D5111A400D34AC4 /* pointer.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE91726195400F7CB35 /* pointer.c */; };
 		7C4D6E2F1D5111A400D34AC4 /* reference.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FEB1726195400F7CB35 /* reference.c */; };
 		7C4D6E301D5111A400D34AC4 /* soundmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C79F9E41A2D47F1005EE8B8 /* soundmenu.c */; };
@@ -1328,7 +1324,6 @@
 		7CB671511F9484C5001FFADF /* nodetbl.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE71726195400F7CB35 /* nodetbl.c */; };
 		7CB671521F9484C5001FFADF /* laguer.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB450121D650B9100B6783F /* laguer.c */; };
 		7CB671531F9484C5001FFADF /* opt_tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE81726195400F7CB35 /* opt_tree.c */; };
-		7CB671541F9484C5001FFADF /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C1BD1C71C4ECAB90093125D /* no_sound.c */; };
 		7CB671551F9484C5001FFADF /* pointer.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FE91726195400F7CB35 /* pointer.c */; };
 		7CB671561F9484C5001FFADF /* reference.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828FEB1726195400F7CB35 /* reference.c */; };
 		7CB671571F9484C5001FFADF /* soundmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C79F9E41A2D47F1005EE8B8 /* soundmenu.c */; };
@@ -1446,6 +1441,11 @@
 		7CB671CA1F9484C5001FFADF /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 71BA647617D4F67B00446D65 /* Default-568h@2x.png */; };
 		7CB671D31F9501E6001FFADF /* symm_startup.enc in Resources */ = {isa = PBXBuildFile; fileRef = 7CB671D11F9501DC001FFADF /* symm_startup.enc */; };
 		7CB8D5D91B6198B90080809C /* string_ref.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB8D5D81B6198B90080809C /* string_ref.c */; };
+		7CCB914E21A36EB000926C39 /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCB914D21A36EB000926C39 /* no_sound.c */; };
+		7CCB914F21A36F9D00926C39 /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCB914D21A36EB000926C39 /* no_sound.c */; };
+		7CCB915021A36F9E00926C39 /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCB914D21A36EB000926C39 /* no_sound.c */; };
+		7CCB915121A36FA000926C39 /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCB914D21A36EB000926C39 /* no_sound.c */; };
+		7CCB915221A36FA000926C39 /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCB914D21A36EB000926C39 /* no_sound.c */; };
 		7CE0183C1FA2433700E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
 		7CE0183D1FA2433800E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
 		7CE0183E1FA2433900E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
@@ -1766,7 +1766,6 @@
 		7C1BD1C11C4ECA170093125D /* alert.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = alert.c; sourceTree = "<group>"; };
 		7C1BD1C31C4ECA6B0093125D /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		7C1BD1C51C4ECA740093125D /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
-		7C1BD1C71C4ECAB90093125D /* no_sound.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = no_sound.c; sourceTree = "<group>"; };
 		7C1BD1C91C5017F90093125D /* fftsupp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fftsupp.c; sourceTree = "<group>"; };
 		7C3904BA17F64787005163CD /* fbmenu.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = fbmenu.m; sourceTree = "<group>"; };
 		7C3904BC17F647BB005163CD /* mouse.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mouse.c; sourceTree = "<group>"; };
@@ -1823,6 +1822,7 @@
 		7CB671D01F9484C5001FFADF /* CSF copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "CSF copy-Info.plist"; path = "/Users/jmulliga/working/quip/xcode/iquip/CSF copy-Info.plist"; sourceTree = "<absolute>"; };
 		7CB671D11F9501DC001FFADF /* symm_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = symm_startup.enc; path = macros/startup/symm_startup.enc; sourceTree = "<group>"; };
 		7CB8D5D81B6198B90080809C /* string_ref.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = string_ref.c; sourceTree = "<group>"; };
+		7CCB914D21A36EB000926C39 /* no_sound.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = no_sound.c; sourceTree = "<group>"; };
 		7CE5FDFC1A60750B0029C7AE /* avCap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = avCap.m; sourceTree = "<group>"; };
 		7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		7CE5FE001A60754A0029C7AE /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
@@ -2463,7 +2463,7 @@
 		7C79F9E31A2D47CF005EE8B8 /* sound */ = {
 			isa = PBXGroup;
 			children = (
-				7C1BD1C71C4ECAB90093125D /* no_sound.c */,
+				7CCB914D21A36EB000926C39 /* no_sound.c */,
 				7C1BD1C11C4ECA170093125D /* alert.c */,
 				7C1BD1BF1C4EC9F50093125D /* DCRejectionFilter.cpp */,
 				7C1BD1BD1C4EC9C40093125D /* BufferManager.cpp */,
@@ -2895,6 +2895,7 @@
 				71828F841726182200F7CB35 /* resample.c in Sources */,
 				7C1BD1C01C4EC9F50093125D /* DCRejectionFilter.cpp in Sources */,
 				71828F851726182200F7CB35 /* sample.c in Sources */,
+				7CCB914E21A36EB000926C39 /* no_sound.c in Sources */,
 				71828F861726182200F7CB35 /* scale.c in Sources */,
 				71828F871726182200F7CB35 /* scramble.c in Sources */,
 				71828F881726182200F7CB35 /* SeedFill.c in Sources */,
@@ -2927,7 +2928,6 @@
 				71828FF01726195400F7CB35 /* mseq.c in Sources */,
 				71828FF11726195400F7CB35 /* nodetbl.c in Sources */,
 				71828FF21726195400F7CB35 /* opt_tree.c in Sources */,
-				7C1BD1C81C4ECAB90093125D /* no_sound.c in Sources */,
 				71828FF31726195400F7CB35 /* pointer.c in Sources */,
 				71828FF41726195400F7CB35 /* reference.c in Sources */,
 				7C79F9E51A2D47F1005EE8B8 /* soundmenu.c in Sources */,
@@ -3205,7 +3205,6 @@
 				7C4332381D4D43FC0033687C /* nodetbl.c in Sources */,
 				7C5D93761D651A140096D7BC /* laguer.c in Sources */,
 				7C4332391D4D43FC0033687C /* opt_tree.c in Sources */,
-				7C43323A1D4D43FC0033687C /* no_sound.c in Sources */,
 				7C43323B1D4D43FC0033687C /* pointer.c in Sources */,
 				7C43323C1D4D43FC0033687C /* reference.c in Sources */,
 				7C43323D1D4D43FC0033687C /* soundmenu.c in Sources */,
@@ -3236,6 +3235,7 @@
 				7C4332531D4D43FC0033687C /* cmfuncs.m in Sources */,
 				7C4332541D4D43FC0033687C /* cmmenu.m in Sources */,
 				7C4332551D4D43FC0033687C /* alpha.c in Sources */,
+				7CCB914F21A36F9D00926C39 /* no_sound.c in Sources */,
 				7C5D93711D651A140096D7BC /* mnbrak.c in Sources */,
 				7C4332561D4D43FC0033687C /* bitmenu.c in Sources */,
 				7C4332571D4D43FC0033687C /* node.c in Sources */,
@@ -3446,6 +3446,7 @@
 				7C43333E1D4D49450033687C /* resample.c in Sources */,
 				7C43333F1D4D49450033687C /* DCRejectionFilter.cpp in Sources */,
 				7C4333401D4D49450033687C /* sample.c in Sources */,
+				7CCB915021A36F9E00926C39 /* no_sound.c in Sources */,
 				7C4333411D4D49450033687C /* scale.c in Sources */,
 				7C4333421D4D49450033687C /* scramble.c in Sources */,
 				7C4333431D4D49450033687C /* SeedFill.c in Sources */,
@@ -3478,7 +3479,6 @@
 				7C43335E1D4D49450033687C /* mseq.c in Sources */,
 				7C43335F1D4D49450033687C /* nodetbl.c in Sources */,
 				7C4333601D4D49450033687C /* opt_tree.c in Sources */,
-				7C4333611D4D49450033687C /* no_sound.c in Sources */,
 				7C4333621D4D49450033687C /* pointer.c in Sources */,
 				7C4333631D4D49450033687C /* reference.c in Sources */,
 				7C4333641D4D49450033687C /* soundmenu.c in Sources */,
@@ -3711,6 +3711,7 @@
 				7C4D6E0A1D5111A400D34AC4 /* resample.c in Sources */,
 				7C4D6E0B1D5111A400D34AC4 /* DCRejectionFilter.cpp in Sources */,
 				7C4D6E0C1D5111A400D34AC4 /* sample.c in Sources */,
+				7CCB915121A36FA000926C39 /* no_sound.c in Sources */,
 				7C4D6E0D1D5111A400D34AC4 /* scale.c in Sources */,
 				7C4D6E0E1D5111A400D34AC4 /* scramble.c in Sources */,
 				7C4D6E0F1D5111A400D34AC4 /* SeedFill.c in Sources */,
@@ -3743,7 +3744,6 @@
 				7C4D6E2A1D5111A400D34AC4 /* mseq.c in Sources */,
 				7C4D6E2B1D5111A400D34AC4 /* nodetbl.c in Sources */,
 				7C4D6E2C1D5111A400D34AC4 /* opt_tree.c in Sources */,
-				7C4D6E2D1D5111A400D34AC4 /* no_sound.c in Sources */,
 				7C4D6E2E1D5111A400D34AC4 /* pointer.c in Sources */,
 				7C4D6E2F1D5111A400D34AC4 /* reference.c in Sources */,
 				7C4D6E301D5111A400D34AC4 /* soundmenu.c in Sources */,
@@ -4021,7 +4021,6 @@
 				7CB671511F9484C5001FFADF /* nodetbl.c in Sources */,
 				7CB671521F9484C5001FFADF /* laguer.c in Sources */,
 				7CB671531F9484C5001FFADF /* opt_tree.c in Sources */,
-				7CB671541F9484C5001FFADF /* no_sound.c in Sources */,
 				7CB671551F9484C5001FFADF /* pointer.c in Sources */,
 				7CB671561F9484C5001FFADF /* reference.c in Sources */,
 				7CB671571F9484C5001FFADF /* soundmenu.c in Sources */,
@@ -4052,6 +4051,7 @@
 				7CB671701F9484C5001FFADF /* cmfuncs.m in Sources */,
 				7CB671711F9484C5001FFADF /* cmmenu.m in Sources */,
 				7CB671721F9484C5001FFADF /* alpha.c in Sources */,
+				7CCB915221A36FA000926C39 /* no_sound.c in Sources */,
 				7CB671731F9484C5001FFADF /* mnbrak.c in Sources */,
 				7CB671741F9484C5001FFADF /* bitmenu.c in Sources */,
 				7CB671751F9484C5001FFADF /* node.c in Sources */,
@@ -4297,8 +4297,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = 6NC2ML6K22;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -4319,7 +4319,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = NASA.CSF;
 				PRODUCT_NAME = CSF;
-				PROVISIONING_PROFILE = "e3b7b8c1-2c88-4567-abed-13faa3b2ff95";
+				PROVISIONING_PROFILE = "973c9247-52b3-4895-924b-8d45c22c1266";
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -4355,7 +4355,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = NASA.CSF;
 				PRODUCT_NAME = CSF;
-				PROVISIONING_PROFILE = "e3b7b8c1-2c88-4567-abed-13faa3b2ff95";
+				PROVISIONING_PROFILE = "973c9247-52b3-4895-924b-8d45c22c1266";
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;

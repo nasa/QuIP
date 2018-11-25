@@ -16,6 +16,9 @@ TARGETS			+= html quip.info
 .texinfo.html:
 	$(MAKEINFO) --html $<
 
+.texi.html:
+	$(MAKEINFO) --html $<
+
 
 all:	$(TARGETS) pdf
 	cp quip.pdf ../docs/quip_manual.pdf

@@ -4,14 +4,17 @@ verbose no
 
 If !var_exists(QUIPSTARTUPDIR) "error_exit 'QUIPSTARTUPDIR is not defined!?'"
 
+advise 'loading quip startup file...' 
 < $QUIPSTARTUPDIR/quip.scr
 
 max_warnings 3
 
+Tell_If 'loading mmvi.mac...' 
 < $macro_dir/movie/mmvi.mac
 
 #< $macro_dir/knox/knox_common.mac	# local or remote
 # Knox_Init now calls knox.mac or knoxc.mac based on host
+Tell_If 'loading knox_missing.mac...' 
 < $macro_dir/knox/knox_missing.mac	# temporary until network issues are fixed
 
 ## < $macro_dir/knox/knox.mac	# when knox interface is local
@@ -25,6 +28,7 @@ Set h_reduction_factor	1	# 4 works well over home dsl...
 #Set v_reduction_factor	2	# 4 works well over home dsl...
 #Set h_reduction_factor	2	# 4 works well over home dsl...
 
+Tell_If 'loading mon_cam.mac...' 
 < $macro_dir/galvo/mon_cam.mac
 < $macro_dir/galvo/ptz_cam.mac
 < $macro_dir/galvo/galvo_cam.mac
@@ -34,8 +38,10 @@ Set h_reduction_factor	1	# 4 works well over home dsl...
 
 Clobber yes		# so save function works...
 
+Tell_If 'initializing v4l2 subsystem...'
 v4l2 quit	# initialize subsystem
 
+Tell_If 'initializing Knox video router...'
 Knox_Init
 Default_Routing
 
