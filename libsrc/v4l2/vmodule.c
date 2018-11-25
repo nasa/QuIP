@@ -331,11 +331,13 @@ void v4l2_get_fieldc(QSP_ARG_DECL  Movie *mvip,uint32_t f,Data_Obj* Datadp,int c
 
 void _monitor_v4l2_video(QSP_ARG_DECL  Data_Obj *dp)
 {
-	Viewer *vp;
-	
+	Viewer *vp=NULL;
+#ifdef HAVE_X11_EXT
 	vp = init_shm_viewer(OBJ_NAME(dp),OBJ_COLS(dp), OBJ_ROWS(dp), OBJ_COMPS(dp));
+#endif // HAVE_X11_EXT
 	if( vp == NULL ) return;
 
+#ifdef HAVE_X11_EXT
 	/* BUG should make this a background process or something... */
 	/* This routine just displays over and over again, no synchronization
 	 * with interrupts...
@@ -343,6 +345,7 @@ void _monitor_v4l2_video(QSP_ARG_DECL  Data_Obj *dp)
 	while(1){
 		display_to_shm_viewer(vp,dp);
 	}
+#endif // HAVE_X11_EXT
 }
 
 /***************************/

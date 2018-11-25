@@ -135,18 +135,5 @@ void set_stereo_input(QSP_ARG_DECL  int is_stereo)
 	advise_no_sound();
 }
 
-int _sound_seek(QSP_ARG_DECL  index_t idx)
-{
-	advise_no_sound(SINGLE_QSP_ARG);
-	return 0;
-}
-
-int _async_play_sound(QSP_ARG_DECL  Data_Obj *dp)
-{
-	advise_no_sound(SINGLE_QSP_ARG);
-	return 0;
-}
-
-
 #endif // ! HAVE_SOUND
 
