@@ -61,7 +61,9 @@ static void intrupt(void);
  * Here if no free parameters given
  */
 
-static void noparams(QSP_ARG_DECL  void (*cstepit_fn)(void))
+#define noparams(cstepit_fn) _noparams(QSP_ARG  cstepit_fn)
+
+static void _noparams(QSP_ARG_DECL  void (*cstepit_fn)(void))
 {
 	advise("calling function with initial parameters...");
 	(*cstepit_fn)();
@@ -79,7 +81,7 @@ void halt_cstepit(void)
  */
 
 /*int stepit(cstepit_fn)*/
-int stepit (QSP_ARG_DECL  void (*cstepit_fn)(void))
+int _stepit (QSP_ARG_DECL  void (*cstepit_fn)(void))
 {
 	int     nactiv, nack, ncirc, nosc, nah, nzip, jock, i, j, k;
 	int     ngiant, ntry, nretry, kl, nt, na, nz, ngate, nflag;
@@ -109,7 +111,7 @@ int stepit (QSP_ARG_DECL  void (*cstepit_fn)(void))
 #endif
 
 	if (n_params <= 0) {
-		noparams(QSP_ARG  cstepit_fn);
+		noparams(cstepit_fn);
 #ifdef FOOBAR
 		sigpop(SIGINT);
 #endif /* FOOBAR */
@@ -207,7 +209,7 @@ int stepit (QSP_ARG_DECL  void (*cstepit_fn)(void))
 		fflush(stdout);
 	}
 	if (n_params <= 0) {
-		noparams(QSP_ARG  cstepit_fn);
+		noparams(cstepit_fn);
 #ifdef FOOBAR
 	sigpop(SIGINT);
 #endif /* FOOBAR */
@@ -747,7 +749,7 @@ void getvals(double *arr, int n)
 		arr[i] = x[i];
 }
 
-int _reset_n_params(QSP_ARG_DECL  int n)
+int _reset_n_opt_params(QSP_ARG_DECL  int n)
 {
 	if( n<=0 ){
 		sprintf(ERROR_STRING,
@@ -765,7 +767,7 @@ int _reset_n_params(QSP_ARG_DECL  int n)
 	return( n_params=n );
 }
 
-void setvals(QSP_ARG_DECL  double *arr, int n)
+void _set_opt_param_vals(QSP_ARG_DECL  double *arr, int n)
 {
 	int i;
 
@@ -781,7 +783,7 @@ void setvals(QSP_ARG_DECL  double *arr, int n)
 		x[i] = arr[i];
 }
 
-void setminmax(QSP_ARG_DECL  double *minarr, double *maxarr, int n)
+void _set_opt_param_minmax(QSP_ARG_DECL  double *minarr, double *maxarr, int n)
 {
 	int i;
 
@@ -799,7 +801,7 @@ void setminmax(QSP_ARG_DECL  double *minarr, double *maxarr, int n)
 	}
 }
 
-void setdelta(QSP_ARG_DECL  double *delarr, double *dmnarr, int n)
+void _set_opt_param_delta(QSP_ARG_DECL  double *delarr, double *dmnarr, int n)
 {
 	int i;
 

@@ -7,7 +7,9 @@
 #include "debug.h"
 #include "quip_prot.h"
 
-static int render_check(QSP_ARG_DECL  Data_Obj *image_dp,Data_Obj *coord_dp,Data_Obj *intens_dp)
+#define render_check(image_dp,coord_dp,intens_dp) _render_check(QSP_ARG  image_dp,coord_dp,intens_dp)
+
+static int _render_check(QSP_ARG_DECL  Data_Obj *image_dp,Data_Obj *coord_dp,Data_Obj *intens_dp)
 {
 	if( OBJ_PREC(image_dp) != PREC_SP ){
 		sprintf(ERROR_STRING,"render_check:  source image %s must be float",OBJ_NAME(image_dp));
@@ -80,7 +82,7 @@ void _render_samples(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_
 	incr_t ix,iy;
 	dimension_t i,k;
 
-	if( render_check(QSP_ARG  image_dp,coord_dp,intens_dp) < 0 )
+	if( render_check(image_dp,coord_dp,intens_dp) < 0 )
 		return;
 
 	image  = (float *) OBJ_DATA_PTR(image_dp);
@@ -130,7 +132,7 @@ void _render_samples2(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data
 	dimension_t i,k;
 	float dx,dy,dxy;
 
-	if( render_check(QSP_ARG  image_dp,coord_dp,intens_dp) < 0 )
+	if( render_check(image_dp,coord_dp,intens_dp) < 0 )
 		return;
 
 fprintf(stderr,"render_samples2 %s %s %s BEGIN\n",
@@ -205,7 +207,7 @@ void _sample_image(QSP_ARG_DECL  Data_Obj *intens_dp, Data_Obj *image_dp, Data_O
 	dimension_t i,k;
 	float dx,dy,dxy;
 
-	if( render_check(QSP_ARG  image_dp,coord_dp,intens_dp) < 0 )
+	if( render_check(image_dp,coord_dp,intens_dp) < 0 )
 		return;
 
 	image  = (float *) OBJ_DATA_PTR(image_dp);

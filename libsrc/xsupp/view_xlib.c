@@ -922,7 +922,9 @@ static const char *string_for_text_mode(Text_Mode m)
 	return("bad text mode!?");
 }
 
-static void dop_info( QSP_ARG_DECL  Draw_Op *dop)
+#define dop_info(dop) _dop_info( QSP_ARG  dop)
+
+static void _dop_info( QSP_ARG_DECL  Draw_Op *dop)
 {
 	switch(dop->do_op){
 		case DRAW_OP_FOREGROUND:
@@ -981,7 +983,7 @@ static void _refresh_drawing(QSP_ARG_DECL  Viewer *vp)
 
 #ifdef QUIP_DEBUG
 if( debug & xdebug ){
-dop_info(DEFAULT_QSP_ARG  dop);
+dop_info(dop);
 }
 #endif
 		switch(dop->do_op){

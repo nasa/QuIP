@@ -153,7 +153,6 @@ static COMMAND_FUNC( do_import_xvals )
 		return;
 	}
 	global_xval_dp = dp;
-fprintf(stderr,"do_import_xvals:  global_xval_dp at 0x%lx %s\n",(long)dp,OBJ_NAME(dp));
 }
 
 static COMMAND_FUNC( do_set_nxvals )

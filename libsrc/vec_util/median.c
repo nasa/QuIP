@@ -227,7 +227,9 @@ static void uby_median(Data_Obj *dpto,Data_Obj *dpfr)
 	(*median_pix_func)(dst,src);
 }
 
-static void process_median(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
+#define process_median(dpto,dpfr) _process_median(QSP_ARG  dpto,dpfr)
+
+static void _process_median(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 {
 	INSIST_RAM_OBJ(dpto,process_median)
 	INSIST_RAM_OBJ(dpfr,process_median)
@@ -267,7 +269,7 @@ static void process_median(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 void _median(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 {
 	median_pix_func=median_of_pix;
-	process_median(QSP_ARG  dpto,dpfr);
+	process_median(dpto,dpfr);
 }
 
 static int fpix_comp(const void *ip1,const void *ip2) /* args are pointers into the order array */
@@ -301,7 +303,7 @@ static void median_clip_pix(u_char *dst,u_char *src)
 void _median_clip(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 {
 	median_pix_func=median_clip_pix;
-	process_median(QSP_ARG  dpto,dpfr);
+	process_median(dpto,dpfr);
 }
 
 

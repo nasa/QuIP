@@ -113,6 +113,30 @@ Compute_Platform *creat_platform(QSP_ARG_DECL  const char *name, platform_type t
 
 } // creat_platform
 
+// BUG move to platform support file!
+const char * _available_pfdev_name(QSP_ARG_DECL  const char *name,char *scratch_string, Compute_Platform *cpp, int max_devices)
+{
+	Platform_Device *pdp;
+	const char *s;
+	int n=1;
+
+	s=name;
+	while(n<=max_devices){
+		pdp = pfdev_of(s);
+		if( pdp == NULL ) return(s);
+
+		// This name is in use
+		n++;
+		sprintf(scratch_string,"%s_%d",name,n);
+		s=scratch_string;
+	}
+	sprintf(ERROR_STRING,"Number of %s %s devices exceed configured maximum %d!?",
+		name,PLATFORM_NAME(cpp),max_devices);
+	WARN(ERROR_STRING);
+	error1(ERROR_STRING);
+	return(NULL);	// NOTREACHED - quiet compiler
+}
+
 void delete_platform(QSP_ARG_DECL  Compute_Platform *cpp)
 {
 	// BUG memory leak of we don't also delete the icp...

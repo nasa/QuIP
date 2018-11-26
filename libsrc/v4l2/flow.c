@@ -79,7 +79,7 @@ static COMMAND_FUNC( update_vars )
 	char varname[128];
 	int n;
 
-	n=check_queue_status(QSP_ARG  curr_vdp);
+	n=check_queue_status(curr_vdp);
 
 	sprintf(val,"%d",n);
 	sprintf(varname,"n_ready.%s",curr_vdp->vd_name);
@@ -127,7 +127,7 @@ static COMMAND_FUNC( wait_next )	/* wait til we have another frame */
 		return;
 	}
 
-	n = check_queue_status(QSP_ARG  curr_vdp);
+	n = check_queue_status(curr_vdp);
 	if( n == curr_vdp->vd_n_buffers ){
 		sprintf(ERROR_STRING,
 	"wait_next:  device %s already has all of its %d buffers ready!?",
@@ -137,7 +137,7 @@ static COMMAND_FUNC( wait_next )	/* wait til we have another frame */
 	}
 
 	do {
-		m = check_queue_status(QSP_ARG  curr_vdp);
+		m = check_queue_status(curr_vdp);
 	} while( m == n );
 
 if( debug & v4l2_debug ){
@@ -162,7 +162,7 @@ static COMMAND_FUNC( wait_drip )	/* wait til we have at least one frame */
 	}
 
 	do {
-		n = check_queue_status(QSP_ARG  curr_vdp);
+		n = check_queue_status(curr_vdp);
 	} while( n == 0 );
 
 	update_vars(SINGLE_QSP_ARG);
@@ -188,11 +188,11 @@ print_buf_info("release_buffer",mbp);
 	assert(bufp->index == mbp->mb_index);
 
 //	if( xioctl(mbp->mb_vdp->vd_fd, VIDIOC_DQBUF, bufp ) < 0 )
-//		ERRNO_WARN ("VIDIOC_DQBUF (release_oldest_buffer)");
+//		errno_warn ("VIDIOC_DQBUF (release_oldest_buffer)");
 //fprintf(stderr,"release_buffer:  after dequeueing buffer %d, flags = 0x%x\n",
 //bufp->index,bufp->flags);
 	if( xioctl(mbp->mb_vdp->vd_fd, VIDIOC_QBUF, bufp ) < 0 )
-		ERRNO_WARN ("VIDIOC_QBUF (release_oldest_buffer)");
+		errno_warn ("VIDIOC_QBUF (release_oldest_buffer)");
 //if( debug & v4l2_debug ){
 //fprintf(stderr,"release_buffer:  after enqueued buffer %d, flags = 0x%x\n",
 //bufp->index,bufp->flags);
@@ -201,7 +201,7 @@ print_buf_info("release_buffer",mbp);
 	mbp->mb_flags &= ~V4L2_BUF_FLAG_DONE;
 }
 
-void release_oldest_buffer(QSP_ARG_DECL  Video_Device *vdp)
+void _release_oldest_buffer(QSP_ARG_DECL  Video_Device *vdp)
 {
 	if( vdp->vd_oldest_mbp == NULL ){
 		WARN("release_oldest_buffer:  no oldest buffer to release!?");
@@ -243,7 +243,7 @@ static COMMAND_FUNC( do_release_buffer )
 	CHECK_DEVICE(release_buffer)
 	INSIST_CAPTURING
 
-	release_oldest_buffer(QSP_ARG  curr_vdp);
+	release_oldest_buffer(curr_vdp);
 	update_vars(SINGLE_QSP_ARG);
 #endif /* HAVE_V4L2 */
 }

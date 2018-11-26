@@ -48,6 +48,7 @@ typedef enum {
 
 	SWF_KNOX,	// Knox video 8x8 switcher
 	SWF_VISCA,	// SONY Visca interface
+	SWF_PIC_LED,	// PIC microcontroller LED driver
 	N_SW_FEATURES
 } sw_feature_t;
 
@@ -106,7 +107,8 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 { UNKNOWN, SWF_DAS1602,		"analog I/O w/ Measurement Computing DAS1602"	},
 { UNKNOWN, SWF_V4L2,		"video-for-Linux II"		},
 { UNKNOWN, SWF_KNOX,		"Knox Video 8x8 switcher"	},
-{ UNKNOWN, SWF_VISCA,		"Sony VISCA camera control protocol"	}
+{ UNKNOWN, SWF_VISCA,		"Sony VISCA camera control protocol"	},
+{ UNKNOWN, SWF_PIC_LED,		"PIC microcontroller LED driver"	}
 };
 
 #ifdef NOW_DONE_WITH_ASSERTION
@@ -377,6 +379,13 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 	FEATURE_PRESENT(SWF_VISCA);
 #else
 	FEATURE_ABSENT(SWF_VISCA);
+#endif
+
+
+#ifdef HAVE_PIC
+	FEATURE_PRESENT(SWF_PIC_LED);
+#else
+	FEATURE_ABSENT(SWF_PIC_LED);
 #endif
 
 

@@ -10,7 +10,9 @@
 #include "my_encryption.h"
 #include "query_stack.h"
 
-static void add_text_to_buffer(QSP_ARG_DECL  void *data, size_t nbytes )
+#define add_text_to_buffer( data, nbytes ) _add_text_to_buffer(QSP_ARG  data, nbytes )
+
+static void _add_text_to_buffer(QSP_ARG_DECL  void *data, size_t nbytes )
 {
 	u_int n_need;
 	u_int n_have;
@@ -59,13 +61,13 @@ static size_t buffer_url_text(void *buffer, size_t size, size_t nmemb, void *use
 	// The safest thing would be to load all the data to a buffer,
 	// which might be larger than the individual chunks.
 
-	add_text_to_buffer(QSP_ARG  buffer,size*nmemb);
+	add_text_to_buffer(buffer,size*nmemb);
 
 	return(size*nmemb);
 }
 
 
-String_Buf *get_url_contents(QSP_ARG_DECL  const char *url)
+String_Buf *_get_url_contents(QSP_ARG_DECL  const char *url)
 {
 	CURLcode success;
 
@@ -95,7 +97,7 @@ String_Buf *get_url_contents(QSP_ARG_DECL  const char *url)
 	return(CURL_STRINGBUF);
 }
 
-void write_file_from_url( QSP_ARG_DECL  FILE *fp_out, const char *url )
+void _write_file_from_url( QSP_ARG_DECL  FILE *fp_out, const char *url )
 {
 	CURLcode success;
 
@@ -117,7 +119,7 @@ void write_file_from_url( QSP_ARG_DECL  FILE *fp_out, const char *url )
 	}
 }
 
-void init_http_subsystem(SINGLE_QSP_ARG_DECL)
+void _init_http_subsystem(SINGLE_QSP_ARG_DECL)
 {
 	curl_version_info_data *vdp;
 	curl_global_init(CURL_GLOBAL_SSL);
@@ -131,18 +133,18 @@ void init_http_subsystem(SINGLE_QSP_ARG_DECL)
 
 #else /* !HAVE_LIBCURL */
 
-String_Buf *get_url_contents(QSP_ARG_DECL  const char *url)
+String_Buf *_get_url_contents(QSP_ARG_DECL  const char *url)
 {
 	WARN("get_url_contents:  program not compiled with http support!?");
 	return NULL;
 }
 
-void write_file_from_url( QSP_ARG_DECL  FILE *fp_out, const char *url )
+void _write_file_from_url( QSP_ARG_DECL  FILE *fp_out, const char *url )
 {
 	WARN("write_file_from_url:  program not compiled with http support!?");
 }
 
-void init_http_subsystem(SINGLE_QSP_ARG_DECL)
+void _init_http_subsystem(SINGLE_QSP_ARG_DECL)
 {
 	WARN("init_http_subsystem:  program not compiled with http support!?");
 }

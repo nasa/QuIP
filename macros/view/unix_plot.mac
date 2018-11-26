@@ -1,3 +1,5 @@
+Start_File unix_plot.mac
+
 If var_exists(plot_locale)
   'warn "unix_plot.mac:  plot locale already initialized to $plot_locale" exit_file nop'
 
@@ -176,8 +178,10 @@ view
 
 Define Validate_Fonts 0
 Set fonts_present 0
+Print unit_font
 Validate_Font $unit_font
 If !$font_present exit_macro
+Print legend_font
 Validate_Font $legend_font
 If !$font_present exit_macro
 Set fonts_present 1
@@ -187,6 +191,7 @@ Define Validate_Font 1 font_name
 Set font_present 0
 os
   pipes
+    Tell_If "Validate_Font $1 will run command:  xlsfonts | grep -e '$1'"
     open f read "xlsfonts | grep -e '$1'"
     read f x
     # xlsfonts will print an error message if we don't own the display,
@@ -203,14 +208,20 @@ If !strcmp('$x','$1') "Set font_present 1"
 
 Define Init_Font_Stuff 0
 
+Tell_If 'Init_Font_Stuff BEGIN'
 # BUG we need a way to figure out how to move...
 
 # these fonts don't seem to be present on fc8...
 Set iso_rev 8859
 #Set iso_rev 10646
 
+# the fonts are not present on CentOS 6 (patrolboat)
 Set unit_font   -adobe-times-bold-r-normal--14-140-75-75-p-77-iso8859-1
 Set legend_font -adobe-times-bold-r-normal--25-180-100-100-p-132-iso10646-1
+
+# the fonts are present on patrolboat, but are they good?
+Set unit_font	-adobe-utopia-bold-r-normal--0-0-0-0-p-0-iso8859-1
+Set legend_font	-adobe-utopia-bold-r-normal--0-0-0-0-p-0-iso8859-1
 
 ## this has been the default...
 ## but these fonts are missing on Ubuntu???
@@ -269,10 +280,15 @@ Set unit_font "-misc-fixed-bold-r-normal--14-130-75-75-c-70-iso8859-2"
 Set legend_font "-misc-fixed-bold-r-normal--14-130-75-75-c-70-iso8859-2"
 
 Validate_Fonts
+Print_If fonts_present
 If $fonts_present exit_macro
 
 error_exit "Couldn't find any fonts for plotting!?"
+Tell_If 'Init_Font_Stuff DONE'
 .
 
 
 Set plot_locale x11
+
+Stop_File unix_plot.mac
+

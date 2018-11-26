@@ -29,7 +29,9 @@ void set_resample_wrap(int flag)
 	wrap_resample=flag;
 }
 
-static int resamp_check(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
+#define resamp_check(dpto,dpfr,dpwarp) _resamp_check(QSP_ARG  dpto,dpfr,dpwarp)
+
+static int _resamp_check(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 {
 	VINSIST_RAM_OBJ(dpto,resample,-1)
 	VINSIST_RAM_OBJ(dpfr,resample,-1)
@@ -80,7 +82,7 @@ void _resample(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 	incr_t src_rowinc;
     //incr_t src_pinc;
 
-	if( resamp_check(QSP_ARG  dpto,dpfr,dpwarp) < 0 ) return;
+	if( resamp_check(dpto,dpfr,dpwarp) < 0 ) return;
 
 	out_rows=OBJ_ROWS(dpto);
 	out_cols=OBJ_COLS(dpto);
@@ -183,7 +185,7 @@ void _bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp
 	float dx,dy,dxy;
 	int map_sample;
 
-	if( resamp_check(QSP_ARG  dpto,dpfr,dpwarp) < 0 ) return;
+	if( resamp_check(dpto,dpfr,dpwarp) < 0 ) return;
 
 	out_rows=OBJ_ROWS(dpto);
 	out_cols=OBJ_COLS(dpto);
@@ -233,7 +235,7 @@ void _new_bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dp
 	float dx,dy,dxy;
 	int map_sample;
 
-	if( resamp_check(QSP_ARG  dpto,dpfr,dpwarp) < 0 ) return;
+	if( resamp_check(dpto,dpfr,dpwarp) < 0 ) return;
 
 
 	out_rows=OBJ_ROWS(dpto);
