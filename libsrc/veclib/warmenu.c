@@ -13,6 +13,7 @@
 #include "vec_util.h"
 #include "quip_menu.h"
 #include "veclib/vl2_veclib_prot.h"
+#include "veclib/fftsupp.h"	// real_fft_algorithm declared
 #include "platform.h"
 
 #define TEMP_UNIMP(func)			\
@@ -640,7 +641,7 @@ static char *scanlist_choices[]={"raster","scattered","random"};
 
 static COMMAND_FUNC( do_pickscan )
 {
-	switch( WHICH_ONE("type of scanning pattern",3,scanlist_choices) ){
+	switch( which_one("type of scanning pattern",3,scanlist_choices) ){
 		case 0: scan_func=get_xy_raster_point; break;
 		case 1: scan_func=get_xy_scattered_point; break;
 		case 2: scan_func=get_xy_random_point; break;
@@ -785,7 +786,7 @@ static char *scanlist_choices[]={"raster","scattered","random"};
 
 static COMMAND_FUNC( do_pickscan )
 {
-	switch( WHICH_ONE("type of scanning pattern",3,scanlist_choices) ){
+	switch( which_one("type of scanning pattern",3,scanlist_choices) ){
 		case 0: scan_func=get_raster_point; break;
 		case 1: scan_func=get_scattered_point; break;
 		case 2: scan_func=get_random_point; break;
@@ -2082,6 +2083,27 @@ static COMMAND_FUNC( do_report_status )
 	prt_msg(msg_str);
 }
 
+#define N_REAL_FFT_ALGOS	2
+static const char *real_fft_algo_choices[N_REAL_FFT_ALGOS]={
+	"Elliot_and_Rao",
+	"Texas_Instruments"
+};
+
+static COMMAND_FUNC(do_set_real_fft_algo)
+{
+	switch( which_one("algorithm for real FFT",N_REAL_FFT_ALGOS,real_fft_algo_choices) ){
+		case 0:
+			real_fft_algorithm = ELLIOT_AND_RAO;
+			break;
+		case 1:
+			real_fft_algorithm = TEXAS_INSTRUMENTS;
+			break;
+		default:
+			warn("Bad real FFT algorithm choice!?");
+			break;
+	}
+}
+
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(control_menu,s,f,h)
 
@@ -2090,6 +2112,7 @@ MENU_BEGIN(control)
 ADD_CMD( perform,	do_set_perf,		set/clear execute flag )
 ADD_CMD( n_processors,	set_n_processors,	set number of processors to use )
 ADD_CMD( status,	do_report_status,	report current computation modes )
+ADD_CMD( real_fft_algo,	do_set_real_fft_algo,	specify algorithm for real FFT )
 #ifdef FOOBAR
 ADD_CMD( cpuinfo,	get_cpu_info,		report cpu info )
 #endif /* FOOBAR */
