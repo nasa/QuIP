@@ -469,12 +469,13 @@ Disp_Obj *_open_display(QSP_ARG_DECL  const char *name,int desired_depth)
 	return(dop);
 }
 
-static Disp_Obj *check_for_desired_depth(SINGLE_QSP_ARG_DECL)
+#define check_for_desired_depth(dname) _check_for_desired_depth(QSP_ARG  dname)
+
+static Disp_Obj *_check_for_desired_depth(QSP_ARG_DECL  const char *dname)
 {
 	const char *s;
 	Disp_Obj *dop;
 	int desired_depth;
-	const char *dname;
 
 	s=getenv("DESIRED_DEPTH");
 	if( s == NULL ) return NULL;
@@ -541,7 +542,7 @@ static Disp_Obj * default_x_display(SINGLE_QSP_ARG_DECL)
 	dop = disp_obj_of(dname);
 	if( dop != NULL ) return(dop);
 
-	dop = check_for_desired_depth(SINGLE_QSP_ARG);
+	dop = check_for_desired_depth(dname);
 	if( dop != NULL ) return dop;
 
 	dop = check_possible_depths(dname);

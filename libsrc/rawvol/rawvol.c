@@ -454,14 +454,11 @@ static void scan_directory(QSP_ARG_DECL  RV_Inode *dk_inp,
 	short *sp;
 	int not_root_dir;
 	const char *s;
-int idx;
 
 	assert( RV_NAME_IDX(dk_inp) >= 0 && RV_NAME_IDX(dk_inp) < total_string_bytes );
-idx = dk_inp - rv_inode_tbl;
 
 	s = rv_string_tbl+RV_NAME_IDX(dk_inp);
 
-//fprintf(stderr,"scan_directory:  inode at table location %d has index %d and name \"%s\"\n",idx,RV_INODE_IDX(dk_inp),s);
 	not_root_dir = strcmp( s, ROOT_DIR_NAME );
 
 	/* set the context */
