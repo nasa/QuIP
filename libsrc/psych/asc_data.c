@@ -489,7 +489,7 @@ static int _read_data_preamble(QSP_ARG_DECL  FILE *fp)
 	 */
 	for(i=0;i<n_xvals;i++){
 		float *xv_p;
-		xv_p = OBJ_DATA_PTR(global_xval_dp) +
+		xv_p = ((float *)OBJ_DATA_PTR(global_xval_dp)) +
 			i * OBJ_PXL_INC(global_xval_dp);
 		if( fscanf(fp,xvline,&xv_p) != 1 ){
 			warn("error reading an x value");

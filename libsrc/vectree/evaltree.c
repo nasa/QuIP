@@ -381,11 +381,8 @@ static void int_to_scalar(Scalar_Value *svp,long intval,Precision *prec_p)
 
 static Data_Obj *_dp_const(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value * svp)
 {
-//	static Data_Obj *const_dp=NULL;
 	Vec_Obj_Args oa1, *oap=&oa1;
 	int status;
-
-	INIT_OBJ_ARG_PTR(oap)
 
 	setvarg1(oap,dp);	// has to come first (clears *oap)
 	SET_OA_SVAL(oap,0, svp );

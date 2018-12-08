@@ -1417,9 +1417,7 @@ fprintf(stderr,"resolve_object passed unknown dynamic object %s\n",VN_STRING(uk_
 
 		default:
 			missing_case(uk_enp,"resolve_object");
-			dp = NULL;
-			idp = NULL;	// silence compiler
-			break;
+			return;
 	}
 
 	SET_VN_FLAG_BITS(uk_enp, resolution_flags);		/* resolve_object */
