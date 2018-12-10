@@ -329,6 +329,9 @@ static COMMAND_FUNC( do_def_mac )
 		advise(ERROR_STRING);
 	} else {
 		mp=create_macro(name,n,ma_tbl,sbp,lineno);
+        // a warning has probably already been printed,
+        // but this test eliminates a compiler warning about a never-read value...
+        if( mp == NULL ) warn("Error creating macro!?");
 	}
 
 	rls_stringbuf(sbp);

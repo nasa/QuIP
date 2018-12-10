@@ -1438,10 +1438,11 @@ static inline void process_this_character(QSP_ARG_DECL  int c )
 
 static int process_next_input_character(SINGLE_QSP_ARG_DECL)
 {
-	Query *qp;
+    // CLEANUP - commented out because of store-not-read warning
+	//Query *qp;
 	int c;
 
-	qp = CURR_QRY(THIS_QSP);
+	//qp = CURR_QRY(THIS_QSP);
 
 	c = scan_another_char(SINGLE_QSP_ARG);
 	if( c == 0 ) return 0;
@@ -1624,6 +1625,9 @@ static const char *next_word_from_level(QSP_ARG_DECL  const char *pline)
 	if( !QRY_HAS_TEXT(qp) )	/* need to read more input */
 	{
 		buf=qline(pline);
+        // suppress store-not-read warning
+        // But can buf be null when we are out of input??
+        if( buf == NULL ) warn("next_word_from_level:  null line!?");
 	}
 
 	if( QLEVEL < 0 ){

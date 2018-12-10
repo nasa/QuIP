@@ -90,8 +90,9 @@ static void init_formats(Camera *cam)
 			CMFormatDescriptionRef fdr;
 			fdr = cdf.formatDescription;
 			vdims = CMVideoFormatDescriptionGetDimensions( fdr );
-			w = vdims.width;
-			h = vdims.height;
+            // These values are never read???
+			//w = vdims.width;
+			//h = vdims.height;
 		} else {
 			fprintf(stderr,"init_formats:  Unhandled media type!?\n");
 		}

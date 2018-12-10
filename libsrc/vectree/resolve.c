@@ -1036,9 +1036,10 @@ void _early_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *call_enp, 
 	List *lp;
 	int save_exec;
 	uint32_t save_res;
-	Vec_Expr_Node *args_enp;
+    // If the args are not set, there's no reason to have a ptr to them...
+	//Vec_Expr_Node *args_enp;
 
-	args_enp = VN_CHILD(call_enp,0);
+	//args_enp = VN_CHILD(call_enp,0);
 
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
