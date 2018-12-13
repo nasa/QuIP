@@ -76,7 +76,7 @@ static void init_formats(Camera *cam)
 		assert( cdf != NULL );
 
 		if( [ cdf.mediaType compare:AVMediaTypeVideo ] == NSOrderedSame ){ 
-			int w, h;
+			 /* int w, h; */
 
 // Only available in iOS 8 and later!?
 #ifdef IOS8_ONLY

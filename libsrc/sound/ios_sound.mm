@@ -17,7 +17,7 @@
 #include "DCRejectionFilter.h"
 
 
-static unsigned int nchannels=2;		/* default */
+//static unsigned int nchannels=2;		/* default */
 static int halting=0;
 static int streaming=0;
 int audio_state = AUDIO_UNINITED;
