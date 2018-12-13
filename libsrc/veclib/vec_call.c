@@ -584,13 +584,13 @@ static int dest_src1_precisions_match( Vec_Obj_Args *oap )
 	if( srcp1 == dst_prec ){
 		if( srcp1 == BITMAP_MACH_PREC ){
 			if( IS_BITMAP(OA_DEST(oap) ) && !IS_BITMAP( OA_SRC1(oap) ) )
-				return -1;
+				return 0;
 			if( IS_BITMAP( OA_SRC1(oap) ) && !IS_BITMAP(OA_DEST(oap) ) )
-				return -1;
+				return 0;
 		}
-		return 0;
+		return 1;
 	}
-	return -1;
+	return 0;
 }
 
 // check_special_projections called for vmaxg vmaxi etc
@@ -732,6 +732,7 @@ static int _chkprec(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 	 * Make sure it is one of the legal ones.
 	 * First we check the special cases (bitmaps, indices).
 	 */
+
 	if( IS_LUTMAP_FUNC(vfp) ){		/* */
 		/* use the precision from the map */
 		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC2(oap) )  ));
@@ -783,7 +784,7 @@ static int _chkprec(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 			break;
 		default:
 			sprintf(ERROR_STRING,
-"chkprec:  %s:  target %s (%s) cannot be used with mixed prec source %s (%s)",
+"chkprec:  %s:  target '%s' (%s) cannot be used with mixed prec source '%s' (%s)",
 				VF_NAME(vfp) ,OBJ_NAME(OA_DEST(oap) ) ,
 				OBJ_PREC_NAME( OA_DEST(oap) ),
 				OBJ_NAME( OA_SRC1(oap) ) ,NAME_FOR_PREC_CODE(srcp1));
