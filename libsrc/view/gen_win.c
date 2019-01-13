@@ -52,6 +52,8 @@ static double get_genwin_posn(QSP_ARG_DECL  IOS_Item *ip, int index)
 	gwp = (Gen_Win *)ip;
 
 	warn("get_genwin_posn:  NOT IMPLEMENTED YET!?");
+    sprintf(ERROR_STRING,"unable to get position of genwin %s",GW_NAME(gwp));
+    advise(ERROR_STRING);
     return 0.0;
 }
 

@@ -60,8 +60,8 @@ extern "C" {
 #define NOT_PASSED(qp)			((QRY_FLAGS(qp) & Q_MPASSED)==0)
 #define IS_PIPE( qp )			(QRY_FLAGS(qp) & Q_PIPE)
 
-#define IS_DUPING			( QRY_DUPFILE(CURR_QRY(THIS_QSP)) != NULL )
-#define FIRST_WORD_ON_LINE		( QRY_FLAGS(CURR_QRY(THIS_QSP)) & Q_FIRST_WORD )
+#define IS_DUPING(qp)			( QRY_DUPFILE(qp) != NULL )
+#define FIRST_WORD_ON_LINE(qp)		( QRY_FLAGS(qp) & Q_FIRST_WORD )
 
 #define LOOKAHEAD_ADVANCED_LINE(qp)	(QRY_FLAGS(qp) & Q_LOOKAHEAD_ADVANCED_LINE)
 

@@ -557,8 +557,6 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define OA_FUNCTYPE(oap)		(oap)->oa_functype
 #define OA_DEST(oap)			(oap)->oa_dest
 #define OA_DBM(oap)			OA_DEST(oap)
-#define INIT_OBJ_ARG_PTR(oap)		(oap)=((Vec_Obj_Args *)getbuf(sizeof(Vec_Obj_Args)));
-#define RELEASE_OBJ_ARG_PTR(oap)	givbuf(oap);
 #define OA_SRC_OBJ(oap,idx)		(oap)->oa_dp[idx]
 #define OA_SRC1(oap)			OA_SRC_OBJ(oap,0)
 #define OA_SRC2(oap)			OA_SRC_OBJ(oap,1)

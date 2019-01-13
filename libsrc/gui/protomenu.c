@@ -633,6 +633,9 @@ static COMMAND_FUNC( do_end_navigation )
 	assert( curr_nav_p != NULL );
 
 	icp=pop_navgrp_context();
+    if( icp == NULL ){
+        warn("do_end_navigation:  error popping navgroup context!?");
+    }
 
 	// We can't be sure that we have pushed a navitm context
 	// without checking the flag...
@@ -676,7 +679,10 @@ static COMMAND_FUNC( mk_nav_panel )
 	// we enter the navigation submenu???
 #ifndef BUILD_FOR_OBJC
 	curr_panel = NAVP_PANEL(nav_p);
-#endif // ! BUILD_FOR_OBJC
+#else // BUILD_FOR_OBJC
+    if( nav_p == NULL )
+        warn("mk_nav_panel:  Error creating nav panel!?");
+#endif // BUILD_FOR_OBJC
 }
 
 /* When we enter the navigation menu, we have a new context for groups.

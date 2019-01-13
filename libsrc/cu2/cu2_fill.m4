@@ -234,7 +234,6 @@ void h_sp_ifl( QSP_ARG_DECL   Data_Obj *dp, int x, int y, float tol, float fill_
 	int h_flag, *flag_p;
 	int n_iterations;
 	Vector_Args va1, *vap=(&va1);
-	dim5 szarr;
 
 	len.d5_dim[1] = OBJ_COLS(dp);
 	len.d5_dim[2] = OBJ_ROWS(dp);
@@ -262,7 +261,7 @@ dnl	//GET_MAX_THREADS(dp)
 
 	/* set filled to zero */
 	CLEAR_CUDA_ERROR(zeroit)
-	zeroit<<< NN_GPU >>>(szarr,filled,len);
+	zeroit<<< NN_GPU >>>(VA_SLOW_SIZE(vap),filled,len);
 	CHECK_CUDA_ERROR(h_sp_ifl: zeroit)
 
 	// Get the value at the seed point
@@ -293,7 +292,7 @@ dnl		/* Clear the flag */
 
 		CLEAR_CUDA_ERROR(g_sp_ifl_incs)
 		g_sp_ifl_incs<<< NN_GPU >>>
-		(szarr,(float *)OBJ_DATA_PTR(dp),inc1,filled,inc2,len,v,tol,fill_val,flag_p);
+		(VA_SLOW_SIZE(vap),(float *)OBJ_DATA_PTR(dp),inc1,filled,inc2,len,v,tol,fill_val,flag_p);
 		CHECK_CUDA_ERROR(h_sp_ifl: g_sp_ifl_incs)
 
 		// download flag to see what happened.
@@ -318,7 +317,6 @@ void h_sp_ifl2( QSP_ARG_DECL  Data_Obj *dp, int seed_x, int seed_y, float tol, f
 	float *f_p, v;
 	int n_iterations;
 	Vector_Args va1, *vap=(&va1);
-	dim5 szarr;
 
 	len.d5_dim[1] = OBJ_COLS(dp);
 	len.d5_dim[2] = OBJ_ROWS(dp);
@@ -338,7 +336,7 @@ dnl	/* use 2d allocator for better stride? */
 
 dnl	/* set filled to zero */
 	CLEAR_CUDA_ERROR(zeroit)
-	zeroit<<< NN_GPU >>>(szarr,filled,len);
+	zeroit<<< NN_GPU >>>(VA_SLOW_SIZE(vap),filled,len);
 	CHECK_CUDA_ERROR(h_sp_ifl2: zeroit)
 
 dnl	// Get the value at the seed point
@@ -369,7 +367,7 @@ dnl	// Fill the seed point
 
 		CLEAR_CUDA_ERROR(g_sp_ifl2_incs)
 		g_sp_ifl2_incs<<< NN_GPU >>>
-		(szarr,(float *)OBJ_DATA_PTR(dp),inc1,filled,inc2,len);
+		(VA_SLOW_SIZE(vap),(float *)OBJ_DATA_PTR(dp),inc1,filled,inc2,len);
 		CHECK_CUDA_ERROR(h_sp_ifl2:  g_sp_ifl2_incs)
 
 	}

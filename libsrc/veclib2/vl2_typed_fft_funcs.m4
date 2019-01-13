@@ -521,14 +521,12 @@ define(`RECOMBINE',`
  * One-dimensional real fft.
  *
  * This routine seems to assume that the data are contiguous...
- * Increments are not used, checked...
+ * Increments are not used, but checked... ???
  *
- * The original implementation (supposedly based on Elliott & Rao?)
- * didnt use the twiddle factors, but did something
+ * This is jbms original implementation (supposedly based on Elliott & Rao?)
+ * doesnt use the twiddle factors, but does something
  * like a split before and after the complex fft...
  *
- * The TI document uses a different algorithm that uses the twiddle factors,
- * that looks simpler...
  */
 
 static void PF_FFT_CALL_NAME(rvfft_v1)( const FFT_Args *fap)
@@ -729,6 +727,21 @@ dnl	the space before the opening paren is important!!!
 	GET_CPX_SUM(&t1,&p1,&p2)
 	*cbot = t1;
 } // rvfft_v2
+
+static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
+{
+	switch( real_fft_algorithm ){
+		case ELLIOT_AND_RAO:
+			PF_FFT_CALL_NAME(rvfft_v1)(fap);
+			break;
+		case TEXAS_INSTRUMENTS:
+			PF_FFT_CALL_NAME(rvfft_v2)(fap);
+			break;
+		default:
+			NERROR1("rvfft:  bad algorithm code!?");
+			break;
+	}
+}
 
 /* One dimensional real inverse fft.
  *
@@ -977,6 +990,22 @@ dnl	the space before the opening paren is important!!!
 		src += src_inc;
 	}
 }	// rvift_v2
+
+static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
+{
+	switch( real_fft_algorithm ){
+		case ELLIOT_AND_RAO:
+			PF_FFT_CALL_NAME(rvift_v1)(fap);
+			break;
+		case TEXAS_INSTRUMENTS:
+			PF_FFT_CALL_NAME(rvift_v2)(fap);
+			break;
+		default:
+			NERROR1("rvfft:  bad algorithm code!?");
+			break;
+	}
+}
+
 
 ',` dnl else ! BUILDING_KERNELS
 

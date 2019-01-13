@@ -15,6 +15,8 @@ void test_reachability(QSP_ARG_DECL  const char *s)
 		kCFAllocatorDefault, s );
 
 	status = SCNetworkReachabilityGetFlags ( target, &flags );
+    
+    // BUG? - need to release object 'target' ???  no auto-release??
 
 	if( ! status ){
 		simple_alert(QSP_ARG  "Network test failed", "Unable to get flags!?");

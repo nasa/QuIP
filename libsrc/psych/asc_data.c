@@ -197,7 +197,9 @@ void write_sequential_data( Sequential_Data_Tbl *qdt_p, FILE *fp )
 	while(np!=NULL){
 		Sequence_Datum *qd_p;
 		qd_p = NODE_DATA(np);
-		np = NODE_NEXT(np);
+        // BUG - should do something to write this here???
+        fprintf(stderr,"BUG - not writing sequential data at 0x%lx!?",(long)qd_p);
+        np = NODE_NEXT(np);
 	}
 }
 
@@ -489,7 +491,7 @@ static int _read_data_preamble(QSP_ARG_DECL  FILE *fp)
 	 */
 	for(i=0;i<n_xvals;i++){
 		float *xv_p;
-		xv_p = OBJ_DATA_PTR(global_xval_dp) +
+		xv_p = ((float *)OBJ_DATA_PTR(global_xval_dp)) +
 			i * OBJ_PXL_INC(global_xval_dp);
 		if( fscanf(fp,xvline,&xv_p) != 1 ){
 			warn("error reading an x value");
