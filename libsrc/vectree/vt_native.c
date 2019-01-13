@@ -173,10 +173,12 @@ void _eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			s=eval_string(VN_CHILD(enp,0));
 #ifndef BUILD_FOR_IOS
 			status = system(s);
-#else // ! BUILD_FOR_IOS
+#else // BUILD_FOR_IOS
             warn("Sorry, system() is temporarily unavailable for iOS!?");
-                status=(-1);
-#endif // ! BUILD_FOR_IOS
+            sprintf(ERROR_STRING,"Can't run command '%s'",s);
+            advise(ERROR_STRING);
+            status=(-1);
+#endif // BUILD_FOR_IOS
                 
 			sprintf(stat_str,"%d",status);	// BUG?  protect against buffer overflow?
 			vp=_assign_reserved_var(DEFAULT_QSP_ARG  "exit_status",stat_str);

@@ -1777,24 +1777,22 @@ define(`PROJ3_SLOW_BODY',`
 	ADJ_COUNTS(loop_count,s1_count)
 	ADJ_COUNTS(loop_count,s2_count)
 
-dnl	NEW_PLOOP_##typ##3( init_statement, count )
-dnl	NEW_PLOOP_##typ##3( statement, loop_count )
-	NEW_PLOOP($2,`3')($3,count)
+	NEW_PLOOP($2,`1')($3,count)
 	NEW_PLOOP($2,`3')($4,loop_count)
 }
 ')
 
 
-dnl	SLOW_BODY_PROJ_CPX_2( name, statement, init_statement )
+dnl	SLOW_BODY_PROJ_CPX_2( name, init_statement, statement )
 define(`SLOW_BODY_PROJ_CPX_2',`SLOW_BODY_PROJ_XXX_2($1,$2,$3,`CPX_')')
 
-dnl	SLOW_BODY_PROJ_QUAT_2( name, statement, init_statement )
+dnl	SLOW_BODY_PROJ_QUAT_2( name, init_statement, statement )
 define(`SLOW_BODY_PROJ_QUAT_2',`SLOW_BODY_PROJ_XXX_2($1,$2,$3,`QUAT_')')
 
-dnl	SLOW_BODY_PROJ_CPX_3( name, statement, init_statement )
-define(`SLOW_BODY_PROJ_CPX_3',`SLOW_BODY_PROJ_XXX_3($1,$2,$3,`CPX_')')
+dnl	SLOW_BODY_PROJ_CPX_3( name, init_statement, statement )
+define(`SLOW_BODY_PROJ_CPX_3',`/* slow_body_proj_cpx_3 */ SLOW_BODY_PROJ_XXX_3($1,$2,$3,`CPX_')')
 
-dnl	SLOW_BODY_PROJ_QUAT_3( name, statement, init_statement )
+dnl	SLOW_BODY_PROJ_QUAT_3( name, init_statement, statement )
 define(`SLOW_BODY_PROJ_QUAT_3',`SLOW_BODY_PROJ_XXX_3($1,$2,$3,`QUAT_')')
 
 dnl	NEW_PLOOP(typ,vectors)
@@ -1802,12 +1800,19 @@ define(`NEW_PLOOP',`_NEW_PLOOP($1$2)')
 define(`_NEW_PLOOP',NEW_PLOOP_$1)
 
 dnl	NEW_PLOOP_CPX_2(statement,loop_count)
+define(`NEW_PLOOP_CPX_1',`NEW_PLOOP_XXX_1($1,$2,`CPX_')')
 define(`NEW_PLOOP_CPX_2',`NEW_PLOOP_XXX_2($1,$2,`CPX_')')
 define(`NEW_PLOOP_CPX_3',`NEW_PLOOP_XXX_3($1,$2,`CPX_')')
+
+define(`NEW_PLOOP_QUAT_1',`NEW_PLOOP_XXX_1($1,$2,`QUAT_')')
 define(`NEW_PLOOP_QUAT_2',`NEW_PLOOP_XXX_2($1,$2,`QUAT_')')
 define(`NEW_PLOOP_QUAT_3',`NEW_PLOOP_XXX_3($1,$2,`QUAT_')')
 
-dnl	SLOW_BODY_PROJ_XXX_2( name, statement, init_statement, typ )
+
+dnl	XXX is for CPX or QUAT...
+
+dnl	SLOW_BODY_PROJ_XXX_2( name, init_statement, statement, typ )
+
 define(`SLOW_BODY_PROJ_XXX_2',`
 
 {
@@ -1819,17 +1824,17 @@ define(`SLOW_BODY_PROJ_XXX_2',`
 	ADJ_COUNTS(loop_count,count)
 	ADJ_COUNTS(loop_count,s1_count)
 
-	dnl NEW_PLOOP_##typ##2( init_statement, count )
-	dnl NEW_PLOOP_##typ##2( statement, loop_count )
-	NEW_PLOOP($4,`2')($3,`count')
-	NEW_PLOOP($4,`2')($2,`loop_count')
+	NEW_PLOOP($4,`1')($2,`count')
+	NEW_PLOOP($4,`2')($3,`loop_count')
 }
 ')
 
-dnl	SLOW_BODY_PROJ_XXX_3( name, statement, init_statement, typ )
+dnl	SLOW_BODY_PROJ_XXX_3( name, init_statement, statement, typ )
 define(`SLOW_BODY_PROJ_XXX_3',`
 
 {
+	/* slow_body_proj_xxx_3 */
+
 	dnl PROJ_LOOP_DECLS_##typ##3
 	PROJ_LOOP_DECLS($4,`3')
 
@@ -1839,10 +1844,9 @@ define(`SLOW_BODY_PROJ_XXX_3',`
 	ADJ_COUNTS(loop_count,s1_count)
 	ADJ_COUNTS(loop_count,s2_count)
 
-	dnl NEW_PLOOP_##typ##3( init_statement, count )
-	dnl NEW_PLOOP_##typ##3( statement, loop_count )
-	NEW_PLOOP($4,`3')($3,`count')
-	NEW_PLOOP($4,`3')($2,`loop_count')
+dnl	NEW_PLOOP_XXX_3(statement,count_arr,typ)
+	NEW_PLOOP_XXX_1($2,`count',$4)
+	NEW_PLOOP_XXX_3($3,`loop_count',$4)
 }
 ')
 
@@ -1852,6 +1856,17 @@ define(`SLOW_BODY_PROJ_XXX_3',`
  * and then again with the source counts to perform the projection...
  */
 
+
+dnl	NEW_PLOOP_X( statement,count_arr,n_vecs)
+define(`NEW_PLOOP_X',`NEW_PLOOP_X($1,$2,`1')')
+
+dnl dnl	NEW_PLOOP_XXX_1( statement,count_arr,typ )
+dnl define(`NEW_PLOOP_XXX_1',`/* new_ploop_xxx_1 */ NEW_PLOOP_XXX_X($1,$2,$3,`1')')
+
+dnl	NEW_PLOOP_1( statement,count_arr )
+define(`NEW_PLOOP_1',`NEW_PLOOP_XXX_X($1,$2,`',`1')')
+
+dnl FIXME - use this pattern for NEW_PLOOP_2 etc...
 
 dnl	NEW_PLOOP_2( statement,count_arr )
 define(`NEW_PLOOP_2',`
@@ -1919,6 +1934,7 @@ define(`NEW_PLOOP_IDX_2',`
 ')
 
 
+dnl	Is this different from NEW_PLOOP_XXX_3 ???
 
 dnl	NEW_PLOOP_3( statement, count_arr )
 define(`NEW_PLOOP_3',`
@@ -1951,38 +1967,61 @@ define(`NEW_PLOOP_3',`
 	}
 ')
 
+
+dnl	NEW_PLOOP_XXX_X( statement,count_arr,typ,n_args )
+
+define(`NEW_PLOOP_XXX_X',`
+	INIT_BASES(`',$3,$4)
+	_INIT_COUNT(i,$2,4)
+	while(i-- > 0){
+		COPY_BASES(`',$3,$4)(2)
+		_INIT_COUNT(j,$2,3)
+		while(j-- > 0){
+			COPY_BASES(`',$3,$4)(1)
+			_INIT_COUNT(k,$2,2)
+			while(k-- > 0){
+				COPY_BASES(`',$3,$4)(0)
+				_INIT_COUNT(l,$2,1)
+				while(l-- > 0){
+					INIT_PTRS($3,$4)
+						$1 ;
+					INC_BASES(`',$3,$4)(1)
+				}
+				INC_BASES(`',$3,$4)(2)
+			}
+			INC_BASES(`',$3,$4)(3)
+		}
+		INC_BASES(`',$3,$4)(4)
+	}
+')
+
+dnl	NEW_PLOOP_XXX_1( statement,count_arr,typ )
+define(`NEW_PLOOP_XXX_1',`/* new_ploop_xxx_1 */ NEW_PLOOP_XXX_X($1,$2,$3,`1')')
+
+
 dnl	NEW_PLOOP_XXX_2( statement,count_arr,typ )
 define(`NEW_PLOOP_XXX_2',`
 
-	dnl INIT_BASES_##typ##2
 	INIT_BASES(`',$3,`2')
 	_INIT_COUNT(i,$2,4)
 	while(i-- > 0){
-		dnl COPY_BASES_##typ##2(2)
 		COPY_BASES(`',$3,`2')(2)
 		_INIT_COUNT(j,$2,3)
 		while(j-- > 0){
-			dnl COPY_BASES_##typ##2(1)
 			COPY_BASES(`',$3,`2')(1)
 			_INIT_COUNT(k,$2,2)
 			while(k-- > 0){
-				dnl COPY_BASES_##typ##2(0)
 				COPY_BASES(`',$3,`2')(0)
 				_INIT_COUNT(l,$2,1)
 				while(l-- > 0){
-					dnl INIT_PTRS_##typ##2
 					INIT_PTRS($3,`2')
 						$1 ;
-					dnl INC_BASES_##typ##2(1)
 					INC_BASES(`',$3,`2')(1)
 				}
-				dnl INC_BASES_##typ##2(2)
 				INC_BASES(`',$3,`2')(2)
 			}
-			dnl INC_BASES_##typ##2(3)
 			INC_BASES(`',$3,`2')(3)
 		}
-		dnl INC_BASES_##typ##2(4)
 		INC_BASES(`',$3,`2')(4)
 	}
 ')
@@ -1991,6 +2030,7 @@ define(`NEW_PLOOP_XXX_2',`
 dnl	NEW_PLOOP_XXX_3( statement, count_arr, typ )
 define(`NEW_PLOOP_XXX_3',`
 
+	/* new_ploop_xxx_3 */
 	INIT_BASES(`',$3,`3')
 	_INIT_COUNT(i,$2,4)
 	while(i-- > 0){
@@ -2981,6 +3021,7 @@ SLOW_BODY_PROJ_2($1,$2,$3)
 
 dnl	_VEC_FUNC_SLOW_CPX_2V_PROJ( name, init_statement, statement, gpu_expr_re, gpu_expr_im )
 define(`_VEC_FUNC_SLOW_CPX_2V_PROJ',`
+/* vec_func_slow_cpx_2v_proj */
 static void SLOW_NAME($1)(LINK_FUNC_ARG_DECLS)
 SLOW_BODY_PROJ_CPX_2($1,$2,$3)
 ')

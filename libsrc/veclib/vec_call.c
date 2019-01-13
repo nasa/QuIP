@@ -446,17 +446,195 @@ OBJ_NAME(OA_DEST(oap) ) ,OBJ_PREC_NAME( OA_DEST(oap) ));		\
 	return -1;
 
 
-#define CHECK_MAP_INDEX_PREC(func_code,prec_code)					\
-\
-if( VF_CODE(vfp) == func_code ){						\
-if( srcp1 != prec_code ){						\
-sprintf(ERROR_STRING,						\
-"Source object %s (%s) must have %s precision for function %s",			\
-OBJ_NAME(OA_SRC1(oap)),NAME_FOR_PREC_CODE(srcp1),	\
-NAME_FOR_PREC_CODE(prec_code),VF_NAME(vfp));		\
-warn(ERROR_STRING);						\
-return -1;							\
-}									\
+#define CHECK_MAP_INDEX_PREC(func_code,prec_code,dp)					\
+											\
+	if( VF_CODE(vfp) == func_code ){						\
+		if( OBJ_MACH_PREC(dp) != prec_code ){					\
+			sprintf(ERROR_STRING,						\
+		"Source object %s (%s) must have %s precision for function %s",		\
+		OBJ_NAME(dp),OBJ_PREC_NAME(dp),						\
+		NAME_FOR_PREC_CODE(prec_code),VF_NAME(vfp));				\
+			warn(ERROR_STRING);						\
+			return -1;							\
+		}									\
+	}
+
+// Make sure that the object precision is legal with this function
+
+#define CHECK_SOURCE_PREC_LEGAL_FOR_FUNC(dp,vfp)				\
+	CHECK_OBJ_PREC_LEGAL_FOR_FUNC(dp,vfp,source)
+
+#define CHECK_DEST_PREC_LEGAL_FOR_FUNC(dp,vfp)					\
+	CHECK_OBJ_PREC_LEGAL_FOR_FUNC(dp,vfp,destination)
+
+#define CHECK_OBJ_PREC_LEGAL_FOR_FUNC(dp,vfp,role)					\
+											\
+	if( ( VF_PRECMASK(vfp) & (1<<OBJ_MACH_PREC(dp))) == 0 ){			\
+		sprintf(ERROR_STRING,							\
+"chkprec:  %s precision %s (obj %s) cannot be used with function %s",			\
+			#role,OBJ_PREC_NAME(dp),OBJ_NAME( dp ) ,VF_NAME(vfp) );		\
+		warn(ERROR_STRING);							\
+		show_legal_precisions( VF_PRECMASK(vfp));				\
+		return -1;								\
+	}
+
+
+#define check_sources_precisions_for_func(vfp, oap ) _check_sources_precisions_for_func(QSP_ARG  vfp, oap )
+
+static int _check_sources_precisions_for_func(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
+{
+	CHECK_DEST_PREC_LEGAL_FOR_FUNC(OA_DEST(oap),vfp)
+
+	int n_srcs = 0;
+	if(  OA_SRC1(oap) != NULL ){
+		CHECK_SOURCE_PREC_LEGAL_FOR_FUNC(OA_SRC1(oap),vfp)
+		n_srcs++;
+		if( OA_SRC2(oap)  != NULL ){
+			CHECK_SOURCE_PREC_LEGAL_FOR_FUNC(OA_SRC2(oap),vfp)
+			n_srcs++;
+			if( OA_SRC3(oap) != NULL ){
+				CHECK_SOURCE_PREC_LEGAL_FOR_FUNC(OA_SRC3(oap),vfp)
+				n_srcs++;
+				if( OA_SRC4(oap) != NULL ){
+					CHECK_SOURCE_PREC_LEGAL_FOR_FUNC(OA_SRC4(oap),vfp)
+					n_srcs++;
+					// Can there be more than 4 sources???
+					// I guess not...
+				}
+			}
+		}
+	}
+	return n_srcs;
+}
+
+#define REPORT_DEST_SRC_MISMATCH_ERROR(vfp,dp1,dp2)					\
+											\
+	sprintf(ERROR_STRING,								\
+"chkprec:  %s: destination %s (%s) and source %s (%s) should have the same precision",	\
+		VF_NAME(vfp),								\
+		OBJ_NAME( dp1 ),							\
+		OBJ_PREC_NAME( dp1 ),							\
+		OBJ_NAME( dp2 ),							\
+		OBJ_PREC_NAME( dp2 ) );							\
+	warn(ERROR_STRING);
+
+
+#define CHECK_DEST_SRC_MATCHING_PRECISIONS(vfp,dp1,dp2)					\
+											\
+	if( OBJ_MACH_PREC(dp1) != OBJ_MACH_PREC(dp2) ) {				\
+		REPORT_DEST_SRC_MISMATCH_ERROR(vfp,dp1,dp2)				\
+		return -1;								\
+	}
+
+
+#define REPORT_SRC_SRC_MISMATCH_ERROR(vfp,dp1,dp2)					\
+											\
+	sprintf(ERROR_STRING,								\
+"chkprec:  %s operands %s (%s) and %s (%s) should have the same precision",		\
+		VF_NAME(vfp),								\
+		OBJ_NAME( dp1 ),							\
+		OBJ_PREC_NAME( dp1 ),							\
+		OBJ_NAME( dp2 ),							\
+		OBJ_PREC_NAME( dp2 ) );							\
+	warn(ERROR_STRING);
+
+
+#define CHECK_MATCHING_SOURCES(vfp,dp1,dp2)						\
+											\
+	if( OBJ_MACH_PREC(dp1) != OBJ_MACH_PREC(dp2) ) {				\
+		REPORT_SRC_SRC_MISMATCH_ERROR(vfp,dp1,dp2)				\
+		return -1;								\
+	}
+
+#define check_first_two_sources(vfp, oap ) _check_first_two_sources(QSP_ARG  vfp, oap )
+
+static int _check_first_two_sources(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
+{
+	/* First make sure that the two source operands match */
+	// BUT only if not a mapping func...
+	if( IS_LUTMAP_FUNC(vfp) ){
+		// The mapping functions require a specific index (first source) precision...
+		CHECK_MAP_INDEX_PREC(FVLUTMAPB,PREC_UBY,OA_SRC1(oap))
+		CHECK_MAP_INDEX_PREC(FVLUTMAPS,PREC_UIN,OA_SRC1(oap))
+
+		CHECK_DEST_SRC_MATCHING_PRECISIONS(vfp,OA_DEST(oap),OA_SRC2(oap))
+	} else {
+		CHECK_MATCHING_SOURCES(vfp,OA_SRC1(oap),OA_SRC2(oap))
+	}
+
+	/* if the precision is long, make sure that
+	 * none (or all) are bitmaps
+	 */
+	if( OBJ_MACH_PREC( OA_SRC1(oap) ) == BITMAP_MACH_PREC ){
+		if( (IS_BITMAP( OA_SRC1(oap) ) && ! IS_BITMAP(OA_SRC2(oap) )) ||
+		    ( ! IS_BITMAP( OA_SRC1(oap) ) && IS_BITMAP(OA_SRC2(oap) )) ){
+			REPORT_SRC_SRC_MISMATCH_ERROR(vfp,OA_SRC1(oap),OA_SRC2(oap))
+			return -1;
+		}
+	}
+	return 0;
+}
+
+
+#define srcp1		OBJ_MACH_PREC(OA_SRC1(oap))
+#define dst_prec	OBJ_MACH_PREC(OA_DEST(oap))
+
+static int dest_src1_precisions_match( Vec_Obj_Args *oap )
+{
+	if( srcp1 == dst_prec ){
+		if( srcp1 == BITMAP_MACH_PREC ){
+			if( IS_BITMAP(OA_DEST(oap) ) && !IS_BITMAP( OA_SRC1(oap) ) )
+				return 0;
+			if( IS_BITMAP( OA_SRC1(oap) ) && !IS_BITMAP(OA_DEST(oap) ) )
+				return 0;
+		}
+		return 1;
+	}
+	return 0;
+}
+
+// check_special_projections called for vmaxg vmaxi etc
+// Here the destination is an array of indices of where the occurrences were
+
+#define check_special_projections(vfp, oap) _check_special_projections(QSP_ARG  vfp, oap)
+
+static int _check_special_projections(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
+{
+	/* We assme that this is an index array and
+	 * not a bitmap.
+	 */
+	if( OBJ_PREC( OA_DEST(oap) ) != PREC_DI ){
+		sprintf(ERROR_STRING,
+"chkprec:  %s:  destination vector %s (%s) should have %s precision",
+			VF_NAME(vfp) ,OBJ_NAME(OA_DEST(oap) ) ,
+			OBJ_PREC_NAME( OA_DEST(oap) ),
+			NAME_FOR_PREC_CODE(PREC_DI) );
+		warn(ERROR_STRING);
+		return -1;
+	}
+	assert( OA_SRC1(oap) != NULL );
+	SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC( OA_SRC1(oap) ) ));
+	return 0;
+}
+
+// This is called when the function requires a bitmap destination...
+
+#define check_bitmap_dest(vfp, oap) _check_bitmap_dest(QSP_ARG  vfp, oap)
+
+static int _check_bitmap_dest(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
+{
+	if( OBJ_PREC( OA_DEST(oap) ) != PREC_BIT ){
+		sprintf(ERROR_STRING,
+	"%s:  result vector %s (%s) should have %s precision",
+			VF_NAME(vfp) ,OBJ_NAME(OA_DEST(oap) ) ,
+			OBJ_PREC_NAME( OA_DEST(oap) ),
+			NAME_FOR_PREC_CODE(PREC_BIT));
+		warn(ERROR_STRING);
+		return -1;
+	}
+	/* use the precision from the source */
+	SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
+	return 0;
 }
 
 /* chkprec sets two flags:
@@ -475,13 +653,8 @@ return -1;							\
 
 static int _chkprec(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 {
-    // We initialize these prec vars to silence a compiler warning,
-    // but probably not necessary...
-	prec_t srcp1=PREC_INVALID, srcp2=PREC_INVALID, dst_prec;
-	prec_t srcp3=PREC_INVALID, srcp4=PREC_INVALID;
-
-	int n_srcs=0;
-	if( IS_NEW_CONVERSION(vfp) ){
+	int n_srcs;
+	if( IS_CONVERSION(vfp) ){
 		// New conversions specify the destination precision
 		// e.g. vconv2by, and have sub-functions for all possible source precs
 		// QUESTION:  does that include the SAME precision???
@@ -492,29 +665,6 @@ static int _chkprec(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 		// No support for bitmaps yet
 		return 0;
 	}
-	if( IS_CONVERSION(vfp) ){
-		/* Conversions support all the precisions, so the checks
-		 * after this block are irrelevant.
-		 */
-
-		/* the default function type is set using OA_SRC1 (the source),
-		 * but if the target is a bitmap we want to set it to bitmap...
-		 */
-		if( IS_BITMAP(OA_DEST(oap) ) ){
-/*
-advise("chkprec:  Setting argstype to R_BIT_ARGS!?");
-			SET_OA_ARGSTYPE(oap, R_BIT_ARGS);
-*/
-			/* R_BIT_ARGS was a functype - not an argset type??? */
-			SET_OA_ARGSPREC_CODE(oap, BIT_ARGS);
-		} else if( IS_BITMAP( OA_SRC1(oap) ) ){
-			/* this is necessary because bitmaps handled with kludgy hacks */
-			SET_OA_SBM(oap,OA_SRC1(oap) );
-		}
-		return 0;
-	}
-
-	dst_prec=OBJ_MACH_PREC(OA_DEST(oap) );
 
 	/* BUG? could be bitmap destination??? */
 	/* need to find out which prec to test... */
@@ -523,51 +673,8 @@ advise("chkprec:  Setting argstype to R_BIT_ARGS!?");
 	 * are legal with this function
 	 */
 
-	if( ( VF_PRECMASK(vfp) & (1<<dst_prec)) == 0  ){
-		sprintf(ERROR_STRING,
-"chkprec:  dest. precision %s (obj %s) cannot be used with function %s",
-			NAME_FOR_PREC_CODE(dst_prec),OBJ_NAME(OA_DEST(oap) ) ,VF_NAME(vfp) );
-		warn(ERROR_STRING);
-		show_legal_precisions( VF_PRECMASK(vfp));
-		return -1;
-	}
-
-#define CHECK_SOURCE_PREC(p,dp)								\
-											\
-	if( ( VF_PRECMASK(vfp) & (1<<p)) == 0 ){					\
-		sprintf(ERROR_STRING,							\
-"chkprec:  source precision %s (obj %s) cannot be used with function %s",		\
-			NAME_FOR_PREC_CODE(p),OBJ_NAME( dp ) ,VF_NAME(vfp) );		\
-		warn(ERROR_STRING);							\
-		show_legal_precisions( VF_PRECMASK(vfp));				\
-		return -1;								\
-	}										\
-	n_srcs++;
-
-	if(  OA_SRC1(oap) != NULL ){
-		srcp1=OBJ_MACH_PREC( OA_SRC1(oap) );
-		CHECK_SOURCE_PREC(srcp1,OA_SRC1(oap))
-		if( OA_SRC2(oap)  != NULL ){
-			srcp2=OBJ_MACH_PREC(OA_SRC2(oap) );
-			CHECK_SOURCE_PREC(srcp2,OA_SRC2(oap))
-			if( OA_SRC3(oap) != NULL ){
-				srcp3=OBJ_MACH_PREC( OA_SRC3(oap) );
-				CHECK_SOURCE_PREC(srcp3,OA_SRC3(oap))
-				if( OA_SRC4(oap) != NULL ){
-					srcp4=OBJ_MACH_PREC( OA_SRC4(oap) );
-					CHECK_SOURCE_PREC(srcp4,OA_SRC4(oap))
-				}
-			}
-		}
-		// Can there be more than 4 sources???
-		
-		
-#define IS_LUTMAP_FUNC(vfp) ( VF_CODE(vfp) == FVLUTMAPB || VF_CODE(vfp) == FVLUTMAPS )
-		CHECK_MAP_INDEX_PREC(FVLUTMAPB,PREC_UBY)
-		CHECK_MAP_INDEX_PREC(FVLUTMAPS,PREC_UIN)
-		
-	}
-
+	n_srcs = check_sources_precisions_for_func(vfp,oap);
+	if( n_srcs < 0 ) return -1;
 
 	/* Figure out what type of function to call based on the arguments... */
 
@@ -583,97 +690,29 @@ advise("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		return 0;
 	}
 
-#define REPORT_SOURCE_MISMATCH_ERROR(dp1,dp2)							\
-											\
-	sprintf(ERROR_STRING,								\
-"chkprec:  %s operands %s (%s) and %s (%s) should have the same precision",		\
-		VF_NAME(vfp) ,OBJ_NAME( dp1 ) ,						\
-		OBJ_PREC_NAME( dp1 ),							\
-		OBJ_NAME( dp2 ) ,							\
-		OBJ_PREC_NAME( dp2 ) );							\
-	warn(ERROR_STRING);
-
-#define REPORT_OBJECT_MISMATCH_ERROR(dp1,dp2)							\
-											\
-	sprintf(ERROR_STRING,								\
-"chkprec:  %s: objects %s (%s) and %s (%s) should have the same precision",		\
-		VF_NAME(vfp) ,OBJ_NAME( dp1 ) ,						\
-		OBJ_PREC_NAME( dp1 ),							\
-		OBJ_NAME( dp2 ) ,							\
-		OBJ_PREC_NAME( dp2 ) );							\
-	warn(ERROR_STRING);
-
-#define CHECK_MATCHING_SOURCES(p1,p2,dp1,dp2)						\
-											\
-	if( p1 != p2 ) {								\
-		REPORT_SOURCE_MISMATCH_ERROR(dp1,dp2)						\
-		return -1;								\
-	}
-
-#define CHECK_MATCHING_PRECISIONS(p1,p2,dp1,dp2)						\
-											\
-	if( p1 != p2 ) {								\
-		REPORT_OBJECT_MISMATCH_ERROR(dp1,dp2)						\
-		return -1;								\
-	}
-
 	if( n_srcs >= 2 ){
-		/* First make sure that the two source operands match */
-		// BUT only if not a mapping func...
-		if( IS_LUTMAP_FUNC(vfp) ){
-			CHECK_MATCHING_PRECISIONS(dst_prec,srcp2,OA_DEST(oap),OA_SRC2(oap))
-		} else {
-			CHECK_MATCHING_SOURCES(srcp1,srcp2,OA_SRC1(oap),OA_SRC2(oap))
-		}
-
-		/* if the precision is long, make sure that
-		 * none (or all) are bitmaps
-		 */
-		if( srcp1 == BITMAP_MACH_PREC ){
-			if( (IS_BITMAP( OA_SRC1(oap) ) && ! IS_BITMAP(OA_SRC2(oap) )) ||
-			    ( ! IS_BITMAP( OA_SRC1(oap) ) && IS_BITMAP(OA_SRC2(oap) )) ){
-				REPORT_SOURCE_MISMATCH_ERROR(OA_SRC1(oap),OA_SRC2(oap))
-				return -1;
-			}
-		}
+		if( check_first_two_sources(vfp,oap) < 0 )
+			return -1;
 	}
+
 	// 3 or 4 inputs are the selection functions...  In principle the test operands
 	// could have different types from the selection types - the latter have to match the destination,
 	// while the former only have to match each other.  But that would lead to an unreasonable proliferation
 	// in the number of function types, so we don't allow it.
 	if( n_srcs >= 3 ){
-		CHECK_MATCHING_SOURCES(srcp1,srcp3,OA_SRC1(oap),OA_SRC3(oap))
+		CHECK_MATCHING_SOURCES(vfp,OA_SRC1(oap),OA_SRC3(oap))
 	}
 	if( n_srcs >= 4 ){
-		CHECK_MATCHING_SOURCES(srcp1,srcp4,OA_SRC1(oap),OA_SRC4(oap))
+		CHECK_MATCHING_SOURCES(vfp,OA_SRC1(oap),OA_SRC4(oap))
 	}
 
 	/* Before proceeding, make sure that this destination precision is legal with this function
 	 * There are a few special cases for which the destination has a different precision than the source.
 	 */
 
-	if( VF_FLAGS(vfp) == V_SCALRET2				/* vmaxg etc */
-			|| VF_FLAGS(vfp) == V_INT_PROJECTION	/* vmaxi etc */
-				){
-		/* We assme that this is an index array and
-		 * not a bitmap.
-		 */
-		if( OBJ_PREC( OA_DEST(oap) ) != PREC_DI ){
-			sprintf(ERROR_STRING,
-"chkprec:  %s:  destination vector %s (%s) should have %s precision",
-				VF_NAME(vfp) ,OBJ_NAME(OA_DEST(oap) ) ,
-				OBJ_PREC_NAME( OA_DEST(oap) ),
-				NAME_FOR_PREC_CODE(PREC_DI) );
-			warn(ERROR_STRING);
-			return -1;
-		}
-		assert( OA_SRC1(oap) != NULL );
-		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC( OA_SRC1(oap) ) ));
-		/* If the destination is long, don't worry about
-		 * a match with the arg...
-		 */
-		return 0;
-	}
+	                  /* vmaxg etc */                    /* vmaxi etc */
+	if( VF_FLAGS(vfp) == V_SCALRET2 || VF_FLAGS(vfp) == V_INT_PROJECTION)
+		return check_special_projections(vfp,oap);
 
 
 	/* Now we know that there are 1 or 2 inputs in addition to the target,
@@ -683,23 +722,17 @@ advise("chkprec:  Setting argstype to R_BIT_ARGS!?");
 	 * but doesn't include the pseudo-precision for bitmaps?
 	 */
 	/* This test can succeed when the input is the same as bitmap_word */
-	if( srcp1 == dst_prec ){
-		if( srcp1 == BITMAP_MACH_PREC ){
-			if( IS_BITMAP(OA_DEST(oap) ) && !IS_BITMAP( OA_SRC1(oap) ) )
-				goto next1;
-			if( IS_BITMAP( OA_SRC1(oap) ) && !IS_BITMAP(OA_DEST(oap) ) )
-				goto next1;
-		}
-		/* Can't use dst_prec here because might be bitmap */
+
+	if( dest_src1_precisions_match(oap) ){
 		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC( OA_DEST(oap) ) ));
 		return 0;
 	}
-next1:
 
 	/* Now we know that this is a mixed precision case.
 	 * Make sure it is one of the legal ones.
 	 * First we check the special cases (bitmaps, indices).
 	 */
+
 	if( IS_LUTMAP_FUNC(vfp) ){		/* */
 		/* use the precision from the map */
 		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC2(oap) )  ));
@@ -707,21 +740,9 @@ next1:
 	}
 
 	if( VF_FLAGS(vfp) & BITMAP_DST ){		/* vcmp, vcmpm */
-		/* Is dest vector set too??? */
-		if( OBJ_PREC( OA_DEST(oap) )  != PREC_BIT ){
-			sprintf(ERROR_STRING,
-		"%s:  result vector %s (%s) should have %s precision",
-				VF_NAME(vfp) ,OBJ_NAME(OA_DEST(oap) ) ,
-				OBJ_PREC_NAME( OA_DEST(oap) ),
-				NAME_FOR_PREC_CODE(PREC_BIT));
-			warn(ERROR_STRING);
-			return -1;
-		}
-		/* use the precision from the source */
-		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
+		return check_bitmap_dest(vfp,oap);
 		// BUG?  functype gets set at the bottom of this function, so how can we return?
 		// Do we also set it elsewhere???
-		return 0;
 	}
 
 	/* don't insist on a precision match if result is an index */
@@ -729,6 +750,8 @@ next1:
 		/* We assume that we check the result precision elsewhere? */
 		return 0;
 	}
+
+	// Finally, check for the known allowed mixed precisions
 
 	switch( dst_prec ){
 		case PREC_IN:
@@ -761,15 +784,16 @@ next1:
 			break;
 		default:
 			sprintf(ERROR_STRING,
-"chkprec:  %s:  target %s (%s) cannot be used with mixed prec source %s (%s)",
+"chkprec:  %s:  target '%s' (%s) cannot be used with mixed prec source '%s' (%s)",
 				VF_NAME(vfp) ,OBJ_NAME(OA_DEST(oap) ) ,
 				OBJ_PREC_NAME( OA_DEST(oap) ),
 				OBJ_NAME( OA_SRC1(oap) ) ,NAME_FOR_PREC_CODE(srcp1));
 			warn(ERROR_STRING);
 			return -1;
 	}
+
+	// It's an error if we've gotten here...
 	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) ) );
-//TELL_FUNCTYPE( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) )
 } /* end chkprec() */
 
 #define check_size_match(vfp, dp1, dp2 ) _check_size_match(QSP_ARG  vfp, dp1, dp2 )
@@ -1056,12 +1080,6 @@ int _call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 		advise(ERROR_STRING);
 		error1("call_vfunc:  no prototype vector!?");
 	}
-
-	/* If we are performing a conversion, we assume that the proper
-	 * conversion function has already been selected.
-	 * We want to do this efficiently...
-	 */
-	/* if( IS_CONVERSION(vfp) ) return 0; */
 
 	/* check for precision, type, size matches */
 	if( chkargs(vfp,oap) == (-1) ) return -1;	/* make set vslct_fake */

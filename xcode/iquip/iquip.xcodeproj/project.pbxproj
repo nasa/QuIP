@@ -1454,6 +1454,7 @@
 		7CE018411FA2435A00E1B4C1 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
 		7CE018421FA2435B00E1B4C1 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
 		7CE018431FA2435C00E1B4C1 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
+		7CE3AE7A21BB47510083FBD8 /* CSF-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 7C4332AE1D4D43FC0033687C /* CSF-Info.plist */; };
 		7CE5FDFD1A60750B0029C7AE /* avCap.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CE5FDFC1A60750B0029C7AE /* avCap.m */; };
 		7CE5FDFF1A60752D0029C7AE /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */; };
 		7CE5FE011A60754A0029C7AE /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
@@ -1819,7 +1820,6 @@
 		7CB4501C1D650E9F00B6783F /* mnbrak.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mnbrak.c; sourceTree = "<group>"; };
 		7CB4501E1D650EB500B6783F /* f1dim.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = f1dim.c; sourceTree = "<group>"; };
 		7CB671CF1F9484C5001FFADF /* Symmetry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Symmetry.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		7CB671D01F9484C5001FFADF /* CSF copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "CSF copy-Info.plist"; path = "/Users/jmulliga/working/quip/xcode/iquip/CSF copy-Info.plist"; sourceTree = "<absolute>"; };
 		7CB671D11F9501DC001FFADF /* symm_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = symm_startup.enc; path = macros/startup/symm_startup.enc; sourceTree = "<group>"; };
 		7CB8D5D81B6198B90080809C /* string_ref.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = string_ref.c; sourceTree = "<group>"; };
 		7CCB914D21A36EB000926C39 /* no_sound.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = no_sound.c; sourceTree = "<group>"; };
@@ -1961,7 +1961,6 @@
 				7106ED0716004437006BF850 /* quip */,
 				7106ED0016004437006BF850 /* Frameworks */,
 				7106ECFE16004437006BF850 /* Products */,
-				7CB671D01F9484C5001FFADF /* CSF copy-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -2609,7 +2608,7 @@
 		7106ECF416004437006BF850 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0910;
+				LastUpgradeCheck = 1010;
 				TargetAttributes = {
 					7106ECFC16004437006BF850 = {
 						DevelopmentTeam = 6NC2ML6K22;
@@ -2678,6 +2677,7 @@
 				7C4332B11D4D48220033687C /* csf_startup.enc in Resources */,
 				7C43329E1D4D43FC0033687C /* Default.png in Resources */,
 				7C43329F1D4D43FC0033687C /* InfoPlist.strings in Resources */,
+				7CE3AE7A21BB47510083FBD8 /* CSF-Info.plist in Resources */,
 				7C4332A01D4D43FC0033687C /* Icon@2x.png in Resources */,
 				7C4332A11D4D43FC0033687C /* Icon.png in Resources */,
 				7C4332A21D4D43FC0033687C /* Icon-Small@2x.png in Resources */,
@@ -4139,11 +4139,13 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
@@ -4198,11 +4200,13 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
@@ -4250,6 +4254,11 @@
 					../../include,
 					../../../numrec/include,
 				);
+				"HEADER_SEARCH_PATHS[arch=*]" = (
+					../../include,
+					../../../numrec/include,
+					../../libsrc/vectree,
+				);
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "";
@@ -4276,6 +4285,10 @@
 				DEVELOPMENT_TEAM = 6NC2ML6K22;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
+				"HEADER_SEARCH_PATHS[arch=*]" = (
+					../../include,
+					../../libsrc/vectree,
+				);
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "";
@@ -4297,8 +4310,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
+				CODE_SIGN_IDENTITY = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = 6NC2ML6K22;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -4308,6 +4321,11 @@
 				HEADER_SEARCH_PATHS = (
 					../../include,
 					../../../numrec/include,
+				);
+				"HEADER_SEARCH_PATHS[arch=*]" = (
+					../../include,
+					../../../numrec/include,
+					../../libsrc/vectree,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -4320,6 +4338,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = NASA.CSF;
 				PRODUCT_NAME = CSF;
 				PROVISIONING_PROFILE = "973c9247-52b3-4895-924b-8d45c22c1266";
+				PROVISIONING_PROFILE_SPECIFIER = JBM_DevProf_11_24_2018;
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -4344,6 +4363,11 @@
 					"$(SRCROOT)/../../include",
 					"$(SRCROOT)/../../../numrec/include",
 				);
+				"HEADER_SEARCH_PATHS[arch=*]" = (
+					"$(SRCROOT)/../../include",
+					"$(SRCROOT)/../../../numrec/include",
+					../../libsrc/vectree,
+				);
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "";
@@ -4356,6 +4380,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = NASA.CSF;
 				PRODUCT_NAME = CSF;
 				PROVISIONING_PROFILE = "973c9247-52b3-4895-924b-8d45c22c1266";
+				PROVISIONING_PROFILE_SPECIFIER = JBM_DevProf_11_24_2018;
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;

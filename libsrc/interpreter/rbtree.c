@@ -373,6 +373,7 @@ static void rebalance(qrb_tree *tree_p, qrb_node *n_p, qrb_node *parent)
 		}
 		//assert(n_p!=NULL);
 		s_p = sibling(n_p,parent);		// has changed
+        assert(s_p!=NULL);
 	}
 	
 	if( IS_BLACK(s_p) ){

@@ -1036,9 +1036,10 @@ void _early_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *call_enp, 
 	List *lp;
 	int save_exec;
 	uint32_t save_res;
-	Vec_Expr_Node *args_enp;
+    // If the args are not set, there's no reason to have a ptr to them...
+	//Vec_Expr_Node *args_enp;
 
-	args_enp = VN_CHILD(call_enp,0);
+	//args_enp = VN_CHILD(call_enp,0);
 
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
@@ -1417,9 +1418,7 @@ fprintf(stderr,"resolve_object passed unknown dynamic object %s\n",VN_STRING(uk_
 
 		default:
 			missing_case(uk_enp,"resolve_object");
-			dp = NULL;
-			idp = NULL;	// silence compiler
-			break;
+			return;
 	}
 
 	SET_VN_FLAG_BITS(uk_enp, resolution_flags);		/* resolve_object */

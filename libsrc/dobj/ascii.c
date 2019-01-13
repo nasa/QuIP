@@ -557,6 +557,10 @@ static void int_format_consume(QSP_ARG_DECL  Precision *prec_p)
 	} else {
 		howmany_type l;
 		l=how_many("dummy integer");
+        if( verbose ){      // this was added just to suppress a compiler warning about never-read value l
+            sprintf(ERROR_STRING,"Ignoring integer value %lld",l);  // BUG? use format macro
+            advise(ERROR_STRING);
+        }
 		advance_format();
 	}
 }
@@ -569,6 +573,11 @@ static void float_format_consume(QSP_ARG_DECL  Precision *prec_p)
 	} else {
 		double d;
 		d=how_much("dummy float");
+        if( verbose ){      // this was added just to suppress a compiler warning about never-read value
+            sprintf(ERROR_STRING,"Ignoring float value %g",d);
+            advise(ERROR_STRING);
+        }
+
 		advance_format();
 	}
 }
@@ -581,6 +590,11 @@ static void string_format_consume(QSP_ARG_DECL  Precision *prec_p)
 	} else {
 		const char *s;
 		s=nameof("dummy string");
+        if( verbose ){      // this was added just to suppress a compiler warning about never-read value
+            sprintf(ERROR_STRING,"Ignoring string value \"%s\"",s);
+            advise(ERROR_STRING);
+        }
+
 		advance_format();
 	}
 }
@@ -653,6 +667,11 @@ static int int_format_read_string(QSP_ARG_DECL  const char **sptr, const char *p
 {
 	howmany_type l;
 	l=how_many("dummy integer value");
+    if( verbose ){      // this was added just to suppress a compiler warning about never-read value
+        sprintf(ERROR_STRING,"Ignoring integer value %lld",l);  // BUG use format macro
+        advise(ERROR_STRING);
+    }
+
 	return 0;
 }
 
@@ -660,6 +679,11 @@ static int float_format_read_string(QSP_ARG_DECL  const char **sptr, const char 
 {
 	double d;
 	d=how_much("dummy float value");
+    if( verbose ){      // this was added just to suppress a compiler warning about never-read value
+        sprintf(ERROR_STRING,"Ignoring double value %g",d);
+        advise(ERROR_STRING);
+    }
+
 	return 0;
 }
 

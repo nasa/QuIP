@@ -53,8 +53,8 @@ static void my_alarm(void);
 				^{
 					// ensure we don't fire again
 					// just turn it off for now
-					dispatch_suspend(timer);
-					ticking = NO;
+					dispatch_suspend(self->timer);
+					self->ticking = NO;
 					my_alarm();
 				}
 			);

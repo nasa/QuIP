@@ -166,12 +166,12 @@ static void _weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac)		/** maxi
 
 	optimize(w_likelihood);
 
-	alpha_param_p=get_opt_param(ALPHA_NAME);
+	//alpha_param_p=get_opt_param(ALPHA_NAME);
 	assert( alpha_param_p != NULL );
 
 	alpha = alpha_param_p->ans;
 
-	beta_param_p=get_opt_param(BETA_NAME);
+	//beta_param_p=get_opt_param(BETA_NAME);
 	assert( beta_param_p != NULL );
 
 	beta = beta_param_p->ans;

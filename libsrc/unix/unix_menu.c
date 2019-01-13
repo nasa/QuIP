@@ -343,6 +343,8 @@ static COMMAND_FUNC( do_system )				/** execute a shell command */
 	
 	if( euid == 0 && ruid != 0 ){
 		warn("Sorry, shell commands not allowed for set-uid root programs");
+        sprintf(ERROR_STRING,"Unable to execute command '%s'",s);
+        advise(ERROR_STRING);
 		return;
 	}
 #endif // HAVE_GETUID

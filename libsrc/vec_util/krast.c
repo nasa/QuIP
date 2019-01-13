@@ -43,6 +43,7 @@ static void getkpt( u_long a, u_short *px, u_short *py )
 	sigma=eta=0;
 
 #define SPECIAL_ITERATION	0
+    assert(base_log>=2);
 	bit = 1 << (base_log-2);
 	for(i=0;i<base_log-1;i++){
 		prev_sigma = sigma >> 1;

@@ -285,7 +285,7 @@ typedef enum {
 // for each possible source precision.  This is more in line with the
 // approach taken for the other functions...
 
-#define FIRST_NEW_CONVERSION_CODE	FVCONV2BY
+#define FIRST_CONVERSION_CODE	FVCONV2BY
 	FVCONV2BY,
 	FVCONV2IN,
 	FVCONV2DI,
@@ -296,9 +296,12 @@ typedef enum {
 	FVCONV2ULI,
 	FVCONV2SP,
 	FVCONV2DP,
-#define LAST_NEW_CONVERSION_CODE	FVCONV2DP
+#define LAST_CONVERSION_CODE	FVCONV2DP
 
-#define IS_CONVERSION( vfp )	IS_NEW_CONVERSION(vfp)
+#define IS_CONVERSION( vfp )						\
+	( CODE_BETWEEN( vfp, FIRST_CONVERSION_CODE,			\
+				LAST_CONVERSION_CODE ) )
+
 
 	FVTRUNC,			/* would add after FVFLOOR, but that would mess up numbers in comments */
 	FVERFINV,			/* ditto... */
@@ -310,6 +313,8 @@ typedef enum {
 
 	FVLUTMAPB,		/* byte index lutmap */
 	FVLUTMAPS,		/* short index lutmap */
+
+#define IS_LUTMAP_FUNC(vfp) ( VF_CODE(vfp) == FVLUTMAPB || VF_CODE(vfp) == FVLUTMAPS )
 
 	N_VEC_FUNCS,		/* must be next-to-last! */
 	INVALID_VFC		/* must be last! */
@@ -354,10 +359,6 @@ typedef enum {
 	case FVSAND:							\
 	case FVSXOR:
 
-
-#define IS_NEW_CONVERSION( vfp )					\
-	( CODE_BETWEEN( vfp, FIRST_NEW_CONVERSION_CODE,		\
-				LAST_NEW_CONVERSION_CODE ) )
 
 #define CODE_BETWEEN( vfp, code1, code2 )				\
 	( VF_CODE(vfp) >= ( code1 ) && VF_CODE(vfp) <= ( code2 ) )

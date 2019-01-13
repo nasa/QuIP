@@ -211,9 +211,12 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	else if(code == T_TYPECAST ){
 		// BUG not how we do precision any more!!!
 		//sprintf(msg_str,"  %s",NAME_FOR_PREC_CODE(VN_INTVAL(enp)));
-		sprintf(msg_str,"  %s",PREC_NAME(VN_PREC_PTR(enp)));
-		prt_msg_frag(msg_str);
-	} else if( code == T_SUBRT_DECL || code == T_SCRIPT ){
+        if( VN_SHAPE(enp) == NULL ) error1("CAUTIOUS:  null node shape for typecast node!?");
+        else {
+            sprintf(msg_str,"  %s",PREC_NAME(VN_PREC_PTR(enp)));
+            prt_msg_frag(msg_str);
+        }
+    } else if( code == T_SUBRT_DECL || code == T_SCRIPT ){
 		Subrt *srp;
 		srp=VN_SUBRT(enp);
 		sprintf(msg_str,"\t%s",SR_NAME(srp));
