@@ -2914,7 +2914,7 @@ define(`_VEC_FUNC_SSSLCT',`OBJ_METHOD($1,$2,SBM_,`',_2S,1,`')')
 
 define(`_VEC_FUNC_1V',`OBJ_METHOD($1,$2,`',`',`',1,`')')
 
-/* this is for vmagsq, vatn2:  real result, cpx source */
+dnl	/* this is for vmagsq, vatn2:  real result, cpx source */
 define(`_VEC_FUNC_2V_MIXED',`OBJ_METHOD($1,$2,`',RC_,`',2,`')')
 
 dnl #define THREE_CPX_VEC_METHOD_T1( name, statement )

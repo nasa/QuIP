@@ -470,9 +470,18 @@ SET_VA_FLAGS(vap,VA_EQSP_ARGS);
 XFER_FAST_ARGS_1
 XFER_EQSP_INC_1')
 
+dnl This is wrong for a complex source!?
+dnl	fprintf(stderr,"xfer_eqsp_args_src:  obj = %s, min_dim = %d%c",
+dnl	OBJ_NAME(OA_SRC_OBJ(oap,$1)),OBJ_MINDIM(OA_SRC_OBJ(oap,$1)),012);
+dnl special case for complex source with mindim 0...
+dnl Not sure that this catches everything???
+dnl Also not sure that 1 is the correct alternative - what about a complex column vector???
 
 define(`XFER_EQSP_ARGS_SRC',`XFER_FAST_ARGS_SRC($1)
-SET_VA_SRC_EQSP_INC(vap,$1,OBJ_TYPE_INC(OA_SRC_OBJ(oap,$1),OBJ_MINDIM(OA_SRC_OBJ(oap,$1))));
+SET_VA_SRC_EQSP_INC(vap,$1,OBJ_TYPE_INC(OA_SRC_OBJ(oap,$1),
+IS_COMPLEX(OA_SRC_OBJ(oap,$1)) ?
+( OBJ_MINDIM(OA_SRC_OBJ(oap,$1)) == 0 ? 1 : OBJ_MINDIM(OA_SRC_OBJ(oap,$1)) )
+: OBJ_MINDIM(OA_SRC_OBJ(oap,$1))));
 ')
 
 define(`XFER_EQSP_ARGS_SRC1',`XFER_EQSP_ARGS_SRC(0)')

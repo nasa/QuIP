@@ -87,6 +87,9 @@ If !var_exists('$1')
   "Set $1 $2 Tell_If 'Check_Var:  $1 set to default value $2'"
 .
 
+# Unset old axis vars to make sure that we don't inherit from
+# a previous viewer?
+
 Define Clear_Axis_Vars 0
 UnSet_If xmin
 UnSet_If xmax

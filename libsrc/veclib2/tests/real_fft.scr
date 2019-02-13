@@ -1,19 +1,37 @@
 
 Vector xf 5 1 complex
 Vector f 8 1 float
+Vector c 8 1 complex
+Vector cxf 8 1 complex
 Assign twopi 8*atan(1)
 
 Ramp1D f 0 $twopi/ncols(f)
 VSin f f
+VMov c{0} f
+VSet c{1} 0
+
 Display f
 RFFT xf f
 Display xf
 Pause
 
+Display c
+FFT c
+Display c
+Pause
+
+
 Display xf
 RInvFFT f xf
 Display f
 Pause
+
+Display c
+InvFFT c
+Display c
+Pause
+
+exit
 
 
 data
