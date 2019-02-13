@@ -2114,7 +2114,7 @@ define(`SLOW_BODY',`_SLOW_BODY($1$2$3$4)')
 define(`_SLOW_BODY',SLOW_BODY_$1)
 
 dnl	FF_DECL(name)
-define(`FF_DECL',`/* ff_decl /$1/ BEGIN */static void FAST_NAME($1) /* ff_decl /$1/ DONE */')
+define(`FF_DECL',`static void FAST_NAME($1)')
 define(`EF_DECL',`static void EQSP_NAME($1)')
 define(`SF_DECL',`static void SLOW_NAME($1)')
 
@@ -2128,11 +2128,8 @@ dnl	FAST_BODY_##typ##MOV( $1, $4 )
 
 dnl	GENERIC_FF_DECL(name, statement,bitmap,typ,scalars,vectors,extra)
 define(`GENERIC_FF_DECL',`
-
-/* generic_ff_decl /$1/ BEGIN */
 	FF_DECL($1)( LINK_FUNC_ARG_DECLS )
 	FAST_BODY($3,$4,$6,$7)($1,$2)
-/* generic_ff_decl /$1/ DONE */
 ')
 
 
@@ -2656,7 +2653,7 @@ define(`FAST_BODY_DBM_SBM_',`SIMPLE_FAST_BODY($1,$2,`',DBM_SBM,`',`')')
 define(`FAST_BODY_DBM_1SBM_',`SIMPLE_FAST_BODY($1,$2,`',DBM_1SBM,`',`')')
 define(`FAST_BODY_DBM_2SBM_',`SIMPLE_FAST_BODY($1,$2,`',DBM_2SBM,`',`')')
 
-define(`FAST_BODY_DBM_2SRCS',`/* fast_body_dbm_2srcs BEGIN */SIMPLE_FAST_BODY($1,$2,`',DBM_2SRCS,`',`')/* fast_body_dbm_2srcs DONE */')
+define(`FAST_BODY_DBM_2SRCS',`SIMPLE_FAST_BODY($1,$2,`',DBM_2SRCS,`',`')')
 define(`FAST_BODY_DBM_',`SIMPLE_FAST_BODY($1,$2,`',DBM_,`',`')')
 define(`FAST_BODY_1',`SIMPLE_FAST_BODY($1,$2,`',1,`',`')')
 define(`FAST_BODY_CPX_1',`SIMPLE_FAST_BODY($1,$2,CPX_,1,`',`')')
@@ -2825,9 +2822,7 @@ dnl	OBJ_METHOD(name,statement,bitmap,typ,scalars,vectors,extra)
 dnl define(`_VEC_FUNC_2V_MIXED',`OBJ_METHOD($1,$2,`',RC_,`',2,`')')
 
 define(`OBJ_METHOD',`
-/* obj_method /$1/ BEGIN */
 GENERIC_FUNC_DECLS($1,$2,$3,$4,$5,$6,$7)
-/* obj_method /$1/ DONE */
 ')
 
 dnl	OBJ_MOV_METHOD(name,statement,bitmap,typ,scalars,vectors)
@@ -2849,31 +2844,23 @@ dnl					restart_condition, assignment,
 dnl					gpu_c1, gpu_c2 )
 
 define(`_VEC_FUNC_FAST_MM_NOCC',`
-/* vec_func_fast_mm_nocc /$1/ /$2/ /$3/ /$4/ BEGIN */
 EXTLOC_FAST_FUNC($1,EXTLOC_STATEMENT($2,$3,$4))
-/* vec_func_fast_mm_nocc /$1/ /$2/ /$3/ /$4/ DONE */
 ')
 
 define(`_VEC_FUNC_EQSP_MM_NOCC',`
-/* vec_func_eqsp_mm_nocc /$1/ /$2/ /$3/ /$4/ BEGIN */
 EXTLOC_EQSP_FUNC($1,EXTLOC_STATEMENT($2,$3,$4))
-/* vec_func_eqsp_mm_nocc /$1/ /$2/ /$3/ /$4/ DONE */
 ')
 
 define(`_VEC_FUNC_SLOW_MM_NOCC',`
-/* vec_func_slow_mm_nocc /$1/ /$2/ /$3/ /$4/ BEGIN */
 EXTLOC_SLOW_FUNC($1,EXTLOC_STATEMENT($2,$3,$4)) 
-/* vec_func_slow_mm_nocc /$1/ /$2/ /$3/ /$4/ DONE */
 ')
 
 
 dnl	define(`_VEC_FUNC_MM_NOCC',`
-dnl	/* vec_func_mm_nocc /$1/ /$2/ /$3/ /$4/ BEGIN */
 
 dnl	EXTLOC_FAST_FUNC($1,EXTLOC_STATEMENT($2,$3,$4))
 dnl	EXTLOC_EQSP_FUNC($1,EXTLOC_STATEMENT($2,$3,$4))
 dnl	EXTLOC_SLOW_FUNC($1,EXTLOC_STATEMENT($2,$3,$4)) 
-dnl	/* vec_func_mm_nocc /$1/ /$2/ /$3/ /$4/ DONE */
 dnl	')
 
 
