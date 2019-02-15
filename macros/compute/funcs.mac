@@ -597,19 +597,17 @@ compute fft scroll $1 $2 $3 $4 quit quit
 .
 
 Define RInvFFT 2 image xform
-#compute fft irfft $1 $2 quit quit
 compute fft invfft $1 $2 quit quit
-VSMul $1 $1 2/(ncols('$1')*nrows('$1'))
+Assign _sfactor (ncols('$1')*nrows('$1'))
+VSMul $1 $1 1/$_sfactor
 .
 
 Define InvFFT 1 image
-advise "InvFFT $1 BEGIN"
 compute fft invfft $1 $1 quit quit
-advise "InvFFT transform computed"
 # assume complex target
-VSMul $1{0} $1{0} 1/(ncols('$1')*nrows('$1'))
-VSMul $1{1} $1{1} 1/(ncols('$1')*nrows('$1'))
-advise "InvFFT $1 DONE"
+Assign _sfactor (ncols('$1')*nrows('$1'))
+VSMul $1{0} $1{0} 1/$_sfactor
+VSMul $1{1} $1{1} 1/$_sfactor
 .
 
 Define Wrap 2 target source

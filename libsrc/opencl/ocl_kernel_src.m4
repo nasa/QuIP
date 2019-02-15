@@ -1,5 +1,14 @@
 /* ocl_kernel_src.m4 BEGIN */
 
+dnl	BUG we need to define this here so that it is expanded
+dnl	in the kernel source code, but it may not be consistent with
+dnl	the value in include/shape_bits.h !?!?
+
+dnl	bitmap_word is typedef'd to unsigned long - is that 32 bits on the gpu???
+dnl	Tried it with 32, and it came out wrong...
+
+define(`BITS_PER_BITMAP_WORD',`64')
+
 my_include(`veclib/gen_gpu_calls.m4')
 my_include(`veclib/gpu_special_defs.m4')
 
