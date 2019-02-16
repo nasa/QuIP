@@ -1,9 +1,9 @@
 
 # test of string and size functions
 
-Vector sv 12 1 string
-Vector sv2 12 1 string
-data import_string sv "jbmulligan" quit
+Scalar sv 12 string
+Scalar sv2 12 string
+Set_String sv "jbmulligan"
 Display sv
 
 expressions

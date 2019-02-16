@@ -1900,10 +1900,8 @@ static int _assign_subrt_args(QSP_ARG_DECL Subrt *srp,Vec_Expr_Node *arg_enp,Vec
 
 
 		case T_SCAL_DECL:		/* assign_subrt_args */
-			//error1("Oops - need to implement scalar value case in assign_subrt_args!");
 			{
 			Identifier *idp;
-			// 
 			idp = get_id(VN_STRING(arg_enp));
 			assert(idp!=NULL);
 			assert(ID_SHAPE(idp)!=NULL);
@@ -3550,7 +3548,6 @@ static void _eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, 
 
 	idp = new_identifier(VN_STRING(enp));		/* eval_decl_stat */
 	SET_ID_TYPE(idp, type);
-//fprintf(stderr,"new id_type = %d\n",type);
 
 
 	assert( idp != NULL );
@@ -3565,10 +3562,7 @@ static void _eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, 
 #endif // SCALARS_NOT_OBJECTS
 
 		case ID_OBJ_REF:
-			// Here we create on object...
-//fprintf(stderr,"ID_OBJ_REF:  idp = 0x%lx\n",(long)idp);
-//fprintf(stderr,"ID_NAME(idp) = 0x%lx\n",(long)ID_NAME(idp));
-//fprintf(stderr,"ID_NAME(idp) = %s\n",ID_NAME(idp));
+			// Here we create an object...
 			SET_ID_DOBJ_CTX(idp , (Item_Context *)NODE_DATA(QLIST_HEAD(LIST_OF_DOBJ_CONTEXTS)) );
 			SET_ID_REF(idp, NEW_REFERENCE );
 			SET_REF_ID(ID_REF(idp), idp );
@@ -3578,6 +3572,8 @@ static void _eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, 
 			// if this declaration is not within a subroutine?
 			// see dangling pointer problem...  subrt_ctx
 			SET_REF_OBJ(ID_REF(idp), finish_obj_decl(enp,dsp,prec_p,decl_flags) );	/* eval_decl_stat */
+
+			set_id_shape(idp,VN_SHAPE(enp));
 
 			// This was CAUTIOUS before, but this can happen
 			// if the user tries to create an object that
@@ -3672,6 +3668,7 @@ static void _eval_extern_decl(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp
 
 			dp=dobj_of(VN_STRING(enp));
 			if( dp == NULL ){
+fprintf(stderr,"eval_extern_decl\n");
 				eval_decl_stat(prec_p,enp,decl_flags);
 				return;
 			}
@@ -4370,6 +4367,7 @@ advise(ERROR_STRING);
 			break;
 
 		case T_SCAL_DECL:
+fprintf(stderr,"reeval_decl_stat\n");
 			return ;
 
 		case T_IMG_DECL:			/* reeval_decl_stat */

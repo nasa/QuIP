@@ -25,8 +25,12 @@ endif
 cat < /dev/null > $outfile
 
 foreach d ( * )
-  set n=`grep BUG $d/*.[ch] | grep -v DEBUG | grep -v expanded.c | wc -l`
-  echo $n BUGs in dir $d >> $outfile
+  if( -d $d ) then
+    set n=`grep BUG $d/*.[ch] | grep -v DEBUG | grep -v expanded.c | wc -l`
+    if( $n > 0 ) then
+      echo $n BUGs in dir $d >> $outfile
+    endif
+  endif
 end
 
 cat $outfile | sort -n

@@ -9,7 +9,8 @@
 #include "data_obj.h"
 #include "vectree.h"
 #include "debug.h"
-#include "query_stack.h"	// BUG?
+//#include "query_stack.h"	// BUG?
+#include "vector_parser_data.h"
 
 /* for definition of function codes */
 #include "veclib/vecgen.h"
@@ -76,7 +77,7 @@ void _init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	SET_VN_PFDEV(enp, NULL);
 	SET_VN_FLAGS(enp, 0);
 	SET_VN_SERIAL(enp, node_serial++);
-	if( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL ){
+	if( THIS_VPD != NULL ){
 		SET_VN_LINENO(enp, PARSER_LINE_NUM);	/* BUG need to point to filename also */
 		SET_VN_INFILE(enp, CURR_INFILE);
 		if( CURR_INFILE != NULL ){
@@ -117,9 +118,6 @@ void _init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case ND_CAST:
 			SET_VN_CAST_PREC_PTR(enp, NULL );
 			break;
-		case ND_VFUNC:
-			SET_VN_VFUNC_CODE(enp, N_VEC_FUNCS);	/* illegal value? */
-			break;
 		case ND_FUNC:
 			SET_VN_FUNC_PTR(enp, NULL);
 			break;
@@ -129,6 +127,10 @@ void _init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case ND_BMAP:
 			SET_VN_BM_CODE(enp, N_VEC_FUNCS);		/* illegal value */
 			SET_VN_BM_SHAPE(enp, NULL);
+			break;
+
+		case ND_DOBJ:
+			SET_VN_OBJ(enp,NULL);
 			break;
 
 		case ND_NONE:
@@ -442,7 +444,6 @@ void _rls_vectree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case ND_CALLF:
 		case ND_STRING:
 		case ND_CAST:
-		case ND_VFUNC:
 		case ND_FUNC:
 		case ND_SIZE_CHANGE:
 			break;
@@ -453,6 +454,11 @@ void _rls_vectree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			break;
 		case ND_NONE:
 		case ND_UNUSED:
+			break;
+
+		case ND_DOBJ:
+			// The node points to an object - do we release the object???
+			// NO - it's just a reference...
 			break;
 
 		case N_NODE_DATA_TYPES:

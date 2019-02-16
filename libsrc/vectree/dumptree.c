@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <inttypes.h>	// PRId64 etc
 
 #include "quip_prot.h"
 //#include "savestr.h"
@@ -269,10 +270,11 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		sprintf(msg_str," %s",VF_NAME(FIND_VEC_FUNC(VN_VFUNC_CODE(enp))));
 		prt_msg_frag(msg_str);
 	} else if( code==T_CALLFUNC ){
+assert(VN_SUBRT(enp)!=NULL);
 		sprintf(msg_str," %s", SR_NAME(VN_SUBRT(enp)));
 		prt_msg_frag(msg_str);
 	} else if( code==T_LIT_INT ){
-		sprintf(msg_str," %ld",VN_INTVAL(enp));
+		sprintf(msg_str," %"PRId64, VN_INTVAL(enp) );
 		prt_msg_frag(msg_str);
 	} else if( code==T_ASSIGN ){
 		prt_msg_frag("\t");

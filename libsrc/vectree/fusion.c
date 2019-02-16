@@ -288,7 +288,7 @@ static void _emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *e
 			cat_string(sbp, ")");
 			break;
 		case T_LIT_INT:
-			sprintf(msg_str,"%ld",VN_INTVAL(enp));
+			sprintf(msg_str,"%"PRId64,VN_INTVAL(enp));
 			cat_string(sbp,msg_str);
 			break;
 		case T_LIT_DBL:

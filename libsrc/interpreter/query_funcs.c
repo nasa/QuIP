@@ -2514,6 +2514,8 @@ void set_query_readfunc( QSP_ARG_DECL  char * (*rfunc)(QSP_ARG_DECL  void *buf, 
 	SET_QRY_READFUNC(qp, rfunc);
 }
 
+#ifdef FOOBAR
+
 // We have a stack of parser environments, and a free list to keep them around
 // when they are popped...
 
@@ -2603,6 +2605,8 @@ void pop_vector_parser_data(SINGLE_QSP_ARG_DECL)
 	SET_QS_VECTOR_PARSER_DATA(THIS_QSP,vpd_p);
 }
 
+#endif // FOOBAR
+
 void _init_scalar_parser_data_at_idx(QSP_ARG_DECL  int idx)
 {
 	Scalar_Parser_Data *spd_p;
@@ -2678,6 +2682,7 @@ void init_query_stack(Query_Stack *qsp)
 
 	//SET_QS_FMT_CODE(qsp, FMT_DECIMAL);
 
+	// BUG make sure to do this before needed!
 	init_vector_parser_data_stack(qsp);
 
 	for(i=0;i<MAX_SCALAR_PARSER_CALL_DEPTH;i++){

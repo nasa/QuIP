@@ -391,7 +391,8 @@ advise("evaluating choldc...");
 
 #ifdef CAUTIOUS
 		default:
-			sprintf(ERROR_STRING,"CAUTIOUS:  eval_vt_native_work (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
+			sprintf(ERROR_STRING,
+	"CAUTIOUS:  eval_vt_native_work (vt):  unhandled keyword %s (%"PRId64")",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
 			warn(ERROR_STRING);
 //			assert( AERROR("eval_vt_native_work:  unhandled keyword!?") );
 			break;

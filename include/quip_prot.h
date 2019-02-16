@@ -57,6 +57,19 @@ extern FILE * qs_msg_file(SINGLE_QSP_ARG_DECL);
 extern void push_vector_parser_data(SINGLE_QSP_ARG_DECL);
 extern void pop_vector_parser_data(SINGLE_QSP_ARG_DECL);
 
+extern Vector_Parser_Data	* new_vector_parser_data(void);
+
+extern Vector_Parser_Data	* _qs_vector_parser_data(SINGLE_QSP_ARG_DECL);
+#define qs_vector_parser_data() _qs_vector_parser_data(SINGLE_QSP_ARG)
+
+extern List	* qs_vector_parser_data_freelist(SINGLE_QSP_ARG_DECL);
+extern List	* qs_vector_parser_data_stack(SINGLE_QSP_ARG_DECL);
+
+extern void set_vector_parser_data_stack(QSP_ARG_DECL  List *);
+extern void set_vector_parser_data_freelist(QSP_ARG_DECL  List *);
+extern void set_vector_parser_data(QSP_ARG_DECL  Vector_Parser_Data *);
+
+
 // quip_main.c
 extern void push_quip_menu(Query_Stack *qsp);
 extern void exec_quip(SINGLE_QSP_ARG_DECL);
