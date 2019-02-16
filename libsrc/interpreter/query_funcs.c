@@ -1093,7 +1093,7 @@ static char * _get_varval(QSP_ARG_DECL  char **spp)			/** see if buf containts a
 	if( strlen(vname) <= 0 ){
 		sprintf(ERROR_STRING,"null invalid variable name \"%s\"",sp);
 		advise(ERROR_STRING);
-		return(NULL);
+		return NULL;
 	}
 	val_str = var_value(vname);
 
@@ -1152,7 +1152,7 @@ advise(ERROR_STRING);
 	sprintf(ERROR_STRING,"Undefined variable \"%s\"!?",vname);
 	warn(ERROR_STRING);
 
-	return(NULL);		/* no match, no expansion */
+	return NULL;		/* no match, no expansion */
 } // end get_varval
 
 // var_expand - expand variables in a buffer
@@ -1587,7 +1587,7 @@ static char * next_word_from_input_line(SINGLE_QSP_ARG_DECL)
 	}
 
 	if( ! (word_scan_flags & RW_NWSEEN) )
-		return(NULL);
+		return NULL;
 
 	// The level should not be popped???
 	if( * QRY_LINE_PTR(qp) == 0 ){
@@ -1904,7 +1904,7 @@ const char * _nextline(QSP_ARG_DECL  const char *pline)
 	if( IS_HALTING(THIS_QSP) ){
 		if( QLEVEL > 0 )		// or should >= ???  BUG?
 			pop_file();
-		return(NULL);
+		return NULL;
 	}
 
 	qp=(CURR_QRY(THIS_QSP));
@@ -1994,7 +1994,7 @@ static const char *getmarg(QSP_ARG_DECL  int index)
 			1+index,MACRO_NAME(QRY_MACRO(qp)),
 			MACRO_N_ARGS(QRY_MACRO(qp)));
 		warn(ERROR_STRING);
-		return(NULL);
+		return NULL;
 	}
 #ifdef QUIP_DEBUG
 if( debug & qldebug ){
@@ -3081,7 +3081,7 @@ Query * _pop_file(SINGLE_QSP_ARG_DECL)
 //char *poptext(TMP_QSP_ARG_DECL  char *buf,int size,FILE* fp)
 static char *poptext(QSP_ARG_DECL  void *buf,int size,void* fp)
 {
-	return(NULL);
+	return NULL;
 }
 
 #ifdef QUIP_DEBUG
@@ -3450,60 +3450,57 @@ FILE *_tfile(SINGLE_QSP_ARG_DECL)
 //#endif // ! BUILD_FOR_OBJC
 #endif // BUILD_FOR_CMD_LINE
 
-// Return a pointer to the named variable or NULL.
-// Works for macro args, i.e. $1 $2, by using a query_stack variable
-// tmpvar.
-//
-// This also works for the cmd line args if we are not in a macro.
-//
-// which function used to be called simple_var_of?  var__of ?
+#define is_in_macro() _is_in_macro(SINGLE_QSP_ARG)
 
-Variable *_var_of(QSP_ARG_DECL const char *name)
-		/* variable name */
+static int _is_in_macro(SINGLE_QSP_ARG_DECL)
+{
+	Query *qp;
+	//DECLARE_QP;
+	qp = CURR_QRY(THIS_QSP);
+	if( qp == NULL ) return 0;
+	if( QRY_MACRO(qp) != NULL ) return 1;
+	return 0;
+}
+
+static int var_index_from_name(const char *name)
 {
 	int i;
-	Variable *vp;
 	const char *s;
-	DECLARE_QP
-
-	vp = var__of(name);
-	if( vp != NULL ) return(vp);
-
-	/* if not set, try to import from env */
-	s = getenv(name);
-	if( s != NULL ){
-		vp = new_var_(name);
-		SET_VAR_VALUE(vp,savestr(s));
-		SET_VAR_FLAGS(vp,VAR_RESERVED);
-		return(vp);
-	}
-
-	/* numbered variable? (macro arg. or cmd line arg.) */
 
 	i=0;
 	s=name;
 	while( *s ){
-		if( !isdigit(*s) ) return(NULL);
+		if( !isdigit(*s) ) return -1;
 		i*=10;
 		i+=(*s)-'0';
 		s++;
 	}
 
 	i--;	/* variables start at 1, indices at 0 */
+	return i;
+}
 
-	/* first see if we're in a macro! */
-	if( QRY_MACRO(qp) != NULL ){
-		/*
-		 * range checking is done in getmarg(),
-		 * which returns NULL if out of range.
-		 * It used to return the null string, but
-		 * this was changed so that the null string
-		 * could be a valid argument.
-		 */
-		const char *v;
-		//Variable *vp;
-		v = getmarg(QSP_ARG  i);
-		if( v == NULL ) return(NULL);
+#define macro_arg_var(name) _macro_arg_var(QSP_ARG  name)
+
+static Variable *_macro_arg_var(QSP_ARG_DECL  const char *name)
+{
+	Variable *vp;
+	int i;
+
+	/*
+	 * range checking is done in getmarg(),
+	 * which returns NULL if out of range.
+	 * It used to return the null string, but
+	 * this was changed so that the null string
+	 * could be a valid argument.
+	 */
+	const char *v;
+
+	i = var_index_from_name(name);
+	if( i < 0 ) return NULL;
+
+	v = getmarg(QSP_ARG  i);
+	if( v == NULL ) return NULL;
 
 #ifdef QUIP_DEBUG
 if( debug & qldebug ){
@@ -3524,42 +3521,95 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-		// Now we need a temporary variable;
-		// We don't want to put this in the database,
-		// because we could have a $1 at every level...
-		if( (vp=QS_TMPVAR(THIS_QSP)) == NULL ){
-			NEW_VARIABLE(vp)
-			SET_QS_TMPVAR(THIS_QSP, vp );
-		}
-		SET_VAR_NAME(vp,name);
-		SET_VAR_VALUE(vp,v);
-		SET_VAR_FLAGS(vp,VAR_RESERVED);
-		//TMPVAR.v_func = NULL;
-		return(vp);
-	} else {	/* command line arg? */
-		/*
-		 * A subtle BUG?...  Should macro args
-		 * be passed to tty redirects from
-		 * within a macro?
-		 * Here they are not...
-		 */
-		if( i >= n_cmd_args ){
-			sprintf(ERROR_STRING,
+	// Now we need a temporary variable;
+	// We don't want to put this in the database,
+	// because we could have a $1 at every level...
+	if( (vp=QS_TMPVAR(THIS_QSP)) == NULL ){
+		NEW_VARIABLE(vp)
+		SET_QS_TMPVAR(THIS_QSP, vp );
+	}
+	SET_VAR_NAME(vp,name);
+	SET_VAR_VALUE(vp,v);
+	SET_VAR_FLAGS(vp,VAR_RESERVED);
+	//TMPVAR.v_func = NULL;
+	return(vp);
+}
+
+#define cmd_arg_var(name) _cmd_arg_var(QSP_ARG  name)
+
+static Variable *_cmd_arg_var(QSP_ARG_DECL  const char * name)
+{
+	Variable *vp;
+	int i;
+
+	i = var_index_from_name(name);
+	if( i < 0 ) return NULL;
+
+	/*
+	 * A subtle BUG?...  Should macro args
+	 * be passed to tty redirects from
+	 * within a macro?
+	 * Here they are not...
+	 */
+	if( i >= n_cmd_args ){
+		sprintf(ERROR_STRING,
 "variable index %d too high; only %d command line arguments\n",
-			i+1,n_cmd_args);
-			warn(ERROR_STRING);
-			return(NULL);
-		} else {
-			char varname[32];
-			sprintf(varname,"argv%d",i+1);
-			vp = var__of(varname);
-			return(vp);
-		}
+		i+1,n_cmd_args);
+		warn(ERROR_STRING);
+		return NULL;
+	} else {
+		char varname[32];
+		sprintf(varname,"argv%d",i+1);
+		vp = var__of(varname);
+		return(vp);
+	}
+}
+
+#define numbered_variable(name) _numbered_variable(QSP_ARG  name)
+
+static Variable * _numbered_variable(QSP_ARG_DECL  const char *name)
+{
+	/* first see if we're in a macro! */
+	if( is_in_macro() ){
+		return macro_arg_var(name);
+	} else {	/* command line arg? */
+		return cmd_arg_var(name);
 	}
 	/* this suppresses a lint error message about no return val... */
 	/* NOTREACHED */
-	/* return(NULL); */
-} /* end var_of */
+	/* return NULL; */
+}
+
+// Return a pointer to the named variable or NULL.
+// Works for macro args, i.e. $1 $2, by using a query_stack variable
+// tmpvar.
+//
+// This also works for the cmd line args if we are not in a macro.
+//
+// which function used to be called simple_var_of?  var__of ?
+
+Variable *_var_of(QSP_ARG_DECL const char *name)
+		/* variable name */
+{
+	Variable *vp;
+	const char *s;
+	//DECLARE_QP
+
+	vp = var__of(name);
+	if( vp != NULL ) return(vp);
+
+	/* if not set, try to import from env */
+	s = getenv(name);
+	if( s != NULL ){
+		vp = new_var_(name);
+		SET_VAR_VALUE(vp,savestr(s));
+		SET_VAR_FLAGS(vp,VAR_RESERVED);
+		return(vp);
+	}
+
+	/* numbered variable? (macro arg. or cmd line arg.) */
+	return numbered_variable(name);
+}
 
 #ifdef HAVE_ROUND
 #define round_func	round

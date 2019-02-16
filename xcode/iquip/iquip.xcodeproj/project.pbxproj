@@ -1446,6 +1446,11 @@
 		7CCB915021A36F9E00926C39 /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCB914D21A36EB000926C39 /* no_sound.c */; };
 		7CCB915121A36FA000926C39 /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCB914D21A36EB000926C39 /* no_sound.c */; };
 		7CCB915221A36FA000926C39 /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCB914D21A36EB000926C39 /* no_sound.c */; };
+		7CCD40D822178CFB00C8E7D4 /* vector_parser_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */; };
+		7CCD40D922178FD300C8E7D4 /* vector_parser_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */; };
+		7CCD40DA22178FD400C8E7D4 /* vector_parser_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */; };
+		7CCD40DB22178FD500C8E7D4 /* vector_parser_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */; };
+		7CCD40DC22178FD500C8E7D4 /* vector_parser_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */; };
 		7CE0183C1FA2433700E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
 		7CE0183D1FA2433800E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
 		7CE0183E1FA2433900E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
@@ -1823,6 +1828,7 @@
 		7CB671D11F9501DC001FFADF /* symm_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = symm_startup.enc; path = macros/startup/symm_startup.enc; sourceTree = "<group>"; };
 		7CB8D5D81B6198B90080809C /* string_ref.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = string_ref.c; sourceTree = "<group>"; };
 		7CCB914D21A36EB000926C39 /* no_sound.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = no_sound.c; sourceTree = "<group>"; };
+		7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = vector_parser_data.c; sourceTree = "<group>"; };
 		7CE5FDFC1A60750B0029C7AE /* avCap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = avCap.m; sourceTree = "<group>"; };
 		7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		7CE5FE001A60754A0029C7AE /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
@@ -2230,6 +2236,7 @@
 		7115AE9616076BD40004645A /* vectree */ = {
 			isa = PBXGroup;
 			children = (
+				7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */,
 				7CEF2F6B1FA182F600ADC7A4 /* fusion.c */,
 				7CF4CFBB1CA5F725004F07AE /* vectree.y */,
 				7CB8D5D81B6198B90080809C /* string_ref.c */,
@@ -2981,6 +2988,7 @@
 				71829088172620E000F7CB35 /* krast.c in Sources */,
 				7182908A172620ED00F7CB35 /* lutmap.c in Sources */,
 				7C1BD1BA1C4EC9870093125D /* ios_sound.mm in Sources */,
+				7CCD40D822178CFB00C8E7D4 /* vector_parser_data.c in Sources */,
 				7182908C1726211700F7CB35 /* linmenu.c in Sources */,
 				7182908E1726214E00F7CB35 /* accel.m in Sources */,
 				718290901726218800F7CB35 /* makedobj.c in Sources */,
@@ -3127,6 +3135,7 @@
 				7C4331EE1D4D43FC0033687C /* main.m in Sources */,
 				7C4331EF1D4D43FC0033687C /* nav_panel.m in Sources */,
 				7C4331F01D4D43FC0033687C /* quipAlarm.m in Sources */,
+				7CCD40D922178FD300C8E7D4 /* vector_parser_data.c in Sources */,
 				7C4331F11D4D43FC0033687C /* quipAppDelegate.m in Sources */,
 				7C4331F21D4D43FC0033687C /* quipCanvas.m in Sources */,
 				7C4331F31D4D43FC0033687C /* quipConsole.m in Sources */,
@@ -3532,6 +3541,7 @@
 				7C4333941D4D49450033687C /* krast.c in Sources */,
 				7C4333951D4D49450033687C /* lutmap.c in Sources */,
 				7C4333961D4D49450033687C /* ios_sound.mm in Sources */,
+				7CCD40DA22178FD400C8E7D4 /* vector_parser_data.c in Sources */,
 				7C4333971D4D49450033687C /* linmenu.c in Sources */,
 				7C4333981D4D49450033687C /* accel.m in Sources */,
 				7C4333991D4D49450033687C /* makedobj.c in Sources */,
@@ -3797,6 +3807,7 @@
 				7C4D6E601D5111A400D34AC4 /* krast.c in Sources */,
 				7C4D6E611D5111A400D34AC4 /* lutmap.c in Sources */,
 				7C4D6E621D5111A400D34AC4 /* ios_sound.mm in Sources */,
+				7CCD40DB22178FD500C8E7D4 /* vector_parser_data.c in Sources */,
 				7C4D6E631D5111A400D34AC4 /* linmenu.c in Sources */,
 				7C4D6E641D5111A400D34AC4 /* accel.m in Sources */,
 				7C4D6E651D5111A400D34AC4 /* makedobj.c in Sources */,
@@ -3943,6 +3954,7 @@
 				7CB671001F9484C5001FFADF /* main.m in Sources */,
 				7CB671011F9484C5001FFADF /* nav_panel.m in Sources */,
 				7CB671021F9484C5001FFADF /* quipAlarm.m in Sources */,
+				7CCD40DC22178FD500C8E7D4 /* vector_parser_data.c in Sources */,
 				7CB671031F9484C5001FFADF /* quipAppDelegate.m in Sources */,
 				7CB671041F9484C5001FFADF /* quipCanvas.m in Sources */,
 				7CB671051F9484C5001FFADF /* quipConsole.m in Sources */,
