@@ -3476,7 +3476,6 @@ static int var_index_from_name(const char *name)
 		s++;
 	}
 
-	i--;	/* variables start at 1, indices at 0 */
 	return i;
 }
 
@@ -3497,6 +3496,7 @@ static Variable *_macro_arg_var(QSP_ARG_DECL  const char *name)
 	const char *v;
 
 	i = var_index_from_name(name);
+	i--;	/* variables start at 1, indices at 0 */
 	if( i < 0 ) return NULL;
 
 	v = getmarg(QSP_ARG  i);
@@ -3559,7 +3559,7 @@ static Variable *_cmd_arg_var(QSP_ARG_DECL  const char * name)
 		return NULL;
 	} else {
 		char varname[32];
-		sprintf(varname,"argv%d",i+1);
+		sprintf(varname,"argv%d",i);
 		vp = var__of(varname);
 		return(vp);
 	}
