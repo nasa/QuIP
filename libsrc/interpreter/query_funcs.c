@@ -3496,8 +3496,9 @@ static Variable *_macro_arg_var(QSP_ARG_DECL  const char *name)
 	const char *v;
 
 	i = var_index_from_name(name);
-	i--;	/* variables start at 1, indices at 0 */
-	if( i < 0 ) return NULL;
+	if( i <= 0 ) return NULL;
+
+	i--;	/* macro variables start at 1, indices at 0 */
 
 	v = getmarg(QSP_ARG  i);
 	if( v == NULL ) return NULL;
@@ -3551,10 +3552,14 @@ static Variable *_cmd_arg_var(QSP_ARG_DECL  const char * name)
 	 * within a macro?
 	 * Here they are not...
 	 */
+
+	// n_cmd_args counts the program name:
+	// % quip arg1 arg2
+	// would have n_cmd_args = 3, and the range of legal values 0-2
 	if( i >= n_cmd_args ){
 		sprintf(ERROR_STRING,
 "variable index %d too high; only %d command line arguments\n",
-		i+1,n_cmd_args);
+		i,n_cmd_args-1);
 		warn(ERROR_STRING);
 		return NULL;
 	} else {
