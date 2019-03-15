@@ -288,16 +288,16 @@ static int _advance_parent(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 		n_parent_bytes = BYTES_PER_BITMAP_WORD * N_BITMAP_WORDS(n_parent_elts);
 	}
 
-fprintf(stderr,"advance_parent:  n_parent_bytes = %d, n_child_bytes = %d, parent_dim_idx = %d\n",
-n_parent_bytes,n_child_bytes,parent_dim_idx);
+//fprintf(stderr,"advance_parent:  n_parent_bytes = %d, n_child_bytes = %d, parent_dim_idx = %d\n",
+//n_parent_bytes,n_child_bytes,parent_dim_idx);
 
 	// will we need another call?
 	if( n_parent_bytes < n_child_bytes ){
 		if( parent_dim_idx < (N_DIMENSIONS-1) ){
 			// see if next dimension is evenly spaced
 			if( PARENT_DIM(parent_dim_idx) * PARENT_INC(parent_dim_idx) != PARENT_INC(parent_dim_idx+1) ){
-fprintf(stderr,"advance_parent:  dim[%d] = %d, inc[%d] = %d, inc[%d] = %d\n",
-parent_dim_idx,PARENT_DIM(parent_dim_idx),parent_dim_idx,PARENT_INC(parent_dim_idx),parent_dim_idx+1,PARENT_INC(parent_dim_idx+1));
+//fprintf(stderr,"advance_parent:  dim[%d] = %d, inc[%d] = %d, inc[%d] = %d\n",
+//parent_dim_idx,PARENT_DIM(parent_dim_idx),parent_dim_idx,PARENT_INC(parent_dim_idx),parent_dim_idx+1,PARENT_INC(parent_dim_idx+1));
 				return -1;
 			}
 		} else {
@@ -335,7 +335,7 @@ static int _advance_child(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 			SET_INCREMENT(EQ_CHILD_TYPE_INCS(eqd_p),child_dim_idx,1);
 			SET_CHILD_INC(child_dim_idx,1);
 		} else {
-fprintf(stderr,"advance_child setting increment %d, curr_parent_inc = %d\n",child_dim_idx,curr_parent_inc);
+//fprintf(stderr,"advance_child setting increment %d, curr_parent_inc = %d\n",child_dim_idx,curr_parent_inc);
 			SET_CHILD_INC(child_dim_idx,(curr_parent_inc*PARENT_MACH_SIZE)/CHILD_ELT_SIZE);
 		}
 		prev_n_child_bytes = n_child_bytes;
@@ -416,7 +416,7 @@ static int _compute_child_increments(QSP_ARG_DECL  Equivalence_Data *eqd_p)
 	 * that have been used at the current level of the dimension counters.
 	 */
 
-fprintf(stderr,"starting loop, n_parent_bytes = %d, n_child_bytes = %d\n",n_parent_bytes,n_child_bytes);
+//fprintf(stderr,"starting loop, n_parent_bytes = %d, n_child_bytes = %d\n",n_parent_bytes,n_child_bytes);
 	while( parent_dim_idx < N_DIMENSIONS || child_dim_idx < N_DIMENSIONS ){
 		if( n_parent_bytes >= n_child_bytes ){
 			if( child_dim_idx < N_DIMENSIONS ){
