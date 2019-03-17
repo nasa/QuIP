@@ -131,7 +131,9 @@ static Item *_list_find_match(QSP_ARG_DECL  Container *cnt_p, const char *name)
 
 static Item *_hash_tbl_find_match(QSP_ARG_DECL  Container *cnt_p, const char *name)
 {
-	return (Item*) fetch_hash(name,cnt_p->cnt_htp);
+	Item *ip;
+	ip = (Item*) fetch_hash(name,cnt_p->cnt_htp);
+	return ip;
 }
 
 static Item *_rb_tree_find_match(QSP_ARG_DECL  Container *cnt_p, const char *name)
@@ -154,14 +156,18 @@ static void search_list_for_fragment(List *lp, Frag_Match_Info *fmi_p, const cha
 	int n;
 	Node* np;
 
+// we might assert the this frag match is associated with a list container
+// but we get here from a list-specific function so should be safe...
+// famous last words?
+
 	lp = _alpha_sort(DEFAULT_QSP_ARG  lp);	// BUG should sort in-place???
 
 	np = QLIST_HEAD(lp);
 
 	n = (int) strlen(frag);
-	fmi_p->fmi_u.li.curr_np = NULL;	// default
-	fmi_p->fmi_u.li.first_np = NULL;
-	fmi_p->fmi_u.li.last_np = NULL;
+	SET_CURR_FRAG(fmi_p, NULL);	// default
+	SET_FIRST_FRAG(fmi_p, NULL);
+	SET_LAST_FRAG(fmi_p, NULL);
 
 	while( np != NULL ){
 		const Item *ip;
@@ -172,16 +178,16 @@ static void search_list_for_fragment(List *lp, Frag_Match_Info *fmi_p, const cha
 		if( compVal == 0 ){
 			// We have found the first node that is a match,
 			// but we want also determine the last...
-			fmi_p->fmi_u.li.curr_np = np;
-			fmi_p->fmi_u.li.first_np = np;
-			fmi_p->fmi_u.li.last_np = np;
+			SET_CURR_FRAG(fmi_p, np);
+			SET_FIRST_FRAG(fmi_p, np);
+			SET_LAST_FRAG(fmi_p, np);
 			np = NODE_NEXT(np);
 			while( np != NULL ){
 				ip = NODE_DATA(np);
 				compVal = strncmp( frag, ITEM_NAME(ip), n );
 				if( compVal != 0 )
 					return;
-				fmi_p->fmi_u.li.last_np = np;
+				SET_LAST_FRAG(fmi_p, np);
 				np = NODE_NEXT(np);
 			}
 			return;
@@ -199,6 +205,7 @@ static void _list_substring_find(QSP_ARG_DECL  Frag_Match_Info *fmi_p, const cha
 	search_list_for_fragment(cnt_p->cnt_lp,fmi_p,frag);
 }
 
+#ifdef FOOBAR
 #define ht_list_container(htp) _ht_list_container(QSP_ARG  htp)
 
 static Container *_ht_list_container(QSP_ARG_DECL  Hash_Tbl *htp)
@@ -209,6 +216,7 @@ static Container *_ht_list_container(QSP_ARG_DECL  Hash_Tbl *htp)
 	cnt_p->cnt_lp = ht_list(htp);
 	return cnt_p;
 }
+#endif // FOOBAR
 
 // Because the hash table items are not sorted, we need to keep a list of the items...
 
@@ -217,13 +225,17 @@ static Container *_ht_list_container(QSP_ARG_DECL  Hash_Tbl *htp)
 static void _hash_tbl_substring_find(QSP_ARG_DECL  Frag_Match_Info *fmi_p,const char *frag)
 {
 	Container *cnt_p;
-	Container *list_cnt_p;
+	//Container *list_cnt_p;
+	List *lp;
 
 	cnt_p = FMI_CONTAINER(fmi_p);
-	list_cnt_p = ht_list_container(cnt_p->cnt_htp);
+	//list_cnt_p = ht_list_container(cnt_p->cnt_htp);
+	lp = ht_list(cnt_p->cnt_htp);
+
 	// fmi_p still points to the hash_tbl container...
-	search_list_for_fragment(list_cnt_p->cnt_lp,fmi_p,frag);
-	zap_list(list_cnt_p->cnt_lp);	// what does "zap" mean?  BUG?
+	search_list_for_fragment(lp,fmi_p,frag);
+	//zap_list(list_cnt_p->cnt_lp);	// what does "zap" mean?  BUG?
+	zap_list(lp);	// what does "zap" mean?  BUG?
 	// BUG memory leak?
 }
 
@@ -517,14 +529,14 @@ DECLARE_NEW_ENUM_FUNC(rb_tree,RB_Tree_Enumerator,cnt_tree_p)
 
 static Item *_rb_tree_frag_item(Frag_Match_Info *fmi_p)
 {
-	if( CURR_RBT_FRAG(fmi_p) == NULL ) return NULL;
+	if( CURR_FRAG(fmi_p) == NULL ) return NULL;
 
 	return RB_NODE_DATA( CURR_RBT_FRAG(fmi_p) );
 }
 
 static Item *_list_frag_item(Frag_Match_Info *fmi_p)
 {
-	if( CURR_LIST_FRAG(fmi_p) == NULL ) return NULL;
+	if( CURR_FRAG(fmi_p) == NULL ) return NULL;
 	return NODE_DATA( CURR_LIST_FRAG(fmi_p) );
 }
 
@@ -544,45 +556,44 @@ Item *current_frag_item( Frag_Match_Info *fmi_p )
 
 static const Item *_list_current_frag_match_item(Frag_Match_Info *fmi_p)
 {
-	if( fmi_p->fmi_u.li.curr_np == NULL )
+	if( CURR_FRAG(fmi_p) == NULL )
 		return NULL;
 	else
-		return fmi_p->fmi_u.li.curr_np->n_data;
+		return NODE_DATA( CURR_LIST_FRAG(fmi_p) );
 }
 
 static const Item *_rb_tree_current_frag_match_item(Frag_Match_Info *fmi_p)
 {
-	if( fmi_p->fmi_u.rbti.curr_n_p == NULL )
+	if( CURR_FRAG(fmi_p) == NULL )
 		return NULL;
 	else
-		return fmi_p->fmi_u.rbti.curr_n_p->data;
+		return RB_NODE_ITEM( CURR_RBT_FRAG(fmi_p) );
 }
 
 static const Item *_hash_tbl_current_frag_match_item(Frag_Match_Info *fmi_p)
 {
-	assert( "hash_tbl_current_frag_match_item should never be called" == NULL );
-	return NULL;
+	return _list_current_frag_match_item(fmi_p);
 }
 
 static void _list_reset_frag_match(QSP_ARG_DECL  Frag_Match_Info *fmi_p, int direction )
 {
 	if( direction == CYC_FORWARD )
-		fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.first_np;
+		SET_CURR_FRAG(fmi_p, FIRST_FRAG(fmi_p) );
 	else
-		fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.last_np;
+		SET_CURR_FRAG(fmi_p, LAST_FRAG(fmi_p) );
 }
 
 static void _rb_tree_reset_frag_match(QSP_ARG_DECL  Frag_Match_Info *fmi_p, int direction )
 {
 	if( direction == CYC_FORWARD )
-		fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.first_n_p;
+		SET_CURR_FRAG(fmi_p, FIRST_FRAG(fmi_p) );
 	else
-		fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.last_n_p;
+		SET_CURR_FRAG(fmi_p, LAST_FRAG(fmi_p) );
 }
 
 static void _hash_tbl_reset_frag_match(QSP_ARG_DECL  Frag_Match_Info *fmi_p, int direction )
 {
-	assert("hash_tbl_reset_frag_match should never be called!?"==NULL);
+	_list_reset_frag_match(QSP_ARG  fmi_p, direction );
 }
 
 static const char *_list_advance_frag_match(QSP_ARG_DECL  Frag_Match_Info * fmi_p, int direction )
@@ -592,21 +603,21 @@ static const char *_list_advance_frag_match(QSP_ARG_DECL  Frag_Match_Info * fmi_
 	assert( fmi_p != NULL );
 
 	if( direction == CYC_FORWARD ){
-		if( fmi_p->fmi_u.li.curr_np == fmi_p->fmi_u.li.last_np )
+		if( CURR_FRAG(fmi_p) == LAST_FRAG(fmi_p) )
 			return NULL;
 		else {
-			fmi_p->fmi_u.li.curr_np = NODE_NEXT(fmi_p->fmi_u.li.curr_np);
-			assert( fmi_p->fmi_u.li.curr_np != NULL );
+			SET_CURR_FRAG(fmi_p, NODE_NEXT(CURR_LIST_FRAG(fmi_p)) );
+			assert( CURR_FRAG(fmi_p) != NULL );
 		}
 	} else {
-		if( fmi_p->fmi_u.li.curr_np == fmi_p->fmi_u.li.first_np )
+		if( CURR_FRAG(fmi_p) == FIRST_FRAG(fmi_p) )
 			return NULL;
 		else {
-			fmi_p->fmi_u.li.curr_np = NODE_PREV( fmi_p->fmi_u.li.curr_np );
-			assert( fmi_p->fmi_u.li.curr_np != NULL );
+			SET_CURR_FRAG(fmi_p, NODE_PREV( CURR_LIST_FRAG(fmi_p) ));
+			assert( CURR_FRAG(fmi_p) != NULL );
 		}
 	}
-	ip = fmi_p->fmi_u.li.curr_np->n_data;
+	ip = NODE_DATA( CURR_LIST_FRAG(fmi_p) );
 	return ip->item_name;
 }
 
@@ -618,28 +629,50 @@ static const char *_rb_tree_advance_frag_match(QSP_ARG_DECL  Frag_Match_Info * f
 	assert( fmi_p != NULL );
 
 	if( direction == CYC_FORWARD ){
-		if( fmi_p->fmi_u.rbti.curr_n_p == fmi_p->fmi_u.rbti.last_n_p )
+		if( CURR_FRAG(fmi_p) == LAST_FRAG(fmi_p) )
 			return NULL;
 		else {
-			fmi_p->fmi_u.rbti.curr_n_p = rb_successor_node( fmi_p->fmi_u.rbti.curr_n_p );
-			assert( fmi_p->fmi_u.rbti.curr_n_p != NULL );
+			SET_CURR_FRAG(fmi_p, rb_successor_node( CURR_RBT_FRAG(fmi_p) ) );
+			assert( CURR_FRAG(fmi_p) != NULL );
 		}
 	} else {
-		if( fmi_p->fmi_u.rbti.curr_n_p == fmi_p->fmi_u.rbti.first_n_p )
+		if( CURR_FRAG(fmi_p) == FIRST_FRAG(fmi_p) )
 			return NULL;
 		else {
-			fmi_p->fmi_u.rbti.curr_n_p = rb_predecessor_node( fmi_p->fmi_u.rbti.curr_n_p );
-			assert( fmi_p->fmi_u.rbti.curr_n_p != NULL );
+			SET_CURR_FRAG(fmi_p,rb_predecessor_node( CURR_RBT_FRAG(fmi_p) ));
+			assert( CURR_FRAG(fmi_p) != NULL );
 		}
 	}
-	ip = fmi_p->fmi_u.rbti.curr_n_p->data;
-	return ip->item_name;
+	ip = RB_NODE_ITEM( CURR_RBT_FRAG(fmi_p) );
+	return ITEM_NAME(ip);
 }
 
 static const char *_hash_tbl_advance_frag_match(QSP_ARG_DECL  Frag_Match_Info * fmi_p, int direction )
 {
-	assert( "hash_tbl_advance_frag_match should never be called" == NULL );
-	return NULL;
+	Item *ip;
+	List *lp;
+
+	// there may be no items!?
+	assert( fmi_p != NULL );
+
+	lp = FMI_HT_LIST(fmi_p);
+	if( direction == CYC_FORWARD ){
+		if( CURR_FRAG(fmi_p) == LAST_FRAG(fmi_p) )
+			return NULL;
+		else {
+			SET_CURR_FRAG(fmi_p, NODE_NEXT( CURR_LIST_FRAG(fmi_p) ) );
+			assert( CURR_FRAG(fmi_p) != NULL );
+		}
+	} else {
+		if( CURR_FRAG(fmi_p) == FIRST_FRAG(fmi_p) )
+			return NULL;
+		else {
+			SET_CURR_FRAG(fmi_p, NODE_PREV( CURR_LIST_FRAG(fmi_p) ) );
+			assert( CURR_FRAG(fmi_p) != NULL );
+		}
+	}
+	ip = NODE_DATA( CURR_LIST_FRAG(fmi_p) );
+	return ip->item_name;
 }
 
 static void _list_init_data(Container *cnt_p)

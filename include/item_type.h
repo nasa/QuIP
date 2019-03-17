@@ -20,11 +20,16 @@ typedef struct {
 	Node *		last_np;
 } list_frag_match_info;
 
+typedef struct {
+	List *			hti_lp;
+} ht_frag_match_info;
+
 // frag_match_info - 
 // We store information for each partial match, including the fragment,
 // the item context, and container-specific match info
 //
 // When there is a stack of contexts, we can have a stack of these?
+// ans:  match_cycle ...
 
 struct frag_match_info {
 	Item				it;		// the partial string - stored in their own context
@@ -32,9 +37,16 @@ struct frag_match_info {
 	u_long				fmi_item_serial;
 
 	//int type;	// LIST_CONTAINER or RB_TREE_CONTAINER
+	// Now we get container type from the context...
+
+	void *				fmi_curr_p;
+	void *				fmi_first_p;
+	void *				fmi_last_p;
+
 	union {
 		rbtree_frag_match_info	rbti;
 		list_frag_match_info	li;
+		ht_frag_match_info	hti;
 	} fmi_u;
 } ;
 
@@ -46,8 +58,37 @@ struct frag_match_info {
 #define FMI_CTX(fmi_p)			(fmi_p)->fmi_icp
 #define SET_FMI_CTX(fmi_p,icp)		(fmi_p)->fmi_icp = icp
 
-#define CURR_RBT_FRAG(fmi_p)	(fmi_p)->fmi_u.rbti.curr_n_p
-#define CURR_LIST_FRAG(fmi_p)	(fmi_p)->fmi_u.li.curr_np
+#define CURR_FRAG(fmi_p)	(fmi_p)->fmi_curr_p
+#define FIRST_FRAG(fmi_p)	(fmi_p)->fmi_first_p
+#define LAST_FRAG(fmi_p)	(fmi_p)->fmi_last_p
+
+#define SET_CURR_FRAG(fmi_p,v)	(fmi_p)->fmi_curr_p = v
+#define SET_FIRST_FRAG(fmi_p,v)	(fmi_p)->fmi_first_p = v
+#define SET_LAST_FRAG(fmi_p,v)	(fmi_p)->fmi_last_p = v
+
+#define CURR_RBT_FRAG(fmi_p)	(qrb_node *)CURR_FRAG(fmi_p)
+#define FIRST_RBT_FRAG(fmi_p)	(qrb_node *)FIRST_FRAG(fmi_p)
+#define LAST_RBT_FRAG(fmi_p)	(qrb_node *)LAST_FRAG(fmi_p)
+
+#define CURR_LIST_FRAG(fmi_p)	(Node *)CURR_FRAG(fmi_p)
+#define FIRST_LIST_FRAG(fmi_p)	(Node *)FIRST_FRAG(fmi_p)
+#define LAST_LIST_FRAG(fmi_p)	(Node *)LAST_FRAG(fmi_p)
+
+/*
+#define SET_CURR_RBT_FRAG(fmi_p,v)	(fmi_p)->fmi_u.rbti.curr_n_p = v
+#define SET_FIRST_RBT_FRAG(fmi_p,v)	(fmi_p)->fmi_u.rbti.first_n_p = v
+#define SET_LAST_RBT_FRAG(fmi_p,v)	(fmi_p)->fmi_u.rbti.last_n_p = v
+
+#define SET_CURR_LIST_FRAG(fmi_p,v)	(fmi_p)->fmi_u.li.curr_np = v
+#define SET_FIRST_LIST_FRAG(fmi_p,v)	(fmi_p)->fmi_u.li.first_np = v
+#define SET_LAST_LIST_FRAG(fmi_p,v)	(fmi_p)->fmi_u.li.last_np = v
+
+#define SET_CURR_HT_FRAG(fmi_p,v)	(fmi_p)->fmi_u.hti.hti_li.curr_np = v
+#define SET_FIRST_HT_FRAG(fmi_p,v)	(fmi_p)->fmi_u.hti.hti_li.first_np = v
+#define SET_LAST_HT_FRAG(fmi_p,v)	(fmi_p)->fmi_u.hti.hti_li.last_np = v
+*/
+
+#define FMI_HT_LIST(fmp_p)	(fmi_p)->fmi_u.hti.hti_lp
 
 // What is a match_cycle?
 //
@@ -86,7 +127,7 @@ struct item_context {
 	Container *		ic_cnt_p;	// the primary container
 	u_long			ic_item_serial;	// count changes to the container
 
-	List *			ic_lp;			// list of items in this context
+	List *			ic_lp;		// list of items in this context
 	u_long			ic_list_serial;	// when list was last updated
 
 	Item_Type *		ic_itp;		// points to the owner of this context

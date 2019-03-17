@@ -1666,7 +1666,7 @@ static void rebuild_match_cycle(QSP_ARG_DECL  Match_Cycle *mc_p)
 	}
 	SET_MATCH_CYCLE_CURR_NODE(mc_p,NULL);
 
-	// Now rebuild
+	// Now rebuild, scan the whole context stack
 	np = QLIST_HEAD( ITCI_CSTK( THIS_ITCI( MATCH_CYCLE_IT(mc_p)) ));
 	while( np != NULL ){
 		Frag_Match_Info *fmi_p;
@@ -1717,6 +1717,9 @@ static void update_match_cycle(QSP_ARG_DECL  Match_Cycle *mc_p)
 		rebuild_match_cycle(QSP_ARG  mc_p);
 	}
 }
+
+// We can't cycle through a hash table as we can a list or tree,
+// so we have to construct match "cycles" of partial matches...
 
 const char *_find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
 {

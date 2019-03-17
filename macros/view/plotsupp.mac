@@ -89,6 +89,9 @@ If !var_exists('$1')
 
 # Unset old axis vars to make sure that we don't inherit from
 # a previous viewer?
+#
+# This is not currently called, because it was killing x_tick_first read from
+# plot param file!?
 
 Define Clear_Axis_Vars 0
 UnSet_If xmin
@@ -266,7 +269,7 @@ Select_Pen $default_fg
 Assign_Margins			# margins by default...
 Grid_Color $gray
 Erase_Plot
-Clear_Axis_Vars
+#Clear_Axis_Vars	# BUG this can obliterate settings read from plot param file!?
 #advise "Init_New_Plotter:  '$1'"
 # This causes trouble if we allow spaces in the plotter name
 Get_Param_Vec_Name $1

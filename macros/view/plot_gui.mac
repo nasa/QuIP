@@ -23,11 +23,7 @@ Set symbol_size	1
 Set max_custom_ticks	20
 Set max_tick_label_len	20
 
-#Vector x_tick_posn_list $max_custom_ticks 1 float
-#Vector x_tick_label_list $max_custom_ticks $max_tick_label_len string
 Set n_x_custom_ticks 0
-#Vector y_tick_posn_list $max_custom_ticks 1 float
-#Vector y_tick_label_list $max_custom_ticks $max_tick_label_len string
 Set n_y_custom_ticks 0
 
 
@@ -83,6 +79,7 @@ Set custom_tick_widget_name 'Custom Ticks'
 Set data_series_widget_name 'Data Series'
 Set data_source_file_widget_name 'Source file'
 Set data_legend_toggle_widget_name 'Legend'
+Set errbar_toggle_widget_name 'Error Bars'
 Set data_legend_text_widget_name 'Data legend text'
 Set data_legend_x_widget_name 'Data legend X'
 Set data_legend_y_widget_name 'Data legend Y'
@@ -111,6 +108,7 @@ Set save_filename_stem $plot_name
 Set series_line_thickness 1
 Set series_symbol_size 4
 Set series_show_legend	0
+Set series_show_errbars	0
 Set series_legend_text no_legend
 Set series_legend_x 0
 Set series_legend_y 0
@@ -223,8 +221,12 @@ If obj_exists(series_pts) "Delete_Image series_pts"
 If obj_exists(series_raw_pts) "Delete_Image series_raw_pts"
 Count_Lines nl $series_filename
 Count_Columns nc $series_filename
-If $nc!=2 "warn 'Get_Series_Points:  expected file $series_filename to have 2 columns!?' exit_macro"
-Vector series_raw_pts $nl 2 float
+# errbars
+If $series_show_errbars
+  Then "Set n_expected 3"
+  Else "Set n_expected 2"
+If $nc!=$n_expected "warn 'Get_Series_Points:  expected file $series_filename to have 2 columns!?' exit_macro"
+Vector series_raw_pts $nl $nc float
 Get_Ascii series_raw_pts $series_filename
 #Reveal series_raw_pts
 Vector series_pts $nl 2 float
@@ -272,10 +274,40 @@ Transform_Series
 Select_Pen $series_color_index
 If $series_line_thickness==1 "XYPlot series_pts"
 If $series_line_thickness>1 "Thick_Plot $series_line_thickness series_pts"
-#Print series_symbol
+If $series_show_errbars Refresh_Series_Errbars
 If strcmp('$series_symbol','none') "Symbol $series_symbol $series_symbol_size Symbol_Plot series_pts"
-#Print series_show_legend
 If $series_show_legend Refresh_Series_Legend
+.
+
+Set errbar_width_pixels 3
+
+Define Get_Errbar_Path 1 pt_index
+If !obj_exists(errbar_path) "Vector errbar_path 6 2 float"
+Assign x value(series_pts[$1]{0})
+Assign y value(series_pts[$1]{1})
+Assign dy value(series_raw_pts[$1]{2})
+Screen_2_Plot_Delta dx foo_dont_care $errbar_width_pixels 1
+data ascii read errbar_path -
+	$x-$dx	$y+$dy
+	$x+$dx	$y+$dy
+	$x	$y+$dy
+	$x	$y-$dy
+  	$x-$dx	$y-$dy
+	$x+$dx	$y-$dy
+  quit quit
+#Display errbar_path
+.
+
+# data in series_raw_pts
+Define Refresh_Series_Errbars 0
+# What about log transform?
+Assign n_pts ncols(series_raw_pts)
+Set pt_idx 0
+repeat $n_pts
+  Get_Errbar_Path $pt_idx
+  XYPlot errbar_path
+  Increment pt_idx
+  end
 .
 
 # Bug the symbol coords is in screen units?
@@ -511,7 +543,6 @@ Panel_On $grid_panel
 
 Define TogAxisLogValues 0
 advise TogAxisLogValues
-Print axis_logv_name
 Set $axis_logv_name $toggle_state
 Refresh_Plot
 .
@@ -611,6 +642,7 @@ Update_Edit_Text $data_source_file_widget_name '(no file specified)' $data_edit_
 Update_Chooser Color $series_color $data_edit_panel
 Update_Chooser Symbol $series_symbol $data_edit_panel
 Update_Toggle $data_legend_toggle_widget_name 0 $data_edit_panel
+Update_Toggle $errbar_toggle_widget_name 0 $data_edit_panel
 Update_Edit_Text $data_legend_text_widget_name no_legend $data_edit_panel
 Update_Edit_Text $data_legend_x_widget_name 0 $data_edit_panel
 Update_Edit_Text $data_legend_y_widget_name 0 $data_edit_panel
@@ -658,15 +690,16 @@ Set plot_type $choice
 .
 
 Define GenPanel 0
+advise "GenPanel BEGIN"
 interface
   decorate $gen_panel
     set_edit_text $plot_legend_text_widget_name "$plot_legend_text"
     set_edit_text $plot_legend_x_widget_name "$plot_legend_x"
     set_edit_text $plot_legend_y_widget_name "$plot_legend_y"
-    # chooser
-    chooser 'Plot type' SetPlotType 2 'points' 'bar'
+    # set the chooser state???
     quit
   quit
+advise "GenPanel will update toggles"
 Update_Toggle $plot_frame_toggle_widget_name $show_frame $gen_panel
 Update_Toggle $plot_legend_toggle_widget_name $show_plot_legend $gen_panel
 Panel_Off $main_panel
@@ -723,6 +756,7 @@ Load_Series_Var $1 symbol_size
 Load_Series_Var $1 line_thickness
 
 Load_Series_Var $1 show_legend
+Load_Series_Var $1 show_errbars
 Load_Series_Var $1 legend_text
 Load_Series_Var $1 legend_x
 Load_Series_Var $1 legend_y
@@ -731,15 +765,10 @@ Load_Series_Var $1 legend_y
 
 Define Store_Tick_Vars 0
 advise Store_Tick_Vars
-Print custom_tick_posn
-Print custom_tick_label
-Print current_tick_index
 Set vname ${which_axis}_tick_${current_tick_index}_posn
 Set $vname $custom_tick_posn
-Print vname
 Set vname ${which_axis}_tick_${current_tick_index}_label
 Set $vname $custom_tick_label
-Print vname
 .
 
 # Store_Series_Vars - transfer the general global vars into  the variables for a particular series
@@ -755,6 +784,7 @@ Store_Series_Var $1 symbol_size
 Store_Series_Var $1 line_thickness
 
 Store_Series_Var $1 show_legend
+Store_Series_Var $1 show_errbars
 Store_Series_Var $1 legend_text
 Store_Series_Var $1 legend_x
 Store_Series_Var $1 legend_y
@@ -899,6 +929,7 @@ interface
     quit
   quit
 Update_Toggle $data_legend_toggle_widget_name $series_show_legend $data_edit_panel
+Update_Toggle $errbar_toggle_widget_name $series_show_errbars $data_edit_panel
 Panel_Off $data_panel
 Panel_On $data_edit_panel
 .
@@ -1012,18 +1043,19 @@ Refresh_Plot
 Load_Series_Vars $curr_series_name
 .
 
+Define TogErrorBars 0
+Set series_show_errbars $toggle_state
+Store_Series_Vars $curr_series_name
+Refresh_Plot
+Load_Series_Vars $curr_series_name
+.
+
 Define SetDataLegendText 0
 Get_Text_Var $data_edit_panel $data_legend_text_widget_name series_legend_text
-#Store_Series_Vars $curr_series_name
-#Refresh_Plot
-#Load_Series_Vars $curr_series_name
 .
 
 Define SetDataLegendX 0
 Get_Text_Var $data_edit_panel $data_legend_x_widget_name series_legend_x
-#Store_Series_Vars $curr_series_name
-#Refresh_Plot
-#Load_Series_Vars $curr_series_name
 .
 
 Define SetTickPosn 0
@@ -1061,9 +1093,6 @@ Get_Text_Var $image_edit_panel $image_zoom_y_widget_name image_zoom_y
 
 Define SetDataLegendY 0
 Get_Text_Var $data_edit_panel $data_legend_y_widget_name series_legend_y
-#Store_Series_Vars $curr_series_name
-#Refresh_Plot
-#Load_Series_Vars $curr_series_name
 .
 
 Define DataEditRefreshPlot 0
@@ -1464,6 +1493,7 @@ repeat $n_data_series
   Save_Series_Param $i symbol
   Save_Series_Param $i symbol_size
   Save_Series_Param $i line_thickness
+  Save_Series_Param $i show_errbars
 
   # save series legend parameters...
   Save_Series_Param $i show_legend
@@ -1572,19 +1602,46 @@ echo "$plot_legend_x gxu $plot_legend_y gyu moveto"
 echo "($plot_legend_text) show"
 .
 
+Define Emit_Std_Y_Axis 0
+Set y $y_tick_first
+do
+  echo "($y) $y	ylabeltick"
+  Add_Var y $y_tick_spacing
+  while $y<=$y_tick_last
+.
+
 Define Emit_Axes 0
 echo "$xmin gxu $ymin gyu moveto"
 echo "$xmax gxu $ymin gyu l"
 echo "$xmin gxu $ymin gyu moveto"
 echo "$xmin gxu $ymax gyu l"
 
-Set y $y_tick_first
-do
-  echo "($y) $y	ylabeltick"
-  Add_Var y $y_tick_spacing
-  while $y<=$y_tick_last
+# custom?
+
+If $y_tick_auto
+  Then Emit_Std_Y_Axis
+  Else Emit_Custom_Y_Axis
+
 echo "($y_legend) ylegend"
 echo "($x_legend) xlegend"
+If $x_tick_auto
+  Then Emit_Std_X_Axis
+  Else Emit_Custom_X_Axis
+.
+
+Define Emit_Custom_X_Axis 0
+Set tick_idx 0
+repeat $n_x_custom_ticks
+  Set varname x_tick_${tick_idx}_posn
+  Set x $$varname
+  Set varname x_tick_${tick_idx}_label
+  Set s $$varname
+  echo "($s) $x	xlabeltick"
+  Increment tick_idx
+  end
+.
+
+Define Emit_Std_X_Axis 0
 Set x $x_tick_first
 do
   echo "($x) $x	xlabeltick"
@@ -1608,6 +1665,19 @@ repeat ncols($1)-1
   Assign y value($1[$pt_idx]{1})
   echo "$x gxu $y gyu l"
   end
+.
+
+Define Emit_Series_Errbars 0
+Set _ese_idx 0
+repeat ncols(series_pts)
+  Emit_Point_Errbars $_ese_idx
+  Increment _ese_idx
+  end
+.
+
+Define Emit_Point_Errbars 1 pt_idx
+Get_Errbar_Path $1
+Emit_Curve errbar_path 1
 .
 
 # Originally, we would use a 6" x 6" plotting area on the page,
@@ -1755,8 +1825,9 @@ repeat ncols(series_pts)
   Emit_Symbol_At $x $y
   Increment pt_idx
   end
+# BUG - should emit error bars before all curves so are painted behind?
+If $series_show_errbars Emit_Series_Errbars
 # draw the curve legend if there is one
-# series_legend
 If $series_show_legend Emit_Series_Legend
 .
 
@@ -2048,6 +2119,7 @@ interface
   decorate $data_edit_panel
     text $series_nickname_widget_name SetSeriesNickname seriesNNN
     text $data_source_file_widget_name SetSeriesSourceFile /dev/null	# Use file chooser?
+    toggle $errbar_toggle_widget_name TogErrorBars
     toggle $data_legend_toggle_widget_name TogDataLegend
     text $data_legend_text_widget_name SetDataLegendText no_legend
     text $data_legend_x_widget_name SetDataLegendX 0
@@ -2107,6 +2179,7 @@ interface
     text $plot_legend_text_widget_name SetPlotLegendText $plot_legend_text
     text $plot_legend_x_widget_name SetPlotLegendX $plot_legend_x
     text $plot_legend_y_widget_name SetPlotLegendY $plot_legend_y
+    chooser 'Plot type' SetPlotType 2 'points' 'bar'
     button 'Refresh plot' Refresh_Plot
     button Done 'Panel_Off $gen_panel Panel_On $main_panel'
     quit
@@ -2188,7 +2261,13 @@ Get_Next eoi_tmp $1
 # Here we need to print the image in postscript format...
 Assign dx ncols(eoi_tmp)
 Assign dy nrows(eoi_tmp)
-If depth(eoi_tmp)!=1 "error_exit 'Emit_One_Image:  Sorry, only know how to emit grayscale images...'"
+If depth(eoi_tmp)==1 "Emit_Grayscale_Image eoi_tmp $2 $3 $4 $5"
+If depth(eoi_tmp)==3 "Emit_RGB_Image eoi_tmp $2 $3 $4 $5"
+Delete_Image eoi_tmp
+.
+
+Define Emit_Grayscale_Image 5 image x y extent_x extent_y
+If depth($1)!=1 "error_exit 'Emit_Grayscale_Image:  image $1 depth is not 1!?'"
 # width height bitspersample matrix datasrc image
 echo "/picstr $dx string def"
 # Need translate and scale commands here to place the image...
@@ -2213,8 +2292,39 @@ echo "$dx $dy 8 [1 0 0 1 0 0]"
 echo "{currentfile picstr readhexstring pop}"	# procedure to read data
 echo image
 # Slow_Emit_Image_Data
-Fast_Emit_Image_Data eoi_tmp
-Delete_Image eoi_tmp
+Fast_Emit_Image_Data $1
+echo grestore
+.
+
+Define Emit_RGB_Image 5 image x y extent_x extent_y
+If depth($1)!=3 "error_exit 'Emit_RGB_Image:  image $1 depth is not 3!?'"
+# width height bitspersample matrix datasrc image
+Assign samples_per_row 3*$dx
+echo "/picstr $samples_per_row string def"
+# Need translate and scale commands here to place the image...
+# First figure out how many plot units the image takes up
+# This gets us the size of the image (unscaled) in plot units
+advise "OLD calculation dx = $dx   dy = $dy"
+###Screen_2_Plot_Delta pdx pdy $dx $dy
+###advise "pdx = $pdx   pdy = $pdy     ($dx, $dy)"
+###Mul_Var pdx $4/$dx
+###Mul_Var pdy $5/$dy
+Assign pdx 1/$dx
+Assign pdy 1/$dy
+advise "OLD calculation pdx = $pdx   pdy = $pdy"
+Assign pdx $4/$dx
+Assign pdy $5/$dy
+advise "New calculation  ext_x = $4  ext_y = $5   pdx = $pdx   pdy = $pdy"
+echo gsave
+echo "$2 gxu $3 gyu translate"
+echo "$pdx gdxu $pdy gdyu scale"
+#echo "$dx $dy 8 [$dx 0 0 $dy 0 0]"
+echo "$dx $dy 8 [1 0 0 1 0 0]"
+echo "{currentfile picstr readhexstring pop}"	# procedure to read data
+echo "false 3"		# postscript manual says, "single data source, 3 colors"
+echo colorimage
+# Slow_Emit_Image_Data
+Fast_Emit_Image_Data $1
 echo grestore
 .
 
@@ -2225,6 +2335,7 @@ If obj_exists(flipped) 'Delete_Image flipped'
 Subsample_Image flipped $1
 	ncols('$1') 0 1
 	nrows('$1') nrows('$1')-1 -1
+Pause
 data
   ascii
     output_fmt postscript
