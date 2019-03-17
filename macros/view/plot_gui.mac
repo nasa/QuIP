@@ -20,6 +20,17 @@ Set plot_legend_y 0
 Set show_plot_frame 0
 Set symbol_size	1
 
+Set max_custom_ticks	20
+Set max_tick_label_len	20
+
+#Vector x_tick_posn_list $max_custom_ticks 1 float
+#Vector x_tick_label_list $max_custom_ticks $max_tick_label_len string
+Set n_x_custom_ticks 0
+#Vector y_tick_posn_list $max_custom_ticks 1 float
+#Vector y_tick_label_list $max_custom_ticks $max_tick_label_len string
+Set n_y_custom_ticks 0
+
+
 # We can't have spaces in the window name, because a colormap object is created
 # using it, and data objects can't have spaces in their names...
 # We could fix this by fixing the name, in xsupp.c?
@@ -29,7 +40,9 @@ Set main_panel "Plot Generator"
 Set plot_name_widget_name 'Plot name'
 Set gen_panel "General Plot Parameters"
 Set axis_panel_name "Axis Settings"
-Set tick_panel_name "Tick Settings"
+Set std_tick_panel_name "Standard Tick Settings"
+Set custom_tick_panel_name "Custom Ticks"
+Set tick_edit_panel "Edit Tick"
 Set x_axis_panel "X Axis"
 Set axis_legend_widget_name "Legend"
 Set axis_max_widget_name "Max"
@@ -52,6 +65,9 @@ Set image_edit_panel "Edit Embedded Image"
 Set grid_edit_panel "Edit Data Grid"
 Set save_panel "Save Plot Image"
 
+Set tick_posn_widget_name	"Location"
+Set tick_label_widget_name	"Label"
+
 Set series_nickname_widget_name	"Nickname"
 Set image_nickname_widget_name	"Nickname"
 Set grid_nickname_widget_name	"Nickname"
@@ -61,6 +77,8 @@ Set plot_legend_toggle_widget_name 'Plot legend'
 Set plot_legend_text_widget_name 'Plot legend text'
 Set plot_legend_x_widget_name 'Plot legend X'
 Set plot_legend_y_widget_name 'Plot legend Y'
+
+Set custom_tick_widget_name 'Custom Ticks'
 
 Set data_series_widget_name 'Data Series'
 Set data_source_file_widget_name 'Source file'
@@ -365,6 +383,12 @@ Set $api_axis_min_name $$axis_min_name
 Set $api_axis_max_name $$axis_max_name
 Set $api_axis_legend_name $$axis_legend_name
 
+If $$tick_auto_name
+  Then Install_Std_Linear_Axis_Vars
+  Else Install_Custom_Linear_Axis_Vars
+.
+
+Define Install_Std_Linear_Axis_Vars 0
 Set $api_tick_spacing_name $$tick_spacing_name
 Check_Var $tick_first_name $$axis_min_name
 Assign $api_tick_first_name $$tick_first_name-$$axis_min_name	# api uses offset, not first posn
@@ -372,15 +396,31 @@ Check_Var $tick_last_name $$axis_max_name
 Assign $api_tick_last_name $$tick_last_name
 .
 
+Define Install_Custom_Linear_Axis_Vars 0
+.
+
 Define Install_Log_Axis_Vars 0
 If $$axis_min_name<=0
   "warn '$which_axis-axis min must be positive for log axis' Set $axis_min_name 0.000001"
-Assign $api_axis_min_name floor(log($$axis_min_name)/log(10))
-Assign $api_axis_max_name ceil(log($$axis_max_name)/log(10))
+#Assign $api_axis_min_name floor(log($$axis_min_name)/log(10))
+#Assign $api_axis_max_name ceil(log($$axis_max_name)/log(10))
+Assign $api_axis_min_name log10($$axis_min_name)
+Assign $api_axis_max_name log10($$axis_max_name)
+#Set $api_axis_legend_name "log $$axis_legend_name"
+Set $api_axis_legend_name "$$axis_legend_name"
+
+If $$tick_auto_name
+  Then Install_Std_Log_Axis_Vars
+  Else Install_Custom_Log_Axis_Vars
+.
+
+Define Install_Std_Log_Axis_Vars 0
 Assign $api_tick_spacing_name $$tick_spacing_name
 Assign $api_tick_first_name $$tick_first_name-$$api_axis_min_name
 Assign $api_tick_last_name $$tick_last_name
-Set $api_axis_legend_name "log $$axis_legend_name"
+.
+
+Define Install_Custom_Log_Axis_Vars 0
 .
 
 Define Install_Both_Axis_Vars 0
@@ -430,7 +470,9 @@ XYPlot frame_coords
 
 Define TicksPanel 0
 Panel_Off $axis_panel_name
-Panel_On $tick_panel_name
+If $$tick_auto_name
+  Then "Panel_On '$std_tick_panel_name'"
+  Else "Update_Tick_Choices Panel_On '$custom_tick_panel_name'"
 .
 
 Define XAxisPanel 0
@@ -493,15 +535,15 @@ Set $tick_auto_name $toggle_state
 .
 
 Define SetTickSpacing 0
-Get_Text_Var $tick_panel_name $tick_spacing_widget_name $tick_spacing_name
+Get_Text_Var $std_tick_panel_name $tick_spacing_widget_name $tick_spacing_name
 .
 
 Define SetTickFirst 0
-Get_Text_Var $tick_panel_name $tick_first_widget_name $tick_first_name
+Get_Text_Var $std_tick_panel_name $tick_first_widget_name $tick_first_name
 .
 
 Define SetTickLast 0
-Get_Text_Var $tick_panel_name $tick_last_widget_name $tick_last_name
+Get_Text_Var $std_tick_panel_name $tick_last_widget_name $tick_last_name
 .
 
 Define TogFontBold 0
@@ -523,6 +565,10 @@ Define SelectSeries 0
 Set selected_series_nickname $selection
 .
 
+Define SelectTick 0
+Set selected_tick_string $selection
+.
+
 Define SelectImage 0
 Set selected_image_nickname $selection
 .
@@ -539,6 +585,16 @@ Define SelectGrid 0
 Set selected_grid_nickname $selection
 .
 
+# AddTick - create a custom tick
+
+Define AddTick 0
+Set current_tick_index $$tick_count_name
+Increment $tick_count_name
+# BUG check against max
+Panel_Off $custom_tick_panel_name
+Panel_On $tick_edit_panel
+.
+
 # AddData - create a new series
 
 Define AddData 0
@@ -550,28 +606,6 @@ Set series_nickname $curr_series_name	# default
 Set series_color black
 Set series_symbol none
 Set_Color_Index_From_Name $series_color
-# should this really be editable?
-#interface
-#  decorate $data_edit_panel
-#    set_edit_text $series_nickname_widget_name $series_nickname
-#    set_edit_text $data_source_file_widget_name '(no file specified)'
-#    set_choice Color $series_color
-#    set_choice Symbol $series_symbol
-#
-#    set_toggle $data_legend_toggle_widget_name no
-#    set_edit_text $data_legend_text_widget_name no_legend
-#    set_edit_text $data_legend_x_widget_name 0
-#    set_edit_text $data_legend_y_widget_name 0
-#
-##    If $series_show_legend
-##      Then "set_toggle $data_legend_toggle_widget_name yes"
-##      Else "set_toggle $data_legend_toggle_widget_name no"
-##    set_edit_text $data_legend_text_widget_name $series_legend_text
-##    set_edit_text $data_legend_x_widget_name $series_legend_x
-##    set_edit_text $data_legend_y_widget_name $series_legend_y
-#
-#    quit
-#  quit
 Update_Edit_Text $series_nickname_widget_name $series_nickname $data_edit_panel
 Update_Edit_Text $data_source_file_widget_name '(no file specified)' $data_edit_panel
 Update_Chooser Color $series_color $data_edit_panel
@@ -693,6 +727,19 @@ Load_Series_Var $1 legend_text
 Load_Series_Var $1 legend_x
 Load_Series_Var $1 legend_y
 #Display_Series_Vars series
+.
+
+Define Store_Tick_Vars 0
+advise Store_Tick_Vars
+Print custom_tick_posn
+Print custom_tick_label
+Print current_tick_index
+Set vname ${which_axis}_tick_${current_tick_index}_posn
+Set $vname $custom_tick_posn
+Print vname
+Set vname ${which_axis}_tick_${current_tick_index}_label
+Set $vname $custom_tick_label
+Print vname
 .
 
 # Store_Series_Vars - transfer the general global vars into  the variables for a particular series
@@ -856,6 +903,40 @@ Panel_Off $data_panel
 Panel_On $data_edit_panel
 .
 
+Define Find_Tick_From_Label 2 varname label
+advise "Find_Tick_From_Label '$2' BEGIN"
+Set $1 -1	# error indicator
+If $$tick_count_name<=0 "error_exit 'Find_Tick_From_Label:  no ticks!?'"
+Set tick_idx 0
+repeat $$tick_count_name
+  Set vname ${which_axis}_tick_${tick_idx}_label
+  If !strcmp('$$vname','$2') "Set $1 $tick_idx exit_macro"
+  Increment tick_idx
+  end
+.
+
+Define EditTick 0
+If !strcmp('$selected_tick_string','no_tick') "No_Tick_Msg exit_macro"
+Find_Tick_From_Label current_tick_index $selected_tick_string
+If $current_tick_index<0 "advise 'Could not find tick from string!?' exit_macro"
+Load_Tick_Vars $current_tick_index
+interface
+  decorate $tick_edit_panel
+    set_edit_text $tick_posn_widget_name $custom_tick_posn
+    set_edit_text $tick_label_widget_name $custom_tick_label
+    quit
+  quit
+Panel_Off $custom_tick_panel_name
+Panel_On $tick_edit_panel
+.
+
+Define Load_Tick_Vars 1 index
+#Assign custom_tick_posn value($tick_posn_list_name[$1])
+Set vname ${which_axis}_tick_${1}_posn
+Set custom_tick_posn $$vname
+Set vname ${which_axis}_tick_${1}_label
+Set custom_tick_label $$vname
+.
 
 Define EditImage 0
 If !strcmp('$selected_image_nickname','no_image') "No_Image_Msg exit_macro"
@@ -944,6 +1025,15 @@ Get_Text_Var $data_edit_panel $data_legend_x_widget_name series_legend_x
 #Refresh_Plot
 #Load_Series_Vars $curr_series_name
 .
+
+Define SetTickPosn 0
+Get_Text_Var $tick_edit_panel $tick_posn_widget_name custom_tick_posn
+.
+
+Define SetTickLabel 0
+Get_Text_Var $tick_edit_panel $tick_label_widget_name custom_tick_label
+.
+
 
 Define SetImageOriginX 0
 Get_Text_Var $image_edit_panel $image_posn_x_widget_name image_posn_x
@@ -1079,6 +1169,19 @@ repeat $n_data_series
 #Print $1
 .
 
+Define Make_Tick_List_Cmd 1 varname
+If $$tick_count_name<1 "Set $1 nop exit_macro"
+Set $1 "items '$custom_tick_widget_name' $$tick_count_name"
+#Show_Tick_Data	# for debug
+Set i 0
+repeat $$tick_count_name
+  Set vname ${which_axis}_tick_${i}_label
+  Set $1 "$$1 '$$vname'"
+  Increment i
+  end
+Print $1
+.
+
 Define Make_Image_List_Cmd 1 varname
 If $n_embedded_images<1 "Set $1 nop exit_macro"
 Set $1 "items 'Embedded Images' $n_embedded_images"
@@ -1106,10 +1209,18 @@ repeat $n_grids
 Define Update_Series_Choices 0
 Make_Series_List_Cmd cmd
 output_file -
-Print cmd
-Print data_panel
 interface
   decorate $data_panel
+    interpret $cmd
+    quit
+  quit
+.
+
+Define Update_Tick_Choices 0
+Make_Tick_List_Cmd cmd
+output_file -
+interface
+  decorate $custom_tick_panel_name
     interpret $cmd
     quit
   quit
@@ -1132,6 +1243,13 @@ interface
     interpret $cmd
     quit
   quit
+.
+
+Define TickEditDone 0
+Store_Tick_Vars
+Update_Tick_Choices
+Panel_Off $tick_edit_panel
+Panel_On $custom_tick_panel_name
 .
 
 Define SeriesEditDone 0
@@ -1233,6 +1351,7 @@ Set old_plot_w $plot_w
 Set old_plot_h $plot_h
 echo "Loading plot parameters from file $1..."
 < $1
+# custom tick data needs to be put into arrays if present?
 #Print n_data_series
 Update_Series_Choices
 Update_Image_Choices
@@ -1260,11 +1379,32 @@ Save_Tick_Params
 .
 
 Define Save_Tick_Params 0
+Save_Param $tick_auto_name
+If $$tick_auto_name
+  Then Save_Std_Tick_Params
+  Else Save_Custom_Tick_Params
+.
+
+Define Save_Std_Tick_Params 0
 Save_Param $tick_spacing_name
 Save_Param $tick_first_name
 Save_Param $tick_last_name
-Save_Param $tick_auto_name
 .
+
+Define Save_Custom_Tick_Params 0
+Save_Param $tick_count_name
+If $$tick_count_name<=0 exit_macro
+Set i 0
+repeat $$tick_count_name
+  Set vname ${which_axis}_tick_${i}_posn
+  Save_Param $vname
+  Set vname ${which_axis}_tick_${i}_label
+  Save_Param $vname
+
+  Increment i
+  end
+.
+
 
 Define Save_YAxis_Params 0
 Save_Axis_Params y
@@ -1302,6 +1442,7 @@ Save_Param $vname
 .
 
 Define Save_Param 1 varname
+If !var_exists('$1') "warn 'Save_Param:  $1 is undefined, not saving!?' exit_macro"
 echo "Set $1 $$1"
 .
 
@@ -1751,10 +1892,14 @@ Set axis_min_name ${1}_axis_min
 Set axis_max_name ${1}_axis_max
 Set axis_logv_name ${1}_axis_logv
 
+# for standard ticks
 Set tick_spacing_name ${1}_tick__spacing	# extra underscore to differentiate from plotsupp (ugly!)
 Set tick_first_name ${1}_tick_first
 Set tick_last_name ${1}_tick_last
 Set tick_auto_name ${1}_tick_auto
+
+# for custom ticks
+Set tick_count_name n_${1}_custom_ticks
 
 Set api_axis_min_name ${1}min
 Set api_axis_max_name ${1}max
@@ -1780,12 +1925,22 @@ Update_Toggle $axis_logv_widget_name $$axis_logv_name $axis_panel_name
 Update_Edit_Text $axis_legend_widget_name $$axis_legend_name $axis_panel_name
 Update_Edit_Text $axis_min_widget_name $$axis_min_name $axis_panel_name
 Update_Edit_Text $axis_max_widget_name $$axis_max_name $axis_panel_name
+Update_Toggle $tick_auto_widget_name $$tick_auto_name $axis_panel_name
 
-Update_Edit_Text $tick_spacing_widget_name $$tick_spacing_name $tick_panel_name
-Update_Edit_Text $tick_first_widget_name $$tick_first_name $tick_panel_name
-Update_Edit_Text $tick_last_widget_name $$tick_last_name $tick_panel_name
-Update_Toggle $tick_auto_widget_name $$tick_auto_name $tick_panel_name
+If $$tick_auto_name
+  Then Update_Std_Axis_Panel
+  Else Update_Custom_Axis_Panel
 .
+
+Define Update_Std_Axis_Panel 0
+Update_Edit_Text $tick_spacing_widget_name $$tick_spacing_name $std_tick_panel_name
+Update_Edit_Text $tick_first_widget_name $$tick_first_name $std_tick_panel_name
+Update_Edit_Text $tick_last_widget_name $$tick_last_name $std_tick_panel_name
+.
+
+Define Update_Custom_Axis_Panel 0
+.
+
 
 Define SetLegendFont 0
 Find_Current_Font
@@ -1817,19 +1972,28 @@ interface
     text $axis_max_widget_name SetAxisMax 0
     toggle $axis_logv_widget_name TogAxisLogValues
     text $axis_legend_widget_name SetAxisLegend 'xyzzy                  xyzzy'
+    toggle $tick_auto_widget_name TogTickAuto
     button Ticks TicksPanel
     button Apply Refresh_Plot
     button Done 'Panel_Off $axis_panel_name Panel_On $main_panel'
     quit
 
-  panel $tick_panel_name $panel_w $panel_h
-  decorate $tick_panel_name
-    toggle $tick_auto_widget_name TogTickAuto
+  panel $std_tick_panel_name $panel_w $panel_h
+  decorate $std_tick_panel_name
     text $tick_spacing_widget_name SetTickSpacing 0
     text $tick_first_widget_name SetTickFirst 0
     text $tick_last_widget_name SetTickLast 0
     button Apply Refresh_Plot
-    button Done 'Panel_Off $tick_panel_name Panel_On $axis_panel_name'
+    button Done 'Panel_Off $std_tick_panel_name Panel_On $axis_panel_name'
+    quit
+
+  panel $custom_tick_panel_name $panel_w $panel_h
+  decorate $custom_tick_panel_name
+    # like data series
+    button 'Add New Tick' AddTick
+    scroller $custom_tick_widget_name SelectTick
+    button 'Edit Tick' EditTick
+    button Done 'Panel_Off $custom_tick_panel_name Panel_On $axis_panel_name'
     quit
 
   panel $save_panel $panel_w $panel_h
@@ -1896,6 +2060,13 @@ interface
     chooser Symbol SetSeriesSymbol 5 none Square Disk Triangle Diamond
     chooser 'Symbol Size' SetSymbolSize 4    3 4 5 6
     chooser 'Line Thickness' SetLineThickness 5 0 1 2 3 4
+    quit
+
+  panel $tick_edit_panel $panel_w $panel_h
+  decorate $tick_edit_panel
+    text $tick_posn_widget_name SetTickPosn 0
+    text $tick_label_widget_name SetTickLabel 'no label set'
+    button Done TickEditDone
     quit
 
   panel $image_edit_panel $panel_w $panel_h

@@ -825,7 +825,6 @@ COMMAND_FUNC( do_set_edit_text )
 	s = nameof("text to display");
 	if( sop == NULL ) return;
 	if( BAD_STRING(s) ) return;	// a non-existent variable, for example...
-fprintf(stderr,"do_set_edit_text:  s = 0x%lx\n",(long)s);
 
 	// BUG make sure SOT_EDIT_BOX
 	if( SOB_CONTENT(sop) != NULL )
@@ -1540,7 +1539,15 @@ int _get_strings(QSP_ARG_DECL Screen_Obj *sop,const char ***sss)
 		// do this after returning
 		// SET_SOB_SELECTORS(sop,string_arr);
 		for(i=0;i<n;i++){
-			string_arr[i]=savestr(nameof("selector text") );
+			const char *s;
+			s = nameof("selector text");
+			assert(s!=NULL);
+			if( *s == 0 ){
+				warn("get_strings:  null string!?");
+				string_arr[i] = "BAD_STRING"; 
+			} else {
+				string_arr[i] = savestr(s);
+			}
 		}
 		*sss = string_arr;
 	} else {

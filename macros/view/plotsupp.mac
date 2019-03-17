@@ -114,14 +114,39 @@ Require_Var ymin	# need y axis limits to draw x legend?
 Require_Var xmax
 Require_Var ymax
 Require_Var x_legend
-Require_Var x_tick_spacing
+Require_Var x_tick_auto
+If $x_tick_auto "Require_Var x_tick_spacing"
 Check_Var x_tick_offset 0
 If !$vars_ok exit_macro
 
 X_Legend $x_legend
 #Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
-Plot_X_Axis_Offset $xmin $xmax $x_tick_spacing $ymin $x_tick_offset
-Label_X_Ticks $xmin+$x_tick_offset $xmax $x_tick_spacing
+If $x_tick_auto
+  Then 'Plot_X_Axis_Offset $xmin $xmax $x_tick_spacing $ymin $x_tick_offset \
+        Label_X_Ticks $xmin+$x_tick_offset $xmax $x_tick_spacing'
+  Else Custom_X_Axis
+.
+
+Define Custom_X_Axis 0
+Plain_X_Axis $xmin $xmax $ymin
+Assign n_x_ticks $n_x_custom_ticks
+If $n_x_ticks<=0 exit_macro
+Set tick_idx 0
+repeat $n_x_ticks
+  Set vname x_tick_${tick_idx}_posn
+  If !var_exists('$vname') "warn 'Custom_X_Axis:  $vname is not defined!?' exit_macro"
+  Set _x $$vname
+  X_Tick_At $_x $ymin		# BUG should allow for offset?
+
+  Set vname x_tick_${tick_idx}_label
+  If !var_exists('$vname') "warn 'Custom_X_Axis:  $vname is not defined!?' exit_macro"
+  Set label $$vname
+  If strlen('$label')<=0
+    Then "warn 'Custom_X_Axis:  empty tick label!?'"
+    Else "Label_X_Tick $_x $label"
+
+  Increment tick_idx
+  end
 .
 
 #
@@ -827,6 +852,7 @@ advise "TEST DONE"
 < /dev/tty
 .
 
+ # X_Tick_At - draw a tick down from x,y
 Define X_Tick_At 2 x y
 PMove $1 $2
 PCont $1 $2-$x_tick_len
@@ -1420,9 +1446,14 @@ Assign n_x_ticks 1+floor($x)
 Select_Pen $label_color
 Assign tick_x $1
 repeat $n_x_ticks
-  Label_X_Tick $tick_x	$tick_x
+  Two_Decimal_Places tick_string $tick_x
+  Label_X_Tick $tick_x	$tick_string
   Add_Var tick_x $3
   end
+.
+
+Define Two_Decimal_Places 2 varname value
+Assign $1 round($2*100)/100
 .
 
 # this one adds the position delta to the label
