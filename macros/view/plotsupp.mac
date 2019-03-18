@@ -54,7 +54,8 @@ Require_Var ymin
 Require_Var xmax
 Require_Var ymax
 Require_Var y_legend
-Require_Var y_tick_spacing
+Require_Var y_tick_auto
+If $y_tick_auto "Require_Var y_tick_spacing"
 Check_Var y_tick_offset 0
 Check_Var y_tick_last $ymax
 Check_Var y_tick_first $ymin
@@ -63,8 +64,10 @@ If !$vars_ok exit_macro
 Plot_Data_Range $xmin $ymin $xmax $ymax
 
 Y_Legend $y_legend
-Plot_Y_Axis_With_Ticks $ymin $ymax $xmin $y_tick_first $y_tick_last $y_tick_spacing
-Label_Y_Ticks $y_tick_first $y_tick_last $y_tick_spacing
+If $y_tick_auto
+  Then 'Plot_Y_Axis_With_Ticks $ymin $ymax $xmin $y_tick_first $y_tick_last $y_tick_spacing \
+        Label_Y_Ticks $y_tick_first $y_tick_last $y_tick_spacing'
+  Else Custom_Y_Axis
 .
 
 Define Redraw_X_Axis 0
@@ -147,6 +150,29 @@ repeat $n_x_ticks
   If strlen('$label')<=0
     Then "warn 'Custom_X_Axis:  empty tick label!?'"
     Else "Label_X_Tick $_x $label"
+
+  Increment tick_idx
+  end
+.
+
+# BUG should merge code with Custom_X_Axis!
+Define Custom_Y_Axis 0
+Plain_Y_Axis $ymin $ymax $xmin
+Assign n_y_ticks $n_y_custom_ticks
+If $n_y_ticks<=0 exit_macro
+Set tick_idx 0
+repeat $n_y_ticks
+  Set vname y_tick_${tick_idx}_posn
+  If !var_exists('$vname') "warn 'Custom_Y_Axis:  $vname is not defined!?' exit_macro"
+  Set _y $$vname
+  Y_Tick_At $xmin $_y		# BUG should allow for offset?
+
+  Set vname y_tick_${tick_idx}_label
+  If !var_exists('$vname') "warn 'Custom_X_Axis:  $vname is not defined!?' exit_macro"
+  Set label $$vname
+  If strlen('$label')<=0
+    Then "warn 'Custom_Y_Axis:  empty tick label!?'"
+    Else "Label_Y_Tick $_y $label"
 
   Increment tick_idx
   end
@@ -861,6 +887,11 @@ PMove $1 $2
 PCont $1 $2-$x_tick_len
 .
 
+Define Plain_Y_Axis 3 ymin ymax xpos
+PMove $3 $1
+PCont $3 $2
+.
+
 Define Plain_X_Axis 3 xmin xmax ypos
 PMove $1 $3
 PCont $2 $3
@@ -912,7 +943,7 @@ If $1<$2
   Else "Draw_Y_Ticks_Descending $4 $5 $3 $6"
 .
 
-Define Draw_Y_Tick_At 2 x y
+Define Y_Tick_At 2 x y
 PMove $1 $2
 PCont $1-$y_tick_len $2
 .
@@ -926,7 +957,7 @@ Define Draw_Y_Ticks_Ascending 4 y_first_tick y_last_tick xpos tick_spacing
 If $4==0 "error_exit 'Draw_Y_Ticks_Ascending:  tick spacing cannot be zero!?'"
 Assign _y $1
 do
-  Draw_Y_Tick_At $3 $_y
+  Y_Tick_At $3 $_y
   Add_Var _y $4
   while $_y<=$2
 .
@@ -935,7 +966,7 @@ Define Draw_Y_Ticks_Descending 4 y_first_tick y_last_tick xpos tick_spacing
 If $4==0 "error_exit 'Draw_Y_Ticks_Descending:  tick spacing cannot be zero!?'"
 Assign _y $1
 do
-  Draw_Y_Tick_At $3 $_y
+  Y_Tick_At $3 $_y
   Add_Var _y -$4
   while $_y>=$2
 .

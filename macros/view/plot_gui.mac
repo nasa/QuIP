@@ -12,6 +12,7 @@ Set plot_name default_plot	# should get plot name from cmd line?
 
 Set n_data_series 0
 Set n_embedded_images 0
+Set n_extra_legends 0
 Set n_grids 0
 Set show_plot_legend 0
 Set plot_legend_text no_legend
@@ -54,10 +55,12 @@ Set axis_logv_widget_name "Logarithmic Axis"
 Set axis_log_widget_name "Logarithmic Axis"	# obsolete
 Set data_panel "Data"
 Set image_panel "Image"
+Set legend_panel "Legends"
 Set font_panel "Fonts"
 Set grid_panel "Grid"
 Set data_edit_panel "Edit Data Series"
 Set image_edit_panel "Edit Embedded Image"
+Set legend_edit_panel "Edit Legend"
 Set grid_edit_panel "Edit Data Grid"
 Set save_panel "Save Plot Image"
 
@@ -66,6 +69,7 @@ Set tick_label_widget_name	"Label"
 
 Set series_nickname_widget_name	"Nickname"
 Set image_nickname_widget_name	"Nickname"
+Set legend_nickname_widget_name	"Nickname"
 Set grid_nickname_widget_name	"Nickname"
 
 Set plot_frame_toggle_widget_name 'Frame'
@@ -84,6 +88,10 @@ Set data_legend_text_widget_name 'Data legend text'
 Set data_legend_x_widget_name 'Data legend X'
 Set data_legend_y_widget_name 'Data legend Y'
 
+Set legend_text_widget_name 'Legend text'
+Set legend_posn_x_widget_name 'Origin X'
+Set legend_posn_y_widget_name 'Origin Y'
+
 Set image_source_file_widget_name 'Image file'
 Set image_posn_x_widget_name 'Origin X'
 Set image_posn_y_widget_name 'Origin Y'
@@ -95,7 +103,7 @@ Set image_zoom_y_widget_name 'Y Zoom'
 Set grid_source_file_widget_name 'Source file'
 
 Set panel_w	400
-Set panel_h	600
+Set panel_h	680
 Set plotwin_x0 500
 Set plotwin_y0 50
 
@@ -119,6 +127,10 @@ Set image_extent_x 1
 Set image_extent_y 1
 Set image_zoom_x 1
 Set image_zoom_y 1
+
+Set legend_posn_x 0
+Set legend_posn_y 0
+Set legend_text legend_text_not_set
 
 Set grid_line_thickness 1
 Set grid_symbol_size 4
@@ -480,6 +492,7 @@ Install_Both_Axis_Vars
 Setup_Axes
 # We need to do the axes before embedding images, because that sets the scale
 If $n_embedded_images>0 Embed_Images
+If $n_extra_legends>0 Render_Legends
 # We might want to redraw the axes over images?
 #advise "Refresh_Plot:  refreshing data..."
 Refresh_Data
@@ -527,6 +540,11 @@ Panel_On $data_panel
 Define ImagePanel 0
 Panel_Off $main_panel
 Panel_On $image_panel
+.
+
+Define LegendPanel 0
+Panel_Off $main_panel
+Panel_On $legend_panel
 .
 
 Define FontPanel 0
@@ -663,6 +681,16 @@ Panel_Off $image_panel
 Panel_On $image_edit_panel
 .
 
+# AddLegend - create a new legend
+
+Define AddLegend 0
+Increment n_extra_legends
+Set legend_nickname legend_$n_extra_legends
+Update_Edit_Text $legend_text_widget_name $legend_nickname $legend_edit_panel
+Panel_Off $legend_panel
+Panel_On $legend_edit_panel
+.
+
 Define AddGrid 0
 Increment n_grids
 Set curr_grid_name grid_$n_grids
@@ -709,6 +737,11 @@ Panel_On $gen_panel
 Define No_Image_Msg 0
 If $n_embedded_images==0 "advise 'Please create a new embedded image' exit_macro"
 advise 'Please select an image'
+.
+
+Define No_Legend_Msg 0
+If $n_extra_legends==0 "advise 'Please create a new extra legend' exit_macro"
+advise 'Please select a legend'
 .
 
 Define No_Series_Msg 0
@@ -812,6 +845,20 @@ Store_Image_Var $1 zoom_x
 Store_Image_Var $1 zoom_y
 .
 
+Define Load_Legend_Vars 1 legend_name
+Load_Legend_Var $1 nickname
+Load_Legend_Var $1 text
+Load_Legend_Var $1 posn_x
+Load_Legend_Var $1 posn_y
+.
+
+Define Store_Legend_Vars 1 legend_name
+Store_Legend_Var $1 nickname
+Store_Legend_Var $1 text
+Store_Legend_Var $1 posn_x
+Store_Legend_Var $1 posn_y
+.
+
 Define Load_Grid_Vars 1 grid_name
 Load_Grid_Var $1 filename
 Load_Grid_Var $1 nickname
@@ -845,6 +892,10 @@ Define Load_Image_Var 2 image_name varname
 Load_Stem_Var $1 $2 image
 .
 
+Define Load_Legend_Var 2 legend_name varname
+Load_Stem_Var $1 $2 legend
+.
+
 Define Load_Grid_Var 2 series_name varname
 Load_Stem_Var $1 $2 grid
 .
@@ -862,6 +913,10 @@ Store_Stem_Var $1 $2 series
 
 Define Store_Image_Var 2 image_name varname
 Store_Stem_Var $1 $2 image
+.
+
+Define Store_Legend_Var 2 legend_name varname
+Store_Stem_Var $1 $2 legend
 .
 
 Define Store_Grid_Var 2 series_name varname
@@ -892,6 +947,17 @@ Set i 1
 repeat $n_embedded_images
   Set vname image_${i}_nickname
   If !strcmp('$1','$$vname') "Set curr_image_name image_$i exit_macro"
+  Increment i
+  end
+.
+
+Define Find_Legend_From_Nickname 1 nickname
+Set legend_nickname no_legend
+If $n_extra_legends==0 exit_macro
+Set i 1
+repeat $n_extra_legends
+  Set vname legend_${i}_nickname
+  If !strcmp('$1','$$vname') "Set legend_nickname legend_$i exit_macro"
   Increment i
   end
 .
@@ -934,21 +1000,29 @@ Panel_Off $data_panel
 Panel_On $data_edit_panel
 .
 
-Define Find_Tick_From_Label 2 varname label
-advise "Find_Tick_From_Label '$2' BEGIN"
+Define Find_Tick_From_ID_String 2 varname string
+advise "Find_Tick_From_ID_String '$2' BEGIN"
 Set $1 -1	# error indicator
 If $$tick_count_name<=0 "error_exit 'Find_Tick_From_Label:  no ticks!?'"
 Set tick_idx 0
 repeat $$tick_count_name
-  Set vname ${which_axis}_tick_${tick_idx}_label
-  If !strcmp('$$vname','$2') "Set $1 $tick_idx exit_macro"
+  Get_Tick_ID_String id_string $tick_idx
+  If !strcmp('$id_string','$2') "Set $1 $tick_idx exit_macro"
   Increment tick_idx
   end
 .
 
+Define Get_Tick_ID_String 2 varname index
+Set vname ${which_axis}_tick_${2}_label
+Set this_label $$vname
+Set vname ${which_axis}_tick_${2}_posn
+Set this_posn $$vname
+Set $1 "$this_label at $this_posn"
+.
+
 Define EditTick 0
 If !strcmp('$selected_tick_string','no_tick') "No_Tick_Msg exit_macro"
-Find_Tick_From_Label current_tick_index $selected_tick_string
+Find_Tick_From_ID_String current_tick_index $selected_tick_string
 If $current_tick_index<0 "advise 'Could not find tick from string!?' exit_macro"
 Load_Tick_Vars $current_tick_index
 interface
@@ -971,6 +1045,31 @@ Set custom_tick_label $$vname
 
 Define EditImage 0
 If !strcmp('$selected_image_nickname','no_image') "No_Image_Msg exit_macro"
+Find_Image_From_Nickname $selected_image_nickname
+If !strcmp('$curr_image_name','no_image') "advise 'Could not find image with nickname $selected_image_nickname!?' exit_macro"
+Load_Image_Vars $curr_image_name
+interface
+  decorate $image_edit_panel
+    set_edit_text $image_nickname_widget_name $image_nickname
+    set_edit_text $image_source_file_widget_name $image_filename
+    set_edit_text $image_posn_x_widget_name $image_posn_x
+    set_edit_text $image_posn_y_widget_name $image_posn_y
+    set_edit_text $image_extent_x_widget_name $image_extent_x
+    set_edit_text $image_extent_y_widget_name $image_extent_y
+    advise "set_edit_text '$image_zoom_x_widget_name' '$image_zoom_x'"
+    set_edit_text $image_zoom_x_widget_name $image_zoom_x
+    advise "set_edit_text '$image_zoom_y_widget_name' '$image_zoom_y'"
+    set_edit_text $image_zoom_y_widget_name $image_zoom_y
+
+    quit
+  quit
+Panel_Off $image_panel
+Panel_On $image_edit_panel
+.
+
+
+Define EditLegend 0
+If !strcmp('$selected_legend_nickname','no_legend') "No_Legend_Msg exit_macro"
 Find_Image_From_Nickname $selected_image_nickname
 If !strcmp('$curr_image_name','no_image') "advise 'Could not find image with nickname $selected_image_nickname!?' exit_macro"
 Load_Image_Vars $curr_image_name
@@ -1020,6 +1119,10 @@ Define SetImageNickname 0
 Get_Text_Var $image_edit_panel $image_nickname_widget_name image_nickname
 .
 
+Define SetLegendNickname 0
+Get_Text_Var $legend_edit_panel $legend_nickname_widget_name legend_nickname
+.
+
 Define SetSeriesNickname 0
 Get_Text_Var $data_edit_panel $series_nickname_widget_name series_nickname
 .
@@ -1030,6 +1133,10 @@ Get_Text_Var $grid_edit_panel $grid_nickname_widget_name grid_nickname
 
 Define SetImageSourceFile 0
 Get_Text_Var $image_edit_panel $image_source_file_widget_name image_filename
+.
+
+Define SetLegendText 0
+Get_Text_Var $legend_edit_panel $legend_text_widget_name legend_text
 .
 
 Define SetSeriesSourceFile 0
@@ -1066,6 +1173,14 @@ Define SetTickLabel 0
 Get_Text_Var $tick_edit_panel $tick_label_widget_name custom_tick_label
 .
 
+
+Define SetLegendX 0
+Get_Text_Var $legend_edit_panel $legend_posn_x_widget_name legend_posn_x
+.
+
+Define SetLegendY 0
+Get_Text_Var $legend_edit_panel $legend_posn_y_widget_name legend_posn_y
+.
 
 Define SetImageOriginX 0
 Get_Text_Var $image_edit_panel $image_posn_x_widget_name image_posn_x
@@ -1105,6 +1220,12 @@ Define ImageEditRefreshPlot 0
 Store_Image_Vars $curr_image_name
 Refresh_Plot
 Load_Image_Vars $curr_image_name
+.
+
+Define LegendEditRefreshPlot 0
+Store_Legend_Vars $legend_nickname
+Refresh_Plot
+Load_Legend_Vars $legend_nickname
 .
 
 Define SetGridSourceFile 0
@@ -1204,8 +1325,8 @@ Set $1 "items '$custom_tick_widget_name' $$tick_count_name"
 #Show_Tick_Data	# for debug
 Set i 0
 repeat $$tick_count_name
-  Set vname ${which_axis}_tick_${i}_label
-  Set $1 "$$1 '$$vname'"
+  Get_Tick_ID_String id_string $i
+  Set $1 "$$1 '$id_string'"
   Increment i
   end
 Print $1
@@ -1217,6 +1338,18 @@ Set $1 "items 'Embedded Images' $n_embedded_images"
 Set i 1
 repeat $n_embedded_images
   Set vname image_${i}_nickname
+  Set $1 "$$1 $$vname"
+  Increment i
+  end
+#Print $1
+.
+
+Define Make_Legend_List_Cmd 1 varname
+If $n_extra_legends<1 "Set $1 nop exit_macro"
+Set $1 "items 'Legends' $n_extra_legends"	# BUG use var for name?
+Set i 1
+repeat $n_extra_legends
+  Set vname legend_${i}_nickname
   Set $1 "$$1 $$vname"
   Increment i
   end
@@ -1264,6 +1397,15 @@ interface
   quit
 .
 
+Define Update_Legend_Choices 0
+Make_Legend_List_Cmd cmd
+interface
+  decorate $legend_panel
+    interpret $cmd
+    quit
+  quit
+.
+
 Define Update_Grid_Choices 0
 Make_Grid_List_Cmd cmd
 #Print cmd
@@ -1300,6 +1442,14 @@ Panel_On $image_panel
 Refresh_Data
 .
 
+Define LegendEditDone 0
+Store_Legend_Vars $legend_nickname
+Update_Legend_Choices
+Panel_Off $legend_edit_panel
+Panel_On $legend_panel
+Refresh_Data		# BUG should refresh whole plot?
+.
+
 
 Define GridEditDone 0
 #Print curr_grid_name
@@ -1321,6 +1471,8 @@ echo ' '
 Save_YAxis_Params
 echo ' '
 Save_Data_Params
+echo ' '
+Save_Legend_Params
 echo ' '
 Save_Image_Params
 echo ' '
@@ -1465,6 +1617,11 @@ Set vname image_${1}_$2
 Save_Param $vname
 .
 
+Define Save_Legend_Param 2 idx varname
+Set vname legend_${1}_$2
+Save_Param $vname
+.
+
 Define Save_Grid_Param 2 idx varname
 Set vname grid_${1}_$2
 Save_Param $vname
@@ -1520,6 +1677,22 @@ repeat $n_embedded_images
 advise "saving zoom params..."
   Save_Image_Param $i zoom_x
   Save_Image_Param $i zoom_y
+
+  Increment i
+  end
+.
+
+
+Define Save_Legend_Params 0
+Save_Param n_extra_legends
+Set i 1
+If $n_extra_legends<1 exit_macro
+repeat $n_extra_legends
+  echo ' '
+  Save_Legend_Param $i nickname
+  Save_Legend_Param $i text
+  Save_Legend_Param $i posn_x
+  Save_Legend_Param $i posn_y
 
   Increment i
   end
@@ -1641,9 +1814,22 @@ repeat $n_x_custom_ticks
   end
 .
 
+Define Emit_Custom_Y_Axis 0
+Set tick_idx 0
+repeat $n_y_custom_ticks
+  Set varname y_tick_${tick_idx}_posn
+  Set y $$varname
+  Set varname y_tick_${tick_idx}_label
+  Set s $$varname
+  echo "($s) $y	ylabeltick"
+  Increment tick_idx
+  end
+.
+
 Define Emit_Std_X_Axis 0
 Set x $x_tick_first
 do
+  # BUG we should trim decimal places?
   echo "($x) $x	xlabeltick"
   Add_Var x $x_tick_spacing
   while $x<=$x_tick_last
@@ -1724,18 +1910,24 @@ repeat $n_embedded_images
   end
 .
 
+Define Emit_Extra_Legends 0
+Set idx 1
+repeat $n_extra_legends
+  Load_Legend_Vars legend_$idx	# is this correct???
+  Emit_One_Legend $legend_text $legend_posn_x $legend_posn_y
+  Increment idx
+  end
+.
+
 Define Emit_Plot_Content 0
 Emit_Prolog
 If $n_embedded_images>0 Emit_Embedded_Images
+If $n_extra_legends>0 Emit_Extra_Legends
 Emit_Axes
 
-# BUG subject label needs to have parameterized coordinates!
-echo "/subj_label { 5.5 gxu 6.0 gyu moveto show } def"
-# END prolog
-#echo "/legend_x $series_legend_x def"
-#echo "/legend_y $series_legend_y def"
-#echo "/legend_delta_y $data_legend_delta_y def"
-#echo "/legend_delta_x $data_legend_delta_x def"
+# Now that we have arbitrary legends, we can just use those for subject labels...
+## BUG subject label needs to have parameterized coordinates!
+#echo "/subj_label { 5.5 gxu 6.0 gyu moveto show } def"
 
 If strcmp('$plot_legend_text','no_legend')
   Emit_Graph_Legend
@@ -2091,6 +2283,14 @@ interface
     button Done 'Panel_Off $image_panel Panel_On $main_panel'
     quit
 
+  panel $legend_panel $panel_w $panel_h
+  decorate $legend_panel
+    button 'Add Legend' AddLegend
+    scroller 'Legends' SelectLegend
+    button 'Edit Legend' EditLegend
+    button Done 'Panel_Off $legend_panel Panel_On $main_panel'
+    quit
+
 #Set $1 "items '$data_series_widget_name' $n_data_series"
   panel $font_panel $panel_w $panel_h
   decorate $font_panel
@@ -2155,6 +2355,16 @@ interface
     button Done ImageEditDone
     quit
 
+  panel $legend_edit_panel $panel_w $panel_h
+  decorate $legend_edit_panel
+    text $legend_nickname_widget_name SetLegendNickname legendNNN
+    text $legend_text_widget_name SetLegendText 'legend text' # Use file chooser?
+    text $legend_posn_x_widget_name SetImageOriginX 0
+    text $legend_posn_y_widget_name SetImageOriginY 0
+    button 'Refresh_Plot' LegendEditRefreshPlot
+    button Done LegendEditDone
+    quit
+
   panel $grid_edit_panel $panel_w $panel_h
   decorate $grid_edit_panel
     text $grid_nickname_widget_name SetGridNickname gridNNN
@@ -2191,6 +2401,7 @@ interface
     button 'Y axis' YAxisPanel
     button 'Data' DataPanel
     button 'Images' ImagePanel
+    button 'Legends' LegendPanel
     button 'Fonts' FontPanel
     button 'Grids' GridPanel
     button 'Refresh Preview' Refresh_Plot
@@ -2227,6 +2438,20 @@ repeat $n_embedded_images
   end
 .
 
+Define Render_Legends 0
+Set idx 1
+repeat $n_extra_legends
+  Load_Legend_Vars legend_$idx	# is this correct???
+  Render_One_Legend $legend_text $legend_posn_x $legend_posn_y
+  Increment idx
+  end
+.
+
+Define Render_One_Legend 3 text x y
+advise "Render_One_Legend '$1' $2 $3"
+S_At $1 $2 $3
+.
+
 Define Embed_One_Image 3 filename x y
 If !file_exists('$1') "warn 'No image file $1!?' exit_macro"
 Read_File_Header $1
@@ -2245,6 +2470,10 @@ view
   embed Plot_Preview eoi_tmp $sx $sy
   quit
 Delete_Image eoi_tmp
+.
+
+Define Emit_One_Legend 3 text x y
+echo "($1) $2 gxu $3 gyu moveto show"
 .
 
 Define Emit_One_Image 5 filename x y extent_x extent_y
@@ -2292,7 +2521,7 @@ echo "$dx $dy 8 [1 0 0 1 0 0]"
 echo "{currentfile picstr readhexstring pop}"	# procedure to read data
 echo image
 # Slow_Emit_Image_Data
-Fast_Emit_Image_Data $1
+Fast_Emit_Grayscale_Image_Data $1
 echo grestore
 .
 
@@ -2304,18 +2533,22 @@ echo "/picstr $samples_per_row string def"
 # Need translate and scale commands here to place the image...
 # First figure out how many plot units the image takes up
 # This gets us the size of the image (unscaled) in plot units
+# dx, dy are the dimensions of the image in pixels
 advise "OLD calculation dx = $dx   dy = $dy"
 ###Screen_2_Plot_Delta pdx pdy $dx $dy
 ###advise "pdx = $pdx   pdy = $pdy     ($dx, $dy)"
 ###Mul_Var pdx $4/$dx
 ###Mul_Var pdy $5/$dy
-Assign pdx 1/$dx
-Assign pdy 1/$dy
-advise "OLD calculation pdx = $pdx   pdy = $pdy"
-Assign pdx $4/$dx
-Assign pdy $5/$dy
-advise "New calculation  ext_x = $4  ext_y = $5   pdx = $pdx   pdy = $pdy"
+
+Assign pdx 1/$dx	# fraction of image width per pixel - pixel dx
+Assign pdy 1/$dy	# ditto for y
+advise "Image width per pixel pdx = $pdx   pdy = $pdy"
+Mul_Var pdx $4
+Mul_Var pdy $5
+advise "Desired size (plot units) ext_x = $4  ext_y = $5"
+advise "Desired size per pixel:  pdx = $pdx   pdy = $pdy"
 echo gsave
+# Do we have to init the transformation here???
 echo "$2 gxu $3 gyu translate"
 echo "$pdx gdxu $pdy gdyu scale"
 #echo "$dx $dy 8 [$dx 0 0 $dy 0 0]"
@@ -2324,18 +2557,17 @@ echo "{currentfile picstr readhexstring pop}"	# procedure to read data
 echo "false 3"		# postscript manual says, "single data source, 3 colors"
 echo colorimage
 # Slow_Emit_Image_Data
-Fast_Emit_Image_Data $1
+Fast_Emit_RGB_Image_Data $1
 echo grestore
 .
 
 # ps gets image data bottom-to-top, so we need to flip the image
 
-Define Fast_Emit_Image_Data 1 image
+Define Fast_Emit_Grayscale_Image_Data 1 image
 If obj_exists(flipped) 'Delete_Image flipped'
 Subsample_Image flipped $1
 	ncols('$1') 0 1
 	nrows('$1') nrows('$1')-1 -1
-Pause
 data
   ascii
     output_fmt postscript
@@ -2343,5 +2575,21 @@ data
     quit
   quit
 .
+
+
+Define Fast_Emit_RGB_Image_Data 1 image
+If obj_exists(flipped) 'Delete_Image flipped'
+Subsample_Color_Image flipped $1
+	ncomps('$1') 0 1
+	ncols('$1') 0 1
+	nrows('$1') nrows('$1')-1 -1
+data
+  ascii
+    output_fmt postscript
+    display flipped
+    quit
+  quit
+.
+
 
 
