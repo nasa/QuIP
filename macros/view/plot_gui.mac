@@ -53,6 +53,7 @@ Set font_family_widget_name 'Font Family'
 Set font_size_widget_name 'Font Size'
 Set axis_logv_widget_name "Logarithmic Axis"
 Set axis_log_widget_name "Logarithmic Axis"	# obsolete
+Set ps_scale_widget_name PS_Scale_x_100
 Set data_panel "Data"
 Set image_panel "Image"
 Set legend_panel "Legends"
@@ -140,6 +141,7 @@ Set grid_rows 4
 # default values
 Set plot_w 600
 Set plot_h 600
+Set ps_scale_factor 1
 
 
 Set min_plot_height	200
@@ -399,11 +401,16 @@ Redo_Window
 Refresh_Plot
 .
 
+Define SetPSScale 0
+Assign ps_scale_factor $slider_val/100
+.
+
 Define Update_Plot_Size_Sliders 0
 interface
   decorate $gen_panel
     set_scale Width $plot_w
     set_scale Height $plot_h
+    set_scale $ps_scale_widget_name $ps_scale_factor*100
     quit
   quit
 .
@@ -832,6 +839,9 @@ Load_Image_Var $1 extent_x
 Load_Image_Var $1 extent_y
 Load_Image_Var $1 zoom_x
 Load_Image_Var $1 zoom_y
+
+Set vname ${1}_posn_y
+advise "Load_Image_Vars $1:  ${1}_posn_y = $$vname"
 .
 
 Define Store_Image_Vars 1 image_name
@@ -1595,6 +1605,7 @@ Define Save_Gen_Params 0
 Save_Param plot_name
 Save_Param plot_w
 Save_Param plot_h
+Save_Param ps_scale_factor
 Save_Param show_plot_frame
 Save_Param show_plot_legend
 Save_Text_Param plot_legend_text
@@ -1907,6 +1918,7 @@ Set idx 1
 repeat $n_embedded_images
   Load_Image_Vars image_$idx	# is this correct???
   Emit_One_Image $image_filename $image_posn_x $image_posn_y $image_extent_x $image_extent_y
+  Increment idx
   end
 .
 
@@ -1935,7 +1947,36 @@ If strcmp('$plot_legend_text','no_legend')
 If $n_data_series>0 Emit_All_Series
 If $n_grids>0 Emit_All_Grids
 .
+##################
 
+##################
+Define Write_Landscape_PS_Header 0
+echo
+"%%BoundingBox:    26   80   842   616\n\
+%%HiResBoundingBox:    26   80   842   616\n\
+% this can be Landscape or Portait and makes no difference???\n\
+%%Orientation: Landscape\n\
+%%DocumentMedia: a4land 842 595 80 () ()\n\
+%%Pages: 1\n\
+%%EndComments\n\
+%%EndProlog\n\
+% What about US letter instead of A4?\n\
+% and how can we make the bounding box correct?\n\
+%%BeginSetup\n\
+  % A4 landscape orientation\n\
+  << /PageSize [842 595] /Orientation 0 >> setpagedevice\n\
+%%EndSetup\n\
+%%Page: 1 1\n\
+%%BeginPageSetup\n\
+%%PageBoundingBox:    26   80   842   616\n\
+%%EndPageSetup\n"
+
+echo "\n% put a scale command here to make a big figure fit...\n"
+.
+
+Define Write_Portrait_PS_Header 0
+error_exit "Write_Portrait_PS_Header not implemented!?"
+.
 
 Define WritePSPlot 0
 Get_PS_Filename $plot_name
@@ -1945,15 +1986,31 @@ If $plot_w>$plot_h
   Else "Set page_orientation portrait"
 
 Set f1 $postscript_lib/jbm_head.ps
-Set f2 $postscript_lib/jbm_${page_orientation}_page.ps
-Set f3 $postscript_lib/plotmacs.ps
+# %!PS-Adobe-3.0 EPSF-3.0
+append no
+output_file $psfile
+echo "%!PS-Adobe-3.0 EPSF-3.0"
 
-If !file_exists('$f1') "warn 'File $f1 does not exist!?' exit_macro"
-If !file_exists('$f2') "warn 'File $f2 does not exist!?' exit_macro"
-If !file_exists('$f3') "warn 'File $f3 does not exist!?' exit_macro"
+If !strcmp('$page_orientation','landscape')
+  Then Write_Landscape_PS_Header
+  Else Write_Portrait_PS_Header
+#Set f2 $postscript_lib/jbm_${page_orientation}_page.ps
+
+If var_exists('ps_scale_factor')
+  'echo "$ps_scale_factor $ps_scale_factor scale"'
+
+output_file -	# close file
+
+Set plot_macro_file $postscript_lib/plotmacs.ps
+
+#If !file_exists('$f1') "warn 'File $f1 does not exist!?' exit_macro"
+#If !file_exists('$f2') "warn 'File $f2 does not exist!?' exit_macro"
+#If !file_exists('$f3') "warn 'File $f3 does not exist!?' exit_macro"
+
+If !file_exists('$plot_macro_file') "warn 'File $plot_macro_file does not exist!?' exit_macro"
 
 os
-  system "cat $f1 $f2 $f3 > $psfile"
+  system "cat $plot_macro_file >> $psfile"
   quit
 
 append yes
@@ -2384,6 +2441,7 @@ interface
   decorate $gen_panel
     slider Width SetPlotWidth $min_plot_width $max_plot_width $plot_w
     slider Height SetPlotHeight $min_plot_height $max_plot_height $plot_h
+    slider $ps_scale_widget_name SetPSScale 0 100 $ps_scale_factor
     toggle $plot_frame_toggle_widget_name TogFrame
     toggle $plot_legend_toggle_widget_name TogPlotLegend
     text $plot_legend_text_widget_name SetPlotLegendText $plot_legend_text
@@ -2435,6 +2493,7 @@ Set idx 1
 repeat $n_embedded_images
   Load_Image_Vars image_$idx	# is this correct???
   Embed_One_Image $image_filename $image_posn_x $image_posn_y
+  Increment idx
   end
 .
 
@@ -2459,6 +2518,11 @@ Image eoi_tmp nrows('$1') ncols('$1') depth('$1') u_byte
 Get_Next eoi_tmp $1
 # We specify the lower-left hand corner in plotting units
 # Now we have to compute the window coordinates of the upper left hand corner
+
+Plot_2_Screen_Delta dx dy $image_extent_x $image_extent_y
+advise "Requested image size correspondes to $dx x $dy pixels"
+If $dx<ncols(eoi_tmp)||$dy<nrows(eoi_tmp)
+  "advise 'ALERT:  image is too big to display on screen without scaling' Delete_Image eoi_tmp exit_macro"
 
 Plot_2_Screen sx sy $image_posn_x $image_posn_y
 advise "$image_posn_x $image_posn_y (plot) -> $sx $sy (screen)"
