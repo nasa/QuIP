@@ -793,6 +793,8 @@ else advise("mixed mode machine precs do not match, casting");
 
 		default:
 			missing_case(VN_CHILD(enp,index),"typecast_child");
+fprintf(stderr,"typecast_child:  index = %d, prec = %s\n",index,PREC_NAME(prec_p));
+			dump_tree(enp);
 			break;
 	}
 

@@ -3189,6 +3189,10 @@ warn(ERROR_STRING);
 	// We are getting an error with an immediate declaration...
 	// This is a static object, but it appears it gets deleted and then evaluated again?
 	if( VN_DECL_OBJ(enp) != NULL ){
+fprintf(stderr,"VN_DECL_OBJ = 0x%lx\n",(long)(VN_DECL_OBJ(enp)));
+fprintf(stderr,"OBJ_NAME(VN_DECL_OBJ) = 0x%lx\n",(long)(OBJ_NAME(VN_DECL_OBJ(enp))));
+		assert(OBJ_NAME(VN_DECL_OBJ(enp))!=NULL);
+
 		if( !strncmp("Z.",OBJ_NAME(VN_DECL_OBJ(enp)),2) ){
 			// the decl object is a zombie!?
 			advise("memory leak from zombie object?");

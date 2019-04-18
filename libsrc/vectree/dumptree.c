@@ -284,6 +284,9 @@ assert(VN_SUBRT(enp)!=NULL);
 		prt_msg_frag("\t");
 	} else if( code==T_RAMP ){
 		prt_msg_frag("\t");
+	} else if( code == T_VS_VS_CONDASS ){
+		sprintf(msg_str," %s",VF_NAME(FIND_VEC_FUNC(VN_BM_CODE(enp))));
+		prt_msg_frag(msg_str);
 	}
 
 	/* Now print the addresses of the child nodes */
