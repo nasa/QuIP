@@ -340,7 +340,8 @@ extern const char *query_filename(SINGLE_QSP_ARG_DECL);
 extern void set_query_filename(Query *, const char *);
 extern void set_query_macro(Query *,Macro *);
 extern void set_query_args(Query *,const char **);
-extern void print_qs_levels(QSP_ARG_DECL  int *level_to_print, int n_levels_to_print);
+// BUG should be in local header file, libsrc/interpreter...
+extern void report_qs_line_numbers(QSP_ARG_DECL  int *level_to_print, int n_levels_to_print);
 extern int *get_levels_to_print(QSP_ARG_DECL  int *n_ptr);
 
 extern void _add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
@@ -564,10 +565,13 @@ extern Query_Stack *new_qstack(QSP_ARG_DECL  const char *name);
 
 extern void qs_do_cmd(Query_Stack *qsp);
 
+// BUG move to local include in libsrc/interpreter
 extern void _open_loop(QSP_ARG_DECL  int n);
-extern void _close_loop(SINGLE_QSP_ARG_DECL);
+extern void _end_loop(SINGLE_QSP_ARG_DECL);
+extern void _open_while_loop(SINGLE_QSP_ARG_DECL);
 #define open_loop(n)	_open_loop(QSP_ARG  n)
-#define close_loop()	_close_loop(SINGLE_QSP_ARG)
+#define end_loop()	_end_loop(SINGLE_QSP_ARG)
+#define open_while_loop() _open_while_loop(SINGLE_QSP_ARG)
 
 extern void _list_current_menu(SINGLE_QSP_ARG_DECL);
 extern void _list_builtin_menu(SINGLE_QSP_ARG_DECL);

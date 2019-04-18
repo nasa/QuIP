@@ -1,6 +1,8 @@
 #ifndef _VEC_EXPR_NODE_H_
 #define _VEC_EXPR_NODE_H_
 
+// BUG?  can this file be moved to libsrc/vectree???
+
 #include "treecode.h"
 #include "veclib/vecgen.h"
 #include "function.h"

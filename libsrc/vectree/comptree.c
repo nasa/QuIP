@@ -703,7 +703,11 @@ else advise("mixed mode machine precs do not match, casting");
 		/* These cases don't actually do anything (safe to ignore type mismatch) */
 
 		case T_LOAD:	/* load does its own casting if necessary */
+
 		case T_RAMP:	/* typecast_child */ /* should be OK, all args are scalars */
+			if( PREC_CODE(prec_p) != PREC_BIT )
+				return;
+			break;
 
 		case T_SCALMAX:  case T_SCALMIN:
 		ALL_SCALAR_FUNCTION_CASES
