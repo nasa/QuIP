@@ -238,15 +238,9 @@ static void pop_prompt(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-char *error_string(SINGLE_QSP_ARG_DECL)
-{
-	return THIS_QSP->qs_error_string;
-}
-
-char *message_string(SINGLE_QSP_ARG_DECL)
-{
-	return THIS_QSP->qs_msg_str;
-}
+char *error_string(SINGLE_QSP_ARG_DECL) { return THIS_QSP->qs_error_string; }
+char *vector_parser_error_string(SINGLE_QSP_ARG_DECL) { return THIS_QSP->qs_vector_parser_error_string; }
+char *message_string(SINGLE_QSP_ARG_DECL) { return THIS_QSP->qs_msg_str; }
 
 #ifdef HAVE_LIBCURL
 Curl_Info *qs_curl_info(SINGLE_QSP_ARG_DECL)

@@ -3922,7 +3922,7 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			return( get_long_scalar_value(dp) );
 			break;
 
-		case T_RECIP:
+		case T_RECIP:			/* eval_int_exp */
 			lval = eval_int_exp(VN_CHILD(enp,0));
 			if( lval == 0 ){
 				node_error(enp);
@@ -3981,19 +3981,6 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			return(lval);
 			break;
 
-		case T_BOOL_PTREQ:
-			{
-			Identifier *idp1,*idp2;
-			idp1=eval_ptr_ref(VN_CHILD(enp,0),EXPECT_PTR_SET);
-			idp2=eval_ptr_ref(VN_CHILD(enp,1),EXPECT_PTR_SET);
-			/* CAUTIOUS check for ptrs? */
-			/* BUG? any other test besides dp ptr identity? */
-			if( REF_OBJ(ID_REF(idp1)) == REF_OBJ(ID_REF(idp2)) )
-				return(1);
-			else
-				return 0;
-			}
-
 		case T_POSTINC:
 			dp = eval_obj_ref(VN_CHILD(enp,0));
 			lval = eval_int_exp(VN_CHILD(enp,0));
@@ -4016,7 +4003,7 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			inc_obj(dp);
 			return(eval_int_exp(VN_CHILD(enp,0)));
 
-		case T_ASSIGN:
+		case T_ASSIGN:			/* eval_int_exp */
 			dp = eval_obj_ref(VN_CHILD(enp,0));
 			lval = eval_int_exp(VN_CHILD(enp,1));
 			int_to_scalar(&sval,lval,OBJ_PREC_PTR(dp));
@@ -4147,12 +4134,28 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			if( dval1 != dval2 ) return(1);
 			else return 0;
 			break;
-		case T_BOOL_EQ:
+		case T_BOOL_EQ:			/* eval_int_exp */
 			dval1=eval_flt_exp(VN_CHILD(enp,0));
 			dval2=eval_flt_exp(VN_CHILD(enp,1));
 			if( dval1 == dval2 ) return(1);
 			else return 0;
 			break;
+		/* Can we fuse these two???
+		 * Would require examining types of child nodes?
+		 */
+		case T_BOOL_PTREQ:			/* eval_int_exp */
+			{
+			Identifier *idp1,*idp2;
+			idp1=eval_ptr_ref(VN_CHILD(enp,0),EXPECT_PTR_SET);
+			idp2=eval_ptr_ref(VN_CHILD(enp,1),EXPECT_PTR_SET);
+			/* CAUTIOUS check for ptrs? */
+			/* BUG? any other test besides dp ptr identity? */
+			if( REF_OBJ(ID_REF(idp1)) == REF_OBJ(ID_REF(idp2)) )
+				return(1);
+			else
+				return 0;
+			}
+
 		case T_PLUS:
 			lval=eval_int_exp(VN_CHILD(enp,0));
 			lval2=eval_int_exp(VN_CHILD(enp,1));
@@ -6579,7 +6582,7 @@ dump_tree(enp);
 			break;
 #endif // SCALARS_NOT_OBJECTS
 
-		case T_BOOL_EQ:
+		case T_BOOL_EQ:		/* eval_obj_assignment */
 		case T_BOOL_NE:
 		case T_BOOL_LT:
 		case T_BOOL_GT:
@@ -6589,7 +6592,7 @@ dump_tree(enp);
 		case T_BOOL_OR:
 		case T_BOOL_XOR:
 		case T_BOOL_NOT:
-		case T_BOOL_PTREQ:
+		case T_BOOL_PTREQ:		/* eval_obj_assignment */
 			eval_bitmap(dst_dp,enp);
 			break;
 
