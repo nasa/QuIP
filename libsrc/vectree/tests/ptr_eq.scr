@@ -1,0 +1,38 @@
+expressions
+  read -
+
+float a[4], b[4], *p;
+
+void test_p()
+{
+	if( p == &b ){
+		advise("p points to b");
+	} else {
+		advise("p does NOT point to b");
+	}
+}
+void assign_p(float *ref)
+{
+	p = ref;
+}
+end
+dump test_p
+dump assign_p
+read -
+
+advise("pointing p to a with subroutine");
+assign_p(&a);
+advise("testing ...");
+test_p();
+
+advise("pointing p to a directly");
+p = &a;
+advise("testing ...");
+test_p();
+
+advise("pointing p to b");
+p = &b;
+test_p();
+
+end
+  exit

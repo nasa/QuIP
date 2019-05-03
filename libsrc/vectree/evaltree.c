@@ -278,10 +278,12 @@ static void _prototype_mismatch(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node 
 
 static void assign_pointer(Pointer *ptrp, Reference *refp)
 {
+fprintf(stderr,"assign_pointer( 0x%lx, 0x%lx ) BEGIN\n",(long)ptrp,(long)refp);
 	SET_PTR_REF(ptrp, refp);
 	/* the pointer declaration carries around the shape of its current contents? */
 	/* so we don't need to copy the shape? */
 	SET_PTR_FLAG_BITS(ptrp, POINTER_SET);
+fprintf(stderr,"assign_pointer( 0x%lx, 0x%lx ) DONE\n",(long)ptrp,(long)refp);
 }
 
 static void dbl_to_scalar(Scalar_Value *svp,double dblval,Precision *prec_p)
@@ -1015,7 +1017,7 @@ static Identifier *_get_arg_ptr(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case T_REFERENCE:
 		case T_POINTER:
 		case T_STR_PTR:
-			return( eval_ptr_ref(enp,EXPECT_PTR_SET) );
+			return( eval_ptr_expr(enp,EXPECT_PTR_SET) );
 
 
 		case T_SET_STR:			/* get_arg_ptr */
@@ -2502,7 +2504,7 @@ static const char *_eval_mixed_list(QSP_ARG_DECL Vec_Expr_Node *enp)
 		case T_STR_PTR:
 			if( dumping ) return(STRING_FORMAT);
 
-			idp = eval_ptr_ref(enp,EXPECT_PTR_SET);
+			idp = eval_ptr_expr(enp,EXPECT_PTR_SET);
 			if( idp==NULL ) return("");
 			assert( IS_STRING_ID(idp) );
 
@@ -2637,7 +2639,7 @@ print_float:
 			eval_print_stat(VN_CHILD(enp,1));
 			break;
 		case T_POINTER:
-			idp = eval_ptr_ref(enp,EXPECT_PTR_SET);
+			idp = eval_ptr_expr(enp,EXPECT_PTR_SET);
 			assert( IS_POINTER(idp) );
 			assert( POINTER_IS_SET(idp) );
 			assert( ID_PTR(idp) != NULL );
@@ -2729,7 +2731,7 @@ static void _eval_ref_tree(QSP_ARG_DECL Vec_Expr_Node *enp,Identifier *dst_idp)
 				warn("CAUTIOUS:  eval_ref_tree:  eval_work_tree returned 0!?");
 			break;
 		case T_RETURN:	/* return a pointer */
-			idp = eval_ptr_ref(VN_CHILD(enp,0),1);
+			idp = eval_ptr_expr(VN_CHILD(enp,0),1);
 			assert( idp != NULL );
 			assert( IS_OBJ_REF(idp) );
 
@@ -3728,14 +3730,7 @@ int _eval_tree(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 			}
 
 		case T_STAT_LIST:			/* eval_tree */
-			/* used to call eval_tree on children here - WHY? */
-			ret_val=eval_work_tree(enp,dst_dp);
-			break;
-
 		case T_GO_FWD:  case T_GO_BACK:		/* eval_tree */
-sprintf(ERROR_STRING,"eval_tree GOTO, dst_dp = %s",
-dst_dp==NULL?"null":OBJ_NAME(dst_dp));
-advise(ERROR_STRING);
 		case T_BREAK:
 		ALL_INCDEC_CASES
 		case T_CALLFUNC:
@@ -3745,6 +3740,7 @@ advise(ERROR_STRING);
 		case T_IFTHEN:
 		case T_EXP_PRINT:
 		case T_DISPLAY:
+		case T_ADVISE:
 			ret_val = eval_work_tree(enp,dst_dp);
 			break;
 
@@ -3881,6 +3877,25 @@ static Vec_Expr_Node *find_goto(Vec_Expr_Node *enp)
 	return(NULL);
 }
 #endif /* FOOBAR */
+
+static const char *name_for_ref( Reference *ref_p )
+{
+	if( ref_p == NULL ) return "(null ref_p)";
+
+	switch( REF_TYPE(ref_p) ){
+		case OBJ_REFERENCE:
+			return OBJ_NAME(REF_OBJ(ref_p));
+		default:
+			return "(unhandled ref type case in name_for_ref)";
+	}
+}
+
+static void dump_ref( Identifier *idp )
+{
+	Reference *refp;
+
+	fprintf(stderr,"Showing reference info for identifier %s\n",ID_NAME(idp));
+}
 
 long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
@@ -4146,10 +4161,35 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 		case T_BOOL_PTREQ:			/* eval_int_exp */
 			{
 			Identifier *idp1,*idp2;
-			idp1=eval_ptr_ref(VN_CHILD(enp,0),EXPECT_PTR_SET);
-			idp2=eval_ptr_ref(VN_CHILD(enp,1),EXPECT_PTR_SET);
+			idp1=eval_ptr_expr(VN_CHILD(enp,0),EXPECT_PTR_SET);
+if( idp1 == NULL ){
+fprintf(stderr,"eval_int_exp T_BOOL_PTREQ:  idp1 is NULL!?\n");
+} else {
+fprintf(stderr,"eval_int_exp T_BOOL_PTREQ:  idp1 is %s\n",ID_NAME(idp1));
+}
+dump_ref(idp1);
+			idp2=eval_ptr_expr(VN_CHILD(enp,1),EXPECT_PTR_SET);
+if( idp2 == NULL ){
+fprintf(stderr,"eval_int_exp T_BOOL_PTREQ:  idp2 is NULL!?\n");
+} else {
+fprintf(stderr,"eval_int_exp T_BOOL_PTREQ:  idp2 is %s\n",ID_NAME(idp2));
+}
 			/* CAUTIOUS check for ptrs? */
 			/* BUG? any other test besides dp ptr identity? */
+if( REF_OBJ(ID_REF(idp1)) == NULL ){
+fprintf(stderr,"eval_int_exp T_BOOL_PTREQ:  ref obj 1 is NULL!?\n");
+} else {
+fprintf(stderr,"eval_int_exp T_BOOL_PTREQ:  ref obj 1 is %s!?\n",
+name_for_ref(ID_REF(idp1))
+);
+}
+if( REF_OBJ(ID_REF(idp2)) == NULL ){
+fprintf(stderr,"eval_int_exp T_BOOL_PTREQ:  ref obj 2 is NULL!?\n");
+} else {
+fprintf(stderr,"eval_int_exp T_BOOL_PTREQ:  ref obj 2 is %s!?\n",
+name_for_ref(ID_REF(idp2))
+);
+}
 			if( REF_OBJ(ID_REF(idp1)) == REF_OBJ(ID_REF(idp2)) )
 				return(1);
 			else
@@ -4441,7 +4481,7 @@ fprintf(stderr,"reeval_decl_stat\n");
 /* eval_obj_id
  *
  * returns a ptr to an Identifier.
- * This is called from eval_ptr_ref
+ * This is called from eval_ptr_expr
  */
 
 static Identifier *_eval_obj_id(QSP_ARG_DECL Vec_Expr_Node *enp)
@@ -4521,11 +4561,11 @@ find_obj:
 }
 
 /*
- * Two ways to call eval_ptr_ref:
+ * Two ways to call eval_ptr_expr:
  * when a ptr is dereferenced, or appears on the RHS, it must be set!
  */
 
-Identifier *_eval_ptr_ref(QSP_ARG_DECL Vec_Expr_Node *enp,int expect_ptr_set)
+Identifier *_eval_ptr_expr(QSP_ARG_DECL Vec_Expr_Node *enp,int expect_ptr_set)
 {
 	Identifier *idp;
 
@@ -4549,8 +4589,8 @@ Identifier *_eval_ptr_ref(QSP_ARG_DECL Vec_Expr_Node *enp,int expect_ptr_set)
 		case T_UNDEF:
 			return(NULL);
 
-		case T_POINTER:		/* eval_ptr_ref */
-		case T_STR_PTR:		/* eval_ptr_ref */
+		case T_POINTER:		/* eval_ptr_expr */
+		case T_STR_PTR:		/* eval_ptr_expr */
 			idp = get_id(VN_STRING(enp));
 			assert( idp != NULL );
 
@@ -4569,7 +4609,7 @@ Identifier *_eval_ptr_ref(QSP_ARG_DECL Vec_Expr_Node *enp,int expect_ptr_set)
 			return(idp);
 			break;
 		default:
-			missing_case(enp,"eval_ptr_ref");
+			missing_case(enp,"eval_ptr_expr");
 			break;
 	}
 	return(NULL);
@@ -4579,10 +4619,9 @@ Identifier *_get_set_ptr(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	Identifier *idp;
 
-	idp = eval_ptr_ref(enp,EXPECT_PTR_SET);
+	idp = eval_ptr_expr(enp,EXPECT_PTR_SET);
 	assert( idp != NULL );
 	assert( IS_POINTER(idp) );
-
 
 	if( ! POINTER_IS_SET(idp) )
 		return(NULL);
@@ -6057,7 +6096,7 @@ const char *_eval_string(QSP_ARG_DECL Vec_Expr_Node *enp)
 			if( dumping ) return(STRING_FORMAT);
 
 			s = eval_string(VN_CHILD(enp,1));
-			idp = eval_ptr_ref(VN_CHILD(enp,0),UNSET_PTR_OK);
+			idp = eval_ptr_expr(VN_CHILD(enp,0),UNSET_PTR_OK);
 			if( idp == NULL ) break;
 			assign_string(idp,s,enp);
 			return(s);
@@ -6170,7 +6209,7 @@ dump_tree(enp);
 		case T_STR_PTR:			/* eval_string */
 			if( dumping ) return(STRING_FORMAT);
 
-			idp = eval_ptr_ref(enp,EXPECT_PTR_SET);
+			idp = eval_ptr_expr(enp,EXPECT_PTR_SET);
 
 			if( idp == NULL ){
 				node_error(enp);
@@ -7646,7 +7685,7 @@ advise(ERROR_STRING);
 		case T_SET_STR:		/* eval_work_tree */
 			if( going ) return(1);
 			s = eval_string(VN_CHILD(enp,1));
-			idp = eval_ptr_ref(VN_CHILD(enp,0),UNSET_PTR_OK);
+			idp = eval_ptr_expr(VN_CHILD(enp,0),UNSET_PTR_OK);
 			if( idp == NULL ) break;
 			assign_string(idp,s,enp);
 			break;
@@ -7656,27 +7695,50 @@ advise(ERROR_STRING);
 
 			assert( dst_dp == NULL );
 
-			idp2 = eval_ptr_ref(VN_CHILD(enp,1),EXPECT_PTR_SET);
-			idp = eval_ptr_ref(VN_CHILD(enp,0),UNSET_PTR_OK);
+fprintf(stderr,"eval_work_tree T_SET_PTR:  BEGIN\n");
+			idp2 = eval_ptr_expr(VN_CHILD(enp,1),EXPECT_PTR_SET);
+			idp = eval_ptr_expr(VN_CHILD(enp,0),UNSET_PTR_OK);
 
 			if( idp2 == NULL || idp == NULL ){
 				node_error(enp);
 				advise("eval_work_tree T_SET_PTR:  null object");
 				break;
 			}
+fprintf(stderr,"eval_work_tree T_SET_PTR:  dst ptr = %s\n",ID_NAME(idp));
+fprintf(stderr,"eval_work_tree T_SET_PTR:  src = %s\n",ID_NAME(idp2));
+dump_tree(enp);
 
 			assert( IS_POINTER(idp) );
 
 			if( IS_POINTER(idp2) ){
+fprintf(stderr,"eval_work_tree T_SET_PTR:  src %s is a pointer\n",ID_NAME(idp2));
 				SET_PTR_REF(ID_PTR(idp), PTR_REF(ID_PTR(idp2)));
 				SET_PTR_FLAG_BITS(ID_PTR(idp), POINTER_SET);
 			} else if( IS_OBJ_REF(idp2) ){
+fprintf(stderr,"eval_work_tree T_SET_PTR:  src %s is an object reference, will assign ptr\n",ID_NAME(idp2));
 				assign_pointer(ID_PTR(idp),ID_REF(idp2));
+fprintf(stderr,"eval_work_tree T_SET_PTR:  back from assign_pointer\n");
 				/* can we do some runtime shape resolution here?? */
 				/* We mark the node as unknown to force propagate_shape to do something
 				 * even when the ptr was previously set to something else.
 				 */
+fprintf(stderr,"will make assertion, ID_PTR(idp) = 0x%lx\n",(long)ID_PTR(idp));
+				/* We already asserted that idp identifies a pointer */
+fprintf(stderr,"Pointer %s:\n",ID_NAME(idp));
+fprintf(stderr,"\tflags: 0x%x\n",PTR_FLAGS(ID_PTR(idp)));
+fprintf(stderr,"\tdecl_enp: 0x%lx\n",(long)PTR_DECL_VN(ID_PTR(idp)));
+fprintf(stderr,"\treference: 0x%lx\n",(long)PTR_REF(ID_PTR(idp)));
+				assert( PTR_DECL_VN(ID_PTR(idp)) != NULL );
+				assert(VN_CHILD(enp,0) != NULL);
+fprintf(stderr,"will make assertion about child 0 prec\n");
+dump_tree(VN_CHILD(enp,0));
+				assert(VN_SHAPE(VN_CHILD(enp,0)) != NULL );
+describe_shape(VN_SHAPE(VN_CHILD(enp,0)));
+				assert( VN_PREC_PTR(VN_CHILD(enp,0)) != NULL );
+fprintf(stderr,"eval_work_tree T_SET_PTR:  will copy unknown node shape to %s\n",node_desc(PTR_DECL_VN(ID_PTR(idp))));
 				copy_node_shape( PTR_DECL_VN(ID_PTR(idp)),uk_shape(VN_PREC(VN_CHILD(enp,0))));
+fprintf(stderr,"eval_work_tree T_SET_PTR:  node shape copied with uk_shape...\n");
+				assert( VN_SHAPE(VN_CHILD(enp,1)) != NULL );
 				if( !UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) )
 					resolve_pointer(VN_CHILD(enp,0),VN_SHAPE(VN_CHILD(enp,1)));
 			}
@@ -7697,7 +7759,7 @@ advise(ERROR_STRING);
 
 		case T_STRCPY:		/* eval_work_tree */
 			if( going ) return(1);
-			idp=eval_ptr_ref(VN_CHILD(enp,0),UNSET_PTR_OK);
+			idp=eval_ptr_expr(VN_CHILD(enp,0),UNSET_PTR_OK);
 			s=eval_string(VN_CHILD(enp,1));
 			if( idp != NULL && s != NULL )
 				assign_string(idp,s,enp);
@@ -7705,7 +7767,7 @@ advise(ERROR_STRING);
 
 		case T_STRCAT:		/* eval_work_tree */
 			if( going ) return(1);
-			idp=eval_ptr_ref(VN_CHILD(enp,0),EXPECT_PTR_SET);
+			idp=eval_ptr_expr(VN_CHILD(enp,0),EXPECT_PTR_SET);
 			s=eval_string(VN_CHILD(enp,1));
 			if( idp != NULL && s != NULL )
 				cat_string(REF_SBUF(ID_REF(idp)),s);

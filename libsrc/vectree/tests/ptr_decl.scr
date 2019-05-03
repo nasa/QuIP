@@ -1,0 +1,10 @@
+expressions
+  read -
+
+float *p;
+float a[4];
+
+p = &a;
+
+end
+exit

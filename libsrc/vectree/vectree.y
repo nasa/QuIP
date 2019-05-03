@@ -407,6 +407,8 @@ pointer		: PTRNAME
 			{
 			$$=node0(T_POINTER);
 			SET_VN_STRING($$, savestr(ID_NAME($1)));
+fprintf(stderr,"PTRNAME recognized, created T_POINTER node\n");
+dump_tree($$);
 			}
 		;
 
@@ -812,6 +814,9 @@ condition	: expression '<' expression {
 		| pointer LOG_EQ ref_arg {
 			$$=node2(T_BOOL_PTREQ,$1,$3);
 			}
+		| expression LOG_EQ pointer {
+			$$=node2(T_BOOL_PTREQ,$1,$3);
+			}
 		| expression LOGAND expression {
 			$$=node2(T_BOOL_AND,$1,$3);
 			}
@@ -864,7 +869,6 @@ func_args	: func_arg
 void_call	: FUNCNAME '(' func_args ')'
 			{
 			$$=node1(T_CALLFUNC,$3);
-fprintf(stderr,"vectree.y:  void_call, setting VN_SUBRT\n");
 			SET_VN_SUBRT($$, $1);
 			/* check to see that this subrt is void! */
 			if( SR_PREC_CODE($1) != PREC_VOID ){

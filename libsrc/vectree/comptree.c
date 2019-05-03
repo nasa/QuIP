@@ -1853,7 +1853,7 @@ advise(ERROR_STRING);
 					point_node_shape(enp,OBJ_SHAPE(dp));
 				}
 			} else {
-//advise("update_node_shape OBJECT, doing nothing");
+advise("update_node_shape POINTER, doing nothing");
 			}
 			break;
 
@@ -2014,7 +2014,7 @@ static void _link_uk_args(QSP_ARG_DECL  Vec_Expr_Node *call_enp,Vec_Expr_Node *a
 
 		
 		/* these get handled elsewhere - we hope!? */
-		case T_POINTER:
+		case T_POINTER:		/* link_uk_args */
 		case T_STR_PTR:
 		case T_SET_STR:
 		case T_REFERENCE:
@@ -2353,7 +2353,7 @@ static int _count_name_refs(QSP_ARG_DECL  Vec_Expr_Node *enp,const char *lhs_nam
 		case T_SCALAR_VAR:
 #endif // SCALARS_NOT_OBJECTS
 		case T_FUNCPTR:
-		case T_POINTER:
+		case T_POINTER:		// count_name_refs
 		case T_STR_PTR:
 		case T_DYN_OBJ:		// _count_name_refs
 			if( strcmp(VN_STRING(enp),lhs_name) ){
@@ -2702,26 +2702,6 @@ static void _note_uk_objref(QSP_ARG_DECL  Vec_Expr_Node *decl_enp, Vec_Expr_Node
 	np=mk_node(enp);
 	addTail(VN_DECL_REFS(decl_enp),np);
 }
-
-#ifdef FOOBAR
-static Identifier *get_named_ptr(QSP_ARG_DECL  Vec_Expr_Node *enp)
-{
-	Identifier *idp;
-
-	switch(VN_CODE(enp)){
-		case T_POINTER:
-			idp = id_of(VN_STRING(enp));
-			assert( idp != NULL );
-			assert( IS_POINTER(idp) );
-
-			return(idp);
-		default:
-			missing_case(enp,"get_named_ptr");
-			break;
-	}
-	return(NULL);
-}
-#endif // FOOBAR
 
 /* check_curds - check a tree to see if any nodes are "curdled", such as
  * a syntax error or something else that would preclude execution.
@@ -4477,7 +4457,7 @@ dump_tree(enp);
 		case T_CLR_OPT_PARAMS:
 		case T_ADD_OPT_PARAM:
 		case T_OPTIMIZE:
-		case T_POINTER:
+		case T_POINTER:		/* compile_node */
 		case T_EQUIVALENCE:
 		case T_FUNCPTR:
 		case T_FUNCREF:
@@ -5181,7 +5161,6 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 			/* void subrt's never need to have a shape */
 			if( SR_PREC_CODE(srp) == PREC_VOID ){
-fprintf(stderr,"prelim_node_shape:  Subroutine %s returns void, setting callfunc shape to null!\n",SR_NAME(srp));
 				SET_VN_SHAPE(enp, NULL);
 				return;
 			}
@@ -5669,9 +5648,18 @@ describe_shape(VN_SHAPE(decl_enp));
 			assert( idp != NULL );
 			assert( IS_POINTER(idp) );
 			assert( PTR_DECL_VN(ID_PTR(idp)) != NULL );
-			assert( VN_SHAPE(PTR_DECL_VN(ID_PTR(idp))) != NULL );
+			//assert( VN_SHAPE(PTR_DECL_VN(ID_PTR(idp))) != NULL );
 
+fprintf(stderr,"prelim_node_shape T_POINTER, pointing node shape to PTR_DECL_VN\n");
+dump_tree(enp);
+			assert(ID_PTR(idp)!=NULL);
+			assert(PTR_DECL_VN(ID_PTR(idp))!=NULL);
+fprintf(stderr,"ptr_decl_vn = 0x%lx\n",(long)PTR_DECL_VN(ID_PTR(idp)));
+dump_tree(PTR_DECL_VN(ID_PTR(idp)));
+			assert(VN_SHAPE(PTR_DECL_VN(ID_PTR(idp)))!=NULL);
+describe_shape(VN_SHAPE(PTR_DECL_VN(ID_PTR(idp))));
 			point_node_shape(enp,VN_SHAPE(PTR_DECL_VN(ID_PTR(idp))));
+fprintf(stderr,"prelim_node_shape T_POINTER, DONE pointing node shape to PTR_DECL_VN\n");
 			break;
 			}
 

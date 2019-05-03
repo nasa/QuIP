@@ -128,7 +128,7 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	int i;
 	const char *s;
 
-	if( enp==NULL ) return;
+	if( enp == NULL ) return;
 
 	/* print the node "name", and a code that tells about shape knowledge */
 
@@ -292,6 +292,7 @@ assert(VN_SUBRT(enp)!=NULL);
 	/* Now print the addresses of the child nodes */
 
 	if( VN_CHILD(enp,0)!=NULL){
+fprintf(stderr,"child 0 at 0x%lx\n",(long)VN_CHILD(enp,0));
 		sprintf(msg_str,"\t\tn%d",VN_SERIAL(VN_CHILD(enp,0)));
 		prt_msg_frag(msg_str);
 	}
