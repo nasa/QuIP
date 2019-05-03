@@ -5581,6 +5581,7 @@ gen_obj_shape:
 			/* If the object's shape is unknown, shouldn't
 			 * we add it to the list here???
 			 */
+			// BUG? - should have a macro for this???
 			decl_enp = (Vec_Expr_Node *)OBJ_EXTRA(dp);
 
 			/* We used to think it was an error if there was no decl_enp,
@@ -5594,6 +5595,16 @@ gen_obj_shape:
 			 *
 			 * And then there's matlab, where there are no declarations,
 			 * and the sizes are a bit more malleable...
+			 *
+			 * 5/2/19  A newly-discovered bug involved immediate statements
+			 * executed outside of subroutines:  these are released after execution,
+			 * and so the objects that point to declaration nodes end up
+			 * holding invalid pointers...  If the declaration nodes are only
+			 * used for resolving unknown shape objects, then maybe we could
+			 * set them to null for fixed-size objects?  That doesn't solve the
+			 * larger problem, however.  That will probably require either keeping
+			 * reference counts or not releasing at all???  Or maybe just not
+			 * releasing declaration statements???
 			 */
 
 			if( decl_enp == NULL ){

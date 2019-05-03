@@ -1,14 +1,15 @@
 expressions
   read -
 
-float a[4], b[4], *p;
+float a[4], b[4];
+float *p;
 
 void test_p()
 {
 	if( p == &b ){
-		advise("p points to b");
+		echo("p points to b");
 	} else {
-		advise("p does NOT point to b");
+		echo("p does NOT point to b");
 	}
 }
 void assign_p(float *ref)
@@ -20,17 +21,17 @@ dump test_p
 dump assign_p
 read -
 
-advise("pointing p to a with subroutine");
+echo("pointing p to a with subroutine");
 assign_p(&a);
-advise("testing ...");
+echo("testing ...");
 test_p();
 
-advise("pointing p to a directly");
+echo("pointing p to a directly");
 p = &a;
-advise("testing ...");
+echo("testing ...");
 test_p();
 
-advise("pointing p to b");
+echo("pointing p to b");
 p = &b;
 test_p();
 
