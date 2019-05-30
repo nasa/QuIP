@@ -464,6 +464,9 @@ DEBUG_LINENO(lookahead_til after nextline)
 				return 0;
 			}
 			qp= CURR_QRY(THIS_QSP);
+            if( qp == NULL ){
+                fprintf(stderr,"unexpected null QP, qlevel = %d",QLEVEL);
+            }
 			assert(qp!=NULL);
 			if( QLEVEL == _level && QRY_HAS_TEXT(qp) ){
 DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #2)
