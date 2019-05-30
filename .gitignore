@@ -33,3 +33,5 @@ config.sub
 config.guess
 compile
 INSTALL
+test-driver
+
