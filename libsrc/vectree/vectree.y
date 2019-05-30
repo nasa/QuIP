@@ -2176,12 +2176,11 @@ static void update_current_input_file(Query_Stack *qsp)
 
 	/* if the name now is different from the remembered name, change it! */
 	if( strcmp(CURRENT_FILENAME,SR_STRING(CURR_INFILE)) ){
-		// This is a problem - we don't want to release the old string, because
+		// We don't want to release the old strin if any
 		// existing nodes point to it.  We don't want them to have private copies,
-		// either, because there would be too many.  We compromise here by not
-		// releasing the old string, but not remembering it either.  Thus we may
-		// end up with a few more copies later, if we have nested file inclusion...
-		// rls_str(CURR_INFILE);
+		// either, because there would be too many.  Therefore,
+		// we keep a count of the number of references to the string,
+		// and only release when it is 0.
 		if( SR_COUNT(CURR_INFILE) == 0 )
 			rls_stringref(CURR_INFILE);
 		CURR_INFILE = save_stringref(CURRENT_FILENAME);
@@ -2763,14 +2762,19 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 	stat=yyparse(THIS_QSP);
 
 	if( TOP_NODE != NULL )	/* successful parsing */
-		{
+	{
 		if( dumpit ) {
 			print_shape_key(SINGLE_QSP_ARG);
 			dump_tree(TOP_NODE);
 		}
 		// What are we releasing?  the immediately
 		// executed statements?
+		//
+		// This can be a problem if they are declarations of objects that retain
+		// a pointer to their declaration nodes!?!?
+fprintf(stderr,"parse_stuff calling check_release...\n");
 		check_release(TOP_NODE);
+fprintf(stderr,"parse_stuff back from check_release...\n");
 	} else {
 		// Do we get here on a syntax error???
 		warn("Unsuccessfully parsed statement (top_node=NULL");

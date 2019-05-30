@@ -291,13 +291,17 @@ assert(VN_SUBRT(enp)!=NULL);
 
 	/* Now print the addresses of the child nodes */
 
+#define N_EXPECTED_CHILDREN(enp)	(tnt_tbl[code].tnt_nchildren)
+
 	if( VN_CHILD(enp,0)!=NULL){
 fprintf(stderr,"child 0 at 0x%lx\n",(long)VN_CHILD(enp,0));
+		assert( N_EXPECTED_CHILDREN(enp) >= 1 );
 		sprintf(msg_str,"\t\tn%d",VN_SERIAL(VN_CHILD(enp,0)));
 		prt_msg_frag(msg_str);
 	}
 	for(i=1;i<MAX_CHILDREN(enp);i++){
 		if( VN_CHILD(enp,i)!=NULL){
+			assert( N_EXPECTED_CHILDREN(enp) > i );
 			sprintf(msg_str,", n%d",VN_SERIAL(VN_CHILD(enp,i)));
 			prt_msg_frag(msg_str);
 		}
