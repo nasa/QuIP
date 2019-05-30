@@ -217,8 +217,9 @@ index_t _index_for_scalar(QSP_ARG_DECL  Typed_Scalar *tsp)
 	  else {
           fprintf(stderr,"index_for_scalar:  tsp at 0x%"PRIxPTR" has precision code %d - expected %d (PREC_DP) or %d (PREC_LI)\n",
                   (uintptr_t) tsp,TS_PREC(tsp),PREC_DP,PREC_LI);
-		v=0;
+		// This value is never read, but only if we are testing the assertions!?
 	  	assert( AERROR( "index_for_scalar:  Unexpected type code!?") );
+        v=0;
 	}
 	if( v < 0 ){
 		sprintf(ERROR_STRING,

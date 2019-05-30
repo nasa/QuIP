@@ -19,6 +19,7 @@ struct struct_name; typedef struct struct_name typedef_name;
 
 FWD_TYPEDEF(query,Query)
 FWD_TYPEDEF(query_stack,Query_Stack)
+FWD_TYPEDEF(vector_parser_data,Vector_Parser_Data)
 FWD_TYPEDEF(typed_scalar,Typed_Scalar)
 FWD_TYPEDEF(scalar_expr_node,Scalar_Expr_Node)
 FWD_TYPEDEF(subrt,Subrt)

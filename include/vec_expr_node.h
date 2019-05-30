@@ -1,6 +1,8 @@
 #ifndef _VEC_EXPR_NODE_H_
 #define _VEC_EXPR_NODE_H_
 
+// BUG?  can this file be moved to libsrc/vectree???
+
 #include "treecode.h"
 #include "veclib/vecgen.h"
 #include "function.h"
@@ -19,7 +21,7 @@ typedef struct dbl_node_data {
 } Dbl_Node_Data;
 
 typedef struct int_node_data {
-	long		intval;
+	int64_t		intval;
 } Int_Node_Data;
 
 typedef struct callf_node_data {
@@ -37,11 +39,12 @@ typedef struct cast_node_data {
 	Precision *	prec_p;
 } Cast_Node_Data;
 
-typedef struct vec_func_node_data {
+typedef struct func_node_data {
+	// Is this comment still relevant???
 	// BUG crashes when this order didn't match bitmap_node_data...
-	Quip_Function *	vf_func_p;
-	int		vf_code;
-} Vec_Func_Node_Data;
+	Quip_Function *	fnd_func_p;
+	int		fnd_code;
+} Func_Node_Data;
 
 typedef struct sizechng_node_data {
 	Shape_Info *	shpp;
@@ -72,34 +75,36 @@ typedef struct decl_node_data {
 
 
 typedef union {
-	List_Node_Data		list_data;
-	String_Node_Data	string_data;
-	Cast_Node_Data		cast_data;
-	Vec_Func_Node_Data	vf_data;
-	Sizechng_Node_Data	sizch_data;
-	Int_Node_Data		int_data;
-	Dbl_Node_Data		dbl_data;
-	Decl_Node_Data		decl_data;
-	Callf_Node_Data		call_data;
-	Bitmap_Node_Data	bitmap_data;
-	Data_Obj_Node_Data	dobj_data;
+	List_Node_Data		list_data;	// ND_LIST
+	String_Node_Data	string_data;	// ND_STRING
+	Cast_Node_Data		cast_data;	// ND_CAST
+	Func_Node_Data		func_data;	// ND_FUNC
+	Sizechng_Node_Data	sizch_data;	// ND_SIZE_CHANGE
+	Int_Node_Data		int_data;	// ND_INT
+	Dbl_Node_Data		dbl_data;	// ND_DBL
+	Decl_Node_Data		decl_data;	// ND_DECL
+	Callf_Node_Data		call_data;	// ND_CALLF
+	Bitmap_Node_Data	bitmap_data;	// ND_BMAP
+	Data_Obj_Node_Data	dobj_data;	// ND_DOBJ
 } Node_Data;
 
+// ND_VFUNC vs. ND_FUNC???
+
 typedef enum {
-	ND_UNUSED,		/* 0	can delete when whole table is set */
-	ND_NONE,		/* 1  */
-	ND_LIST,		/* 2  */
-	ND_STRING,		/* 3  */
-	ND_CAST,		/* 4  */
-	ND_VFUNC,		/* 5  */
-	ND_SIZE_CHANGE,		/* 6  */
-	ND_INT,			/* 7  */
-	ND_DBL,			/* 8  */
-	ND_DECL,		/* 9  */
-	ND_CALLF,		/* 10 */
-	ND_BMAP,		/* 11 */
-	ND_FUNC,		/* 12   this doesn't appear in the union!?  BUG??? */
-	N_NODE_DATA_TYPES	/* 13 */
+	ND_UNUSED,		// 0	// can delete when whole table is set
+	ND_NONE,		// 1
+	ND_LIST,		// 2
+	ND_STRING,		// 3
+	ND_CAST,		// 4
+	ND_FUNC,		// 5
+	ND_SIZE_CHANGE,		// 6
+	ND_INT,			// 7
+	ND_DBL,			// 8
+	ND_DECL,		// 9
+	ND_CALLF,		// 10
+	ND_BMAP,		// 11
+	ND_DOBJ,		// 12
+	N_NODE_DATA_TYPES	// 13
 } Node_Data_Type;
 
 struct vec_expr_node {
@@ -186,11 +191,11 @@ struct vec_expr_node {
 
 #define VN_STRING(enp)		((enp)->ven_data).string_data.string
 #define VN_N_ELTS(enp)		((enp)->ven_data).list_data.n_elts
-#define VN_FUNC_PTR(enp)	((enp)->ven_data).vf_data.vf_func_p
+#define VN_FUNC_PTR(enp)	((enp)->ven_data).func_data.fnd_func_p
 #define VN_UK_ARGS(enp)		((enp)->ven_data).call_data.uk_args_lp
 #define VN_SIZCH_SHAPE(enp)	((enp)->ven_data).sizch_data.shpp
 #define VN_CAST_PREC_PTR(enp)	((enp)->ven_data).cast_data.prec_p
-#define VN_VFUNC_CODE(enp)	((enp)->ven_data).vf_data.vf_code
+#define VN_VFUNC_CODE(enp)	((enp)->ven_data).func_data.fnd_code
 #define VN_BM_SHAPE(enp)	((enp)->ven_data).bitmap_data.shpp
 #define VN_BM_CODE(enp)		((enp)->ven_data).bitmap_data.code
 #define VN_INTVAL(enp)		((enp)->ven_data).int_data.intval
@@ -202,7 +207,7 @@ struct vec_expr_node {
 
 #define SET_VN_SIZCH_SHAPE(enp,_shpp)	SET_VN_DATA(enp,sizch_data.shpp,_shpp)
 #define SET_VN_CAST_PREC_PTR(enp,p)	SET_VN_DATA(enp,cast_data.prec_p,p)
-#define SET_VN_VFUNC_CODE(enp,c)	SET_VN_DATA(enp,vf_data.vf_code,c)
+#define SET_VN_VFUNC_CODE(enp,c)	SET_VN_DATA(enp,func_data.fnd_code,c)
 #define SET_VN_BM_SHAPE(enp,_shpp)	SET_VN_DATA(enp,bitmap_data.shpp,_shpp)
 #define SET_VN_BM_CODE(enp,c)		SET_VN_DATA(enp,bitmap_data.code,c)
 #define SET_VN_INTVAL(enp,v)		SET_VN_DATA(enp,int_data.intval,v)
@@ -219,7 +224,7 @@ struct vec_expr_node {
 
 #define SET_VN_STRING(enp,s)		SET_VN_DATA(enp,string_data.string,s)
 #define SET_VN_N_ELTS(enp,v)		SET_VN_DATA(enp,list_data.n_elts,v)
-#define SET_VN_FUNC_PTR(enp,v)		SET_VN_DATA(enp,vf_data.vf_func_p,v)
+#define SET_VN_FUNC_PTR(enp,v)		SET_VN_DATA(enp,func_data.fnd_func_p,v)
 #define SET_VN_UK_ARGS(enp,lp)		SET_VN_DATA(enp,call_data.uk_args_lp,lp)
 
 #define SET_VN_DECL_FLAG_BITS(enp,b)	SET_VN_DATA(enp,decl_data.decl_flags,VN_DECL_FLAGS(enp)|b)

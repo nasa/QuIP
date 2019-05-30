@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <inttypes.h>	// PRId64 etc
 
 #include "quip_prot.h"
 //#include "savestr.h"
@@ -127,7 +128,7 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	int i;
 	const char *s;
 
-	if( enp==NULL ) return;
+	if( enp == NULL ) return;
 
 	/* print the node "name", and a code that tells about shape knowledge */
 
@@ -211,9 +212,12 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	else if(code == T_TYPECAST ){
 		// BUG not how we do precision any more!!!
 		//sprintf(msg_str,"  %s",NAME_FOR_PREC_CODE(VN_INTVAL(enp)));
-		sprintf(msg_str,"  %s",PREC_NAME(VN_PREC_PTR(enp)));
-		prt_msg_frag(msg_str);
-	} else if( code == T_SUBRT_DECL || code == T_SCRIPT ){
+        if( VN_SHAPE(enp) == NULL ) error1("CAUTIOUS:  null node shape for typecast node!?");
+        else {
+            sprintf(msg_str,"  %s",PREC_NAME(VN_PREC_PTR(enp)));
+            prt_msg_frag(msg_str);
+        }
+    } else if( code == T_SUBRT_DECL || code == T_SCRIPT ){
 		Subrt *srp;
 		srp=VN_SUBRT(enp);
 		sprintf(msg_str,"\t%s",SR_NAME(srp));
@@ -266,10 +270,11 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		sprintf(msg_str," %s",VF_NAME(FIND_VEC_FUNC(VN_VFUNC_CODE(enp))));
 		prt_msg_frag(msg_str);
 	} else if( code==T_CALLFUNC ){
+assert(VN_SUBRT(enp)!=NULL);
 		sprintf(msg_str," %s", SR_NAME(VN_SUBRT(enp)));
 		prt_msg_frag(msg_str);
 	} else if( code==T_LIT_INT ){
-		sprintf(msg_str," %ld",VN_INTVAL(enp));
+		sprintf(msg_str," %"PRId64, VN_INTVAL(enp) );
 		prt_msg_frag(msg_str);
 	} else if( code==T_ASSIGN ){
 		prt_msg_frag("\t");
@@ -279,16 +284,24 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		prt_msg_frag("\t");
 	} else if( code==T_RAMP ){
 		prt_msg_frag("\t");
+	} else if( code == T_VS_VS_CONDASS ){
+		sprintf(msg_str," %s",VF_NAME(FIND_VEC_FUNC(VN_BM_CODE(enp))));
+		prt_msg_frag(msg_str);
 	}
 
 	/* Now print the addresses of the child nodes */
 
+#define N_EXPECTED_CHILDREN(enp)	(tnt_tbl[code].tnt_nchildren)
+
 	if( VN_CHILD(enp,0)!=NULL){
+fprintf(stderr,"child 0 at 0x%lx\n",(long)VN_CHILD(enp,0));
+		assert( N_EXPECTED_CHILDREN(enp) >= 1 );
 		sprintf(msg_str,"\t\tn%d",VN_SERIAL(VN_CHILD(enp,0)));
 		prt_msg_frag(msg_str);
 	}
 	for(i=1;i<MAX_CHILDREN(enp);i++){
 		if( VN_CHILD(enp,i)!=NULL){
+			assert( N_EXPECTED_CHILDREN(enp) > i );
 			sprintf(msg_str,", n%d",VN_SERIAL(VN_CHILD(enp,i)));
 			prt_msg_frag(msg_str);
 		}

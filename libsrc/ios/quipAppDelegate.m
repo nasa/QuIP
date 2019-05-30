@@ -762,6 +762,7 @@ int is_portrait(void)
 				retval = 1;
 				break;
 			}
+            break;
 		default:
 /*
 fprintf(stderr,"is_portrait:  [UIDevice currentDevice] = 0x%lx\n",(long)dev);

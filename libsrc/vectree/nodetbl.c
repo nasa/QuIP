@@ -47,7 +47,7 @@ Tree_Node_Type tnt_tbl[N_TREE_CODES]={
 {	T_LIST_OBJ,	"listobj",		1,	CP_SHP,	ND_NONE	},
 {	T_COMP_OBJ,	"compobj",		1,	CP_SHP,	ND_NONE	},
 {	T_DYN_OBJ,	"dynamic_object",	0,	PT_SHP,	ND_STRING	},
-{	T_STATIC_OBJ,	"static_object",	0,	PT_SHP,	ND_STRING	},
+{	T_STATIC_OBJ,	"static_object",	0,	PT_SHP,	ND_DOBJ	},
 #ifdef SCALARS_NOT_OBJECTS
 {	T_SCALAR_VAR,	"scalar_var",		0,	PT_SHP,	ND_STRING	},
 #endif // SCALARS_NOT_OBJECTS

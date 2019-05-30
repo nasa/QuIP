@@ -106,3 +106,4 @@ Delete_Image sumbuf
 
 Stop_File rdp.mac
 
+Set rdp_mac_loaded 1

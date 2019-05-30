@@ -342,6 +342,15 @@ void _xplot_text(QSP_ARG_DECL  const char *s)
 {
 	float delta;
 
+	if( s == NULL ){
+		warn("xplot_text:  passed null pointer!?");
+		return;
+	}
+	if( *s == 0 ){
+		warn("xplot_text:  passed empty string!?");
+		return;
+	}
+
 	if( plot_vp != NULL ){
 		xp_text(plot_vp,_currx,_curry+PLOT_TEXT_OFFSET,s);
 	}

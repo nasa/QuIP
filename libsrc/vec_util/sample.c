@@ -135,9 +135,6 @@ void _render_samples2(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data
 	if( render_check(image_dp,coord_dp,intens_dp) < 0 )
 		return;
 
-fprintf(stderr,"render_samples2 %s %s %s BEGIN\n",
-OBJ_NAME(image_dp),OBJ_NAME(coord_dp),OBJ_NAME(intens_dp));
-
 	image  = (float *) OBJ_DATA_PTR(image_dp);
 	coord  = (float *) OBJ_DATA_PTR(coord_dp);
 	intens = (float *) OBJ_DATA_PTR(intens_dp);

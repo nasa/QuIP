@@ -1,5 +1,12 @@
 #include "shape_bits.h"
 
+typedef enum {
+	ELLIOT_AND_RAO,
+	TEXAS_INSTRUMENTS
+} Real_FFT_Algorithm_Code;
+
+extern Real_FFT_Algorithm_Code real_fft_algorithm;
+
 typedef struct fft_args {
 	void *		fft_src_addr;
 	void *		fft_dst_addr;

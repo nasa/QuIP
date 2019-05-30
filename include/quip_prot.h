@@ -57,6 +57,19 @@ extern FILE * qs_msg_file(SINGLE_QSP_ARG_DECL);
 extern void push_vector_parser_data(SINGLE_QSP_ARG_DECL);
 extern void pop_vector_parser_data(SINGLE_QSP_ARG_DECL);
 
+extern Vector_Parser_Data	* new_vector_parser_data(void);
+
+extern Vector_Parser_Data	* _qs_vector_parser_data(SINGLE_QSP_ARG_DECL);
+#define qs_vector_parser_data() _qs_vector_parser_data(SINGLE_QSP_ARG)
+
+extern List	* qs_vector_parser_data_freelist(SINGLE_QSP_ARG_DECL);
+extern List	* qs_vector_parser_data_stack(SINGLE_QSP_ARG_DECL);
+
+extern void set_vector_parser_data_stack(QSP_ARG_DECL  List *);
+extern void set_vector_parser_data_freelist(QSP_ARG_DECL  List *);
+extern void set_vector_parser_data(QSP_ARG_DECL  Vector_Parser_Data *);
+
+
 // quip_main.c
 extern void push_quip_menu(Query_Stack *qsp);
 extern void exec_quip(SINGLE_QSP_ARG_DECL);
@@ -236,8 +249,10 @@ extern String_Buf *		qs_expr_string(SINGLE_QSP_ARG_DECL);
 
 
 extern char *error_string(SINGLE_QSP_ARG_DECL);
+extern char *vector_parser_error_string(SINGLE_QSP_ARG_DECL);
 extern char *message_string(SINGLE_QSP_ARG_DECL);
 #define ERROR_STRING		error_string(SINGLE_QSP_ARG)
+#define VECTOR_PARSER_ERROR_STRING		vector_parser_error_string(SINGLE_QSP_ARG)
 #define DEFAULT_ERROR_STRING	error_string(SGL_DEFAULT_QSP_ARG)
 #define MSG_STR			message_string(SINGLE_QSP_ARG)
 #define DEFAULT_MSG_STR		message_string(SGL_DEFAULT_QSP_ARG)
@@ -327,7 +342,8 @@ extern const char *query_filename(SINGLE_QSP_ARG_DECL);
 extern void set_query_filename(Query *, const char *);
 extern void set_query_macro(Query *,Macro *);
 extern void set_query_args(Query *,const char **);
-extern void print_qs_levels(QSP_ARG_DECL  int *level_to_print, int n_levels_to_print);
+// BUG should be in local header file, libsrc/interpreter...
+extern void report_qs_line_numbers(QSP_ARG_DECL  int *level_to_print, int n_levels_to_print);
 extern int *get_levels_to_print(QSP_ARG_DECL  int *n_ptr);
 
 extern void _add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
@@ -551,10 +567,13 @@ extern Query_Stack *new_qstack(QSP_ARG_DECL  const char *name);
 
 extern void qs_do_cmd(Query_Stack *qsp);
 
+// BUG move to local include in libsrc/interpreter
 extern void _open_loop(QSP_ARG_DECL  int n);
-extern void _close_loop(SINGLE_QSP_ARG_DECL);
+extern void _end_loop(SINGLE_QSP_ARG_DECL);
+extern void _open_while_loop(SINGLE_QSP_ARG_DECL);
 #define open_loop(n)	_open_loop(QSP_ARG  n)
-#define close_loop()	_close_loop(SINGLE_QSP_ARG)
+#define end_loop()	_end_loop(SINGLE_QSP_ARG)
+#define open_while_loop() _open_while_loop(SINGLE_QSP_ARG)
 
 extern void _list_current_menu(SINGLE_QSP_ARG_DECL);
 extern void _list_builtin_menu(SINGLE_QSP_ARG_DECL);

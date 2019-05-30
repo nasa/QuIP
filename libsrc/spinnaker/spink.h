@@ -9,6 +9,7 @@
 
 #ifdef HAVE_LIBSPINNAKER
 #include "SpinnakerC.h"
+#include "SpinVideoC.h"
 #endif // HAVE_LIBSPINNAKER
 
 #define BOOL	bool8_t

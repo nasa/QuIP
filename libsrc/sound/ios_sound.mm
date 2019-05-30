@@ -17,7 +17,7 @@
 #include "DCRejectionFilter.h"
 
 
-static unsigned int nchannels=2;		/* default */
+//static unsigned int nchannels=2;		/* default */
 static int halting=0;
 static int streaming=0;
 int audio_state = AUDIO_UNINITED;
@@ -516,7 +516,7 @@ static void my_output_callback(	void *inUserData,
 {
 	OSStatus status;
 	int n_avail;
-	uint32_t n_to_copy;
+	uint32_t n_to_copy=0;
 
 	n_avail = inBuffer->mAudioDataBytesCapacity / sizeof(audio_sample_type);	// BUG get sample size from buffer?
 
@@ -780,7 +780,7 @@ advise("calling AudioQueueStart for output queue...");
 
 void audio_init(QSP_ARG_DECL  int mode)
 {
-	int channels;
+	//int channels;
 	static int ts_class_inited=0;
 
 advise("audio_init BEGIN");
@@ -824,7 +824,7 @@ advise("audio_init BEGIN");
 
 
 
-	channels = nchannels;
+	//channels = nchannels;
 
 	audio_state = mode;
 

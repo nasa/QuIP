@@ -37,6 +37,8 @@ extern void _zap_fore(QSP_ARG_DECL  Foreach_Loop *frp);
 #define zap_fore(frp) _zap_fore(QSP_ARG  frp)
 
 extern void init_query_stack( Query_Stack *qsp );
+extern void init_vector_parser_data_stack( Query_Stack *qsp );
+
 extern void	set_progname(const char *program_name);
 
 extern const char * _nextline(QSP_ARG_DECL const char *pline);

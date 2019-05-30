@@ -311,9 +311,6 @@ static COMMAND_FUNC( do_def_mac )
 	}
 
 	ma_tbl = setup_macro_args(n);
-	// We want to store the line number of the file where the macro
-	// is declared...  We can read it now from the query stream...
-	//lineno = QRY_LINES_READ(CURR_QRY(THIS_QSP));
 	lineno = current_line_number(SINGLE_QSP_ARG);
 
 	sbp = read_macro_body();
@@ -329,11 +326,15 @@ static COMMAND_FUNC( do_def_mac )
 		advise(ERROR_STRING);
 	} else {
 		mp=create_macro(name,n,ma_tbl,sbp,lineno);
+
+        	// a warning has probably already been printed,
+        	// but this test eliminates a compiler warning about a never-read value...
+        	if( mp == NULL ) warn("Error creating macro!?");
 	}
 
 	rls_stringbuf(sbp);
 
-	// for compatibility with quip - maybe should change this?
+	// for compatibility with older versions of quip - maybe should change this?
 	pop_menu();
 
 } // do_def_mac
@@ -827,10 +828,9 @@ static COMMAND_FUNC( do_repeat )
 	open_loop(n);
 }
 
-static COMMAND_FUNC( do_close_loop )
+static COMMAND_FUNC( do_end_loop )		// 'end' command closes repeat $n or foreach loop
 {
-	//[THIS_QSP closeLoop ];
-	close_loop();
+	end_loop();
 }
 
 static COMMAND_FUNC( do_while )
@@ -840,10 +840,11 @@ static COMMAND_FUNC( do_while )
 
 	s=nameof("expression");
 	tsp = pexpr(s);
-	if( has_zero_value(tsp) )
+	if( has_zero_value(tsp) ){
 		whileloop(0);
-	else
+	} else {
 		whileloop(1);
+	}
 	RELEASE_SCALAR(tsp);
 }
 
@@ -897,7 +898,7 @@ static COMMAND_FUNC( do_foreach_loop )
 
 static COMMAND_FUNC( do_do_loop )
 {
-	open_loop(-1);
+	open_while_loop();
 }
 
 static COMMAND_FUNC( do_error_exit )
@@ -1548,7 +1549,7 @@ ADD_CMD( echo,		do_echo,	echo a word		)
 ADD_CMD( advise,	do_advise,	echo a word to stderr	)
 ADD_CMD( log_message,	do_log_message,	print a log message to stderr	)
 ADD_CMD( repeat,	do_repeat,	open an iterative loop	)
-ADD_CMD( end,		do_close_loop,	close a loop		)
+ADD_CMD( end,		do_end_loop,	close a loop		)
 ADD_CMD( foreach,	do_foreach_loop,	iterate over a set of words	)
 ADD_CMD( do,		do_do_loop,	open a loop		)
 ADD_CMD( while,		do_while,	conditionally close a loop	)

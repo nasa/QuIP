@@ -12,3 +12,6 @@
 #include "veclib/vl2_veclib_prot.h"
 #include "vl2_fft_expanded.c"
 
+Real_FFT_Algorithm_Code real_fft_algorithm = ELLIOT_AND_RAO;
+
+

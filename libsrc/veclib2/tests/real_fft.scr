@@ -1,34 +1,49 @@
 
 Vector xf 5 1 complex
 Vector f 8 1 float
+Vector c 8 1 complex
+Vector cxf 8 1 complex
 Assign twopi 8*atan(1)
+
+Define Real_FFT_Tests 1 algo
+
+Set algo $1
+compute control real_fft_algo $1 quit quit
+
 
 Ramp1D f 0 $twopi/ncols(f)
 VSin f f
+VMov c{0} f
+VSet c{1} 0
+
+echo "Computing FFT of a real sequence using $algo algorithm..."
 Display f
 RFFT xf f
 Display xf
 Pause
 
+echo "Computing FFT of a complex sequence using $algo algorithm..."
+Display c
+FFT c
+Display c
+Pause
+
+
+echo "Computing inverse FFT to a real sequence using $algo algorithm..."
 Display xf
 RInvFFT f xf
 Display f
 Pause
 
-
-data
-  ascii
-    read xf -
-    	1	0
-	0	0
-	0	0
-	0	0
-	0	0
-    quit
-  quit
-
-Display xf
-RInvFFT f xf
-Display f
+echo "Computing inverse FFT to a complex sequence using $algo algorithm..."
+Display c
+InvFFT c
+Display c
 Pause
+.
+
+Real_FFT_Tests Elliot_and_Rao
+Real_FFT_Tests Texas_Instruments
+
+exit
 

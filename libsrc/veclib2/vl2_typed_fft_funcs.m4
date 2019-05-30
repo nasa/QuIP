@@ -521,14 +521,12 @@ define(`RECOMBINE',`
  * One-dimensional real fft.
  *
  * This routine seems to assume that the data are contiguous...
- * Increments are not used, checked...
+ * Increments are not used, but checked... ???
  *
- * The original implementation (supposedly based on Elliott & Rao?)
- * didnt use the twiddle factors, but did something
+ * This is jbms original implementation (supposedly based on Elliott & Rao?)
+ * doesnt use the twiddle factors, but does something
  * like a split before and after the complex fft...
  *
- * The TI document uses a different algorithm that uses the twiddle factors,
- * that looks simpler...
  */
 
 static void PF_FFT_CALL_NAME(rvfft_v1)( const FFT_Args *fap)
@@ -547,7 +545,7 @@ static void PF_FFT_CALL_NAME(rvfft_v1)( const FFT_Args *fap)
 
 	//if( ! for_real ) return;
 
-	/* len the length of the real data or complex data?... */
+	/* len is the length of the real data */
 	len = FFT_LEN(fap);
 	source = (std_type *)FFT_SRC(fap);
 	dest = (std_cpx *)FFT_DST(fap);
@@ -635,7 +633,7 @@ define(`ADVANCE_CPX_PTRS',`
 	btop--;
 ')
 
-static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
+static void PF_FFT_CALL_NAME(rvfft_v2)( const FFT_Args *fap)
 {
 	std_cpx *ctop, *cbot;
 	std_cpx *atop, *abot;
@@ -728,7 +726,22 @@ dnl	the space before the opening paren is important!!!
 	GET_CPX_CONJ1_PROD(&p2,ctop,bbot)
 	GET_CPX_SUM(&t1,&p1,&p2)
 	*cbot = t1;
-} // rvfft
+} // rvfft_v2
+
+static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
+{
+	switch( real_fft_algorithm ){
+		case ELLIOT_AND_RAO:
+			PF_FFT_CALL_NAME(rvfft_v1)(fap);
+			break;
+		case TEXAS_INSTRUMENTS:
+			PF_FFT_CALL_NAME(rvfft_v2)(fap);
+			break;
+		default:
+			NERROR1("rvfft:  bad algorithm code!?");
+			break;
+	}
+}
 
 /* One dimensional real inverse fft.
  *
@@ -740,7 +753,7 @@ dnl	the space before the opening paren is important!!!
  * original code based on Elliott & Rao
  */
 
-static void PF_FFT_CALL_NAME(rvift_v2)( FFT_Args *fap)
+static void PF_FFT_CALL_NAME(rvift_v1)( FFT_Args *fap)
 {
 	std_cpx *src;
 	std_type *dest;
@@ -844,8 +857,10 @@ dnl	the space before the opening paren is important!!!
 		op += 2*dst_inc;
 		total += *op;
 	}
+/*
 sprintf(DEFAULT_ERROR_STRING,"rvift:  total = %g    B0 = %g",total,B0);
 NADVISE(DEFAULT_ERROR_STRING);
+*/
 
 	// Not sure what the above comment means...
 	// Because they are generally not equal - does this
@@ -861,8 +876,10 @@ NADVISE(DEFAULT_ERROR_STRING);
 	// WITHOUT normalization:
 	total /= (len);
 	diff = (std_type)( 2*(B0 - total) );
+/*
 sprintf(DEFAULT_ERROR_STRING,"rvift:  after normalizing total = %g    diff = %g",total,diff);
 NADVISE(DEFAULT_ERROR_STRING);
+*/
 
 	// B0 comes from the transform,
 	// while total comes from the output of the
@@ -880,7 +897,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 // The forward transform seems to have more numerical error
 // than the nVidia solution???
 
-static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
+static void PF_FFT_CALL_NAME(rvift_v2)( FFT_Args *fap)
 {
 	std_cpx *src;
 	std_type *dest;
@@ -972,7 +989,23 @@ dnl	the space before the opening paren is important!!!
 		dest += dst_inc;
 		src += src_inc;
 	}
-}	// rvift
+}	// rvift_v2
+
+static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
+{
+	switch( real_fft_algorithm ){
+		case ELLIOT_AND_RAO:
+			PF_FFT_CALL_NAME(rvift_v1)(fap);
+			break;
+		case TEXAS_INSTRUMENTS:
+			PF_FFT_CALL_NAME(rvift_v2)(fap);
+			break;
+		default:
+			NERROR1("rvfft:  bad algorithm code!?");
+			break;
+	}
+}
+
 
 ',` dnl else ! BUILDING_KERNELS
 
@@ -1019,12 +1052,12 @@ void HOST_TYPED_CALL_NAME_REAL(vfft,type_code)( HOST_CALL_ARG_DECLS )
 	SET_FFT_SRC( fap, (std_type *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
 	SET_FFT_DST( fap, (std_cpx *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 
-	XFER_FFT_SINC(rvfft,fap,OA_SRC1(oap))
-	XFER_FFT_DINC(rvfft,fap,OA_DEST(oap))
+	XFER_FFT_SINC(rvfft_v1,fap,OA_SRC1(oap))
+	XFER_FFT_DINC(rvfft_v1,fap,OA_DEST(oap))
 
 	SET_FFT_LEN( fap, OBJ_N_TYPE_ELTS( OA_SRC1(oap) ) );
 	SET_FFT_ISI( fap, FWD_FFT );
-	PF_FFT_CALL_NAME(rvfft)( fap );
+	PF_FFT_CALL_NAME(rvfft_v1)( fap );
 }
 
 void HOST_TYPED_CALL_NAME_REAL(vift,type_code)( HOST_CALL_ARG_DECLS )
@@ -1035,13 +1068,12 @@ void HOST_TYPED_CALL_NAME_REAL(vift,type_code)( HOST_CALL_ARG_DECLS )
 	SET_FFT_SRC( fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
 	SET_FFT_DST( fap, (std_type *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 
-	XFER_FFT_SINC(rvift,fap,OA_SRC1(oap))
-	XFER_FFT_DINC(rvift,fap,OA_DEST(oap))
+	XFER_FFT_SINC(rvift_v1,fap,OA_SRC1(oap))
+	XFER_FFT_DINC(rvift_v1,fap,OA_DEST(oap))
 
 	SET_FFT_LEN( fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );
 	SET_FFT_ISI( fap, INV_FFT );
-	//PF_FFT_CALL_NAME(rvfft)( fap );
-	PF_FFT_CALL_NAME(rvift)( fap );
+	PF_FFT_CALL_NAME(rvift_v1)( fap );
 }
 
 /* Read 2-D fourier transform.
@@ -1261,10 +1293,10 @@ void HOST_TYPED_CALL_NAME_REAL(fftrows,type_code)(HOST_CALL_ARG_DECLS)
 
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 	if( n_processors > 1 ){
-		MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),std_type,std_cpx)
+		MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft_v1),std_type,std_cpx)
 	} else
 ') dnl endif /* N_PROCESSORS > 1 */
-		ROW_LOOP( OA_SRC1(oap), PF_FFT_CALL_NAME(rvfft),std_type,std_cpx )
+		ROW_LOOP( OA_SRC1(oap), PF_FFT_CALL_NAME(rvfft_v1),std_type,std_cpx )
 
 }
 
@@ -1295,10 +1327,10 @@ dnl	//SET_FFT_DINC( fap, OBJ_PXL_INC( OA_DEST(oap) )/2 );
 
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
-			MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),std_type,std_cpx)
+			MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft_v1),std_type,std_cpx)
 		} else
 ') dnl endif /* N_PROCESSORS > 1 */
-			ROW_LOOP( OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),
+			ROW_LOOP( OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft_v1),
 				std_type,std_cpx)
 	}
 
@@ -1346,10 +1378,10 @@ static void HOST_TYPED_CALL_NAME_REAL(fft2d_2,type_code)(HOST_CALL_ARG_DECLS)
 
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
-			MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),std_type,std_cpx)
+			MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft_v1),std_type,std_cpx)
 		} else
 ') dnl endif /* N_PROCESSORS > 1 */
-			COL_LOOP_2( OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),
+			COL_LOOP_2( OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft_v1),
 				std_type,std_cpx)
 	}
 
@@ -1425,10 +1457,10 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
-			MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),std_cpx,std_type)
+			MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),std_cpx,std_type)
 		} else
 ') dnl endif /* N_PROCESSORS > 1 */
-			ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),
+			ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),
 				std_cpx,std_type)
 	}
 }
@@ -1473,12 +1505,12 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
-			MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),std_cpx,std_type)
+			MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),std_cpx,std_type)
 		} else
 ') dnl endif /* N_PROCESSORS > 1 */
-	/*		ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),
+	/*		ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),
 				std_cpx,std_type) */
-			COL_LOOP_2(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),
+			COL_LOOP_2(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),
 				std_cpx,std_type)
 	}
 }
@@ -1516,11 +1548,11 @@ void HOST_TYPED_CALL_NAME_REAL(iftrows,type_code)( HOST_CALL_ARG_DECLS )
 
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 	if( n_processors > 1 ){
-		MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),std_cpx,std_type)
+		MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),std_cpx,std_type)
 		return;
 	} else
 ') dnl endif /* N_PROCESSORS > 1 */
-		ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),std_cpx,std_type)
+		ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),std_cpx,std_type)
 }
 
 

@@ -680,7 +680,7 @@ dump_tree(enp);
 			break;
 
 		case T_POINTER:
-			idp = eval_ptr_ref(enp,EXPECT_PTR_SET);
+			idp = eval_ptr_expr(enp,EXPECT_PTR_SET);
 			if( idp == NULL ){
 				break;	/* probably not set */
 			}
@@ -948,6 +948,7 @@ void _resolve_subrt_call(QSP_ARG_DECL  Vec_Expr_Node *call_enp,List *uk_list, Sh
 	Context_Pair *prev_cpp;
 
 	srp = VN_SUBRT(call_enp);
+	assert(srp!=NULL);
 	argval_tree = VN_CHILD(call_enp,0);
 
 	prev_cpp = pop_previous(SINGLE_QSP_ARG);
@@ -1036,9 +1037,10 @@ void _early_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *call_enp, 
 	List *lp;
 	int save_exec;
 	uint32_t save_res;
-	Vec_Expr_Node *args_enp;
+    // If the args are not set, there's no reason to have a ptr to them...
+	//Vec_Expr_Node *args_enp;
 
-	args_enp = VN_CHILD(call_enp,0);
+	//args_enp = VN_CHILD(call_enp,0);
 
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
@@ -1085,10 +1087,11 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	if( dst_dp == NULL )
+	if( dst_dp == NULL ){
 		resolve_subrt_call(call_enp,lp,NULL);
-	else
+	} else {
 		resolve_subrt_call(call_enp,lp,OBJ_SHAPE(dst_dp));
+	}
 
 	executing = save_exec;
 
@@ -1328,7 +1331,7 @@ void _resolve_pointer(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 	 * typically the arg values have not been set at calltime...
 	 */
 
-	/* idp = eval_ptr_ref(uk_enp,1); */
+	/* idp = eval_ptr_expr(uk_enp,1); */
 	idp = get_set_ptr(uk_enp);
 
 	if( idp == NULL ){
@@ -1417,9 +1420,7 @@ fprintf(stderr,"resolve_object passed unknown dynamic object %s\n",VN_STRING(uk_
 
 		default:
 			missing_case(uk_enp,"resolve_object");
-			dp = NULL;
-			idp = NULL;	// silence compiler
-			break;
+			return;
 	}
 
 	SET_VN_FLAG_BITS(uk_enp, resolution_flags);		/* resolve_object */

@@ -71,6 +71,23 @@ void describe_cuda_error(const char *whence, CUresult e)
 			sprintf(DEFAULT_ERROR_STRING,"%s:  No errors.",whence);
 			NADVISE(DEFAULT_ERROR_STRING);
 			break;
+
+#if CUDA_VERSION >= 10000
+RUNTIME_ERROR_CASE(CUDA_ERROR_NVLINK_UNCORRECTABLE,"Uncorrectable NVLink error");
+RUNTIME_ERROR_CASE(CUDA_ERROR_JIT_COMPILER_NOT_FOUND,"JIT compiler not found");
+RUNTIME_ERROR_CASE(CUDA_ERROR_ILLEGAL_STATE,"Illegal state");
+RUNTIME_ERROR_CASE(CUDA_ERROR_COOPERATIVE_LAUNCH_TOO_LARGE,"Cooperative launch too large");
+RUNTIME_ERROR_CASE(CUDA_ERROR_SYSTEM_NOT_READY,"System not ready");
+RUNTIME_ERROR_CASE(CUDA_ERROR_STREAM_CAPTURE_UNSUPPORTED,"Stream capture unsupported");
+RUNTIME_ERROR_CASE(CUDA_ERROR_STREAM_CAPTURE_INVALIDATED,"Stream catpure invalidated");
+RUNTIME_ERROR_CASE(CUDA_ERROR_STREAM_CAPTURE_MERGE,"Stream capture merge");
+RUNTIME_ERROR_CASE(CUDA_ERROR_STREAM_CAPTURE_UNMATCHED,"Stream capture unmatched");
+RUNTIME_ERROR_CASE(CUDA_ERROR_STREAM_CAPTURE_UNJOINED,"Stream capture unjoined");
+RUNTIME_ERROR_CASE(CUDA_ERROR_STREAM_CAPTURE_ISOLATION,"Stream capture isolation");
+RUNTIME_ERROR_CASE(CUDA_ERROR_STREAM_CAPTURE_IMPLICIT,"Stream capture implicit");
+RUNTIME_ERROR_CASE(CUDA_ERROR_CAPTURED_EVENT,"Captured event");
+#endif
+
 #if CUDA_VERSION >= 6050
 RUNTIME_ERROR_CASE(CUDA_ERROR_INVALID_GRAPHICS_CONTEXT,"Invalid graphics context")
 #endif
@@ -180,6 +197,21 @@ void describe_cuda_driver_error(const char *whence, cudaError_t e)
 
 	switch(e){
 DRIVER_ERROR_CASE(cudaSuccess,"No driver errors")
+#if CUDA_VERSION >= 10000
+DRIVER_ERROR_CASE(cudaErrorNvlinkUncorrectable,"Uncorrectable NVLink error")
+DRIVER_ERROR_CASE(cudaErrorJitCompilerNotFound,"JIT compiler not found")
+DRIVER_ERROR_CASE(cudaErrorCooperativeLaunchTooLarge,"Cooperative launch too large")
+DRIVER_ERROR_CASE(cudaErrorSystemNotReady,"System not ready")
+DRIVER_ERROR_CASE(cudaErrorIllegalState,"Illegal state")
+DRIVER_ERROR_CASE(cudaErrorStreamCaptureUnsupported,"Stream capture unsupported")
+DRIVER_ERROR_CASE(cudaErrorStreamCaptureInvalidated,"Stream capture invalidated")
+DRIVER_ERROR_CASE(cudaErrorStreamCaptureMerge,"Stream capture merge")
+DRIVER_ERROR_CASE(cudaErrorStreamCaptureUnmatched,"Stream capture unmatched")
+DRIVER_ERROR_CASE(cudaErrorStreamCaptureUnjoined,"Stream capture unjoined")
+DRIVER_ERROR_CASE(cudaErrorStreamCaptureIsolation,"Stream capture isolation")
+DRIVER_ERROR_CASE(cudaErrorStreamCaptureImplicit,"Stream capture implicit")
+DRIVER_ERROR_CASE(cudaErrorCapturedEvent,"Captured event")
+#endif
 #if CUDA_VERSION >= 6050
 DRIVER_ERROR_CASE(cudaErrorInvalidGraphicsContext,"Invalid graphics context")
 DRIVER_ERROR_CASE( cudaErrorInvalidPtx , "Invalid PTX." )
