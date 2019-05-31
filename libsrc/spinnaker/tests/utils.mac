@@ -49,7 +49,7 @@ spinnaker
   quit
 .
 
-Viewer v 1280 1024
+#Viewer v 1280 1024
 
 Define Release_Oldest 0
 spinnaker capture release quit quit

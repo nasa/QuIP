@@ -2,13 +2,19 @@ max_warnings 30
 
 < $macro_dir/system/mark_time.mac
 < utils.mac
-< flea3.mac
+#< flea3.mac
+< blackfly.mac
 
-Set cam0 Flea3_FL3-U3-13Y3M
+# Blackfly_S_BFS-U3-13Y3M
+# Blackfly_S_BFS-U3-13Y3M_2
+
+#Set cam0 Flea3_FL3-U3-13Y3M
+Set cam0 Blackfly_S_BFS-U3-13Y3M
 
 Init_Cameras
 
-Init_Flea3
+#Init_Flea3
+Init_Chunk_Data $cam0
 
 #Test_Grab $cam0
 
