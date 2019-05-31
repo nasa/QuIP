@@ -1,0 +1,211 @@
+Define Check_Video_Mode 1 camera
+spinnaker
+  nodes
+    select_map $1.genicam
+    terse_info VideoMode
+    Pause
+    quit
+  quit
+.
+
+Define Init_Flea3 0
+# nop for now...
+.
+
+
+Define Check_Binning 1 camera
+spinnaker
+  nodes
+    select_map $1.genicam
+
+    set IspEnable no
+    set BinningSelector Sensor
+    set BinningHorizontalMode Average
+    set BinningVerticalMode Average
+#    set BinningHorizontal 2
+#    set BinningVertical 2
+#    set Width 640
+#    #set Width 320
+#    set Height 256
+
+    terse_info IspEnable
+    terse_info BinningSelector
+    terse_info BinningHorizontalMode
+    terse_info BinningVerticalMode
+    terse_info Width
+    terse_info Height
+    terse_info BinningHorizontal
+    terse_info BinningVertical
+    Pause
+    quit
+  quit
+.
+
+Define Init_Cameras 0
+spinnaker
+  init
+  #list_interfaces
+  list_cams
+  quit
+.
+
+Viewer v 1280 1024
+
+Define Release_Oldest 0
+spinnaker capture release quit quit
+.
+
+Define Grab_Next 0
+spinnaker capture grab quit quit
+.
+
+Define Init_Timestamp 0
+Set last_ts -1
+Set first_fid -1
+.
+
+Define Show_Timestamp 0
+spinnaker
+  chunks
+    fetch ts Timestamp cam$cam_idx.frame$newest
+    fetch fid FrameID cam$cam_idx.frame$newest
+    quit
+  quit
+#If $last_ts>0 Show_Delta
+#Set last_ts $ts
+#If $first_fid<0 "Set first_fid $fid"
+#Add_Var fid -$first_fid
+#advise "Frame $fid"
+.
+
+Define Show_Delta 0
+Assign delta ($ts-$last_ts)/1000000	# nano seconds?
+advise "delta = $delta msec"
+.
+
+Define Set_Exposure_Time 2 camera value
+advise "Set_Exposure_Time $1 $2"
+# NOTE:  ExposureAuto must be false!
+spinnaker
+  nodes
+    select_map $1.genicam
+    set ExposureAuto Off
+    set ExposureTime $2
+    terse_info ExposureTime
+    terse_info ExposureAuto
+    quit
+  quit
+.
+
+# start capture on both cameras...
+
+Define Start_Capture_Both 1 n_frames
+Init_Timestamp
+advise "Grabbing $1 frames..."
+advise "starting capture ($cam0)"
+spinnaker select $cam0 capture start quit quit
+advise "starting capture ($cam1)"
+spinnaker select $cam1 capture start quit quit
+advise "capture started..."
+Set i_grab 0
+.
+
+Define Start_Capture 1 cam_name
+Init_Timestamp
+advise "starting capture  from $1"
+spinnaker select $1 capture start quit quit
+advise "capture started..."
+Set i_grab 0
+.
+
+Define Grab_Some 2 n_frames_to_grab cam_name
+repeat $1
+  #advise "grabbing frame $i_grab..."
+  Grab_Next
+  Set image_ready 0
+  #Show_Timestamp	# only blackfly
+  #usleep $proc_usecs
+  Release_Oldest
+  Increment i_grab
+  end
+Show_Underrun_Count
+.
+
+Define Time_It 3 macro_name arg1 arg2
+advise "Time_It $1 $2 BEGIN"
+Zero_Time
+$1 $2 $3
+#advise "Time_It calling Tell_Time..."
+#Tell_Time
+Mark_Time
+Assign fps $2/($total_ms/1000)
+advise "$total_ms milliseconds elapsed, $fps fps"
+advise "Time_It DONE"
+.
+
+Define Show_Underrun_Count 0
+spinnaker
+  nodes
+    select_map $$cam_name.stream_TL
+#    info_all
+    terse_info StreamBufferUnderrunCount
+    terse_info StreamTotalBufferCount
+    quit
+  quit
+.
+
+Define Setup_Grab 2 cam n_buffers
+spinnaker
+  info $1
+  nodes
+    select_map $1.genicam
+    terse_info AcquisitionMode
+    select_map $1.stream_TL
+    terse_info StreamBufferHandlingMode
+    set StreamBufferHandlingMode NewestOnly
+    terse_info StreamBufferHandlingMode
+    terse_info StreamDefaultBufferCount
+    set StreamDefaultBufferCount $2
+    terse_info StreamDefaultBufferCount
+    quit
+advise "selecting $1"
+  select $1
+  info $1
+  capture
+    advise "Setting up $2 buffers for $1"
+    set_n_buffers $2
+    quit
+  quit
+
+Init_Chunk_Data $1		# defined in camera-specific file
+
+#Set_Exposure_Time $1 997
+Set_Exposure_Time $1 401
+
+#Check_Binning $1
+Check_Video_Mode
+Pause
+
+advise "Setup_Grab $1 $2  DONE"
+.
+
+Set cam_idx 0
+Set cam_name cam$cam_idx
+
+Define Test_Grab 1 cam_name
+# There seems to be some sort of internal bug that bites us when we increase the number
+# of buffers???
+
+Setup_Grab $1 10	# default, works
+
+Set frm_idx 0
+Set n_test 170	# should be 1 sec for Blackfly...
+Show_Underrun_Count
+Start_Capture $1
+repeat 4
+  advise "Ready to grab $n_test frames..."
+  Pause
+  Time_It Grab_Some $n_test $1
+  end
+.
+
