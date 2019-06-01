@@ -82,11 +82,7 @@ SPINK_WRAPPER_ONE_ARG(enable_grey_image_stats,ImageStatisticsEnableGreyOnly,spin
 SPINK_WRAPPER_ONE_ARG(enable_rgb_image_stats,ImageStatisticsEnableRgbOnly,spinImageStatistics,hStatistics)
 SPINK_WRAPPER_ONE_ARG(enable_hsl_image_stats,ImageStatisticsEnableHslOnly,spinImageStatistics,hStatistics)
 //SPINK_WRAPPER_ONE_ARG(get_all_image_stats,ImageStatisticsGetAll(
-
-// spinAVIRecorderClose was deprecated, replaced by spinVideoClose
-// same args???
-SPINK_WRAPPER_ONE_ARG(close_avi_recorder,VideoClose,spinVideo,hSpinVideo)
-
+SPINK_WRAPPER_ONE_ARG(close_avi_recorder,AVIRecorderClose,spinAVIRecorder,hRecorder)
 SPINK_WRAPPER_ONE_ARG(invalidate_spink_node,NodeInvalidateNode,spinNodeHandle,hNode)
 
 

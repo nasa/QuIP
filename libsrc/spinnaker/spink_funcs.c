@@ -8,7 +8,7 @@
 // define this to empty to quiet debugging...
 #ifdef MAX_DEBUG
 #define WRAPPER_REPORT(my_name,spin_name)							\
-fprintf(stderr,"SPIN  %s calling spin%s\n",#my_name,#spin_name);
+fprintf(stderr,"SPINNAKER API CALL:  %s calling spin%s\n",#my_name,#spin_name);
 #else // ! MAX_DEBUG
 #define WRAPPER_REPORT(my_name,spin_name)
 #endif // ! MAX_DEBUG
@@ -156,7 +156,8 @@ void _report_spink_error(QSP_ARG_DECL  spinError error, const char *whence )
 			break;
 	}
 	sprintf(ERROR_STRING,"spin%s:  %s",whence,msg);
-	warn(ERROR_STRING);
+	//warn(ERROR_STRING);
+	error1(ERROR_STRING);
 }
 
 #include "spink_wrappers.c"

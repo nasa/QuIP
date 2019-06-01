@@ -223,6 +223,7 @@ static void _get_int_range(QSP_ARG_DECL  Spink_Node *skn_p, int64_t *min_p, int6
 	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
 	if( get_node_min_value_int(hNode,min_p) < 0 ) return;
 	if( get_node_max_value_int(hNode,max_p) < 0 ) return;
+//fprintf(stderr,"get_int_range %s:  max is %ld\n",skn_p->skn_name,*max_p);
 }
 
 #define set_float_node(skn_p, dval) _set_float_node(QSP_ARG  skn_p, dval)
@@ -277,7 +278,11 @@ static void _set_integer_node_from_script(QSP_ARG_DECL  Spink_Node *skn_p)
 	assert(skn_p->skn_type_p->snt_type == IntegerNode);
 
 	get_int_range(skn_p,&minv,&maxv);
-	sprintf(pmpt,"%s (%ld-%ld)",skn_p->skn_name,minv,maxv);
+	if( maxv > 0x10000 ){
+		sprintf(pmpt,"%s (0x%lx-0x%lx)",skn_p->skn_name,minv,maxv);
+	} else {
+		sprintf(pmpt,"%s (%ld-%ld)",skn_p->skn_name,minv,maxv);
+	}
 	ival = how_many(pmpt);
 
 	set_integer_node(skn_p,ival);
@@ -450,7 +455,11 @@ static void _print_integer_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
 	spinNodeHandle hNode;
 	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
 	if( get_int_value(hNode, &integerValue) < 0 ) return;
-	sprintf(MSG_STR,INT_NODE_FMT_STR, integerValue);
+	if( INT_NODE_MAX_VAL(skn_p) >= 0x10000 ){
+		sprintf(MSG_STR,INT_NODE_HEX_FMT_STR, integerValue, INT_NODE_MIN_VAL(skn_p), INT_NODE_MAX_VAL(skn_p) );
+	} else {
+		sprintf(MSG_STR,INT_NODE_DEC_FMT_STR, integerValue, INT_NODE_MIN_VAL(skn_p), INT_NODE_MAX_VAL(skn_p) );
+	}
 	prt_msg_frag(MSG_STR);
 }
 
@@ -460,7 +469,7 @@ static void _print_float_node_value(QSP_ARG_DECL  Spink_Node *skn_p)
 	spinNodeHandle hNode;
 	if( lookup_spink_node(skn_p, &hNode) < 0 ) return;
 	if( get_float_value(hNode,&floatValue) < 0 ) return;
-	sprintf(MSG_STR,FLT_NODE_FMT_STR, floatValue);
+	sprintf(MSG_STR,FLT_NODE_FMT_STR, floatValue, FLOAT_NODE_MIN_VAL(skn_p), FLOAT_NODE_MAX_VAL(skn_p) );
 	prt_msg_frag(MSG_STR);
 }
 
@@ -684,6 +693,115 @@ void _print_cat_tree(QSP_ARG_DECL  Spink_Category *sct_p)
 	traverse_node_tree(sct_p->sct_root_p,_print_node_from_tree);
 }
 
+#define make_spink_category(skn_p) _make_spink_category(QSP_ARG  skn_p)
+
+static void _make_spink_category(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	Spink_Category *sct_p;
+	sct_p = spink_cat_of(skn_p->skn_name);
+	//assert(sct_p==NULL); 
+	// This should always be NULL the first time we initialize the system,
+	// but currently we aren't cleaning up when we shut it down and reinitialize...
+	if( sct_p == NULL ){
+		sct_p = new_spink_cat(skn_p->skn_name);
+	}
+	assert(sct_p!=NULL); 
+	sct_p->sct_root_p = skn_p;
+}
+
+static void set_root_node(Spink_Node *skn_p)
+{
+	assert(current_map->skm_root_p == NULL);
+	assert(!strcmp(skn_p->skn_name,"Root"));
+	current_map->skm_root_p = skn_p;
+	skn_p->skn_parent = NULL;
+	skn_p->skn_idx = (-1);	// because no parent
+	//assert(current_parent_p==NULL);
+}
+
+static void set_nonroot_node(Spink_Node *skn_p, int level)
+{
+	int idx;
+	idx=level-1;
+	assert(idx>=0&&idx<MAX_TREE_DEPTH);
+	skn_p->skn_parent = current_parent_p[idx];
+	skn_p->skn_idx = current_node_idx;	// set in traverse...
+}
+
+#define set_int_node_data(skn_p) _set_int_node_data(QSP_ARG  skn_p)
+
+static void _set_int_node_data(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	int64_t minv,maxv;
+
+	get_int_range(skn_p,&minv,&maxv);
+	SET_INT_NODE_MIN_VAL(skn_p,minv);
+	SET_INT_NODE_MAX_VAL(skn_p,maxv);
+}
+
+#define set_float_node_data(skn_p) _set_float_node_data(QSP_ARG  skn_p)
+
+static void _set_float_node_data(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	double minv,maxv;
+
+	get_float_range(skn_p,&minv,&maxv);
+	SET_FLOAT_NODE_MIN_VAL(skn_p,minv);
+	SET_FLOAT_NODE_MAX_VAL(skn_p,maxv);
+}
+
+#define KNOWN_CHUNK(name,type)	{ #name, type }
+
+static struct known_chunk {
+	char *kc_name;
+	Chunk_Data_Type kc_type;
+} known_chunk_tbl[]={
+	KNOWN_CHUNK(Width,INT_CHUNK_DATA),
+	KNOWN_CHUNK(Timestamp,INT_CHUNK_DATA),
+	KNOWN_CHUNK(PixelFormat,INT_CHUNK_DATA),
+	KNOWN_CHUNK(OffsetY,INT_CHUNK_DATA),
+	KNOWN_CHUNK(OffsetX,INT_CHUNK_DATA),
+	KNOWN_CHUNK(Height,INT_CHUNK_DATA),
+	KNOWN_CHUNK(Gain,FLOAT_CHUNK_DATA),
+	KNOWN_CHUNK(FrameID,INT_CHUNK_DATA),
+	KNOWN_CHUNK(FrameCounter,INT_CHUNK_DATA),
+	KNOWN_CHUNK(ExposureTime,FLOAT_CHUNK_DATA),
+	KNOWN_CHUNK(BlackLevel,FLOAT_CHUNK_DATA)
+};
+
+#define N_KNOWN_CHUNKS	(sizeof(known_chunk_tbl)/sizeof(struct known_chunk))
+
+static Chunk_Data_Type type_for_chunk_data(const char *name)
+{
+	int i;
+
+	for(i=0;i<N_KNOWN_CHUNKS;i++){
+		if( !strcmp(name,known_chunk_tbl[i].kc_name) )
+			return known_chunk_tbl[i].kc_type;
+	}
+	return INVALID_CHUNK_DATA_TYPE;
+}
+
+
+#define check_for_chunk_selector(skn_p) _check_for_chunk_selector(QSP_ARG  skn_p)
+
+static void _check_for_chunk_selector(QSP_ARG_DECL  Spink_Node *skn_p)
+{
+	char *s;
+	Chunk_Data *cdp;
+
+	if( (s=strstr(skn_p->skn_name, CHUNK_SELECTOR_ENUM_PREFIX )) == NULL )
+		return;
+
+	assert(s==skn_p->skn_name);	// if the substring occurs, it should be the prefix
+	s += strlen(CHUNK_SELECTOR_ENUM_PREFIX);
+
+	cdp = new_chunk_data(s);
+	cdp->cd_type = type_for_chunk_data(s);
+	// BUG - chunk data can be int or float???
+fprintf(stderr,"Found chunk type %s\n",s);
+}
+
 static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 {
 	char name[LLEN];
@@ -702,18 +820,9 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 	assert(current_map!=NULL);
 	skn_p->skn_skm_p = current_map;
 	if( level == 0 ){
-		assert(current_map->skm_root_p == NULL);
-		assert(!strcmp(name,"Root"));
-		current_map->skm_root_p = skn_p;
-		skn_p->skn_parent = NULL;
-		skn_p->skn_idx = (-1);	// because no parent
-		//assert(current_parent_p==NULL);
+		set_root_node(skn_p);
 	} else {
-		int idx;
-		idx=level-1;
-		assert(idx>=0&&idx<MAX_TREE_DEPTH);
-		skn_p->skn_parent = current_parent_p[idx];
-		skn_p->skn_idx = current_node_idx;	// set in traverse...
+		set_nonroot_node(skn_p,level);
 	}
 	assert(level>=0&&level<MAX_TREE_DEPTH);
 	current_parent_p[level] = skn_p;
@@ -734,22 +843,19 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 	skn_p->skn_type_p = find_type_by_code(type);
 	assert(skn_p->skn_type_p!=NULL);
 
-	// don't make a category for the root node
-	if( level > 0 && type == CategoryNode ){
-		Spink_Category *sct_p;
-		sct_p = spink_cat_of(skn_p->skn_name);
-		//assert(sct_p==NULL); 
-		// This should always be NULL the first time we initialize the system,
-		// but currently we aren't cleaning up when we shut it down and reinitialize...
-		if( sct_p == NULL ){
-			sct_p = new_spink_cat(skn_p->skn_name);
-		}
-		assert(sct_p!=NULL); 
-		sct_p->sct_root_p = skn_p;
-	}
-
+	// BUG - this should be a node type-specific field????
 	skn_p->skn_enum_ival = INVALID_ENUM_INT_VALUE;
-	if( type == EnumEntryNode ){
+
+	if( type == CategoryNode ){
+		if( level > 0 ){		// don't make a category for the root node
+			make_spink_category(skn_p);
+		}
+	} else if( type == IntegerNode ){
+		set_int_node_data(skn_p);
+	} else if( type == FloatNode ){
+		set_float_node_data(skn_p);
+	} else if( type == EnumEntryNode ){
+		// For chunks, how do we know what the chunk type is???
 		int64_t ival;
 		if( get_enum_int_value(hNode,&ival) < 0 ){
 			skn_p->skn_enum_ival = INVALID_ENUM_INT_VALUE;
@@ -763,6 +869,7 @@ static int _register_one_node(QSP_ARG_DECL  spinNodeHandle hNode, int level)
 	skn_p->skn_level = level;
 
 //fprintf(stderr,"register_one_node:  %s   flags = %d\n",skn_p->skn_name,skn_p->skn_flags);
+	check_for_chunk_selector(skn_p);
 
 	//skn_p->skn_handle = hNode;
 	return 0;
@@ -1058,6 +1165,12 @@ static int _init_one_spink_cam(QSP_ARG_DECL  int idx)
 	skc_p->skc_iface_idx = -1;	// invalid value
 	skc_p->skc_n_buffers = 0;
 
+	if( chunk_data_itp == NULL ) init_chunk_datas();
+	assert(chunk_data_itp!=NULL);
+	skc_p->skc_chunk_icp = create_item_context(chunk_data_itp,skc_p->skc_name);
+	assert(skc_p->skc_chunk_icp!=NULL);
+	push_item_context(chunk_data_itp,skc_p->skc_chunk_icp);
+
 	// register_cam_nodemaps will get the camera handle again...
 //	if( release_spink_cam(hCam) < 0 )
 //		return -1;
@@ -1079,6 +1192,8 @@ static int _init_one_spink_cam(QSP_ARG_DECL  int idx)
 	//spink_release_cam(skc_p);
 
 	release_current_camera(1);
+
+	pop_item_context(chunk_data_itp);
 
 	return 0;
 } // init_one_spink_cam
@@ -1191,12 +1306,17 @@ static int _create_spink_interface_structs(SINGLE_QSP_ARG_DECL)
 	return 0;
 }
 
+#ifdef FOOBAR
 #define INIT_CHUNK_DATUM(name,type)			\
 	cd_p = new_chunk_data(#name);			\
 	assert(cd_p!=NULL);				\
 	cd_p->cd_type = type;
 
 #define init_chunk_data_structs() _init_chunk_data_structs(SINGLE_QSP_ARG)
+
+
+// BUG The available chunk data depends on the camera, so these need to be created
+// when we load the camera node map!
 
 static void _init_chunk_data_structs(SINGLE_QSP_ARG_DECL)
 {
@@ -1211,11 +1331,28 @@ static void _init_chunk_data_structs(SINGLE_QSP_ARG_DECL)
 	INIT_CHUNK_DATUM(Height,INT_CHUNK_DATA);
 	INIT_CHUNK_DATUM(Gain,FLOAT_CHUNK_DATA);
 	INIT_CHUNK_DATUM(FrameID,INT_CHUNK_DATA);
+	INIT_CHUNK_DATUM(FrameCounter,INT_CHUNK_DATA);
 	INIT_CHUNK_DATUM(ExposureTime,FLOAT_CHUNK_DATA);
 // CRC
 	INIT_CHUNK_DATUM(BlackLevel,FLOAT_CHUNK_DATA);
 }
+#endif // FOOBAR
+
 #endif // HAVE_LIBSPINNAKER
+
+static double _spink_cam_is_capturing(QSP_ARG_DECL  Item *ip)
+{
+	Spink_Cam *skc_p;
+
+	skc_p = (Spink_Cam *) ip;
+
+	if( CAPTURE_REQUESTED(skc_p) ) return 1.0;
+	return 0.0;
+}
+
+static Camera_Functions spink_cf={
+	_spink_cam_is_capturing
+};
 
 
 int _init_spink_cam_system(SINGLE_QSP_ARG_DECL)
@@ -1233,9 +1370,14 @@ int _init_spink_cam_system(SINGLE_QSP_ARG_DECL)
 	if( get_spink_cameras(hSystem,&hCameraList,&numCameras) < 0 ) return -1;
 	if( create_spink_camera_structs() < 0 ) return -1;
 
-	init_chunk_data_structs();
+	// The chunks need to be created per-camera!
+	// init_chunk_data_structs();
 
 	do_on_exit(_release_spink_cam_system);
+
+	// support for camera functions in script expressions...
+	init_cam_expr_funcs();
+	add_camera(spink_cam_itp,&spink_cf,NULL);
 
 #endif // HAVE_LIBSPINNAKER
 	return 0;
@@ -1267,7 +1409,7 @@ void _release_spink_cam_system(SINGLE_QSP_ARG_DECL)
 {
 	if( hSystem == NULL ) return;	// may already be shut down?
 
-SPINK_DEBUG_MSG(releast_spink_cam_system BEGIN)
+DEBUG_MSG(releast_spink_cam_system BEGIN)
 
 	// make sure that no cameras are running...
 	stop_all_cameras();
@@ -1284,7 +1426,7 @@ SPINK_DEBUG_MSG(releast_spink_cam_system BEGIN)
 	if( release_spink_interface_list(&hInterfaceList) < 0 ) return;
 	if( release_spink_system(hSystem) < 0 ) return;
 	hSystem = NULL;
-SPINK_DEBUG_MSG(releast_spink_cam_system DONE)
+DEBUG_MSG(releast_spink_cam_system DONE)
 }
 
 int _spink_release_cam(QSP_ARG_DECL  Spink_Cam *skc_p)
@@ -1390,6 +1532,22 @@ void _format_chunk_data(QSP_ARG_DECL  char *buf, Chunk_Data *cd_p)
 	} else if( cd_p->cd_type == FLOAT_CHUNK_DATA ){
 		sprintf(buf,"%g",cd_p->cd_u.u_fltval);
 	} else error1("format_chunk_data:  bad chunk data type code!?");
+}
+
+void _deselect_spink_cam(QSP_ARG_DECL  Spink_Cam *skc_p )
+{
+	Item_Context *icp;
+
+	assert(chunk_data_itp!=NULL);
+	icp = pop_item_context(chunk_data_itp);
+	assert( icp == skc_p->skc_chunk_icp );
+}
+
+Spink_Cam * _select_spink_cam(QSP_ARG_DECL  Spink_Cam *skc_p )
+{
+	assert(chunk_data_itp!=NULL);
+	push_item_context(chunk_data_itp,skc_p->skc_chunk_icp);
+	return skc_p;
 }
 
 #endif // HAVE_LIBSPINNAKER
