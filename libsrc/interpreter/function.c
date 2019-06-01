@@ -672,6 +672,26 @@ static double get_timestamp(QSP_ARG_DECL  Item *ip,int func_index,dimension_t fr
 	return d;
 }
 
+static double is_capturing(QSP_ARG_DECL  Item *ip)
+{
+	Camera_Functions *cfp;
+	Member_Info *mip;
+	double d;
+
+	if( ip == NULL ) return(0.0);
+
+	if( camera_icp == NULL )
+		init_camera_class(SINGLE_QSP_ARG);
+
+	mip = get_member_info(camera_icp,ip->item_name);
+	assert( mip != NULL );
+
+	cfp = (Camera_Functions *) mip->mi_data;
+
+	d = (*(cfp->is_capturing_func))(QSP_ARG  ip);
+	return( d );
+}
+
 Item *sub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
 {
 	Subscript_Functions *sfp;
@@ -830,6 +850,9 @@ float erfinvf(float x)
 	return y;
 }
 
+
+static double _captfunc(QSP_ARG_DECL  Item *ip )
+{ return( is_capturing(QSP_ARG  ip)); }
 
 static double _secfunc(QSP_ARG_DECL  Item *ip, dimension_t frame )
 { return get_timestamp(QSP_ARG  ip,0,frame); }
@@ -990,6 +1013,8 @@ DECLARE_POSITION_FUNCTION(	y_position,	_y_func,	1	)
 DECLARE_TS_FUNCTION(	seconds,	_secfunc	)
 DECLARE_TS_FUNCTION(	milliseconds,	_msecfunc	)
 DECLARE_TS_FUNCTION(	microseconds,	_usecfunc	)
+
+DECLARE_CAM_FUNCTION(	is_capturing,	_captfunc	)
 }
 
 
