@@ -483,6 +483,7 @@ static Item_Class *sizable_icp=NULL;
 static Item_Class *interlaceable_icp=NULL;
 static Item_Class *positionable_icp=NULL;
 static Item_Class *tsable_icp=NULL;
+static Item_Class *camera_icp=NULL;
 static Item_Class *subscriptable_icp=NULL;
 
 #define DECLARE_CLASS_INITIALIZER(type_stem)				\
@@ -503,6 +504,7 @@ DECLARE_CLASS_INITIALIZER(tsable)
 DECLARE_CLASS_INITIALIZER(subscriptable)
 DECLARE_CLASS_INITIALIZER(interlaceable)
 DECLARE_CLASS_INITIALIZER(positionable)
+DECLARE_CLASS_INITIALIZER(camera)
 
 
 // We would like to be able to use named IOS items here too...
@@ -530,6 +532,7 @@ DECLARE_ADD_FUNCTION(positionable,Position_Functions)
 // But originally, they were packed into the size function struct, so here they
 // are...
 DECLARE_ADD_FUNCTION(subscriptable,Subscript_Functions)
+DECLARE_ADD_FUNCTION(camera,Camera_Functions)
 
 #define DECLARE_FIND_FUNCTION(type_stem)				\
 									\

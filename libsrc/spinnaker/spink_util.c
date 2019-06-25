@@ -1409,7 +1409,7 @@ void _release_spink_cam_system(SINGLE_QSP_ARG_DECL)
 {
 	if( hSystem == NULL ) return;	// may already be shut down?
 
-DEBUG_MSG(releast_spink_cam_system BEGIN)
+SPINK_DEBUG_MSG(releast_spink_cam_system BEGIN)
 
 	// make sure that no cameras are running...
 	stop_all_cameras();
@@ -1426,7 +1426,7 @@ DEBUG_MSG(releast_spink_cam_system BEGIN)
 	if( release_spink_interface_list(&hInterfaceList) < 0 ) return;
 	if( release_spink_system(hSystem) < 0 ) return;
 	hSystem = NULL;
-DEBUG_MSG(releast_spink_cam_system DONE)
+SPINK_DEBUG_MSG(releast_spink_cam_system DONE)
 }
 
 int _spink_release_cam(QSP_ARG_DECL  Spink_Cam *skc_p)

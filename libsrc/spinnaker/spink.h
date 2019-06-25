@@ -16,7 +16,7 @@
 
 #define BOOL	bool8_t
 
-//#define DEBUG_MSG(s)
+#define SPINK_DEBUG_MSG(s)
 
 #include "spink_funcs.h"
 

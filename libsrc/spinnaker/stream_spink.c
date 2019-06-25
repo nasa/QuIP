@@ -305,7 +305,7 @@ int n_stored_times;
 #define MAX_DISKS_PER_THREAD		4	/* should be ceil(((float)MAX_DISKS)/n_disk_writer_threads) */
 
 // BUG we should choose this to match the number of disks!?
-static int n_disk_writer_threads=/*DEFAULT_DISK_WRITER_THREADS*/ 3;
+static int n_disk_writer_threads=/*DEFAULT_DISK_WRITER_THREADS*/ 2;
 
 /* These are the data to be passed to each disk writer thread */
 

@@ -33,6 +33,7 @@ typedef enum {
 	STRV2_FUNCTYP,	// 14	string-valued function, two string args
 	STRV3_FUNCTYP,	// 15	string-valued function, one long arg
 	DOBJV_STR_ARG_FUNCTYP,	// 16	data_obj-valued function, one string arg
+	CAM_FUNCTYP,	// 17	1 camera_name arg
 	N_FUNC_TYPES	// must be last
 } Function_Type;
 
@@ -55,6 +56,7 @@ typedef union {
 	int           (*char_func)(char);
 	double        (*il_func)(QSP_ARG_DECL  Item *);
 	double        (*posn_func)(QSP_ARG_DECL  Item *);
+	double        (*cam_func)(QSP_ARG_DECL  Item *);
 } Fn_Func;
 
 struct quip_function {
@@ -122,6 +124,10 @@ typedef struct posn_functions {
 typedef struct timestamp_functions {
 	double	(*timestamp_func[3])(QSP_ARG_DECL  Item *,dimension_t);
 } Timestamp_Functions;
+
+typedef struct camera_functions {
+	double	(*is_capturing_func)(QSP_ARG_DECL  Item *);
+} Camera_Functions;
 
 
 /* support for general window functions */
@@ -210,6 +216,9 @@ ITEM_CHECK_PROT(Quip_Function,function)
 #define DECLARE_TS_FUNCTION( name, func )	\
 	DECLARE_SCALAR_FUNCTION(name,func,TS_FUNCTYP,ts_func,-1)
 
+#define DECLARE_CAM_FUNCTION( name, func )	\
+	DECLARE_SCALAR_FUNCTION(name,func,CAM_FUNCTYP,cam_func,-1)
+
 #define DECLARE_ILACE_FUNCTION( name, func )	\
 	DECLARE_SCALAR_FUNCTION(name,func,ILACE_FUNCTYP,il_func,-1)
 
@@ -252,6 +261,7 @@ extern Subscript_Functions *_get_subscriptable_functions(QSP_ARG_DECL  Item *ip)
 extern Item *_find_##type_stem(QSP_ARG_DECL  const char *name);
 
 FIND_FUNC_PROTOTYPE(sizable)
+FIND_FUNC_PROTOTYPE(camera)
 FIND_FUNC_PROTOTYPE(tsable)
 FIND_FUNC_PROTOTYPE(positionable)
 FIND_FUNC_PROTOTYPE(interlaceable)
@@ -280,11 +290,13 @@ extern void _add_##type_stem(QSP_ARG_DECL  Item_Type *itp,	\
 	func_type *func_str_ptr, Item *(*lookup)(QSP_ARG_DECL  const char *));
 
 ADD_CLASS_PROTOTYPE(sizable,Size_Functions)
+ADD_CLASS_PROTOTYPE(camera,Camera_Functions)
 ADD_CLASS_PROTOTYPE(tsable,Timestamp_Functions)
 ADD_CLASS_PROTOTYPE(interlaceable,Interlace_Functions)
 ADD_CLASS_PROTOTYPE(positionable,Position_Functions)
 ADD_CLASS_PROTOTYPE(subscriptable,Subscript_Functions)
 
+#define add_camera(itp,ftype,lookup)		_add_camera(QSP_ARG  itp,ftype,lookup)
 #define add_sizable(itp,ftype,lookup)		_add_sizable(QSP_ARG  itp,ftype,lookup)
 #define add_tsable(itp,ftype,lookup)		_add_tsable(QSP_ARG  itp,ftype,lookup)
 #define add_interlaceable(itp,ftype,lookup)	_add_interlaceable(QSP_ARG  itp,ftype,lookup)
