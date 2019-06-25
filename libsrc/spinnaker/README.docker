@@ -1,0 +1,11 @@
+
+System changes made in the docker system will not be persistent unless
+the following command is run:
+
+% docker ps
+CONTAINER ID        IMAGE                     COMMAND             CREATED             STATUS              PORTS               NAMES
+95240194b6f0        ubuntu/jeffflycapture18   "bash"              3 minutes ago       Up 3 minutes                            romantic_ride
+
+% docker commit 95240194b6f0 ubuntu/jeffflycapture18
+
+
