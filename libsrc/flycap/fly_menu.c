@@ -493,7 +493,9 @@ static COMMAND_FUNC( do_set_prop )
 
 #ifdef HAVE_LIBFLYCAP
 		if( t != NULL ){
-			sprintf(pmpt,"%s in %ss",t->name,t->info.pUnits);
+			if( snprintf(pmpt,LLEN,"%s in %ss",t->name,t->info.pUnits) >= LLEN ){
+				error1("do_set_prop:  prompt string overflow!?");
+			}
 		} else {
 			sprintf(pmpt,"value (integer)");
 		}

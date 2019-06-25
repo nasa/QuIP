@@ -252,7 +252,9 @@ typedef enum {
 typedef struct grab_frame_info {
 	Data_Obj *		gfi_dp;
 	Grab_Frame_Status	gfi_status;
+#ifdef HAVE_LIB_SPINNAKER
 	spinImage		gfi_hImage;	// used to be placed in OBJ_EXTRA...
+#endif // HAVE_LIB_SPINNAKER
 } Grab_Frame_Info;
 
 #define N_FMT7_MODES	5	// PGR has 32, but why bother?
