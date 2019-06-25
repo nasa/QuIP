@@ -37,6 +37,6 @@ static Item * _eval_cam_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 
 void _init_cam_expr_funcs(SINGLE_QSP_ARG_DECL)
 {
-	set_eval_cam_func(QSP_ARG  _eval_cam_expr );
+	set_eval_cam_func(_eval_cam_expr);
 }
 
