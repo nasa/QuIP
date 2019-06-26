@@ -1320,6 +1320,14 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,Fly_Cam
 	assert( n_disks > 1 );
 	assert( fcp->fc_n_buffers > 0 );
 
+	/* go ahead and make the number of disk writer threads equal to the number of disks... */
+	if( n_disks != n_disk_writer_threads ){
+		sprintf(ERROR_STRING,"Changing number of disk writer threads from default value (%d) to %d, to match number of disks",
+			n_disk_writer_threads,n_disks);
+		advise(ERROR_STRING);
+		n_disk_writer_threads = n_disks;
+	}
+
 	if( fcp->fc_n_buffers < (2*n_disks) ){
 		sprintf(ERROR_STRING,
 	"buffer frames (%d) must be >= 2 x number of disks (%d)",
