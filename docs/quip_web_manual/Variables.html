@@ -1,52 +1,83 @@
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Variables - QuIP Manual</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="QuIP Manual">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="up" href="Command-Language.html#Command-Language" title="Command Language">
-<link rel="prev" href="Startup.html#Startup" title="Startup">
-<link rel="next" href="Macros.html#Macros" title="Macros">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Variables (QuIP Manual)</title>
+
+<meta name="description" content="Variables (QuIP Manual)">
+<meta name="keywords" content="Variables (QuIP Manual)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="Index.html#Index" rel="index" title="Index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="Command-Language.html#Command-Language" rel="up" title="Command Language">
+<link href="The-variables-submenu.html#The-variables-submenu" rel="next" title="The variables submenu">
+<link href="Startup.html#Startup" rel="prev" title="Startup">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
 </head>
-<body>
-<div class="node">
+
+<body lang="en">
 <a name="Variables"></a>
+<div class="header">
 <p>
-Next:&nbsp;<a rel="next" accesskey="n" href="Macros.html#Macros">Macros</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="Startup.html#Startup">Startup</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="Command-Language.html#Command-Language">Command Language</a>
-<hr>
+Next: <a href="Macros.html#Macros" accesskey="n" rel="next">Macros</a>, Previous: <a href="Startup.html#Startup" accesskey="p" rel="prev">Startup</a>, Up: <a href="Command-Language.html#Command-Language" accesskey="u" rel="up">Command Language</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
 </div>
-
+<hr>
+<a name="Variables-1"></a>
 <h3 class="section">2.4 Variables</h3>
-
 <p>Using script variables
-
+</p>
 <p>The QuIP has a set of string variables that have a usage similar to command
 interpreters such as bash and csh.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="The-variables-submenu.html#The-variables-submenu" accesskey="1">The variables submenu    </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Commands to manipulate variables
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="Setting-variables.html#Setting-variables" accesskey="2">Setting variables        </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">How to set a variable
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="Using-variables.html#Using-variables" accesskey="3">Using variables          </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">How to dereference a variable
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="Special-variables.html#Special-variables" accesskey="4">Special variables        </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Variables that are set for you
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="Numeric-variables.html#Numeric-variables" accesskey="5">Numeric variables        </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Assigning a number to a variable
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="Advanced-variable-usage.html#Advanced-variable-usage" accesskey="6">Advanced variable usage  </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Pushing the limits
+</td></tr>
+</table>
 
-<ul class="menu">
-<li><a accesskey="1" href="The-variables-submenu.html#The-variables-submenu">The variables submenu </a>:   Commands to manipulate variables
-<li><a accesskey="2" href="Setting-variables.html#Setting-variables">Setting variables </a>:   How to set a variable
-<li><a accesskey="3" href="Using-variables.html#Using-variables">Using variables </a>:   How to dereference a variable
-<li><a accesskey="4" href="Special-variables.html#Special-variables">Special variables </a>:   Variables that are set for you
-<li><a accesskey="5" href="Numeric-variables.html#Numeric-variables">Numeric variables </a>:   Assigning a number to a variable
-<li><a accesskey="6" href="Advanced-variable-usage.html#Advanced-variable-usage">Advanced variable usage </a>:   Pushing the limits
-</ul>
 
-</body></html>
 
+
+</body>
+</html>

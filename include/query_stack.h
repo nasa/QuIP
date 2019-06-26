@@ -167,8 +167,10 @@ struct query_stack {
 #endif /* HAVE_PTHREADS */
 #endif /* THREAD_SAFE_QUERY */
 
+	/* These are not part of vector_parser_data because we can have a stack of parsers... */
 	List *			qs_vector_parser_data_stack;
 	List *			qs_vector_parser_data_freelist;
+	char			qs_vector_parser_error_string[LLEN];
 	Vector_Parser_Data *	qs_vector_parser_data;		// current parser
 
 	// if we allow reentrant parsing, then we have to have more of these...
@@ -317,6 +319,7 @@ struct query_stack {
 #define QS_VECTOR_PARSER_DATA(qsp)		(qsp)->qs_vector_parser_data
 #define QS_VECTOR_PARSER_DATA_STACK(qsp)	(qsp)->qs_vector_parser_data_stack
 #define QS_VECTOR_PARSER_DATA_FREELIST(qsp)	(qsp)->qs_vector_parser_data_freelist
+#define QS_VECTOR_PARSER_ERROR_STRING(qsp,d)	(qsp)->qs_vector_parser_error_string
 #define SET_QS_VECTOR_PARSER_DATA(qsp,d)	(qsp)->qs_vector_parser_data = d
 #define SET_QS_VECTOR_PARSER_DATA_STACK(qsp,v)	(qsp)->qs_vector_parser_data_stack = v
 #define SET_QS_VECTOR_PARSER_DATA_FREELIST(qsp,v)	(qsp)->qs_vector_parser_data_freelist = v

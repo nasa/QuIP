@@ -1,3 +1,15 @@
+*************************************** UBUNTU ****************************************
+
+On a fresh ubuntu docker container, install:
+
+git, tcsh, vim, bison, apt-file, texinfo, texlive
+
+*************************************** CENTOS ****************************************
+
+For building:
+
+texinfo
+
 
 Here is a list of packages (names for yum,
 different for apt-get) that need to
@@ -51,6 +63,14 @@ installed:
 	mesa-libGL-devel
 	mesa-libGLU-devel
 
+
+*************************************** MAC OSX ****************************************
+
+NEW:  use homebrew...
+
+Need to write down the list of homebrew packages...
+
+OLD:  used fink
 
 ##########################
 For Mac OSX, we are using fink...  the packages have slightly different names.

@@ -12,6 +12,15 @@ static Fly_Cam *the_cam_p=NULL;	// should this be per-thread?
 static COMMAND_FUNC( do_fly_cam_menu );
 
 
+#define SUPPRESS_UNUSED_PTR_WARNING(p)					\
+	fprintf(stderr,"Discarding object at \"0x%lx\"\n",(long)(p));
+
+#define SUPPRESS_UNUSED_INT_VAR_WARNING(n)				\
+	fprintf(stderr,"Discarding integer value \"%d\"\n",n);
+
+#define SUPPRESS_UNUSED_STRING_VAR_WARNING(s)				\
+	fprintf(stderr,"Discarding string value \"%s\"\n",s);
+
 #define UNIMP_MSG(whence)						\
 									\
 	sprintf(ERROR_STRING,						\
@@ -28,7 +37,8 @@ static COMMAND_FUNC( do_fly_cam_menu );
 									\
 	const char *s;							\
 	s=NAMEOF("dummy word");						\
-	NO_LIB_MSG(whence)
+	NO_LIB_MSG(whence)						\
+	SUPPRESS_UNUSED_STRING_VAR_WARNING(s)
 
 
 #define CHECK_CAM	if( the_cam_p == NULL ){ \
@@ -393,6 +403,7 @@ static COMMAND_FUNC( do_read_reg )
 	}
 #else // ! HAVE_LIBFLYCAP
 	UNIMP_MSG("read_register");
+	SUPPRESS_UNUSED_INT_VAR_WARNING(addr)
 #endif // ! HAVE_LIBFLYCAP
 }
 
@@ -409,6 +420,8 @@ static COMMAND_FUNC( do_write_reg )
 	write_register(QSP_ARG  the_cam_p, addr, val);
 #else // ! HAVE_LIBFLYCAP
 	UNIMP_MSG("write_register");
+	SUPPRESS_UNUSED_INT_VAR_WARNING(val)
+	SUPPRESS_UNUSED_INT_VAR_WARNING(addr)
 #endif // ! HAVE_LIBFLYCAP
 }
 
@@ -468,6 +481,7 @@ static COMMAND_FUNC( do_set_auto )
 	set_prop_auto(QSP_ARG   the_cam_p, t, yn );
 #else // ! HAVE_LIBFLYCAP
 	UNIMP_MSG("set_prop_auto");
+	SUPPRESS_UNUSED_INT_VAR_WARNING(yn)
 #endif // ! HAVE_LIBFLYCAP
 }
 
@@ -493,7 +507,9 @@ static COMMAND_FUNC( do_set_prop )
 
 #ifdef HAVE_LIBFLYCAP
 		if( t != NULL ){
-			sprintf(pmpt,"%s in %ss",t->name,t->info.pUnits);
+			if( snprintf(pmpt,LLEN,"%s in %ss",t->name,t->info.pUnits) >= LLEN ){
+				error1("do_set_prop:  prompt string overflow!?");
+			}
 		} else {
 			sprintf(pmpt,"value (integer)");
 		}
@@ -511,6 +527,7 @@ static COMMAND_FUNC( do_set_prop )
 	set_prop_value(QSP_ARG  the_cam_p, t, &pv );
 #else // ! HAVE_LIBFLYCAP
 	UNIMP_MSG("set_prop_value");
+	SUPPRESS_UNUSED_PTR_WARNING(&pv)
 #endif // ! HAVE_LIBFLYCAP
 }
 
@@ -533,6 +550,7 @@ static COMMAND_FUNC( do_set_fmt7 )
 	set_fmt7_mode(QSP_ARG  the_cam_p, i );
 #else // ! HAVE_LIBFLYCAP
 	UNIMP_MSG("set_fmt7_mode");
+	SUPPRESS_UNUSED_INT_VAR_WARNING(i)
 #endif // ! HAVE_LIBFLYCAP
 }
 
@@ -581,7 +599,10 @@ static COMMAND_FUNC( do_set_eii )
 
 #ifdef HAVE_LIBFLYCAP
 	set_eii_property(QSP_ARG  the_cam_p,i,yesno);
-#endif // HAVE_LIBFLYCAP
+#else // ! HAVE_LIBFLYCAP
+	UNIMP_MSG("set_eii_property");
+	SUPPRESS_UNUSED_INT_VAR_WARNING(yesno)
+#endif // ! HAVE_LIBFLYCAP
 }
 
 static COMMAND_FUNC( do_list_fly_cam_props )
@@ -590,6 +611,7 @@ static COMMAND_FUNC( do_list_fly_cam_props )
 #ifdef HAVE_LIBFLYCAP
 	list_fly_cam_properties(QSP_ARG  the_cam_p);
 #else // ! HAVE_LIBFLYCAP
+	UNIMP_MSG("list_fly_cam_properties");
 	WARN("No support for libflycap in this build.");
 #endif // ! HAVE_LIBFLYCAP
 }
@@ -753,6 +775,8 @@ static COMMAND_FUNC( do_fmt7_setsize )
 	set_fmt7_size(QSP_ARG  the_cam_p, w, h );
 #else // ! HAVE_LIBFLYCAP
 	UNIMP_MSG("set_fmt7_size");
+	SUPPRESS_UNUSED_INT_VAR_WARNING(w)
+	SUPPRESS_UNUSED_INT_VAR_WARNING(h)
 #endif // ! HAVE_LIBFLYCAP
 }
 

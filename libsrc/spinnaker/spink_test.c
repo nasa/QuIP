@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "spink.h"
+//#include "spink.h"
 
 
 // Example entry point; this function sets up the system and retrieves

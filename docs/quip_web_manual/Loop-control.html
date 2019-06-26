@@ -1,65 +1,94 @@
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Loop control - QuIP Manual</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="QuIP Manual">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="up" href="Builtin-commands.html#Builtin-commands" title="Builtin commands">
-<link rel="next" href="Generating-output.html#Generating-output" title="Generating output">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
-</head>
-<body>
-<div class="node">
-<a name="Loop-control"></a>
-<p>
-Next:&nbsp;<a rel="next" accesskey="n" href="Generating-output.html#Generating-output">Generating output</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="Builtin-commands.html#Builtin-commands">Builtin commands</a>
-<hr>
-</div>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Loop control (QuIP Manual)</title>
 
-<h5 class="subsubsection">2.2.2.1 Loop control</h5>
+<meta name="description" content="Loop control (QuIP Manual)">
+<meta name="keywords" content="Loop control (QuIP Manual)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="Index.html#Index" rel="index" title="Index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="Builtin-commands.html#Builtin-commands" rel="up" title="Builtin commands">
+<link href="Generating-output.html#Generating-output" rel="next" title="Generating output">
+<link href="Builtin-commands.html#Builtin-commands" rel="prev" title="Builtin commands">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="Loop-control"></a>
+<div class="header">
+<p>
+Next: <a href="Generating-output.html#Generating-output" accesskey="n" rel="next">Generating output</a>, Up: <a href="Builtin-commands.html#Builtin-commands" accesskey="u" rel="up">Builtin commands</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Loop-control-1"></a>
+<h4 class="subsubsection">2.2.2.1 Loop control</h4>
 
 <p>These commands are useful for creating control structures.
-
+</p>
 <p>If &lt;condition&gt; &lt;command&gt; <br>
 If &lt;condition&gt; Then &lt;command&gt; Else &lt;command&gt;
-
+</p>
 <p>When an <code>If</code> is encountered, the next word is read and interpreted as a boolean
 condition using the scalar expression parser.  If the word following the condition is
 the reserved word <code>Then</code>, then three words are read, the second of which must be
 the reserved word <code>Else</code>.
-
+</p>
 <p>Multi-word commands (or multiple commands) may be executed following
-an <code>If</code> by enclosing the entire group in single or double quotes. 
+an <code>If</code> by enclosing the entire group in single or double quotes.
 <code>If</code> commands can be nested, but because the command language does
 not use braces for grouping, it is often better to write a macro to encapsulate
 the predicate of an <code>If</code> statement.
+</p>
 
 <p>do &lt;commands&gt; while &lt;condition&gt;
-
+</p>
 <p>repeat &lt;count&gt; &lt;commands&gt; end
-
+</p>
 <p>foreach &lt;varname&gt; ( &lt;wordlist&gt; ) &lt;commands&gt; end
-
+</p>
 <p>These three forms provide for looping.  After the loop is opened, commands
 are read until the closing word is encountered.  Unlike command shells such
 as (t)csh, the commands are immediately executed as they are read.  When the loop
 is scanned for the first time, the commands are saved to a buffer before each
 one is executed.  When the end of the loop is reached, the condition is evaluated,
 and when appropriate the stored loop body is pushed back onto the input.
+</p>
 
-</body></html>
 
+
+</body>
+</html>

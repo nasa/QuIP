@@ -680,7 +680,7 @@ dump_tree(enp);
 			break;
 
 		case T_POINTER:
-			idp = eval_ptr_ref(enp,EXPECT_PTR_SET);
+			idp = eval_ptr_expr(enp,EXPECT_PTR_SET);
 			if( idp == NULL ){
 				break;	/* probably not set */
 			}
@@ -1331,7 +1331,7 @@ void _resolve_pointer(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 	 * typically the arg values have not been set at calltime...
 	 */
 
-	/* idp = eval_ptr_ref(uk_enp,1); */
+	/* idp = eval_ptr_expr(uk_enp,1); */
 	idp = get_set_ptr(uk_enp);
 
 	if( idp == NULL ){

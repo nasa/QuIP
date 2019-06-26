@@ -1,78 +1,108 @@
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Using variables - QuIP Manual</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="QuIP Manual">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="up" href="Variables.html#Variables" title="Variables">
-<link rel="prev" href="Setting-variables.html#Setting-variables" title="Setting variables">
-<link rel="next" href="Special-variables.html#Special-variables" title="Special variables">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Using variables (QuIP Manual)</title>
+
+<meta name="description" content="Using variables (QuIP Manual)">
+<meta name="keywords" content="Using variables (QuIP Manual)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="Index.html#Index" rel="index" title="Index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="Variables.html#Variables" rel="up" title="Variables">
+<link href="Special-variables.html#Special-variables" rel="next" title="Special variables">
+<link href="Setting-variables.html#Setting-variables" rel="prev" title="Setting variables">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
 </head>
-<body>
-<div class="node">
+
+<body lang="en">
 <a name="Using-variables"></a>
+<div class="header">
 <p>
-Next:&nbsp;<a rel="next" accesskey="n" href="Special-variables.html#Special-variables">Special variables</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="Setting-variables.html#Setting-variables">Setting variables</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="Variables.html#Variables">Variables</a>
-<hr>
+Next: <a href="Special-variables.html#Special-variables" accesskey="n" rel="next">Special variables</a>, Previous: <a href="Setting-variables.html#Setting-variables" accesskey="p" rel="prev">Setting variables</a>, Up: <a href="Variables.html#Variables" accesskey="u" rel="up">Variables</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
 </div>
-
+<hr>
+<a name="Using-variables-1"></a>
 <h4 class="subsection">2.4.3 Using variables</h4>
-
 <p>Variable expansion is peformed when lines are read.  Variable substitution is triggered
 by the dollar sign character <code>$</code>.  As in the UNIX command shells, variable expansion
 is inhibited by enclosing a string in single quotes, and always performed for strings in
 double quotes.
-
+</p>
 <p>Nested quotes can become rather complicated.  It is the outermost set of quotes that matter;
 In the following example, the variable will be expanded when the line is first read;
 the text interpreted after evaluation of the <code>If</code> condition will be <code>echo 'John is a minor'</code>.
-
+</p>
 <p>Set name John <br>
 Set age 15 <br>
 If $age&gt;=18 <br>
-  Then "echo '$name is an adult'" <br>
-  Else "echo '$name is a minor'"
-
+  Then &quot;echo &rsquo;$name is an adult&rsquo;&quot; <br>
+  Else &quot;echo &rsquo;$name is a minor&rsquo;&quot;
+</p>
 <p>On the other hand, the quotes could be switched:
-
+</p>
 <p>If $age&gt;=18 <br>
-  Then 'echo "$name is an adult"' <br>
-  Else 'echo "$name is a minor"'
-
-<p>In this case, the text to be interpreted will be <code>echo "$name is a minor"</code>. 
+  Then &rsquo;echo &quot;$name is an adult&quot;&rsquo; <br>
+  Else &rsquo;echo &quot;$name is a minor&quot;&rsquo;
+</p>
+<p>In this case, the text to be interpreted will be <code>echo &quot;$name is a minor&quot;</code>.
 This difference can become important if such a statement is encountered in a loop in
 which the value of the variable changes from one iteration to the next.
-
+</p>
 <p>Another example where immediate variable expansion must be inhibited is when the variable
 may not exist:
-
+</p>
 <p>If var_exists(test) <br>
-  Then 'echo "variable test exists and has value = $test"' <br>
-  Else 'echo "variable test does not exist"'
-
+  Then &rsquo;echo &quot;variable test exists and has value = $test&quot;&rsquo; <br>
+  Else &rsquo;echo &quot;variable test does not exist&quot;&rsquo;
+</p>
 <p>In this example, the first echo command after the <code>Then</code> must
 be enclosed in single quotes, because all of the text is scanned
-and subjected to variable expansion before evaluation of the condition. 
+and subjected to variable expansion before evaluation of the condition.
 Enclosing the first <code>echo</code> command in double quotes would
 generate an undefined variable warning in the case where the
-variable does not exist, even though the command will not be executed. 
+variable does not exist, even though the command will not be executed.
 This might be considered a design flaw.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="Special-variables.html#Special-variables" accesskey="n" rel="next">Special variables</a>, Previous: <a href="Setting-variables.html#Setting-variables" accesskey="p" rel="prev">Setting variables</a>, Up: <a href="Variables.html#Variables" accesskey="u" rel="up">Variables</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+</div>
 
-</body></html>
 
+
+</body>
+</html>

@@ -824,7 +824,7 @@ int get_fly_cam_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, Fly_Cam *fcp
 			strcpy(dst,src);
 		}
 	}
-	set_script_var_from_int(QSP_ARG  "n_video_modes",n);
+	set_script_var_from_int("n_video_modes",n);
 	return n;
 }
 
@@ -1437,7 +1437,7 @@ static void fix_string( char *s )
 static Fly_Cam *unique_fly_cam_instance( QSP_ARG_DECL  fc2Context context )
 {
 	int i;
-	char cname[80];	// How many chars is enough?
+	char cname[LLEN];	// How many chars is enough?
 	Fly_Cam *fcp;
 	fc2Error error;
 	fc2CameraInfo camInfo;
@@ -1452,7 +1452,9 @@ static Fly_Cam *unique_fly_cam_instance( QSP_ARG_DECL  fc2Context context )
 	fcp=NULL;
 	while(fcp==NULL){
 		//sprintf(cname,"%s_%d",cam_p->model,i);
-		sprintf(cname,"%s_%d",camInfo.modelName,i);
+		if( snprintf(cname,LLEN,"%s_%d",camInfo.modelName,i) >= LLEN ){
+			error1("unique_fly_cam_instance:  camera name too long for buffer!?");
+		}
 		fix_string(cname);	// change spaces to underscores
 //sprintf(ERROR_STRING,"Checking for existence of %s",cname);
 //advise(ERROR_STRING);
@@ -1687,7 +1689,7 @@ name_for_framerate(fcp->fc_framerate)
 
 
 	// Make a data_obj context for the frames...
-	fcp->fc_do_icp = create_dobj_context( QSP_ARG  fcp->fc_name );
+	fcp->fc_do_icp = create_dobj_context( fcp->fc_name );
 
 	fcp->fc_frm_dp_tbl = NULL;
 	fcp->fc_newest = (-1);

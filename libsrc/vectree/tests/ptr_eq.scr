@@ -1,0 +1,39 @@
+expressions
+  read -
+
+float a[4], b[4];
+float *p;
+
+void test_p()
+{
+	if( p == &b ){
+		echo("p points to b");
+	} else {
+		echo("p does NOT point to b");
+	}
+}
+void assign_p(float *ref)
+{
+	p = ref;
+}
+end
+dump test_p
+dump assign_p
+read -
+
+echo("pointing p to a with subroutine");
+assign_p(&a);
+echo("testing ...");
+test_p();
+
+echo("pointing p to a directly");
+p = &a;
+echo("testing ...");
+test_p();
+
+echo("pointing p to b");
+p = &b;
+test_p();
+
+end
+  exit

@@ -1,0 +1,28 @@
+
+spinnaker
+  init
+  quit
+
+Define Dump_Map 1 map_name
+spinnaker
+  nodes
+    select_map $1
+    info_all
+    quit
+  quit
+.
+
+Set cam0 Blackfly_S_BFS-U3-13Y3M
+Set cam1 Blackfly_S_BFS-U3-13Y3M_2
+
+Set cam_idx 0
+repeat 2
+  Set cam_name cam$cam_idx
+  Dump_Map $$cam_name.device_TL
+  Dump_Map $$cam_name.genicam
+  Dump_Map $$cam_name.stream_TL
+  Increment cam_idx
+  end
+
+exit
+

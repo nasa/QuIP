@@ -1,0 +1,142 @@
+max_warnings 3
+< $macro_dir/system/mark_time.mac
+
+# BUG - should get camera list from system!?
+Set cam1 Blackfly_S_BFS-U3-13Y3M
+#Set cam2 Flea3_FL3-U3-13Y3M
+Set cam2 Blackfly_S_BFS-U3-13Y3M_2
+
+spinnaker
+  advise "initializing..."
+  init
+  advise "DONE initializing..."
+  #list_interfaces
+  list_cams
+#  info Flea3_FL3-U3-13Y3M
+#  select Flea3_FL3-U3-13Y3M
+#  test
+  quit
+
+#Viewer v 1280 1024
+#view viewers shm_setup v quit quit
+
+Define Release_Oldest 0
+spinnaker capture release quit quit
+.
+
+Define Grab_Next 0
+spinnaker capture grab quit quit
+.
+
+Define GrabEm 1 n
+repeat $1
+  Grab_Next
+  #Show_Bytes cam$cam_idx.frame$newest v
+  Release_Oldest
+  end
+.
+
+Define GrabFast 1 n
+spinnaker
+  capture
+    repeat $1
+      grab
+      release
+      end
+    quit
+  quit
+.
+
+Define GrabNShow 1 n
+repeat $1
+  Grab_Next
+  #Show_Bytes cam$cam_idx.frame$newest v
+#  view viewers shm_update v cam$cam_idx.frame$newest 0 0 quit quit
+  Release_Oldest
+  end
+.
+
+Define Time_It 2 macro_name arg
+advise "Time_It $1 $2 BEGIN"
+Zero_Time
+$1 $2
+Check_Time
+advise "$total_ms milliseconds elapsed"
+advise "Time_It DONE"
+.
+
+Define Test_Capture 1 cam_name
+spinnaker
+  nodes
+    select_map $1.genicam
+    info AcquisitionMode
+#      select_map Blackfly_S_BFS-U3-13Y3M.genicam
+#      info AcquisitionMode
+    quit
+advise "selecting $1"
+  select $1
+  info $1
+advise "testing $1"
+  quit
+spinnaker
+  capture
+    advise "Setting up 10 buffers"
+    set_n_buffers 10
+    start
+    quit
+  quit
+Set frm_idx 0
+Set n_test 500
+advise 'Ready to run GrabFast'
+Time_It GrabFast $n_test
+advise 'Ready to run GrabEm'
+Pause
+Time_It GrabEm $n_test
+advise 'Ready to run GrabNShow'
+Pause
+Time_It GrabNShow $n_test
+advise "Test_Capture:  DONE"
+Pause
+.
+
+Set cam_idx 1
+#repeat 2
+repeat 1
+  Set cam_name cam$cam_idx
+  Test_Capture $$cam_name
+  Increment cam_idx
+  end
+
+exit
+
+do
+    
+  Grab_Next
+  Show_Bytes cam$cam_idx.frame$newest v
+  Release_Oldest
+  while 1
+
+      quit
+#    nodes
+#      select_map Flea3_FL3-U3-13Y3M.genicam
+#      info AcquisitionMode
+#      select_map Blackfly_S_BFS-U3-13Y3M.genicam
+#      info AcquisitionMode
+#      info_all
+#      quit
+
+    quit
+  Pause
+  Set fno 0
+  repeat 8
+#    Show_Bytes frame$fno v
+    #Pause
+    Info frame$fno
+    Increment fno
+    end
+  Increment idx
+  end
+
+exit
+
+

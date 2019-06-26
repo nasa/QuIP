@@ -24,3 +24,14 @@ errors
 a.out
 .deps
 .DS_Store
+ylwrap
+missing
+install-sh
+doc/mdate-sh
+depcomp
+config.sub
+config.guess
+compile
+INSTALL
+test-driver
+

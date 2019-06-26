@@ -1,57 +1,83 @@
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Startup - QuIP Manual</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="QuIP Manual">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="up" href="Command-Language.html#Command-Language" title="Command Language">
-<link rel="prev" href="Menus.html#Menus" title="Menus">
-<link rel="next" href="Variables.html#Variables" title="Variables">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Startup (QuIP Manual)</title>
+
+<meta name="description" content="Startup (QuIP Manual)">
+<meta name="keywords" content="Startup (QuIP Manual)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="Index.html#Index" rel="index" title="Index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="Command-Language.html#Command-Language" rel="up" title="Command Language">
+<link href="Variables.html#Variables" rel="next" title="Variables">
+<link href="Exiting-the-menu.html#Exiting-the-menu" rel="prev" title="Exiting the menu">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
 </head>
-<body>
-<div class="node">
+
+<body lang="en">
 <a name="Startup"></a>
+<div class="header">
 <p>
-Next:&nbsp;<a rel="next" accesskey="n" href="Variables.html#Variables">Variables</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="Menus.html#Menus">Menus</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="Command-Language.html#Command-Language">Command Language</a>
-<hr>
+Next: <a href="Variables.html#Variables" accesskey="n" rel="next">Variables</a>, Previous: <a href="Menus.html#Menus" accesskey="p" rel="prev">Menus</a>, Up: <a href="Command-Language.html#Command-Language" accesskey="u" rel="up">Command Language</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
 </div>
-
+<hr>
+<a name="Startup-1"></a>
 <h3 class="section">2.3 Startup</h3>
-
 <p>QuIP initialization
-
-<p>Before interpreting user input, QuIP attempts to read a startup file. 
+</p>
+<p>Before interpreting user input, QuIP attempts to read a startup file.
 QuIP looks for a startup file with the same name as by which the program
 was invoked, with the .scr (script) extension added.  Thus, the default
 startup file is named quip.scr.  Creating links to the QuIP executable
 with different names provides a way to produce different behavior on startup
 through the use of specialized startup scripts.
-
+</p>
 <p>QuIP searches for a startup script in the following series of directories:
 1)  the current directory;
 2)  $QUIPSTARTUPDIR (if defined in the environment);
 3)  $HOME/.quip/startup (if it exists);
 4)  the macro installation directory (/usr/local/share/quip/macros/startup).
-
+</p>
 <p>Options 2 and 3 happen only when the user customizes his or her environment
 appropriately.  The installation directory used in the last case can
 be modified during the configuration process (XREF building).
+</p>
 
-</body></html>
 
+
+
+</body>
+</html>

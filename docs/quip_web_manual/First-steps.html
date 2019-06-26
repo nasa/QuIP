@@ -1,66 +1,94 @@
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>First steps - QuIP Manual</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="QuIP Manual">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="up" href="Overview.html#Overview" title="Overview">
-<link rel="prev" href="History.html#History" title="History">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
-</head>
-<body>
-<div class="node">
-<a name="First-steps"></a>
-<p>
-Previous:&nbsp;<a rel="previous" accesskey="p" href="History.html#History">History</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="Overview.html#Overview">Overview</a>
-<hr>
-</div>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>First steps (QuIP Manual)</title>
 
+<meta name="description" content="First steps (QuIP Manual)">
+<meta name="keywords" content="First steps (QuIP Manual)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="Index.html#Index" rel="index" title="Index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="Overview.html#Overview" rel="up" title="Overview">
+<link href="Command-Language.html#Command-Language" rel="next" title="Command Language">
+<link href="History.html#History" rel="prev" title="History">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="First-steps"></a>
+<div class="header">
+<p>
+Previous: <a href="History.html#History" accesskey="p" rel="prev">History</a>, Up: <a href="Overview.html#Overview" accesskey="u" rel="up">Overview</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="First-steps-1"></a>
 <h3 class="section">1.2 First steps</h3>
 
 <p>Here we present the simplest possible QuIP script.  Invoke QuIP by typing
-'quip' at your command shell prompt.  (QuIP command prompts typically end
-with the string '&gt; '; the top level prompt is 'quip&gt; '.) 
+&rsquo;quip&rsquo; at your command shell prompt.  (QuIP command prompts typically end
+with the string &rsquo;&gt; &rsquo;; the top level prompt is &rsquo;quip&gt; &rsquo;.)
 Characters typed by the user are appear as <kbd>user_input</kbd>.
-
-<p>quip&gt;  <kbd>echo "Hello world" &lt;RET&gt;</kbd> <br>
+</p>
+<p>quip&gt;  <kbd>echo &quot;Hello world&quot; <span class="key">RET</span></kbd> <br>
 Hello world <br>
 quip&gt;
-
-<p>If you type this example in, you might notice that after the first 'e' is typed,
-the interpreter completes the word 'expressions', but that the
-completion disappears as soon as the following 'c' is typed.
-
+</p>
+<p>If you type this example in, you might notice that after the first &rsquo;e&rsquo; is typed,
+the interpreter completes the word &rsquo;expressions&rsquo;, but that the
+completion disappears as soon as the following &rsquo;c&rsquo; is typed.
+</p>
 <p>Here is a slightly longer version:
-
-<p>quip&gt; <kbd>view &lt;RET&gt;</kbd> <br>
-quip/view&gt; <kbd>viewers &lt;RET&gt;</kbd> <br>
-quip/view/viewers&gt; <kbd> new v 300 100 &lt;RET&gt;</kbd> <br>
-quip/view/viewers&gt; <kbd> quit &lt;RET&gt;</kbd> <br>
-quip/view&gt; <kbd> draw v &lt;RET&gt;</kbd> <br>
-quip/view/draw&gt; <kbd> string "Hello world" 20 20 &lt;RET&gt;</kbd> <br>
-quip/view/draw&gt; <kbd> quit &lt;RET&gt;</kbd> <br>
-quip/view&gt; <kbd> quit &lt;RET&gt;</kbd> <br>
+</p>
+<p>quip&gt; <kbd>view <span class="key">RET</span></kbd> <br>
+quip/view&gt; <kbd>viewers <span class="key">RET</span></kbd> <br>
+quip/view/viewers&gt; <kbd> new v 300 100 <span class="key">RET</span></kbd> <br>
+quip/view/viewers&gt; <kbd> quit <span class="key">RET</span></kbd> <br>
+quip/view&gt; <kbd> draw v <span class="key">RET</span></kbd> <br>
+quip/view/draw&gt; <kbd> string &quot;Hello world&quot; 20 20 <span class="key">RET</span></kbd> <br>
+quip/view/draw&gt; <kbd> quit <span class="key">RET</span></kbd> <br>
+quip/view&gt; <kbd> quit <span class="key">RET</span></kbd> <br>
 quip&gt;
-
+</p>
 <p>The first command <code>view</code> causes the interpreter to enter a submenu,
 which is reflected in the prompt.  By convention, submenus are exited
 with the <code>quit</code> command.
+</p>
 
-<!-- CHAPTER 2 - COMMAND LANGUAGE -->
-</body></html>
 
+
+
+</body>
+</html>

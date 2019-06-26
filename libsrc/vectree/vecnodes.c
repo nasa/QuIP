@@ -49,11 +49,11 @@ static int node_serial=1;
  * So it could just as well be a macro!
  */
 
-static Vec_Expr_Node *alloc_node(void)
+static Vec_Expr_Node * alloc_node(void)
 {
 	Vec_Expr_Node *enp;
 
-	enp = (Vec_Expr_Node *)getbuf(sizeof(*enp));
+	enp = (Vec_Expr_Node *) getbuf(sizeof(*enp));
 //fprintf(stderr,"alloc_node returning new node at 0x%lx\n",(long)enp);
 
 	/* Do this after the code is set */
@@ -176,13 +176,14 @@ const char *node_data_type_desc(Node_Data_Type t)
 
 /* set up a new node with the given code */
 
-#define NOTHER_NODE(code)	nother_node(QSP_ARG  code)
+#define another_node(code)	_another_node(QSP_ARG  code)
 
-static Vec_Expr_Node *nother_node(QSP_ARG_DECL  Tree_Code code)
+static Vec_Expr_Node *_another_node(QSP_ARG_DECL  Tree_Code code)
 {
 	Vec_Expr_Node *enp;
 
-	enp=alloc_node();
+	enp = alloc_node();
+	// Clear the memory to be safe, we rely on things being NULL in a few places...
 	SET_VN_CODE(enp,code);
 	SET_LAST_NODE(NULL);
 	init_expr_node(enp);
@@ -193,7 +194,7 @@ static Vec_Expr_Node *nother_node(QSP_ARG_DECL  Tree_Code code)
 // nother child sets the child field int the parent, and if the child is not NULL
 // then sets the parent field in the child.
 
-static void nother_child(Vec_Expr_Node * enp,Vec_Expr_Node * child,int index)
+static void another_child(Vec_Expr_Node * enp,Vec_Expr_Node * child,int index)
 {
 	SET_VN_CHILD(enp,index, child);
 	if( child != NULL ){
@@ -205,7 +206,7 @@ static void nother_child(Vec_Expr_Node * enp,Vec_Expr_Node * child,int index)
 		/*
 //		if( VN_PARENT(child) != NULL ){
 //			sprintf(ERROR_STRING,
-//				"CAUTIOUS:  nother_child:  node n%d (%s) has parent n%d (%s), rival n%d (%s)!?",
+//				"CAUTIOUS:  another_child:  node n%d (%s) has parent n%d (%s), rival n%d (%s)!?",
 //				child->en_serial,
 //				NNAME(child),
 //				VN_PARENT(child)->en_serial,
@@ -232,10 +233,10 @@ Vec_Expr_Node *_node3(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr
 
 	VERIFY_N_CHILDREN(code,3);
 
-	enp=NOTHER_NODE(code);
-	nother_child(enp,lchld,0);
-	nother_child(enp,rchld,1);
-	nother_child(enp,chld3,2);
+	enp = another_node(code);
+	another_child(enp,lchld,0);
+	another_child(enp,rchld,1);
+	another_child(enp,chld3,2);
 
 	return(enp);
 }
@@ -248,9 +249,9 @@ Vec_Expr_Node *_node2(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr
 
 	VERIFY_N_CHILDREN(code,2);
 
-	enp=NOTHER_NODE(code);
-	nother_child(enp,lchld,0);
-	nother_child(enp,rchld,1);
+	enp=another_node(code);
+	another_child(enp,lchld,0);
+	another_child(enp,rchld,1);
 
 	return(enp);
 }
@@ -262,8 +263,8 @@ Vec_Expr_Node *_node1(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld)
 
 	VERIFY_N_CHILDREN(code,1);
 
-	enp=NOTHER_NODE(code);
-	nother_child(enp,lchld,0);
+	enp=another_node(code);
+	another_child(enp,lchld,0);
 
 	return(enp);
 }
@@ -273,14 +274,14 @@ Vec_Expr_Node *_node0(QSP_ARG_DECL  Tree_Code code)
 {
 	VERIFY_N_CHILDREN(code,0);
 
-	return( NOTHER_NODE(code) );
+	return( another_node(code) );
 }
 
 static Vec_Expr_Node *dup_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Vec_Expr_Node *new_enp;
 
-	new_enp = NOTHER_NODE(VN_CODE(enp));
+	new_enp = another_node(VN_CODE(enp));
 	/* now copy over the relevant data */
 	switch(VN_CODE(enp)){
 		case T_STRING:
@@ -416,7 +417,7 @@ void _rls_vectree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			rls_vectree(VN_CHILD(enp,i));
 		}
 
-//fprintf(stderr,"releasing %s\n",node_desc(enp));
+fprintf(stderr,"releasing %s\n",node_desc(enp));
 
 	/* now release this node */
 	if( VN_INFILE(enp) != NULL ){

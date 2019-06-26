@@ -249,8 +249,10 @@ extern String_Buf *		qs_expr_string(SINGLE_QSP_ARG_DECL);
 
 
 extern char *error_string(SINGLE_QSP_ARG_DECL);
+extern char *vector_parser_error_string(SINGLE_QSP_ARG_DECL);
 extern char *message_string(SINGLE_QSP_ARG_DECL);
 #define ERROR_STRING		error_string(SINGLE_QSP_ARG)
+#define VECTOR_PARSER_ERROR_STRING		vector_parser_error_string(SINGLE_QSP_ARG)
 #define DEFAULT_ERROR_STRING	error_string(SGL_DEFAULT_QSP_ARG)
 #define MSG_STR			message_string(SINGLE_QSP_ARG)
 #define DEFAULT_MSG_STR		message_string(SGL_DEFAULT_QSP_ARG)
