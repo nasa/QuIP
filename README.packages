@@ -2,7 +2,7 @@
 
 On a fresh ubuntu docker container, install:
 
-git, tcsh, vim, bison
+git, tcsh, vim, bison, apt-file, texinfo
 
 *************************************** CENTOS ****************************************
 

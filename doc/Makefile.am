@@ -20,6 +20,7 @@ TARGETS			+= html quip.info
 	$(MAKEINFO) --html $<
 
 
+# makeinfo --html is not making the html when called from automake
 all:	$(TARGETS) pdf
 	cp quip.pdf ../docs/quip_manual.pdf
 	cp -R quip.html ../docs/quip_web_manual
