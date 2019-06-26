@@ -23,7 +23,9 @@ TARGETS			+= html quip.info
 # makeinfo --html is not making the html when called from automake
 all:	$(TARGETS) pdf
 	cp quip.pdf ../docs/quip_manual.pdf
-	cp -R quip.html ../docs/quip_web_manual
+#	cp -R quip.html ../docs/quip_web_manual
+#	BUG ../docs/quip_web_manual must exist!
+	cp -R quip/*.html ../docs/quip_web_manual
 
 .PHONY:	html
 html:	version.texi $(HTML_DOCS)
