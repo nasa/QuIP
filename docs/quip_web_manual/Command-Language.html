@@ -1,47 +1,78 @@
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Command Language - QuIP Manual</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="QuIP Manual">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="prev" href="Overview.html#Overview" title="Overview">
-<link rel="next" href="Data-Objects.html#Data-Objects" title="Data Objects">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Command Language (QuIP Manual)</title>
+
+<meta name="description" content="Command Language (QuIP Manual)">
+<meta name="keywords" content="Command Language (QuIP Manual)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="QuIPindex.html#QuIPindex" rel="index" title="QuIPindex">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="Interactive-Features.html#Interactive-Features" rel="next" title="Interactive Features">
+<link href="First-steps.html#First-steps" rel="prev" title="First steps">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
 </head>
-<body>
-<div class="node">
+
+<body lang="en">
 <a name="Command-Language"></a>
+<div class="header">
 <p>
-Next:&nbsp;<a rel="next" accesskey="n" href="Data-Objects.html#Data-Objects">Data Objects</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="Overview.html#Overview">Overview</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
-<hr>
+Next: <a href="Data-Objects.html#Data-Objects" accesskey="n" rel="next">Data Objects</a>, Previous: <a href="Overview.html#Overview" accesskey="p" rel="prev">Overview</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="QuIPindex.html#QuIPindex" title="Index" rel="index">Index</a>]</p>
 </div>
-
+<hr>
+<a name="Command-Language-1"></a>
 <h2 class="chapter">2 Command Language</h2>
-
 <p>The simplest way to interact with QuIP is via the command language.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="Interactive-Features.html#Interactive-Features" accesskey="1">Interactive Features  </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Typing directly into QuIP
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="Menus.html#Menus" accesskey="2">Menus			</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Command menus
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="Startup.html#Startup" accesskey="3">Startup		</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">QuIP initialization
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="Variables.html#Variables" accesskey="4">Variables             </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Using script variables
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="Macros.html#Macros" accesskey="5">Macros                </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Writing and using QuIP macros
+</td></tr>
+</table>
 
-<ul class="menu">
-<li><a accesskey="1" href="Interactive-Features.html#Interactive-Features">Interactive Features </a>:   Typing directly into QuIP
-<li><a accesskey="2" href="Menus.html#Menus">Menus	</a>:   Command menus
-<li><a accesskey="3" href="Startup.html#Startup">Startup	</a>:   QuIP initialization
-<li><a accesskey="4" href="Variables.html#Variables">Variables </a>:   Using script variables
-<li><a accesskey="5" href="Macros.html#Macros">Macros </a>:   Writing and using QuIP macros
-</ul>
 
-</body></html>
 
+
+</body>
+</html>

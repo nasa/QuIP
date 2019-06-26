@@ -3261,4 +3261,6 @@ MISSING_VOID_FUNC(insure_default_rv)
 void rv_mkfs(QSP_ARG_DECL  int ndisks,const char **disknames,uint32_t nib,uint32_t nsb)
 MISSING_VOID_FUNC(rv_mkfs)
 
+void _update_movie_database(QSP_ARG_DECL  RV_Inode *inp)
+MISSING_VOID_FUNC(update_movie_database)
 #endif // ! HAVE_RAWVOL
