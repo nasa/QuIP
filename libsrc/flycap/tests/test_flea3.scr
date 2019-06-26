@@ -1,0 +1,17 @@
+#
+# Test the usb3 flea3 camera
+Set cam Flea3_FL3-U3-32S2M_1
+Set w 2080
+Set h 1552
+Set nfrms 8
+
+Sequence frms $nfrms $h $w 1 u_byte
+
+fly
+  init
+  list
+  select $cam
+  capture
+    set_buffer_obj frms
+    Pause
+

@@ -23,6 +23,8 @@
 
 #include "fly.h"
 
+static void show_fmt7_info(QSP_ARG_DECL  Fly_Cam *fcp, fc2Mode mode );	// fwd declaration
+
 #define TMPSIZE	32	// for temporary object names, e.g. _frame55
 
 ITEM_INTERFACE_DECLARATIONS(Fly_Cam,fly_cam,0)
@@ -1162,7 +1164,7 @@ int set_fmt7_mode(QSP_ARG_DECL  Fly_Cam *fcp, int idx )
 		return -1;
 	}
 
-fprintf(stderr,"Using size %d x %d\n",settings.width,settings.height);
+fprintf(stderr,"set_fmt7_mode:  Using size %d x %d\n",settings.width,settings.height);
 
 	percentage = 100.0;
 	error = fc2SetFormat7Configuration(fcp->fc_context,&settings,
@@ -1357,7 +1359,9 @@ static int set_default_video_mode(QSP_ARG_DECL  Fly_Cam *fcp)
 		return -1;
 	}
 
-//fprintf(stderr,"get_supported_video_modes found %d modes\n",fcp->fc_n_video_modes);
+fprintf(stderr,"set_default_video_mode:  get_supported_video_modes found %d mode%s\n",
+fcp->fc_n_video_modes,fcp->fc_n_video_modes==1?"":"s");
+
 	_nskip=0;
 	do {
 		_nskip++;
@@ -1365,15 +1369,14 @@ static int set_default_video_mode(QSP_ARG_DECL  Fly_Cam *fcp)
 		fcp->fc_my_video_mode_index = i;
 		j = fcp->fc_video_mode_indices[i];
 		m = all_video_modes[j].nvm_value;
+fprintf(stderr,"set_default_video_mode:  m = %d (0x%x)\n",m,m);
 		// BUG we don't check that nskip is in-bounds, but should be OK
 	} while( m == FC2_VIDEOMODE_FORMAT7  && _nskip < fcp->fc_n_video_modes );
 
 	if( m == FC2_VIDEOMODE_FORMAT7 ){
-		/*
 		sprintf(ERROR_STRING,"set_default_video_mode:  %s has only format7 modes!?",
 			fcp->fc_name);
 		advise(ERROR_STRING);
-		*/
 		return -1;
 	}
 
@@ -1509,10 +1512,16 @@ static void get_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp)
 			largest,fcp->fc_n_fmt7_modes);
 		warn(ERROR_STRING);
 	}
+fprintf(stderr,"get_fmt7_modes:  found %d format7 mode%s\n",
+fcp->fc_n_fmt7_modes,
+fcp->fc_n_fmt7_modes==1?"":"s");
 
 	nb = fcp->fc_n_fmt7_modes * sizeof(fc2Format7Info);
 	fcp->fc_fmt7_info_tbl = getbuf( nb );
 	memcpy(fcp->fc_fmt7_info_tbl,fmt7_info_tbl,nb);
+for(i=0;i<fcp->fc_n_fmt7_modes;i++){
+show_fmt7_info(QSP_ARG  fcp,i);
+}
 
 	fcp->fc_fmt7_index = 0;
 }
@@ -1678,6 +1687,7 @@ name_for_framerate(fcp->fc_framerate)
 	// What if the fly_cam is a usb cam???
 	//dc1394_video_set_iso_speed( cam_p, DC1394_ISO_SPEED_400 );
 
+	// Why do we create this image???
 	fcp->fc_img_p = getbuf( sizeof(*fcp->fc_img_p) );
 
         error = fc2CreateImage( fcp->fc_img_p );
