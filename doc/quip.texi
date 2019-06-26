@@ -67,6 +67,8 @@ This manual is for QuIP, version 0.2.
 
 @end ifnottex
 
+@c changed Index to QuIPindex because of stupid OSX case confusion with index.html...
+
 @menu
 * Overview              ::  A brief tour of QuIP
 * Command Language      ::  Writing scripts in QuIP's command language
@@ -79,7 +81,7 @@ This manual is for QuIP, version 0.2.
 * Advanced Graphics     ::  Sythesizing images using OpenGL
 * Interfacing Hardware  ::  Controlling various hardware devices
 * Installing QuIP       ::  Obtaining and installing QuIP
-* Index                 ::  Complete index
+* QuIPindex             ::  Complete index
 
 @end menu
 
@@ -746,8 +748,8 @@ QuIP can be downloaded from:
 http://scanpath.arc.nasa.gov/quip
 
 
-@node Index
-@unnumbered Index
+@node QuIPindex
+@unnumbered QuIPindex
 
 @printindex cp
 
