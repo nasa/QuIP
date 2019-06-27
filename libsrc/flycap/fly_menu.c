@@ -664,29 +664,6 @@ static COMMAND_FUNC( do_set_prop )
 #endif // ! HAVE_LIBFLYCAP
 }
 
-static COMMAND_FUNC( do_set_fmt7 )
-{
-	int i;
-
-	i = HOW_MANY("index of format7 mode");
-	CHECK_CAM
-
-#ifdef HAVE_LIBFLYCAP
-	if( i < 0 || i >= the_cam_p->fc_n_fmt7_modes ){
-		sprintf(ERROR_STRING,
-			"%s:  format7 index must be in the range 0 - %d",
-			the_cam_p->fc_name,the_cam_p->fc_n_fmt7_modes-1);
-		WARN(ERROR_STRING);
-		return;
-	}
-
-	set_fmt7_mode(QSP_ARG  the_cam_p, i );
-#else // ! HAVE_LIBFLYCAP
-	UNIMP_MSG("set_fmt7_mode");
-	SUPPRESS_UNUSED_INT_VAR_WARNING(i)
-#endif // ! HAVE_LIBFLYCAP
-}
-
 static COMMAND_FUNC( do_show_n_bufs )
 {
 	CHECK_CAM
@@ -771,7 +748,6 @@ static COMMAND_FUNC( do_set_iso_speed )
 	EAT_ONE_DUMMY("speed");
 }
 
-
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(fly_cam_menu,s,f,h)
 
@@ -785,7 +761,6 @@ ADD_CMD( properties,		do_prop_menu,		camera properties submenu )
 ADD_CMD( list_video_modes,	do_list_fly_cam_modes,		list all video modes for this camera )
 ADD_CMD( get_video_modes,	do_get_fly_cam_video_modes,	copy video modes strings to an array )
 ADD_CMD( set_video_mode,	do_set_video_mode,	set video mode )
-ADD_CMD( format7,		do_set_fmt7,		select a format7 mode )
 ADD_CMD( show_video_mode,	do_show_fly_cam_video_mode,	display current video mode )
 ADD_CMD( list_framerates,	do_list_fly_cam_framerates,	list all framerates for this camera )
 ADD_CMD( get_framerates,	do_get_framerates,	copy framerate strings to an array )
@@ -886,9 +861,18 @@ static COMMAND_FUNC( captmenu )
 
 #define CAM_P	the_cam_p->fc_cam_p
 
-static COMMAND_FUNC( do_fmt7_list )
+static COMMAND_FUNC( do_fmt7_show )
 {
-	UNIMP_MSG("fmt7_list");
+	int i;
+	CHECK_CAM
+	i=how_many("index of format7 mode");
+	if( i < 0 || i >= the_cam_p->fc_n_fmt7_modes ){
+		sprintf(ERROR_STRING,"Requested format7 mode (%d) must be in the range 0-%d!?",
+			i,the_cam_p->fc_n_fmt7_modes-1);
+		warn(ERROR_STRING);
+		return;
+	}
+	show_fmt7_info( QSP_ARG  the_cam_p, i );
 }
 
 static COMMAND_FUNC( do_fmt7_setsize )
@@ -944,20 +928,49 @@ static COMMAND_FUNC( do_fmt7_setposn )
 
 static COMMAND_FUNC( do_fmt7_select )
 {
-	UNIMP_MSG("fmt7_select");
+	int i;
+
+	i = HOW_MANY("index of format7 mode");
+	CHECK_CAM
+
+#ifdef HAVE_LIBFLYCAP
+	if( i < 0 || i >= the_cam_p->fc_n_fmt7_modes ){
+		sprintf(ERROR_STRING,
+			"%s:  format7 index must be in the range 0 - %d",
+			the_cam_p->fc_name,the_cam_p->fc_n_fmt7_modes-1);
+		WARN(ERROR_STRING);
+		return;
+	}
+
+	set_fmt7_mode(QSP_ARG  the_cam_p, i );
+#else // ! HAVE_LIBFLYCAP
+	UNIMP_MSG("do_fmt7_select");
+	SUPPRESS_UNUSED_INT_VAR_WARNING(i)
+#endif // ! HAVE_LIBFLYCAP
+}
+
+static COMMAND_FUNC(do_fmt7_info)
+{
+	CHECK_CAM
+#ifdef HAVE_LIBFLYCAP
+	report_fmt7_modes(QSP_ARG  the_cam_p);
+#else // ! HAVE_LIBFLYCAP
+	UNIMP_MSG("do_fmt7_info");
+#endif // ! HAVE_LIBFLYCAP
 }
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(format7_menu,s,f,h)
 
 MENU_BEGIN(format7)
+ADD_CMD( info,		do_fmt7_info,		display possible format7 modes )
 ADD_CMD( mode,		do_fmt7_select,		select format7 mode for get/set )
-ADD_CMD( list,		do_fmt7_list,		list format7 settings )
+ADD_CMD( show,		do_fmt7_show,		show format7 settings )
 ADD_CMD( set_image_size, do_fmt7_setsize,	set image size )
 ADD_CMD( position,	do_fmt7_setposn,	set image position )
 MENU_END(format7)
 
-static COMMAND_FUNC( fmt7menu )
+static COMMAND_FUNC( do_fmt7_menu )
 {
 	CHECK_AND_PUSH_MENU( format7 );
 }
@@ -994,7 +1007,7 @@ ADD_CMD( list,		do_list_fly_cams,	list cameras )
 ADD_CMD( select,	do_select_cam,	select camera )
 ADD_CMD( get_cameras,	do_get_cams,	copy camera names to an array )
 ADD_CMD( capture,	captmenu,	capture submenu )
-ADD_CMD( format7,	fmt7menu,	format7 submenu )
+ADD_CMD( format7,	do_fmt7_menu,	format7 submenu )
 ADD_CMD( select,	do_select_cam,	select camera )
 ADD_CMD( info,		do_cam_info,	print camera info )
 ADD_CMD( power,		do_power,	power camera on/off )

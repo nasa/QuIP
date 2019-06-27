@@ -189,6 +189,7 @@ extern void set_grab_mode(QSP_ARG_DECL  Fly_Cam *fcp, int idx);
 extern void set_buffer_obj(QSP_ARG_DECL  Fly_Cam *fcp, Data_Obj *dp);
 extern void set_eii_property(QSP_ARG_DECL  Fly_Cam *fcp, int idx, int yesno );
 extern void show_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp);
+extern void show_fmt7_info(QSP_ARG_DECL  Fly_Cam *fcp, fc2Mode mode );
 extern int set_n_buffers(QSP_ARG_DECL  Fly_Cam *fcp, int n );
 extern void show_n_buffers(QSP_ARG_DECL  Fly_Cam *fcp);
 extern void set_fmt7_size(QSP_ARG_DECL  Fly_Cam *fcp, int w, int h );
@@ -250,6 +251,8 @@ extern void print_fly_cam_info(QSP_ARG_DECL  Fly_Cam *fcp);
 extern int list_fly_cam_features(QSP_ARG_DECL  Fly_Cam *fcp);
 extern int get_feature_choices(Fly_Cam *fcp, const char ***chp);
 extern void get_fly_cam_features(Fly_Cam *fcp);
+
+extern void report_fmt7_modes(QSP_ARG_DECL  Fly_Cam *the_cam_p);
 
 /* cam_ctl.c */
 #ifdef HAVE_LIBFLYCAP

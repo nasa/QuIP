@@ -1400,6 +1400,26 @@ static void sync_inode(QSP_ARG_DECL  RV_Inode *inp)
 	//CLR_RV_FLAG_BITS(&rv_inode_tbl[RV_INODE_IDX(inp)],RVI_SCANNED);
 }
 
+#define REPORT_ONE_FLAG(mask,msg)					\
+	if( inp->rvi_inode.rvi_flags & mask ){				\
+		sprintf(MSG_STR,"%s flag (0x%x) is set",msg,mask);	\
+		prt_msg(MSG_STR);					\
+	} else {							\
+		sprintf(MSG_STR,"%s flag (0x%x) is NOT set",msg,mask);	\
+		prt_msg(MSG_STR);					\
+	}
+
+static void report_rvi_flags(QSP_ARG_DECL  RV_Inode *inp)
+{
+	sprintf(MSG_STR,"\nflags = 0x%x\n",inp->rvi_inode.rvi_flags);
+	prt_msg(MSG_STR);
+
+	REPORT_ONE_FLAG(DIRECTORY_BIT,"directory")
+	REPORT_ONE_FLAG(RVI_LINK,"link")
+	REPORT_ONE_FLAG(RVI_INUSE,"in use")
+	REPORT_ONE_FLAG(RVI_SCANNED,"scanned")
+}
+
 #ifdef UNUSED
 
 static RV_Inode *search_directory(RV_Inode *inp, int index)
@@ -1551,6 +1571,8 @@ advise(ERROR_STRING);
 		goto errorB;
 	}
 
+	// clear the flags first
+	SET_RV_FLAGS(inp, 0);
 	SET_RV_FLAG_BITS(inp, RVI_INUSE | RVI_SCANNED);
 
 	/* divide size by the number of disks, rounding up to nearest int */
@@ -1996,8 +2018,14 @@ void _rv_info(QSP_ARG_DECL  RV_Inode *inp)
 {
 	rv_ls_inode(QSP_ARG  inp);
 	rv_ls_extra(QSP_ARG  inp);
-	if( IS_REGULAR_FILE(inp) )
+fprintf(stderr,"flags = 0x%x\n",inp->rvi_inode.rvi_flags);
+	report_rvi_flags(QSP_ARG  inp);
+	if( IS_REGULAR_FILE(inp) ){
+fprintf(stderr,"rv_info will describe shape for regular file...\n");
 		describe_shape(RV_MOVIE_SHAPE(inp));
+	} else {
+fprintf(stderr,"rv_info will NOT describe shape, not a regular file...\n");
+	}
 }
 
 void rv_ls_inode(QSP_ARG_DECL  RV_Inode *inp)

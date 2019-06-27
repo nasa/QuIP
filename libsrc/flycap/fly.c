@@ -23,7 +23,6 @@
 
 #include "fly.h"
 
-static void show_fmt7_info(QSP_ARG_DECL  Fly_Cam *fcp, fc2Mode mode );	// fwd declaration
 
 #define TMPSIZE	32	// for temporary object names, e.g. _frame55
 
@@ -1136,59 +1135,50 @@ static void set_highest_fmt7_framerate( QSP_ARG_DECL  Fly_Cam *fcp )
 	}
 }
 
-int set_fmt7_mode(QSP_ARG_DECL  Fly_Cam *fcp, int idx )
+void report_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp )
 {
-	fc2Format7ImageSettings settings;
-//	fc2Format7PacketInfo pinfo;
-//	BOOL is_valid;
-	fc2Error error;
-	unsigned int packetSize;
-	float percentage;
+	int i;
 
-	insure_stopped(QSP_ARG  fcp,"setting format7 mode");
+	sprintf(MSG_STR,"\nCamera %s has %d format7 modes\n",fcp->fc_name,fcp->fc_n_fmt7_modes);
+	prt_msg(MSG_STR);
 
-	if( idx < 0 || idx >= fcp->fc_n_fmt7_modes ){
-		warn("Format 7 index out of range!?");
-		return -1;
+	for(i=0;i<fcp->fc_n_fmt7_modes;i++){
+		show_fmt7_info(QSP_ARG  fcp, i);
 	}
+}
 
-	settings.mode = idx;
-	settings.offsetX = 0;
-	settings.offsetY = 0;
-	settings.width = fcp->fc_fmt7_info_tbl[idx].maxWidth;
-	settings.height = fcp->fc_fmt7_info_tbl[idx].maxHeight;
+static void report_estimated_frame_rate( fc2Format7ImageSettings *settings_p, unsigned int packetSize )
+{
+	long bytes_per_image;
+	float est_fps;
+
+	bytes_per_image = settings_p->width * settings_p->height;
+	// assumes mono8
+
+	// where does 8k come from???
+	est_fps = 8000.0 * packetSize / bytes_per_image;
+	fprintf(stderr,"Estimated frame rate:  %g\n",est_fps);
+}
+
+static int init_fmt7_settings(QSP_ARG_DECL Fly_Cam *fcp, fc2Format7ImageSettings *settings_p, int idx )
+{
+	settings_p->mode = idx;
+	settings_p->offsetX = 0;
+	settings_p->offsetY = 0;
+	settings_p->width = fcp->fc_fmt7_info_tbl[idx].maxWidth;
+	settings_p->height = fcp->fc_fmt7_info_tbl[idx].maxHeight;
 	if( fcp->fc_fmt7_info_tbl[idx].pixelFormatBitField &
 			FC2_PIXEL_FORMAT_RAW8 )
-		settings.pixelFormat = FC2_PIXEL_FORMAT_RAW8;
+		settings_p->pixelFormat = FC2_PIXEL_FORMAT_RAW8;
 	else {
 		warn("Camera does not support raw8!?");
 		return -1;
 	}
+	return 0;
+}
 
-fprintf(stderr,"set_fmt7_mode:  Using size %d x %d\n",settings.width,settings.height);
-
-	percentage = 100.0;
-	error = fc2SetFormat7Configuration(fcp->fc_context,&settings,
-			percentage);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2SetFormat7Configuration" );
-		return -1;
-	}
-
-	set_highest_fmt7_framerate(QSP_ARG  fcp);
-
-	// This fails if we are not in format 7 already.
-	error = fc2GetFormat7Configuration(fcp->fc_context,&settings,
-			&packetSize,&percentage);
-
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetFormat7Configuration" );
-		return -1;
-	}
-
-	fprintf(stderr,"Percentage = %g (packet size = %d)\n",
-		percentage,packetSize);
-
+static void update_camera_for_fmt7(Fly_Cam *fcp, int idx, fc2Format7ImageSettings *settings_p )
+{
 	fcp->fc_video_mode = FC2_VIDEOMODE_FORMAT7;
 	fcp->fc_framerate = FC2_FRAMERATE_FORMAT7;
 	fcp->fc_framerate_index = index_of_framerate(FC2_FRAMERATE_FORMAT7);
@@ -1199,19 +1189,62 @@ fprintf(stderr,"set_fmt7_mode:  Using size %d x %d\n",settings.width,settings.he
 
 	// Do we have to set the framerate to FC2_FRAMERATE_FORMAT7???
 
-	fcp->fc_rows = settings.height;
-	fcp->fc_cols = settings.width;
+	fcp->fc_rows = settings_p->height;
+	fcp->fc_cols = settings_p->width;
+}
 
-	{
-		long bytes_per_image;
-		float est_fps;
+static int init_fmt7_packet(QSP_ARG_DECL  Fly_Cam *fcp, fc2Format7ImageSettings *settings_p )
+{
+	float percentage;
+	unsigned int packetSize;
+	fc2Error error;
 
-		bytes_per_image = settings.width * settings.height;
-		// assumes mono8
-
-		est_fps = 8000.0 * packetSize / bytes_per_image;
-		fprintf(stderr,"Estimated frame rate:  %g\n",est_fps);
+	percentage = 100.0;
+	error = fc2SetFormat7Configuration(fcp->fc_context,settings_p, percentage);
+	if( error != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  error, "fc2SetFormat7Configuration" );
+		return -1;
 	}
+
+	set_highest_fmt7_framerate(QSP_ARG  fcp);
+
+	// This fails if we are not in format 7 already.
+	error = fc2GetFormat7Configuration(fcp->fc_context,settings_p,
+			&packetSize,&percentage);
+
+	if( error != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  error, "fc2GetFormat7Configuration" );
+		return -1;
+	}
+
+	fprintf(stderr,"Percentage = %g (packet size = %d)\n",
+		percentage,packetSize);
+
+	report_estimated_frame_rate(settings_p,packetSize);
+
+	return 0;
+}
+
+int set_fmt7_mode(QSP_ARG_DECL  Fly_Cam *fcp, int idx )
+{
+	fc2Format7ImageSettings settings;
+
+	insure_stopped(QSP_ARG  fcp,"setting format7 mode");
+
+	if( idx < 0 || idx >= fcp->fc_n_fmt7_modes ){
+		warn("Format 7 index out of range!?");
+		return -1;
+	}
+
+	// copy the settings from the info table, size will be maximal
+	if( init_fmt7_settings(QSP_ARG  fcp,&settings,idx) < 0 )
+		return -1;
+fprintf(stderr,"set_fmt7_mode:  Using size %d x %d\n",settings.width,settings.height);
+
+	if( init_fmt7_packet(QSP_ARG  fcp,&settings) < 0 )
+		return -1;
+
+	update_camera_for_fmt7(fcp,idx,&settings);
 
 	// refresh_config reads the config from the library...
 	return refresh_config(QSP_ARG  fcp);
@@ -1360,8 +1393,8 @@ static int set_default_video_mode(QSP_ARG_DECL  Fly_Cam *fcp)
 		return -1;
 	}
 
-fprintf(stderr,"set_default_video_mode:  get_supported_video_modes found %d mode%s\n",
-fcp->fc_n_video_modes,fcp->fc_n_video_modes==1?"":"s");
+//fprintf(stderr,"set_default_video_mode:  get_supported_video_modes found %d mode%s\n",
+//fcp->fc_n_video_modes,fcp->fc_n_video_modes==1?"":"s");
 
 	_nskip=0;
 	do {
@@ -1370,7 +1403,7 @@ fcp->fc_n_video_modes,fcp->fc_n_video_modes==1?"":"s");
 		fcp->fc_my_video_mode_index = i;
 		j = fcp->fc_video_mode_indices[i];
 		m = all_video_modes[j].nvm_value;
-fprintf(stderr,"set_default_video_mode:  m = %d (0x%x)\n",m,m);
+//fprintf(stderr,"set_default_video_mode:  m = %d (0x%x)\n",m,m);
 		// BUG we don't check that nskip is in-bounds, but should be OK
 	} while( m == FC2_VIDEOMODE_FORMAT7  && _nskip < fcp->fc_n_video_modes );
 
@@ -1486,6 +1519,11 @@ static Fly_Cam *unique_fly_cam_instance( QSP_ARG_DECL  fc2Context context )
 	return fcp;
 }
 
+static void show_fmt7_table_data(QSP_ARG_DECL  fc2Format7Info *f7i_p)
+{
+//	sprintf(MSG_STR,
+}
+
 static void get_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	fc2Error error;
@@ -1496,15 +1534,20 @@ static void get_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp)
 
 	fcp->fc_n_fmt7_modes = 0;
 	for(i=0;i<N_FMT7_MODES;i++){
-		fmt7_info_tbl[i].mode = i;
+		fmt7_info_tbl[i].mode = i;	// specify which mode for the get function
 		error = fc2GetFormat7Info(fcp->fc_context,
 				&fmt7_info_tbl[i],&supported);
 		if( error != FC2_ERROR_OK ){
 			report_fc2_error(QSP_ARG  error, "fc2GetFormat7Info" );
 		}
 		if( supported ){
+show_fmt7_table_data(QSP_ARG  &fmt7_info_tbl[i]);
 			fcp->fc_n_fmt7_modes ++ ;
 			largest = i;
+fprintf(stderr,"format7 mode %d is supported\n",i);
+		}
+		else {
+fprintf(stderr,"format7 mode %d is NOT supported\n",i);
 		}
 	}
 	if( (largest+1) != fcp->fc_n_fmt7_modes ){
@@ -1513,16 +1556,20 @@ static void get_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp)
 			largest,fcp->fc_n_fmt7_modes);
 		warn(ERROR_STRING);
 	}
+/*
 fprintf(stderr,"get_fmt7_modes:  found %d format7 mode%s\n",
 fcp->fc_n_fmt7_modes,
 fcp->fc_n_fmt7_modes==1?"":"s");
+*/
 
 	nb = fcp->fc_n_fmt7_modes * sizeof(fc2Format7Info);
 	fcp->fc_fmt7_info_tbl = getbuf( nb );
 	memcpy(fcp->fc_fmt7_info_tbl,fmt7_info_tbl,nb);
+/*
 for(i=0;i<fcp->fc_n_fmt7_modes;i++){
 show_fmt7_info(QSP_ARG  fcp,i);
 }
+*/
 
 	fcp->fc_fmt7_index = 0;
 }
@@ -1537,7 +1584,7 @@ prt_msg(MSG_STR);
 sprintf(MSG_STR,"\t%s:  0x%x",#desc_str,fcp->fc_fmt7_info_tbl[mode].value); \
 prt_msg(MSG_STR);
 
-static void show_fmt7_info(QSP_ARG_DECL  Fly_Cam *fcp, fc2Mode mode )
+void show_fmt7_info(QSP_ARG_DECL  Fly_Cam *fcp, fc2Mode mode )
 {
 	sprintf(MSG_STR,"Format 7 mode %d:",mode);
 	prt_msg(MSG_STR);
@@ -1778,7 +1825,6 @@ int init_fly_cam_system(SINGLE_QSP_ARG_DECL)
 		if( error != FC2_ERROR_OK ){
 			report_fc2_error(QSP_ARG  error, "fc2GetCameraFromIndex" );
 		} else {
-fprintf(stderr,"Calling setup_my_fly_cam for camera %d\n",i);
 			setup_my_fly_cam(QSP_ARG   context, &guid, i );
 		}
 	}

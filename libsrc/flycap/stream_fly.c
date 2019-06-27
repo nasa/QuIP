@@ -733,6 +733,7 @@ show_tmrs(SGL_DEFAULT_QSP_ARG);
 	}
 
 	setup_rv_iofile(inp);		/* open read file	*/
+fprintf(stderr,"update_movie_database:  calling make_movie_from_inode\n");
 	make_movie_from_inode(inp);	/* make movie struct	*/
 }
 
@@ -747,6 +748,7 @@ static void finish_recording(QSP_ARG_DECL  Image_File *ifp)
 
 	close_image_file(ifp);		/* close write file	*/
 
+fprintf(stderr,"finish_recording:  calling update_movie_database\n");
 	update_movie_database(inp);
 
 	// do we have error frames for PGR??

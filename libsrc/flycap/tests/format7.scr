@@ -1,0 +1,12 @@
+
+fly
+  init
+  list
+  select Flea3_FL3-U3-13Y3M_1
+  format7
+    info
+  Pause
+  exit
+
+
+
