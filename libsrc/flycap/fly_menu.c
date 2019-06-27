@@ -66,6 +66,139 @@ static COMMAND_FUNC( do_trigger )
 	CHECK_AND_PUSH_MENU(trigger);
 }
 
+#define GET_STROBE_SOURCE									\
+	source = how_many("source");								\
+	if( source < MIN_STROBE_SOURCE || source > MAX_STROBE_SOURCE ){				\
+		sprintf(ERROR_STRING,"Strobe source (%d) must be in the range %d-%d",		\
+			source,MIN_STROBE_SOURCE,MAX_STROBE_SOURCE);				\
+		warn(ERROR_STRING);								\
+		return;										\
+	}
+
+
+static COMMAND_FUNC(do_get_strobe_info)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	get_strobe_info(QSP_ARG  the_cam_p,source);
+#else
+	NO_LIB_MSG("do_get_strobe_info");
+#endif
+}
+
+
+static COMMAND_FUNC(do_get_strobe_ctl)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	get_strobe_control(QSP_ARG  the_cam_p,source);
+#else
+	NO_LIB_MSG("do_get_strobe_ctl");
+#endif
+}
+
+
+static COMMAND_FUNC(do_strobe_enable)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	set_strobe_enable(QSP_ARG  the_cam_p,source,1);
+#else
+	NO_LIB_MSG("do_strobe_enable");
+#endif
+}
+
+
+static COMMAND_FUNC(do_strobe_disable)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	set_strobe_enable(QSP_ARG  the_cam_p,source,0);
+#else
+	NO_LIB_MSG("do_strobe_disable");
+#endif
+}
+
+
+static COMMAND_FUNC(do_strobe_polarity)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	unsigned int polarity;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	polarity = how_many("strobe polarity");
+	set_strobe_polarity(QSP_ARG  the_cam_p,source,polarity);
+#else
+	NO_LIB_MSG("do_strobe_enable");
+#endif
+}
+
+
+static COMMAND_FUNC(do_strobe_delay)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	int delay;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	delay = how_many("strobe delay");
+	// BUG validate value
+	set_strobe_delay(QSP_ARG  the_cam_p,source,delay);
+#else
+	NO_LIB_MSG("do_strobe_delay");
+#endif
+}
+
+
+static COMMAND_FUNC(do_strobe_duration)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	int duration;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	duration = how_many("strobe duration");
+	// BUG validate value
+	set_strobe_duration(QSP_ARG  the_cam_p,source,duration);
+#else
+	NO_LIB_MSG("do_strobe_enable");
+#endif
+}
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(strobe_menu,s,f,h)
+
+MENU_BEGIN(strobe)
+ADD_CMD( info,		do_get_strobe_info,	report strobe info )
+ADD_CMD( get_control,	do_get_strobe_ctl,	report strobe control settings )
+ADD_CMD( enable,	do_strobe_enable,	enable strobe )
+ADD_CMD( disable,	do_strobe_disable,	disable strobe )
+ADD_CMD( polarity,	do_strobe_polarity,	set strobe polarity )
+ADD_CMD( delay,		do_strobe_delay,	set strobe delay )
+ADD_CMD( duration,	do_strobe_duration,	set strobe duration )
+MENU_END(strobe)
+
+static COMMAND_FUNC( do_strobe )
+{
+	CHECK_AND_PUSH_MENU(strobe);
+}
+
 static COMMAND_FUNC( do_init )
 {
 #ifdef HAVE_LIBFLYCAP
@@ -664,6 +797,8 @@ ADD_CMD( power_off,		do_power_off,		power off current camera )
 ADD_CMD( temperature,		do_set_temp,		set color temperature )
 ADD_CMD( white_balance,		do_set_white_balance,	set white balance )
 ADD_CMD( white_shading,		do_set_white_shading,	set white shading )
+ADD_CMD( trigger,		do_trigger,		trigger submenu )
+ADD_CMD( strobe,		do_strobe,		strobe submenu )
 MENU_END(fly_cam)
 
 static COMMAND_FUNC( do_fly_cam_menu )
@@ -865,7 +1000,6 @@ ADD_CMD( info,		do_cam_info,	print camera info )
 ADD_CMD( power,		do_power,	power camera on/off )
 ADD_CMD( reset,		do_reset,	reset camera )
 /* ADD_CMD( frame,	do_frame,	create a data object alias for a capture buffer frame ) */
-ADD_CMD( trigger,	do_trigger,	trigger submenu )
 ADD_CMD( bandwidth,	do_bw,		report bandwidth usage )
 ADD_CMD( bmode,		do_bmode,	set/clear B-mode )
 ADD_CMD( close,		do_close,	shutdown firewire subsystem )

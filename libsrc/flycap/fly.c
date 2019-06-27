@@ -199,6 +199,7 @@ FC2_ENTRY(	gigE,		FC2_INTERFACE_GIGE	)
 
 #endif // HAVE_LIBFLYCAP
 
+// embedded image info = eii
 
 const char *eii_prop_names[N_EII_PROPERTIES]={
 	"timestamp",
@@ -2311,6 +2312,127 @@ void set_buffer_obj(QSP_ARG_DECL  Fly_Cam *fcp, Data_Obj *dp)
 		refresh_config(QSP_ARG  fcp);
 	}
 	fcp->fc_base = NULL;	// force init_fly_base to run again
+}
+
+#define REPORT_INT_PROP(struct_ptr,p)				\
+	sprintf(MSG_STR,"%24s %d",#p ":",struct_ptr->p);	\
+	prt_msg(MSG_STR);
+
+#define REPORT_BOOL_PROP(struct_ptr,p)					\
+	sprintf(MSG_STR,"%24s %s",#p ":",struct_ptr->p?"true":"false");	\
+	prt_msg(MSG_STR);
+
+#define REPORT_FLOAT_PROP(struct_ptr,p)				\
+	sprintf(MSG_STR,"%24s %g",#p ":",struct_ptr->p);	\
+	prt_msg(MSG_STR);
+
+static void report_strobe_info(QSP_ARG_DECL  fc2StrobeInfo *si_p)
+{
+	REPORT_INT_PROP(si_p,source)
+	REPORT_BOOL_PROP(si_p,present)
+	REPORT_BOOL_PROP(si_p,readOutSupported)
+	REPORT_BOOL_PROP(si_p,onOffSupported)
+	REPORT_BOOL_PROP(si_p,polaritySupported)
+	REPORT_FLOAT_PROP(si_p,minValue)
+	REPORT_FLOAT_PROP(si_p,maxValue)
+}
+
+static void report_strobe_control(QSP_ARG_DECL  fc2StrobeControl *sc_p)
+{
+        REPORT_INT_PROP(sc_p,source)
+        REPORT_BOOL_PROP(sc_p,onOff)
+        REPORT_INT_PROP(sc_p,polarity)	// this one is unsigned?
+        REPORT_FLOAT_PROP(sc_p,delay)
+        REPORT_FLOAT_PROP(sc_p,duration)
+}
+
+void get_strobe_info(QSP_ARG_DECL Fly_Cam *fcp, int source)
+{
+	fc2StrobeInfo strobeInfo;
+	fc2Error err;
+
+	if( fcp == NULL ){
+		sprintf(ERROR_STRING,"get_strobe_info:  no fly_cam selected!?");
+		warn(ERROR_STRING);
+		return;
+	}
+	strobeInfo.source = source;	// BUG?  how do we know how many sources are possible???
+	err = fc2GetStrobeInfo( fcp->fc_context, &strobeInfo );
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetStrobeInfo" );
+		return;
+	}
+	report_strobe_info(QSP_ARG  &strobeInfo);
+}
+
+#define GET_STROBE_CTL								\
+	strobeControl.source = source;						\
+        err = fc2GetStrobe( fcp->fc_context, &strobeControl );			\
+	if( err != FC2_ERROR_OK ){						\
+		report_fc2_error(QSP_ARG  err, "fc2GetStrobeInfo" );		\
+		return;								\
+	}
+
+#define SET_STROBE_CTL								\
+        err = fc2SetStrobe( fcp->fc_context, &strobeControl );			\
+	if( err != FC2_ERROR_OK ){						\
+		report_fc2_error(QSP_ARG  err, "fc2SetStrobeInfo" );		\
+		return;								\
+	}
+
+void get_strobe_control(QSP_ARG_DECL  Fly_Cam *fcp, int source)
+{
+	fc2Error err;
+	fc2StrobeControl strobeControl;
+
+	GET_STROBE_CTL
+	report_strobe_control(QSP_ARG  &strobeControl);
+}
+
+void set_strobe_enable(QSP_ARG_DECL  Fly_Cam *fcp, int source, int enable )
+{
+	fc2Error err;
+	fc2StrobeControl strobeControl;
+
+	GET_STROBE_CTL
+
+	if( enable ){
+		strobeControl.onOff = TRUE;
+	} else {
+		strobeControl.onOff = FALSE;
+	}
+
+	SET_STROBE_CTL
+}
+
+void set_strobe_polarity(QSP_ARG_DECL  Fly_Cam *fcp, int source, unsigned int polarity )
+{
+	fc2Error err;
+	fc2StrobeControl strobeControl;
+
+	GET_STROBE_CTL
+	strobeControl.polarity = polarity;
+	SET_STROBE_CTL
+}
+
+void set_strobe_delay(QSP_ARG_DECL  Fly_Cam *fcp, int source, int delay )
+{
+	fc2Error err;
+	fc2StrobeControl strobeControl;
+
+	GET_STROBE_CTL
+	strobeControl.delay = delay;
+	SET_STROBE_CTL
+}
+
+void set_strobe_duration(QSP_ARG_DECL  Fly_Cam *fcp, int source, int duration )
+{
+	fc2Error err;
+	fc2StrobeControl strobeControl;
+
+	GET_STROBE_CTL
+	strobeControl.duration = duration;
+	SET_STROBE_CTL
 }
 
 #endif /* HAVE_LIBFLYCAP */

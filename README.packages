@@ -4,6 +4,16 @@ On a fresh ubuntu docker container, install:
 
 git, tcsh, vim, bison, apt-file, texinfo, texlive
 
+To build quip install:
+
+libmotif-dev
+libjpeg-dev
+libtiff-dev
+libcurl4-openssl-dev
+libgcrypt20-dev
+portaudio19-dev
+libgsl-dev
+
 *************************************** CENTOS ****************************************
 
 For building:
