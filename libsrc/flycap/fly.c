@@ -2342,9 +2342,86 @@ void stop_firewire_capture(QSP_ARG_DECL  Fly_Cam *fcp)
 	}
 }
 
+#define GET_FMT7_CONFIG									\
+											\
+        err = fc2GetFormat7Configuration( fcp->fc_context, &imageSettings,		\
+		&packetSize, &percentage );						\
+											\
+	if( err != FC2_ERROR_OK ){							\
+		report_fc2_error(QSP_ARG  err, "fc2GetFormat7Configuration" );		\
+		return;									\
+	}
+
+#define CHECK_FMT7_CONFIG										\
+													\
+        err = fc2ValidateFormat7Settings(fcp->fc_context,&imageSettings,&isValid,&packetInfo);		\
+													\
+	if( err != FC2_ERROR_OK ){									\
+		report_fc2_error(QSP_ARG  err, "fc2ValidateFormat7Settings" );				\
+		return;											\
+	}
+
+#define CHECK_VALID_SIZE										\
+													\
+	if( ! isValid ){										\
+		sprintf(ERROR_STRING,"set_fmt7_size:  requested size (%d x %d) is not valid!?",w,h);	\
+		warn(ERROR_STRING);									\
+		return;											\
+	}
+
+#define CHECK_VALID_POSN										\
+													\
+	if( ! isValid ){										\
+		sprintf(ERROR_STRING,"set_fmt7_posn:  requested position (%d, %d) is not valid!?",x,y);	\
+		warn(ERROR_STRING);									\
+		return;											\
+	}
+
+#define SET_FMT7_CONFIG										\
+												\
+        err = fc2SetFormat7Configuration( fcp->fc_context, &imageSettings, percentage );	\
+												\
+	if( err != FC2_ERROR_OK ){								\
+		report_fc2_error(QSP_ARG  err, "fc2SetFormat7Configuration" );			\
+		return;										\
+	}
+
 void set_fmt7_size(QSP_ARG_DECL  Fly_Cam *fcp, int w, int h)
 {
-	UNIMP_FUNC("set_fmt7_size");
+	fc2Format7ImageSettings imageSettings;
+	fc2Format7PacketInfo packetInfo;
+	fc2Error err;
+	BOOL isValid;
+	float percentage;
+	unsigned int packetSize;
+
+	GET_FMT7_CONFIG
+
+	imageSettings.width = w;
+	imageSettings.height = h;
+
+	CHECK_FMT7_CONFIG
+	CHECK_VALID_SIZE
+	SET_FMT7_CONFIG
+}
+
+void set_fmt7_posn(QSP_ARG_DECL  Fly_Cam *fcp, int x, int y)
+{
+	fc2Format7ImageSettings imageSettings;
+	fc2Format7PacketInfo packetInfo;
+	fc2Error err;
+	BOOL isValid;
+	float percentage;
+	unsigned int packetSize;
+
+	GET_FMT7_CONFIG
+
+	imageSettings.offsetX = x;
+	imageSettings.offsetY = y;
+
+	CHECK_FMT7_CONFIG
+	CHECK_VALID_POSN
+	SET_FMT7_CONFIG
 }
 
 void release_oldest_frame(QSP_ARG_DECL  Fly_Cam *fcp)

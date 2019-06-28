@@ -896,29 +896,29 @@ static COMMAND_FUNC( do_fmt7_setsize )
 
 static COMMAND_FUNC( do_fmt7_setposn )
 {
-	uint32_t h,v;
+	uint32_t x,y;
 
-	h=HOW_MANY("horizontal position (left)");
-	v=HOW_MANY("vertical position (top)");
+	x=HOW_MANY("horizontal position (left)");
+	y=HOW_MANY("vertical position (top)");
 
 	CHECK_CAM
 
 	// What are the constraints as to what this can be???
 	// At least on the flea, the position has to be even...
 
-	if( h & 1 ){
-		sprintf(ERROR_STRING,"Horizontal position (%d) should be even, rounding down to %d.",h,h&(~1));
+	if( x & 1 ){
+		sprintf(ERROR_STRING,"Horizontal position (%d) should be even, rounding down to %d.",x,x&(~1));
 		advise(ERROR_STRING);
-		h &= ~1;
+		x &= ~1;
 	}
 
-	if( v & 1 ){
-		sprintf(ERROR_STRING,"Vertical position (%d) should be even, rounding down to %d.",v,v&(~1));
+	if( y & 1 ){
+		sprintf(ERROR_STRING,"Vertical position (%d) should be even, rounding down to %d.",y,y&(~1));
 		advise(ERROR_STRING);
-		v &= ~1;
+		y &= ~1;
 	}
 
-	UNIMP_MSG("fmt7_posn");
+	set_fmt7_posn(QSP_ARG  the_cam_p, x, y );
 }
 
 static COMMAND_FUNC( do_fmt7_select )

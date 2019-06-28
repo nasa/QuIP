@@ -3,12 +3,17 @@ fly
   init
   list
   select Flea3_FL3-U3-13Y3M_1
+  # If there is a pause here, then the info displays correctly below
+  # But if we charge on through, then the info for mode 1 appears for mode 0???
+#  Pause
   camera
+    # We don't always get the correct settings for mode 0???
 #    set_video_mode format7 1
     set_video_mode format7 0
     quit
   format7
     info
+  advise 'Type ^D to exit program'
   Pause
   exit
 

@@ -192,6 +192,7 @@ extern void set_eii_property(QSP_ARG_DECL  Fly_Cam *fcp, int idx, int yesno );
 extern int set_n_buffers(QSP_ARG_DECL  Fly_Cam *fcp, int n );
 extern void show_n_buffers(QSP_ARG_DECL  Fly_Cam *fcp);
 extern void set_fmt7_size(QSP_ARG_DECL  Fly_Cam *fcp, int w, int h );
+extern void set_fmt7_posn(QSP_ARG_DECL  Fly_Cam *fcp, int x, int y );
 
 extern void list_fly_cam_properties(QSP_ARG_DECL  Fly_Cam *fcp);
 extern void refresh_fly_cam_properties(QSP_ARG_DECL  Fly_Cam *fcp);
