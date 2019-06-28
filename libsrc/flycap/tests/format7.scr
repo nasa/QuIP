@@ -3,6 +3,10 @@ fly
   init
   list
   select Flea3_FL3-U3-13Y3M_1
+  camera
+#    set_video_mode format7 1
+    set_video_mode format7 0
+    quit
   format7
     info
   Pause

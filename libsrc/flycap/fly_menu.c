@@ -392,7 +392,10 @@ name_of_indexed_video_mode( the_cam_p->fc_video_mode_indices[i] ) );
 advise(ERROR_STRING);
 
 	if( is_fmt7_mode(QSP_ARG  the_cam_p, i ) ){
-		set_fmt7_mode(QSP_ARG  the_cam_p, the_cam_p->fc_fmt7_index );
+		int idx;
+		idx = how_many("index of format7 mode");
+		// BUG validate index
+		set_fmt7_mode(QSP_ARG  the_cam_p, idx );
 	} else {
 		set_std_mode( QSP_ARG  the_cam_p, i );
 	}
@@ -863,16 +866,8 @@ static COMMAND_FUNC( captmenu )
 
 static COMMAND_FUNC( do_fmt7_show )
 {
-	int i;
 	CHECK_CAM
-	i=how_many("index of format7 mode");
-	if( i < 0 || i >= the_cam_p->fc_n_fmt7_modes ){
-		sprintf(ERROR_STRING,"Requested format7 mode (%d) must be in the range 0-%d!?",
-			i,the_cam_p->fc_n_fmt7_modes-1);
-		warn(ERROR_STRING);
-		return;
-	}
-	show_fmt7_info( QSP_ARG  the_cam_p, i );
+	show_fmt7_settings( QSP_ARG  the_cam_p );
 }
 
 static COMMAND_FUNC( do_fmt7_setsize )
