@@ -2711,7 +2711,7 @@ advise(ERROR_STRING);
 
 	offset = (off64_t) RV_ADDR(inp) * (off64_t) curr_rv_sbp->rv_blocksize;
 	retval=curr_rv_sbp->rv_ndisks;
-fprintf(stderr,"queue_rv_file:  offset = %"PRId64" (0x%"PRIx64")\n",offset,offset);
+//fprintf(stderr,"queue_rv_file:  offset = %"PRId64" (0x%"PRIx64")\n",offset,offset);
 	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
 		retoff = my_lseek64(curr_rv_sbp->rv_fd[i],offset,SEEK_SET);
 		if( retoff != offset ){

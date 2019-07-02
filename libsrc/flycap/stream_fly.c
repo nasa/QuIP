@@ -914,7 +914,9 @@ MSTATUS(MS_CHECKING)
 		//
 		// This should probably be a soft var - in any case,
 		// it should never be larger than the number of buffers minus 2!
-#define MAX_DW_ASYNCHRONY	20
+
+#define MAX_DW_ASYNCHRONY	100
+
 		if( (max_frames_written-min_frames_written) > MAX_DW_ASYNCHRONY ){
 fprintf(stderr,"video_reader %d:  Disk writer %d not keeping up, %d written, max = %d\n",
 n_frames_read,min_i,min_frames_written,max_frames_written);
