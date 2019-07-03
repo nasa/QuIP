@@ -56,6 +56,7 @@ ITEM_INTERFACE_DECLARATIONS(Fly_Cam,fly_cam,0)
 	sprintf(MSG_STR,"%-28s %g",#p ":",(struct_ptr)->p);	\
 	prt_msg(MSG_STR);
 
+#ifdef HAVE_LIBFLYCAP
 static const char *name_for_pixel_format(fc2PixelFormat f);	// forward def
 static void report_fmt7_info(QSP_ARG_DECL  fc2Format7Info *f7i_p );
 
@@ -100,6 +101,8 @@ static Named_Pixel_Format all_pixel_formats[]={
 };
 
 #define N_NAMED_PIXEL_FORMATS	(sizeof(all_pixel_formats)/sizeof(Named_Pixel_Format))
+
+#endif // HAVE_LIBFLYCAP
 
 #ifdef HAVE_LIBFLYCAP
 #define FC2_MODE(string,code,w,h,d)	{#string,code,w,h,d}
