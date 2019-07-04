@@ -816,19 +816,6 @@ static const char *get_display_width(SINGLE_QSP_ARG_DECL)
 	int w;
 	static char wstr[16];
 
-fprintf(stderr,"get_display_width:  globalAppDelegate.dev_size = %f (w) x %f (h)\n",
-globalAppDelegate.dev_size.width,globalAppDelegate.dev_size.height);
-//#ifdef BUILD_FOR_IOS
-//	if( is_portrait() )
-//		w=(int)globalAppDelegate.dev_size.width;
-//	else
-//		w=(int)globalAppDelegate.dev_size.height;
-//#else // ! BUILD_FOR_IOS
-//	w=(int)globalAppDelegate.dev_size.width;
-//#endif // ! BUILD_FOR_IOS
-
-//fprintf(stderr,"get_display_width:  w = %d, is_portrait = %d\n",w,is_portrait());
-
 	w=(int)globalAppDelegate.dev_size.width;
 
 	sprintf(wstr,"%d",w);

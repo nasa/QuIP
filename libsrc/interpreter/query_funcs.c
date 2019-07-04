@@ -174,11 +174,22 @@ static int has_stdin=0;		// where should we set this?
 
 #define MACRO_LOCATION_PREFIX	"Macro "
 
+#ifdef BUILD_FOR_OBJC
+
 #define DECLARE_QP						\
 								\
 	Query *qp;						\
 	qp = CURR_QRY(THIS_QSP);				\
 	assert(qp!=NULL);
+
+#else // ! BUILD_FOR_OBJC
+
+#define DECLARE_QP						\
+								\
+	Query *qp;						\
+	qp = CURR_QRY(THIS_QSP);
+
+#endif // ! BUILD_FOR_OBJC
 
 
 static inline void clear_query_text(Query *qp)
@@ -1640,9 +1651,11 @@ static const char *next_word_from_level(QSP_ARG_DECL  const char *pline)
 	if( !QRY_HAS_TEXT(qp) )	// need to read more input
 	{
 		buf=qline(pline);
+#ifndef BUILD_FOR_OBJC
 		// suppress store-not-read warning
 		// But can buf be null when we are out of input??
 		if( buf == NULL ) warn("next_word_from_level:  null line!?");
+#endif // ! BUILD_FOR_OBJC
 	}
 
 	if( QLEVEL < 0 ){
@@ -4142,9 +4155,16 @@ inline const char *current_filename(SINGLE_QSP_ARG_DECL)
 	return QRY_FILENAME(qp);
 }
 
+// reset_return_strings - set the index of the next string to use to 0
+//
+// in iOS, it is possible for qp to be NULL...
+
 inline void _reset_return_strings(SINGLE_QSP_ARG_DECL)
 {
 	DECLARE_QP
+#ifdef BUILD_FOR_OBJC
+	if( qp == NULL ) return;
+#endif // BUILD_FOR_OBJC
 	SET_QRY_RETSTR_IDX(qp,0);
 }
 
