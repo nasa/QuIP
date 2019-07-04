@@ -362,6 +362,10 @@ void _delete_image_file(QSP_ARG_DECL  Image_File *ifp)
 		givbuf(ifp->if_dp);
 		ifp->if_dp = NULL;
 	}
+	if( ifp->if_extra_p != NULL ){
+		givbuf(ifp->if_extra_p);
+		ifp->if_extra_p = NULL;
+	}
 	if( ifp->if_pathname != ifp->if_name ){
 		rls_str((char *)ifp->if_pathname);
 	}
@@ -423,6 +427,7 @@ void setup_dummy(Image_File *ifp)
 {
 	assert(ifp!=NULL);
 	assert( ifp->if_dp == NULL );
+	assert( ifp->if_extra_p == NULL );
 
 	/* these are not in the database... */
 
@@ -677,6 +682,7 @@ Image_File *_img_file_creat(QSP_ARG_DECL  const char *name,int rw,Filetype * ftp
 	update_pathname(ifp);
 
 	ifp->if_dp = NULL;
+	ifp->if_extra_p = NULL;			// most filetypes don't use this...
 
 	// what is the "dummy" used for, and when do we release it?
 	if( IS_READABLE(ifp) ) setup_dummy(ifp);
@@ -830,6 +836,10 @@ void _if_info(QSP_ARG_DECL  Image_File *ifp)
 			INFO_ARGS( OBJ_COLS(ifp->if_dp) ),
 			INFO_ARGS( OBJ_COMPS(ifp->if_dp) )
 			);
+		prt_msg(msg_str);
+	}
+	if( ifp->if_extra_p != NULL ){
+		sprintf(msg_str,"Extra info at 0x%lx",(long)ifp->if_extra_p);
 		prt_msg(msg_str);
 	}
 	if( IS_READABLE(ifp) ){

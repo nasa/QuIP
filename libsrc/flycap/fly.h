@@ -173,6 +173,8 @@ typedef struct named_trigger_mode {
 
 extern const char *eii_prop_names[];
 
+#define MIN_STROBE_SOURCE	0
+#define MAX_STROBE_SOURCE	3
 
 /* fly.c */
 
@@ -186,13 +188,15 @@ extern void show_grab_mode(QSP_ARG_DECL  Fly_Cam *fcp);
 extern void set_grab_mode(QSP_ARG_DECL  Fly_Cam *fcp, int idx);
 extern void set_buffer_obj(QSP_ARG_DECL  Fly_Cam *fcp, Data_Obj *dp);
 extern void set_eii_property(QSP_ARG_DECL  Fly_Cam *fcp, int idx, int yesno );
-extern void show_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp);
+//extern void show_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp);
 extern int set_n_buffers(QSP_ARG_DECL  Fly_Cam *fcp, int n );
 extern void show_n_buffers(QSP_ARG_DECL  Fly_Cam *fcp);
 extern void set_fmt7_size(QSP_ARG_DECL  Fly_Cam *fcp, int w, int h );
+extern void set_fmt7_posn(QSP_ARG_DECL  Fly_Cam *fcp, int x, int y );
 
 extern void list_fly_cam_properties(QSP_ARG_DECL  Fly_Cam *fcp);
 extern void refresh_fly_cam_properties(QSP_ARG_DECL  Fly_Cam *fcp);
+extern void show_fmt7_settings(QSP_ARG_DECL Fly_Cam *fcp );
 
 #ifdef HAVE_LIBFLYCAP
 extern void refresh_property_info(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *t);
@@ -230,6 +234,12 @@ extern void start_firewire_capture(QSP_ARG_DECL  Fly_Cam * fcp);
 extern void stop_firewire_capture(QSP_ARG_DECL  Fly_Cam * fcp );
 extern int reset_fly_cam(QSP_ARG_DECL  Fly_Cam * fcp );
 extern void list_fly_cam_trig( QSP_ARG_DECL  Fly_Cam * fcp );
+extern void get_strobe_info( QSP_ARG_DECL  Fly_Cam * fcp, int source );
+extern void get_strobe_control( QSP_ARG_DECL  Fly_Cam * fcp, int source );
+extern void set_strobe_enable( QSP_ARG_DECL  Fly_Cam * fcp, int source, int enable );
+extern void set_strobe_polarity( QSP_ARG_DECL  Fly_Cam * fcp, int source, unsigned int polarity );
+extern void set_strobe_delay( QSP_ARG_DECL  Fly_Cam * fcp, int source, int delay );
+extern void set_strobe_duration( QSP_ARG_DECL  Fly_Cam * fcp, int source, int duration );
 extern void release_oldest_frame(QSP_ARG_DECL  Fly_Cam *fcp);
 extern void report_fly_cam_bandwidth(QSP_ARG_DECL  Fly_Cam *fcp);
 extern void list_fly_cam_framerates(QSP_ARG_DECL  Fly_Cam *fcp);
@@ -242,6 +252,8 @@ extern void print_fly_cam_info(QSP_ARG_DECL  Fly_Cam *fcp);
 extern int list_fly_cam_features(QSP_ARG_DECL  Fly_Cam *fcp);
 extern int get_feature_choices(Fly_Cam *fcp, const char ***chp);
 extern void get_fly_cam_features(Fly_Cam *fcp);
+
+extern void report_fmt7_modes(QSP_ARG_DECL  Fly_Cam *the_cam_p);
 
 /* cam_ctl.c */
 #ifdef HAVE_LIBFLYCAP

@@ -733,6 +733,7 @@ show_tmrs(SGL_DEFAULT_QSP_ARG);
 	}
 
 	setup_rv_iofile(inp);		/* open read file	*/
+fprintf(stderr,"update_movie_database:  calling make_movie_from_inode\n");
 	make_movie_from_inode(inp);	/* make movie struct	*/
 }
 
@@ -747,6 +748,7 @@ static void finish_recording(QSP_ARG_DECL  Image_File *ifp)
 
 	close_image_file(ifp);		/* close write file	*/
 
+fprintf(stderr,"finish_recording:  calling update_movie_database\n");
 	update_movie_database(inp);
 
 	// do we have error frames for PGR??
@@ -912,7 +914,9 @@ MSTATUS(MS_CHECKING)
 		//
 		// This should probably be a soft var - in any case,
 		// it should never be larger than the number of buffers minus 2!
-#define MAX_DW_ASYNCHRONY	20
+
+#define MAX_DW_ASYNCHRONY	100
+
 		if( (max_frames_written-min_frames_written) > MAX_DW_ASYNCHRONY ){
 fprintf(stderr,"video_reader %d:  Disk writer %d not keeping up, %d written, max = %d\n",
 n_frames_read,min_i,min_frames_written,max_frames_written);
@@ -1319,6 +1323,14 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,Fly_Cam
 	n_disks = queue_rv_file(inp,fd_arr);
 	assert( n_disks > 1 );
 	assert( fcp->fc_n_buffers > 0 );
+
+	/* go ahead and make the number of disk writer threads equal to the number of disks... */
+	if( n_disks != n_disk_writer_threads ){
+		sprintf(ERROR_STRING,"Changing number of disk writer threads from default value (%d) to %d, to match number of disks",
+			n_disk_writer_threads,n_disks);
+		advise(ERROR_STRING);
+		n_disk_writer_threads = n_disks;
+	}
 
 	if( fcp->fc_n_buffers < (2*n_disks) ){
 		sprintf(ERROR_STRING,

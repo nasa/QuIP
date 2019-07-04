@@ -2772,9 +2772,9 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 		//
 		// This can be a problem if they are declarations of objects that retain
 		// a pointer to their declaration nodes!?!?
-fprintf(stderr,"parse_stuff calling check_release...\n");
+//fprintf(stderr,"parse_stuff calling check_release...\n");
 		check_release(TOP_NODE);
-fprintf(stderr,"parse_stuff back from check_release...\n");
+//fprintf(stderr,"parse_stuff back from check_release...\n");
 	} else {
 		// Do we get here on a syntax error???
 		warn("Unsuccessfully parsed statement (top_node=NULL");

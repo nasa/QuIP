@@ -1,21 +1,47 @@
+Set nf 32	# try concatenating 3 frames
 
-Image b 64 64 3 u_byte
+Set _w 640
+Set _h 512
+Image b $_h $_w 3 u_byte
 VSet b 200
 #Display b
 
 Set f b.png
 
 Clobber yes
-Write_File_Header $f 1
-Put_Next b $f
+Write_File_Header $f $nf
+advise "Writing $nf frames to file $f"
+repeat $nf
+  Put_Next b $f
+  end
 
 Pause
+
+Define Assert 1 cond
+If $1 exit_macro
+error_exit "Assertion failed:  $1"
+.
 
 # BUG png file not auto-closed after writing!?
 
 Read_File_Header $f
 Assign p precision('$f')
 Print p
+Assign w ncols('$f')
+Assign h nrows('$f')
+Assign d depth('$f')
+Assign n nframes('$f')
+Assert $w==$_w
+Assert $h==$_h
+Assert $d==3
+Assert $n==$nf
+
+Image b2 $h $w $d $p
+advise "Reading $n frames from file $f"
+repeat $n
+  Get_Next b2 $f
+  end
+
 
 exit
 

@@ -1,0 +1,29 @@
+# dump all of the maps - for comparison w/ aravis
+
+Set n_cameras 2
+Set cam0 Blackfly_S_BFS-U3-13Y3M
+Set cam1 Blackfly_S_BFS-U3-13Y3M_2
+
+spinnaker
+  init
+  Set cam_idx 0
+  nodes
+    list_maps
+    repeat $n_cameras
+      Set cam_name cam$cam_idx
+      Set cam $$cam_name
+      foreach map ( device_TL stream_TL genicam )
+        advise "Will show info for map $cam.$map"
+	Pause
+        select_map $cam.$map
+        info_all
+	end
+      Increment cam_idx
+      end
+    quit
+  quit
+
+advise "Done showing maps."
+Pause
+exit
+

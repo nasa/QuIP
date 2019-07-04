@@ -447,6 +447,7 @@ int _lookahead_til(QSP_ARG_DECL  int stop_level)
 DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #1)
 			eatup_space_for_lookahead(SINGLE_QSP_ARG);
 		}
+
 		if( QRY_HAS_TEXT(qp) ){
 			return 1;
 		}
@@ -458,12 +459,17 @@ DEBUG_LINENO(lookahead_til after nextline)
 			// But because it can pop a level, we should not any
 			// the space here...
 
+#ifdef BUILD_FOR_OBJC
+			if( QLEVEL < 0 ){ return 0; }
+#endif /* BUILD_FOR_OBJC */
+
 			// halting bit can be set if we run out of input on a secondary thread
 			// (primary thread will exit)
 			if( IS_HALTING(THIS_QSP) ) {
 				return 0;
 			}
 			qp= CURR_QRY(THIS_QSP);
+
 			assert(qp!=NULL);
 			if( QLEVEL == _level && QRY_HAS_TEXT(qp) ){
 DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #2)

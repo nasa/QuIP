@@ -1,48 +1,80 @@
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Interfacing Hardware - QuIP Manual</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="QuIP Manual">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="prev" href="Advanced-Graphics.html#Advanced-Graphics" title="Advanced Graphics">
-<link rel="next" href="Installing-QuIP.html#Installing-QuIP" title="Installing QuIP">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
-</head>
-<body>
-<div class="node">
-<a name="Interfacing-Hardware"></a>
-<p>
-Next:&nbsp;<a rel="next" accesskey="n" href="Installing-QuIP.html#Installing-QuIP">Installing QuIP</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="Advanced-Graphics.html#Advanced-Graphics">Advanced Graphics</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
-<hr>
-</div>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Interfacing Hardware (QuIP Manual)</title>
 
+<meta name="description" content="Interfacing Hardware (QuIP Manual)">
+<meta name="keywords" content="Interfacing Hardware (QuIP Manual)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="QuIPindex.html#QuIPindex" rel="index" title="QuIPindex">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="Frame-grabbers.html#Frame-grabbers" rel="next" title="Frame grabbers">
+<link href="Advanced-Graphics.html#Advanced-Graphics" rel="prev" title="Advanced Graphics">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="Interfacing-Hardware"></a>
+<div class="header">
+<p>
+Next: <a href="Installing-QuIP.html#Installing-QuIP" accesskey="n" rel="next">Installing QuIP</a>, Previous: <a href="Advanced-Graphics.html#Advanced-Graphics" accesskey="p" rel="prev">Advanced Graphics</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="QuIPindex.html#QuIPindex" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Interfacing-Hardware-1"></a>
 <h2 class="chapter">10 Interfacing Hardware</h2>
 
 <p>Modules have been written to allow QuIP to control a variety
 of hardware devices.  Most of these rely on LINUX drivers.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="Frame-grabbers.html#Frame-grabbers" accesskey="1">Frame grabbers  </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Getting images from analog cameras
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="Video-cameras.html#Video-cameras" accesskey="2">Video cameras   </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Getting images from digital cameras
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="Analog-I_002fO.html#Analog-I_002fO" accesskey="3">Analog I/O      </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Reading and sending signals
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="Serial-devices.html#Serial-devices" accesskey="4">Serial devices  </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Devices that communcate via RS232
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="Parallel-port.html#Parallel-port" accesskey="5">Parallel port   </a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Using the PC parallel port
+</td></tr>
+</table>
 
-<ul class="menu">
-<li><a accesskey="1" href="Frame-grabbers.html#Frame-grabbers">Frame grabbers </a>:   Getting images from analog cameras
-<li><a accesskey="2" href="Video-cameras.html#Video-cameras">Video cameras </a>:   Getting images from digital cameras
-<li><a accesskey="3" href="Analog-I_002fO.html#Analog-I_002fO">Analog I/O </a>:   Reading and sending signals
-<li><a accesskey="4" href="Serial-devices.html#Serial-devices">Serial devices </a>:   Devices that communcate via RS232
-<li><a accesskey="5" href="Parallel-port.html#Parallel-port">Parallel port </a>:   Using the PC parallel port
-</ul>
 
-</body></html>
 
+
+</body>
+</html>

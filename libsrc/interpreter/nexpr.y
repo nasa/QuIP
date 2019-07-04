@@ -95,13 +95,29 @@ static inline void _push_parser_input(QSP_ARG_DECL  const char *s)
 	YYSTRSTK[EDEPTH]=s;
 }
 
-static Item * default_eval_szbl( QSP_ARG_DECL  Scalar_Expr_Node *enp )
+
+// We use indirect function calls with these dummy defaults to reduce
+// dependencies on other modules...
+
+static Item * _default_eval_sizable( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 { return NULL; }
 
-static Item * ( * eval_szbl_func ) ( QSP_ARG_DECL  Scalar_Expr_Node *enp ) = default_eval_szbl;
-#define EVAL_SZBL_EXPR_FUNC( s )	(*eval_szbl_func)( QSP_ARG  s )
-#define EVAL_ILBL_EXPR( s )	eval_interlaceable_expr( QSP_ARG  s )
-#define EVAL_PSNBL_EXPR( s )	eval_positionable_expr( QSP_ARG  s )
+static Item * ( * _eval_sizable_expr_p ) ( QSP_ARG_DECL  Scalar_Expr_Node *enp ) = _default_eval_sizable;
+
+static Item * _default_eval_cam( QSP_ARG_DECL  Scalar_Expr_Node *enp )
+{
+	warn("default_eval_cam:  no camera lookup function specified!?");
+	return NULL;
+}
+
+static Item * ( * _eval_cam_expr_p ) ( QSP_ARG_DECL  Scalar_Expr_Node *enp ) = _default_eval_cam;
+
+#define eval_sizable_expr( s )		(*_eval_sizable_expr_p)( QSP_ARG  s )
+#define eval_cam_expr( s )		(*_eval_cam_expr_p)( QSP_ARG  s )
+#define eval_tsbl_expr( s )		_eval_tsbl_expr( QSP_ARG  s )
+#define eval_interlaceable_expr( s )	_eval_interlaceable_expr( QSP_ARG  s )
+#define eval_positionable_expr( s )	_eval_positionable_expr( QSP_ARG  s )
+
 
 #ifdef QUIP_DEBUG
 static debug_flag_t expr_debug=0;
@@ -643,7 +659,7 @@ const char *_eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 }
 
 
-static Item* eval_tsbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
+static Item* _eval_tsbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 {
 	Item *ip=NULL;
 	const char *s;
@@ -934,12 +950,17 @@ static Data_Obj * (*eval_dobj_func)(QSP_ARG_DECL  Scalar_Expr_Node *enp) = defau
 
 void _set_eval_szbl_func(QSP_ARG_DECL  Item * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) )
 {
-	eval_szbl_func = func;
+	_eval_sizable_expr_p = func;
 }
 
 void _set_eval_dobj_func(QSP_ARG_DECL  Data_Obj * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) )
 {
 	eval_dobj_func = func;
+}
+
+void _set_eval_cam_func(QSP_ARG_DECL  Item * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) )
+{
+	_eval_cam_expr_p = func;
 }
 
 #ifdef MOVED
@@ -1073,7 +1094,7 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 }
 #endif // MOVED
 
-static Item * eval_positionable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
+static Item * _eval_positionable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 {
 	Item *szp=NULL;
 	const char *s;
@@ -1106,7 +1127,7 @@ static Item * eval_positionable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 	return(szp);
 }
 
-static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
+static Item * _eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 {
 	Item *szp=NULL;
 	const char *s;
@@ -1343,7 +1364,7 @@ dump_enode(QSP_ARG  enp);
 			return tsp;
 		}
 #endif /* BUILD_FOR_OBJC */
-		szp = EVAL_PSNBL_EXPR(enp->sen_child[0]);
+		szp = eval_positionable_expr(enp->sen_child[0]);
 		dval = (*enp->sen_func_p->fn_u.posn_func)( QSP_ARG  szp );
 		tsp = scalar_for_double(dval);
 		break;
@@ -1356,7 +1377,7 @@ dump_enode(QSP_ARG  enp);
 			return tsp;
 		}
 #endif /* BUILD_FOR_OBJC */
-		szp = EVAL_ILBL_EXPR(enp->sen_child[0]);
+		szp = eval_interlaceable_expr(enp->sen_child[0]);
 		dval = (*enp->sen_func_p->fn_u.il_func)( QSP_ARG  szp );
 		tsp = scalar_for_double(dval);
 		break;
@@ -1370,7 +1391,7 @@ dump_enode(QSP_ARG  enp);
 			return tsp;
 		}
 #endif /* BUILD_FOR_OBJC */
-		szp = EVAL_SZBL_EXPR_FUNC(enp->sen_child[0]);
+		szp = eval_sizable_expr(enp->sen_child[0]);
 		dval = (*enp->sen_func_p->fn_u.sz_func)( QSP_ARG  szp );
 		tsp = scalar_for_double(dval);
 		break;
@@ -1400,7 +1421,7 @@ dump_enode(QSP_ARG  enp);
 		break;
 
 	case N_TSFUNC:		// eval_expr
-		szp = eval_tsbl_expr(QSP_ARG  enp->sen_child[0]);
+		szp = eval_tsbl_expr(enp->sen_child[0]);
 		tsp2=eval_expr(enp->sen_child[1]);
 		frm = (dimension_t)double_for_scalar(tsp2);
 		RELEASE_FIRST
