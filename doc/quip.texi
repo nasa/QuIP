@@ -67,6 +67,8 @@ This manual is for QuIP, version 0.2.
 
 @end ifnottex
 
+@c changed Index to QuIPindex because of stupid OSX case confusion with index.html...
+
 @menu
 * Overview              ::  A brief tour of QuIP
 * Command Language      ::  Writing scripts in QuIP's command language
@@ -79,7 +81,7 @@ This manual is for QuIP, version 0.2.
 * Advanced Graphics     ::  Sythesizing images using OpenGL
 * Interfacing Hardware  ::  Controlling various hardware devices
 * Installing QuIP       ::  Obtaining and installing QuIP
-* Index                 ::  Complete index
+* QuIPindex             ::  Complete index
 
 @end menu
 
@@ -727,11 +729,18 @@ Reading & sending signals.
 
 @node Serial devices
 @section Serial devices
-Devices that communicate via RS232.
+
+Commands to control and communicate with RS232 serial interfaces are provided in the os/serial submenu.
+Serial interfaces are accessed via device files such as /dev/ttyS0 etc.; for specific configurations, it may
+be convenient to create a symbolic link, such as /dev/visca to point to the particular interface connected to
+
 
 @node Parallel port
 @section Parallel port
-Using the PC parallel port.
+
+Limited support is provided for using the parallel port using the Linux driver, accessed via /dev/parport0 etc.
+Currently, only read access is provided, allowing synchronization of scripts with external triggers patched into one
+of the port's input lines.
 
 
 @c CHAPTER 11 - INSTALLING QUIP
@@ -746,8 +755,8 @@ QuIP can be downloaded from:
 http://scanpath.arc.nasa.gov/quip
 
 
-@node Index
-@unnumbered Index
+@node QuIPindex
+@unnumbered QuIPindex
 
 @printindex cp
 

@@ -1,0 +1,168 @@
+#If $argc!=2 "error_exit 'usage:  coq filename n_seconds < r.scr'"
+#
+#Set rname $1
+
+max_warnings 4
+
+Set fps 500	# flea3, format7 mode 1
+#Assign nf $fps*$2
+
+Set w 640
+Set h 512
+Set pix_type u_byte
+
+If $showing "Viewer Cam_View $w $h"
+
+Set n_buffers 500
+
+data alignment 1024 quit
+Sequence flea_bufs $n_buffers $h $w 1 $pix_type
+data alignment -1 quit
+
+rawvol default quit
+fly
+  init
+  select Flea3_FL3-U3-13Y3M_1
+  camera
+    format7 1
+    set_embedded_image_info timestamp yes
+    set_embedded_image_info frameCounter yes
+    set_n_buffers $n_buffers
+    quit
+  capture
+    set_buffer_obj flea_bufs
+    quit
+  quit
+
+Define Make_Recording 2 filename n_frames
+If $monitoring StopMonitoring
+fly
+  capture
+    show_mode
+    set_mode buffer_frames
+    show_mode
+    advise "Recording $1..."
+    date
+    record $1 $2
+    date
+    quit
+  quit
+.
+
+Set monitoring 0
+
+Define StartMonitoring 0
+advise "StartMonitoring BEGIN"
+If $monitoring "warn 'Already monitoring!?' exit_macro"
+
+fly
+  capture
+    show_mode
+    set_mode drop_frames
+    advise 'calling show_mode...'
+    show_mode
+    advise 'calling start capture...'
+    start
+    advise 'back from start capture...'
+    quit
+  quit
+Set monitoring 1
+advise "StartMonitoring DONE"
+.
+
+Define StopMonitoring 0
+If !$monitoring "warn 'Not monitoring!?' exit_macro"
+
+fly
+  capture
+    stop
+    quit
+  quit
+Set monitoring 0
+.
+
+Define CleanUpAndExit 0
+If $monitoring StopMonitoring
+exit
+.
+
+Define Update_Display 0
+advise "Update_Display"
+fly
+  capture
+    #advise 'Update_Display:  what should I do now?'
+    grab
+    quit
+  quit
+If $showing
+  Then "Show_Bytes flea_bufs[$newest] Cam_View"
+  Else "advise 'Update_Display:  not showing, newest = $newest'"
+.
+
+Set out_file foo
+
+Define SetFilename 0
+Set out_file $input_string
+advise "Will record to file $out_file"
+.
+
+Set min_secs 3
+Set seconds_to_record $min_secs	# set default
+Assign frames_to_record $seconds_to_record*$fps
+
+Define SetSeconds 0
+Set seconds_to_record $slider_val
+Assign frames_to_record $seconds_to_record*$fps
+.
+
+# what is this???
+Set StartPause 0 #Initialize StartPause F.Z
+
+Define DoRecord 0
+advise "DoRecord:  will record $frames_to_record frames to file $out_file"
+Make_Recording $out_file $frames_to_record
+.
+
+Define Declare_Recorder_Panel 0
+advise "Declaring recorder panel..."
+interface
+  Set p 'Video Recorder'
+  panel $p 500 500 #changed from 400 to 500 f.z
+  decorate $p
+    button Monitor StartMonitoring
+    button Stop StopMonitoring
+    # text widget is broken???
+    #text fooFilename SetFilename foo
+    edit_box Filename SetFilename $out_file
+    slider Seconds_To_Record SetSeconds $min_secs 300 $seconds_to_record
+    button Record DoRecord
+    button Pause StartPause #Pause Button F.Z
+    button Quit CleanUpAndExit
+    quit
+  control
+advise "showing recorder panel..."
+    show $p
+    quit
+  quit
+
+Set y0 200
+Posn_Window $p ncols('$DISPLAY')-2000 $y0
+Posn_Window Cam_View ncols('$DISPLAY')-1400 $y0
+.
+
+If $showing
+  Then Declare_Recorder_Panel
+  Else 'advise "NOT declaring recorder panel!?"'
+
+If !$showing "DoRecord exit"
+
+advise "entering main loop..."
+do
+  os events quit	# check for and process user events
+  If $monitoring Update_Display
+  while 1
+
+exit
+
+
+

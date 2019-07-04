@@ -1,11 +1,14 @@
 #ifndef _SPINK_H_
 #define _SPINK_H_
 
+#ifdef HAVE_CONFIG_H
 #include "quip_config.h"
 #include "data_obj.h"
 #include "fio_api.h"
+#else // ! HAVE_CONFIG_H
+#endif // ! HAVE_CONFIG_H
 
-#define MAX_DEBUG	// enables WRAPPER_REPORT
+//#define MAX_DEBUG	// enables WRAPPER_REPORT
 
 #ifdef HAVE_LIBSPINNAKER
 #include "SpinnakerC.h"
@@ -44,8 +47,12 @@
 // to match...   We could generate them programmatically, but that's extra work
 // that we will skip for now.
 
-#define INT_NODE_FMT_STR	"%-24ld"
-#define FLT_NODE_FMT_STR	"%-24f"
+// 24 chars total, subtract 6 for spaces and parens leaves 18, or 6 digits per... is that enough?
+// NOT if we need 6 more characters for hex!?
+// used to be %-24d and %-24f
+#define INT_NODE_DEC_FMT_STR	"%-6ld (%-6ld - %-6ld)"
+#define INT_NODE_HEX_FMT_STR	"0x%-6lx (0x%-6lx - 0x%-6lx)"
+#define FLT_NODE_FMT_STR	"%-6f (%-6f - %-6f)"
 #define STRING_NODE_FMT_STR	"%-24s"
 
 // a couple of globals...
@@ -63,9 +70,12 @@ struct spink_node;
 extern int max_display_name_len;
 
 typedef enum {
+	INVALID_CHUNK_DATA_TYPE,
 	FLOAT_CHUNK_DATA,
 	INT_CHUNK_DATA
 } Chunk_Data_Type;
+
+#define CHUNK_SELECTOR_ENUM_PREFIX	"EnumEntry_ChunkSelector_"
 
 typedef struct chunk_data {
 	const char *	cd_name;
@@ -80,6 +90,7 @@ ITEM_INTERFACE_PROTOTYPES(Chunk_Data,chunk_data)
 
 #define pick_chunk_data(s)	_pick_chunk_data(QSP_ARG  s)
 #define new_chunk_data(s)	_new_chunk_data(QSP_ARG  s)
+#define init_chunk_datas()	_init_chunk_datas(SINGLE_QSP_ARG)
 #define list_chunk_datas(fp)	_list_chunk_datas(QSP_ARG  fp)
 
 typedef struct spink_node_type {
@@ -96,6 +107,40 @@ ITEM_INTERFACE_PROTOTYPES(Spink_Node_Type,spink_node_type)
 #define spink_node_type_list()	_spink_node_type_list(SINGLE_QSP_ARG)
 #define new_spink_node_type(name)	_new_spink_node_type(QSP_ARG  name)
 
+typedef struct {
+	int64_t	min;
+	int64_t	max;
+} Spink_Int_Node_Data;
+
+typedef struct {
+	double	min;
+	double	max;
+} Spink_Float_Node_Data;
+
+typedef struct {
+	// We tried using enum values instead of int values, but not all nodes support that...
+	int64_t			enum_ival;	// only used by enum_entry nodes...
+} Spink_EnumEntry_Node_Data;
+
+#define INVALID_ENUM_INT_VALUE	(-1)
+#define skn_enum_ival	skn_data.u_enum_data.enum_ival
+
+typedef union {
+	Spink_Int_Node_Data		u_int_data;
+	Spink_Float_Node_Data		u_float_data;
+	Spink_EnumEntry_Node_Data	u_enum_data;
+} Spink_Node_Data;
+
+#define FLOAT_NODE_MIN_VAL(skn_p)	(skn_p)->skn_data.u_float_data.min
+#define FLOAT_NODE_MAX_VAL(skn_p)	(skn_p)->skn_data.u_float_data.max
+#define INT_NODE_MIN_VAL(skn_p)		(skn_p)->skn_data.u_int_data.min
+#define INT_NODE_MAX_VAL(skn_p)		(skn_p)->skn_data.u_int_data.max
+
+#define SET_FLOAT_NODE_MIN_VAL(skn_p,v)	(skn_p)->skn_data.u_float_data.min = v
+#define SET_FLOAT_NODE_MAX_VAL(skn_p,v)	(skn_p)->skn_data.u_float_data.max = v
+#define SET_INT_NODE_MIN_VAL(skn_p,v)	(skn_p)->skn_data.u_int_data.min = v
+#define SET_INT_NODE_MAX_VAL(skn_p,v)	(skn_p)->skn_data.u_int_data.max = v
+
 // It's kind of wasteful to duplicate information that is present
 // in the SDK node structure...  but it's not a lot of storage so
 // for now we won't worry about it.
@@ -108,10 +153,8 @@ typedef struct spink_node {
 	int			skn_level;	// tree depth
 	int			skn_flags;
 	Spink_Node_Type *	skn_type_p;
+	Spink_Node_Data		skn_data;
 	List *			skn_children;
-	// We tried using enum values instead of int values, but not all nodes support that...
-	int64_t			skn_enum_ival;	// only used by enum_entry nodes...
-#define INVALID_ENUM_INT_VALUE	(-1)
 
 } Spink_Node;
 
@@ -192,6 +235,28 @@ ITEM_INTERFACE_PROTOTYPES(Spink_Map,spink_map)
 #define pick_spink_map(s)	_pick_spink_map(QSP_ARG  s)
 #define spink_map_list()	_spink_map_list(SINGLE_QSP_ARG)
 
+typedef struct my_event_info {
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *	ei_qsp;
+#endif // THREAD_SAFE_QUERY
+	struct spink_cam *	ei_skc_p;
+	int		ei_next_frame;
+	int		ei_n_frames;
+} Image_Event_Info;
+
+typedef enum {
+	FRAME_STATUS_AVAILABLE,
+	FRAME_STATUS_IN_USE
+} Grab_Frame_Status;
+
+typedef struct grab_frame_info {
+	Data_Obj *		gfi_dp;
+	Grab_Frame_Status	gfi_status;
+#ifdef HAVE_LIBSPINNAKER
+	spinImage		gfi_hImage;	// used to be placed in OBJ_EXTRA...
+#endif /* HAVE_LIBSPINNAKER */
+} Grab_Frame_Info;
+
 #define N_FMT7_MODES	5	// PGR has 32, but why bother?
 
 typedef int Framerate_Mask;
@@ -203,6 +268,7 @@ typedef struct spink_cam {
 	struct spink_map *	skc_dev_map;
 	struct spink_map *	skc_cam_map;
 	struct spink_map *	skc_stream_map;
+	Item_Context *		skc_chunk_icp;
 #ifdef HAVE_LIBSPINNAKER
 	spinCamera		skc_current_handle;	// non-NULL if we are holding a handle -
 							// set to NULL when released...
@@ -215,11 +281,20 @@ typedef struct spink_cam {
 	int			skc_n_buffers;
 	int			skc_newest;
 	int			skc_oldest;
-	Data_Obj **		skc_frm_dp_tbl;
+	//Data_Obj **		skc_frm_dp_tbl;
+	Grab_Frame_Info *	skc_gfi_tbl;
+
 //	Item_Context *		skc_do_icp;	// data_obj context
 //	List *			skc_in_use_lp;	// list of frames...
 //	List *			skc_feat_lp;
 	u_long			skc_flags;
+
+	u_char *		skc_base;	// buffers?
+	long			skc_buf_delta;	// assumes evenly spaced buffers???
+
+// information for image event handlers...
+
+	Image_Event_Info	skc_event_info;
 } Spink_Cam;
 
 ITEM_INTERFACE_PROTOTYPES(Spink_Cam,spink_cam)
@@ -238,10 +313,12 @@ ITEM_INTERFACE_PROTOTYPES(Spink_Cam,spink_cam)
 #define SPINK_CAM_CAPTURING		4
 #define SPINK_CAM_TRANSMITTING		8
 #define SPINK_CAM_EVENTS_READY		16
+#define SPINK_CAM_CAPT_REQUESTED	32
 
 #define IS_CONNECTED(skc_p)	(skc_p->skc_flags & SPINK_CAM_CONNECTED)
 #define IS_RUNNING(skc_p)	(skc_p->skc_flags & SPINK_CAM_RUNNING)
 #define IS_CAPTURING(skc_p)	(skc_p->skc_flags & SPINK_CAM_CAPTURING)
+#define CAPTURE_REQUESTED(skc_p)	(skc_p->skc_flags & SPINK_CAM_CAPT_REQUESTED)
 #define IS_TRANSMITTING(skc_p)	(skc_p->skc_flags & SPINK_CAM_TRANSMITTING)
 #define IS_EVENTFUL(skc_p)	(skc_p->skc_flags & SPINK_CAM_EVENTS_READY)
 
@@ -257,15 +334,6 @@ ITEM_INTERFACE_PROTOTYPES(Spink_Interface,spink_interface)
 #define list_spink_interfaces(fp)	_list_spink_interfaces(QSP_ARG  fp)
 #define pick_spink_interface(s)		_pick_spink_interface(QSP_ARG  s)
 #define spink_interface_list()		_spink_interface_list(SINGLE_QSP_ARG)
-
-// information passed to image event handlers...
-
-typedef struct my_event_info {
-#ifdef THREAD_SAFE_QUERY
-	Query_Stack *	ei_qsp;
-#endif // THREAD_SAFE_QUERY
-	Spink_Cam *	ei_skc_p;
-} Image_Event_Info;
 
 // spink_enum.c
 #ifdef HAVE_LIBSPINNAKER
@@ -369,8 +437,21 @@ extern int _print_string_node(QSP_ARG_DECL  spinNodeHandle hNode, unsigned int l
 
 // spink_acq.c
 
+extern Grab_Frame_Status _cam_frame_status(QSP_ARG_DECL  Spink_Cam *skc_p, int idx);
+extern void _set_cam_frame_status(QSP_ARG_DECL  Spink_Cam *skc_p, int idx, Grab_Frame_Status status);
+extern void _set_cam_frame_image(QSP_ARG_DECL  Spink_Cam *skc_p, int idx, spinImage hImage);
+#define cam_frame_status(skc_p, idx) _cam_frame_status(QSP_ARG  skc_p, idx)
+#define set_cam_frame_status(skc_p, idx, status) _set_cam_frame_status(QSP_ARG  skc_p, idx, status)
+#define set_cam_frame_image(skc_p, idx, hImage) _set_cam_frame_image(QSP_ARG  skc_p, idx, hImage)
+
+extern Data_Obj *_cam_frame_with_index(QSP_ARG_DECL  Spink_Cam *skc_p, int idx);
+
+#define cam_frame_with_index(skc_p, idx) _cam_frame_with_index(QSP_ARG  skc_p, idx)
+
 extern void _release_oldest_spink_frame(QSP_ARG_DECL  Spink_Cam *skc_p);
 #define release_oldest_spink_frame(skc_p) _release_oldest_spink_frame(QSP_ARG  skc_p)
+extern void _release_spink_frame(QSP_ARG_DECL  Spink_Cam *skc_p, int index);
+#define release_spink_frame(skc_p,idx) _release_spink_frame(QSP_ARG  skc_p,idx)
 
 extern int _set_acquisition_continuous(QSP_ARG_DECL  Spink_Cam *skc_p);
 #define set_acquisition_continuous(skc_p) _set_acquisition_continuous(QSP_ARG  skc_p)
@@ -412,6 +493,14 @@ extern void _select_spink_map(QSP_ARG_DECL  Spink_Map *skm_p);
 
 // spink_util.c
 
+extern Spink_Cam * _select_spink_cam(QSP_ARG_DECL  Spink_Cam *skc_p);
+extern void _deselect_spink_cam(QSP_ARG_DECL  Spink_Cam *skc_p);
+#define select_spink_cam(skc_p) _select_spink_cam(QSP_ARG  skc_p)
+#define deselect_spink_cam(skc_p) _deselect_spink_cam(QSP_ARG  skc_p)
+
+extern void _init_cam_expr_funcs(SINGLE_QSP_ARG_DECL);
+#define init_cam_expr_funcs() _init_cam_expr_funcs(SINGLE_QSP_ARG)
+
 extern int _init_spink_cam_system(SINGLE_QSP_ARG_DECL);
 #define init_spink_cam_system() _init_spink_cam_system(SINGLE_QSP_ARG)
 
@@ -451,15 +540,21 @@ extern void _push_spink_cat_context(QSP_ARG_DECL  Item_Context *icp);
 extern void _release_spink_cam_system(SINGLE_QSP_ARG_DECL);
 #define release_spink_cam_system() _release_spink_cam_system(SINGLE_QSP_ARG)
 
-extern int is_fmt7_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx );
-extern int set_fmt7_mode(QSP_ARG_DECL  Spink_Cam *scp, int idx );
-extern int set_std_mode(QSP_ARG_DECL  Spink_Cam *fcp, int idx);
+extern int is_fmt7_mode(QSP_ARG_DECL  Spink_Cam *skc_p, int idx );
+extern int set_fmt7_mode(QSP_ARG_DECL  Spink_Cam *skc_p, int idx );
+extern int set_std_mode(QSP_ARG_DECL  Spink_Cam *skc_p, int idx);
 
 /* stream_spink.c */
 extern void _spink_stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,int n_cameras,Spink_Cam **skc_p_tbl);
 #define spink_stream_record(ifp,n_frames_wanted,n_cameras,skc_p_tbl) _spink_stream_record(QSP_ARG  ifp,n_frames_wanted,n_cameras,skc_p_tbl)
 
-extern Image_File * _get_file_for_recording(QSP_ARG_DECL  const char *name, uint32_t n_frames,Spink_Cam *fcp);
-#define get_file_for_recording(name,n_f,fcp)	_get_file_for_recording(QSP_ARG  name,n_f,fcp)
+extern Image_File * _get_file_for_recording(QSP_ARG_DECL  const char *name, uint32_t n_frames,Spink_Cam *skc_p);
+#define get_file_for_recording(name,n_f,skc_p)	_get_file_for_recording(QSP_ARG  name,n_f,skc_p)
+
+extern void spink_set_async_record(int flag);
+extern int spink_get_async_record(void);
+extern void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,Spink_Cam *skc_p);
+extern COMMAND_FUNC( spink_wait_record );
+extern COMMAND_FUNC( spink_halt_record );
 
 #endif // _SPINK_H_

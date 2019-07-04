@@ -1,0 +1,21 @@
+Define Init_Chunk_Data 1 camera_name
+spinnaker
+  select $1
+  nodes
+    select_map $1.genicam
+    quit
+  chunks
+    enable Timestamp
+    enable FrameID
+    quit
+  nodes
+    set ChunkSelector Timestamp
+    advise "Showing enable state for Timestamp chunk:"
+    terse_info ChunkEnable
+    set ChunkSelector FrameID
+    advise "Showing enable state for FrameID chunk:"
+    terse_info ChunkEnable
+    quit
+  quit
+.
+

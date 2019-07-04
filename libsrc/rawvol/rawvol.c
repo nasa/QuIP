@@ -1400,6 +1400,26 @@ static void sync_inode(QSP_ARG_DECL  RV_Inode *inp)
 	//CLR_RV_FLAG_BITS(&rv_inode_tbl[RV_INODE_IDX(inp)],RVI_SCANNED);
 }
 
+#define REPORT_ONE_FLAG(mask,msg)					\
+	if( inp->rvi_inode.rvi_flags & mask ){				\
+		sprintf(MSG_STR,"%s flag (0x%x) is set",msg,mask);	\
+		prt_msg(MSG_STR);					\
+	} else {							\
+		sprintf(MSG_STR,"%s flag (0x%x) is NOT set",msg,mask);	\
+		prt_msg(MSG_STR);					\
+	}
+
+static void report_rvi_flags(QSP_ARG_DECL  RV_Inode *inp)
+{
+	sprintf(MSG_STR,"\nflags = 0x%x\n",inp->rvi_inode.rvi_flags);
+	prt_msg(MSG_STR);
+
+	REPORT_ONE_FLAG(DIRECTORY_BIT,"directory")
+	REPORT_ONE_FLAG(RVI_LINK,"link")
+	REPORT_ONE_FLAG(RVI_INUSE,"in use")
+	REPORT_ONE_FLAG(RVI_SCANNED,"scanned")
+}
+
 #ifdef UNUSED
 
 static RV_Inode *search_directory(RV_Inode *inp, int index)
@@ -1551,6 +1571,8 @@ advise(ERROR_STRING);
 		goto errorB;
 	}
 
+	// clear the flags first
+	SET_RV_FLAGS(inp, 0);
 	SET_RV_FLAG_BITS(inp, RVI_INUSE | RVI_SCANNED);
 
 	/* divide size by the number of disks, rounding up to nearest int */
@@ -1996,8 +2018,14 @@ void _rv_info(QSP_ARG_DECL  RV_Inode *inp)
 {
 	rv_ls_inode(QSP_ARG  inp);
 	rv_ls_extra(QSP_ARG  inp);
-	if( IS_REGULAR_FILE(inp) )
+fprintf(stderr,"flags = 0x%x\n",inp->rvi_inode.rvi_flags);
+	report_rvi_flags(QSP_ARG  inp);
+	if( IS_REGULAR_FILE(inp) ){
+fprintf(stderr,"rv_info will describe shape for regular file...\n");
 		describe_shape(RV_MOVIE_SHAPE(inp));
+	} else {
+fprintf(stderr,"rv_info will NOT describe shape, not a regular file...\n");
+	}
 }
 
 void rv_ls_inode(QSP_ARG_DECL  RV_Inode *inp)
@@ -2683,7 +2711,7 @@ advise(ERROR_STRING);
 
 	offset = (off64_t) RV_ADDR(inp) * (off64_t) curr_rv_sbp->rv_blocksize;
 	retval=curr_rv_sbp->rv_ndisks;
-fprintf(stderr,"queue_rv_file:  offset = %"PRId64" (0x%"PRIx64")\n",offset,offset);
+//fprintf(stderr,"queue_rv_file:  offset = %"PRId64" (0x%"PRIx64")\n",offset,offset);
 	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
 		retoff = my_lseek64(curr_rv_sbp->rv_fd[i],offset,SEEK_SET);
 		if( retoff != offset ){
@@ -3261,4 +3289,6 @@ MISSING_VOID_FUNC(insure_default_rv)
 void rv_mkfs(QSP_ARG_DECL  int ndisks,const char **disknames,uint32_t nib,uint32_t nsb)
 MISSING_VOID_FUNC(rv_mkfs)
 
+void _update_movie_database(QSP_ARG_DECL  RV_Inode *inp)
+MISSING_VOID_FUNC(update_movie_database)
 #endif // ! HAVE_RAWVOL

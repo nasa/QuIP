@@ -15,7 +15,7 @@
 # (X_Legend_Top string)
 # Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
 # Plot_Y_Axis $ymin $ymax $y_tick_spacing $xmin
-# Label_X_Ticks $xmin $xmax $x_tick_spacing
+# Label_X_Ticks $first_x $last_x $x_tick_spacing
 # Label_Y_Ticks $ymin $ymax $y_tick_spacing
 # (Label_Y_Ticks_Right first max delta)
 #
@@ -128,8 +128,8 @@ If !$vars_ok exit_macro
 X_Legend $x_legend
 #Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
 If $x_tick_auto
-  Then 'Plot_X_Axis_Offset $xmin $xmax $x_tick_spacing $ymin $x_tick_offset \
-        Label_X_Ticks $xmin+$x_tick_offset $xmax $x_tick_spacing'
+  Then 'Plot_X_Axis_Offset $xmin $xmax $x_tick_spacing $ymin $x_tick_offset $x_tick_last\
+        Label_X_Ticks $xmin+$x_tick_offset $x_tick_last $x_tick_spacing'
   Else Custom_X_Axis
 .
 
@@ -764,24 +764,39 @@ Print plot_ymax
 # Plot_2_Screen - convert a point in plot coords to screen coords
 
 Define Plot_2_Screen 4 xvarname yvarname x y
+Get_Plotter_Constants
 # these two statements are for debugging...
 #advise "Plot_2_Screen $1 $2 $3 $4  -   the_plotter = $the_plotter"
 #Show_Plot_Limits
 
 # first get the fractional position in the plotting space
-Assign $2 ($4-$plot_ymin)/($plot_ymax-$plot_ymin)
-Assign $1 ($3-$plot_xmin)/($plot_xmax-$plot_xmin)
+Assign $2 ($4-$plot_ymin)/$n_plot_units_y
+Assign $1 ($3-$plot_xmin)/$n_plot_units_y
 # turn Y upside down
 Assign $2 1-$$2
 # scale
-Mul_Var $1 (ncols('$the_plotter')*(1-($left_margin+$right_margin)))
-Mul_Var $2 (nrows('$the_plotter')*(1-($top_margin+$bot_margin)))
+Mul_Var $1 $n_plot_pixels_x
+Mul_Var $2 $n_plot_pixels_y
 # shift origin
 Add_Var $1 ncols('$the_plotter')*$left_margin
 Add_Var $2 nrows('$the_plotter')*$top_margin
 Assign $1 floor($$1+0.5)
 Assign $2 floor($$2+0.5)
 #advise "Plot_2_Screen $$1 $$2  <-  $3 $4"
+.
+
+Define Get_Plotter_Constants 0
+Assign n_plot_pixels_x ncols('$the_plotter')*(1-($left_margin+$right_margin))
+Assign n_plot_units_x $plot_xmax-$plot_xmin
+
+Assign n_plot_pixels_y nrows('$the_plotter')*(1-($top_margin+$bot_margin))
+Assign n_plot_units_y $plot_ymax-$plot_ymin
+.
+
+Define Plot_2_Screen_Delta 4 xvarname yvarname dx dy
+Get_Plotter_Constants
+Assign $1 $3*$n_plot_pixels_x/$n_plot_units_x
+Assign $2 $4*$n_plot_pixels_y/$n_plot_units_y
 .
 
 # Screen_2_Plot - convert from window coordinates to plotting units
@@ -799,8 +814,8 @@ Define Screen_2_Plot 4 xvarname yvarname x y
 Assign $1 ($3)-ncols('$the_plotter')*$left_margin
 Assign $2 ($4)-nrows('$the_plotter')*$top_margin
 #advise "Screen_2_Plot, shifting origin:  $$1 $$2 <- $3 $4"
-Mul_Var $1 ($plot_xmax-$plot_xmin)/(ncols('$the_plotter')*(1-($left_margin+$right_margin)))
-Mul_Var $2 ($plot_ymax-$plot_ymin)/(nrows('$the_plotter')*(1-($top_margin+$bot_margin)))
+Mul_Var $1 $n_plot_units_x/$n_plot_pixels_x
+Mul_Var $2 $n_plot_units_y/$n_plot_pixels_y
 #advise "Screen_2_Plot, scaling:  $$1 $$2 <- $3 $4"
 # turn Y upside down
 Assign $2 $plot_ymax-$plot_ymin-$$2
@@ -810,8 +825,8 @@ Add_Var $2 $plot_ymin
 .
 
 Define Screen_2_Plot_Delta 4 dx_varname dy_varname dx dy
-Assign $1 $3*($plot_xmax-$plot_xmin)/(ncols('$the_plotter')*(1-($left_margin+$right_margin)))
-Assign $2 $4*($plot_ymax-$plot_ymin)/(nrows('$the_plotter')*(1-($top_margin+$bot_margin)))
+Assign $1 $3*$n_plot_units_x/$n_plot_pixels_x
+Assign $2 $4*$n_plot_units_y/$n_plot_pixels_y
 .
 
 Define Test_Coords 0
@@ -897,23 +912,23 @@ PMove $1 $3
 PCont $2 $3
 .
 
-Define Plot_X_Axis_Offset 5 xmin xmax tick_spacing ypos first_tick_offset
+Define Plot_X_Axis_Offset 6 xmin xmax tick_spacing ypos first_tick_offset last_x_tick
 Plain_X_Axis $1 $2 $4
 Assign _x $1+$5
 do
   X_Tick_At $_x $4
   Add_Var _x $3
-  while $_x<=$2
+  while $_x<=$6
 .
 
 
 Define Plot_X_Axis 4 xmin xmax tick_spacing ypos
-Plot_X_Axis_Offset $1 $2 $3 $4 0
+Plot_X_Axis_Offset $1 $2 $3 $4 0 $2
 .
 
 Define Plot_X_Axis_Top 4 xmin xmax tick_spacing ypos
 Mul_Var x_tick_len -1
-Plot_X_Axis_Offset $1 $2 $3 $4 0
+Plot_X_Axis_Offset $1 $2 $3 $4 0 $2
 Mul_Var x_tick_len -1
 .
 
@@ -1474,16 +1489,14 @@ view draw $the_plotter line_width $1 quit quit
 
 # BUG should have shared code for x and y!
 
-Define Label_X_Ticks 3 first max delta 
-Assign x ($2-($1))/$3
-Assign n_x_ticks 1+floor($x)
+Define Label_X_Ticks 3 first last delta
 Select_Pen $label_color
 Assign tick_x $1
-repeat $n_x_ticks
+do
   Two_Decimal_Places tick_string $tick_x
   Label_X_Tick $tick_x	$tick_string
   Add_Var tick_x $3
-  end
+  while $tick_x<=$2
 .
 
 Define Two_Decimal_Places 2 varname value

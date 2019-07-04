@@ -50,6 +50,67 @@ uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 	[self enableUpdates];
 }
 
+#ifdef BUILD_FOR_IOS
+
+-(void) setRefreshTime
+{
+	char time_buf[64];
+	uint64_t ltime;
+	ltime = mach_absolute_time();
+	CFTimeInterval t;
+	
+
+	// This is not what we need for PVT, because
+	// This is called at the start of the trial...
+	t = [_updateTimer timestamp];
+	if( (QI_QV(self)).baseTime == 0 ){
+		[QI_QV(self) setBaseTime:t];
+	}
+//sprintf(DEFAULT_ERROR_STRING,"_refresh:  t = %g, base_time = %g",t,(QI_QV(self)).baseTime);
+//sprintf(DEFAULT_ERROR_STRING,"_refresh:  _vbl_count = %d, _frame_duration = %d",_vbl_count,_frame_duration);
+//NADVISE(DEFAULT_ERROR_STRING);
+	sprintf(time_buf,"%g",t - (QI_QV(self)).baseTime);
+	assign_var(DEFAULT_QSP_ARG  "refresh_time", time_buf );
+
+	//ltime -= _time0_2;
+	ltime -= (QI_QV(self)).baseTime_2;
+	uint64_t ns;
+	//ns = AbsoluteToNanoseconds( *(AbsoluteTime *) &ltime );
+	ns = my_absolute_to_nanoseconds( &ltime );
+	sprintf(time_buf,"%g",round(ns/100000)/10.0);
+	assign_var(DEFAULT_QSP_ARG  "refresh_time2", time_buf );
+}
+
+#endif // BUILD_FOR_IOS
+
+-(void) run_cycle_func
+{
+	// This is a one-shot
+	[self disableUpdates];
+
+#ifdef BUILD_FOR_IOS
+	[self setRefreshTime];
+#endif // BUILD_FOR_IOS
+
+	chew_text(DEFAULT_QSP_ARG  cycle_func, "(refresh event)");
+}
+
+-(void) check_cycle
+{
+	/* If there is no cycle_func, we count up until we cycle frames */
+
+	if( _vbl_count < _frame_duration ){
+		// Give this frame more time
+		_vbl_count ++;
+	} else {
+		// Time to cycle
+		_vbl_count = 1;		// We count the new frame
+//fprintf(stderr,"refresh:  cycling image\n",_vbl_count);
+		[self cycle_images];
+	}
+}
+
+
 // This is called when _updateTimer is added to the run loop...
 
 // We need to support a variety of animation modes;
@@ -58,13 +119,14 @@ uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 // for a fixed interval.  For example, for PVT we need
 // to wait for a variable delay, and then swap images.
 // We want to take the timestamp at the time of the swap.
+//
+// The original PVT used a single stimulus image, but when we analyzed Kenji's
+// app that had a traditional time counter, we discovered that sometimes the first
+// frame was not displayed.  So we would like to display a counter in our PVT as well
+// so that we can see if we have the same problem!
 
 -(void) _refresh
 {
-#ifdef BUILD_FOR_IOS
-	CFTimeInterval t;
-#endif // BUILD_FOR_IOS
-	
 	/* This used to be after the first block - not sure what it is for??? */
 	/*
 	if( _flags & QI_CHECK_TIMESTAMP ){
@@ -75,52 +137,9 @@ uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 	*/
 
 	if( cycle_func != NULL ){
-#ifdef BUILD_FOR_IOS
-		char time_buf[64];
-#endif // BUILD_FOR_IOS
-
-fprintf(stderr,"_refresh:  cycle_func = '%s'\n",cycle_func);
-		// This is a one-shot
-		[self disableUpdates];
-#ifdef BUILD_FOR_IOS
-		uint64_t ltime;
-		ltime = mach_absolute_time();
-
-		// This is not what we need for PVT, because
-		// This is called at the start of the trial...
-		t = [_updateTimer timestamp];
-		if( (QI_QV(self)).baseTime == 0 ){
-			[QI_QV(self) setBaseTime:t];
-		}
-//sprintf(DEFAULT_ERROR_STRING,"_refresh:  t = %g, base_time = %g",t,(QI_QV(self)).baseTime);
-//sprintf(DEFAULT_ERROR_STRING,"_refresh:  _vbl_count = %d, _frame_duration = %d",_vbl_count,_frame_duration);
-//NADVISE(DEFAULT_ERROR_STRING);
-		sprintf(time_buf,"%g",t - (QI_QV(self)).baseTime);
-		assign_var(DEFAULT_QSP_ARG  "refresh_time", time_buf );
-
-		//ltime -= _time0_2;
-		ltime -= (QI_QV(self)).baseTime_2;
-		uint64_t ns;
-		//ns = AbsoluteToNanoseconds( *(AbsoluteTime *) &ltime );
-		ns = my_absolute_to_nanoseconds( &ltime );
-		sprintf(time_buf,"%g",round(ns/100000)/10.0);
-		assign_var(DEFAULT_QSP_ARG  "refresh_time2", time_buf );
-
-#endif // BUILD_FOR_IOS
-		chew_text(DEFAULT_QSP_ARG  cycle_func, "(refresh event)");
+		[self run_cycle_func];
 	} else {
-		/* If there is no cycle_func, we count up until we cycle frames */
-
-		if( _vbl_count < _frame_duration ){
-//fprintf(stderr,"refresh:  _vbl_count = %d\n",_vbl_count);
-			_vbl_count ++;
-			return;
-		}
-
-		_vbl_count = 1;		// We count this frame
-
-//fprintf(stderr,"refresh:  cycling image\n",_vbl_count);
-		[self cycle_images];
+		[self check_cycle];
 	}
 }
 

@@ -12,6 +12,15 @@ static Fly_Cam *the_cam_p=NULL;	// should this be per-thread?
 static COMMAND_FUNC( do_fly_cam_menu );
 
 
+#define SUPPRESS_UNUSED_PTR_WARNING(p)					\
+	fprintf(stderr,"Discarding object at \"0x%lx\"\n",(long)(p));
+
+#define SUPPRESS_UNUSED_INT_VAR_WARNING(n)				\
+	fprintf(stderr,"Discarding integer value \"%d\"\n",n);
+
+#define SUPPRESS_UNUSED_STRING_VAR_WARNING(s)				\
+	fprintf(stderr,"Discarding string value \"%s\"\n",s);
+
 #define UNIMP_MSG(whence)						\
 									\
 	sprintf(ERROR_STRING,						\
@@ -28,7 +37,8 @@ static COMMAND_FUNC( do_fly_cam_menu );
 									\
 	const char *s;							\
 	s=NAMEOF("dummy word");						\
-	NO_LIB_MSG(whence)
+	NO_LIB_MSG(whence)						\
+	SUPPRESS_UNUSED_STRING_VAR_WARNING(s)
 
 
 #define CHECK_CAM	if( the_cam_p == NULL ){ \
@@ -54,6 +64,139 @@ MENU_END(trigger)
 static COMMAND_FUNC( do_trigger )
 {
 	CHECK_AND_PUSH_MENU(trigger);
+}
+
+#define GET_STROBE_SOURCE									\
+	source = how_many("source");								\
+	if( source < MIN_STROBE_SOURCE || source > MAX_STROBE_SOURCE ){				\
+		sprintf(ERROR_STRING,"Strobe source (%d) must be in the range %d-%d",		\
+			source,MIN_STROBE_SOURCE,MAX_STROBE_SOURCE);				\
+		warn(ERROR_STRING);								\
+		return;										\
+	}
+
+
+static COMMAND_FUNC(do_get_strobe_info)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	get_strobe_info(QSP_ARG  the_cam_p,source);
+#else
+	NO_LIB_MSG("do_get_strobe_info");
+#endif
+}
+
+
+static COMMAND_FUNC(do_get_strobe_ctl)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	get_strobe_control(QSP_ARG  the_cam_p,source);
+#else
+	NO_LIB_MSG("do_get_strobe_ctl");
+#endif
+}
+
+
+static COMMAND_FUNC(do_strobe_enable)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	set_strobe_enable(QSP_ARG  the_cam_p,source,1);
+#else
+	NO_LIB_MSG("do_strobe_enable");
+#endif
+}
+
+
+static COMMAND_FUNC(do_strobe_disable)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	set_strobe_enable(QSP_ARG  the_cam_p,source,0);
+#else
+	NO_LIB_MSG("do_strobe_disable");
+#endif
+}
+
+
+static COMMAND_FUNC(do_strobe_polarity)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	unsigned int polarity;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	polarity = how_many("strobe polarity");
+	set_strobe_polarity(QSP_ARG  the_cam_p,source,polarity);
+#else
+	NO_LIB_MSG("do_strobe_enable");
+#endif
+}
+
+
+static COMMAND_FUNC(do_strobe_delay)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	int delay;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	delay = how_many("strobe delay");
+	// BUG validate value
+	set_strobe_delay(QSP_ARG  the_cam_p,source,delay);
+#else
+	NO_LIB_MSG("do_strobe_delay");
+#endif
+}
+
+
+static COMMAND_FUNC(do_strobe_duration)
+{
+#ifdef HAVE_LIBFLYCAP
+	int source;
+	int duration;
+	CHECK_CAM
+
+	GET_STROBE_SOURCE
+	duration = how_many("strobe duration");
+	// BUG validate value
+	set_strobe_duration(QSP_ARG  the_cam_p,source,duration);
+#else
+	NO_LIB_MSG("do_strobe_enable");
+#endif
+}
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(strobe_menu,s,f,h)
+
+MENU_BEGIN(strobe)
+ADD_CMD( info,		do_get_strobe_info,	report strobe info )
+ADD_CMD( get_control,	do_get_strobe_ctl,	report strobe control settings )
+ADD_CMD( enable,	do_strobe_enable,	enable strobe )
+ADD_CMD( disable,	do_strobe_disable,	disable strobe )
+ADD_CMD( polarity,	do_strobe_polarity,	set strobe polarity )
+ADD_CMD( delay,		do_strobe_delay,	set strobe delay )
+ADD_CMD( duration,	do_strobe_duration,	set strobe duration )
+MENU_END(strobe)
+
+static COMMAND_FUNC( do_strobe )
+{
+	CHECK_AND_PUSH_MENU(strobe);
 }
 
 static COMMAND_FUNC( do_init )
@@ -249,7 +392,10 @@ name_of_indexed_video_mode( the_cam_p->fc_video_mode_indices[i] ) );
 advise(ERROR_STRING);
 
 	if( is_fmt7_mode(QSP_ARG  the_cam_p, i ) ){
-		set_fmt7_mode(QSP_ARG  the_cam_p, the_cam_p->fc_fmt7_index );
+		int idx;
+		idx = how_many("index of format7 mode");
+		// BUG validate index
+		set_fmt7_mode(QSP_ARG  the_cam_p, idx );
 	} else {
 		set_std_mode( QSP_ARG  the_cam_p, i );
 	}
@@ -393,6 +539,7 @@ static COMMAND_FUNC( do_read_reg )
 	}
 #else // ! HAVE_LIBFLYCAP
 	UNIMP_MSG("read_register");
+	SUPPRESS_UNUSED_INT_VAR_WARNING(addr)
 #endif // ! HAVE_LIBFLYCAP
 }
 
@@ -409,6 +556,8 @@ static COMMAND_FUNC( do_write_reg )
 	write_register(QSP_ARG  the_cam_p, addr, val);
 #else // ! HAVE_LIBFLYCAP
 	UNIMP_MSG("write_register");
+	SUPPRESS_UNUSED_INT_VAR_WARNING(val)
+	SUPPRESS_UNUSED_INT_VAR_WARNING(addr)
 #endif // ! HAVE_LIBFLYCAP
 }
 
@@ -468,6 +617,7 @@ static COMMAND_FUNC( do_set_auto )
 	set_prop_auto(QSP_ARG   the_cam_p, t, yn );
 #else // ! HAVE_LIBFLYCAP
 	UNIMP_MSG("set_prop_auto");
+	SUPPRESS_UNUSED_INT_VAR_WARNING(yn)
 #endif // ! HAVE_LIBFLYCAP
 }
 
@@ -493,7 +643,9 @@ static COMMAND_FUNC( do_set_prop )
 
 #ifdef HAVE_LIBFLYCAP
 		if( t != NULL ){
-			sprintf(pmpt,"%s in %ss",t->name,t->info.pUnits);
+			if( snprintf(pmpt,LLEN,"%s in %ss",t->name,t->info.pUnits) >= LLEN ){
+				error1("do_set_prop:  prompt string overflow!?");
+			}
 		} else {
 			sprintf(pmpt,"value (integer)");
 		}
@@ -511,28 +663,7 @@ static COMMAND_FUNC( do_set_prop )
 	set_prop_value(QSP_ARG  the_cam_p, t, &pv );
 #else // ! HAVE_LIBFLYCAP
 	UNIMP_MSG("set_prop_value");
-#endif // ! HAVE_LIBFLYCAP
-}
-
-static COMMAND_FUNC( do_set_fmt7 )
-{
-	int i;
-
-	i = HOW_MANY("index of format7 mode");
-	CHECK_CAM
-
-#ifdef HAVE_LIBFLYCAP
-	if( i < 0 || i >= the_cam_p->fc_n_fmt7_modes ){
-		sprintf(ERROR_STRING,
-			"%s:  format7 index must be in the range 0 - %d",
-			the_cam_p->fc_name,the_cam_p->fc_n_fmt7_modes-1);
-		WARN(ERROR_STRING);
-		return;
-	}
-
-	set_fmt7_mode(QSP_ARG  the_cam_p, i );
-#else // ! HAVE_LIBFLYCAP
-	UNIMP_MSG("set_fmt7_mode");
+	SUPPRESS_UNUSED_PTR_WARNING(&pv)
 #endif // ! HAVE_LIBFLYCAP
 }
 
@@ -581,7 +712,10 @@ static COMMAND_FUNC( do_set_eii )
 
 #ifdef HAVE_LIBFLYCAP
 	set_eii_property(QSP_ARG  the_cam_p,i,yesno);
-#endif // HAVE_LIBFLYCAP
+#else // ! HAVE_LIBFLYCAP
+	UNIMP_MSG("set_eii_property");
+	SUPPRESS_UNUSED_INT_VAR_WARNING(yesno)
+#endif // ! HAVE_LIBFLYCAP
 }
 
 static COMMAND_FUNC( do_list_fly_cam_props )
@@ -590,6 +724,7 @@ static COMMAND_FUNC( do_list_fly_cam_props )
 #ifdef HAVE_LIBFLYCAP
 	list_fly_cam_properties(QSP_ARG  the_cam_p);
 #else // ! HAVE_LIBFLYCAP
+	UNIMP_MSG("list_fly_cam_properties");
 	WARN("No support for libflycap in this build.");
 #endif // ! HAVE_LIBFLYCAP
 }
@@ -616,7 +751,6 @@ static COMMAND_FUNC( do_set_iso_speed )
 	EAT_ONE_DUMMY("speed");
 }
 
-
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(fly_cam_menu,s,f,h)
 
@@ -630,7 +764,6 @@ ADD_CMD( properties,		do_prop_menu,		camera properties submenu )
 ADD_CMD( list_video_modes,	do_list_fly_cam_modes,		list all video modes for this camera )
 ADD_CMD( get_video_modes,	do_get_fly_cam_video_modes,	copy video modes strings to an array )
 ADD_CMD( set_video_mode,	do_set_video_mode,	set video mode )
-ADD_CMD( format7,		do_set_fmt7,		select a format7 mode )
 ADD_CMD( show_video_mode,	do_show_fly_cam_video_mode,	display current video mode )
 ADD_CMD( list_framerates,	do_list_fly_cam_framerates,	list all framerates for this camera )
 ADD_CMD( get_framerates,	do_get_framerates,	copy framerate strings to an array )
@@ -642,6 +775,8 @@ ADD_CMD( power_off,		do_power_off,		power off current camera )
 ADD_CMD( temperature,		do_set_temp,		set color temperature )
 ADD_CMD( white_balance,		do_set_white_balance,	set white balance )
 ADD_CMD( white_shading,		do_set_white_shading,	set white shading )
+ADD_CMD( trigger,		do_trigger,		trigger submenu )
+ADD_CMD( strobe,		do_strobe,		strobe submenu )
 MENU_END(fly_cam)
 
 static COMMAND_FUNC( do_fly_cam_menu )
@@ -729,9 +864,10 @@ static COMMAND_FUNC( captmenu )
 
 #define CAM_P	the_cam_p->fc_cam_p
 
-static COMMAND_FUNC( do_fmt7_list )
+static COMMAND_FUNC( do_fmt7_show )
 {
-	UNIMP_MSG("fmt7_list");
+	CHECK_CAM
+	show_fmt7_settings( QSP_ARG  the_cam_p );
 }
 
 static COMMAND_FUNC( do_fmt7_setsize )
@@ -753,52 +889,83 @@ static COMMAND_FUNC( do_fmt7_setsize )
 	set_fmt7_size(QSP_ARG  the_cam_p, w, h );
 #else // ! HAVE_LIBFLYCAP
 	UNIMP_MSG("set_fmt7_size");
+	SUPPRESS_UNUSED_INT_VAR_WARNING(w)
+	SUPPRESS_UNUSED_INT_VAR_WARNING(h)
 #endif // ! HAVE_LIBFLYCAP
 }
 
 static COMMAND_FUNC( do_fmt7_setposn )
 {
-	uint32_t h,v;
+	uint32_t x,y;
 
-	h=HOW_MANY("horizontal position (left)");
-	v=HOW_MANY("vertical position (top)");
+	x=HOW_MANY("horizontal position (left)");
+	y=HOW_MANY("vertical position (top)");
 
 	CHECK_CAM
 
 	// What are the constraints as to what this can be???
 	// At least on the flea, the position has to be even...
 
-	if( h & 1 ){
-		sprintf(ERROR_STRING,"Horizontal position (%d) should be even, rounding down to %d.",h,h&(~1));
+	if( x & 1 ){
+		sprintf(ERROR_STRING,"Horizontal position (%d) should be even, rounding down to %d.",x,x&(~1));
 		advise(ERROR_STRING);
-		h &= ~1;
+		x &= ~1;
 	}
 
-	if( v & 1 ){
-		sprintf(ERROR_STRING,"Vertical position (%d) should be even, rounding down to %d.",v,v&(~1));
+	if( y & 1 ){
+		sprintf(ERROR_STRING,"Vertical position (%d) should be even, rounding down to %d.",y,y&(~1));
 		advise(ERROR_STRING);
-		v &= ~1;
+		y &= ~1;
 	}
 
-	UNIMP_MSG("fmt7_posn");
+	set_fmt7_posn(QSP_ARG  the_cam_p, x, y );
 }
 
 static COMMAND_FUNC( do_fmt7_select )
 {
-	UNIMP_MSG("fmt7_select");
+	int i;
+
+	i = HOW_MANY("index of format7 mode");
+	CHECK_CAM
+
+#ifdef HAVE_LIBFLYCAP
+	if( i < 0 || i >= the_cam_p->fc_n_fmt7_modes ){
+		sprintf(ERROR_STRING,
+			"%s:  format7 index must be in the range 0 - %d",
+			the_cam_p->fc_name,the_cam_p->fc_n_fmt7_modes-1);
+		WARN(ERROR_STRING);
+		return;
+	}
+
+	set_fmt7_mode(QSP_ARG  the_cam_p, i );
+#else // ! HAVE_LIBFLYCAP
+	UNIMP_MSG("do_fmt7_select");
+	SUPPRESS_UNUSED_INT_VAR_WARNING(i)
+#endif // ! HAVE_LIBFLYCAP
+}
+
+static COMMAND_FUNC(do_fmt7_info)
+{
+	CHECK_CAM
+#ifdef HAVE_LIBFLYCAP
+	report_fmt7_modes(QSP_ARG  the_cam_p);
+#else // ! HAVE_LIBFLYCAP
+	UNIMP_MSG("do_fmt7_info");
+#endif // ! HAVE_LIBFLYCAP
 }
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(format7_menu,s,f,h)
 
 MENU_BEGIN(format7)
+ADD_CMD( info,		do_fmt7_info,		display possible format7 modes )
 ADD_CMD( mode,		do_fmt7_select,		select format7 mode for get/set )
-ADD_CMD( list,		do_fmt7_list,		list format7 settings )
+ADD_CMD( show,		do_fmt7_show,		show format7 settings )
 ADD_CMD( set_image_size, do_fmt7_setsize,	set image size )
 ADD_CMD( position,	do_fmt7_setposn,	set image position )
 MENU_END(format7)
 
-static COMMAND_FUNC( fmt7menu )
+static COMMAND_FUNC( do_fmt7_menu )
 {
 	CHECK_AND_PUSH_MENU( format7 );
 }
@@ -835,13 +1002,12 @@ ADD_CMD( list,		do_list_fly_cams,	list cameras )
 ADD_CMD( select,	do_select_cam,	select camera )
 ADD_CMD( get_cameras,	do_get_cams,	copy camera names to an array )
 ADD_CMD( capture,	captmenu,	capture submenu )
-ADD_CMD( format7,	fmt7menu,	format7 submenu )
+ADD_CMD( format7,	do_fmt7_menu,	format7 submenu )
 ADD_CMD( select,	do_select_cam,	select camera )
 ADD_CMD( info,		do_cam_info,	print camera info )
 ADD_CMD( power,		do_power,	power camera on/off )
 ADD_CMD( reset,		do_reset,	reset camera )
 /* ADD_CMD( frame,	do_frame,	create a data object alias for a capture buffer frame ) */
-ADD_CMD( trigger,	do_trigger,	trigger submenu )
 ADD_CMD( bandwidth,	do_bw,		report bandwidth usage )
 ADD_CMD( bmode,		do_bmode,	set/clear B-mode )
 ADD_CMD( close,		do_close,	shutdown firewire subsystem )

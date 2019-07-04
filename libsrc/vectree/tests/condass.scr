@@ -3,15 +3,37 @@ expressions
 
   read -
 
-void t(float f[], float k)
+void f1(float f[], float k)
 {
-#	f = f > k ? 1 : 0;
 	f = f > k ? f : 0;
+	display(f);
 }
+
+void f2(float f[], float k)
+{
+	f = f > k ? 1 : 0;
+	display(f);
+}
+
+float v[5];
+v=ramp(0,1,0);
+display(v);
 
 end
 
-  dump t
+  echo "f>k?f:0"
+  dump f1
+  read -
+f1(v,2);
+display(v);
+end
+
+  echo "f>k?1:0"
+  dump f2
+  read -
+f2(v,2);
+display(v);
+end
   quit
 
 exit

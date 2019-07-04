@@ -29,9 +29,13 @@ static Spink_Cam *the_cam_p=NULL;	// should this be per-thread?
 	NO_LIB_MSG(whence)
 
 
-#define CHECK_CAM	if( the_cam_p == NULL ){ \
-		WARN("No spink_cam selected."); \
-		return; }
+#define CHECK_CAM(whence)							\
+										\
+	if( the_cam_p == NULL ){ 						\
+		sprintf(ERROR_STRING,"%s:  No spink_cam selected.",#whence);	\
+		warn(ERROR_STRING); 						\
+		return;								\
+	}
 
 static Spink_Map *curr_map_p=NULL;
 
@@ -100,6 +104,18 @@ static COMMAND_FUNC(do_spink_node_info)
 	print_spink_node_info(skn_p,0);
 }
 
+static COMMAND_FUNC(do_spink_node_terse_info)
+{
+	Spink_Node *skn_p;
+
+	CHECK_CURRENT_MAP
+
+	skn_p = pick_spink_node("");
+	if( skn_p == NULL ) return;
+
+	print_spink_node_info(skn_p,0);
+}
+
 #define get_dummy_input() _get_dummy_input(SINGLE_QSP_ARG)
 
 static void _get_dummy_input(SINGLE_QSP_ARG_DECL)
@@ -157,6 +173,7 @@ ADD_CMD(list_maps,do_list_spink_maps, list all node maps)
 ADD_CMD(select_map,do_select_spink_map, select default map for node operations)
 ADD_CMD(list_nodes,do_list_spink_nodes, list all nodes from current map)
 ADD_CMD(info,do_spink_node_info, print information about a node)
+ADD_CMD(terse_info,do_spink_node_terse_info, print node state with no header)
 ADD_CMD(set,do_set_node, set the value of a node)
 ADD_CMD(info_all,do_all_nodes_info, print information about a all nodes in current map)
 ADD_CMD(list_categories,do_list_cats, list node categories in current map)
@@ -200,42 +217,36 @@ static COMMAND_FUNC( do_list_spink_cams )
 
 static COMMAND_FUNC( do_cam_info )
 {
-	Spink_Cam *scp;
+	Spink_Cam *skc_p;
 
-	scp = pick_spink_cam("camera");
-	if( scp == NULL ) return;
+	skc_p = pick_spink_cam("camera");
+	if( skc_p == NULL ) return;
 
-	if( scp == the_cam_p ){
-		sprintf(MSG_STR,"%s is selected as current camera.",scp->skc_name);
+	if( skc_p == the_cam_p ){
+		sprintf(MSG_STR,"%s is selected as current camera.",skc_p->skc_name);
 		prt_msg(MSG_STR);
 	}
 #ifdef HAVE_LIBSPINNAKER
-	//print_spink_cam_info(QSP_ARG  scp);
+	//print_spink_cam_info(QSP_ARG  skc_p);
 #else
 	NO_LIB_MSG("do_list_spink_cam");
 #endif
 }
 
-#define select_spink_cam(scp ) _select_spink_cam(QSP_ARG  scp )
-
-static void _select_spink_cam(QSP_ARG_DECL  Spink_Cam *scp )
-{
-	the_cam_p = scp;
-}
-
 static COMMAND_FUNC( do_select_cam )
 {
-	Spink_Cam *scp;
+	Spink_Cam *skc_p;
 
-	scp = pick_spink_cam("camera");
-	if( scp == NULL ) return;
+	skc_p = pick_spink_cam("camera");
+	if( skc_p == NULL ) return;
 
-	select_spink_cam(scp);
+	if( the_cam_p != NULL ) deselect_spink_cam(the_cam_p);
+	the_cam_p = select_spink_cam(skc_p);
 }
 
 static COMMAND_FUNC( do_start )
 {
-	CHECK_CAM
+	CHECK_CAM(start)
 	spink_start_capture(the_cam_p);
 }
 
@@ -243,7 +254,7 @@ static COMMAND_FUNC( do_grab )
 {
 	Data_Obj *dp;
 
-	CHECK_CAM
+	CHECK_CAM(grab)
 	if( (dp=grab_spink_cam_frame(the_cam_p )) == NULL ){
 		/* any error */
 		// We might fail because we need to release a frame...
@@ -266,7 +277,7 @@ static COMMAND_FUNC( do_grab_newest )
 
 static COMMAND_FUNC( do_stop )
 {
-	CHECK_CAM
+	CHECK_CAM(stop)
 	spink_stop_capture(the_cam_p );
 }
 
@@ -279,14 +290,14 @@ static COMMAND_FUNC(do_reset)
 static COMMAND_FUNC( do_release )
 {
 #ifdef HAVE_LIBSPINNAKER
-	CHECK_CAM
+	CHECK_CAM(release)
 	release_oldest_spink_frame(the_cam_p);
 #endif
 }
 
 static COMMAND_FUNC( do_close )
 {
-	//CHECK_CAM
+	//CHECK_CAM(close)
 #ifdef HAVE_LIBSPINNAKER
 	release_spink_cam_system();
 #endif
@@ -295,7 +306,7 @@ static COMMAND_FUNC( do_close )
 
 static COMMAND_FUNC( do_show_n_bufs )
 {
-	CHECK_CAM
+	CHECK_CAM(show_n_buffers)
 
 	show_n_buffers(the_cam_p);
 }
@@ -306,7 +317,7 @@ static COMMAND_FUNC( do_set_n_bufs )
 
 	n=HOW_MANY("number of buffers");
 
-	CHECK_CAM
+	CHECK_CAM(set_n_buffers)
 
 	if( n < MIN_N_BUFFERS ){
 		sprintf(ERROR_STRING,"do_set_n_bufs:  n (%d) must be >= %d",n,MIN_N_BUFFERS);
@@ -348,19 +359,45 @@ static COMMAND_FUNC( do_record )
 	}
 	for(i=0;i<nc;i++){
 		if( skc_p_tbl[i] == NULL ) return;
+		if( skc_p_tbl[i]->skc_n_buffers <= 0 ){
+			sprintf(ERROR_STRING,"record:  number of buffers for %s (%d) must be positive!?",
+				skc_p_tbl[i]->skc_name, skc_p_tbl[i]->skc_n_buffers);
+			warn(ERROR_STRING);
+			return;
+		}
 	}
 	// BUG here we should insist that all cameras are distinct!
 
-	ifp = get_file_for_recording(s,nf,the_cam_p);
+	// For now, we write all data to a single file - but how to disentangle
+	// data from multiple cameras???
+	ifp = get_file_for_recording(s,nf*nc,skc_p_tbl[0]);
 	if( ifp == NULL ) return;
 	
-	CHECK_CAM
+	//CHECK_CAM(record)		// No! this does not use the_cam_p...
 
 #ifdef HAVE_LIBSPINNAKER
 	spink_stream_record(ifp, nf, nc, skc_p_tbl );
 #else // ! HAVE_LIBSPINNAKER
 	UNIMP_MSG("stream_record");
 #endif // ! HAVE_LIBSPINNAKER
+}
+
+static COMMAND_FUNC(do_set_n_capture)
+{
+	int n;
+
+	n = HOW_MANY("Number of frames to capture");
+
+	CHECK_CAM(set_n_capture)	// insure the_cam_p is valid...
+
+	if( n <= 0 ){
+		sprintf(ERROR_STRING,"set_n_capture:  count must be positive!?");
+		warn(ERROR_STRING);
+		return;
+	}
+
+	the_cam_p->skc_event_info.ei_next_frame = 0;
+	the_cam_p->skc_event_info.ei_n_frames = n;
 }
 
 #undef ADD_CMD
@@ -370,6 +407,7 @@ MENU_BEGIN(capture)
 //ADD_CMD( set_buffer_obj,	do_set_bufs,	specify sequence object to use for capture )
 ADD_CMD( set_n_buffers,		do_set_n_bufs,		specify number of frames in the ring buffer )
 ADD_CMD( show_n_buffers,	do_show_n_bufs,		show number of frames in the ring buffer )
+ADD_CMD( set_n_capture,		do_set_n_capture,	set the number of frames to capture)
 ADD_CMD( start,			do_start,	start capture )
 ADD_CMD( grab,			do_grab,	grab a frame )
 ADD_CMD( grab_newest,		do_grab_newest,	grab the newest frame )
@@ -397,7 +435,7 @@ static COMMAND_FUNC( do_fmt7_setsize )
 	w=HOW_MANY("width");
 	h=HOW_MANY("height");
 
-	CHECK_CAM
+	CHECK_CAM(fmt7_setsize)
 
 	/* Don't try to set the image size if capture is running... */
 
@@ -406,6 +444,8 @@ static COMMAND_FUNC( do_fmt7_setsize )
 		return;
 	}
 	UNIMP_MSG("set_fmt7_size");
+	sprintf(ERROR_STRING,"Can't set image size to %d x %d",w,h);
+	advise(ERROR_STRING);
 }
 
 static COMMAND_FUNC( do_fmt7_setposn )
@@ -415,7 +455,7 @@ static COMMAND_FUNC( do_fmt7_setposn )
 	h=HOW_MANY("horizontal position (left)");
 	v=HOW_MANY("vertical position (top)");
 
-	CHECK_CAM
+	CHECK_CAM(fmt7_setposn)
 
 	// What are the constraints as to what this can be???
 	// At least on the flea, the position has to be even...
@@ -533,7 +573,7 @@ static COMMAND_FUNC(do_enable_chunk)
 	cd_p = pick_chunk_data("");
 	if( cd_p == NULL ) return;
 
-	CHECK_CAM
+	CHECK_CAM(enable_chunk)
 
 	enable_chunk_data(the_cam_p,cd_p);
 }

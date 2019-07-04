@@ -8,28 +8,67 @@
 // We don't need to grab, because the event handler already gives us the image.
 // Presumably it is released when the handler exits...  This may be incompatible with
 // how we have done recording, where the disk writer releases the image when writing
-// is complete...
+// is complete...  But maybe we don't need disk writer threads any more - we can have
+// each event function to a blocking write to the disk.  Still, we might want
+// to have a single disk-writer thread for each disk to prevent parallel writes...
+// How do we communicate between this thread and the event functions?
 
 static spinImageEvent ev1;
+static int using_image_events=0;
+
+Grab_Frame_Status _cam_frame_status(QSP_ARG_DECL  Spink_Cam *skc_p, int index)
+{
+	assert(skc_p->skc_gfi_tbl!=NULL);
+	// BUG validate that index is within range
+	return skc_p->skc_gfi_tbl[index].gfi_status;
+}
+
+void _set_cam_frame_status(QSP_ARG_DECL  Spink_Cam *skc_p, int index, Grab_Frame_Status status)
+{
+	assert(skc_p->skc_gfi_tbl!=NULL);
+	// BUG validate that index is within range
+	skc_p->skc_gfi_tbl[index].gfi_status = status;
+}
+
+void _set_cam_frame_image(QSP_ARG_DECL  Spink_Cam *skc_p, int index, spinImage hImage)
+{
+	assert(skc_p->skc_gfi_tbl!=NULL);
+	// BUG validate that index is within range
+	skc_p->skc_gfi_tbl[index].gfi_hImage = hImage;
+}
+
+Data_Obj * _cam_frame_with_index(QSP_ARG_DECL  Spink_Cam *skc_p, int index)
+{
+	Data_Obj *dp;
+	assert(skc_p->skc_gfi_tbl!=NULL);
+	dp = skc_p->skc_gfi_tbl[index].gfi_dp;
+	assert(dp!=NULL);
+	return( dp );
+}
 
 void _enable_image_events(QSP_ARG_DECL  Spink_Cam *skc_p, void (*func)(spinImage,void *))
 {
-	Image_Event_Info *inf_p;
-
 	if( IS_EVENTFUL(skc_p) ) return;
 
+fprintf(stderr,"enable_image_events:  enabling events for %s\n",skc_p->skc_name);
 	insure_current_camera(skc_p);
 	assert( skc_p->skc_current_handle != NULL );
-	inf_p = getbuf(sizeof(*inf_p));		// when to release???  MEMORY LEAK BUG!
+
 #ifdef THREAD_SAFE_QUERY
-	inf_p->ei_qsp = THIS_QSP;
+	skc_p->skc_event_info.ei_qsp = THIS_QSP;
 #endif // THREAD_SAFE_QUERY
-	inf_p->ei_skc_p = skc_p;
-	if( create_image_event(&ev1,func,(void *)(inf_p) ) < 0 ) return;
+
+	// BUG - is it safe to use a single ev1 struct, when we have multiple
+	// cameras?  If it isn't needed after register_cam_image_event,
+	// then can it be a stack variable that goes away?
+fprintf(stderr,"enable_image_events:  creating image event\n");
+	if( create_image_event(&ev1,func,(void *)(skc_p) ) < 0 ) return;
+fprintf(stderr,"enable_image_events:  registering image event\n");
 	if( register_cam_image_event(skc_p->skc_current_handle, ev1) < 0 ) return;
 
 	skc_p->skc_flags |= SPINK_CAM_EVENTS_READY;
 	//assign_var("image_ready","0");
+fprintf(stderr,"enable_image_events %s DONE\n",skc_p->skc_name);
 }
 
 #ifdef NOT_USED
@@ -124,63 +163,127 @@ Data_Obj * _grab_spink_cam_frame(QSP_ARG_DECL  Spink_Cam * skc_p )
 		if( report_image_status(status) < 0 ) return NULL;
 	}
 
+	// BUG - the image data seems not to be aligned???
+	// Can we align by throwing away a few lines?n_written
+	// Not a good solution...
+	// can use get_image_size() and get_image_stride()...
 	get_image_data(hImage,&data_ptr);
 
 	index = skc_p->skc_newest;	// temporary - needs to be changed
 	index ++;
 	if( index >= skc_p->skc_n_buffers ) index=0;
 	assert(index>=0&&index<skc_p->skc_n_buffers);
-	dp = skc_p->skc_frm_dp_tbl[index];
-	point_obj_to_ext_data(dp,data_ptr);
+
+	if( cam_frame_status(skc_p,index) == FRAME_STATUS_AVAILABLE ){
+		dp = cam_frame_with_index(skc_p,index);
+		set_cam_frame_status(skc_p,index,FRAME_STATUS_IN_USE);
+		set_cam_frame_image(skc_p,index,hImage);
+	} else {
+		error1("grab_spink_cam_frame:  data_obj is not available!?");
+		dp = NULL;
+	}
+
+fprintf(stderr,"Frame %d data ptr at 0x%lx\n",index,(long)data_ptr);
+{
+void *aligned_ptr;
+long diff;
+#define SECTOR_SIZE	1024	// BUG check?
+aligned_ptr = (void *) ((((uint64_t)data_ptr) + SECTOR_SIZE-1) & ~(SECTOR_SIZE-1));
+diff = aligned_ptr - data_ptr;
+fprintf(stderr,"Aligned ptr at 0x%lx, %ld bytes discarded\n",(long)aligned_ptr,diff);
+
+
+
+	point_obj_to_ext_data(dp,aligned_ptr /* data_ptr */ );
+	SET_OBJ_UNALIGNED_PTR(dp,data_ptr);
+
+fprintf(stderr,"object %s has %d rows and %d columns\n",OBJ_NAME(dp),OBJ_ROWS(dp),OBJ_COLS(dp));
+	// BUG need to take off a few rows???
+}
+
+fprintf(stderr,"TRACE grab_spink_cam_frame buffer %d hImage at 0x%lx\n",index,(long)hImage);
 	SET_OBJ_EXTRA(dp,hImage);
 	skc_p->skc_newest = index;
 	if( skc_p->skc_oldest < 0 ) skc_p->skc_oldest = index;
 	set_script_var("newest",skc_p->skc_newest);	// BUG need cam-specific var?
 	set_script_var("oldest",skc_p->skc_oldest);	// BUG need cam-specific var?
 
-	return( skc_p->skc_frm_dp_tbl[index] );
+	return( dp );
 }
 
-void _release_oldest_spink_frame(QSP_ARG_DECL  Spink_Cam *skc_p)
-{
-	Data_Obj *dp;
-	int index;
-	spinImage hImage;
+#define check_release_ok(skc_p) _check_release_ok(QSP_ARG  skc_p)
 
+static int _check_release_ok(QSP_ARG_DECL  Spink_Cam *skc_p)
+{
 	if( ! IS_CAPTURING(skc_p) ){
 		sprintf(ERROR_STRING,"release_oldest_spink_frame:  %s is not capturing!?",
 			skc_p->skc_name);
 		warn(ERROR_STRING);
-		return;
+		return -1;
 	}
 
 	if( skc_p->skc_oldest < 0 ){
 		sprintf(ERROR_STRING,"No frames have been grabbed by %s, can't release!?",
 			skc_p->skc_name);
 		warn(ERROR_STRING);
-		return;
+		return -1;
 	}
-	index = skc_p->skc_oldest;
+	return 0;
+}
+
+void _release_spink_frame(QSP_ARG_DECL  Spink_Cam *skc_p, int index)
+{
+	Data_Obj *dp;
+	spinImage hImage;
+	Grab_Frame_Info *gfi_p;
+
+	if( check_release_ok(skc_p) < 0 ) return;
 	assert(index>=0&&index<skc_p->skc_n_buffers);
-	dp = skc_p->skc_frm_dp_tbl[index];
-	assert(dp!=NULL);
-	hImage = OBJ_EXTRA(dp);
+	gfi_p = (&(skc_p->skc_gfi_tbl[index]));
+	//dp = skc_p->skc_frm_dp_tbl[index];
+	assert(gfi_p!=NULL);
+
+	//hImage = OBJ_EXTRA(dp);
+	hImage = gfi_p->gfi_hImage;
+
+fprintf(stderr,"TRACE release_spink_frame buffer %d hImage at 0x%lx\n",index,(long)hImage);
 	if( release_spink_image(hImage) < 0 ){
 		sprintf(ERROR_STRING,"release_oldest_spink_frame %s:  Error releasing image %d",skc_p->skc_name,index);
 		warn(ERROR_STRING);
 	}
+	dp = gfi_p->gfi_dp;
 	point_obj_to_ext_data(dp,NULL);
-	SET_OBJ_EXTRA(dp,NULL);
-	if( skc_p->skc_newest == index ){
+	//SET_OBJ_EXTRA(dp,NULL);
+	gfi_p->gfi_status = FRAME_STATUS_AVAILABLE;
+	gfi_p->gfi_hImage = NULL;
+}
+
+// This logic is only good when we know released_idx was formerly the oldest!?
+// Maybe the stream recorder doesn't need oldest/newest ???
+
+static void update_oldest(Spink_Cam *skc_p, int released_idx)
+{
+	if( skc_p->skc_newest == released_idx ){
 //fprintf(stderr,"release_oldest_spink_frame:  last frame was released\n");
 		skc_p->skc_newest = -1;
 		skc_p->skc_oldest = -1;
 	} else {
-		index++;
-		if( index >= skc_p->skc_n_buffers ) index = 0;
-		skc_p->skc_oldest = index;
+		int new_index;
+		new_index = released_idx + 1;
+		if( new_index >= skc_p->skc_n_buffers ) new_index = 0;
+		skc_p->skc_oldest = new_index;
 //fprintf(stderr,"release_oldest_spink_frame:  oldest frame is now %d\n",index);
 	}
+}
+
+void _release_oldest_spink_frame(QSP_ARG_DECL  Spink_Cam *skc_p)
+{
+	int index;
+
+	index = skc_p->skc_oldest;
+	release_spink_frame(skc_p,index);
+
+	update_oldest(skc_p,index);	// update oldest (and possibly newest if no more frames
 }
 
 #define init_frame_by_index(skc_p, idx) _init_frame_by_index(QSP_ARG  skc_p, idx)
@@ -216,21 +319,24 @@ void _set_n_spink_buffers(QSP_ARG_DECL  Spink_Cam *skc_p, int n)
 
 
 	if( skc_p->skc_n_buffers > 0 ){
-		assert(skc_p->skc_frm_dp_tbl!=NULL);
+		//assert(skc_p->skc_frm_dp_tbl!=NULL);
+		assert(skc_p->skc_gfi_tbl!=NULL);
 		// BUG -  We need to release resources from the dobj structs!!!
 		// MEMORY LEAK!
-		givbuf(skc_p->skc_frm_dp_tbl);
+		givbuf(skc_p->skc_gfi_tbl);
 	}
 
 	skc_p->skc_n_buffers = n;
 
-	sz = n * sizeof(Data_Obj *);
-	skc_p->skc_frm_dp_tbl = getbuf(sz);
+	sz = n * sizeof(Grab_Frame_Info);
+	skc_p->skc_gfi_tbl = getbuf(sz);
 
 	for(i=0;i<n;i++){
 		Data_Obj *dp;
 		dp = init_frame_by_index(skc_p,i);
-		skc_p->skc_frm_dp_tbl[i] = dp;
+		skc_p->skc_gfi_tbl[i].gfi_dp = dp;
+		skc_p->skc_gfi_tbl[i].gfi_status = FRAME_STATUS_AVAILABLE;
+		skc_p->skc_gfi_tbl[i].gfi_hImage = NULL;
 	}
 	//alloc_cam_buffers(skc_p,n);
 }
@@ -315,24 +421,49 @@ int _next_spink_image(QSP_ARG_DECL  spinImage *img_p, Spink_Cam *skc_p)
 
 static void test_event_handler(spinImage hImg, void *user_data)
 {
-	Image_Event_Info *inf_p;
+	//Image_Event_Info *inf_p;
+	Spink_Cam *skc_p;
+// we needed this when we called spink_stop_capture()...
+//#ifdef THREAD_SAFE_QUERY
+//	Query_Stack *qsp;
+//#endif // THREAD_SAFE_QUERY
 
-	inf_p = (Image_Event_Info *) user_data;
-fprintf(stderr,"Event! (%s)\n",inf_p->ei_skc_p->skc_name);
+	skc_p = (Spink_Cam *) user_data;
+//fprintf(stderr,"Event! (%s, %d of %d)\n",skc_p->skc_name,skc_p->skc_event_info.ei_next_frame,
+//skc_p->skc_event_info.ei_n_frames);
+	skc_p->skc_event_info.ei_next_frame ++;
+
+	if( skc_p->skc_event_info.ei_next_frame >= skc_p->skc_event_info.ei_n_frames ){
+		//char varname[LLEN];
+//#ifdef THREAD_SAFE_QUERY
+//		qsp = skc_p->skc_event_info.ei_qsp;
+//#endif // THREAD_SAFE_QUERY
+		//spink_stop_capture(skc_p);
+
+		//sprintf(varname,"%s_is_capturing",spc_p->skc_name)
+		//assign_var(varname,"0");
+
+		// The camera is still capturing, but we use this flag
+		// to tell the controlling software to stop.
+		// It doesn't seem to work if we call spink_stop_capture() here...
+		skc_p->skc_flags &= ~SPINK_CAM_CAPT_REQUESTED;
+	}
 }
 
 int _spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 {
 	spinCamera hCam;
-	
+fprintf(stderr,"spink_start_capture %s BEGIN\n",skc_p->skc_name);
 	if( IS_CAPTURING(skc_p) ){
-		sprintf(ERROR_STRING,"spink_stop_capture:  %s is already capturing!?",
+		sprintf(ERROR_STRING,"spink_start_capture:  %s is already capturing!?",
 			skc_p->skc_name);
 		warn(ERROR_STRING);
 		return 0;
 	}
 
+fprintf(stderr,"spink_start_capture %s insuring current camera...\n",skc_p->skc_name);
 	insure_current_camera(skc_p);
+fprintf(stderr,"spink_start_capture %s initializing oldest and newest...\n",skc_p->skc_name);
 	skc_p->skc_newest = -1;
 	skc_p->skc_oldest = -1;
 	hCam = skc_p->skc_current_handle;
@@ -340,12 +471,21 @@ int _spink_start_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 //	setup_events(skc_p);	// make this optional???
 				// should cleanup events when stopping capture?
 	// for testing!
-	enable_image_events(skc_p,test_event_handler);
+	if( using_image_events ){
+fprintf(stderr,"spink_start_capture %s enabling image events...\n",skc_p->skc_name);
+		enable_image_events(skc_p,test_event_handler);
+	}
 
-	if( begin_acquisition(hCam) < 0 ) return -1;
+fprintf(stderr,"spink_start_capture %s will call begin_acquisition...\n",skc_p->skc_name);
+	if( begin_acquisition(hCam) < 0 ){
+fprintf(stderr,"spink_start_capture %s error return after failing to begin acquisition...\n",skc_p->skc_name);
+		return -1;
+	}
 
-	skc_p->skc_flags |= SPINK_CAM_CAPTURING;
+fprintf(stderr,"spink_start_capture %s setting capture flags...\n",skc_p->skc_name);
+	skc_p->skc_flags |= SPINK_CAM_CAPTURING | SPINK_CAM_CAPT_REQUESTED;
 
+fprintf(stderr,"spink_start_capture %s DONE\n",skc_p->skc_name);
 	return 0;
 }
 
@@ -370,10 +510,10 @@ int _spink_stop_capture(QSP_ARG_DECL  Spink_Cam *skc_p)
 
 	insure_current_camera(skc_p);
 	hCam = skc_p->skc_current_handle;
+	skc_p->skc_flags &= ~(SPINK_CAM_CAPTURING|SPINK_CAM_CAPT_REQUESTED);
 
 	if( end_acquisition(hCam) < 0 ) return -1;
 
-	skc_p->skc_flags &= ~SPINK_CAM_CAPTURING;
 
 	return 0;
 }

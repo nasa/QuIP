@@ -1,0 +1,30 @@
+# test of line numbering after a loop
+max_warnings 50
+echo "File t.scr BEGIN"
+
+Set looping 1
+Set counter 0
+
+warn "before do loop, line 8"
+do
+  If $counter>5 "Set looping 0"
+  Increment counter
+  Print looping
+warn "bottom of do loop, line 13"
+  while $looping
+warn "after do loop, line 15"
+
+foreach str ( "this is" "that is" "hello" )
+  echo "This string is '$str'"
+  warn "bottom of foreach loop, line 19"
+end
+
+Set c 0
+repeat 3
+  Print c
+  warn "bottom of repeat loop, line 25"
+  end
+
+warn "All done, line 28"
+exit
+

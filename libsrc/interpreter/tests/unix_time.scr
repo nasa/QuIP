@@ -1,0 +1,11 @@
+Set s "Fri Jun 29 15:18:42 2018"
+echo "Testing time conversion functions with arbitrary date string:"
+Print s
+echo "Converting date string to unix time:"
+Assign t unix_time('$s')
+Print t
+echo "Formatting unix time:"
+Assign s format_time($t)
+Print s
+exit
+

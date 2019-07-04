@@ -50,14 +50,13 @@ When should we sync line numbers?
 										\
 	{									\
 	INC_QRY_LINES_READ							\
-fprintf(stderr,"increment_lines_read: %s\n",#whence);				\
 	DEBUG_LINENO(increment_lines_read)					\
 	}
 
 #define DEBUG_LINENO(whence)						\
 if( QLEVEL >=0 ){							\
-	fprintf(stderr,"%s:  Line %d (%d lines read)\n",		\
-		#whence,QRY_LINENO(qp),QRY_LINES_READ(qp));		\
+	fprintf(stderr,"%s:  q_level %d, Line %d (%d lines read)\n",		\
+		#whence,QRY_IDX(qp),QRY_LINENO(qp),QRY_LINES_READ(qp));		\
 }
 
 #else // ! QUIP_DEBUG_LINENO
@@ -175,11 +174,22 @@ static int has_stdin=0;		// where should we set this?
 
 #define MACRO_LOCATION_PREFIX	"Macro "
 
+#ifdef BUILD_FOR_OBJC
+
 #define DECLARE_QP						\
 								\
 	Query *qp;						\
 	qp = CURR_QRY(THIS_QSP);				\
 	assert(qp!=NULL);
+
+#else // ! BUILD_FOR_OBJC
+
+#define DECLARE_QP						\
+								\
+	Query *qp;						\
+	qp = CURR_QRY(THIS_QSP);
+
+#endif // ! BUILD_FOR_OBJC
 
 
 static inline void clear_query_text(Query *qp)
@@ -448,6 +458,7 @@ int _lookahead_til(QSP_ARG_DECL  int stop_level)
 DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #1)
 			eatup_space_for_lookahead(SINGLE_QSP_ARG);
 		}
+
 		if( QRY_HAS_TEXT(qp) ){
 			return 1;
 		}
@@ -459,12 +470,17 @@ DEBUG_LINENO(lookahead_til after nextline)
 			// But because it can pop a level, we should not any
 			// the space here...
 
+#ifdef BUILD_FOR_OBJC
+			if( QLEVEL < 0 ){ return 0; }
+#endif /* BUILD_FOR_OBJC */
+
 			// halting bit can be set if we run out of input on a secondary thread
 			// (primary thread will exit)
 			if( IS_HALTING(THIS_QSP) ) {
 				return 0;
 			}
 			qp= CURR_QRY(THIS_QSP);
+
 			assert(qp!=NULL);
 			if( QLEVEL == _level && QRY_HAS_TEXT(qp) ){
 DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #2)
@@ -1635,9 +1651,11 @@ static const char *next_word_from_level(QSP_ARG_DECL  const char *pline)
 	if( !QRY_HAS_TEXT(qp) )	// need to read more input
 	{
 		buf=qline(pline);
+#ifndef BUILD_FOR_OBJC
 		// suppress store-not-read warning
 		// But can buf be null when we are out of input??
 		if( buf == NULL ) warn("next_word_from_level:  null line!?");
+#endif // ! BUILD_FOR_OBJC
 	}
 
 	if( QLEVEL < 0 ){
@@ -2923,6 +2941,7 @@ advise(ERROR_STRING);
 
 	SET_QRY_LINE_PTR( qp,QRY_LINE_PTR(QRY_AT_LEVEL(THIS_QSP,QLEVEL-1)));
 	SET_QRY_LINES_READ( qp,QRY_LINES_READ(QRY_AT_LEVEL(THIS_QSP,QLEVEL-1)));
+	// We need to copy back when this loop is closed!?
 
 	/* the absence of the next line caused a subtle bug
 	 * for loops within macros that were preceded by a doubly
@@ -2965,11 +2984,19 @@ void _open_loop(QSP_ARG_DECL int n)
 	SET_QRY_FLAG_BITS(qp,Q_SAVING);
 }
 
+#define FOREACH_LOOP_COUNT_CODE		(-2)
+#define WHILE_LOOP_RUNNING_COUNT_CODE	(-3)
+#define WHILE_LOOP_DONE_COUNT_CODE	(-4)
+
+void _open_while_loop(SINGLE_QSP_ARG_DECL)
+{
+	open_loop(WHILE_LOOP_RUNNING_COUNT_CODE);
+}
+
 // The code relies upon the fact that QRY_COUNT will never be set
 // to a negative value except by decrementing...
 // Kind of a hack...
 
-#define FORELOOP_COUNT	(-2)
 
 void _foreach_loop(QSP_ARG_DECL Foreach_Loop *frp)
 {
@@ -2979,7 +3006,7 @@ void _foreach_loop(QSP_ARG_DECL Foreach_Loop *frp)
 
 	assign_var(FL_VARNAME(frp),(const char *)NODE_DATA(QLIST_HEAD(FL_LIST(frp))));
 
-	SET_QRY_COUNT(qp, FORELOOP_COUNT);
+	SET_QRY_COUNT(qp, FOREACH_LOOP_COUNT_CODE);
 	SET_QRY_FORLOOP(qp, frp);
 	insure_query_text_buf(qp);
 	SET_QRY_FLAG_BITS(qp,Q_SAVING);
@@ -3169,52 +3196,34 @@ advise(ERROR_STRING);
 	share_macro_args(QSP_ARG CURR_QRY(THIS_QSP),QRY_AT_LEVEL(THIS_QSP,QLEVEL-1));	// fullpush
 }
 
-void _close_loop(SINGLE_QSP_ARG_DECL)
+#define check_loop_open() _check_loop_open(SINGLE_QSP_ARG)
+
+static int _check_loop_open(SINGLE_QSP_ARG_DECL)
 {
-	Query *qp, *new_qp;
-	Query *loop_qp;
 	const char *errmsg="Can't close loop, no loop open";
+
+	assert( QLEVEL >= 0 );
 
 	if( QLEVEL <= 0 || QRY_COUNT(QRY_AT_LEVEL(THIS_QSP,QLEVEL-1)) == 0 ){
 		warn(errmsg);
-		return;
+		return -1;
 	}
+	return 0;
+}
 
-	/* the lookahead word may have popped the level already...
-	 * How would we know???
-	 */
+#define repeat_loop_body() _repeat_loop_body(SINGLE_QSP_ARG)
 
-	loop_qp=pop_file();	// are we sure we should do this?
+static void _repeat_loop_body(SINGLE_QSP_ARG_DECL)
+{
+	Query *qp, *new_qp;
 
 	qp=(CURR_QRY(THIS_QSP));
 	assert(qp!=NULL);
-
-	CLEAR_QRY_FLAG_BITS(qp,Q_SAVING);
-
-	if( QRY_COUNT(qp) == FORELOOP_COUNT ){
-		FL_NODE(QRY_FORLOOP(qp)) = NODE_NEXT(FL_NODE(QRY_FORLOOP(qp)));
-		if( FL_NODE(QRY_FORLOOP(qp)) == NULL ){
-			zap_fore(QRY_FORLOOP(qp));	// this releases the foreach struct also
-			SET_QRY_FORLOOP(qp,NULL);
-			goto lup_dun;
-		}
-		assign_var(FL_VARNAME(QRY_FORLOOP(qp)),
-			(const char *)FL_WORD(QRY_FORLOOP(qp)) );
-
-	} else if( QRY_COUNT(qp) < 0 ){		/* do/while loop */
-
-		// don't have to do anything ...
-
-	} else {		// regular repeat loop
-
-		// decrement the count
-		SET_QRY_COUNT( qp, QRY_COUNT(qp)-1 );
-		if( QRY_COUNT(qp) <= 0 ) goto lup_dun;
-	}
-
 	assert(QRY_TEXT_BUF(qp) != NULL );
+
 	// does fullpush push the macro pointer?
 	fullpush(QSP_ARG  sb_buffer(QRY_TEXT_BUF(qp)), CURRENT_FILENAME );
+
 	new_qp = CURR_QRY(THIS_QSP);
 	assert(new_qp!=NULL);
 
@@ -3223,10 +3232,31 @@ void _close_loop(SINGLE_QSP_ARG_DECL)
 	if( QRY_FLAGS(qp) & Q_LINEDONE ){
 		INCREMENT_LINES_READ(close_loop)
 	}
+}
 
-	return;
+#define pop_loop() _pop_loop(SINGLE_QSP_ARG)
 
-lup_dun:
+static Query * _pop_loop(SINGLE_QSP_ARG_DECL)
+{
+	Query *qp, *loop_qp;
+	loop_qp=pop_file();	// are we sure we should do this?
+
+	qp=(CURR_QRY(THIS_QSP));
+	assert(qp!=NULL);
+	CLEAR_QRY_FLAG_BITS(qp,Q_SAVING);
+	return loop_qp;
+}
+
+// this is called to clean up when a loop is done
+
+#define conclude_loop(loop_qp) _conclude_loop(QSP_ARG  loop_qp)
+
+static void _conclude_loop(QSP_ARG_DECL  Query *loop_qp)
+{
+	Query *qp;
+
+	qp=(CURR_QRY(THIS_QSP));
+	assert(qp!=NULL);
 
 	// Now we are done with the loop
 	// - why is the line number wrong??
@@ -3241,36 +3271,115 @@ lup_dun:
 	lookahead(SINGLE_QSP_ARG);
 }
 
+#define close_foreach_loop(loop_qp) _close_foreach_loop(QSP_ARG  loop_qp)
 
+static void _close_foreach_loop(QSP_ARG_DECL  Query *loop_qp)
+{
+	Query *qp;
+	qp=(CURR_QRY(THIS_QSP));
+	assert(qp!=NULL);
+
+	FL_NODE(QRY_FORLOOP(qp)) = NODE_NEXT(FL_NODE(QRY_FORLOOP(qp)));
+	if( FL_NODE(QRY_FORLOOP(qp)) == NULL ){
+		zap_fore(QRY_FORLOOP(qp));	// this releases the foreach struct also
+		SET_QRY_FORLOOP(qp,NULL);
+		conclude_loop(loop_qp);
+	} else {
+		assign_var(FL_VARNAME(QRY_FORLOOP(qp)),
+			(const char *)FL_WORD(QRY_FORLOOP(qp)) );
+		repeat_loop_body();
+	}
+}
+
+#define close_repeat_loop(loop_qp) _close_repeat_loop(QSP_ARG  loop_qp)
+
+static void _close_repeat_loop(QSP_ARG_DECL  Query *loop_qp)
+{
+	Query *qp;
+	qp=(CURR_QRY(THIS_QSP));
+	assert(qp!=NULL);
+
+	// decrement the count
+	SET_QRY_COUNT( qp, QRY_COUNT(qp)-1 );
+	if( QRY_COUNT(qp) <= 0 ){
+		conclude_loop(loop_qp);
+	} else {
+		repeat_loop_body();
+	}
+}
+
+#define close_foreach_or_repeat_loop(loop_qp) _close_foreach_or_repeat_loop(QSP_ARG  loop_qp)
+
+static void _close_foreach_or_repeat_loop(QSP_ARG_DECL  Query *loop_qp)
+{
+	Query *qp;
+	qp=(CURR_QRY(THIS_QSP));
+	assert(qp!=NULL);
+
+	if( QRY_COUNT(qp) == FOREACH_LOOP_COUNT_CODE ){
+		close_foreach_loop(loop_qp);
+	} else if( QRY_COUNT(qp) < 0 ){		// should never happen???
+		// should never happen?
+		warn("Unexpected negative loop count!?");
+	} else {		// regular repeat loop
+		close_repeat_loop(loop_qp);
+	}
+}
+
+#define NOT_WHILE_LOOP		(-1)
+#define WHILE_LOOP_DONE		0
+#define WHILE_LOOP_RUNNING	1
+
+#define close_loop(loop_type_flag) _close_loop(QSP_ARG  loop_type_flag)
+
+static void _close_loop(QSP_ARG_DECL  int loop_type_flag)
+{
+	Query *qp;
+	Query *loop_qp;
+
+	if( check_loop_open() < 0 ) return;
+
+	/* the lookahead word may have popped the level already...
+	 * How would we know???
+	 */
+
+	loop_qp=pop_loop();
+
+	qp=(CURR_QRY(THIS_QSP));
+	assert(qp!=NULL);
+
+	switch( loop_type_flag ){
+		case WHILE_LOOP_RUNNING:
+			repeat_loop_body();
+			break;
+		case WHILE_LOOP_DONE:
+			conclude_loop(loop_qp);
+			break;
+		case NOT_WHILE_LOOP:
+			close_foreach_or_repeat_loop(loop_qp);
+			break;
+		default:
+			warn("close_loop:  unexpected value of whileloop_flag!?");
+			break;
+	}
+}
+
+void _end_loop(SINGLE_QSP_ARG_DECL)
+{
+	// repeat or foreach ?
+	close_loop(NOT_WHILE_LOOP);
+}
 
 // "while" can be used instead of "end",
 // but first we need to make sure that a loop is open!
+// value == 1 means keep looping
+
+// Need to merge some things here with close_loop!
 
 void _whileloop(QSP_ARG_DECL  int value)
 {
-
-	Query *qp;
-	const char *errmsg="Can't close with While, no loop open";
-
-	assert( QLEVEL >= 0 );
-
-	if( QLEVEL == 0 || QRY_COUNT(QRY_AT_LEVEL(THIS_QSP,QLEVEL-1)) == 0 ){
-		warn(errmsg);
-		return;
-	}
-
-	pop_file();
-	qp=(CURR_QRY(THIS_QSP));
-	assert(qp!=NULL);
-	CLEAR_QRY_FLAG_BITS(qp,Q_SAVING);
-
-	if( ! value ){
-		clear_query_text(qp);
-		SET_QRY_COUNT(qp, 0);	// do loop sets count to -1
-	} else {
-		assert( QRY_TEXT_BUF(qp) != NULL );
-		fullpush(QSP_ARG  sb_buffer(QRY_TEXT_BUF(qp)), CURRENT_FILENAME );
-	}
+	if( check_loop_open() < 0 ) return;
+	close_loop( value ? WHILE_LOOP_RUNNING : WHILE_LOOP_DONE );
 }
 
 
@@ -4014,7 +4123,7 @@ static void tell_macro_location(QSP_ARG_DECL  const char *location_string, int n
 	advise(MSG_STR);
 }
 
-void print_qs_levels(QSP_ARG_DECL  int *level_to_print, int n_levels_to_print)
+void report_qs_line_numbers(QSP_ARG_DECL  int *level_to_print, int n_levels_to_print)
 {
 	int i;
 	int ql,n;
@@ -4046,9 +4155,16 @@ inline const char *current_filename(SINGLE_QSP_ARG_DECL)
 	return QRY_FILENAME(qp);
 }
 
+// reset_return_strings - set the index of the next string to use to 0
+//
+// in iOS, it is possible for qp to be NULL...
+
 inline void _reset_return_strings(SINGLE_QSP_ARG_DECL)
 {
 	DECLARE_QP
+#ifdef BUILD_FOR_OBJC
+	if( qp == NULL ) return;
+#endif // BUILD_FOR_OBJC
 	SET_QRY_RETSTR_IDX(qp,0);
 }
 

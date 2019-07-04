@@ -637,7 +637,7 @@ void rls_genlock_mutex(SINGLE_QSP_ARG_DECL)
 	pthread_mutex_unlock(&genlock_mutex);
 }
 
-static void report_genlock_status( FB_Info *fbip )
+void report_genlock_status( FB_Info *fbip )
 {
 	int i,index;
 	float l2,l3;
@@ -759,8 +759,8 @@ static void fbpair_monitor( FB_Info *fbip1, FB_Info *fbip2 )
 	start_fb_threads(2,fd_arr);
 }
 
-
 #endif /* HAVE_GENLOCK */
+
 
 COMMAND_FUNC( halt_genlock )
 {

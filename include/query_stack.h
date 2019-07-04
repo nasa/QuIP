@@ -16,70 +16,12 @@
 #include <dispatch/dispatch.h>
 #endif /* BUILD_FOR_IOS */
 
-#ifdef FOOBAR
-typedef struct vector_parser_data {
-	void *		vpd_top_enp;	// really Vec_Expr_Node
-	void *		vpd_last_enp;	// really Vec_Expr_Node
-	const char *	vpd_yy_cp;
-	int		vpd_expr_level;
-	int		vpd_last_line_num;
-	int		vpd_parser_line_num;
-	String_Buf *	vpd_yy_last_line;
-	String_Buf *	vpd_yy_input_line;
-	String_Buf *	vpd_expr_string;	// for reading the next word?
-	String_Buf *	vpd_yy_word_buf;
-	int		vpd_semi_seen;		// boolean flag...
-	int		vpd_end_seen;		// boolean flag?
-						// BUG - combine flags into single flag word?
-	int		vpd_edepth;		// same as expr_level???
-	const char *	vpd_curr_string;
-	double		vpd_final;
-	String_Ref *	vpd_curr_infile;
-	List *		vpd_subroutine_context_stack;
-} Vector_Parser_Data;
-
-#define	VPD_TOP_ENP(vpd_p)		(vpd_p)->vpd_top_enp
-#define	VPD_LAST_ENP(vpd_p)		(vpd_p)->vpd_last_enp
-#define	VPD_END_SEEN(vpd_p)		(vpd_p)->vpd_end_seen
-#define	VPD_YY_CP(vpd_p)		(vpd_p)->vpd_yy_cp
-#define	VPD_EXPR_LEVEL(vpd_p)		(vpd_p)->vpd_expr_level
-#define	VPD_LAST_LINE_NUM(vpd_p)	(vpd_p)->vpd_last_line_num
-#define	VPD_PARSER_LINE_NUM(vpd_p)	(vpd_p)->vpd_parser_line_num
-#define	VPD_YY_LAST_LINE(vpd_p)		(vpd_p)->vpd_yy_last_line
-#define	VPD_YY_INPUT_LINE(vpd_p)	(vpd_p)->vpd_yy_input_line
-#define	VPD_YY_WORD_BUF(vpd_p)		(vpd_p)->vpd_yy_word_buf
-#define	VPD_SEMI_SEEN(vpd_p)		(vpd_p)->vpd_semi_seen
-#define	VPD_EXPR_STRING(vpd_p)		(vpd_p)->vpd_expr_string
-#define	VPD_EDEPTH(vpd_p)		(vpd_p)->vpd_edepth
-#define	VPD_CURR_STRING(vpd_p)		(vpd_p)->vpd_curr_string
-#define	VPD_FINAL(vpd_p)		(vpd_p)->vpd_final
-#define	VPD_CURR_INFILE(vpd_p)		(vpd_p)->vpd_curr_infile
-#define VPD_SUBRT_CTX_STACK(vpd_p)	(vpd_p)->vpd_subroutine_context_stack
-
-
-#define	SET_VPD_TOP_ENP(vpd_p,v)		(vpd_p)->vpd_top_enp = v
-#define	SET_VPD_LAST_ENP(vpd_p,v)		(vpd_p)->vpd_last_enp = v
-#define	SET_VPD_END_SEEN(vpd_p,v)		(vpd_p)->vpd_end_seen = v
-#define	SET_VPD_YY_CP(vpd_p,v)			(vpd_p)->vpd_yy_cp = v
-#define	SET_VPD_EXPR_LEVEL(vpd_p,v)		(vpd_p)->vpd_expr_level = v
-#define	SET_VPD_LAST_LINE_NUM(vpd_p,v)		(vpd_p)->vpd_last_line_num = v
-#define	SET_VPD_PARSER_LINE_NUM(vpd_p,v)	(vpd_p)->vpd_parser_line_num = v
-#define	SET_VPD_YY_LAST_LINE(vpd_p,v)		(vpd_p)->vpd_yy_last_line = v
-#define	SET_VPD_YY_WORD_BUF(vpd_p,v)		(vpd_p)->vpd_yy_word_buf = v
-#define	SET_VPD_YY_INPUT_LINE(vpd_p,v)		(vpd_p)->vpd_yy_input_line = v
-#define	SET_VPD_SEMI_SEEN(vpd_p,v)		(vpd_p)->vpd_semi_seen = v
-#define	SET_VPD_EXPR_STRING(vpd_p,v)		(vpd_p)->vpd_expr_string = v
-#define	SET_VPD_EDEPTH(vpd_p,v)			(vpd_p)->vpd_edepth = v
-#define	SET_VPD_CURR_STRING(vpd_p,v)		(vpd_p)->vpd_curr_string = v
-#define	SET_VPD_FINAL(vpd_p,v)			(vpd_p)->vpd_final = v
-#define	SET_VPD_CURR_INFILE(vpd_p,v)		(vpd_p)->vpd_curr_infile = v
-#define SET_VPD_SUBRT_CTX_STACK(vpd_p,v)	(vpd_p)->vpd_subroutine_context_stack = v
-
-#endif // FOOBAR
-
 
 #define MAXEDEPTH	20	// for variables inside expressions
 #define MAX_E_STRINGS	64
+
+// BUG should make this an opaque struct, and move this
+// to a local header in libsrc/interpreter...
 
 typedef struct scalar_parser_data {
 	const char *		spd_yystrstk[MAXEDEPTH];	// stack of input
@@ -225,8 +167,10 @@ struct query_stack {
 #endif /* HAVE_PTHREADS */
 #endif /* THREAD_SAFE_QUERY */
 
+	/* These are not part of vector_parser_data because we can have a stack of parsers... */
 	List *			qs_vector_parser_data_stack;
 	List *			qs_vector_parser_data_freelist;
+	char			qs_vector_parser_error_string[LLEN];
 	Vector_Parser_Data *	qs_vector_parser_data;		// current parser
 
 	// if we allow reentrant parsing, then we have to have more of these...
@@ -375,6 +319,7 @@ struct query_stack {
 #define QS_VECTOR_PARSER_DATA(qsp)		(qsp)->qs_vector_parser_data
 #define QS_VECTOR_PARSER_DATA_STACK(qsp)	(qsp)->qs_vector_parser_data_stack
 #define QS_VECTOR_PARSER_DATA_FREELIST(qsp)	(qsp)->qs_vector_parser_data_freelist
+#define QS_VECTOR_PARSER_ERROR_STRING(qsp,d)	(qsp)->qs_vector_parser_error_string
 #define SET_QS_VECTOR_PARSER_DATA(qsp,d)	(qsp)->qs_vector_parser_data = d
 #define SET_QS_VECTOR_PARSER_DATA_STACK(qsp,v)	(qsp)->qs_vector_parser_data_stack = v
 #define SET_QS_VECTOR_PARSER_DATA_FREELIST(qsp,v)	(qsp)->qs_vector_parser_data_freelist = v

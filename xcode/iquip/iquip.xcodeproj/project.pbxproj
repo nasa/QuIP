@@ -28,7 +28,6 @@
 		7153FD1E175BF995002D1407 /* seqprint.c in Sources */ = {isa = PBXBuildFile; fileRef = 7153FD1D175BF995002D1407 /* seqprint.c */; };
 		715913B51734D48B008F5524 /* quipTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 715913B41734D48B008F5524 /* quipTableViewController.m */; };
 		715913B71734D8F4008F5524 /* quipNavController.m in Sources */ = {isa = PBXBuildFile; fileRef = 715913B61734D8F4008F5524 /* quipNavController.m */; };
-		71614B38187745BE001AC360 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 71614B37187745BE001AC360 /* genlock.c */; };
 		716CCB2417AA1228009F5690 /* AdSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 716CCB2317AA1228009F5690 /* AdSupport.framework */; };
 		717074A6162DCDA500831805 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 717074A5162DCDA500831805 /* QuartzCore.framework */; };
 		71828E7F1726139F00F7CB35 /* http_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828E7E1726139F00F7CB35 /* http_menu.c */; };
@@ -505,7 +504,6 @@
 		7C4332891D4D43FC0033687C /* ppm.c in Sources */ = {isa = PBXBuildFile; fileRef = 71D2E98717B21340003AEB04 /* ppm.c */; };
 		7C43328A1D4D43FC0033687C /* reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 71D37EB717C9D95F00ECCBE1 /* reachability.m */; };
 		7C43328B1D4D43FC0033687C /* function.m in Sources */ = {isa = PBXBuildFile; fileRef = 71A1041C17CFEB33003AC2C2 /* function.m */; };
-		7C43328C1D4D43FC0033687C /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 71614B37187745BE001AC360 /* genlock.c */; };
 		7C43328E1D4D43FC0033687C /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C51C4ECA740093125D /* AudioToolbox.framework */; };
 		7C43328F1D4D43FC0033687C /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C31C4ECA6B0093125D /* CoreAudio.framework */; };
 		7C4332901D4D43FC0033687C /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
@@ -779,7 +777,6 @@
 		7C4333B01D4D49450033687C /* ppm.c in Sources */ = {isa = PBXBuildFile; fileRef = 71D2E98717B21340003AEB04 /* ppm.c */; };
 		7C4333B11D4D49450033687C /* reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 71D37EB717C9D95F00ECCBE1 /* reachability.m */; };
 		7C4333B21D4D49450033687C /* function.m in Sources */ = {isa = PBXBuildFile; fileRef = 71A1041C17CFEB33003AC2C2 /* function.m */; };
-		7C4333B31D4D49450033687C /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 71614B37187745BE001AC360 /* genlock.c */; };
 		7C4333B51D4D49450033687C /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C51C4ECA740093125D /* AudioToolbox.framework */; };
 		7C4333B61D4D49450033687C /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C31C4ECA6B0093125D /* CoreAudio.framework */; };
 		7C4333B71D4D49450033687C /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
@@ -1058,7 +1055,6 @@
 		7C4D6E7C1D5111A400D34AC4 /* ppm.c in Sources */ = {isa = PBXBuildFile; fileRef = 71D2E98717B21340003AEB04 /* ppm.c */; };
 		7C4D6E7D1D5111A400D34AC4 /* reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 71D37EB717C9D95F00ECCBE1 /* reachability.m */; };
 		7C4D6E7E1D5111A400D34AC4 /* function.m in Sources */ = {isa = PBXBuildFile; fileRef = 71A1041C17CFEB33003AC2C2 /* function.m */; };
-		7C4D6E7F1D5111A400D34AC4 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 71614B37187745BE001AC360 /* genlock.c */; };
 		7C4D6E811D5111A400D34AC4 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C51C4ECA740093125D /* AudioToolbox.framework */; };
 		7C4D6E821D5111A400D34AC4 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C31C4ECA6B0093125D /* CoreAudio.framework */; };
 		7C4D6E831D5111A400D34AC4 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
@@ -1413,7 +1409,6 @@
 		7CB671AB1F9484C5001FFADF /* ppm.c in Sources */ = {isa = PBXBuildFile; fileRef = 71D2E98717B21340003AEB04 /* ppm.c */; };
 		7CB671AC1F9484C5001FFADF /* reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 71D37EB717C9D95F00ECCBE1 /* reachability.m */; };
 		7CB671AD1F9484C5001FFADF /* function.m in Sources */ = {isa = PBXBuildFile; fileRef = 71A1041C17CFEB33003AC2C2 /* function.m */; };
-		7CB671AE1F9484C5001FFADF /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 71614B37187745BE001AC360 /* genlock.c */; };
 		7CB671B01F9484C5001FFADF /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C51C4ECA740093125D /* AudioToolbox.framework */; };
 		7CB671B11F9484C5001FFADF /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C31C4ECA6B0093125D /* CoreAudio.framework */; };
 		7CB671B21F9484C5001FFADF /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
@@ -1440,6 +1435,11 @@
 		7CB671C91F9484C5001FFADF /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = 711F118A1637B6D50069EF13 /* Icon-72.png */; };
 		7CB671CA1F9484C5001FFADF /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 71BA647617D4F67B00446D65 /* Default-568h@2x.png */; };
 		7CB671D31F9501E6001FFADF /* symm_startup.enc in Resources */ = {isa = PBXBuildFile; fileRef = 7CB671D11F9501DC001FFADF /* symm_startup.enc */; };
+		7CB6F68A22C6D057008B8286 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB6F68922C6D057008B8286 /* genlock.c */; };
+		7CB6F68B22C6D373008B8286 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB6F68922C6D057008B8286 /* genlock.c */; };
+		7CB6F68C22C6D374008B8286 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB6F68922C6D057008B8286 /* genlock.c */; };
+		7CB6F68D22C6D375008B8286 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB6F68922C6D057008B8286 /* genlock.c */; };
+		7CB6F68E22C6D376008B8286 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB6F68922C6D057008B8286 /* genlock.c */; };
 		7CB8D5D91B6198B90080809C /* string_ref.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB8D5D81B6198B90080809C /* string_ref.c */; };
 		7CCB914E21A36EB000926C39 /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCB914D21A36EB000926C39 /* no_sound.c */; };
 		7CCB914F21A36F9D00926C39 /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCB914D21A36EB000926C39 /* no_sound.c */; };
@@ -1548,7 +1548,6 @@
 		7153FD1D175BF995002D1407 /* seqprint.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = seqprint.c; sourceTree = "<group>"; };
 		715913B41734D48B008F5524 /* quipTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipTableViewController.m; sourceTree = "<group>"; };
 		715913B61734D8F4008F5524 /* quipNavController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipNavController.m; sourceTree = "<group>"; };
-		71614B37187745BE001AC360 /* genlock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = genlock.c; sourceTree = "<group>"; };
 		716CCB2317AA1228009F5690 /* AdSupport.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdSupport.framework; path = System/Library/Frameworks/AdSupport.framework; sourceTree = SDKROOT; };
 		717074A5162DCDA500831805 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		71828E7E1726139F00F7CB35 /* http_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = http_menu.c; sourceTree = "<group>"; };
@@ -1826,6 +1825,9 @@
 		7CB4501E1D650EB500B6783F /* f1dim.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = f1dim.c; sourceTree = "<group>"; };
 		7CB671CF1F9484C5001FFADF /* Symmetry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Symmetry.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7CB671D11F9501DC001FFADF /* symm_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = symm_startup.enc; path = macros/startup/symm_startup.enc; sourceTree = "<group>"; };
+		7CB6F68722C6979D008B8286 /* vector_parser_data.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = vector_parser_data.h; sourceTree = "<group>"; };
+		7CB6F68822C697D6008B8286 /* subrt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = subrt.h; sourceTree = "<group>"; };
+		7CB6F68922C6D057008B8286 /* genlock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = genlock.c; sourceTree = "<group>"; };
 		7CB8D5D81B6198B90080809C /* string_ref.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = string_ref.c; sourceTree = "<group>"; };
 		7CCB914D21A36EB000926C39 /* no_sound.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = no_sound.c; sourceTree = "<group>"; };
 		7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = vector_parser_data.c; sourceTree = "<group>"; };
@@ -2236,6 +2238,8 @@
 		7115AE9616076BD40004645A /* vectree */ = {
 			isa = PBXGroup;
 			children = (
+				7CB6F68822C697D6008B8286 /* subrt.h */,
+				7CB6F68722C6979D008B8286 /* vector_parser_data.h */,
 				7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */,
 				7CEF2F6B1FA182F600ADC7A4 /* fusion.c */,
 				7CF4CFBB1CA5F725004F07AE /* vectree.y */,
@@ -2418,7 +2422,7 @@
 		71E43C2B160D4906003A2297 /* view */ = {
 			isa = PBXGroup;
 			children = (
-				71614B37187745BE001AC360 /* genlock.c */,
+				7CB6F68922C6D057008B8286 /* genlock.c */,
 				7C3904BA17F64787005163CD /* fbmenu.m */,
 				7182908B1726211700F7CB35 /* linmenu.c */,
 				718290751726205A00F7CB35 /* linear.c */,
@@ -2938,6 +2942,7 @@
 				71828FF31726195400F7CB35 /* pointer.c in Sources */,
 				71828FF41726195400F7CB35 /* reference.c in Sources */,
 				7C79F9E51A2D47F1005EE8B8 /* soundmenu.c in Sources */,
+				7CB6F68A22C6D057008B8286 /* genlock.c in Sources */,
 				71828FF51726195400F7CB35 /* resolve.c in Sources */,
 				71828FF61726195400F7CB35 /* subrt_funcs.c in Sources */,
 				71828FF71726195400F7CB35 /* subrt.c in Sources */,
@@ -3018,7 +3023,6 @@
 				71D37EB817C9D95F00ECCBE1 /* reachability.m in Sources */,
 				71A1041D17CFEB33003AC2C2 /* function.m in Sources */,
 				7C74566C1DB18F4D00A0D538 /* rbtree.c in Sources */,
-				71614B38187745BE001AC360 /* genlock.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3183,6 +3187,7 @@
 				7C4332191D4D43FC0033687C /* sample.c in Sources */,
 				7C43321A1D4D43FC0033687C /* scale.c in Sources */,
 				7C43321B1D4D43FC0033687C /* scramble.c in Sources */,
+				7CB6F68B22C6D373008B8286 /* genlock.c in Sources */,
 				7C43321C1D4D43FC0033687C /* SeedFill.c in Sources */,
 				7C5D93831D651A210096D7BC /* nrmenu.c in Sources */,
 				7C43321D1D4D43FC0033687C /* fftsupp.c in Sources */,
@@ -3305,7 +3310,6 @@
 				7C9F27A720C32B45002D9F63 /* equivalence.c in Sources */,
 				7C43328A1D4D43FC0033687C /* reachability.m in Sources */,
 				7C43328B1D4D43FC0033687C /* function.m in Sources */,
-				7C43328C1D4D43FC0033687C /* genlock.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3491,6 +3495,7 @@
 				7C4333621D4D49450033687C /* pointer.c in Sources */,
 				7C4333631D4D49450033687C /* reference.c in Sources */,
 				7C4333641D4D49450033687C /* soundmenu.c in Sources */,
+				7CB6F68C22C6D374008B8286 /* genlock.c in Sources */,
 				7C4333651D4D49450033687C /* resolve.c in Sources */,
 				7C4333661D4D49450033687C /* subrt_funcs.c in Sources */,
 				7C4333671D4D49450033687C /* subrt.c in Sources */,
@@ -3571,7 +3576,6 @@
 				7C4333B11D4D49450033687C /* reachability.m in Sources */,
 				7C4333B21D4D49450033687C /* function.m in Sources */,
 				7C74566E1DB18F5600A0D538 /* rbtree.c in Sources */,
-				7C4333B31D4D49450033687C /* genlock.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3757,6 +3761,7 @@
 				7C4D6E2E1D5111A400D34AC4 /* pointer.c in Sources */,
 				7C4D6E2F1D5111A400D34AC4 /* reference.c in Sources */,
 				7C4D6E301D5111A400D34AC4 /* soundmenu.c in Sources */,
+				7CB6F68D22C6D375008B8286 /* genlock.c in Sources */,
 				7C4D6E311D5111A400D34AC4 /* resolve.c in Sources */,
 				7C4D6E321D5111A400D34AC4 /* subrt_funcs.c in Sources */,
 				7C4D6E331D5111A400D34AC4 /* subrt.c in Sources */,
@@ -3837,7 +3842,6 @@
 				7C4D6E7D1D5111A400D34AC4 /* reachability.m in Sources */,
 				7C4D6E7E1D5111A400D34AC4 /* function.m in Sources */,
 				7C74566F1DB18F5700A0D538 /* rbtree.c in Sources */,
-				7C4D6E7F1D5111A400D34AC4 /* genlock.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4002,6 +4006,7 @@
 				7CB671311F9484C5001FFADF /* sample.c in Sources */,
 				7CB671321F9484C5001FFADF /* scale.c in Sources */,
 				7CB671331F9484C5001FFADF /* scramble.c in Sources */,
+				7CB6F68E22C6D376008B8286 /* genlock.c in Sources */,
 				7CB671341F9484C5001FFADF /* SeedFill.c in Sources */,
 				7CB671351F9484C5001FFADF /* nrmenu.c in Sources */,
 				7CB671361F9484C5001FFADF /* fftsupp.c in Sources */,
@@ -4124,7 +4129,6 @@
 				7C9F27AA20C32B48002D9F63 /* equivalence.c in Sources */,
 				7CB671AC1F9484C5001FFADF /* reachability.m in Sources */,
 				7CB671AD1F9484C5001FFADF /* function.m in Sources */,
-				7CB671AE1F9484C5001FFADF /* genlock.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4192,7 +4196,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = ../../include;
+				HEADER_SEARCH_PATHS = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = iQuIP;
@@ -4241,7 +4245,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = ../../include;
+				HEADER_SEARCH_PATHS = "";
 				"HEADER_SEARCH_PATHS[sdk=iphoneos*]" = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
@@ -4409,6 +4413,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
+				"HEADER_SEARCH_PATHS[arch=*]" = ../../include;
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "";
@@ -4418,6 +4423,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = JBM_DevProf_11_24_2018;
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -4444,6 +4450,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = NewerDistCert;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=*]" = NewerDistCert;
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;

@@ -1,0 +1,74 @@
+# Test script for Spinnaker - but what does it do???
+
+max_warnings -1
+Set cam1 Blackfly_S_BFS-U3-13Y3M
+Set cam2 Blackfly_S_BFS-U3-13Y3M_2
+
+spinnaker
+  init
+#  list_interfaces	# command removed...
+  list_cams
+#  info Flea3_FL3-U3-13Y3M
+#  select Flea3_FL3-U3-13Y3M
+#  test
+  quit
+
+#Viewer v 1280 1024
+
+Set idx 1
+repeat 2
+#repeat 1
+  Set cam_name cam$idx
+  advise "Ready to test settings for $cam_name $$cam_name..."
+  Pause
+  spinnaker
+#    info $$cam_name
+    nodes
+      list_maps
+#      advise "Selecting BlackFly map..."
+#      select_map Blackfly_S_BFS-U3-13Y3M.genicam
+      advise "Selecting map for $cam_name ($$cam_name)..."
+      select_map $$cam_name.genicam
+      info AcquisitionMode
+      info Width
+
+      #info Sharpness		# only flea has this???
+
+      list_categories
+      print_category AnalogControl
+      advise "Setting GainAuto to Once"
+      set GainAuto Once
+      print_category AnalogControl
+      advise "Setting GainAuto to Continuous"
+      set GainAuto Continuous
+      print_category AnalogControl
+      advise "Setting GainAuto to Off"
+      set GainAuto Off
+      print_category AnalogControl
+      #info_all
+      #exit
+      quit
+    advise "Ready to print info for $cam_name $$cam_name..."
+    Pause
+    advise "selecting $$cam_name"
+    select $$cam_name
+    info $$cam_name
+# "test" function has been removed from the menu?
+#
+#advise "testing $$cam_name"
+#    test		# what does this do?
+    quit
+#  Set fno 0
+#  repeat 8
+#    Show_Bytes frame$fno v
+#    Pause
+#    Increment fno
+#    end
+
+  Increment idx
+  end
+
+advise "no more cameras"
+exit
+
+
