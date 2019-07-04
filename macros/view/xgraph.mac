@@ -39,13 +39,17 @@ Set scale_determined 0
 Set axes_drawn 0
 Set x_scale_determined 0
 Set y_scale_determined 0
-Set x_tick_spacing -1
-Set y_tick_spacing -1
 Set have_y_legend 0
 Set have_x_legend 0
+Set grid_style 1		# default
+
+Define Set_Default_Plotter_Params 0
+Set x_tick_spacing -1
+Set y_tick_spacing -1
 Set y_legend none
 Set x_legend none
-Set grid_style 1		# default
+.
+
 
 Define Process_Arg 1 index
 #advise "Process_Arg $1 (argc = $argc)"
@@ -54,7 +58,7 @@ Set arg $$argname
 If !strncmp('$arg','--',2) "Process_Long_Option $arg $1 exit_macro"
 If !strncmp('$arg','-',1) "Process_Short_Option $arg $1 exit_macro"
 # The default action is plot a file of points
-If !$have_plotter_instance Plotter_Instance
+If !$have_plotter_instance "Plotter_Instance Set_Default_Plotter_Params"
 #advise "Graph_File $$argname $pen_color"
 Graph_File $$argname $pen_color
 Next_Pen_Color
@@ -291,7 +295,6 @@ Set plotter_y 50
 Set have_plotter_instance 0
 
 Define Plotter_Instance 0
-#advise "Plotter_Instance:  New_Plotter $plotter_name $plotter_width $plotter_height"
 New_Plotter $plotter_name $plotter_width $plotter_height
 Assign_Margins
 White_On_Black

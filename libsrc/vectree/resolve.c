@@ -680,7 +680,7 @@ dump_tree(enp);
 			break;
 
 		case T_POINTER:
-			idp = eval_ptr_ref(enp,EXPECT_PTR_SET);
+			idp = eval_ptr_expr(enp,EXPECT_PTR_SET);
 			if( idp == NULL ){
 				break;	/* probably not set */
 			}
@@ -948,6 +948,7 @@ void _resolve_subrt_call(QSP_ARG_DECL  Vec_Expr_Node *call_enp,List *uk_list, Sh
 	Context_Pair *prev_cpp;
 
 	srp = VN_SUBRT(call_enp);
+	assert(srp!=NULL);
 	argval_tree = VN_CHILD(call_enp,0);
 
 	prev_cpp = pop_previous(SINGLE_QSP_ARG);
@@ -1086,10 +1087,11 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	if( dst_dp == NULL )
+	if( dst_dp == NULL ){
 		resolve_subrt_call(call_enp,lp,NULL);
-	else
+	} else {
 		resolve_subrt_call(call_enp,lp,OBJ_SHAPE(dst_dp));
+	}
 
 	executing = save_exec;
 
@@ -1329,7 +1331,7 @@ void _resolve_pointer(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 	 * typically the arg values have not been set at calltime...
 	 */
 
-	/* idp = eval_ptr_ref(uk_enp,1); */
+	/* idp = eval_ptr_expr(uk_enp,1); */
 	idp = get_set_ptr(uk_enp);
 
 	if( idp == NULL ){

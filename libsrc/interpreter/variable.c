@@ -9,6 +9,8 @@
 #include "list.h"
 #include "getbuf.h"
 
+#include "query_stack.h"	// temporary!
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>	// getcwd
 #endif // HAVE_UNISTD_H

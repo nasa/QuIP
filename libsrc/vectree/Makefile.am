@@ -26,6 +26,7 @@ libvectree_a_SOURCES =			\
 			vt_native.c	\
 			string_ref.c	\
 			fusion.c	\
+			vector_parser_data.c	\
 			vt_native.h
 
 noinst_HEADERS =	subrt.h

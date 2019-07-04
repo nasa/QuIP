@@ -1,37 +1,60 @@
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Numeric variables - QuIP Manual</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="QuIP Manual">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="up" href="Variables.html#Variables" title="Variables">
-<link rel="prev" href="Special-variables.html#Special-variables" title="Special variables">
-<link rel="next" href="Advanced-variable-usage.html#Advanced-variable-usage" title="Advanced variable usage">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
-</head>
-<body>
-<div class="node">
-<a name="Numeric-variables"></a>
-<p>
-Next:&nbsp;<a rel="next" accesskey="n" href="Advanced-variable-usage.html#Advanced-variable-usage">Advanced variable usage</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="Special-variables.html#Special-variables">Special variables</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="Variables.html#Variables">Variables</a>
-<hr>
-</div>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Numeric variables (QuIP Manual)</title>
 
+<meta name="description" content="Numeric variables (QuIP Manual)">
+<meta name="keywords" content="Numeric variables (QuIP Manual)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="QuIPindex.html#QuIPindex" rel="index" title="QuIPindex">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="Variables.html#Variables" rel="up" title="Variables">
+<link href="Advanced-variable-usage.html#Advanced-variable-usage" rel="next" title="Advanced variable usage">
+<link href="Special-variables.html#Special-variables" rel="prev" title="Special variables">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="Numeric-variables"></a>
+<div class="header">
+<p>
+Next: <a href="Advanced-variable-usage.html#Advanced-variable-usage" accesskey="n" rel="next">Advanced variable usage</a>, Previous: <a href="Special-variables.html#Special-variables" accesskey="p" rel="prev">Special variables</a>, Up: <a href="Variables.html#Variables" accesskey="u" rel="up">Variables</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="QuIPindex.html#QuIPindex" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Numeric-variables-1"></a>
 <h4 class="subsection">2.4.5 Numeric variables</h4>
 
 <p>It is not uncommon to use a variable to hold a numeric value.  The
@@ -43,22 +66,25 @@ the <code>Assign</code> macro.  <code>Assign</code> is like <code>Set</code> in 
 sets the value of a variable, but it does so after running the value
 through the scalar expression parser, and formatting the result
 as a number.  For example:
-
+</p>
 <p>quip&gt; Set pi 4*atan(1) <br>
 quip&gt; Print pi <br>
 pi = 4*atan(1) <br>
 quip&gt; Assign pi 4*atan(1) <br>
 quip&gt; Print pi <br>
 pi = 3.141593 <br>
-
+</p>
 <p>Several macros are provided to facilitate the manipulation of numeric variables:
-
+</p>
 <p><code>Add_Var &lt;var_name&gt; &lt;number&gt;</code> <br>
 <code>Mul_Var &lt;var_name&gt; &lt;number&gt;</code> <br>
 <code>Increment &lt;var_name&gt;</code> <br>
 <code>Decrement &lt;var_name&gt;</code> <br>
-
+</p>
 <p>These correspond to the C language operators <code>+=</code>, <code>*=</code>, <code>++</code> and <code>--</code>, respectively.
+</p>
 
-</body></html>
 
+
+</body>
+</html>

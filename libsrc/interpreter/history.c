@@ -381,63 +381,6 @@ static const char *cyc_list_match(QSP_ARG_DECL  const char *so_far, int directio
 	return(hcp->hc_text);
 }
 
-#ifdef NOT_USED_YET
-
-static const char * cyc_tree_match(Frag_Match_Info *fmi_p, int direction )
-{
-	Item *ip;
-
-	// there may be no items!?
-	assert( fmi_p != NULL );
-
-	if( direction == CYC_FORWARD ){
-		if( fmi_p->fmi_u.rbti.curr_n_p == fmi_p->fmi_u.rbti.last_n_p )
-			fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.first_n_p;
-		else {
-			fmi_p->fmi_u.rbti.curr_n_p = rb_successor_node( fmi_p->fmi_u.rbti.curr_n_p );
-			assert( fmi_p->fmi_u.rbti.curr_n_p != NULL );
-		}
-	} else {
-		if( fmi_p->fmi_u.rbti.curr_n_p == fmi_p->fmi_u.rbti.first_n_p )
-			fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.last_n_p;
-		else {
-			fmi_p->fmi_u.rbti.curr_n_p = rb_predecessor_node( fmi_p->fmi_u.rbti.curr_n_p );
-			assert( fmi_p->fmi_u.rbti.curr_n_p != NULL );
-		}
-	}
-	ip = fmi_p->fmi_u.rbti.curr_n_p->data;
-	return ip->item_name;
-}
-#endif // NOT_USED_YET
-
-#ifdef NOT_USED_YET
-
-static const char *cyc_item_list( Frag_Match_Info *fmi_p, int direction )
-{
-	Item *ip;
-
-	assert( fmi_p != NULL );
-
-	if( direction == CYC_FORWARD ){
-		if( fmi_p->fmi_u.li.curr_np == fmi_p->fmi_u.li.last_np )
-			fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.first_np;
-		else {
-			fmi_p->fmi_u.li.curr_np = NODE_NEXT(fmi_p->fmi_u.li.curr_np);
-			assert( fmi_p->fmi_u.li.curr_np != NULL );
-		}
-	} else {
-		if( fmi_p->fmi_u.li.curr_np == fmi_p->fmi_u.li.first_np )
-			fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.last_np;
-		else {
-			fmi_p->fmi_u.li.curr_np = NODE_PREV( fmi_p->fmi_u.li.curr_np );
-			assert( fmi_p->fmi_u.li.curr_np != NULL );
-		}
-	}
-	ip = fmi_p->fmi_u.li.curr_np->n_data;
-	return ip->item_name;
-}
-#endif // NOT_USED_YET
-
 #define advance_frag_match(fmi_p,direction) _advance_frag_match(QSP_ARG  fmi_p,direction)
 
 static const char *_advance_frag_match(QSP_ARG_DECL  Frag_Match_Info * fmi_p, int direction )
@@ -484,8 +427,9 @@ static inline Node *cycle_match_info( Node *np, int direction, Match_Cycle *mc_p
 	return np;
 }
 
-// We can have matches in different contexts on the context stack.  We keep a list that has matches
-// we cycle the current one, and advance if we are at the end of the cycle for the current frag_match_info
+// We can have matches in different contexts on the context stack.  For each context,
+// we keep a list that has matches; we cycle the current one, and advance if we are
+// at the end of the cycle for the current frag_match_info
 
 static const char * cyc_item_match(QSP_ARG_DECL  const char *so_far, int direction )
 {
@@ -508,8 +452,12 @@ static const char * cyc_item_match(QSP_ARG_DECL  const char *so_far, int directi
 
 	fmi_p = NODE_DATA(np);
 
+//sprintf(ERROR_STRING,"cyc_item_match \"%s\", will call advance_frag_match...",so_far);
+//advise(ERROR_STRING);
 	s = advance_frag_match(fmi_p,direction);
-	if( s != NULL ) return s;
+	if( s != NULL ){
+		return s;
+	}
 
 	do {
 		np = cycle_match_info( np, direction, mc_p );
@@ -519,8 +467,9 @@ static const char * cyc_item_match(QSP_ARG_DECL  const char *so_far, int directi
 
 		s = current_frag_match(fmi_p);
 		// s can be null if there are no matches in this context...
-		if( s != NULL )
+		if( s != NULL ){
 			return s;
+		}
 		// Can this become an infinite loop?
 	} while(1);
 }
@@ -533,6 +482,7 @@ static const char * cyc_item_match(QSP_ARG_DECL  const char *so_far, int directi
 const char *_cyc_match(QSP_ARG_DECL  const char *so_far, int direction )
 {
 	if( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL ){
+//advise("cyc_match will return cyc_item_match...");
 		return cyc_item_match(QSP_ARG  so_far, direction );
 	}
 	return cyc_list_match(QSP_ARG  so_far, direction );

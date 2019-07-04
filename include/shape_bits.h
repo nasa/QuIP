@@ -152,6 +152,8 @@ typedef enum {
 // BUG? we'd like to have the precision be the machine's native long...
 // This is int32 or int64, which have different PREC codes...
 
+// BUG - BITS_PER_BITMAP_WORD needs to be defined in m4 so that it is
+// expanded in the openCL kernel source code!?
 
 #if __WORDSIZE == 64
 

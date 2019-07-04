@@ -105,6 +105,7 @@ FIO_OPEN_FUNC( rvfio )
 			/* overwrite of an existing file.
 			 * destroy the old one to make sure we get the size right.
 			 */
+fprintf(stderr,"rvfio_open:  file %s already exists, will remove...\n",name);
 			rv_rmfile(name);
 		}
 		_n_disks = creat_rv_file(name,size,rv_fd_arr);

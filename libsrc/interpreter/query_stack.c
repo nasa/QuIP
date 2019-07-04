@@ -27,6 +27,72 @@ ITEM_PICK_FUNC(Query_Stack,query_stack)
 static void push_prompt(QSP_ARG_DECL  const char *pmpt);
 static void pop_prompt(SINGLE_QSP_ARG_DECL);
 
+// We have a stack of parser environments, and a free list to keep them around
+// when they are popped...
+
+void init_vector_parser_data_stack(Query_Stack *qsp)
+{
+	SET_QS_VECTOR_PARSER_DATA_STACK(qsp, new_list());
+	SET_QS_VECTOR_PARSER_DATA_FREELIST(qsp, new_list());
+	SET_QS_VECTOR_PARSER_DATA(qsp, NULL);
+}
+
+static Vector_Parser_Data *find_free_vector_parser_data(SINGLE_QSP_ARG_DECL)
+{
+	Vector_Parser_Data *vpd_p;
+
+	if( QLIST_HEAD( QS_VECTOR_PARSER_DATA_FREELIST(THIS_QSP) ) != NULL ){
+		Node *np;
+		np = remHead( QS_VECTOR_PARSER_DATA_FREELIST(THIS_QSP) );
+		vpd_p = NODE_DATA(np);
+		rls_node(np);
+	} else {
+		vpd_p = new_vector_parser_data();
+	}
+	return vpd_p;
+}
+
+void pop_vector_parser_data(SINGLE_QSP_ARG_DECL)
+{
+	Vector_Parser_Data *vpd_p;
+	Node *np;
+
+	np = remHead( QS_VECTOR_PARSER_DATA_STACK(THIS_QSP) );
+	assert(np!=NULL);
+
+	vpd_p = NODE_DATA(np);
+
+	// We don't release the resources of this object, we just store it
+	// on the free list, and it will be ready to go if we need it again.
+	// rls_vector_parser_data(vpd_p);	// prevent leaks!
+
+	addHead( QS_VECTOR_PARSER_DATA_FREELIST(THIS_QSP), np );
+
+	np = QLIST_HEAD( QS_VECTOR_PARSER_DATA_STACK(THIS_QSP) );
+	if( np != NULL ){
+		vpd_p = NODE_DATA(np);
+	} else {
+		vpd_p = NULL;
+	}
+	SET_QS_VECTOR_PARSER_DATA(THIS_QSP, vpd_p);
+}
+
+void push_vector_parser_data(SINGLE_QSP_ARG_DECL)
+{
+	Vector_Parser_Data *vpd_p;
+	Node *np;
+
+	vpd_p = find_free_vector_parser_data(SINGLE_QSP_ARG);
+	assert(vpd_p!=NULL);
+
+	// now we initialize in new_vector_parser_data...
+	// init_vector_parser_data(vpd_p);
+
+	np = mk_node(vpd_p);
+	addHead( QS_VECTOR_PARSER_DATA_STACK(THIS_QSP), np );
+	SET_QS_VECTOR_PARSER_DATA(THIS_QSP, vpd_p);
+}
+
 void _push_menu(QSP_ARG_DECL  Menu *mp)
 {
 	push_item(QS_MENU_STACK(THIS_QSP),mp);
@@ -172,15 +238,9 @@ static void pop_prompt(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-char *error_string(SINGLE_QSP_ARG_DECL)
-{
-	return THIS_QSP->qs_error_string;
-}
-
-char *message_string(SINGLE_QSP_ARG_DECL)
-{
-	return THIS_QSP->qs_msg_str;
-}
+char *error_string(SINGLE_QSP_ARG_DECL) { return THIS_QSP->qs_error_string; }
+char *vector_parser_error_string(SINGLE_QSP_ARG_DECL) { return THIS_QSP->qs_vector_parser_error_string; }
+char *message_string(SINGLE_QSP_ARG_DECL) { return THIS_QSP->qs_msg_str; }
 
 #ifdef HAVE_LIBCURL
 Curl_Info *qs_curl_info(SINGLE_QSP_ARG_DECL)
@@ -189,6 +249,7 @@ Curl_Info *qs_curl_info(SINGLE_QSP_ARG_DECL)
 }
 #endif // HAVE_LIBCURL
 
+#ifdef FOOBAR
 Vec_Expr_Node * qs_top_node( SINGLE_QSP_ARG_DECL  )
 {
 	assert( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL );
@@ -200,16 +261,6 @@ void set_top_node( QSP_ARG_DECL  Vec_Expr_Node *enp )
 {
 	assert( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL );
 	SET_VPD_TOP_ENP( QS_VECTOR_PARSER_DATA(THIS_QSP), enp );
-}
-
-int qs_serial_func(SINGLE_QSP_ARG_DECL)
-{
-	return _QS_SERIAL(THIS_QSP);
-}
-
-String_Buf *qs_scratch_buffer(SINGLE_QSP_ARG_DECL)
-{
-	return THIS_QSP->qs_scratch;
 }
 
 void set_curr_string(QSP_ARG_DECL  const char *s)
@@ -230,6 +281,18 @@ String_Buf *qs_expr_string(SINGLE_QSP_ARG_DECL)
 	return VPD_EXPR_STRING( QS_VECTOR_PARSER_DATA(THIS_QSP) );
 }
 
+#endif // FOOBAR
+
+int qs_serial_func(SINGLE_QSP_ARG_DECL)
+{
+	return _QS_SERIAL(THIS_QSP);
+}
+
+String_Buf *qs_scratch_buffer(SINGLE_QSP_ARG_DECL)
+{
+	return THIS_QSP->qs_scratch;
+}
+
 int qs_level(SINGLE_QSP_ARG_DECL)
 {
 	return QS_LEVEL(THIS_QSP);
@@ -248,5 +311,10 @@ int _max_vectorizable(SINGLE_QSP_ARG_DECL)
 void _set_max_vectorizable(QSP_ARG_DECL  int v)
 {
 	SET_QS_MAX_VECTORIZABLE(THIS_QSP,v);
+}
+
+Vector_Parser_Data * _qs_vector_parser_data(SINGLE_QSP_ARG_DECL)
+{
+	return QS_VECTOR_PARSER_DATA(THIS_QSP);
 }
 

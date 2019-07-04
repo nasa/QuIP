@@ -7,7 +7,8 @@
 #include "quip_prot.h"
 #include "vectree.h"
 #include "subrt.h"
-#include "query_stack.h"	// BUG
+#include "vector_parser_data.h"
+//#include "query_stack.h"	// BUG
 
 
 /* We call this after we scan the body of a subroutine for which
@@ -255,6 +256,7 @@ COMMAND_FUNC( do_run_subrt )
 	push_vector_parser_data(SINGLE_QSP_ARG);
 	args_enp = get_subrt_args(srp);
 	call_enp = node1(T_CALLFUNC,args_enp);
+	SET_VN_SUBRT(call_enp, srp);
 
 	run_subrt_immed(srp,NULL,call_enp);
 	pop_vector_parser_data(SINGLE_QSP_ARG);

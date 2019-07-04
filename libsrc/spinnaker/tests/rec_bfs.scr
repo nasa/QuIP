@@ -1,0 +1,45 @@
+max_warnings 30
+
+< $macro_dir/system/mark_time.mac
+< utils.mac
+#< flea3.mac
+< blackfly.mac
+
+# Blackfly_S_BFS-U3-13Y3M
+# Blackfly_S_BFS-U3-13Y3M_2
+
+#Set cam0 Flea3_FL3-U3-13Y3M
+Set cam0 Blackfly_S_BFS-U3-13Y3M
+
+Init_Cameras
+
+#Init_Flea3
+Init_Chunk_Data $cam0
+
+#Test_Grab $cam0
+
+advise "Initializing raw volume..."
+rawvol
+  default
+  ls_cwd
+  quit
+
+advise "Ready to make a recording..."
+#Pause
+
+spinnaker
+  select $cam0
+  capture
+    set_n_buffers 40
+    #verbose yes
+    record foo1 500 1 $cam0
+    advise 'Back from record command'
+#    Pause
+    quit
+  quit
+
+advise "Ready to exit program..."
+exit
+
+
+

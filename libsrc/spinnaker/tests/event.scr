@@ -1,0 +1,228 @@
+# Based on grab.scr, this is for testing event handling...
+
+advise "FOR THIS PROGRAM TO WORK PROPERLY, spink_acq.c MUST BE COMPILED"
+advise "WITH using_image_events SET TO TRUE!!!\n"
+Pause
+
+max_warnings 3
+#max_warnings -1
+< $macro_dir/system/mark_time.mac
+
+Set cam0 Blackfly_S_BFS-U3-13Y3M
+Set cam1 Blackfly_S_BFS-U3-13Y3M_2
+#Set cam2 Flea3_FL3-U3-13Y3M
+
+spinnaker
+  advise "SPIN initializing..."
+  init
+  advise "SPIN DONE initializing..."
+  list_cams
+  quit
+
+Define Release_Oldest 0
+spinnaker capture release quit quit
+.
+
+Define Grab_Next 0
+spinnaker capture grab quit quit
+.
+
+# at 170 fps, there is around 6msec between frames...
+
+Set proc_usecs 3000
+
+# this value causes 10% underrun...
+#Set proc_usecs 6000
+# this value causes 25% underrun...
+#Set proc_usecs 7000
+# this value causes 40% underrun...
+#Set proc_usecs 8000
+# this value causes 70% underrun...
+#Set proc_usecs 10000
+# this value causes 110% underrun...
+#Set proc_usecs 12000
+
+Define Init_Timestamp 0
+Set last_ts -1
+Set first_fid -1
+.
+
+Define Show_Timestamp 0
+spinnaker
+  chunks
+    fetch ts Timestamp cam$cam_idx.frame$newest
+    fetch fid FrameID cam$cam_idx.frame$newest
+    quit
+  quit
+If $last_ts>0 Show_Delta
+Set last_ts $ts
+If $first_fid<0 "Set first_fid $fid"
+Add_Var fid -$first_fid
+advise "Frame $fid"
+.
+
+Define Show_Delta 0
+Assign delta ($ts-$last_ts)/1000000	# nano seconds?
+advise "delta = $delta msec"
+.
+
+Define Set_Exposure_Time 2 camera value
+advise "Set_Exposure_Time $1 $2"
+# NOTE:  ExposureAuto must be false!
+spinnaker
+  nodes
+    select_map $1.genicam
+    set ExposureAuto Off
+    set ExposureTime $2
+    info ExposureTime
+    info ExposureAuto
+    Pause
+    quit
+  quit
+.
+
+Define GrabEm 1 n
+spinnaker
+  select $cam0
+  capture
+    set_n_capture $1
+    quit
+  select $cam1
+  capture
+    set_n_capture $1
+    quit
+  quit
+
+Set_Exposure_Time $cam0 997
+Set_Exposure_Time $cam1 997
+
+Init_Timestamp
+advise "Grabbing $1 frames..."
+advise "starting capture ($cam0)"
+spinnaker select $cam0 capture start quit quit
+advise "starting capture ($cam1)"
+spinnaker select $cam1 capture start quit quit
+advise "capture started..."
+Set i_grab 0
+#repeat $1
+#  advise "grabbing frame $i_grab..."
+#  Grab_Next
+#  Set image_ready 0
+#  Show_Timestamp
+#  usleep $proc_usecs
+#  Release_Oldest
+#  Increment i_grab
+#  end
+
+# for now we just want to see if the handler msg prints?
+do
+  os events quit
+  while is_capturing('$cam0')&&is_capturing('$cam1')
+
+advise 'DONE capturing from two cameras!'
+advise "stopping capture ($cam0)"
+spinnaker select $cam0 capture stop quit quit
+advise "stopping capture ($cam1)"
+spinnaker select $cam1 capture stop quit quit
+.
+
+Define Time_It 2 macro_name arg
+advise "Time_It $1 $2 BEGIN"
+Zero_Time
+$1 $2
+Check_Time
+advise "$total_ms milliseconds elapsed"
+advise "Time_It DONE"
+.
+
+Define Show_Underrun_Count 0
+spinnaker
+  nodes
+    select_map $$cam_name.stream_TL
+#    info_all
+    info StreamBufferUnderrunCount
+    info StreamTotalBufferCount
+    quit
+  quit
+.
+
+Define Setup_Grab 2 cam n_buffers
+spinnaker
+  info $1
+  nodes
+    select_map $1.genicam
+    info AcquisitionMode
+    select_map $1.stream_TL
+    info StreamBufferHandlingMode
+    set StreamBufferHandlingMode NewestOnly
+    info StreamBufferHandlingMode
+    info StreamDefaultBufferCount
+    set StreamDefaultBufferCount $2
+    info StreamDefaultBufferCount
+    quit
+advise "selecting $1"
+  select $1
+  info $1
+  capture
+    advise "Setting up $2 buffers for $1"
+    set_n_buffers $2
+    quit
+  quit
+advise "Setup_Grab $1 $2  DONE"
+.
+
+Set cam_idx 0
+Set cam_name cam$cam_idx
+
+spinnaker
+  advise "SPIN selecting $$cam_name"
+  select $$cam_name
+  advise "SPIN selecting map $$cam_name.genicam"
+  nodes
+    select_map $$cam_name.genicam
+    #info_all
+    quit
+  advise "SPIN enabling Timestamp"
+  chunks
+    enable Timestamp
+  advise "SPIN enabling FrameID"
+    enable FrameID
+    quit
+  nodes
+    select_map $$cam_name.genicam
+    #info_all
+    quit
+  quit
+
+# There seems to be some sort of internal bug that bites us when we increase the number
+# of buffers???
+
+advise "SPIN Setup_Grab $cam0"
+Setup_Grab $cam0 10	# default, works
+advise "SPIN Setup_Grab $cam1"
+Setup_Grab $cam1 10	# default, works
+
+Set frm_idx 0
+Set n_test 170	# should be 1 sec for Blackfly...
+Time_It GrabEm $n_test
+Show_Underrun_Count
+Time_It GrabEm $n_test
+Show_Underrun_Count
+#Time_It GrabEm $n_test
+#Show_Underrun_Count
+
+Define Show_All_Nodes 0
+spinnaker
+  nodes
+    select_map $$cam_name.device_TL
+    info_all
+    select_map $$cam_name.stream_TL
+    info_all
+    select_map $$cam_name.genicam
+    info_all
+    quit quit
+.
+
+exit
+
+

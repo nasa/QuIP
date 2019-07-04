@@ -178,10 +178,10 @@ view
 
 Define Validate_Fonts 0
 Set fonts_present 0
-Print unit_font
+#Print unit_font
 Validate_Font $unit_font
 If !$font_present exit_macro
-Print legend_font
+#Print legend_font
 Validate_Font $legend_font
 If !$font_present exit_macro
 Set fonts_present 1

@@ -15,7 +15,7 @@
 # (X_Legend_Top string)
 # Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
 # Plot_Y_Axis $ymin $ymax $y_tick_spacing $xmin
-# Label_X_Ticks $xmin $xmax $x_tick_spacing
+# Label_X_Ticks $first_x $last_x $x_tick_spacing
 # Label_Y_Ticks $ymin $ymax $y_tick_spacing
 # (Label_Y_Ticks_Right first max delta)
 #
@@ -54,7 +54,8 @@ Require_Var ymin
 Require_Var xmax
 Require_Var ymax
 Require_Var y_legend
-Require_Var y_tick_spacing
+Require_Var y_tick_auto
+If $y_tick_auto "Require_Var y_tick_spacing"
 Check_Var y_tick_offset 0
 Check_Var y_tick_last $ymax
 Check_Var y_tick_first $ymin
@@ -63,8 +64,10 @@ If !$vars_ok exit_macro
 Plot_Data_Range $xmin $ymin $xmax $ymax
 
 Y_Legend $y_legend
-Plot_Y_Axis_With_Ticks $ymin $ymax $xmin $y_tick_first $y_tick_last $y_tick_spacing
-Label_Y_Ticks $y_tick_first $y_tick_last $y_tick_spacing
+If $y_tick_auto
+  Then 'Plot_Y_Axis_With_Ticks $ymin $ymax $xmin $y_tick_first $y_tick_last $y_tick_spacing \
+        Label_Y_Ticks $y_tick_first $y_tick_last $y_tick_spacing'
+  Else Custom_Y_Axis
 .
 
 Define Redraw_X_Axis 0
@@ -86,6 +89,12 @@ Define Check_Var 2 varname default_value
 If !var_exists('$1')
   "Set $1 $2 Tell_If 'Check_Var:  $1 set to default value $2'"
 .
+
+# Unset old axis vars to make sure that we don't inherit from
+# a previous viewer?
+#
+# This is not currently called, because it was killing x_tick_first read from
+# plot param file!?
 
 Define Clear_Axis_Vars 0
 UnSet_If xmin
@@ -111,14 +120,62 @@ Require_Var ymin	# need y axis limits to draw x legend?
 Require_Var xmax
 Require_Var ymax
 Require_Var x_legend
-Require_Var x_tick_spacing
+Require_Var x_tick_auto
+If $x_tick_auto "Require_Var x_tick_spacing"
 Check_Var x_tick_offset 0
 If !$vars_ok exit_macro
 
 X_Legend $x_legend
 #Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
-Plot_X_Axis_Offset $xmin $xmax $x_tick_spacing $ymin $x_tick_offset
-Label_X_Ticks $xmin+$x_tick_offset $xmax $x_tick_spacing
+If $x_tick_auto
+  Then 'Plot_X_Axis_Offset $xmin $xmax $x_tick_spacing $ymin $x_tick_offset $x_tick_last\
+        Label_X_Ticks $xmin+$x_tick_offset $x_tick_last $x_tick_spacing'
+  Else Custom_X_Axis
+.
+
+Define Custom_X_Axis 0
+Plain_X_Axis $xmin $xmax $ymin
+Assign n_x_ticks $n_x_custom_ticks
+If $n_x_ticks<=0 exit_macro
+Set tick_idx 0
+repeat $n_x_ticks
+  Set vname x_tick_${tick_idx}_posn
+  If !var_exists('$vname') "warn 'Custom_X_Axis:  $vname is not defined!?' exit_macro"
+  Set _x $$vname
+  X_Tick_At $_x $ymin		# BUG should allow for offset?
+
+  Set vname x_tick_${tick_idx}_label
+  If !var_exists('$vname') "warn 'Custom_X_Axis:  $vname is not defined!?' exit_macro"
+  Set label $$vname
+  If strlen('$label')<=0
+    Then "warn 'Custom_X_Axis:  empty tick label!?'"
+    Else "Label_X_Tick $_x $label"
+
+  Increment tick_idx
+  end
+.
+
+# BUG should merge code with Custom_X_Axis!
+Define Custom_Y_Axis 0
+Plain_Y_Axis $ymin $ymax $xmin
+Assign n_y_ticks $n_y_custom_ticks
+If $n_y_ticks<=0 exit_macro
+Set tick_idx 0
+repeat $n_y_ticks
+  Set vname y_tick_${tick_idx}_posn
+  If !var_exists('$vname') "warn 'Custom_Y_Axis:  $vname is not defined!?' exit_macro"
+  Set _y $$vname
+  Y_Tick_At $xmin $_y		# BUG should allow for offset?
+
+  Set vname y_tick_${tick_idx}_label
+  If !var_exists('$vname') "warn 'Custom_X_Axis:  $vname is not defined!?' exit_macro"
+  Set label $$vname
+  If strlen('$label')<=0
+    Then "warn 'Custom_Y_Axis:  empty tick label!?'"
+    Else "Label_Y_Tick $_y $label"
+
+  Increment tick_idx
+  end
 .
 
 #
@@ -238,7 +295,7 @@ Select_Pen $default_fg
 Assign_Margins			# margins by default...
 Grid_Color $gray
 Erase_Plot
-Clear_Axis_Vars
+#Clear_Axis_Vars	# BUG this can obliterate settings read from plot param file!?
 #advise "Init_New_Plotter:  '$1'"
 # This causes trouble if we allow spaces in the plotter name
 Get_Param_Vec_Name $1
@@ -707,24 +764,39 @@ Print plot_ymax
 # Plot_2_Screen - convert a point in plot coords to screen coords
 
 Define Plot_2_Screen 4 xvarname yvarname x y
+Get_Plotter_Constants
 # these two statements are for debugging...
 #advise "Plot_2_Screen $1 $2 $3 $4  -   the_plotter = $the_plotter"
 #Show_Plot_Limits
 
 # first get the fractional position in the plotting space
-Assign $2 ($4-$plot_ymin)/($plot_ymax-$plot_ymin)
-Assign $1 ($3-$plot_xmin)/($plot_xmax-$plot_xmin)
+Assign $2 ($4-$plot_ymin)/$n_plot_units_y
+Assign $1 ($3-$plot_xmin)/$n_plot_units_y
 # turn Y upside down
 Assign $2 1-$$2
 # scale
-Mul_Var $1 (ncols('$the_plotter')*(1-($left_margin+$right_margin)))
-Mul_Var $2 (nrows('$the_plotter')*(1-($top_margin+$bot_margin)))
+Mul_Var $1 $n_plot_pixels_x
+Mul_Var $2 $n_plot_pixels_y
 # shift origin
 Add_Var $1 ncols('$the_plotter')*$left_margin
 Add_Var $2 nrows('$the_plotter')*$top_margin
 Assign $1 floor($$1+0.5)
 Assign $2 floor($$2+0.5)
 #advise "Plot_2_Screen $$1 $$2  <-  $3 $4"
+.
+
+Define Get_Plotter_Constants 0
+Assign n_plot_pixels_x ncols('$the_plotter')*(1-($left_margin+$right_margin))
+Assign n_plot_units_x $plot_xmax-$plot_xmin
+
+Assign n_plot_pixels_y nrows('$the_plotter')*(1-($top_margin+$bot_margin))
+Assign n_plot_units_y $plot_ymax-$plot_ymin
+.
+
+Define Plot_2_Screen_Delta 4 xvarname yvarname dx dy
+Get_Plotter_Constants
+Assign $1 $3*$n_plot_pixels_x/$n_plot_units_x
+Assign $2 $4*$n_plot_pixels_y/$n_plot_units_y
 .
 
 # Screen_2_Plot - convert from window coordinates to plotting units
@@ -742,8 +814,8 @@ Define Screen_2_Plot 4 xvarname yvarname x y
 Assign $1 ($3)-ncols('$the_plotter')*$left_margin
 Assign $2 ($4)-nrows('$the_plotter')*$top_margin
 #advise "Screen_2_Plot, shifting origin:  $$1 $$2 <- $3 $4"
-Mul_Var $1 ($plot_xmax-$plot_xmin)/(ncols('$the_plotter')*(1-($left_margin+$right_margin)))
-Mul_Var $2 ($plot_ymax-$plot_ymin)/(nrows('$the_plotter')*(1-($top_margin+$bot_margin)))
+Mul_Var $1 $n_plot_units_x/$n_plot_pixels_x
+Mul_Var $2 $n_plot_units_y/$n_plot_pixels_y
 #advise "Screen_2_Plot, scaling:  $$1 $$2 <- $3 $4"
 # turn Y upside down
 Assign $2 $plot_ymax-$plot_ymin-$$2
@@ -753,8 +825,8 @@ Add_Var $2 $plot_ymin
 .
 
 Define Screen_2_Plot_Delta 4 dx_varname dy_varname dx dy
-Assign $1 $3*($plot_xmax-$plot_xmin)/(ncols('$the_plotter')*(1-($left_margin+$right_margin)))
-Assign $2 $4*($plot_ymax-$plot_ymin)/(nrows('$the_plotter')*(1-($top_margin+$bot_margin)))
+Assign $1 $3*$n_plot_units_x/$n_plot_pixels_x
+Assign $2 $4*$n_plot_units_y/$n_plot_pixels_y
 .
 
 Define Test_Coords 0
@@ -824,9 +896,15 @@ advise "TEST DONE"
 < /dev/tty
 .
 
+ # X_Tick_At - draw a tick down from x,y
 Define X_Tick_At 2 x y
 PMove $1 $2
 PCont $1 $2-$x_tick_len
+.
+
+Define Plain_Y_Axis 3 ymin ymax xpos
+PMove $3 $1
+PCont $3 $2
 .
 
 Define Plain_X_Axis 3 xmin xmax ypos
@@ -834,23 +912,23 @@ PMove $1 $3
 PCont $2 $3
 .
 
-Define Plot_X_Axis_Offset 5 xmin xmax tick_spacing ypos first_tick_offset
+Define Plot_X_Axis_Offset 6 xmin xmax tick_spacing ypos first_tick_offset last_x_tick
 Plain_X_Axis $1 $2 $4
 Assign _x $1+$5
 do
   X_Tick_At $_x $4
   Add_Var _x $3
-  while $_x<=$2
+  while $_x<=$6
 .
 
 
 Define Plot_X_Axis 4 xmin xmax tick_spacing ypos
-Plot_X_Axis_Offset $1 $2 $3 $4 0
+Plot_X_Axis_Offset $1 $2 $3 $4 0 $2
 .
 
 Define Plot_X_Axis_Top 4 xmin xmax tick_spacing ypos
 Mul_Var x_tick_len -1
-Plot_X_Axis_Offset $1 $2 $3 $4 0
+Plot_X_Axis_Offset $1 $2 $3 $4 0 $2
 Mul_Var x_tick_len -1
 .
 
@@ -880,7 +958,7 @@ If $1<$2
   Else "Draw_Y_Ticks_Descending $4 $5 $3 $6"
 .
 
-Define Draw_Y_Tick_At 2 x y
+Define Y_Tick_At 2 x y
 PMove $1 $2
 PCont $1-$y_tick_len $2
 .
@@ -894,7 +972,7 @@ Define Draw_Y_Ticks_Ascending 4 y_first_tick y_last_tick xpos tick_spacing
 If $4==0 "error_exit 'Draw_Y_Ticks_Ascending:  tick spacing cannot be zero!?'"
 Assign _y $1
 do
-  Draw_Y_Tick_At $3 $_y
+  Y_Tick_At $3 $_y
   Add_Var _y $4
   while $_y<=$2
 .
@@ -903,7 +981,7 @@ Define Draw_Y_Ticks_Descending 4 y_first_tick y_last_tick xpos tick_spacing
 If $4==0 "error_exit 'Draw_Y_Ticks_Descending:  tick spacing cannot be zero!?'"
 Assign _y $1
 do
-  Draw_Y_Tick_At $3 $_y
+  Y_Tick_At $3 $_y
   Add_Var _y -$4
   while $_y>=$2
 .
@@ -1411,15 +1489,18 @@ view draw $the_plotter line_width $1 quit quit
 
 # BUG should have shared code for x and y!
 
-Define Label_X_Ticks 3 first max delta 
-Assign x ($2-($1))/$3
-Assign n_x_ticks 1+floor($x)
+Define Label_X_Ticks 3 first last delta
 Select_Pen $label_color
 Assign tick_x $1
-repeat $n_x_ticks
-  Label_X_Tick $tick_x	$tick_x
+do
+  Two_Decimal_Places tick_string $tick_x
+  Label_X_Tick $tick_x	$tick_string
   Add_Var tick_x $3
-  end
+  while $tick_x<=$2
+.
+
+Define Two_Decimal_Places 2 varname value
+Assign $1 round($2*100)/100
 .
 
 # this one adds the position delta to the label

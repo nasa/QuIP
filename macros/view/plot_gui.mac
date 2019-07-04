@@ -12,6 +12,7 @@ Set plot_name default_plot	# should get plot name from cmd line?
 
 Set n_data_series 0
 Set n_embedded_images 0
+Set n_extra_legends 0
 Set n_grids 0
 Set show_plot_legend 0
 Set plot_legend_text no_legend
@@ -19,6 +20,13 @@ Set plot_legend_x 0
 Set plot_legend_y 0
 Set show_plot_frame 0
 Set symbol_size	1
+
+Set max_custom_ticks	20
+Set max_tick_label_len	20
+
+Set n_x_custom_ticks 0
+Set n_y_custom_ticks 0
+
 
 # We can't have spaces in the window name, because a colormap object is created
 # using it, and data objects can't have spaces in their names...
@@ -29,7 +37,9 @@ Set main_panel "Plot Generator"
 Set plot_name_widget_name 'Plot name'
 Set gen_panel "General Plot Parameters"
 Set axis_panel_name "Axis Settings"
-Set tick_panel_name "Tick Settings"
+Set std_tick_panel_name "Standard Tick Settings"
+Set custom_tick_panel_name "Custom Ticks"
+Set tick_edit_panel "Edit Tick"
 Set x_axis_panel "X Axis"
 Set axis_legend_widget_name "Legend"
 Set axis_max_widget_name "Max"
@@ -43,17 +53,24 @@ Set font_family_widget_name 'Font Family'
 Set font_size_widget_name 'Font Size'
 Set axis_logv_widget_name "Logarithmic Axis"
 Set axis_log_widget_name "Logarithmic Axis"	# obsolete
+Set ps_scale_widget_name PS_Scale_x_100
 Set data_panel "Data"
 Set image_panel "Image"
+Set legend_panel "Legends"
 Set font_panel "Fonts"
 Set grid_panel "Grid"
 Set data_edit_panel "Edit Data Series"
 Set image_edit_panel "Edit Embedded Image"
+Set legend_edit_panel "Edit Legend"
 Set grid_edit_panel "Edit Data Grid"
 Set save_panel "Save Plot Image"
 
+Set tick_posn_widget_name	"Location"
+Set tick_label_widget_name	"Label"
+
 Set series_nickname_widget_name	"Nickname"
 Set image_nickname_widget_name	"Nickname"
+Set legend_nickname_widget_name	"Nickname"
 Set grid_nickname_widget_name	"Nickname"
 
 Set plot_frame_toggle_widget_name 'Frame'
@@ -62,12 +79,19 @@ Set plot_legend_text_widget_name 'Plot legend text'
 Set plot_legend_x_widget_name 'Plot legend X'
 Set plot_legend_y_widget_name 'Plot legend Y'
 
+Set custom_tick_widget_name 'Custom Ticks'
+
 Set data_series_widget_name 'Data Series'
 Set data_source_file_widget_name 'Source file'
 Set data_legend_toggle_widget_name 'Legend'
+Set errbar_toggle_widget_name 'Error Bars'
 Set data_legend_text_widget_name 'Data legend text'
 Set data_legend_x_widget_name 'Data legend X'
 Set data_legend_y_widget_name 'Data legend Y'
+
+Set legend_text_widget_name 'Legend text'
+Set legend_posn_x_widget_name 'Origin X'
+Set legend_posn_y_widget_name 'Origin Y'
 
 Set image_source_file_widget_name 'Image file'
 Set image_posn_x_widget_name 'Origin X'
@@ -80,7 +104,7 @@ Set image_zoom_y_widget_name 'Y Zoom'
 Set grid_source_file_widget_name 'Source file'
 
 Set panel_w	400
-Set panel_h	600
+Set panel_h	680
 Set plotwin_x0 500
 Set plotwin_y0 50
 
@@ -93,6 +117,7 @@ Set save_filename_stem $plot_name
 Set series_line_thickness 1
 Set series_symbol_size 4
 Set series_show_legend	0
+Set series_show_errbars	0
 Set series_legend_text no_legend
 Set series_legend_x 0
 Set series_legend_y 0
@@ -104,6 +129,10 @@ Set image_extent_y 1
 Set image_zoom_x 1
 Set image_zoom_y 1
 
+Set legend_posn_x 0
+Set legend_posn_y 0
+Set legend_text legend_text_not_set
+
 Set grid_line_thickness 1
 Set grid_symbol_size 4
 Set grid_columns 4
@@ -112,6 +141,7 @@ Set grid_rows 4
 # default values
 Set plot_w 600
 Set plot_h 600
+Set ps_scale_factor 1
 
 
 Set min_plot_height	200
@@ -205,8 +235,12 @@ If obj_exists(series_pts) "Delete_Image series_pts"
 If obj_exists(series_raw_pts) "Delete_Image series_raw_pts"
 Count_Lines nl $series_filename
 Count_Columns nc $series_filename
-If $nc!=2 "warn 'Get_Series_Points:  expected file $series_filename to have 2 columns!?' exit_macro"
-Vector series_raw_pts $nl 2 float
+# errbars
+If $series_show_errbars
+  Then "Set n_expected 3"
+  Else "Set n_expected 2"
+If $nc!=$n_expected "warn 'Get_Series_Points:  expected file $series_filename to have 2 columns!?' exit_macro"
+Vector series_raw_pts $nl $nc float
 Get_Ascii series_raw_pts $series_filename
 #Reveal series_raw_pts
 Vector series_pts $nl 2 float
@@ -254,10 +288,40 @@ Transform_Series
 Select_Pen $series_color_index
 If $series_line_thickness==1 "XYPlot series_pts"
 If $series_line_thickness>1 "Thick_Plot $series_line_thickness series_pts"
-#Print series_symbol
+If $series_show_errbars Refresh_Series_Errbars
 If strcmp('$series_symbol','none') "Symbol $series_symbol $series_symbol_size Symbol_Plot series_pts"
-#Print series_show_legend
 If $series_show_legend Refresh_Series_Legend
+.
+
+Set errbar_width_pixels 3
+
+Define Get_Errbar_Path 1 pt_index
+If !obj_exists(errbar_path) "Vector errbar_path 6 2 float"
+Assign x value(series_pts[$1]{0})
+Assign y value(series_pts[$1]{1})
+Assign dy value(series_raw_pts[$1]{2})
+Screen_2_Plot_Delta dx foo_dont_care $errbar_width_pixels 1
+data ascii read errbar_path -
+	$x-$dx	$y+$dy
+	$x+$dx	$y+$dy
+	$x	$y+$dy
+	$x	$y-$dy
+  	$x-$dx	$y-$dy
+	$x+$dx	$y-$dy
+  quit quit
+#Display errbar_path
+.
+
+# data in series_raw_pts
+Define Refresh_Series_Errbars 0
+# What about log transform?
+Assign n_pts ncols(series_raw_pts)
+Set pt_idx 0
+repeat $n_pts
+  Get_Errbar_Path $pt_idx
+  XYPlot errbar_path
+  Increment pt_idx
+  end
 .
 
 # Bug the symbol coords is in screen units?
@@ -337,11 +401,16 @@ Redo_Window
 Refresh_Plot
 .
 
+Define SetPSScale 0
+Assign ps_scale_factor $slider_val/100
+.
+
 Define Update_Plot_Size_Sliders 0
 interface
   decorate $gen_panel
     set_scale Width $plot_w
     set_scale Height $plot_h
+    set_scale $ps_scale_widget_name $ps_scale_factor*100
     quit
   quit
 .
@@ -365,6 +434,12 @@ Set $api_axis_min_name $$axis_min_name
 Set $api_axis_max_name $$axis_max_name
 Set $api_axis_legend_name $$axis_legend_name
 
+If $$tick_auto_name
+  Then Install_Std_Linear_Axis_Vars
+  Else Install_Custom_Linear_Axis_Vars
+.
+
+Define Install_Std_Linear_Axis_Vars 0
 Set $api_tick_spacing_name $$tick_spacing_name
 Check_Var $tick_first_name $$axis_min_name
 Assign $api_tick_first_name $$tick_first_name-$$axis_min_name	# api uses offset, not first posn
@@ -372,15 +447,31 @@ Check_Var $tick_last_name $$axis_max_name
 Assign $api_tick_last_name $$tick_last_name
 .
 
+Define Install_Custom_Linear_Axis_Vars 0
+.
+
 Define Install_Log_Axis_Vars 0
 If $$axis_min_name<=0
   "warn '$which_axis-axis min must be positive for log axis' Set $axis_min_name 0.000001"
-Assign $api_axis_min_name floor(log($$axis_min_name)/log(10))
-Assign $api_axis_max_name ceil(log($$axis_max_name)/log(10))
+#Assign $api_axis_min_name floor(log($$axis_min_name)/log(10))
+#Assign $api_axis_max_name ceil(log($$axis_max_name)/log(10))
+Assign $api_axis_min_name log10($$axis_min_name)
+Assign $api_axis_max_name log10($$axis_max_name)
+#Set $api_axis_legend_name "log $$axis_legend_name"
+Set $api_axis_legend_name "$$axis_legend_name"
+
+If $$tick_auto_name
+  Then Install_Std_Log_Axis_Vars
+  Else Install_Custom_Log_Axis_Vars
+.
+
+Define Install_Std_Log_Axis_Vars 0
 Assign $api_tick_spacing_name $$tick_spacing_name
 Assign $api_tick_first_name $$tick_first_name-$$api_axis_min_name
 Assign $api_tick_last_name $$tick_last_name
-Set $api_axis_legend_name "log $$axis_legend_name"
+.
+
+Define Install_Custom_Log_Axis_Vars 0
 .
 
 Define Install_Both_Axis_Vars 0
@@ -408,6 +499,7 @@ Install_Both_Axis_Vars
 Setup_Axes
 # We need to do the axes before embedding images, because that sets the scale
 If $n_embedded_images>0 Embed_Images
+If $n_extra_legends>0 Render_Legends
 # We might want to redraw the axes over images?
 #advise "Refresh_Plot:  refreshing data..."
 Refresh_Data
@@ -430,7 +522,9 @@ XYPlot frame_coords
 
 Define TicksPanel 0
 Panel_Off $axis_panel_name
-Panel_On $tick_panel_name
+If $$tick_auto_name
+  Then "Panel_On '$std_tick_panel_name'"
+  Else "Update_Tick_Choices Panel_On '$custom_tick_panel_name'"
 .
 
 Define XAxisPanel 0
@@ -455,6 +549,11 @@ Panel_Off $main_panel
 Panel_On $image_panel
 .
 
+Define LegendPanel 0
+Panel_Off $main_panel
+Panel_On $legend_panel
+.
+
 Define FontPanel 0
 Panel_Off $main_panel
 Panel_On $font_panel
@@ -469,7 +568,6 @@ Panel_On $grid_panel
 
 Define TogAxisLogValues 0
 advise TogAxisLogValues
-Print axis_logv_name
 Set $axis_logv_name $toggle_state
 Refresh_Plot
 .
@@ -493,15 +591,15 @@ Set $tick_auto_name $toggle_state
 .
 
 Define SetTickSpacing 0
-Get_Text_Var $tick_panel_name $tick_spacing_widget_name $tick_spacing_name
+Get_Text_Var $std_tick_panel_name $tick_spacing_widget_name $tick_spacing_name
 .
 
 Define SetTickFirst 0
-Get_Text_Var $tick_panel_name $tick_first_widget_name $tick_first_name
+Get_Text_Var $std_tick_panel_name $tick_first_widget_name $tick_first_name
 .
 
 Define SetTickLast 0
-Get_Text_Var $tick_panel_name $tick_last_widget_name $tick_last_name
+Get_Text_Var $std_tick_panel_name $tick_last_widget_name $tick_last_name
 .
 
 Define TogFontBold 0
@@ -523,6 +621,10 @@ Define SelectSeries 0
 Set selected_series_nickname $selection
 .
 
+Define SelectTick 0
+Set selected_tick_string $selection
+.
+
 Define SelectImage 0
 Set selected_image_nickname $selection
 .
@@ -539,6 +641,16 @@ Define SelectGrid 0
 Set selected_grid_nickname $selection
 .
 
+# AddTick - create a custom tick
+
+Define AddTick 0
+Set current_tick_index $$tick_count_name
+Increment $tick_count_name
+# BUG check against max
+Panel_Off $custom_tick_panel_name
+Panel_On $tick_edit_panel
+.
+
 # AddData - create a new series
 
 Define AddData 0
@@ -550,33 +662,12 @@ Set series_nickname $curr_series_name	# default
 Set series_color black
 Set series_symbol none
 Set_Color_Index_From_Name $series_color
-# should this really be editable?
-#interface
-#  decorate $data_edit_panel
-#    set_edit_text $series_nickname_widget_name $series_nickname
-#    set_edit_text $data_source_file_widget_name '(no file specified)'
-#    set_choice Color $series_color
-#    set_choice Symbol $series_symbol
-#
-#    set_toggle $data_legend_toggle_widget_name no
-#    set_edit_text $data_legend_text_widget_name no_legend
-#    set_edit_text $data_legend_x_widget_name 0
-#    set_edit_text $data_legend_y_widget_name 0
-#
-##    If $series_show_legend
-##      Then "set_toggle $data_legend_toggle_widget_name yes"
-##      Else "set_toggle $data_legend_toggle_widget_name no"
-##    set_edit_text $data_legend_text_widget_name $series_legend_text
-##    set_edit_text $data_legend_x_widget_name $series_legend_x
-##    set_edit_text $data_legend_y_widget_name $series_legend_y
-#
-#    quit
-#  quit
 Update_Edit_Text $series_nickname_widget_name $series_nickname $data_edit_panel
 Update_Edit_Text $data_source_file_widget_name '(no file specified)' $data_edit_panel
 Update_Chooser Color $series_color $data_edit_panel
 Update_Chooser Symbol $series_symbol $data_edit_panel
 Update_Toggle $data_legend_toggle_widget_name 0 $data_edit_panel
+Update_Toggle $errbar_toggle_widget_name 0 $data_edit_panel
 Update_Edit_Text $data_legend_text_widget_name no_legend $data_edit_panel
 Update_Edit_Text $data_legend_x_widget_name 0 $data_edit_panel
 Update_Edit_Text $data_legend_y_widget_name 0 $data_edit_panel
@@ -595,6 +686,16 @@ Update_Edit_Text $image_nickname_widget_name $image_nickname $image_edit_panel
 Update_Edit_Text $image_source_file_widget_name '(no file specified)' $image_edit_panel
 Panel_Off $image_panel
 Panel_On $image_edit_panel
+.
+
+# AddLegend - create a new legend
+
+Define AddLegend 0
+Increment n_extra_legends
+Set legend_nickname legend_$n_extra_legends
+Update_Edit_Text $legend_text_widget_name $legend_nickname $legend_edit_panel
+Panel_Off $legend_panel
+Panel_On $legend_edit_panel
 .
 
 Define AddGrid 0
@@ -624,15 +725,16 @@ Set plot_type $choice
 .
 
 Define GenPanel 0
+advise "GenPanel BEGIN"
 interface
   decorate $gen_panel
     set_edit_text $plot_legend_text_widget_name "$plot_legend_text"
     set_edit_text $plot_legend_x_widget_name "$plot_legend_x"
     set_edit_text $plot_legend_y_widget_name "$plot_legend_y"
-    # chooser
-    chooser 'Plot type' SetPlotType 2 'points' 'bar'
+    # set the chooser state???
     quit
   quit
+advise "GenPanel will update toggles"
 Update_Toggle $plot_frame_toggle_widget_name $show_frame $gen_panel
 Update_Toggle $plot_legend_toggle_widget_name $show_plot_legend $gen_panel
 Panel_Off $main_panel
@@ -642,6 +744,11 @@ Panel_On $gen_panel
 Define No_Image_Msg 0
 If $n_embedded_images==0 "advise 'Please create a new embedded image' exit_macro"
 advise 'Please select an image'
+.
+
+Define No_Legend_Msg 0
+If $n_extra_legends==0 "advise 'Please create a new extra legend' exit_macro"
+advise 'Please select a legend'
 .
 
 Define No_Series_Msg 0
@@ -689,10 +796,19 @@ Load_Series_Var $1 symbol_size
 Load_Series_Var $1 line_thickness
 
 Load_Series_Var $1 show_legend
+Load_Series_Var $1 show_errbars
 Load_Series_Var $1 legend_text
 Load_Series_Var $1 legend_x
 Load_Series_Var $1 legend_y
 #Display_Series_Vars series
+.
+
+Define Store_Tick_Vars 0
+advise Store_Tick_Vars
+Set vname ${which_axis}_tick_${current_tick_index}_posn
+Set $vname $custom_tick_posn
+Set vname ${which_axis}_tick_${current_tick_index}_label
+Set $vname $custom_tick_label
 .
 
 # Store_Series_Vars - transfer the general global vars into  the variables for a particular series
@@ -708,6 +824,7 @@ Store_Series_Var $1 symbol_size
 Store_Series_Var $1 line_thickness
 
 Store_Series_Var $1 show_legend
+Store_Series_Var $1 show_errbars
 Store_Series_Var $1 legend_text
 Store_Series_Var $1 legend_x
 Store_Series_Var $1 legend_y
@@ -722,6 +839,9 @@ Load_Image_Var $1 extent_x
 Load_Image_Var $1 extent_y
 Load_Image_Var $1 zoom_x
 Load_Image_Var $1 zoom_y
+
+Set vname ${1}_posn_y
+advise "Load_Image_Vars $1:  ${1}_posn_y = $$vname"
 .
 
 Define Store_Image_Vars 1 image_name
@@ -733,6 +853,20 @@ Store_Image_Var $1 extent_x
 Store_Image_Var $1 extent_y
 Store_Image_Var $1 zoom_x
 Store_Image_Var $1 zoom_y
+.
+
+Define Load_Legend_Vars 1 legend_name
+Load_Legend_Var $1 nickname
+Load_Legend_Var $1 text
+Load_Legend_Var $1 posn_x
+Load_Legend_Var $1 posn_y
+.
+
+Define Store_Legend_Vars 1 legend_name
+Store_Legend_Var $1 nickname
+Store_Legend_Var $1 text
+Store_Legend_Var $1 posn_x
+Store_Legend_Var $1 posn_y
 .
 
 Define Load_Grid_Vars 1 grid_name
@@ -768,6 +902,10 @@ Define Load_Image_Var 2 image_name varname
 Load_Stem_Var $1 $2 image
 .
 
+Define Load_Legend_Var 2 legend_name varname
+Load_Stem_Var $1 $2 legend
+.
+
 Define Load_Grid_Var 2 series_name varname
 Load_Stem_Var $1 $2 grid
 .
@@ -785,6 +923,10 @@ Store_Stem_Var $1 $2 series
 
 Define Store_Image_Var 2 image_name varname
 Store_Stem_Var $1 $2 image
+.
+
+Define Store_Legend_Var 2 legend_name varname
+Store_Stem_Var $1 $2 legend
 .
 
 Define Store_Grid_Var 2 series_name varname
@@ -815,6 +957,17 @@ Set i 1
 repeat $n_embedded_images
   Set vname image_${i}_nickname
   If !strcmp('$1','$$vname') "Set curr_image_name image_$i exit_macro"
+  Increment i
+  end
+.
+
+Define Find_Legend_From_Nickname 1 nickname
+Set legend_nickname no_legend
+If $n_extra_legends==0 exit_macro
+Set i 1
+repeat $n_extra_legends
+  Set vname legend_${i}_nickname
+  If !strcmp('$1','$$vname') "Set legend_nickname legend_$i exit_macro"
   Increment i
   end
 .
@@ -852,13 +1005,81 @@ interface
     quit
   quit
 Update_Toggle $data_legend_toggle_widget_name $series_show_legend $data_edit_panel
+Update_Toggle $errbar_toggle_widget_name $series_show_errbars $data_edit_panel
 Panel_Off $data_panel
 Panel_On $data_edit_panel
 .
 
+Define Find_Tick_From_ID_String 2 varname string
+advise "Find_Tick_From_ID_String '$2' BEGIN"
+Set $1 -1	# error indicator
+If $$tick_count_name<=0 "error_exit 'Find_Tick_From_Label:  no ticks!?'"
+Set tick_idx 0
+repeat $$tick_count_name
+  Get_Tick_ID_String id_string $tick_idx
+  If !strcmp('$id_string','$2') "Set $1 $tick_idx exit_macro"
+  Increment tick_idx
+  end
+.
+
+Define Get_Tick_ID_String 2 varname index
+Set vname ${which_axis}_tick_${2}_label
+Set this_label $$vname
+Set vname ${which_axis}_tick_${2}_posn
+Set this_posn $$vname
+Set $1 "$this_label at $this_posn"
+.
+
+Define EditTick 0
+If !strcmp('$selected_tick_string','no_tick') "No_Tick_Msg exit_macro"
+Find_Tick_From_ID_String current_tick_index $selected_tick_string
+If $current_tick_index<0 "advise 'Could not find tick from string!?' exit_macro"
+Load_Tick_Vars $current_tick_index
+interface
+  decorate $tick_edit_panel
+    set_edit_text $tick_posn_widget_name $custom_tick_posn
+    set_edit_text $tick_label_widget_name $custom_tick_label
+    quit
+  quit
+Panel_Off $custom_tick_panel_name
+Panel_On $tick_edit_panel
+.
+
+Define Load_Tick_Vars 1 index
+#Assign custom_tick_posn value($tick_posn_list_name[$1])
+Set vname ${which_axis}_tick_${1}_posn
+Set custom_tick_posn $$vname
+Set vname ${which_axis}_tick_${1}_label
+Set custom_tick_label $$vname
+.
 
 Define EditImage 0
 If !strcmp('$selected_image_nickname','no_image') "No_Image_Msg exit_macro"
+Find_Image_From_Nickname $selected_image_nickname
+If !strcmp('$curr_image_name','no_image') "advise 'Could not find image with nickname $selected_image_nickname!?' exit_macro"
+Load_Image_Vars $curr_image_name
+interface
+  decorate $image_edit_panel
+    set_edit_text $image_nickname_widget_name $image_nickname
+    set_edit_text $image_source_file_widget_name $image_filename
+    set_edit_text $image_posn_x_widget_name $image_posn_x
+    set_edit_text $image_posn_y_widget_name $image_posn_y
+    set_edit_text $image_extent_x_widget_name $image_extent_x
+    set_edit_text $image_extent_y_widget_name $image_extent_y
+    advise "set_edit_text '$image_zoom_x_widget_name' '$image_zoom_x'"
+    set_edit_text $image_zoom_x_widget_name $image_zoom_x
+    advise "set_edit_text '$image_zoom_y_widget_name' '$image_zoom_y'"
+    set_edit_text $image_zoom_y_widget_name $image_zoom_y
+
+    quit
+  quit
+Panel_Off $image_panel
+Panel_On $image_edit_panel
+.
+
+
+Define EditLegend 0
+If !strcmp('$selected_legend_nickname','no_legend') "No_Legend_Msg exit_macro"
 Find_Image_From_Nickname $selected_image_nickname
 If !strcmp('$curr_image_name','no_image') "advise 'Could not find image with nickname $selected_image_nickname!?' exit_macro"
 Load_Image_Vars $curr_image_name
@@ -908,6 +1129,10 @@ Define SetImageNickname 0
 Get_Text_Var $image_edit_panel $image_nickname_widget_name image_nickname
 .
 
+Define SetLegendNickname 0
+Get_Text_Var $legend_edit_panel $legend_nickname_widget_name legend_nickname
+.
+
 Define SetSeriesNickname 0
 Get_Text_Var $data_edit_panel $series_nickname_widget_name series_nickname
 .
@@ -918,6 +1143,10 @@ Get_Text_Var $grid_edit_panel $grid_nickname_widget_name grid_nickname
 
 Define SetImageSourceFile 0
 Get_Text_Var $image_edit_panel $image_source_file_widget_name image_filename
+.
+
+Define SetLegendText 0
+Get_Text_Var $legend_edit_panel $legend_text_widget_name legend_text
 .
 
 Define SetSeriesSourceFile 0
@@ -931,18 +1160,36 @@ Refresh_Plot
 Load_Series_Vars $curr_series_name
 .
 
+Define TogErrorBars 0
+Set series_show_errbars $toggle_state
+Store_Series_Vars $curr_series_name
+Refresh_Plot
+Load_Series_Vars $curr_series_name
+.
+
 Define SetDataLegendText 0
 Get_Text_Var $data_edit_panel $data_legend_text_widget_name series_legend_text
-#Store_Series_Vars $curr_series_name
-#Refresh_Plot
-#Load_Series_Vars $curr_series_name
 .
 
 Define SetDataLegendX 0
 Get_Text_Var $data_edit_panel $data_legend_x_widget_name series_legend_x
-#Store_Series_Vars $curr_series_name
-#Refresh_Plot
-#Load_Series_Vars $curr_series_name
+.
+
+Define SetTickPosn 0
+Get_Text_Var $tick_edit_panel $tick_posn_widget_name custom_tick_posn
+.
+
+Define SetTickLabel 0
+Get_Text_Var $tick_edit_panel $tick_label_widget_name custom_tick_label
+.
+
+
+Define SetLegendX 0
+Get_Text_Var $legend_edit_panel $legend_posn_x_widget_name legend_posn_x
+.
+
+Define SetLegendY 0
+Get_Text_Var $legend_edit_panel $legend_posn_y_widget_name legend_posn_y
 .
 
 Define SetImageOriginX 0
@@ -971,9 +1218,6 @@ Get_Text_Var $image_edit_panel $image_zoom_y_widget_name image_zoom_y
 
 Define SetDataLegendY 0
 Get_Text_Var $data_edit_panel $data_legend_y_widget_name series_legend_y
-#Store_Series_Vars $curr_series_name
-#Refresh_Plot
-#Load_Series_Vars $curr_series_name
 .
 
 Define DataEditRefreshPlot 0
@@ -986,6 +1230,12 @@ Define ImageEditRefreshPlot 0
 Store_Image_Vars $curr_image_name
 Refresh_Plot
 Load_Image_Vars $curr_image_name
+.
+
+Define LegendEditRefreshPlot 0
+Store_Legend_Vars $legend_nickname
+Refresh_Plot
+Load_Legend_Vars $legend_nickname
 .
 
 Define SetGridSourceFile 0
@@ -1079,12 +1329,37 @@ repeat $n_data_series
 #Print $1
 .
 
+Define Make_Tick_List_Cmd 1 varname
+If $$tick_count_name<1 "Set $1 nop exit_macro"
+Set $1 "items '$custom_tick_widget_name' $$tick_count_name"
+#Show_Tick_Data	# for debug
+Set i 0
+repeat $$tick_count_name
+  Get_Tick_ID_String id_string $i
+  Set $1 "$$1 '$id_string'"
+  Increment i
+  end
+Print $1
+.
+
 Define Make_Image_List_Cmd 1 varname
 If $n_embedded_images<1 "Set $1 nop exit_macro"
 Set $1 "items 'Embedded Images' $n_embedded_images"
 Set i 1
 repeat $n_embedded_images
   Set vname image_${i}_nickname
+  Set $1 "$$1 $$vname"
+  Increment i
+  end
+#Print $1
+.
+
+Define Make_Legend_List_Cmd 1 varname
+If $n_extra_legends<1 "Set $1 nop exit_macro"
+Set $1 "items 'Legends' $n_extra_legends"	# BUG use var for name?
+Set i 1
+repeat $n_extra_legends
+  Set vname legend_${i}_nickname
   Set $1 "$$1 $$vname"
   Increment i
   end
@@ -1106,10 +1381,18 @@ repeat $n_grids
 Define Update_Series_Choices 0
 Make_Series_List_Cmd cmd
 output_file -
-Print cmd
-Print data_panel
 interface
   decorate $data_panel
+    interpret $cmd
+    quit
+  quit
+.
+
+Define Update_Tick_Choices 0
+Make_Tick_List_Cmd cmd
+output_file -
+interface
+  decorate $custom_tick_panel_name
     interpret $cmd
     quit
   quit
@@ -1124,6 +1407,15 @@ interface
   quit
 .
 
+Define Update_Legend_Choices 0
+Make_Legend_List_Cmd cmd
+interface
+  decorate $legend_panel
+    interpret $cmd
+    quit
+  quit
+.
+
 Define Update_Grid_Choices 0
 Make_Grid_List_Cmd cmd
 #Print cmd
@@ -1132,6 +1424,13 @@ interface
     interpret $cmd
     quit
   quit
+.
+
+Define TickEditDone 0
+Store_Tick_Vars
+Update_Tick_Choices
+Panel_Off $tick_edit_panel
+Panel_On $custom_tick_panel_name
 .
 
 Define SeriesEditDone 0
@@ -1151,6 +1450,14 @@ Update_Image_Choices
 Panel_Off $image_edit_panel
 Panel_On $image_panel
 Refresh_Data
+.
+
+Define LegendEditDone 0
+Store_Legend_Vars $legend_nickname
+Update_Legend_Choices
+Panel_Off $legend_edit_panel
+Panel_On $legend_panel
+Refresh_Data		# BUG should refresh whole plot?
 .
 
 
@@ -1174,6 +1481,8 @@ echo ' '
 Save_YAxis_Params
 echo ' '
 Save_Data_Params
+echo ' '
+Save_Legend_Params
 echo ' '
 Save_Image_Params
 echo ' '
@@ -1233,6 +1542,7 @@ Set old_plot_w $plot_w
 Set old_plot_h $plot_h
 echo "Loading plot parameters from file $1..."
 < $1
+# custom tick data needs to be put into arrays if present?
 #Print n_data_series
 Update_Series_Choices
 Update_Image_Choices
@@ -1260,11 +1570,32 @@ Save_Tick_Params
 .
 
 Define Save_Tick_Params 0
+Save_Param $tick_auto_name
+If $$tick_auto_name
+  Then Save_Std_Tick_Params
+  Else Save_Custom_Tick_Params
+.
+
+Define Save_Std_Tick_Params 0
 Save_Param $tick_spacing_name
 Save_Param $tick_first_name
 Save_Param $tick_last_name
-Save_Param $tick_auto_name
 .
+
+Define Save_Custom_Tick_Params 0
+Save_Param $tick_count_name
+If $$tick_count_name<=0 exit_macro
+Set i 0
+repeat $$tick_count_name
+  Set vname ${which_axis}_tick_${i}_posn
+  Save_Param $vname
+  Set vname ${which_axis}_tick_${i}_label
+  Save_Param $vname
+
+  Increment i
+  end
+.
+
 
 Define Save_YAxis_Params 0
 Save_Axis_Params y
@@ -1274,6 +1605,7 @@ Define Save_Gen_Params 0
 Save_Param plot_name
 Save_Param plot_w
 Save_Param plot_h
+Save_Param ps_scale_factor
 Save_Param show_plot_frame
 Save_Param show_plot_legend
 Save_Text_Param plot_legend_text
@@ -1296,12 +1628,18 @@ Set vname image_${1}_$2
 Save_Param $vname
 .
 
+Define Save_Legend_Param 2 idx varname
+Set vname legend_${1}_$2
+Save_Param $vname
+.
+
 Define Save_Grid_Param 2 idx varname
 Set vname grid_${1}_$2
 Save_Param $vname
 .
 
 Define Save_Param 1 varname
+If !var_exists('$1') "warn 'Save_Param:  $1 is undefined, not saving!?' exit_macro"
 echo "Set $1 $$1"
 .
 
@@ -1323,6 +1661,7 @@ repeat $n_data_series
   Save_Series_Param $i symbol
   Save_Series_Param $i symbol_size
   Save_Series_Param $i line_thickness
+  Save_Series_Param $i show_errbars
 
   # save series legend parameters...
   Save_Series_Param $i show_legend
@@ -1349,6 +1688,22 @@ repeat $n_embedded_images
 advise "saving zoom params..."
   Save_Image_Param $i zoom_x
   Save_Image_Param $i zoom_y
+
+  Increment i
+  end
+.
+
+
+Define Save_Legend_Params 0
+Save_Param n_extra_legends
+Set i 1
+If $n_extra_legends<1 exit_macro
+repeat $n_extra_legends
+  echo ' '
+  Save_Legend_Param $i nickname
+  Save_Legend_Param $i text
+  Save_Legend_Param $i posn_x
+  Save_Legend_Param $i posn_y
 
   Increment i
   end
@@ -1431,21 +1786,61 @@ echo "$plot_legend_x gxu $plot_legend_y gyu moveto"
 echo "($plot_legend_text) show"
 .
 
+Define Emit_Std_Y_Axis 0
+Set y $y_tick_first
+do
+  echo "($y) $y	ylabeltick"
+  Add_Var y $y_tick_spacing
+  while $y<=$y_tick_last
+.
+
 Define Emit_Axes 0
 echo "$xmin gxu $ymin gyu moveto"
 echo "$xmax gxu $ymin gyu l"
 echo "$xmin gxu $ymin gyu moveto"
 echo "$xmin gxu $ymax gyu l"
 
-Set y $y_tick_first
-do
-  echo "($y) $y	ylabeltick"
-  Add_Var y $y_tick_spacing
-  while $y<=$y_tick_last
+# custom?
+
+If $y_tick_auto
+  Then Emit_Std_Y_Axis
+  Else Emit_Custom_Y_Axis
+
 echo "($y_legend) ylegend"
 echo "($x_legend) xlegend"
+If $x_tick_auto
+  Then Emit_Std_X_Axis
+  Else Emit_Custom_X_Axis
+.
+
+Define Emit_Custom_X_Axis 0
+Set tick_idx 0
+repeat $n_x_custom_ticks
+  Set varname x_tick_${tick_idx}_posn
+  Set x $$varname
+  Set varname x_tick_${tick_idx}_label
+  Set s $$varname
+  echo "($s) $x	xlabeltick"
+  Increment tick_idx
+  end
+.
+
+Define Emit_Custom_Y_Axis 0
+Set tick_idx 0
+repeat $n_y_custom_ticks
+  Set varname y_tick_${tick_idx}_posn
+  Set y $$varname
+  Set varname y_tick_${tick_idx}_label
+  Set s $$varname
+  echo "($s) $y	ylabeltick"
+  Increment tick_idx
+  end
+.
+
+Define Emit_Std_X_Axis 0
 Set x $x_tick_first
 do
+  # BUG we should trim decimal places?
   echo "($x) $x	xlabeltick"
   Add_Var x $x_tick_spacing
   while $x<=$x_tick_last
@@ -1467,6 +1862,19 @@ repeat ncols($1)-1
   Assign y value($1[$pt_idx]{1})
   echo "$x gxu $y gyu l"
   end
+.
+
+Define Emit_Series_Errbars 0
+Set _ese_idx 0
+repeat ncols(series_pts)
+  Emit_Point_Errbars $_ese_idx
+  Increment _ese_idx
+  end
+.
+
+Define Emit_Point_Errbars 1 pt_idx
+Get_Errbar_Path $1
+Emit_Curve errbar_path 1
 .
 
 # Originally, we would use a 6" x 6" plotting area on the page,
@@ -1510,21 +1918,28 @@ Set idx 1
 repeat $n_embedded_images
   Load_Image_Vars image_$idx	# is this correct???
   Emit_One_Image $image_filename $image_posn_x $image_posn_y $image_extent_x $image_extent_y
+  Increment idx
+  end
+.
+
+Define Emit_Extra_Legends 0
+Set idx 1
+repeat $n_extra_legends
+  Load_Legend_Vars legend_$idx	# is this correct???
+  Emit_One_Legend $legend_text $legend_posn_x $legend_posn_y
+  Increment idx
   end
 .
 
 Define Emit_Plot_Content 0
 Emit_Prolog
 If $n_embedded_images>0 Emit_Embedded_Images
+If $n_extra_legends>0 Emit_Extra_Legends
 Emit_Axes
 
-# BUG subject label needs to have parameterized coordinates!
-echo "/subj_label { 5.5 gxu 6.0 gyu moveto show } def"
-# END prolog
-#echo "/legend_x $series_legend_x def"
-#echo "/legend_y $series_legend_y def"
-#echo "/legend_delta_y $data_legend_delta_y def"
-#echo "/legend_delta_x $data_legend_delta_x def"
+# Now that we have arbitrary legends, we can just use those for subject labels...
+## BUG subject label needs to have parameterized coordinates!
+#echo "/subj_label { 5.5 gxu 6.0 gyu moveto show } def"
 
 If strcmp('$plot_legend_text','no_legend')
   Emit_Graph_Legend
@@ -1532,7 +1947,36 @@ If strcmp('$plot_legend_text','no_legend')
 If $n_data_series>0 Emit_All_Series
 If $n_grids>0 Emit_All_Grids
 .
+##################
 
+##################
+Define Write_Landscape_PS_Header 0
+echo
+"%%BoundingBox:    26   80   842   616\n\
+%%HiResBoundingBox:    26   80   842   616\n\
+% this can be Landscape or Portait and makes no difference???\n\
+%%Orientation: Landscape\n\
+%%DocumentMedia: a4land 842 595 80 () ()\n\
+%%Pages: 1\n\
+%%EndComments\n\
+%%EndProlog\n\
+% What about US letter instead of A4?\n\
+% and how can we make the bounding box correct?\n\
+%%BeginSetup\n\
+  % A4 landscape orientation\n\
+  << /PageSize [842 595] /Orientation 0 >> setpagedevice\n\
+%%EndSetup\n\
+%%Page: 1 1\n\
+%%BeginPageSetup\n\
+%%PageBoundingBox:    26   80   842   616\n\
+%%EndPageSetup\n"
+
+echo "\n% put a scale command here to make a big figure fit...\n"
+.
+
+Define Write_Portrait_PS_Header 0
+error_exit "Write_Portrait_PS_Header not implemented!?"
+.
 
 Define WritePSPlot 0
 Get_PS_Filename $plot_name
@@ -1542,15 +1986,31 @@ If $plot_w>$plot_h
   Else "Set page_orientation portrait"
 
 Set f1 $postscript_lib/jbm_head.ps
-Set f2 $postscript_lib/jbm_${page_orientation}_page.ps
-Set f3 $postscript_lib/plotmacs.ps
+# %!PS-Adobe-3.0 EPSF-3.0
+append no
+output_file $psfile
+echo "%!PS-Adobe-3.0 EPSF-3.0"
 
-If !file_exists('$f1') "warn 'File $f1 does not exist!?' exit_macro"
-If !file_exists('$f2') "warn 'File $f2 does not exist!?' exit_macro"
-If !file_exists('$f3') "warn 'File $f3 does not exist!?' exit_macro"
+If !strcmp('$page_orientation','landscape')
+  Then Write_Landscape_PS_Header
+  Else Write_Portrait_PS_Header
+#Set f2 $postscript_lib/jbm_${page_orientation}_page.ps
+
+If var_exists('ps_scale_factor')
+  'echo "$ps_scale_factor $ps_scale_factor scale"'
+
+output_file -	# close file
+
+Set plot_macro_file $postscript_lib/plotmacs.ps
+
+#If !file_exists('$f1') "warn 'File $f1 does not exist!?' exit_macro"
+#If !file_exists('$f2') "warn 'File $f2 does not exist!?' exit_macro"
+#If !file_exists('$f3') "warn 'File $f3 does not exist!?' exit_macro"
+
+If !file_exists('$plot_macro_file') "warn 'File $plot_macro_file does not exist!?' exit_macro"
 
 os
-  system "cat $f1 $f2 $f3 > $psfile"
+  system "cat $plot_macro_file >> $psfile"
   quit
 
 append yes
@@ -1614,8 +2074,9 @@ repeat ncols(series_pts)
   Emit_Symbol_At $x $y
   Increment pt_idx
   end
+# BUG - should emit error bars before all curves so are painted behind?
+If $series_show_errbars Emit_Series_Errbars
 # draw the curve legend if there is one
-# series_legend
 If $series_show_legend Emit_Series_Legend
 .
 
@@ -1751,10 +2212,14 @@ Set axis_min_name ${1}_axis_min
 Set axis_max_name ${1}_axis_max
 Set axis_logv_name ${1}_axis_logv
 
+# for standard ticks
 Set tick_spacing_name ${1}_tick__spacing	# extra underscore to differentiate from plotsupp (ugly!)
 Set tick_first_name ${1}_tick_first
 Set tick_last_name ${1}_tick_last
 Set tick_auto_name ${1}_tick_auto
+
+# for custom ticks
+Set tick_count_name n_${1}_custom_ticks
 
 Set api_axis_min_name ${1}min
 Set api_axis_max_name ${1}max
@@ -1780,12 +2245,22 @@ Update_Toggle $axis_logv_widget_name $$axis_logv_name $axis_panel_name
 Update_Edit_Text $axis_legend_widget_name $$axis_legend_name $axis_panel_name
 Update_Edit_Text $axis_min_widget_name $$axis_min_name $axis_panel_name
 Update_Edit_Text $axis_max_widget_name $$axis_max_name $axis_panel_name
+Update_Toggle $tick_auto_widget_name $$tick_auto_name $axis_panel_name
 
-Update_Edit_Text $tick_spacing_widget_name $$tick_spacing_name $tick_panel_name
-Update_Edit_Text $tick_first_widget_name $$tick_first_name $tick_panel_name
-Update_Edit_Text $tick_last_widget_name $$tick_last_name $tick_panel_name
-Update_Toggle $tick_auto_widget_name $$tick_auto_name $tick_panel_name
+If $$tick_auto_name
+  Then Update_Std_Axis_Panel
+  Else Update_Custom_Axis_Panel
 .
+
+Define Update_Std_Axis_Panel 0
+Update_Edit_Text $tick_spacing_widget_name $$tick_spacing_name $std_tick_panel_name
+Update_Edit_Text $tick_first_widget_name $$tick_first_name $std_tick_panel_name
+Update_Edit_Text $tick_last_widget_name $$tick_last_name $std_tick_panel_name
+.
+
+Define Update_Custom_Axis_Panel 0
+.
+
 
 Define SetLegendFont 0
 Find_Current_Font
@@ -1817,19 +2292,28 @@ interface
     text $axis_max_widget_name SetAxisMax 0
     toggle $axis_logv_widget_name TogAxisLogValues
     text $axis_legend_widget_name SetAxisLegend 'xyzzy                  xyzzy'
+    toggle $tick_auto_widget_name TogTickAuto
     button Ticks TicksPanel
     button Apply Refresh_Plot
     button Done 'Panel_Off $axis_panel_name Panel_On $main_panel'
     quit
 
-  panel $tick_panel_name $panel_w $panel_h
-  decorate $tick_panel_name
-    toggle $tick_auto_widget_name TogTickAuto
+  panel $std_tick_panel_name $panel_w $panel_h
+  decorate $std_tick_panel_name
     text $tick_spacing_widget_name SetTickSpacing 0
     text $tick_first_widget_name SetTickFirst 0
     text $tick_last_widget_name SetTickLast 0
     button Apply Refresh_Plot
-    button Done 'Panel_Off $tick_panel_name Panel_On $axis_panel_name'
+    button Done 'Panel_Off $std_tick_panel_name Panel_On $axis_panel_name'
+    quit
+
+  panel $custom_tick_panel_name $panel_w $panel_h
+  decorate $custom_tick_panel_name
+    # like data series
+    button 'Add New Tick' AddTick
+    scroller $custom_tick_widget_name SelectTick
+    button 'Edit Tick' EditTick
+    button Done 'Panel_Off $custom_tick_panel_name Panel_On $axis_panel_name'
     quit
 
   panel $save_panel $panel_w $panel_h
@@ -1854,6 +2338,14 @@ interface
     scroller 'Embedded Images' SelectImage
     button 'Edit Image' EditImage
     button Done 'Panel_Off $image_panel Panel_On $main_panel'
+    quit
+
+  panel $legend_panel $panel_w $panel_h
+  decorate $legend_panel
+    button 'Add Legend' AddLegend
+    scroller 'Legends' SelectLegend
+    button 'Edit Legend' EditLegend
+    button Done 'Panel_Off $legend_panel Panel_On $main_panel'
     quit
 
 #Set $1 "items '$data_series_widget_name' $n_data_series"
@@ -1884,6 +2376,7 @@ interface
   decorate $data_edit_panel
     text $series_nickname_widget_name SetSeriesNickname seriesNNN
     text $data_source_file_widget_name SetSeriesSourceFile /dev/null	# Use file chooser?
+    toggle $errbar_toggle_widget_name TogErrorBars
     toggle $data_legend_toggle_widget_name TogDataLegend
     text $data_legend_text_widget_name SetDataLegendText no_legend
     text $data_legend_x_widget_name SetDataLegendX 0
@@ -1898,6 +2391,13 @@ interface
     chooser 'Line Thickness' SetLineThickness 5 0 1 2 3 4
     quit
 
+  panel $tick_edit_panel $panel_w $panel_h
+  decorate $tick_edit_panel
+    text $tick_posn_widget_name SetTickPosn 0
+    text $tick_label_widget_name SetTickLabel 'no label set'
+    button Done TickEditDone
+    quit
+
   panel $image_edit_panel $panel_w $panel_h
   decorate $image_edit_panel
     text $image_nickname_widget_name SetImageNickname imageNNN
@@ -1910,6 +2410,16 @@ interface
     text $image_zoom_y_widget_name SetImageZoomY 0
     button 'Refresh_Plot' ImageEditRefreshPlot
     button Done ImageEditDone
+    quit
+
+  panel $legend_edit_panel $panel_w $panel_h
+  decorate $legend_edit_panel
+    text $legend_nickname_widget_name SetLegendNickname legendNNN
+    text $legend_text_widget_name SetLegendText 'legend text' # Use file chooser?
+    text $legend_posn_x_widget_name SetImageOriginX 0
+    text $legend_posn_y_widget_name SetImageOriginY 0
+    button 'Refresh_Plot' LegendEditRefreshPlot
+    button Done LegendEditDone
     quit
 
   panel $grid_edit_panel $panel_w $panel_h
@@ -1931,11 +2441,13 @@ interface
   decorate $gen_panel
     slider Width SetPlotWidth $min_plot_width $max_plot_width $plot_w
     slider Height SetPlotHeight $min_plot_height $max_plot_height $plot_h
+    slider $ps_scale_widget_name SetPSScale 0 100 $ps_scale_factor
     toggle $plot_frame_toggle_widget_name TogFrame
     toggle $plot_legend_toggle_widget_name TogPlotLegend
     text $plot_legend_text_widget_name SetPlotLegendText $plot_legend_text
     text $plot_legend_x_widget_name SetPlotLegendX $plot_legend_x
     text $plot_legend_y_widget_name SetPlotLegendY $plot_legend_y
+    chooser 'Plot type' SetPlotType 2 'points' 'bar'
     button 'Refresh plot' Refresh_Plot
     button Done 'Panel_Off $gen_panel Panel_On $main_panel'
     quit
@@ -1947,6 +2459,7 @@ interface
     button 'Y axis' YAxisPanel
     button 'Data' DataPanel
     button 'Images' ImagePanel
+    button 'Legends' LegendPanel
     button 'Fonts' FontPanel
     button 'Grids' GridPanel
     button 'Refresh Preview' Refresh_Plot
@@ -1980,7 +2493,22 @@ Set idx 1
 repeat $n_embedded_images
   Load_Image_Vars image_$idx	# is this correct???
   Embed_One_Image $image_filename $image_posn_x $image_posn_y
+  Increment idx
   end
+.
+
+Define Render_Legends 0
+Set idx 1
+repeat $n_extra_legends
+  Load_Legend_Vars legend_$idx	# is this correct???
+  Render_One_Legend $legend_text $legend_posn_x $legend_posn_y
+  Increment idx
+  end
+.
+
+Define Render_One_Legend 3 text x y
+advise "Render_One_Legend '$1' $2 $3"
+S_At $1 $2 $3
 .
 
 Define Embed_One_Image 3 filename x y
@@ -1990,6 +2518,11 @@ Image eoi_tmp nrows('$1') ncols('$1') depth('$1') u_byte
 Get_Next eoi_tmp $1
 # We specify the lower-left hand corner in plotting units
 # Now we have to compute the window coordinates of the upper left hand corner
+
+Plot_2_Screen_Delta dx dy $image_extent_x $image_extent_y
+advise "Requested image size correspondes to $dx x $dy pixels"
+If $dx<ncols(eoi_tmp)||$dy<nrows(eoi_tmp)
+  "advise 'ALERT:  image is too big to display on screen without scaling' Delete_Image eoi_tmp exit_macro"
 
 Plot_2_Screen sx sy $image_posn_x $image_posn_y
 advise "$image_posn_x $image_posn_y (plot) -> $sx $sy (screen)"
@@ -2001,6 +2534,10 @@ view
   embed Plot_Preview eoi_tmp $sx $sy
   quit
 Delete_Image eoi_tmp
+.
+
+Define Emit_One_Legend 3 text x y
+echo "($1) $2 gxu $3 gyu moveto show"
 .
 
 Define Emit_One_Image 5 filename x y extent_x extent_y
@@ -2017,7 +2554,13 @@ Get_Next eoi_tmp $1
 # Here we need to print the image in postscript format...
 Assign dx ncols(eoi_tmp)
 Assign dy nrows(eoi_tmp)
-If depth(eoi_tmp)!=1 "error_exit 'Emit_One_Image:  Sorry, only know how to emit grayscale images...'"
+If depth(eoi_tmp)==1 "Emit_Grayscale_Image eoi_tmp $2 $3 $4 $5"
+If depth(eoi_tmp)==3 "Emit_RGB_Image eoi_tmp $2 $3 $4 $5"
+Delete_Image eoi_tmp
+.
+
+Define Emit_Grayscale_Image 5 image x y extent_x extent_y
+If depth($1)!=1 "error_exit 'Emit_Grayscale_Image:  image $1 depth is not 1!?'"
 # width height bitspersample matrix datasrc image
 echo "/picstr $dx string def"
 # Need translate and scale commands here to place the image...
@@ -2042,14 +2585,49 @@ echo "$dx $dy 8 [1 0 0 1 0 0]"
 echo "{currentfile picstr readhexstring pop}"	# procedure to read data
 echo image
 # Slow_Emit_Image_Data
-Fast_Emit_Image_Data eoi_tmp
-Delete_Image eoi_tmp
+Fast_Emit_Grayscale_Image_Data $1
+echo grestore
+.
+
+Define Emit_RGB_Image 5 image x y extent_x extent_y
+If depth($1)!=3 "error_exit 'Emit_RGB_Image:  image $1 depth is not 3!?'"
+# width height bitspersample matrix datasrc image
+Assign samples_per_row 3*$dx
+echo "/picstr $samples_per_row string def"
+# Need translate and scale commands here to place the image...
+# First figure out how many plot units the image takes up
+# This gets us the size of the image (unscaled) in plot units
+# dx, dy are the dimensions of the image in pixels
+advise "OLD calculation dx = $dx   dy = $dy"
+###Screen_2_Plot_Delta pdx pdy $dx $dy
+###advise "pdx = $pdx   pdy = $pdy     ($dx, $dy)"
+###Mul_Var pdx $4/$dx
+###Mul_Var pdy $5/$dy
+
+Assign pdx 1/$dx	# fraction of image width per pixel - pixel dx
+Assign pdy 1/$dy	# ditto for y
+advise "Image width per pixel pdx = $pdx   pdy = $pdy"
+Mul_Var pdx $4
+Mul_Var pdy $5
+advise "Desired size (plot units) ext_x = $4  ext_y = $5"
+advise "Desired size per pixel:  pdx = $pdx   pdy = $pdy"
+echo gsave
+# Do we have to init the transformation here???
+echo "$2 gxu $3 gyu translate"
+echo "$pdx gdxu $pdy gdyu scale"
+#echo "$dx $dy 8 [$dx 0 0 $dy 0 0]"
+echo "$dx $dy 8 [1 0 0 1 0 0]"
+echo "{currentfile picstr readhexstring pop}"	# procedure to read data
+echo "false 3"		# postscript manual says, "single data source, 3 colors"
+echo colorimage
+# Slow_Emit_Image_Data
+Fast_Emit_RGB_Image_Data $1
 echo grestore
 .
 
 # ps gets image data bottom-to-top, so we need to flip the image
 
-Define Fast_Emit_Image_Data 1 image
+Define Fast_Emit_Grayscale_Image_Data 1 image
 If obj_exists(flipped) 'Delete_Image flipped'
 Subsample_Image flipped $1
 	ncols('$1') 0 1
@@ -2061,5 +2639,21 @@ data
     quit
   quit
 .
+
+
+Define Fast_Emit_RGB_Image_Data 1 image
+If obj_exists(flipped) 'Delete_Image flipped'
+Subsample_Color_Image flipped $1
+	ncomps('$1') 0 1
+	ncols('$1') 0 1
+	nrows('$1') nrows('$1')-1 -1
+data
+  ascii
+    output_fmt postscript
+    display flipped
+    quit
+  quit
+.
+
 
 

@@ -79,6 +79,7 @@ fprintf(stderr,"ios_read_global_startup:  STARTUP_FILE = %s\n",STRINGIFY(STARTUP
 			return -1;
 		}
 		// called from the main thread...
+fprintf(stderr,"ios_read_global_startup calling redir...\n");
 		redir(QSP_ARG  fp, startup_path.UTF8String );
 
 		//note_path(QSP_ARG  startup_path.UTF8String);

@@ -4,4 +4,5 @@
 Makefile
 Makefile.in
 *.dat
-
+test_xv.asc
+test_xvals

@@ -1,0 +1,18 @@
+Vector c 4 1 complex
+Vector m 4 1 float
+Vector m2 4 2 float
+data ascii read c -
+	0	1
+	2	0
+	3	3
+	-1	1
+  quit quit
+Display c
+VMagSq m c
+Display m
+
+VMagSq m2{0} c
+Display m2{0}
+Display m2
+exit
+
