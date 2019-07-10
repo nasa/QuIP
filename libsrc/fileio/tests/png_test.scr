@@ -15,14 +15,14 @@ repeat $nf
   Put_Next b $f
   end
 
-Pause
-
 Define Assert 1 cond
 If $1 exit_macro
 error_exit "Assertion failed:  $1"
 .
 
 # BUG png file not auto-closed after writing!?
+
+advise "Reading back from file $f"
 
 Read_File_Header $f
 Assign p precision('$f')

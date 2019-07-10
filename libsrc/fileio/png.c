@@ -159,8 +159,7 @@ static dimension_t _count_png_frames(QSP_ARG_DECL  Image_File *ifp, long *frame_
 
 	fp = ifp->if_fp;
 
-	// We need to save this offset to add to the seek offsets!
-	// Or do we?
+	// We assume we have already read part of the first header
 	file_pos = ftell(fp);
 
 	// get to the first header - why are we not there already!?
@@ -214,12 +213,8 @@ static dimension_t _count_png_frames(QSP_ARG_DECL  Image_File *ifp, long *frame_
 	}
 	*frame_size_p = file_pos2;	// return the frame size
 
-	// rewind to initial position
-	if( fseek(fp,file_pos,SEEK_SET) < 0 )
-		warn("count_png_frames:  reset seek error!?");
-
 	return nf;
-}
+} // count_png_frames
 
 #define read_png_signature(ifp) _read_png_signature(QSP_ARG  ifp)
 
@@ -357,6 +352,10 @@ static int init_png_for_reading(QSP_ARG_DECL  Image_File *ifp /* , png_infop inf
 	init_frame_count(ifp);
 
 	fill_hdr(HDR_P);		// fill the header struct using png_ptr and info_ptr
+
+	// rewind
+	if( fseek(ifp->if_fp,0L,SEEK_SET) < 0 )
+		warn("init_png_for_reading:  rewind seek error!?");
 
 	return 0;
 }
