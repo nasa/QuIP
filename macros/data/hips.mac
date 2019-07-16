@@ -287,6 +287,10 @@ Define Raw_Image_Sizes 2 width height
 fileio raw_sizes 1 $1 $2 0 1 quit
 .
 
+Define Raw_Pixel_Type 1 type
+fileio raw_prec $1 quit
+.
+
 
 
 # Set a script variable if the file exists in the unix filesystem

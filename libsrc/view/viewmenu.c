@@ -381,6 +381,8 @@ static COMMAND_FUNC( do_hide_imgs )
 
 }
 
+// I forget what this does - VW_IMAGES is a canvas viewer in iOS???
+
 static COMMAND_FUNC( do_reveal_imgs )
 {
 	Viewer *vp;
@@ -434,6 +436,12 @@ static COMMAND_FUNC( do_cycle_func )
 #endif
 
 }
+
+// another command developed to support animation on iOS...
+//
+// We have a stack of images that get cycled at the frame interrupts?
+// duration is given in refreshes...
+// see ../ios/quipImages.m, ../ios/quipImageView.m
 
 static COMMAND_FUNC( do_refresh_viewer )
 {

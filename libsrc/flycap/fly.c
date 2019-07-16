@@ -23,6 +23,7 @@
 
 #include "fly.h"
 
+
 #define TMPSIZE	32	// for temporary object names, e.g. _frame55
 
 ITEM_INTERFACE_DECLARATIONS(Fly_Cam,fly_cam,0)
@@ -39,7 +40,43 @@ ITEM_INTERFACE_DECLARATIONS(Fly_Cam,fly_cam,0)
 {	#string			}
 #endif // ! HAVE_LIBFLYCAP
 
-#ifdef NOT_USED
+#define REPORT_INT_PROP(struct_ptr,p)				\
+	sprintf(MSG_STR,"%-28s %d",#p ":",(struct_ptr)->p);	\
+	prt_msg(MSG_STR);
+
+#define REPORT_INT_PROP_HEX(struct_ptr,p)			\
+	sprintf(MSG_STR,"%-28s 0x%x",#p ":",(struct_ptr)->p);	\
+	prt_msg(MSG_STR);
+
+#define REPORT_BOOL_PROP(struct_ptr,p)						\
+	sprintf(MSG_STR,"%-28s %s",#p ":",(struct_ptr)->p?"true":"false");	\
+	prt_msg(MSG_STR);
+
+#define REPORT_FLOAT_PROP(struct_ptr,p)				\
+	sprintf(MSG_STR,"%-28s %g",#p ":",(struct_ptr)->p);	\
+	prt_msg(MSG_STR);
+
+#ifdef HAVE_LIBFLYCAP
+static const char *name_for_pixel_format(fc2PixelFormat f);	// forward def
+static void report_fmt7_info(QSP_ARG_DECL  fc2Format7Info *f7i_p );
+
+#define REPORT_PXLFMT_PROP(struct_ptr,p)						\
+	sprintf(MSG_STR,"%-28s %s",#p ":",name_for_pixel_format((struct_ptr)->p));	\
+	prt_msg(MSG_STR);
+
+
+static void report_fmt7_settings(QSP_ARG_DECL  fc2Format7ImageSettings *f7s_p)
+{
+	REPORT_INT_PROP(f7s_p,mode)
+	REPORT_INT_PROP(f7s_p,offsetX)
+	REPORT_INT_PROP(f7s_p,offsetY)
+	REPORT_INT_PROP(f7s_p,width)
+	REPORT_INT_PROP(f7s_p,height)
+        REPORT_PXLFMT_PROP(f7s_p,pixelFormat)
+}
+
+// Why are these not used?  They look useful!!!???
+
 static Named_Pixel_Format all_pixel_formats[]={
 { "mono8",	FC2_PIXEL_FORMAT_MONO8			},
 { "411yuv8",	FC2_PIXEL_FORMAT_411YUV8		},
@@ -64,7 +101,8 @@ static Named_Pixel_Format all_pixel_formats[]={
 };
 
 #define N_NAMED_PIXEL_FORMATS	(sizeof(all_pixel_formats)/sizeof(Named_Pixel_Format))
-#endif // NOT_USED
+
+#endif // HAVE_LIBFLYCAP
 
 #ifdef HAVE_LIBFLYCAP
 #define FC2_MODE(string,code,w,h,d)	{#string,code,w,h,d}
@@ -197,6 +235,7 @@ FC2_ENTRY(	gigE,		FC2_INTERFACE_GIGE	)
 
 #endif // HAVE_LIBFLYCAP
 
+// embedded image info = eii
 
 const char *eii_prop_names[N_EII_PROPERTIES]={
 	"timestamp",
@@ -249,11 +288,11 @@ static Size_Functions fly_cam_sf={
 };
 
 
-static void report_fc2_error(QSP_ARG_DECL  fc2Error error, const char *whence )
+static void report_fc2_error(QSP_ARG_DECL  fc2Error err, const char *whence )
 {
 	const char *msg;
 
-	switch(error){
+	switch(err){
 		case FC2_ERROR_UNDEFINED:
 			msg = "Undefined flycap error."; break;
 		case FC2_ERROR_OK:
@@ -344,7 +383,7 @@ static void report_fc2_error(QSP_ARG_DECL  fc2Error error, const char *whence )
 		default:
 			sprintf(ERROR_STRING,
 		"report_fc2_error (%s):  unhandled error code %d!?\n",
-				whence,error);
+				whence,err);
 			warn(ERROR_STRING);
 			msg = "unhandled error code";
 			break;
@@ -442,11 +481,11 @@ static void init_property_types(SINGLE_QSP_ARG_DECL)
 
 void refresh_property_info(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt )
 {
-	fc2Error error;
+	fc2Error err;
 
-	error = fc2GetPropertyInfo( fcp->fc_context, &(pgpt->info) );
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetPropertyInfo" );
+	err = fc2GetPropertyInfo( fcp->fc_context, &(pgpt->info) );
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetPropertyInfo" );
 		return;
 	}
 }
@@ -537,11 +576,11 @@ void show_property_info(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt 
 
 void refresh_property_value(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt )
 {
-	fc2Error error;
+	fc2Error err;
 
-	error = fc2GetProperty( fcp->fc_context, &(pgpt->prop) );
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetProperty" );
+	err = fc2GetProperty( fcp->fc_context, &(pgpt->prop) );
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetProperty" );
 		return;
 	}
 }
@@ -620,7 +659,7 @@ void show_property_value(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt
 
 void set_prop_value(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt, Fly_Cam_Prop_Val *vp )
 {
-	fc2Error error;
+	fc2Error err;
 
 	if( vp->pv_is_abs ){
 		if( vp->pv_u.u_f < pgpt->info.absMin || vp->pv_u.u_f > pgpt->info.absMax ){
@@ -644,16 +683,16 @@ void set_prop_value(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt, Fly
 		pgpt->prop.valueA = vp->pv_u.u_i;
 	}
 
-	error = fc2SetProperty( fcp->fc_context, &(pgpt->prop));
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2SetProperty" );
+	err = fc2SetProperty( fcp->fc_context, &(pgpt->prop));
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2SetProperty" );
 		return;
 	}
 }
 
 void set_prop_auto(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt, BOOL yn )
 {
-	fc2Error error;
+	fc2Error err;
 
 	if( ! pgpt->info.autoSupported ){
 		sprintf(ERROR_STRING,"Sorry, auto mode not supported for %s.",
@@ -663,9 +702,9 @@ void set_prop_auto(QSP_ARG_DECL  Fly_Cam *fcp, Fly_Cam_Property_Type *pgpt, BOOL
 	}
 
 	pgpt->prop.autoManualMode = yn;
-	error = fc2SetProperty( fcp->fc_context, &(pgpt->prop) );
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2SetProperty" );
+	err = fc2SetProperty( fcp->fc_context, &(pgpt->prop) );
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2SetProperty" );
 		return;
 	}
 }
@@ -824,7 +863,7 @@ int get_fly_cam_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, Fly_Cam *fcp
 			strcpy(dst,src);
 		}
 	}
-	set_script_var_from_int(QSP_ARG  "n_video_modes",n);
+	set_script_var_from_int("n_video_modes",n);
 	return n;
 }
 
@@ -945,7 +984,7 @@ int get_fly_cam_framerate_strings( QSP_ARG_DECL  Data_Obj *str_dp, Fly_Cam *fcp 
 static void test_setup(QSP_ARG_DECL  Fly_Cam *fcp,
 		fc2VideoMode m, fc2FrameRate r, int *kp, int idx )
 {
-	fc2Error error;
+	fc2Error err;
 	BOOL supported;
 
 	// punt if format 7
@@ -953,10 +992,10 @@ static void test_setup(QSP_ARG_DECL  Fly_Cam *fcp,
 		// BUG?  make sure fly_cam has format7 modes?
 		supported = TRUE;
 	} else {
-		error = fc2GetVideoModeAndFrameRateInfo( fcp->fc_context,
+		err = fc2GetVideoModeAndFrameRateInfo( fcp->fc_context,
 			m,r,&supported );
-		if( error != FC2_ERROR_OK ){
-			report_fc2_error(QSP_ARG  error,
+		if( err != FC2_ERROR_OK ){
+			report_fc2_error(QSP_ARG  err,
 				"fc2GetVideoModeAndFrameRateInfo" );
 			supported = FALSE;
 		}
@@ -1038,11 +1077,11 @@ int is_fmt7_mode(QSP_ARG_DECL  Fly_Cam *fcp, int idx )
 
 static int refresh_config(QSP_ARG_DECL  Fly_Cam *fcp)
 {
-	fc2Error error;
+	fc2Error err;
 
-	error = fc2GetConfiguration(fcp->fc_context,&fcp->fc_config);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetConfiguration" );
+	err = fc2GetConfiguration(fcp->fc_context,&fcp->fc_config);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetConfiguration" );
 		// should we set a flag to indicate an invalid config?
 		return -1;
 	}
@@ -1054,7 +1093,7 @@ static int refresh_config(QSP_ARG_DECL  Fly_Cam *fcp)
 int set_std_mode(QSP_ARG_DECL  Fly_Cam *fcp, int idx )
 {
 	fc2FrameRate r;
-	fc2Error error;
+	fc2Error err;
 	fc2VideoMode m;
 
 //	CHECK_IDX(set_std_mode)
@@ -1070,9 +1109,9 @@ int set_std_mode(QSP_ARG_DECL  Fly_Cam *fcp, int idx )
 
 	r = highest_framerate(QSP_ARG  fcp->fc_framerate_mask_tbl[idx] );
 
-	error = fc2SetVideoModeAndFrameRate(fcp->fc_context,m,r);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2SetVideoModeAndFrameRate" );
+	err = fc2SetVideoModeAndFrameRate(fcp->fc_context,m,r);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2SetVideoModeAndFrameRate" );
 		return -1;
 	}
 
@@ -1097,15 +1136,15 @@ static void set_highest_fmt7_framerate( QSP_ARG_DECL  Fly_Cam *fcp )
 	 * to format7.  So here we go to the max by default...
 	 */
 
-	fc2Error error;
+	fc2Error err;
 	fc2Property prop;
 #ifdef FOOBAR
 	fc2PropertyInfo propInfo;
 
 	propInfo.type = FC2_FRAME_RATE;
-	error = fc2GetPropertyInfo( fcp->fc_context, &propInfo );
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetPropertyInfo" );
+	err = fc2GetPropertyInfo( fcp->fc_context, &propInfo );
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetPropertyInfo" );
 		return;
 	}
 #endif // FOOBAR
@@ -1118,74 +1157,67 @@ static void set_highest_fmt7_framerate( QSP_ARG_DECL  Fly_Cam *fcp )
 	assert( fr_prop_p->info.absValSupported );
 
 	prop.type = FC2_FRAME_RATE;
-	error = fc2GetProperty( fcp->fc_context, &prop);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetProperty" );
+	err = fc2GetProperty( fcp->fc_context, &prop);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetProperty" );
 		return;
 	}
 	prop.absControl = TRUE;
 	prop.absValue = fr_prop_p->info.absMax;
 
-	error = fc2SetProperty( fcp->fc_context, &prop);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2SetProperty" );
+	err = fc2SetProperty( fcp->fc_context, &prop);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2SetProperty" );
 		return;
 	}
 }
 
-int set_fmt7_mode(QSP_ARG_DECL  Fly_Cam *fcp, int idx )
+void report_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp )
 {
-	fc2Format7ImageSettings settings;
-//	fc2Format7PacketInfo pinfo;
-//	BOOL is_valid;
-	fc2Error error;
-	unsigned int packetSize;
-	float percentage;
+	int i;
 
-	insure_stopped(QSP_ARG  fcp,"setting format7 mode");
+	sprintf(MSG_STR,"\nCamera %s has %d format7 modes\n",fcp->fc_name,fcp->fc_n_fmt7_modes);
+	prt_msg(MSG_STR);
 
-	if( idx < 0 || idx >= fcp->fc_n_fmt7_modes ){
-		warn("Format 7 index out of range!?");
+	for(i=0;i<fcp->fc_n_fmt7_modes;i++){
+		report_fmt7_info(QSP_ARG  &fcp->fc_fmt7_info_tbl[i] );
+	}
+}
+
+static void report_estimated_frame_rate( fc2Format7ImageSettings *settings_p, unsigned int packetSize )
+{
+	long bytes_per_image;
+	float est_fps;
+
+	bytes_per_image = settings_p->width * settings_p->height;
+	// assumes mono8
+
+	// where does 8k come from???
+	est_fps = 8000.0 * packetSize / bytes_per_image;
+	fprintf(stderr,"Estimated frame rate:  %g\n",est_fps);
+}
+
+static int init_fmt7_settings(QSP_ARG_DECL Fly_Cam *fcp, fc2Format7ImageSettings *settings_p, int idx )
+{
+fprintf(stderr,"init_fmt7_settings %d:  installing settings from cached Format7Info...\n",idx);
+report_fmt7_info(QSP_ARG  &fcp->fc_fmt7_info_tbl[idx] );
+	settings_p->mode = idx;
+	settings_p->offsetX = 0;
+	settings_p->offsetY = 0;
+	settings_p->width = fcp->fc_fmt7_info_tbl[idx].maxWidth;
+	settings_p->height = fcp->fc_fmt7_info_tbl[idx].maxHeight;
+
+	if( fcp->fc_fmt7_info_tbl[idx].pixelFormatBitField & FC2_PIXEL_FORMAT_RAW8 ){
+		settings_p->pixelFormat = FC2_PIXEL_FORMAT_RAW8;
+	} else {
+		warn("init_fmt7_settings:  Camera does not support raw8!?");
 		return -1;
 	}
+	return 0;
+}
 
-	settings.mode = idx;
-	settings.offsetX = 0;
-	settings.offsetY = 0;
-	settings.width = fcp->fc_fmt7_info_tbl[idx].maxWidth;
-	settings.height = fcp->fc_fmt7_info_tbl[idx].maxHeight;
-	if( fcp->fc_fmt7_info_tbl[idx].pixelFormatBitField &
-			FC2_PIXEL_FORMAT_RAW8 )
-		settings.pixelFormat = FC2_PIXEL_FORMAT_RAW8;
-	else {
-		warn("Camera does not support raw8!?");
-		return -1;
-	}
-
-fprintf(stderr,"Using size %d x %d\n",settings.width,settings.height);
-
-	percentage = 100.0;
-	error = fc2SetFormat7Configuration(fcp->fc_context,&settings,
-			percentage);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2SetFormat7Configuration" );
-		return -1;
-	}
-
-	set_highest_fmt7_framerate(QSP_ARG  fcp);
-
-	// This fails if we are not in format 7 already.
-	error = fc2GetFormat7Configuration(fcp->fc_context,&settings,
-			&packetSize,&percentage);
-
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetFormat7Configuration" );
-		return -1;
-	}
-
-	fprintf(stderr,"Percentage = %g (packet size = %d)\n",
-		percentage,packetSize);
-
+static void update_camera_for_fmt7(Fly_Cam *fcp, int idx, fc2Format7ImageSettings *settings_p )
+{
 	fcp->fc_video_mode = FC2_VIDEOMODE_FORMAT7;
 	fcp->fc_framerate = FC2_FRAMERATE_FORMAT7;
 	fcp->fc_framerate_index = index_of_framerate(FC2_FRAMERATE_FORMAT7);
@@ -1196,19 +1228,70 @@ fprintf(stderr,"Using size %d x %d\n",settings.width,settings.height);
 
 	// Do we have to set the framerate to FC2_FRAMERATE_FORMAT7???
 
-	fcp->fc_rows = settings.height;
-	fcp->fc_cols = settings.width;
+	fcp->fc_rows = settings_p->height;
+	fcp->fc_cols = settings_p->width;
+}
 
-	{
-		long bytes_per_image;
-		float est_fps;
+static int init_fmt7_packet(QSP_ARG_DECL  Fly_Cam *fcp, fc2Format7ImageSettings *settings_p )
+{
+	float percentage;
+	unsigned int packetSize;
+	fc2Error err;
+	BOOL isValid;
+	fc2Format7PacketInfo packetInfo;
 
-		bytes_per_image = settings.width * settings.height;
-		// assumes mono8
+	// BUG validate setting before setting...
+        err = fc2ValidateFormat7Settings(fcp->fc_context,settings_p,&isValid,&packetInfo);
 
-		est_fps = 8000.0 * packetSize / bytes_per_image;
-		fprintf(stderr,"Estimated frame rate:  %g\n",est_fps);
+	percentage = 100.0;
+	err = fc2SetFormat7Configuration(fcp->fc_context,settings_p, percentage);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2SetFormat7Configuration" );
+		return -1;
 	}
+
+	set_highest_fmt7_framerate(QSP_ARG  fcp);
+
+	// This fails if we are not in format 7 already.
+	err = fc2GetFormat7Configuration(fcp->fc_context,settings_p,
+			&packetSize,&percentage);
+
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetFormat7Configuration" );
+		return -1;
+	}
+
+	fprintf(stderr,"Percentage = %g (packet size = %d)\n",
+		percentage,packetSize);
+
+	report_estimated_frame_rate(settings_p,packetSize);
+
+	return 0;
+}
+
+int set_fmt7_mode(QSP_ARG_DECL  Fly_Cam *fcp, int idx )
+{
+	fc2Format7ImageSettings settings;
+
+	insure_stopped(QSP_ARG  fcp,"setting format7 mode");
+
+	if( idx < 0 || idx >= fcp->fc_n_fmt7_modes ){
+		warn("Format 7 index out of range!?");
+		return -1;
+	}
+
+	// copy the settings from the info table, size will be maximal
+	if( init_fmt7_settings(QSP_ARG  fcp,&settings,idx) < 0 )
+		return -1;
+fprintf(stderr,"set_fmt7_mode:  Using size %d x %d\n",settings.width,settings.height);
+report_fmt7_settings(QSP_ARG  &settings);
+
+	// BUG?  validate the settings?
+
+	if( init_fmt7_packet(QSP_ARG  fcp,&settings) < 0 )
+		return -1;
+
+	update_camera_for_fmt7(fcp,idx,&settings);
 
 	// refresh_config reads the config from the library...
 	return refresh_config(QSP_ARG  fcp);
@@ -1217,7 +1300,7 @@ fprintf(stderr,"Using size %d x %d\n",settings.width,settings.height);
 void set_eii_property(QSP_ARG_DECL  Fly_Cam *fcp, int idx, int yesno )
 {
 	myEmbeddedImageInfo *eii_p;
-	fc2Error error;
+	fc2Error err;
 
 	eii_p = (myEmbeddedImageInfo *) (&fcp->fc_ei_info);
 	if( ! eii_p->prop_tbl[idx].available ){
@@ -1228,15 +1311,15 @@ void set_eii_property(QSP_ARG_DECL  Fly_Cam *fcp, int idx, int yesno )
 	}
 	eii_p->prop_tbl[idx].onOff = yesno ? TRUE : FALSE;
 
-	error = fc2SetEmbeddedImageInfo(fcp->fc_context,&fcp->fc_ei_info);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2SetEmbeddedImageInfo" );
+	err = fc2SetEmbeddedImageInfo(fcp->fc_context,&fcp->fc_ei_info);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2SetEmbeddedImageInfo" );
 	}
 }
 
 void set_grab_mode(QSP_ARG_DECL  Fly_Cam *fcp, int grabmode_idx )
 {
-	fc2Error error;
+	fc2Error err;
 	fc2Config cfg;
 
 	assert( grabmode_idx >= 0 && grabmode_idx < N_NAMED_GRAB_MODES );
@@ -1244,9 +1327,9 @@ void set_grab_mode(QSP_ARG_DECL  Fly_Cam *fcp, int grabmode_idx )
 	// grab mode is part of the config struct
 	cfg = fcp->fc_config;
 	cfg.grabMode = all_grab_modes[grabmode_idx].ngm_value;
-	error = fc2SetConfiguration(fcp->fc_context,&cfg);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2SetConfiguration" );
+	err = fc2SetConfiguration(fcp->fc_context,&cfg);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2SetConfiguration" );
 		// should we set a flag to indicate an invalid config?
 		return;
 	}
@@ -1281,17 +1364,17 @@ int pick_fly_cam_framerate(QSP_ARG_DECL  Fly_Cam *fcp, const char *pmpt)
 int set_framerate(QSP_ARG_DECL  Fly_Cam *fcp, int framerate_index)
 {
 	fc2FrameRate rate;
-	fc2Error error;
+	fc2Error err;
 
 	if( fcp == NULL ) return -1;
 
 	insure_stopped(QSP_ARG  fcp,"setting frame rate");
 
 	rate = all_framerates[framerate_index].nfr_value;
-	error = fc2SetVideoModeAndFrameRate(fcp->fc_context,
+	err = fc2SetVideoModeAndFrameRate(fcp->fc_context,
 			fcp->fc_video_mode,rate);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2SetVideoModeAndFrameRate" );
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2SetVideoModeAndFrameRate" );
 		return -1;
 	}
 
@@ -1349,7 +1432,7 @@ static int set_default_video_mode(QSP_ARG_DECL  Fly_Cam *fcp)
 	fc2VideoMode m;
 	fc2FrameRate r;
 	int i,j;
-	fc2Error error;
+	fc2Error err;
 	int _nskip;
 
 	if( get_supported_video_modes(QSP_ARG  fcp ) < 0 ){
@@ -1357,7 +1440,9 @@ static int set_default_video_mode(QSP_ARG_DECL  Fly_Cam *fcp)
 		return -1;
 	}
 
-//fprintf(stderr,"get_supported_video_modes found %d modes\n",fcp->fc_n_video_modes);
+//fprintf(stderr,"set_default_video_mode:  get_supported_video_modes found %d mode%s\n",
+//fcp->fc_n_video_modes,fcp->fc_n_video_modes==1?"":"s");
+
 	_nskip=0;
 	do {
 		_nskip++;
@@ -1365,15 +1450,14 @@ static int set_default_video_mode(QSP_ARG_DECL  Fly_Cam *fcp)
 		fcp->fc_my_video_mode_index = i;
 		j = fcp->fc_video_mode_indices[i];
 		m = all_video_modes[j].nvm_value;
+//fprintf(stderr,"set_default_video_mode:  m = %d (0x%x)\n",m,m);
 		// BUG we don't check that nskip is in-bounds, but should be OK
 	} while( m == FC2_VIDEOMODE_FORMAT7  && _nskip < fcp->fc_n_video_modes );
 
 	if( m == FC2_VIDEOMODE_FORMAT7 ){
-		/*
 		sprintf(ERROR_STRING,"set_default_video_mode:  %s has only format7 modes!?",
 			fcp->fc_name);
 		advise(ERROR_STRING);
-		*/
 		return -1;
 	}
 
@@ -1403,10 +1487,10 @@ static int set_default_video_mode(QSP_ARG_DECL  Fly_Cam *fcp)
 //advise(ERROR_STRING);
 
 
-	error = fc2SetVideoModeAndFrameRate( fcp->fc_context,
+	err = fc2SetVideoModeAndFrameRate( fcp->fc_context,
 			fcp->fc_video_mode, fcp->fc_framerate );
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2SetVideoModeAndFrameRate" );
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2SetVideoModeAndFrameRate" );
 		return -1;
 	}
 
@@ -1437,14 +1521,14 @@ static void fix_string( char *s )
 static Fly_Cam *unique_fly_cam_instance( QSP_ARG_DECL  fc2Context context )
 {
 	int i;
-	char cname[80];	// How many chars is enough?
+	char cname[LLEN];	// How many chars is enough?
 	Fly_Cam *fcp;
-	fc2Error error;
+	fc2Error err;
 	fc2CameraInfo camInfo;
 
-	error = fc2GetCameraInfo( context, &camInfo );
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetCameraInfo" );
+	err = fc2GetCameraInfo( context, &camInfo );
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetCameraInfo" );
 		return NULL;
 	}
 
@@ -1452,7 +1536,9 @@ static Fly_Cam *unique_fly_cam_instance( QSP_ARG_DECL  fc2Context context )
 	fcp=NULL;
 	while(fcp==NULL){
 		//sprintf(cname,"%s_%d",cam_p->model,i);
-		sprintf(cname,"%s_%d",camInfo.modelName,i);
+		if( snprintf(cname,LLEN,"%s_%d",camInfo.modelName,i) >= LLEN ){
+			error1("unique_fly_cam_instance:  camera name too long for buffer!?");
+		}
 		fix_string(cname);	// change spaces to underscores
 //sprintf(ERROR_STRING,"Checking for existence of %s",cname);
 //advise(ERROR_STRING);
@@ -1480,9 +1566,14 @@ static Fly_Cam *unique_fly_cam_instance( QSP_ARG_DECL  fc2Context context )
 	return fcp;
 }
 
+static void show_fmt7_table_data(QSP_ARG_DECL  fc2Format7Info *f7i_p)
+{
+//	sprintf(MSG_STR,
+}
+
 static void get_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp)
 {
-	fc2Error error;
+	fc2Error err;
 	BOOL supported;
 	int i, largest=(-1);
 	fc2Format7Info fmt7_info_tbl[N_FMT7_MODES];
@@ -1490,27 +1581,44 @@ static void get_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp)
 
 	fcp->fc_n_fmt7_modes = 0;
 	for(i=0;i<N_FMT7_MODES;i++){
-		fmt7_info_tbl[i].mode = i;
-		error = fc2GetFormat7Info(fcp->fc_context,
+		fmt7_info_tbl[i].mode = i;	// specify which mode for the get function
+		err = fc2GetFormat7Info(fcp->fc_context,
 				&fmt7_info_tbl[i],&supported);
-		if( error != FC2_ERROR_OK ){
-			report_fc2_error(QSP_ARG  error, "fc2GetFormat7Info" );
+		if( err != FC2_ERROR_OK ){
+			report_fc2_error(QSP_ARG  err, "fc2GetFormat7Info" );
 		}
+prt_msg("\ndata returned by fc2GetFormat7Info:");
+report_fmt7_info(QSP_ARG  &fmt7_info_tbl[i] );
 		if( supported ){
+show_fmt7_table_data(QSP_ARG  &fmt7_info_tbl[i]);
 			fcp->fc_n_fmt7_modes ++ ;
 			largest = i;
+fprintf(stderr,"format7 mode %d is supported\n",i);
+		}
+		else {
+fprintf(stderr,"format7 mode %d is NOT supported\n",i);
 		}
 	}
 	if( (largest+1) != fcp->fc_n_fmt7_modes ){
 		sprintf(ERROR_STRING,
 	"Unexpected number of format7 modes!?  (largest index = %d, n_modes = %d)",
 			largest,fcp->fc_n_fmt7_modes);
-		warn(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
+/*
+fprintf(stderr,"get_fmt7_modes:  found %d format7 mode%s\n",
+fcp->fc_n_fmt7_modes,
+fcp->fc_n_fmt7_modes==1?"":"s");
+*/
 
 	nb = fcp->fc_n_fmt7_modes * sizeof(fc2Format7Info);
 	fcp->fc_fmt7_info_tbl = getbuf( nb );
 	memcpy(fcp->fc_fmt7_info_tbl,fmt7_info_tbl,nb);
+
+prt_msg("\nafter copying data:");
+for(i=0;i<fcp->fc_n_fmt7_modes;i++){
+report_fmt7_info(QSP_ARG  &fcp->fc_fmt7_info_tbl[i] );
+}
 
 	fcp->fc_fmt7_index = 0;
 }
@@ -1525,26 +1633,43 @@ prt_msg(MSG_STR);
 sprintf(MSG_STR,"\t%s:  0x%x",#desc_str,fcp->fc_fmt7_info_tbl[mode].value); \
 prt_msg(MSG_STR);
 
-static void show_fmt7_info(QSP_ARG_DECL  Fly_Cam *fcp, fc2Mode mode )
+static void report_fmt7_info(QSP_ARG_DECL  fc2Format7Info *f7i_p )
 {
-	sprintf(MSG_STR,"Format 7 mode %d:",mode);
-	prt_msg(MSG_STR);
-	
-	SHOW_FIELD(max width,maxWidth)
-	SHOW_FIELD(max height,maxHeight)
-	SHOW_FIELD(offsetHStepSize,offsetHStepSize)
-	SHOW_FIELD(offsetVStepSize,offsetVStepSize)
-	SHOW_FIELD(imageHStepSize,imageHStepSize)
-	SHOW_FIELD(imageVStepSize,imageVStepSize)
-	SHOW_FIELD_HEX(pixelFormatBitField,pixelFormatBitField)
-	SHOW_FIELD_HEX(vendorPixelFormatBitField,vendorPixelFormatBitField)
-	SHOW_FIELD(packetSize,packetSize)
-	SHOW_FIELD(minPacketSize,minPacketSize)
-	SHOW_FIELD(maxPacketSize,maxPacketSize)
+	REPORT_INT_PROP(f7i_p,mode)
+        REPORT_INT_PROP(f7i_p, maxWidth)
+        REPORT_INT_PROP(f7i_p, maxHeight)
+        REPORT_INT_PROP(f7i_p, offsetHStepSize)
+        REPORT_INT_PROP(f7i_p, offsetVStepSize)
+        REPORT_INT_PROP(f7i_p, imageHStepSize)
+        REPORT_INT_PROP(f7i_p, imageVStepSize)
+        REPORT_INT_PROP_HEX(f7i_p, pixelFormatBitField)
+        REPORT_INT_PROP_HEX(f7i_p, vendorPixelFormatBitField)
+        REPORT_INT_PROP(f7i_p, packetSize)
+        REPORT_INT_PROP(f7i_p, minPacketSize)
+        REPORT_INT_PROP(f7i_p, maxPacketSize)
+        REPORT_FLOAT_PROP(f7i_p, percentage)
 
 	prt_msg("");
 }
 
+void show_fmt7_settings(QSP_ARG_DECL  Fly_Cam *fcp )
+{
+	fc2Error err;
+	fc2Format7ImageSettings imageSettings;
+	unsigned int packetSize;
+	float percentage;
+
+        err = fc2GetFormat7Configuration( fcp->fc_context, &imageSettings,
+		&packetSize, &percentage );
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetFormat7Configuration" );
+		return;
+	}
+
+	report_fmt7_settings(QSP_ARG  &imageSettings);
+}
+
+#ifdef NOT_USED
 void show_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp)
 {
 	if( fcp->fc_n_fmt7_modes <= 0 ){
@@ -1555,6 +1680,7 @@ void show_fmt7_modes(QSP_ARG_DECL  Fly_Cam *fcp)
 			show_fmt7_info( QSP_ARG  fcp, i );
 	}
 }
+#endif // NOT_USED
 
 // This should only be called once...
 
@@ -1563,12 +1689,12 @@ static Fly_Cam *setup_my_fly_cam( QSP_ARG_DECL
 				int index )
 {
 	Fly_Cam *fcp;
-	fc2Error error;
+	fc2Error err;
 	int i;
 
-	error = fc2Connect(context,guid_p);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2Connect" );
+	err = fc2Connect(context,guid_p);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2Connect" );
 		return NULL;
 	}
 
@@ -1578,28 +1704,28 @@ static Fly_Cam *setup_my_fly_cam( QSP_ARG_DECL
 	// Why do we disconnect from the context we were called with -
 	// subsequent cameras will still use it...
 	// Maybe this just undoes the connection directly above?
-	error = fc2Disconnect(context);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2Disconnect" );
+	err = fc2Disconnect(context);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2Disconnect" );
 		// BUG should clean up and return NULL?
 		return fcp;
 	}
 
 	//fcp->fc_cam_p = cam_p;
-	error = fc2CreateContext(&fcp->fc_context);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2CreateContext" );
+	err = fc2CreateContext(&fcp->fc_context);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2CreateContext" );
 		// BUG clean up first
 		return NULL;
 	}
-	error=fc2GetCameraFromIndex(fcp->fc_context,index,&fcp->fc_guid);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetCameraFromIndex" );
+	err=fc2GetCameraFromIndex(fcp->fc_context,index,&fcp->fc_guid);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetCameraFromIndex" );
 	}
 
-	error = fc2Connect(fcp->fc_context,&fcp->fc_guid);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2Connect" );
+	err = fc2Connect(fcp->fc_context,&fcp->fc_guid);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2Connect" );
 		// BUG clean up first
 		return NULL;
 	}
@@ -1608,9 +1734,9 @@ static Fly_Cam *setup_my_fly_cam( QSP_ARG_DECL
 		// BUG clean up first
 		return NULL;
 
-	error = fc2GetEmbeddedImageInfo(fcp->fc_context,&fcp->fc_ei_info);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetEmbeddedImageInfo" );
+	err = fc2GetEmbeddedImageInfo(fcp->fc_context,&fcp->fc_ei_info);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetEmbeddedImageInfo" );
 		// BUG clean up first
 		return NULL;
 	}
@@ -1622,10 +1748,10 @@ static Fly_Cam *setup_my_fly_cam( QSP_ARG_DECL
 
 	get_fmt7_modes(QSP_ARG  fcp);
 
-	error = fc2GetVideoModeAndFrameRate( fcp->fc_context,
+	err = fc2GetVideoModeAndFrameRate( fcp->fc_context,
 			&fcp->fc_video_mode, &fcp->fc_framerate );
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetVideoModeAndFrameRate" );
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetVideoModeAndFrameRate" );
 		// BUG clean up first
 		return NULL;
 	}
@@ -1676,18 +1802,19 @@ name_for_framerate(fcp->fc_framerate)
 	// What if the fly_cam is a usb cam???
 	//dc1394_video_set_iso_speed( cam_p, DC1394_ISO_SPEED_400 );
 
+	// Why do we create this image???
 	fcp->fc_img_p = getbuf( sizeof(*fcp->fc_img_p) );
 
-        error = fc2CreateImage( fcp->fc_img_p );
-        if ( error != FC2_ERROR_OK ) {
-		report_fc2_error(QSP_ARG  error, "fc2CreateImage" );
+        err = fc2CreateImage( fcp->fc_img_p );
+        if ( err != FC2_ERROR_OK ) {
+		report_fc2_error(QSP_ARG  err, "fc2CreateImage" );
 		// BUG clean up?
 		//return NULL;
 	}
 
 
 	// Make a data_obj context for the frames...
-	fcp->fc_do_icp = create_dobj_context( QSP_ARG  fcp->fc_name );
+	fcp->fc_do_icp = create_dobj_context( fcp->fc_name );
 
 	fcp->fc_frm_dp_tbl = NULL;
 	fcp->fc_newest = (-1);
@@ -1715,7 +1842,7 @@ int init_fly_cam_system(SINGLE_QSP_ARG_DECL)
 #ifdef HAVE_LIBFLYCAP
 	fc2Version version;
 	fc2Context context;
-	fc2Error error;
+	fc2Error err;
 	fc2PGRGuid guid;	// BUG should be associated with one fly_cam?
 	unsigned int numCameras=0;
 	int i;
@@ -1737,15 +1864,15 @@ int init_fly_cam_system(SINGLE_QSP_ARG_DECL)
 	// on the console...  You don't need to RUN from the console,
 	// but apparently something gets owned?
 
-	error = fc2CreateContext(&context);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2CreateContext" );
+	err = fc2CreateContext(&context);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2CreateContext" );
 		return -1;
 	}
 
-	error = fc2GetNumOfCameras(context,&numCameras);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetNumOfCameras" );
+	err = fc2GetNumOfCameras(context,&numCameras);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetNumOfCameras" );
 		// BUG? should we destroy the context here?
 		return -1;
 	}
@@ -1761,17 +1888,16 @@ int init_fly_cam_system(SINGLE_QSP_ARG_DECL)
 
 	//for(i=0;i<numCameras;i++)
 	for(i=numCameras-1;i>=0;i--){
-		error=fc2GetCameraFromIndex(context,i,&guid);
-		if( error != FC2_ERROR_OK ){
-			report_fc2_error(QSP_ARG  error, "fc2GetCameraFromIndex" );
+		err=fc2GetCameraFromIndex(context,i,&guid);
+		if( err != FC2_ERROR_OK ){
+			report_fc2_error(QSP_ARG  err, "fc2GetCameraFromIndex" );
 		} else {
-fprintf(stderr,"Calling setup_my_fly_cam for camera %d\n",i);
 			setup_my_fly_cam(QSP_ARG   context, &guid, i );
 		}
 	}
-	error = fc2DestroyContext( context );
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2DestroyContext" );
+	err = fc2DestroyContext( context );
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2DestroyContext" );
 	}
 
 	add_sizable(fly_cam_itp, &fly_cam_sf, (Item *(*)(QSP_ARG_DECL  const char *)) _fly_cam_of );
@@ -1817,7 +1943,7 @@ void show_n_buffers(QSP_ARG_DECL  Fly_Cam *fcp)
 int set_n_buffers(QSP_ARG_DECL  Fly_Cam *fcp, int n )
 {
 	fc2Config cfg;
-	fc2Error error;
+	fc2Error err;
 
 fprintf(stderr,"set_n_buffers %s %d\n",fcp->fc_name,n);
 	if( n < MIN_N_BUFFERS || n > MAX_N_BUFFERS ){
@@ -1830,9 +1956,9 @@ fprintf(stderr,"set_n_buffers %s %d\n",fcp->fc_name,n);
 	cfg = fcp->fc_config;
 	cfg.numBuffers = n;
 
-	error = fc2SetConfiguration(fcp->fc_context,&cfg);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2SetConfiguration" );
+	err = fc2SetConfiguration(fcp->fc_context,&cfg);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2SetConfiguration" );
 		// should we set a flag to indicate an invalid config?
 		return -1;
 	}
@@ -2005,12 +2131,12 @@ static void init_fly_base(QSP_ARG_DECL  Fly_Cam *fcp)
 	smallest_addr = NULL;
 
 	while( n_buffers_seen < fcp->fc_n_buffers ){
-		fc2Error error;
+		fc2Error err;
 		void *buf_addr;
 
-		error = fc2RetrieveBuffer( fcp->fc_context, fcp->fc_img_p );
-		if( error != FC2_ERROR_OK ){
-			report_fc2_error(QSP_ARG  error, "fc2RetrieveBuffer" );
+		err = fc2RetrieveBuffer( fcp->fc_context, fcp->fc_img_p );
+		if( err != FC2_ERROR_OK ){
+			report_fc2_error(QSP_ARG  err, "fc2RetrieveBuffer" );
 			return;
 		}
 /*
@@ -2099,7 +2225,6 @@ advise(ERROR_STRING);
 	return idx;
 }
 
-#ifdef NOT_USED
 static const char *name_for_pixel_format(fc2PixelFormat f)
 {
 	int i;
@@ -2110,22 +2235,21 @@ static const char *name_for_pixel_format(fc2PixelFormat f)
 	}
 	return("(unrecognixed pixel format code)");
 }
-#endif // NOT_USED
 
 // libflycap doesn't have a queue mechanism like libdc1394...
 // do we get the newest frame???
 
 Data_Obj * grab_fly_cam_frame(QSP_ARG_DECL  Fly_Cam * fcp )
 {
-	fc2Error error;
+	fc2Error err;
 	int index;
 
 	if( fcp->fc_base == NULL )
 		init_fly_base(QSP_ARG  fcp);
 
-	error = fc2RetrieveBuffer( fcp->fc_context, fcp->fc_img_p );
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2RetrieveBuffer" );
+	err = fc2RetrieveBuffer( fcp->fc_context, fcp->fc_img_p );
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2RetrieveBuffer" );
 		return NULL;
 	}
 //fprintf(stderr,"pixel format of retrieved images is %s (0x%x)\n",
@@ -2139,11 +2263,11 @@ Data_Obj * grab_fly_cam_frame(QSP_ARG_DECL  Fly_Cam * fcp )
 
 int reset_fly_cam(QSP_ARG_DECL  Fly_Cam *fcp)
 {
-	fc2Error error;
+	fc2Error err;
 
-	error=fc2FireBusReset(fcp->fc_context,&fcp->fc_guid);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2FireBusReset" );
+	err=fc2FireBusReset(fcp->fc_context,&fcp->fc_guid);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2FireBusReset" );
 	}
 
 	return 0;
@@ -2156,29 +2280,29 @@ void report_fly_cam_bandwidth(QSP_ARG_DECL  Fly_Cam *fcp )
 
 unsigned int read_register( QSP_ARG_DECL  Fly_Cam *fcp, unsigned int addr )
 {
-	fc2Error error;
+	fc2Error err;
 	unsigned int val;
 
-	error = fc2ReadRegister(fcp->fc_context,addr,&val);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2ReadRegister" );
+	err = fc2ReadRegister(fcp->fc_context,addr,&val);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2ReadRegister" );
 	}
 	return val;
 }
 
 void write_register( QSP_ARG_DECL  Fly_Cam *fcp, unsigned int addr, unsigned int val )
 {
-	fc2Error error;
+	fc2Error err;
 
-	error = fc2WriteRegister(fcp->fc_context,addr,val);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2WriteRegister" );
+	err = fc2WriteRegister(fcp->fc_context,addr,val);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2WriteRegister" );
 	}
 }
 
 void start_firewire_capture(QSP_ARG_DECL  Fly_Cam *fcp)
 {
-	fc2Error error;
+	fc2Error err;
 
 advise("start_firewire_capture BEGIN");
 	if( fcp->fc_flags & FLY_CAM_IS_RUNNING ){
@@ -2189,9 +2313,9 @@ advise("start_firewire_capture cam is not already running");
 advise("start_firewire_capture calling fc2StartCapture");
 
 fprintf(stderr,"context = 0x%lx\n",(long)fcp->fc_context);
-	error = fc2StartCapture(fcp->fc_context);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2StartCapture" );
+	err = fc2StartCapture(fcp->fc_context);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2StartCapture" );
 	} else {
 		fcp->fc_flags |= FLY_CAM_IS_RUNNING;
 
@@ -2206,24 +2330,101 @@ advise("start_firewire_capture DONE");
 
 void stop_firewire_capture(QSP_ARG_DECL  Fly_Cam *fcp)
 {
-	fc2Error error;
+	fc2Error err;
 
 	if( (fcp->fc_flags & FLY_CAM_IS_RUNNING) == 0 ){
 		warn("stop_firewire_capture:  fly_cam is not capturing!?");
 		return;
 	}
 
-	error = fc2StopCapture(fcp->fc_context);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2StopCapture" );
+	err = fc2StopCapture(fcp->fc_context);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2StopCapture" );
 	} else {
 		fcp->fc_flags &= ~FLY_CAM_IS_RUNNING;
 	}
 }
 
+#define GET_FMT7_CONFIG									\
+											\
+        err = fc2GetFormat7Configuration( fcp->fc_context, &imageSettings,		\
+		&packetSize, &percentage );						\
+											\
+	if( err != FC2_ERROR_OK ){							\
+		report_fc2_error(QSP_ARG  err, "fc2GetFormat7Configuration" );		\
+		return;									\
+	}
+
+#define CHECK_FMT7_CONFIG										\
+													\
+        err = fc2ValidateFormat7Settings(fcp->fc_context,&imageSettings,&isValid,&packetInfo);		\
+													\
+	if( err != FC2_ERROR_OK ){									\
+		report_fc2_error(QSP_ARG  err, "fc2ValidateFormat7Settings" );				\
+		return;											\
+	}
+
+#define CHECK_VALID_SIZE										\
+													\
+	if( ! isValid ){										\
+		sprintf(ERROR_STRING,"set_fmt7_size:  requested size (%d x %d) is not valid!?",w,h);	\
+		warn(ERROR_STRING);									\
+		return;											\
+	}
+
+#define CHECK_VALID_POSN										\
+													\
+	if( ! isValid ){										\
+		sprintf(ERROR_STRING,"set_fmt7_posn:  requested position (%d, %d) is not valid!?",x,y);	\
+		warn(ERROR_STRING);									\
+		return;											\
+	}
+
+#define SET_FMT7_CONFIG										\
+												\
+        err = fc2SetFormat7Configuration( fcp->fc_context, &imageSettings, percentage );	\
+												\
+	if( err != FC2_ERROR_OK ){								\
+		report_fc2_error(QSP_ARG  err, "fc2SetFormat7Configuration" );			\
+		return;										\
+	}
+
 void set_fmt7_size(QSP_ARG_DECL  Fly_Cam *fcp, int w, int h)
 {
-	UNIMP_FUNC("set_fmt7_size");
+	fc2Format7ImageSettings imageSettings;
+	fc2Format7PacketInfo packetInfo;
+	fc2Error err;
+	BOOL isValid;
+	float percentage;
+	unsigned int packetSize;
+
+	GET_FMT7_CONFIG
+
+	imageSettings.width = w;
+	imageSettings.height = h;
+
+	CHECK_FMT7_CONFIG
+	CHECK_VALID_SIZE
+	SET_FMT7_CONFIG
+}
+
+void set_fmt7_posn(QSP_ARG_DECL  Fly_Cam *fcp, int x, int y)
+{
+	fc2Format7ImageSettings imageSettings;
+	fc2Format7PacketInfo packetInfo;
+	fc2Error err;
+	BOOL isValid;
+	float percentage;
+	unsigned int packetSize;
+
+	GET_FMT7_CONFIG
+
+	imageSettings.offsetX = x;
+	imageSettings.offsetY = y;
+
+	CHECK_FMT7_CONFIG
+	CHECK_VALID_POSN
+	SET_FMT7_CONFIG
 }
 
 void release_oldest_frame(QSP_ARG_DECL  Fly_Cam *fcp)
@@ -2233,13 +2434,13 @@ void release_oldest_frame(QSP_ARG_DECL  Fly_Cam *fcp)
 
 void list_fly_cam_trig(QSP_ARG_DECL  Fly_Cam *fcp)
 {
-	fc2Error error;
+	fc2Error err;
 	fc2TriggerModeInfo tinfo;
 	fc2TriggerMode tmode;
 
-	error = fc2GetTriggerModeInfo(fcp->fc_context,&tinfo);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetTriggerModeInfo" );
+	err = fc2GetTriggerModeInfo(fcp->fc_context,&tinfo);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetTriggerModeInfo" );
 		return;
 	}
 	fprintf(stderr,"Trigger mode info:\n");
@@ -2253,9 +2454,9 @@ void list_fly_cam_trig(QSP_ARG_DECL  Fly_Cam *fcp)
 	fprintf(stderr,"\tsoftwareTriggerSupported:  %s\n",BOOL_STR(tinfo.softwareTriggerSupported));
 	fprintf(stderr,"\tmodeMask:  0x%x\n",tinfo.modeMask);
 
-	error = fc2GetTriggerMode(fcp->fc_context,&tmode);
-	if( error != FC2_ERROR_OK ){
-		report_fc2_error(QSP_ARG  error, "fc2GetTriggerMode" );
+	err = fc2GetTriggerMode(fcp->fc_context,&tmode);
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetTriggerMode" );
 		return;
 	}
 	fprintf(stderr,"Trigger mode:\n");
@@ -2287,18 +2488,127 @@ void set_buffer_obj(QSP_ARG_DECL  Fly_Cam *fcp, Data_Obj *dp)
 		return;
 	}
 	{
-		fc2Error error;
+		fc2Error err;
 
-		error = fc2SetUserBuffers(fcp->fc_context, OBJ_DATA_PTR(dp),
+		err = fc2SetUserBuffers(fcp->fc_context, OBJ_DATA_PTR(dp),
 				OBJ_COLS(dp)*OBJ_ROWS(dp)*OBJ_COMPS(dp),OBJ_FRAMES(dp));
-		if( error != FC2_ERROR_OK ){
-			report_fc2_error(QSP_ARG  error, "fc2SetUserBuffers" );
+		if( err != FC2_ERROR_OK ){
+			report_fc2_error(QSP_ARG  err, "fc2SetUserBuffers" );
 			return;
 		}
 		// refresh the configuration
 		refresh_config(QSP_ARG  fcp);
 	}
 	fcp->fc_base = NULL;	// force init_fly_base to run again
+}
+
+static void report_strobe_info(QSP_ARG_DECL  fc2StrobeInfo *si_p)
+{
+	REPORT_INT_PROP(si_p,source)
+	REPORT_BOOL_PROP(si_p,present)
+	REPORT_BOOL_PROP(si_p,readOutSupported)
+	REPORT_BOOL_PROP(si_p,onOffSupported)
+	REPORT_BOOL_PROP(si_p,polaritySupported)
+	REPORT_FLOAT_PROP(si_p,minValue)
+	REPORT_FLOAT_PROP(si_p,maxValue)
+}
+
+static void report_strobe_control(QSP_ARG_DECL  fc2StrobeControl *sc_p)
+{
+        REPORT_INT_PROP(sc_p,source)
+        REPORT_BOOL_PROP(sc_p,onOff)
+        REPORT_INT_PROP(sc_p,polarity)	// this one is unsigned?
+        REPORT_FLOAT_PROP(sc_p,delay)
+        REPORT_FLOAT_PROP(sc_p,duration)
+}
+
+void get_strobe_info(QSP_ARG_DECL Fly_Cam *fcp, int source)
+{
+	fc2StrobeInfo strobeInfo;
+	fc2Error err;
+
+	if( fcp == NULL ){
+		sprintf(ERROR_STRING,"get_strobe_info:  no fly_cam selected!?");
+		warn(ERROR_STRING);
+		return;
+	}
+	strobeInfo.source = source;	// BUG?  how do we know how many sources are possible???
+	err = fc2GetStrobeInfo( fcp->fc_context, &strobeInfo );
+	if( err != FC2_ERROR_OK ){
+		report_fc2_error(QSP_ARG  err, "fc2GetStrobeInfo" );
+		return;
+	}
+	report_strobe_info(QSP_ARG  &strobeInfo);
+}
+
+#define GET_STROBE_CTL								\
+	strobeControl.source = source;						\
+        err = fc2GetStrobe( fcp->fc_context, &strobeControl );			\
+	if( err != FC2_ERROR_OK ){						\
+		report_fc2_error(QSP_ARG  err, "fc2GetStrobeInfo" );		\
+		return;								\
+	}
+
+#define SET_STROBE_CTL								\
+        err = fc2SetStrobe( fcp->fc_context, &strobeControl );			\
+	if( err != FC2_ERROR_OK ){						\
+		report_fc2_error(QSP_ARG  err, "fc2SetStrobeInfo" );		\
+		return;								\
+	}
+
+void get_strobe_control(QSP_ARG_DECL  Fly_Cam *fcp, int source)
+{
+	fc2Error err;
+	fc2StrobeControl strobeControl;
+
+	GET_STROBE_CTL
+	report_strobe_control(QSP_ARG  &strobeControl);
+}
+
+void set_strobe_enable(QSP_ARG_DECL  Fly_Cam *fcp, int source, int enable )
+{
+	fc2Error err;
+	fc2StrobeControl strobeControl;
+
+	GET_STROBE_CTL
+
+	if( enable ){
+		strobeControl.onOff = TRUE;
+	} else {
+		strobeControl.onOff = FALSE;
+	}
+
+	SET_STROBE_CTL
+}
+
+void set_strobe_polarity(QSP_ARG_DECL  Fly_Cam *fcp, int source, unsigned int polarity )
+{
+	fc2Error err;
+	fc2StrobeControl strobeControl;
+
+	GET_STROBE_CTL
+	strobeControl.polarity = polarity;
+	SET_STROBE_CTL
+}
+
+void set_strobe_delay(QSP_ARG_DECL  Fly_Cam *fcp, int source, int delay )
+{
+	fc2Error err;
+	fc2StrobeControl strobeControl;
+
+	GET_STROBE_CTL
+	strobeControl.delay = delay;
+	SET_STROBE_CTL
+}
+
+void set_strobe_duration(QSP_ARG_DECL  Fly_Cam *fcp, int source, int duration )
+{
+	fc2Error err;
+	fc2StrobeControl strobeControl;
+
+	GET_STROBE_CTL
+	strobeControl.duration = duration;
+	SET_STROBE_CTL
 }
 
 #endif /* HAVE_LIBFLYCAP */

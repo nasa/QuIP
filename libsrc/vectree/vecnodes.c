@@ -417,7 +417,7 @@ void _rls_vectree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			rls_vectree(VN_CHILD(enp,i));
 		}
 
-fprintf(stderr,"releasing %s\n",node_desc(enp));
+//fprintf(stderr,"releasing %s\n",node_desc(enp));
 
 	/* now release this node */
 	if( VN_INFILE(enp) != NULL ){

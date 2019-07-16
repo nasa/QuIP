@@ -174,11 +174,22 @@ static int has_stdin=0;		// where should we set this?
 
 #define MACRO_LOCATION_PREFIX	"Macro "
 
+#ifdef BUILD_FOR_OBJC
+
 #define DECLARE_QP						\
 								\
 	Query *qp;						\
 	qp = CURR_QRY(THIS_QSP);				\
 	assert(qp!=NULL);
+
+#else // ! BUILD_FOR_OBJC
+
+#define DECLARE_QP						\
+								\
+	Query *qp;						\
+	qp = CURR_QRY(THIS_QSP);
+
+#endif // ! BUILD_FOR_OBJC
 
 
 static inline void clear_query_text(Query *qp)
@@ -447,6 +458,7 @@ int _lookahead_til(QSP_ARG_DECL  int stop_level)
 DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #1)
 			eatup_space_for_lookahead(SINGLE_QSP_ARG);
 		}
+
 		if( QRY_HAS_TEXT(qp) ){
 			return 1;
 		}
@@ -458,12 +470,17 @@ DEBUG_LINENO(lookahead_til after nextline)
 			// But because it can pop a level, we should not any
 			// the space here...
 
+#ifdef BUILD_FOR_OBJC
+			if( QLEVEL < 0 ){ return 0; }
+#endif /* BUILD_FOR_OBJC */
+
 			// halting bit can be set if we run out of input on a secondary thread
 			// (primary thread will exit)
 			if( IS_HALTING(THIS_QSP) ) {
 				return 0;
 			}
 			qp= CURR_QRY(THIS_QSP);
+
 			assert(qp!=NULL);
 			if( QLEVEL == _level && QRY_HAS_TEXT(qp) ){
 DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #2)
@@ -1634,9 +1651,11 @@ static const char *next_word_from_level(QSP_ARG_DECL  const char *pline)
 	if( !QRY_HAS_TEXT(qp) )	// need to read more input
 	{
 		buf=qline(pline);
+#ifndef BUILD_FOR_OBJC
 		// suppress store-not-read warning
 		// But can buf be null when we are out of input??
 		if( buf == NULL ) warn("next_word_from_level:  null line!?");
+#endif // ! BUILD_FOR_OBJC
 	}
 
 	if( QLEVEL < 0 ){
@@ -4136,9 +4155,16 @@ inline const char *current_filename(SINGLE_QSP_ARG_DECL)
 	return QRY_FILENAME(qp);
 }
 
+// reset_return_strings - set the index of the next string to use to 0
+//
+// in iOS, it is possible for qp to be NULL...
+
 inline void _reset_return_strings(SINGLE_QSP_ARG_DECL)
 {
 	DECLARE_QP
+#ifdef BUILD_FOR_OBJC
+	if( qp == NULL ) return;
+#endif // BUILD_FOR_OBJC
 	SET_QRY_RETSTR_IDX(qp,0);
 }
 
