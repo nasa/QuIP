@@ -1550,5 +1550,11 @@ Spink_Cam * _select_spink_cam(QSP_ARG_DECL  Spink_Cam *skc_p )
 	return skc_p;
 }
 
+void _print_spink_cam_info(QSP_ARG_DECL  Spink_Cam *skc_p )
+{
+    //SPINNAKERC_API spinSystemGetLibraryVersion(spinSystem hSystem, spinLibraryVersion* hLibraryVersion);
+    advise("Sorry, print_spink_cam_info not implemented yet!?");
+}
+
 #endif // HAVE_LIBSPINNAKER
 

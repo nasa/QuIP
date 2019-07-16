@@ -182,25 +182,30 @@ struct item_context {
 typedef struct item_type_context_info {
 	Stack *			itci_context_stack;	// need to have one per thread
 	u_long			itci_stack_serial;	// increment this when the stack is changed (push/pop)
-	u_long			itci_item_serial;	// increment this when any context is changed
+	u_long			itci_items_serial;	// increment this when any context is changed
 
 	int			itci_flags;
 
 	List *			itci_item_lp;		// list of all of the items -
-	u_long			itci_list_serial;	// update when list is updated
+	u_long			itci_list_items_serial;	// update when list is updated
+	u_long			itci_list_stack_serial;	// update when list is updated
 
 	Item_Context *		itci_icp;		// current context
 	Match_Cycle *		itci_mc_p;		// why remember one???
 	struct item_context *	itci_mc_icp;		// match cycle database for this context stack
-} Item_Type_Context_Info;
+} Item_Type_Context_Info; // ITCI
 
 // Flag bits
 #define ITCI_CTX_RESTRICTED_FLAG		1
 
-#define NEEDS_NEW_LIST(itp)	(ITCI_LIST_SERIAL(THIS_ITCI(itp)) != ITCI_ITEM_SERIAL(THIS_ITCI(itp)))
+#define NEEDS_NEW_LIST(itp)	(											\
+					(ITCI_LIST_ITEMS_SERIAL(THIS_ITCI(itp)) != ITCI_ITEMS_SERIAL(THIS_ITCI(itp)))	\
+					|| 										\
+					(ITCI_LIST_STACK_SERIAL(THIS_ITCI(itp)) != ITCI_STACK_SERIAL(THIS_ITCI(itp)))	\
+				)
 
-#define ITCI_ITEM_LIST(itci_p)			(itci_p)->itci_item_lp
-#define SET_ITCI_ITEM_LIST(itci_p,lp)		(itci_p)->itci_item_lp = lp
+#define ITCI_ITEMS_LIST(itci_p)			(itci_p)->itci_item_lp
+#define SET_ITCI_ITEMS_LIST(itci_p,lp)		(itci_p)->itci_item_lp = lp
 
 #define ITCI_CSTK(itci_p)			(itci_p)->itci_context_stack
 #define SET_ITCI_CSTK(itci_p,sp)		(itci_p)->itci_context_stack = sp
@@ -221,17 +226,19 @@ typedef struct item_type_context_info {
 #define ITCI_MC_CONTEXT(itci_p)			(itci_p)->itci_mc_icp
 #define SET_ITCI_MC_CONTEXT(itci_p,icp)		(itci_p)->itci_mc_icp = icp
 
-#define INC_ITCI_ITEM_CHANGE_COUNT(itci_p)	(itci_p)->itci_item_serial ++
+#define INC_ITCI_ITEMS_CHANGE_COUNT(itci_p)	(itci_p)->itci_items_serial ++
 #define INC_ITCI_STACK_CHANGE_COUNT(itci_p)	(itci_p)->itci_stack_serial ++
 
-#define ITCI_ITEM_SERIAL(itci_p)		(itci_p)->itci_item_serial
-#define SET_ITCI_ITEM_SERIAL(itci_p,c)		(itci_p)->itci_item_serial = c
+#define ITCI_ITEMS_SERIAL(itci_p)		(itci_p)->itci_items_serial
+#define SET_ITCI_ITEMS_SERIAL(itci_p,c)		(itci_p)->itci_items_serial = c
 
 #define ITCI_STACK_SERIAL(itci_p)		(itci_p)->itci_stack_serial
 #define SET_ITCI_STACK_SERIAL(itci_p,c)		(itci_p)->itci_stack_serial = c
 
-#define ITCI_LIST_SERIAL(itci_p)		(itci_p)->itci_list_serial
-#define SET_ITCI_LIST_SERIAL(itci_p,c)		(itci_p)->itci_list_serial = c
+#define ITCI_LIST_ITEMS_SERIAL(itci_p)		(itci_p)->itci_list_items_serial
+#define ITCI_LIST_STACK_SERIAL(itci_p)		(itci_p)->itci_list_stack_serial
+#define SET_ITCI_LIST_ITEMS_SERIAL(itci_p,c)	(itci_p)->itci_list_items_serial = c
+#define SET_ITCI_LIST_STACK_SERIAL(itci_p,c)	(itci_p)->itci_list_stack_serial = c
 
 
 struct item_type {
@@ -290,9 +297,9 @@ struct item_type {
 #define IT_MC_CONTEXT(itp)		ITCI_MC_CONTEXT( THIS_ITCI(itp) )
 #define SET_IT_MC_CONTEXT(itp,icp)	SET_ITCI_MC_CONTEXT( THIS_ITCI(itp), icp )
 
-#define ITEM_CHANGE_COUNT(itp)		ITCI_ITEM_SERIAL( THIS_ITCI(itp) )
+#define ITEMS_CHANGE_COUNT(itp)		ITCI_ITEMS_SERIAL( THIS_ITCI(itp) )
 #define STACK_CHANGE_COUNT(itp)		ITCI_STACK_SERIAL( THIS_ITCI(itp) )
-#define INC_ITEM_CHANGE_COUNT(itp)	INC_ITCI_ITEM_CHANGE_COUNT( THIS_ITCI(itp) )
+#define INC_ITEMS_CHANGE_COUNT(itp)	INC_ITCI_ITEMS_CHANGE_COUNT( THIS_ITCI(itp) )
 #define INC_STACK_CHANGE_COUNT(itp)	INC_ITCI_STACK_CHANGE_COUNT( THIS_ITCI(itp) )
 
 // The context field may be null, so we have a function to do the checking

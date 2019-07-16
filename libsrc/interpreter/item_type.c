@@ -128,16 +128,17 @@ static void _init_itci(QSP_ARG_DECL  Item_Type *itp,int idx)
 
 	itci_p = &(itp->it_itci[idx]);
 
-	SET_ITCI_ITEM_LIST(itci_p, new_list() );
+	SET_ITCI_ITEMS_LIST(itci_p, new_list() );
 	SET_ITCI_CSTK(itci_p,new_stack());
 	SET_ITCI_CTX(itci_p,NULL);
 	// This appear to clear the restriction bit...
 	SET_ITCI_FLAGS(itci_p,0);
 	SET_ITCI_MATCH_CYCLE(itci_p,NULL);
 
-	SET_ITCI_ITEM_SERIAL(itci_p,0);
+	SET_ITCI_ITEMS_SERIAL(itci_p,0);
 	SET_ITCI_STACK_SERIAL(itci_p,0);
-	SET_ITCI_LIST_SERIAL(itci_p,0);
+	SET_ITCI_LIST_ITEMS_SERIAL(itci_p,0);
+	SET_ITCI_LIST_STACK_SERIAL(itci_p,0);
 }
 
 static void _init_itp(QSP_ARG_DECL  Item_Type *itp, int container_type)
@@ -363,7 +364,7 @@ int _add_item( QSP_ARG_DECL  Item_Type *itp, void *ip )
 	assert( ip != NULL );
 
 	_store_item(QSP_ARG  current_context(itp), (Item*) ip);
-	INC_ITEM_CHANGE_COUNT(itp);
+	INC_ITEMS_CHANGE_COUNT(itp);
 
 	return 0;
 }
@@ -429,7 +430,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 	if( nip == NULL ){
 		sprintf(DEFAULT_ERROR_STRING,
-	"new_item:  out of memory while getting a new page of %s's",
+	"alloc_more_items:  out of memory while getting a new page of %s's",
 			IT_NAME(itp));
 		NERROR1(DEFAULT_ERROR_STRING);
 	}
@@ -627,6 +628,8 @@ NADVISE(ERROR_STRING);
 
 	SET_CURRENT_CONTEXT(itp, icp);
 	INC_STACK_CHANGE_COUNT(itp);
+
+	// mark the list as dirty?  item_list
 
 } // end push_item_context
 
@@ -910,11 +913,12 @@ List *_item_list(QSP_ARG_DECL  Item_Type *itp)
 			Item_Context *icp;
 			icp=(Item_Context *) NODE_DATA(context_np);
 			if( CTX_LIST_SERIAL(icp) != CTX_ITEM_SERIAL(icp) )
-				INC_ITCI_ITEM_CHANGE_COUNT(THIS_ITCI(itp));
+				INC_ITCI_ITEMS_CHANGE_COUNT(THIS_ITCI(itp));
 			context_np=NODE_NEXT(context_np);
 		}
 	}
 
+	// NEEDS_NEW_LIST tests the list serial against the item serial in ITCI...
 	if( ! NEEDS_NEW_LIST(itp) ){
 		/* Nothing changed, just return the existing list */
 		return(current_item_list(itp));
@@ -941,7 +945,8 @@ List *_item_list(QSP_ARG_DECL  Item_Type *itp)
 	}
 
 	//CLEAR_ITCI_FLAG_BITS(THIS_ITCI(itp), ITCI_NEEDS_LIST );
-	SET_ITCI_LIST_SERIAL( THIS_ITCI(itp), ITCI_ITEM_SERIAL(THIS_ITCI(itp)) );
+	SET_ITCI_LIST_ITEMS_SERIAL( THIS_ITCI(itp), ITCI_ITEMS_SERIAL(THIS_ITCI(itp)) );
+	SET_ITCI_LIST_STACK_SERIAL( THIS_ITCI(itp), ITCI_STACK_SERIAL(THIS_ITCI(itp)) );
 
 	return(current_item_list(itp));
 }
@@ -1255,7 +1260,7 @@ void _del_item(QSP_ARG_DECL  Item_Type *itp,void* ip)
 
 	recycle_item(itp,ip);
 
-	INC_ITEM_CHANGE_COUNT(itp);
+	INC_ITEMS_CHANGE_COUNT(itp);
 
 	UNLOCK_ITEM_TYPE(itp)
 }
@@ -1644,7 +1649,7 @@ static int cycle_is_current(QSP_ARG_DECL  Match_Cycle *mc_p)
 	// Or can we use the stack itself?
 	if( MC_STACK_SERIAL(mc_p) != ITCI_STACK_SERIAL(THIS_ITCI(MATCH_CYCLE_IT(mc_p))) )
 		return 0;
-	if( MC_ITEM_SERIAL(mc_p) != ITCI_ITEM_SERIAL(THIS_ITCI(MATCH_CYCLE_IT(mc_p))) )
+	if( MC_ITEM_SERIAL(mc_p) != ITCI_ITEMS_SERIAL(THIS_ITCI(MATCH_CYCLE_IT(mc_p))) )
 		return 0;
 	return 1;
 }
@@ -1759,7 +1764,7 @@ List *_context_stack(QSP_ARG_DECL  Item_Type *itp)
 
 List *_current_item_list(QSP_ARG_DECL  Item_Type *itp)
 {
-	return ITCI_ITEM_LIST(THIS_ITCI(itp));
+	return ITCI_ITEMS_LIST(THIS_ITCI(itp));
 }
 
 Item_Context *_current_context(QSP_ARG_DECL  Item_Type *itp)

@@ -3,8 +3,6 @@
 
 //#define RB_TREE_DEBUG
 
-//#include"misc.h"
-//#include"stack.h"
 #include "item_obj.h"
 
 typedef enum {
