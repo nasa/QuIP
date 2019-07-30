@@ -123,10 +123,13 @@ Require_Var x_legend
 Require_Var x_tick_auto
 If $x_tick_auto "Require_Var x_tick_spacing"
 Check_Var x_tick_offset 0
+Check_Var x_tick_last $xmax
+Check_Var x_tick_first $xmin
 If !$vars_ok exit_macro
 
 X_Legend $x_legend
 #Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
+advise "Setup_X_Axis:  x_tick_auto = $x_tick_auto, x_tick_last = $x_tick_last"
 If $x_tick_auto
   Then 'Plot_X_Axis_Offset $xmin $xmax $x_tick_spacing $ymin $x_tick_offset $x_tick_last\
         Label_X_Ticks $xmin+$x_tick_offset $x_tick_last $x_tick_spacing'
@@ -771,7 +774,7 @@ Get_Plotter_Constants
 
 # first get the fractional position in the plotting space
 Assign $2 ($4-$plot_ymin)/$n_plot_units_y
-Assign $1 ($3-$plot_xmin)/$n_plot_units_y
+Assign $1 ($3-$plot_xmin)/$n_plot_units_x
 # turn Y upside down
 Assign $2 1-$$2
 # scale
@@ -918,7 +921,7 @@ Assign _x $1+$5
 do
   X_Tick_At $_x $4
   Add_Var _x $3
-  while $_x<=$6
+  while $_x<=min($2,$6)
 .
 
 
@@ -936,9 +939,9 @@ Define Plot_Y_Axis 4 ymin ymax tick_spacing xpos
 Plot_Y_Axis_With_Ticks $1 $2 $4 $1 $2 $3
 .
 
-Define Plot_Y_Axis_Right 4 ymin ymax xpos tick_spacing
+Define Plot_Y_Axis_Right 4 ymin ymax tick_spacing xpos
 Mul_Var y_tick_len -1
-Plot_Y_Axis_With_Ticks $1 $2 $3 $1 $2 $4
+Plot_Y_Axis_With_Ticks $1 $2 $4 $1 $2 $3
 Mul_Var y_tick_len -1
 .
 
