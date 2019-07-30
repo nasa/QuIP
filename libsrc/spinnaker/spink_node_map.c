@@ -306,6 +306,7 @@ int _get_node_map_handle(QSP_ARG_DECL  spinNodeMapHandle *hMap_p, Spink_Map *skm
 
 void _list_nodes_from_map(QSP_ARG_DECL  Spink_Map *skm_p)
 {
+	// lists nodes in the current context stack?
 	list_spink_nodes( tell_msgfile() );
 }
 

@@ -48,7 +48,9 @@ void _select_spink_map(QSP_ARG_DECL  Spink_Map *skm_p)
 {
 	if( curr_map_p == skm_p ) return;	// nothing to do
 
-	if( curr_map_p != NULL ) pop_map_contexts();
+	if( curr_map_p != NULL ){
+		pop_map_contexts();
+	}
 
 	curr_map_p = skm_p;
 
@@ -227,7 +229,7 @@ static COMMAND_FUNC( do_cam_info )
 		prt_msg(MSG_STR);
 	}
 #ifdef HAVE_LIBSPINNAKER
-	//print_spink_cam_info(QSP_ARG  skc_p);
+	print_spink_cam_info(skc_p);
 #else
 	NO_LIB_MSG("do_list_spink_cam");
 #endif

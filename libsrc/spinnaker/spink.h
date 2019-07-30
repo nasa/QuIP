@@ -493,6 +493,9 @@ extern void _select_spink_map(QSP_ARG_DECL  Spink_Map *skm_p);
 
 // spink_util.c
 
+extern void _print_spink_cam_info(QSP_ARG_DECL  Spink_Cam *skc_p );
+#define print_spink_cam_info( skc_p ) _print_spink_cam_info(QSP_ARG  skc_p )
+
 extern Spink_Cam * _select_spink_cam(QSP_ARG_DECL  Spink_Cam *skc_p);
 extern void _deselect_spink_cam(QSP_ARG_DECL  Spink_Cam *skc_p);
 #define select_spink_cam(skc_p) _select_spink_cam(QSP_ARG  skc_p)

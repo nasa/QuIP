@@ -9,9 +9,17 @@
 #include "list.h"
 #include "item_type.h"
 
-// just for debugging
-//static void rb_tree_dump( qrb_tree *tree_p );
-//static void dump_rb_node( qrb_node *np );
+// define RB_TREE_DEBUG in rbtree.h for debugging...
+
+
+#ifdef RB_TREE_DEBUG
+static void _rb_tree_dump( QSP_ARG_DECL  qrb_tree *tree_p );
+#define rb_tree_dump( tree_p ) _rb_tree_dump( QSP_ARG  tree_p )
+static void _rb_subtree_dump( QSP_ARG_DECL  qrb_node *np, qrb_tree *tree_p );
+#define rb_subtree_dump( np, tree_p ) _rb_subtree_dump( QSP_ARG  np, tree_p )
+static void _dump_rb_node( QSP_ARG_DECL  qrb_node *np, qrb_tree *tree_p );
+#define dump_rb_node( np, tree_p ) _dump_rb_node( QSP_ARG  np, tree_p )
+#endif // RB_TREE_DEBUG
 
 // This assumes that the keys are strings!
 #define NODE_NAME(np)	(np==NULL?"<null>":RB_NODE_KEY(np))
@@ -23,6 +31,9 @@ static void set_root_node(qrb_tree *tree_p, qrb_node *np)
 		np->parent = NULL;
 		MAKE_BLACK(np);
 	}
+#ifdef RB_TREE_DEBUG
+	np->depth=0;
+#endif // RB_TREE_DEBUG
 }
 
 qrb_tree* _create_rb_tree( SINGLE_QSP_ARG_DECL )
@@ -63,16 +74,24 @@ static void binary_tree_insert(qrb_tree* tree, qrb_node* new_node_p)
 
 	while( curr_node_p != NULL ){
 		if( /*tree->comp_func*/ strcmp( RB_NODE_KEY(new_node_p),RB_NODE_KEY(curr_node_p)) < 0 ){
+			// new node is to the left of the current node
 			if( curr_node_p->left == NULL ){
 				new_node_p->parent = curr_node_p;
 				curr_node_p->left = new_node_p;
+#ifdef RB_TREE_DEBUG
+				new_node_p->depth = new_node_p->parent->depth + 1;
+#endif // RB_TREE_DEBUG
 				return;
 			}
 			curr_node_p = curr_node_p->left;
 		} else {
+			// new node is to the right of the current node
 			if( curr_node_p->right == NULL ){
 				new_node_p->parent = curr_node_p;
 				curr_node_p->right = new_node_p;
+#ifdef RB_TREE_DEBUG
+				new_node_p->depth = new_node_p->parent->depth + 1;
+#endif // RB_TREE_DEBUG
 				return;
 			}
 			curr_node_p = curr_node_p->right;
@@ -102,8 +121,68 @@ static qrb_node *uncle( qrb_node *np )
 		return g_p->left;
 }
 
+#ifdef RB_TREE_DEBUG
 
-// if we call rotate_right, the node should be the left child of its parent
+#define INCREMENT_NODE_DEPTH(np)	increment_node_depth(np);
+#define DECREMENT_NODE_DEPTH(np)	decrement_node_depth(np);
+#define INCREMENT_SUBTREE_DEPTH(np)	increment_subtree_depth(np);
+#define DECREMENT_SUBTREE_DEPTH(np)	decrement_subtree_depth(np);
+
+static void increment_node_depth( qrb_node *np ) { if( np != NULL ) np->depth ++; }
+static void decrement_node_depth( qrb_node *np ) { if( np != NULL ) np->depth --; }
+
+static void increment_subtree_depth( qrb_node *np )
+{
+	if( np == NULL ) return;
+	increment_node_depth(np);
+	increment_subtree_depth(np->left);
+	increment_subtree_depth(np->right);
+}
+
+static void decrement_subtree_depth( qrb_node *np )
+{
+	if( np == NULL ) return;
+	decrement_node_depth(np);
+	decrement_subtree_depth(np->left);
+	decrement_subtree_depth(np->right);
+}
+
+#else	// ! RB_TREE_DEBUG
+
+#define INCREMENT_NODE_DEPTH(np)
+#define DECREMENT_NODE_DEPTH(np)
+#define INCREMENT_SUBTREE_DEPTH(np)
+#define DECREMENT_SUBTREE_DEPTH(np)
+
+#endif	// ! RB_TREE_DEBUG
+
+
+/* rotate_right: currend_side = left, direction = right
+ *
+ *                     gp
+ *                   /    \
+ *		 parent
+ *              /     \
+ *            np       X
+ *           /  \
+ *          L    R
+ *
+ *                     gp
+ *                   /    \
+ *		   np
+ *
+ *                     gp
+ *                   /    \
+ *		   np
+ *                /  \
+ *               L  parent
+ *                  /  \
+ *                 R    X
+ *
+ * depth changes on np, parent, L, and X
+ *
+ */
+
 
 #define GENERAL_ROTATION(func_name,current_side,direction)	\
 								\
@@ -138,6 +217,11 @@ static void func_name(qrb_tree *tree_p, qrb_node *np)		\
 								\
 	if( IS_ROOT_NODE(np) )					\
 		tree_p->root = np;				\
+								\
+	INCREMENT_NODE_DEPTH(parent)				\
+	DECREMENT_NODE_DEPTH(np)				\
+	INCREMENT_SUBTREE_DEPTH(parent->direction)		\
+	DECREMENT_SUBTREE_DEPTH(np->current_side)		\
 }
 
 GENERAL_ROTATION(rotate_right,left,right)
@@ -229,7 +313,9 @@ qrb_node* rb_find( qrb_tree * tree, const char * key )
 	qrb_node* n_p = RB_TREE_ROOT(tree);
 
 	while(1){
-		if( n_p == NULL ) return(NULL);
+		if( n_p == NULL ){
+			return(NULL);
+		}
 
 		compVal = /*tree->comp_func*/ strcmp( key, RB_NODE_KEY(n_p) );
 		if( compVal == 0 ) return n_p;
@@ -766,24 +852,35 @@ Item *rb_tree_enumerator_item(RB_Tree_Enumerator *rbtep)
 	return rbtep->node_p->data;
 }
 
-/*
+#ifdef RB_TREE_DEBUG
 // for debugging
 
-static void dump_rb_node( qrb_node *np, qrb_tree *tree_p )
+static void _dump_rb_node( QSP_ARG_DECL  qrb_node *np, qrb_tree *tree_p )
 {
+	int i;
+	for(i=0;i<np->depth;i++)
+		fprintf(stderr,"   ");
 	fprintf(stderr,"node 0x%lx (%s)\n",(long)np,ITEM_NAME( (Item *)(np->data) ) );
-	fprintf(stderr,"\tleft 0x%lx (%s)\t\tright 0x%lx (%s)\n",
+	for(i=0;i<np->depth;i++)
+		fprintf(stderr,"   ");
+	fprintf(stderr,"left 0x%lx (%s)\t\tright 0x%lx (%s)\n",
 		(long)np->left,np->left==NULL?"<null>":ITEM_NAME( (Item *)(np->left->data) ),
 		(long)np->right,np->right==NULL?"<null>":ITEM_NAME( (Item *)(np->right->data) )
 		);
 }
 
-static void rb_tree_dump( qrb_tree *tree_p )
+static void _rb_tree_dump( QSP_ARG_DECL  qrb_tree *tree_p )
 {
 	if( tree_p->root == NULL ) return;
-	rb_traverse(tree_p->root,dump_rb_node,tree_p);
+	rb_traverse(tree_p->root,_dump_rb_node,tree_p);
 }
-*/
+
+static void _rb_subtree_dump( QSP_ARG_DECL  qrb_node *np, qrb_tree *tree_p )
+{
+	rb_traverse(np,_dump_rb_node,NULL);
+}
+
+#endif // RB_TREE_DEBUG
 
 #define add_rb_node_to_list(rbn_p,tree_p) _add_rb_node_to_list(QSP_ARG  rbn_p,tree_p)
 
