@@ -1,0 +1,92 @@
+# new funcs added to allow different precisions for test and select w/ vv_vv_eq etc
+
+Set n 5
+
+Vector a $n 1 u_byte
+Vector b $n 1 u_byte
+Vector c $n 1 u_byte
+
+Vector d_by $n 1 byte
+Vector e_by $n 1 byte
+Vector d_in $n 1 short
+Vector e_in $n 1 short
+Vector d_di $n 1 int
+Vector e_di $n 1 int
+Vector d_li $n 1 long
+Vector e_li $n 1 long
+
+Vector d_uby $n 1 u_byte
+Vector e_uby $n 1 u_byte
+Vector d_uin $n 1 u_short
+Vector e_uin $n 1 u_short
+Vector d_udi $n 1 u_int
+Vector e_udi $n 1 u_int
+Vector d_uli $n 1 u_long
+Vector e_uli $n 1 u_long
+Vector d_sp $n 1 float
+Vector e_sp $n 1 float
+Vector d_dp $n 1 double
+Vector e_dp $n 1 double
+
+Ramp1D a 0 1
+Ramp1D b 100 10
+
+Vector x $n 1 float
+Vector y $n 1 float
+Ramp1D x 0 1
+VSet y 3
+
+Define Test_Type_VV_VV 1 type_code
+advise "\nTesting with $1 test sources:"
+Convert d_$1 x
+Convert e_$1 y
+#Display d_$1
+#Display e_$1
+veclib
+  execute vv_vv_lt c a b d_$1 e_$1
+  quit
+Display c
+.
+
+Define Test_Type_VV_VS 1 type_code
+advise "\nTesting with $1 test sources:"
+Convert d_$1 x
+veclib
+  execute vv_vs_lt c a b d_$1 3
+  quit
+Display c
+.
+
+Define Test_VV_VV 0
+Test_Type_VV_VV by
+Test_Type_VV_VV in
+Test_Type_VV_VV di
+Test_Type_VV_VV li
+Test_Type_VV_VV uby
+Test_Type_VV_VV uin
+Test_Type_VV_VV udi
+Test_Type_VV_VV uli
+Test_Type_VV_VV sp
+Test_Type_VV_VV dp
+Test_Type_VV_VV dp
+.
+
+Define Test_VV_VS 0
+Test_Type_VV_VS by
+Test_Type_VV_VS in
+Test_Type_VV_VS di
+Test_Type_VV_VS li
+Test_Type_VV_VS uby
+Test_Type_VV_VS uin
+Test_Type_VV_VS udi
+Test_Type_VV_VS uli
+Test_Type_VV_VS sp
+Test_Type_VV_VS dp
+Test_Type_VV_VS dp
+.
+
+# Test_VV_VV
+Test_VV_VS
+
+
+exit
