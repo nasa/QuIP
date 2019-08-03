@@ -885,8 +885,8 @@ void pause_sound(SINGLE_QSP_ARG_DECL)
 static int good_for_sound(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( OBJ_PREC(dp) != EXPECTED_SOUND_PREC ){
-		sprintf(ERROR_STRING,"good_for_sound:  object %s should have %s precision!?",
-			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)) );
+		sprintf(ERROR_STRING,"good_for_sound:  object %s (%s) should have %s precision!?",
+			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)),NAME_FOR_PREC_CODE(EXPECTED_SOUND_PREC) );
 		warn(ERROR_STRING);
 		return 0;
 	}

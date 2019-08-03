@@ -2030,7 +2030,7 @@ void _pop_nav(QSP_ARG_DECL  int count)
 
 void _end_busy(QSP_ARG_DECL  int final)
 {
-	warn("end_busy:  not implemented!?");
+	advise("end_busy:  not implemented!?");
 }
 
 void _get_confirmation(QSP_ARG_DECL  const char *title, const char *question)
@@ -2050,7 +2050,7 @@ void _simple_alert(QSP_ARG_DECL  const char *title, const char *msg)
 
 void _notify_busy(QSP_ARG_DECL  const char *title, const char *msg)
 {
-	warn("notify_busy:  not implemented!?");
+	advise("notify_busy:  not implemented!?");
 }
 
 int n_pushed_panels(void)

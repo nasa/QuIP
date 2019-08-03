@@ -189,9 +189,6 @@ Assign xs "ncols($1)"
 Assign ys "nrows($1)"
 Image mra_coords $ys $xs 1 complex		# dx,dy are distance from center
 Make_Coords_At mra_coords $2 $3
-Display mra_coords[0][0]
-Display mra_coords[100][100]
-#echo "VMagSq $1 mra_coords"
 VMagSq $1 mra_coords
 VSqrt $1 $1
 Delete_Image mra_coords

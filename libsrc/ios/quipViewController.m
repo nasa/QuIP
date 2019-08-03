@@ -195,6 +195,11 @@
 		return UIInterfaceOrientationMaskPortrait;
 	}
 }
+/*
+ Deprecated
+ 
+ Override the supportedInterfaceOrientations and preferredInterfaceOrientationForPresentation methods instead.
+ */
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {

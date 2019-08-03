@@ -1,6 +1,7 @@
 #
 # make some "tone scrambles"
 #
+max_warnings 2
 
 Set tone_duration_msec		80
 Set scramble_duration_sec	4
@@ -56,7 +57,7 @@ VSMul tone_list tone_list 4
 VFloor tone_list tone_list
 VSMin tone_list tone_list 3	# just in case...
 Convert tone_indices tone_list
-Map tone_list tone_indices $2
+Map_B tone_list tone_indices $2
 #Display tone_list
 VSMul tone_list tone_list $base_arg_inc
 Enlarge stim tone_list
