@@ -1,14 +1,14 @@
 If !var_exists(rdp_mac_loaded)
-  "advise 'opt_ht.mac requires rdp.mac, loading ...' < $macro_dir/compute/rdp.mac"
+  'advise "opt_ht.mac requires rdp.mac, loading ..." < $macro_dir/compute/rdp.mac'
 
 # easy usage:
 #	Opt_HT_Init target
 #	Compute_Opt_HT target source
 
 # dependencies on these files:
-#< $macro_dir/view/def_viewers.scr
-#< $macro_dir/war/rdp.mac
-#< $macro_dir/war/conv.mac
+# view/def_viewers.scr
+# compute/rdp.mac
+# compute/conv.mac
 
 #< disp.macs
 

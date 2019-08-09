@@ -160,6 +160,9 @@ struct data_obj {
 	List *			dt_children;
 	const char *		dt_declfile;
 	int			dt_refcount;
+#ifdef BUILD_FOR_IOS
+	void *			dt_uii_p;	// UIImage *
+#endif // BUILD_FOR_IOS
 };
 
 #define OWNS_DATA(dp)		((OBJ_FLAGS(dp) & DT_NO_DATA)==0)
@@ -285,6 +288,13 @@ struct data_obj {
 #define OBJ_FRAMES(dp)		SHP_FRAMES(OBJ_SHAPE(dp))
 #define OBJ_SEQS(dp)		SHP_SEQS(OBJ_SHAPE(dp))
 #define OBJ_DIMENSION(dp,idx)	SHP_DIMENSION(OBJ_SHAPE(dp),idx)
+
+#ifdef BUILD_FOR_IOS
+#define OBJ_UI_IMG(dp)		(__bridge UIImage *)(dp)->dt_uii_p
+#define SET_OBJ_UI_IMG(dp,v)	(dp)->dt_uii_p = (__bridge void *)v
+#define INIT_OBJ_UI_IMG(dp,v)	(dp)->dt_uii_p = v
+#endif // BUILD_FOR_IOS
+
 
 /*
 #define OBJ_RANGE_MAXDIM(dp)	(dp)->dt_range_maxdim

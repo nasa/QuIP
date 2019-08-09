@@ -26,6 +26,8 @@ extern COMMAND_FUNC( do_redraw );
 extern COMMAND_FUNC( do_embed_image );
 extern COMMAND_FUNC( do_unembed_image );
 extern COMMAND_FUNC( do_load_viewer );
+extern COMMAND_FUNC( do_queue_frame );
+extern COMMAND_FUNC( do_clear_queue );
 
 /* drawmenu.c */
 extern COMMAND_FUNC( drawmenu );

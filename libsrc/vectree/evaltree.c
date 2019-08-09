@@ -3893,7 +3893,7 @@ static const char *name_for_ref( Reference *ref_p )
 static void dump_ref( Identifier *idp )
 {
 	Reference *refp;
-
+    assert(idp!=NULL);
 	fprintf(stderr,"Showing reference info for identifier %s\n",ID_NAME(idp));
 }
 

@@ -238,6 +238,10 @@ static Data_Obj *_init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 	SET_BITMAP_OBJ_GPU_INFO_HOST_PTR(dp,NULL);
 #endif // HAVE_ANY_GPU
 
+#ifdef BUILD_FOR_IOS
+	INIT_OBJ_UI_IMG(dp,NULL);
+#endif // BUILD_FOR_IOS
+
 	return(dp);
 } // end init_dp_with_shape
 

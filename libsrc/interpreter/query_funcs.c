@@ -176,18 +176,20 @@ static int has_stdin=0;		// where should we set this?
 
 #ifdef BUILD_FOR_OBJC
 
+// in iOS, it is possible for qp to be NULL...
+
 #define DECLARE_QP						\
 								\
 	Query *qp;						\
-	qp = CURR_QRY(THIS_QSP);				\
-	assert(qp!=NULL);
+	qp = CURR_QRY(THIS_QSP);
 
 #else // ! BUILD_FOR_OBJC
 
 #define DECLARE_QP						\
 								\
 	Query *qp;						\
-	qp = CURR_QRY(THIS_QSP);
+	qp = CURR_QRY(THIS_QSP);				\
+	assert(qp!=NULL);
 
 #endif // ! BUILD_FOR_OBJC
 

@@ -4,6 +4,8 @@
 //  Created by Jeff Mulligan on 3/7/13.
 //  Copyright 2013 NASA. All rights reserved.
 //
+// This file may be completely obsolete!
+//
 
 #ifndef _QUIPIMAGEVIEW_H_
 #define _QUIPIMAGEVIEW_H_

@@ -22,7 +22,8 @@
 @class Viewer;
 
 #ifdef BUILD_FOR_IOS
-@interface quipImages : UIView
+@interface quipImages : UIImageView
+
 // Should this timer be per-viewer/images?
 // Why not have one for the whole app?
 @property (retain) CADisplayLink *	_updateTimer;
@@ -37,9 +38,16 @@
 @property CFTimeInterval		_time0;
 @property uint64_t			_time0_2;	// for mach_absolute_time()
 @property long				_flags;
+
+// We may be able to get rid of some of our home-grown animation stuff??
 @property int				_vbl_count;
 @property int				_frame_duration;
 @property const char *			cycle_func;
+@property const char *			cycle_done_func;
+@property int				_n_frames_to_cycle;
+@property NSMutableArray *		frameQueue;
+@property int				_queue_idx;
+
 
 -(id) initWithSize:(CGSize)size;
 -(void) set_refresh:(int)duration;
@@ -47,13 +55,17 @@
 -(void) hide;
 -(void) reveal;
 -(void) set_cycle_func:(const char *)s;
+-(void) set_cycle_done_func:(const char *)s;
 -(void) discard_subviews;
 -(void) enableUpdates;
 -(void) disableUpdates;
+-(void) queueFrame: (UIImage *)uii_p;
+-(void) clearQueue;
 -(void) bring_to_front:(struct data_obj *)dp;
 -(void) send_to_back:(struct data_obj *)dp;
 -(int) hasImageFromDataObject:(struct data_obj *)dp;
 -(void) removeImageFromDataObject:(struct data_obj *)dp;
+-(int) subviewCount;
 @end
 
 // flag bits

@@ -292,8 +292,38 @@ COMMAND_FUNC( do_load_viewer )
 	INSIST_RAM_OBJ(dp,"load_viewer");
 
 	INSURE_X11_SERVER
-//fprintf(stderr,"Calling load_viewer %s %s\n",VW_NAME(vp),OBJ_NAME(dp));
 	load_viewer(vp,dp);
 	select_viewer(vp);
 }
+
+COMMAND_FUNC( do_queue_frame )
+{
+	Viewer *vp;
+	Data_Obj *dp;
+
+	vp = pick_vwr("");
+	dp = pick_obj("image");
+
+	if( vp == NULL || dp == NULL ) return;
+
+	INSIST_RAM_OBJ(dp,"queue_frame");
+
+	INSURE_X11_SERVER
+	queue_frame(vp,dp);
+}
+
+
+COMMAND_FUNC( do_clear_queue )
+{
+	Viewer *vp;
+
+	vp = pick_vwr("");
+
+	if( vp == NULL ) return;
+
+	INSURE_X11_SERVER
+	clear_queue(vp);
+}
+
+
 

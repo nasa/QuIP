@@ -38,6 +38,8 @@ int add_image( Viewer *vp, Data_Obj *dp, int x, int y )
 }
 #endif /* ! BUILD_FOR_IOS */
 
+// This is really a sequence viewer, and is not currently used...
+
 void _old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 {
 	dimension_t i;
@@ -136,7 +138,20 @@ void _bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp, int x, int y 
 	warn(ERROR_STRING);
 } // end bring_image_to_front
 
+void _clear_queue( QSP_ARG_DECL  Viewer *vp )
+{
+	warn("clear_queue not implemented!?");
+}
+
+void _queue_frame( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
+{
+	warn("queue_frame not implemented!?");
+}
+
 #endif // ! BUILD_FOR_IOS
+
+// queue_frame is supposed to load without displaying,
+// but we'll do that another way...
 
 void _load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 {

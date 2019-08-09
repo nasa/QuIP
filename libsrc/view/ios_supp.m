@@ -8,7 +8,7 @@
 #include "view_cmds.h"
 #include "linear.h"
 #include "quipView.h"
-#include "quipImageView.h"
+//#include "quipImageView.h"
 #include "quipCanvas.h"
 #include "quipViewController.h"
 #include "quipAppDelegate.h"
@@ -767,96 +767,240 @@ int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
 #endif // ! BUILD_FOR_IOS
 }
 
-/* We would like to be able to bring an image to the front,
+/* we want little-endian for images we synthesize on the iPad...
+ * but when we write and then read a png file, the bytes are swapped!?
+ * What a mess...
+ */
+
+static QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
+{
+	QUIP_IMAGE_TYPE *theImage;
+	CGImageRef myimg;
+	CGColorSpaceRef colorSpace;
+
+	if( OBJ_PREC(dp) != PREC_UBY ){
+		sprintf(DEFAULT_ERROR_STRING,
+			"cgimg_for_dp:  object %s (%s) must be u_byte",
+			OBJ_NAME(dp),OBJ_PREC_NAME(dp));
+		NWARN(DEFAULT_ERROR_STRING);
+		return NULL;
+	}
+	if( OBJ_COMPS(dp) != 4 ){
+		sprintf(DEFAULT_ERROR_STRING,
+			"cgimg_for_dp:  object %s (%d) must have 4 components",
+			OBJ_NAME(dp),OBJ_COMPS(dp));
+		NWARN(DEFAULT_ERROR_STRING);
+		return NULL;
+	}
+
+	colorSpace = CGColorSpaceCreateDeviceRGB();
+//fprintf(stderr,"objc_img_for_dp:  little_endian_flag = %d\n",little_endian_flag);
+	CGContextRef cref = CGBitmapContextCreateWithData(OBJ_DATA_PTR(dp),
+		OBJ_COLS(dp), OBJ_ROWS(dp), 8, 4* OBJ_COLS(dp) ,
+		colorSpace,
+		(
+#ifdef BUILD_FOR_IOS
+		(little_endian_flag==0?0:kCGBitmapByteOrder32Little) |
+#endif // BUILD_FOR_IOS
+		kCGImageAlphaPremultipliedFirst
+		/*kCGImageAlphaPremultipliedLast*/
+		/*kCGImageAlphaFirst*/	// not compatible with other flags???
+		/*kCGImageAlphaLast*/	// docs say have to be premultiplied???
+		),
+
+		NULL,		// release callback
+		NULL			// release callback data arg
+		);
+	CGColorSpaceRelease(colorSpace);
+
+
+	if ( cref == NULL ){
+		printf("error creating bitmap context!?\n");
+		return NULL;
+	}
+
+	myimg = CGBitmapContextCreateImage(cref);
+	CGContextRelease(cref);
+
+#ifdef BUILD_FOR_IOS
+	theImage = [QUIP_IMAGE_TYPE imageWithCGImage:myimg];
+#endif // BUILD_FOR_IOS
+
+#ifdef BUILD_FOR_MACOS
+	theImage = [[QUIP_IMAGE_TYPE alloc]
+		initWithCGImage:myimg
+		size:NSZeroSize ];
+#endif // BUILD_FOR_MACOS
+    
+	// image is retained by the property setting above,
+	// so we can release the original
+	// jbm:  DO WE NEED THAT WITH ARC???
+	
+	// static analyzer complains, so we remove for now...
+	// but that broke things!
+	// It appears that CG stuff needs releases, even with ARC...
+	CGImageRelease(myimg);
+
+	return theImage;
+
+}	// objc_img_for_dp
+
+
+/*
+ * We create a view the first time we display an image, and cache a ptr
+ * in the data_obj structure.
+ * We set the view size to match the viewer, though, so there is a potential
+ * problem if we later display the image in a differently-sized viewer!?
+ */
+
+static quipImages * insure_viewer_images(Viewer *vp)
+{
+	quipImages *qip;
+	CGSize size;
+
+#ifdef BUILD_FOR_IOS
+	if( VW_IMAGES(vp) != NULL ){
+		return VW_IMAGES(vp);
+	}
+#endif // BUILD_FOR_IOS
+
+	size.width = VW_WIDTH(vp);
+	size.height = VW_HEIGHT(vp);
+
+	qip=[[quipImages alloc]initWithSize:size];
+
+#ifdef BUILD_FOR_IOS
+	SET_QV_IMAGES(VW_QV(vp),qip);
+
+	[VW_QV(vp) addSubview:qip];
+
+
+	// We want the canvas to be in front of the images,
+	// but behind the controls...
+	// BUT this brings the images to the front?
+	// Does this depend on order of initialization?
+
+	// That comment says we want the controls in front - so why
+	// are we bringing the images to the front???
+
+	// this puts it just in front of the default background?
+	[VW_QV(vp) insertSubview:qip aboveSubview:QV_BG_IMG(VW_QV(vp))];
+
+	qip.backgroundColor = [UIColor clearColor];
+#endif // BUILD_FOR_IOS
+
+	return qip;
+}
+
+#ifdef FOOBAR
+static quipImageView * insure_viewer_has_image( Viewer *vp, Data_Obj *dp, int x, int y )
+{
+	quipImageView *qiv_p;
+	CGRect rect;
+
+	rect = CGRectMake(x,y,VW_WIDTH(vp),VW_HEIGHT(vp));
+
+	qiv_p = img_view_for_obj(dp,rect);
+
+
+	// We add the new imageView as a subview of the viewer view...
+	if( VW_IMAGES(vp) == NULL ){
+		insure_viewer_images(vp);
+	}
+
+	if( ! [VW_IMAGES(vp) hasSubview:qiv_p] ){
+		// addSubview does nothing if the view is already a subview,
+		// so the above check doesn't really do much...
+		// are new subviews added at the back or front??
+
+fprintf(stderr,"insure_viewer_has_image:  %s has %d subviews before adding %s\n",
+VW_NAME(vp),[VW_IMAGES(vp) subviewCount],OBJ_NAME(dp));
+
+		[VW_IMAGES(vp) addSubview:qiv_p];
+	}
+	return qiv_p;
+}
+#endif // FOOBAR
+
+static UIImage * insure_object_has_uiimage(Data_Obj *dp)
+{
+	UIImage *uii_p;
+fprintf(stderr,"insure_object_has_uiimage:  checking %s\n",OBJ_NAME(dp));
+	if( OBJ_UI_IMG(dp) == NULL ){
+        fprintf(stderr,"insure_object_has_uiimage:  creating UIImage for %s\n",OBJ_NAME(dp));
+		uii_p = objc_img_for_dp( dp, 1 /* little_endian flag */ );
+
+		// Save a reference to the image view in the data obj
+		SET_OBJ_UI_IMG(dp,uii_p);
+        fprintf(stderr,"insure_object_has_uiimage:  set to 0x%lx\n",(long)uii_p);
+	} else {
+        fprintf(stderr,"insure_object_has_uiimage:  returning existing UIImage (0x%lx) for %s\n",(long)OBJ_UI_IMG(dp),OBJ_NAME(dp));
+		uii_p = OBJ_UI_IMG(dp);
+	}
+	return uii_p;
+}
+
+/*
+ * OLD COMMENT:
+ * We would like to be able to bring an image to the front,
  * but in a script we only have the data object name.
  * We solve this by subclassing UIImageView, and adding
  * a Data_Obj reference.
+ *
+ * NEW COMMENT:
+ * We turned this around, and give the data_obj's a pointer to
+ * an associated imageView - but the imageView holds a copy of the
+ * image at the time it was created, and won't be updated!?
+ * We would like to repoint the data object to the view's data???
+ * Or create a data object for a view???  FIXME LATER
  */
 
 void embed_image(QSP_ARG_DECL Viewer *vp, Data_Obj *dp,int x,int y)
 {
-	quipImageView *qiv_p;
+	//quipImageView *qiv_p;
+	UIImage *uii_p;		// BUG really only for iOS...
 
 	INSIST_IMAGE_VIEWER(embed_image)
 
-	// BUG?  it seems kind of ineffiecient to create a new object
-	// every time we reload an image...  can't we simply reset the
-	// image data property of a quipImageView associated with the viewer?
-	qiv_p = [[quipImageView alloc] initWithDataObj:dp];
-
-//fprintf(stderr,"embed_image:  quipImageView = 0x%lx\n",
-//(long)qiv_p);
+	////qiv_p = insure_viewer_has_image(vp,dp,x,y);
+	uii_p = insure_object_has_uiimage(dp);
 
 #ifdef BUILD_FOR_IOS
-	qiv_p.contentMode = UIViewContentModeTopLeft;
+	[VW_IMAGES(vp) setImage:uii_p];
 #endif // BUILD_FOR_IOS
-
-	// BUG?  make the view the size of the viewer, not the image
-	qiv_p.frame = CGRectMake(x,y,VW_WIDTH(vp),VW_HEIGHT(vp));
-
-	// We add the new imageView as a subview of the viewer view...
-//fprintf(stderr,"embed_image:  checking VW_IMAGES...\n");
-	if( VW_IMAGES(vp) == NULL ){
-//fprintf(stderr,"embed_image:  Calling init_viewer_images...\n");
-		init_viewer_images(vp);
-//fprintf(stderr,"embed_image:  Back from init_viewer_images...\n");
-	}
-
-//fprintf(stderr,"embed_image:  proceeding\n");
-	// What is the purpose of this bit of code???
-
-// old, duplicates lookup
-
-	if( [VW_IMAGES(vp) hasImageFromDataObject:dp] ){
-		// This is supposed to keep memory from blowing up
-		// if we repetitively load the same image...
-		[VW_IMAGES(vp) removeImageFromDataObject:dp];
-	}
-
-
-// new, more efficient
-	/*
-	int idx;
-
-	if( (idx=[VW_IMAGES(vp) indexForDataObject:dp]) >= 0 ){
-		[VW_IMAGES(vp) removeImageFromDataObject:dp];
-		quipImageView *qiv_p;
-		qiv_p = [[VW_IMAGES(vp) subviews] objectAtIndex:i];
-		[qiv_p removeFromSuperview];
-	}
-	 */
-
-	[VW_IMAGES(vp) addSubview:qiv_p];
 
 #ifdef BUILD_FOR_MACOS
-	//[qiv_p setWindow: GW_WINDOW(VW_GW(vp))];
 	[GW_WINDOW(VW_GW(vp)) setContentView: qiv_p ];
-
-//fprintf(stderr,"embed_images:  qiv_p = 0x%lx, window = 0x%lx\n",
-//(long)qiv_p,(long)qiv_p.window);
-
-//[qiv_p setNeedsDisplay:YES];
 #endif // BUILD_FOR_MACOS
-
-	// The newest image is placed in front.
-	// For a movie, if we render them in the order
-	// we want them played, then we can move from back-to-front...
-#ifdef BUILD_FOR_IOS
-	[VW_IMAGES(vp) bringSubviewToFront:qiv_p];
-#endif // BUILD_FOR_IOS
-
-	/* This implementation creates a new view every time we load an image!?
-	 * It would probably be better to have a single image view that
-	 * we reload.  But would this work for different size images?
-	 *
-	 * Loading many images causes a low memory crash...
-	 *
-	 * We want to be able to load an image which is behind graphics
-	 * drawn from the draw/plot menus.  So we need a drawing view on top
-	 * of the image view.  So the call to bringSubviewToFront is problematic...
-	 */
 }
 
+void _queue_frame( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
+{
+	UIImage *uii_p;
+	quipImages *qi_p;
+
+	uii_p = insure_object_has_uiimage(dp);
+	assert(uii_p!=NULL);
+
+	qi_p = insure_viewer_images(vp);
+	assert(qi_p!=NULL);
+
+	[qi_p queueFrame:uii_p];
+}
+
+void _clear_queue( QSP_ARG_DECL  Viewer *vp )
+{
+	quipImages *qi_p;
+
+	qi_p = VW_IMAGES(vp);
+	if(qi_p!=NULL){
+		// quipImages may not be created if we have never
+		// queued any frames before...
+		[qi_p clearQueue];
+	}
+}
+
+#ifdef FOOBAR
 quipImageView *image_view_for_viewer(Viewer *vp)
 {
 	quipImageView *qiv_p;
@@ -875,8 +1019,9 @@ fprintf(stderr,"image_view_for_viewer returing existing image view 0x%lx for vie
 #endif // BUILD_FOR_IOS
 
 	// We add the new imageView as a subview of the viewer view...
-	if( VW_IMAGES(vp) == NULL )
-		init_viewer_images(vp);
+	if( VW_IMAGES(vp) == NULL ){
+		insure_viewer_images(vp);
+	}
 
 fprintf(stderr,"adding subview 0x%lx to images 0x%lx, viewer = 0x%lx...\n",
 (long)qiv_p,(long)VW_IMAGES(vp),(long)vp);
@@ -898,6 +1043,7 @@ fprintf(stderr,"bringing subview to front...\n");
 
 	return qiv_p;
 }
+#endif // FOOBAR
 
 #ifdef BUILD_FOR_IOS
 
@@ -1280,47 +1426,6 @@ void init_viewer_canvas(Viewer *vp)
 	// the context is set by drawRect
 	//init_text_font(vp);
 } // end init_viewer_canvas
-
-void init_viewer_images(Viewer *vp)
-{
-	quipImages *qip;
-	CGSize size;
-
-	size.width = VW_WIDTH(vp);
-	size.height = VW_HEIGHT(vp);
-
-	qip=[[quipImages alloc]initWithSize:size];
-
-#ifdef BUILD_FOR_IOS
-	SET_QV_IMAGES(VW_QV(vp),qip);
-
-	[VW_QV(vp) addSubview:qip];
-
-
-	// We want the canvas to be in front of the images,
-	// but behind the controls...
-	// BUT this brings the images to the front?
-	// Does this depend on order of initialization?
-
-	// That comment says we want the controls in front - so why
-	// are we bringing the images to the front???
-
-//sprintf(ERROR_STRING,"init_viewer_images:  bringing images 0x%lx to front, superview = 0x%lx",
-//(long)qip,(long)VW_QV(vp));
-//advise(ERROR_STRING);
-
-	//[VW_QV(vp) bringSubviewToFront:qip];
-
-	// this puts it behind the default background!
-	//[VW_QV(vp) sendSubviewToBack:qip];
-
-	// this puts it just in front of the default background?
-	[VW_QV(vp) insertSubview:qip aboveSubview:QV_BG_IMG(VW_QV(vp))];
-
-	qip.backgroundColor = [UIColor clearColor];
-#endif // BUILD_FOR_IOS
-
-}
 
 #ifdef BUILD_FOR_IOS
 void bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp,int x,int y)

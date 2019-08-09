@@ -1596,6 +1596,13 @@ Write_File_Header $1 1
 Put_Next _plotbuf $1
 .
 
+
+# this is the default, but $macro_dir is not defined on iOS
+
+Define Assume_Unix_Plot_Locale 0
+< $macro_dir/view/unix_plot.mac
+.
+
 # Now execute a few commands...
 
 Set the_plotter no_plotter
@@ -1634,12 +1641,17 @@ Set fonts_loaded 0
 Init_Plotter_Param_Indices
 Init_Color_Indices
 
-# Can't reference macro_dir here...  WHY NOT?
-#If !var_exists(plot_locale)
-#  '< $macro_dir/view/unix_plot.mac'	# the default
+# Can't reference macro_dir here, because when using on iOS all the macros
+# are loaded into one startup file, and this throws an undefined variable warning,
+# even though we are not executing that line.
+# But a better solution is to hide the variable reference in a macro.
+# I would have thought that the use of single quotes would have postponed the
+# expansion of the variable???
 
+Print plot_locale
 If !var_exists(plot_locale)
-  '< $macro_dir/view/unix_plot.mac'	# the default
+  Assume_Unix_Plot_Locale
+
 
 Init_Font_Stuff
 

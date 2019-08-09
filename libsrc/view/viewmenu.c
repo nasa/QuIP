@@ -413,7 +413,7 @@ static COMMAND_FUNC( do_cycle_func )
 	const char *s;
 	Viewer *vp;
 
-	GET_VIEWER("do_cycle_viewer");
+	GET_VIEWER("do_cycle_func");
 	s=nameof("text to interpret at next image flip");
 
 	if( vp == NULL ) return;
@@ -427,6 +427,35 @@ static COMMAND_FUNC( do_cycle_func )
 		return;
 	}
 	[ VW_IMAGES(vp) set_cycle_func:s];
+#else
+	warn("image cycle functions not implemented for this platform");
+	// suppress warning
+	sprintf(ERROR_STRING,"Not interpreting \"%s\" in viewer 0x%lx",
+		s,(long)vp);
+	advise(ERROR_STRING);
+#endif
+
+}
+
+static COMMAND_FUNC( do_cycle_done_func )
+{
+	const char *s;
+	Viewer *vp;
+
+	GET_VIEWER("do_cycle_done_func");
+	s=nameof("text to interpret at end of animation cycle");
+
+	if( vp == NULL ) return;
+
+#ifdef BUILD_FOR_IOS
+	if( VW_IMAGES(vp) == NULL ){
+		sprintf(ERROR_STRING,
+			"do_cycle_viewer:  viewer %s does not have an associated image viewer!?",
+			VW_NAME(vp));
+		warn(ERROR_STRING);
+		return;
+	}
+	[ VW_IMAGES(vp) set_cycle_done_func:s];
 #else
 	warn("image cycle functions not implemented for this platform");
 	// suppress warning
@@ -522,7 +551,10 @@ ADD_CMD( show,		do_show_viewer,	display viewing window )
 ADD_CMD( unshow,	do_unshow_viewer,	hide viewing window )
 ADD_CMD( refresh,	do_refresh_viewer,	enable/disable refresh trapping)
 ADD_CMD( cycle,		do_cycle_viewer,	cycle images associated with a viewer)
+ADD_CMD( queue_frame,	do_queue_frame,		queue an animation frame for display in a viewer )
+ADD_CMD( clear_queue,	do_clear_queue,		empty the animation queue )
 ADD_CMD( cycle_func,	do_cycle_func,		specify script to run at next image cycling)
+ADD_CMD( cycle_done_func,	do_cycle_done_func,	specify script to run at end of animation cycle)
 ADD_CMD( bring_to_front,	do_bring_fwd,	bring an image to the front of a viewer)
 ADD_CMD( send_to_back,	do_send_back,	send an image to the back of a viewer)
 ADD_CMD( hide_images,	do_hide_imgs,	hide all images in a viewer)

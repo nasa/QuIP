@@ -1355,8 +1355,10 @@ fprintf(stderr,"Genwin %s has an unknown view controller type!?\n",GW_NAME(gwp))
 	// perhaps the solution to this is the UINavigationControllerDelegate
 	// methods ???
 
+	// changed animated to NO for snappier performance with experiments.
+	// Maybe should make this a user-settable property???
 	[ root_view_controller
-		pushViewController:GW_VC(gwp) animated:YES];
+		pushViewController:GW_VC(gwp) animated:/*YES*/NO];
 
 	// push the screen object context too, so that we will
 	// be able to look up widgets in other places,
@@ -1413,10 +1415,11 @@ void pop_nav(QSP_ARG_DECL int n_levels)
 		}
 		UIViewController *target_vc;
 		target_vc = a[a.count-n_levels-1];
-		[ root_view_controller popToViewController:target_vc animated:YES ];
+		// Changed to NO for snappier performance in experiments
+		[ root_view_controller popToViewController:target_vc animated:/*YES*/NO ];
 	} else {
 	/* qvc = (quipViewController *) */
-		[ root_view_controller popViewControllerAnimated:YES
+		[ root_view_controller popViewControllerAnimated:/*YES*/NO
 			checkOrientation:[old_vc didBlockAutorotation]
 			];
 	}
