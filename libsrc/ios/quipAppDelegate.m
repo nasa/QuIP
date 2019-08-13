@@ -642,11 +642,22 @@ event_done:
 	// We create the dummy panel so that we can use expressions
 	// like ncols(iPad2)...
 
+	// BUG we need to check landscape vs. portrait.
+	// This code was written with portrait in mind, but iPhone4s introduced
+	// when using landscale, really same as iPod retina!?  FIXME
+
 	// dev_size fields are float, can't switch
 	int w = dev_size.width, h = dev_size.height;
 
 	//Gen_Win *po;
 	switch( w ){
+		case 480:	// iPhone4s?
+			dev_type = DEV_TYPE_IPHONE4S;
+			force_reserved_var(DEFAULT_QSP_ARG  "DISPLAY","iPhone4s");
+			dummy_panel(DEFAULT_QSP_ARG  "iPhone4s",
+				dev_size.width, dev_size.height);
+			break;
+
 		case 568:	// iPhone5?
 			dev_type = DEV_TYPE_IPHONE5;
 			force_reserved_var(DEFAULT_QSP_ARG  "DISPLAY","iPhone5");
@@ -706,7 +717,7 @@ ipad_pro_9_7:
 			NWARN(DEFAULT_ERROR_STRING);
 			break;
 	}
-}
+} // getDevTypeForSize
 
 int is_portrait(void)
 {

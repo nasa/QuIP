@@ -46,8 +46,11 @@ static void init_format_type_tbl(void);
 #define DEFAULT_MIN_FIELD_WIDTH		10
 #define DEFAULT_DISPLAY_PRECISION	6
 
-#define PADDED_FLT_FMT_STR	"%10.24g"
+#define PADDED_FLT_FMT_STR	"%10.24g"		// not used???
 #define PLAIN_FLT_FMT_STR	"%g"
+
+#define UPDATE_PADDED_FLOAT_FORMAT_STRING						\
+	sprintf(padded_flt_fmt_str,"%%%d.%dg",min_field_width,display_precision);
 
 #define NORMAL_SEPARATOR	" "
 #define POSTSCRIPT_SEPARATOR	""
@@ -213,6 +216,8 @@ void _init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p)
 	dai_p->dai_min_field_width = DEFAULT_MIN_FIELD_WIDTH;
 	dai_p->dai_display_precision = DEFAULT_DISPLAY_PRECISION;
 	dai_p->dai_fmt_lp = NULL;
+
+	UPDATE_PADDED_FLOAT_FORMAT_STRING
 
 	if( int_out_fmt_itp == NULL ) init_output_formats();
 }
@@ -898,7 +903,7 @@ advise(ERROR_STRING);
  * It seems we are confused about what to do about bitmaps - BUG?
  */
 
-void _format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *data)
+void _format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *data, int pad_flag)
 {
 	//int64_t l;
 	int c;
@@ -914,7 +919,8 @@ void _format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *da
 	}
 
 	if( ! IS_BITMAP(dp) ){
-		format_scalar_value(buf,buflen,data,OBJ_PREC_PTR(dp),PAD_FOR_EVEN_COLUMNS);
+		// Why do we pad by default???
+		format_scalar_value(buf,buflen,data,OBJ_PREC_PTR(dp),/*PAD_FOR_EVEN_COLUMNS*/ pad_flag);
 	}
 	else {
 		warn("format_scalar_obj:  don't know what to do with bitmaps!?");
@@ -932,6 +938,7 @@ void _format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *da
 
 void _format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision *prec_p, int pad_flag)
 {
+	// BUG - buflen is ignored?
 	(*(PREC_MACH_PREC_PTR(prec_p)->format_func))(QSP_ARG  buf,data,pad_flag);
 }
 
@@ -1029,7 +1036,7 @@ static void _pnt_one(QSP_ARG_DECL  FILE *fp, Data_Obj *dp,  u_char *data )
 					fprintf(fp,"\n");
 					n_this_line = 0;
 				}
-				format_scalar_obj(buf,128,dp,data);
+				format_scalar_obj(buf,128,dp,data,PAD_FOR_EVEN_COLUMNS);
 				// put a space here, because format_scalar_obj does not include a separator
 				fprintf(fp," %s",buf);
 				data += inc;
@@ -1037,7 +1044,7 @@ static void _pnt_one(QSP_ARG_DECL  FILE *fp, Data_Obj *dp,  u_char *data )
 			}
 		}
 	} else {
-		format_scalar_obj(buf,128,dp,data);
+		format_scalar_obj(buf,128,dp,data,PAD_FOR_EVEN_COLUMNS);
 		fprintf(fp," %s",buf);
 		n_this_line++;
 	}
@@ -1147,12 +1154,14 @@ static void _sp_pntvec( QSP_ARG_DECL  Data_Obj *dp, FILE *fp )
 void set_min_field_width(int fw)
 {
 	min_field_width=fw;
+	UPDATE_PADDED_FLOAT_FORMAT_STRING
 }
 #endif /* NOT_USED */
 
 void _set_display_precision(QSP_ARG_DECL  int digits)
 {
 	display_precision=digits;
+	UPDATE_PADDED_FLOAT_FORMAT_STRING
 }
 
 #define MAX_BITS_PER_LINE 32
@@ -1228,8 +1237,8 @@ void _pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 
 	/* BUG should set format based on desired radix !!! */
 
-	// BUG should only do this at init time, and when changed...
-	sprintf(padded_flt_fmt_str,"%%%d.%dg",min_field_width,display_precision);
+	// // BUG should only do this at init time, and when changed...
+	// sprintf(padded_flt_fmt_str,"%%%d.%dg",min_field_width,display_precision);
 
 	if( OBJ_MACH_PREC(dp) == PREC_SP ){
 		sp_pntvec(dp,fp);

@@ -387,8 +387,8 @@ extern Data_Obj *_insure_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *dp);
 
 /* ascii.c */
 extern void _init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p);
-extern void _format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *data);
-#define format_scalar_obj(buf,buflen,dp,data) _format_scalar_obj(QSP_ARG  buf,buflen,dp,data)
+extern void _format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *data,int pad_flag);
+#define format_scalar_obj(buf,buflen,dp,data,pad_flag) _format_scalar_obj(QSP_ARG  buf,buflen,dp,data,pad_flag)
 
 #define init_dobj_ascii_info(dai_p) _init_dobj_ascii_info(QSP_ARG  dai_p)
 
