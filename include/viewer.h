@@ -159,6 +159,7 @@ IOS_ITEM_LIST_PROT(Canvas_Event,canvas_event)
 #define VW_QV(vp)		((quipView *)VW_QVC(vp).view)
 #define VW_CANVAS(vp)		QV_CANVAS(VW_QV(vp))
 #define VW_IMAGES(vp)		QV_IMAGES(VW_QV(vp))
+#define SET_VW_IMAGES(vp,v)	SET_QV_IMAGES(VW_QV(vp),v)
 #endif // BUILD_FOR_IOS
 
 #define VW_BG_IMG(vp)		QV_BG_IMG(VW_QV(vp))
@@ -756,6 +757,12 @@ extern void display_to_shm_viewer(Viewer *vp,Data_Obj *dp);
 }
 #endif
 
+#ifdef BUILD_FOR_OBJC
+
+// ios_supp.c
+extern void set_viewer_refresh(Viewer *vp, int frame_duration);
+
+#endif // BUILD_FOR_OBJC
 
 #endif /* ! _VIEWER_H_ */
 

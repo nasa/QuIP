@@ -853,19 +853,22 @@ static QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
  * problem if we later display the image in a differently-sized viewer!?
  */
 
-static quipImages * insure_viewer_images(Viewer *vp)
+static void insure_viewer_images(Viewer *vp)
 {
 	quipImages *qip;
 	CGSize size;
 
 #ifdef BUILD_FOR_IOS
 	if( VW_IMAGES(vp) != NULL ){
-		return VW_IMAGES(vp);
+		return;
 	}
 #endif // BUILD_FOR_IOS
 
 	size.width = VW_WIDTH(vp);
 	size.height = VW_HEIGHT(vp);
+
+fprintf(stderr,"insure_viewer_images %s:  will create quipImages with width %d and height %d\n",
+VW_NAME(vp),VW_WIDTH(vp),VW_HEIGHT(vp));
 
 	qip=[[quipImages alloc]initWithSize:size];
 
@@ -889,10 +892,26 @@ static quipImages * insure_viewer_images(Viewer *vp)
 	qip.backgroundColor = [UIColor clearColor];
 #endif // BUILD_FOR_IOS
 
-	return qip;
-}
+} // insure_viewer_images
 
 #ifdef FOOBAR
+
+static void make_ready_for_images(Viewer *vp)
+{
+	quipImages *qis_p;
+	CGSize size;
+
+	assert(VW_IMAGES(vp)==NULL);
+
+	size.height = VW_HEIGHT(vp);
+	size.width = VW_WIDTH(vp);
+
+	qis_p = [[quipImages alloc] initWithSize:size];
+
+	SET_VW_IMAGES(vp,qis_p);	// reall SET_QV_IMAGES
+	[ VW_QV(vp) addSubview: qis_p ];
+}
+
 static quipImageView * insure_viewer_has_image( Viewer *vp, Data_Obj *dp, int x, int y )
 {
 	quipImageView *qiv_p;
@@ -922,21 +941,26 @@ VW_NAME(vp),[VW_IMAGES(vp) subviewCount],OBJ_NAME(dp));
 }
 #endif // FOOBAR
 
+static NSMutableArray * uii_list = NULL;
+
 static UIImage * insure_object_has_uiimage(Data_Obj *dp)
 {
 	UIImage *uii_p;
-fprintf(stderr,"insure_object_has_uiimage:  checking %s\n",OBJ_NAME(dp));
 	if( OBJ_UI_IMG(dp) == NULL ){
-        fprintf(stderr,"insure_object_has_uiimage:  creating UIImage for %s\n",OBJ_NAME(dp));
 		uii_p = objc_img_for_dp( dp, 1 /* little_endian flag */ );
 
 		// Save a reference to the image view in the data obj
 		SET_OBJ_UI_IMG(dp,uii_p);
-        fprintf(stderr,"insure_object_has_uiimage:  set to 0x%lx\n",(long)uii_p);
 	} else {
-        fprintf(stderr,"insure_object_has_uiimage:  returning existing UIImage (0x%lx) for %s\n",(long)OBJ_UI_IMG(dp),OBJ_NAME(dp));
 		uii_p = OBJ_UI_IMG(dp);
 	}
+
+	// Save a reference in an Apple struct so it doesn't get garbage collected?
+	if( uii_list == NULL ){
+		uii_list = [[NSMutableArray alloc] init];
+	}
+	[ uii_list addObject:uii_p];	// adds at end of array
+
 	return uii_p;
 }
 
@@ -966,6 +990,9 @@ void embed_image(QSP_ARG_DECL Viewer *vp, Data_Obj *dp,int x,int y)
 	uii_p = insure_object_has_uiimage(dp);
 
 #ifdef BUILD_FOR_IOS
+	insure_viewer_images(vp);
+	assert(VW_IMAGES(vp)!=NULL);
+
 	[VW_IMAGES(vp) setImage:uii_p];
 #endif // BUILD_FOR_IOS
 
@@ -982,10 +1009,10 @@ void _queue_frame( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 	uii_p = insure_object_has_uiimage(dp);
 	assert(uii_p!=NULL);
 
-	qi_p = insure_viewer_images(vp);
-	assert(qi_p!=NULL);
+	insure_viewer_images(vp);
+	assert(VW_IMAGES(vp)!=NULL);
 
-	[qi_p queueFrame:uii_p];
+	[VW_IMAGES(vp) queueFrame:uii_p];
 }
 
 void _clear_queue( QSP_ARG_DECL  Viewer *vp )
@@ -1433,4 +1460,30 @@ void bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp,int x,int y)
 	warn("bring_image_to_front not implemented for iOS!?");
 }
 #endif // BUILD_FOR_IOS
+
+
+void set_viewer_refresh(Viewer *vp, int frame_duration)
+{
+	insure_viewer_images(vp);
+	NSMutableArray *frame_queue;
+	NSTimeInterval dur;
+	float nf;
+
+	assert( VW_IMAGES(vp) != NULL );
+
+	frame_queue = VW_IMAGES(vp).frameQueue;
+	if( frame_queue == NULL ){
+		fprintf(stderr,"set_viewer_refresh:  viewer %s has no frame queue!?\n",
+			VW_NAME(vp));
+		return;
+	}
+	nf = frame_queue.count;
+	dur = nf * (1.0/60.0) * frame_duration;	// frame_duration measured in refreshes
+
+	[VW_IMAGES(vp) setAnimationImages:frame_queue];
+	[VW_IMAGES(vp) setAnimationRepeatCount:1];	// 0 for looping
+	[VW_IMAGES(vp) setAnimationDuration:dur];	// 0 for looping
+	// default is 30 fps???
+	[VW_IMAGES(vp) startAnimating];
+}
 

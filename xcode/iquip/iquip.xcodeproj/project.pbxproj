@@ -116,7 +116,6 @@
 		71828F321726171000F7CB35 /* quipCanvas.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F201726171000F7CB35 /* quipCanvas.m */; };
 		71828F331726171000F7CB35 /* quipConsole.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F211726171000F7CB35 /* quipConsole.m */; };
 		71828F341726171000F7CB35 /* quipImages.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F221726171000F7CB35 /* quipImages.m */; };
-		71828F351726171000F7CB35 /* quipImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F231726171000F7CB35 /* quipImageView.m */; };
 		71828F391726173C00F7CB35 /* client.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F371726173C00F7CB35 /* client.c */; };
 		71828F3A1726173C00F7CB35 /* dataport.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F381726173C00F7CB35 /* dataport.c */; };
 		71828F411726174F00F7CB35 /* packets.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F3B1726174F00F7CB35 /* packets.c */; };
@@ -359,7 +358,6 @@
 		7C4331F21D4D43FC0033687C /* quipCanvas.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F201726171000F7CB35 /* quipCanvas.m */; };
 		7C4331F31D4D43FC0033687C /* quipConsole.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F211726171000F7CB35 /* quipConsole.m */; };
 		7C4331F41D4D43FC0033687C /* quipImages.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F221726171000F7CB35 /* quipImages.m */; };
-		7C4331F51D4D43FC0033687C /* quipImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F231726171000F7CB35 /* quipImageView.m */; };
 		7C4331F61D4D43FC0033687C /* client.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F371726173C00F7CB35 /* client.c */; };
 		7C4331F71D4D43FC0033687C /* dataport.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F381726173C00F7CB35 /* dataport.c */; };
 		7C4331F81D4D43FC0033687C /* packets.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F3B1726174F00F7CB35 /* packets.c */; };
@@ -632,7 +630,6 @@
 		7C4333191D4D49450033687C /* quipCanvas.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F201726171000F7CB35 /* quipCanvas.m */; };
 		7C43331A1D4D49450033687C /* quipConsole.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F211726171000F7CB35 /* quipConsole.m */; };
 		7C43331B1D4D49450033687C /* quipImages.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F221726171000F7CB35 /* quipImages.m */; };
-		7C43331C1D4D49450033687C /* quipImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F231726171000F7CB35 /* quipImageView.m */; };
 		7C43331D1D4D49450033687C /* client.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F371726173C00F7CB35 /* client.c */; };
 		7C43331E1D4D49450033687C /* dataport.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F381726173C00F7CB35 /* dataport.c */; };
 		7C43331F1D4D49450033687C /* packets.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F3B1726174F00F7CB35 /* packets.c */; };
@@ -910,7 +907,6 @@
 		7C4D6DE51D5111A400D34AC4 /* quipCanvas.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F201726171000F7CB35 /* quipCanvas.m */; };
 		7C4D6DE61D5111A400D34AC4 /* quipConsole.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F211726171000F7CB35 /* quipConsole.m */; };
 		7C4D6DE71D5111A400D34AC4 /* quipImages.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F221726171000F7CB35 /* quipImages.m */; };
-		7C4D6DE81D5111A400D34AC4 /* quipImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F231726171000F7CB35 /* quipImageView.m */; };
 		7C4D6DE91D5111A400D34AC4 /* client.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F371726173C00F7CB35 /* client.c */; };
 		7C4D6DEA1D5111A400D34AC4 /* dataport.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F381726173C00F7CB35 /* dataport.c */; };
 		7C4D6DEB1D5111A400D34AC4 /* packets.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F3B1726174F00F7CB35 /* packets.c */; };
@@ -1120,6 +1116,11 @@
 		7C74566E1DB18F5600A0D538 /* rbtree.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C74566B1DB18F4D00A0D538 /* rbtree.c */; };
 		7C74566F1DB18F5700A0D538 /* rbtree.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C74566B1DB18F4D00A0D538 /* rbtree.c */; };
 		7C79F9E51A2D47F1005EE8B8 /* soundmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C79F9E41A2D47F1005EE8B8 /* soundmenu.c */; };
+		7C80CE3422FDF1E600C13959 /* quipImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C80CE3322FDF1E600C13959 /* quipImage.m */; };
+		7C80CE3522FDF44900C13959 /* quipImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C80CE3322FDF1E600C13959 /* quipImage.m */; };
+		7C80CE3622FDF44A00C13959 /* quipImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C80CE3322FDF1E600C13959 /* quipImage.m */; };
+		7C80CE3722FDF44B00C13959 /* quipImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C80CE3322FDF1E600C13959 /* quipImage.m */; };
+		7C80CE3822FDF44C00C13959 /* quipImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C80CE3322FDF1E600C13959 /* quipImage.m */; };
 		7C922E1F19CA51DE00F92C21 /* typed_scalars.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C922E1E19CA51DE00F92C21 /* typed_scalars.c */; };
 		7C9C32181C0699CE00E2094F /* lin_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C9C32171C0699CE00E2094F /* lin_util.c */; };
 		7C9F27A620C32B39002D9F63 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C9F27A520C32B39002D9F63 /* equivalence.c */; };
@@ -1247,7 +1248,6 @@
 		7CB671041F9484C5001FFADF /* quipCanvas.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F201726171000F7CB35 /* quipCanvas.m */; };
 		7CB671051F9484C5001FFADF /* quipConsole.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F211726171000F7CB35 /* quipConsole.m */; };
 		7CB671061F9484C5001FFADF /* quipImages.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F221726171000F7CB35 /* quipImages.m */; };
-		7CB671071F9484C5001FFADF /* quipImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F231726171000F7CB35 /* quipImageView.m */; };
 		7CB671081F9484C5001FFADF /* container.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C7456661DB18EE900A0D538 /* container.c */; };
 		7CB671091F9484C5001FFADF /* client.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F371726173C00F7CB35 /* client.c */; };
 		7CB6710A1F9484C5001FFADF /* dataport.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F381726173C00F7CB35 /* dataport.c */; };
@@ -1636,7 +1636,6 @@
 		71828F201726171000F7CB35 /* quipCanvas.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipCanvas.m; sourceTree = "<group>"; };
 		71828F211726171000F7CB35 /* quipConsole.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipConsole.m; sourceTree = "<group>"; };
 		71828F221726171000F7CB35 /* quipImages.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipImages.m; sourceTree = "<group>"; };
-		71828F231726171000F7CB35 /* quipImageView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipImageView.m; sourceTree = "<group>"; };
 		71828F371726173C00F7CB35 /* client.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = client.c; sourceTree = "<group>"; };
 		71828F381726173C00F7CB35 /* dataport.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dataport.c; sourceTree = "<group>"; };
 		71828F3B1726174F00F7CB35 /* packets.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = packets.c; sourceTree = "<group>"; };
@@ -1797,6 +1796,7 @@
 		7C7456661DB18EE900A0D538 /* container.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = container.c; sourceTree = "<group>"; };
 		7C74566B1DB18F4D00A0D538 /* rbtree.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rbtree.c; sourceTree = "<group>"; };
 		7C79F9E41A2D47F1005EE8B8 /* soundmenu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = soundmenu.c; sourceTree = "<group>"; };
+		7C80CE3322FDF1E600C13959 /* quipImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipImage.m; sourceTree = "<group>"; };
 		7C922E1E19CA51DE00F92C21 /* typed_scalars.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = typed_scalars.c; sourceTree = "<group>"; };
 		7C9C32171C0699CE00E2094F /* lin_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lin_util.c; sourceTree = "<group>"; };
 		7C9F27A520C32B39002D9F63 /* equivalence.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = equivalence.c; sourceTree = "<group>"; };
@@ -2320,6 +2320,7 @@
 		7115AF9B16079BBA0004645A /* ios */ = {
 			isa = PBXGroup;
 			children = (
+				7C80CE3322FDF1E600C13959 /* quipImage.m */,
 				7CE5FDFC1A60750B0029C7AE /* avCap.m */,
 				715913B61734D8F4008F5524 /* quipNavController.m */,
 				715913B41734D48B008F5524 /* quipTableViewController.m */,
@@ -2342,7 +2343,6 @@
 				71828F201726171000F7CB35 /* quipCanvas.m */,
 				71828F211726171000F7CB35 /* quipConsole.m */,
 				71828F221726171000F7CB35 /* quipImages.m */,
-				71828F231726171000F7CB35 /* quipImageView.m */,
 			);
 			path = ios;
 			sourceTree = "<group>";
@@ -2858,6 +2858,7 @@
 				71828F291726171000F7CB35 /* ios_list.m in Sources */,
 				7CF4CFB81CA5F1CD004F07AE /* nexpr.y in Sources */,
 				71828F2A1726171000F7CB35 /* ios_node.m in Sources */,
+				7C80CE3422FDF1E600C13959 /* quipImage.m in Sources */,
 				7C0C6D1A1CEFD06900D7D2FB /* pipe_menu.c in Sources */,
 				71828F2B1726171000F7CB35 /* ios_sizable.m in Sources */,
 				7C7456671DB18EE900A0D538 /* container.c in Sources */,
@@ -2869,7 +2870,6 @@
 				71828F321726171000F7CB35 /* quipCanvas.m in Sources */,
 				71828F331726171000F7CB35 /* quipConsole.m in Sources */,
 				71828F341726171000F7CB35 /* quipImages.m in Sources */,
-				71828F351726171000F7CB35 /* quipImageView.m in Sources */,
 				71828F391726173C00F7CB35 /* client.c in Sources */,
 				71828F3A1726173C00F7CB35 /* dataport.c in Sources */,
 				71828F411726174F00F7CB35 /* packets.c in Sources */,
@@ -3144,7 +3144,6 @@
 				7C4331F21D4D43FC0033687C /* quipCanvas.m in Sources */,
 				7C4331F31D4D43FC0033687C /* quipConsole.m in Sources */,
 				7C4331F41D4D43FC0033687C /* quipImages.m in Sources */,
-				7C4331F51D4D43FC0033687C /* quipImageView.m in Sources */,
 				7C7456681DB18F3300A0D538 /* container.c in Sources */,
 				7C4331F61D4D43FC0033687C /* client.c in Sources */,
 				7C4331F71D4D43FC0033687C /* dataport.c in Sources */,
@@ -3223,6 +3222,7 @@
 				7C43323C1D4D43FC0033687C /* reference.c in Sources */,
 				7C43323D1D4D43FC0033687C /* soundmenu.c in Sources */,
 				7C43323E1D4D43FC0033687C /* resolve.c in Sources */,
+				7C80CE3522FDF44900C13959 /* quipImage.m in Sources */,
 				7C5D93701D651A140096D7BC /* f1dim.c in Sources */,
 				7C43323F1D4D43FC0033687C /* subrt_funcs.c in Sources */,
 				7C4332401D4D43FC0033687C /* subrt.c in Sources */,
@@ -3411,6 +3411,7 @@
 				7C43330F1D4D49450033687C /* ios_list.m in Sources */,
 				7C4333101D4D49450033687C /* nexpr.y in Sources */,
 				7C4333111D4D49450033687C /* ios_node.m in Sources */,
+				7C80CE3622FDF44A00C13959 /* quipImage.m in Sources */,
 				7C4333121D4D49450033687C /* pipe_menu.c in Sources */,
 				7C4333131D4D49450033687C /* ios_sizable.m in Sources */,
 				7C7456691DB18F3500A0D538 /* container.c in Sources */,
@@ -3422,7 +3423,6 @@
 				7C4333191D4D49450033687C /* quipCanvas.m in Sources */,
 				7C43331A1D4D49450033687C /* quipConsole.m in Sources */,
 				7C43331B1D4D49450033687C /* quipImages.m in Sources */,
-				7C43331C1D4D49450033687C /* quipImageView.m in Sources */,
 				7C43331D1D4D49450033687C /* client.c in Sources */,
 				7C43331E1D4D49450033687C /* dataport.c in Sources */,
 				7C43331F1D4D49450033687C /* packets.c in Sources */,
@@ -3677,6 +3677,7 @@
 				7C4D6DDB1D5111A400D34AC4 /* ios_list.m in Sources */,
 				7C4D6DDC1D5111A400D34AC4 /* nexpr.y in Sources */,
 				7C4D6DDD1D5111A400D34AC4 /* ios_node.m in Sources */,
+				7C80CE3722FDF44B00C13959 /* quipImage.m in Sources */,
 				7C4D6DDE1D5111A400D34AC4 /* pipe_menu.c in Sources */,
 				7C4D6DDF1D5111A400D34AC4 /* ios_sizable.m in Sources */,
 				7C74566A1DB18F3500A0D538 /* container.c in Sources */,
@@ -3688,7 +3689,6 @@
 				7C4D6DE51D5111A400D34AC4 /* quipCanvas.m in Sources */,
 				7C4D6DE61D5111A400D34AC4 /* quipConsole.m in Sources */,
 				7C4D6DE71D5111A400D34AC4 /* quipImages.m in Sources */,
-				7C4D6DE81D5111A400D34AC4 /* quipImageView.m in Sources */,
 				7C4D6DE91D5111A400D34AC4 /* client.c in Sources */,
 				7C4D6DEA1D5111A400D34AC4 /* dataport.c in Sources */,
 				7C4D6DEB1D5111A400D34AC4 /* packets.c in Sources */,
@@ -3963,7 +3963,6 @@
 				7CB671041F9484C5001FFADF /* quipCanvas.m in Sources */,
 				7CB671051F9484C5001FFADF /* quipConsole.m in Sources */,
 				7CB671061F9484C5001FFADF /* quipImages.m in Sources */,
-				7CB671071F9484C5001FFADF /* quipImageView.m in Sources */,
 				7CB671081F9484C5001FFADF /* container.c in Sources */,
 				7CB671091F9484C5001FFADF /* client.c in Sources */,
 				7CB6710A1F9484C5001FFADF /* dataport.c in Sources */,
@@ -4042,6 +4041,7 @@
 				7CB671561F9484C5001FFADF /* reference.c in Sources */,
 				7CB671571F9484C5001FFADF /* soundmenu.c in Sources */,
 				7CB671581F9484C5001FFADF /* resolve.c in Sources */,
+				7C80CE3822FDF44C00C13959 /* quipImage.m in Sources */,
 				7CB671591F9484C5001FFADF /* f1dim.c in Sources */,
 				7CB6715A1F9484C5001FFADF /* subrt_funcs.c in Sources */,
 				7CB6715B1F9484C5001FFADF /* subrt.c in Sources */,

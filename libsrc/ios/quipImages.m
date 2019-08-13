@@ -137,30 +137,6 @@ fprintf(stderr,"set_cycle_done_func:  func = '%s'\n",cycle_done_func);
 	}
 }
 
-#ifdef FOOBAR
--(void) frameFromQueue
-{
-	if( _vbl_count < _frame_duration ){
-		// Give this frame more time
-		_vbl_count ++;
-	} else {
-		// Time to cycle
-		_vbl_count = 1;		// We count the new frame
-		if( _queue_idx >= frameQueue.count ){
-			// all done, no more to do...
-			fprintf(stderr,"frameFromQueue: stopping animation.\n");
-			[self cycle_done];
-		} else {
-			quipImageView *v;
-fprintf(stderr,"frameFromQueue:  will show frame %d\n",_queue_idx);
-			v = [frameQueue objectAtIndex:_queue_idx];
-			[self bringSubviewToFront:v];
-			_queue_idx ++;
-		}
-	}
-}
-#endif // FOOBAR
-
 // This is called when _updateTimer is added to the run loop...
 
 // We need to support a variety of animation modes;
@@ -234,25 +210,6 @@ fprintf(stderr,"frameFromQueue:  will show frame %d\n",_queue_idx);
 #endif // BUILD_FOR_IOS
 }
 
-#ifdef FOOBAR
--(int) hasSubview:(quipImageView *) qiv_p
-{
-#ifdef BUILD_FOR_IOS
-	NSArray *a;
-
-	a=self.subviews;
-	if( a == NULL ) return -1;
-
-	int i;
-	for(i=0;i<a.count;i++){
-		if( qiv_p == [a objectAtIndex:i] )
-			return 1;	// true
-	}
-#endif // BUILD_FOR_IOS
-	return 0;	// false
-}
-#endif // FOOBAR
-
 -(int) subviewCount
 {
 #ifdef BUILD_FOR_IOS
@@ -265,63 +222,6 @@ fprintf(stderr,"frameFromQueue:  will show frame %d\n",_queue_idx);
 	return 0;	
 #endif // ! BUILD_FOR_IOS
 }
-
-#ifdef FOOBAR
--(int) indexForDataObject:(Data_Obj *)dp
-{
-#ifdef BUILD_FOR_IOS
-	NSArray *a;
-
-	a=self.subviews;
-	if( a == NULL ) return -1;
-
-	int i;
-	for(i=0;i<a.count;i++){
-		quipImageView *qiv_p;
-		qiv_p = [a objectAtIndex:i];
-		if( qiv_p.qiv_dp == dp ) return i;
-	}
-#endif // BUILD_FOR_IOS
-	return -1;
-}
-
--(int) hasImageFromDataObject:(Data_Obj *)dp
-{
-	int i;
-
-	i=[self indexForDataObject:dp];
-	if( i < 0 ) return NO;
-	return YES;
-}
-
--(void) removeImageFromDataObject:(Data_Obj *)dp
-{
-	int i;
-
-	i=[self indexForDataObject:dp];
-#ifdef CAUTIOUS
-	if( i < 0 ){
-		sprintf(DEFAULT_ERROR_STRING,
-	"CAUTIOUS:  removeImageFromDataObject:  object %s not found in image list!?",
-			OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
-		return;
-	}
-#endif /* CAUTIOUS */
-
-#ifdef BUILD_FOR_IOS
-	quipImageView *qiv_p;
-	qiv_p = [self.subviews objectAtIndex:i];
-	[qiv_p removeFromSuperview];
-
-	// now we want to deallocate the imageView...
-	// what is the reference count???
-	// are there any other references???
-
-#endif // BUILD_FOR_IOS
-}
-#endif // FOOBAR
-
 
 -(void) hide
 {
@@ -337,58 +237,6 @@ fprintf(stderr,"reveal:  bringing subview to front...\n");
 	[self.superview bringSubviewToFront:self];
 #endif
 }
-
-#ifdef FOOBAR
--(void) bring_to_front : (Data_Obj *) dp
-{
-#ifdef BUILD_FOR_IOS
-	NSArray *a;
-	int i;
-
-	a=self.subviews;
-	if( a == NULL ){
-		NWARN("bring_to_front:  no subviews!?");
-		return;
-	}
-
-	for ( i=0; i<a.count; i++ ){
-		quipImageView * qiv_p;
-
-		qiv_p = [a objectAtIndex:i];
-		if( dp == qiv_p.qiv_dp ){	// found a match!
-			[self bringSubviewToFront:qiv_p];
-			return;
-		}
-	}
-	NWARN("bring_to_front:  no subview found matching image");
-#endif // BUILD_FOR_IOS
-}
-
--(void) send_to_back : (Data_Obj *) dp
-{
-#ifdef BUILD_FOR_IOS
-	NSArray *a;
-	int i;
-
-	a=self.subviews;
-	if( a == NULL ){
-		NWARN("send_to_back:  no subviews!?");
-		return;
-	}
-
-	for ( i=0; i<a.count; i++ ){
-		quipImageView * qiv_p;
-
-		qiv_p = [a objectAtIndex:i];
-		if( dp == qiv_p.qiv_dp ){	// found a match!
-			[self sendSubviewToBack:qiv_p];
-			return;
-		}
-	}
-	NWARN("send_to_back:  no subview found matching image");
-#endif // BUILD_FOR_IOS
-}
-#endif // FOOBAR
 
 -(void) discard_subviews
 {
@@ -437,10 +285,7 @@ fprintf(stderr,"clearQueue: resetting index to 0\n");
 -(void) enableUpdates
 {
 	if( _flags & QI_TRAP_REFRESH ){
-		// We used to print a message here,
-		// but now we will use set_refresh to initiate
-		// one-shot animation
-		//NADVISE("quipImages enableUpdates:  WARNING refresh processing is already enabled!?");
+		NADVISE("quipImages enableUpdates:  WARNING refresh processing is already enabled!?");
 		return;
 	}
 #ifdef BUILD_FOR_IOS
@@ -466,9 +311,13 @@ fprintf(stderr,"clearQueue: resetting index to 0\n");
 
 // We don't do this by default to avoid bogging things down...
 // Disable with a requested duration <= 0
+//
+// Now that we use iOS's built-in animation facility, do we still need this?
+// What about for PVT?
 
 -(void) set_refresh:(int) duration
 {
+fprintf(stderr,"set_refresh(%d):  BEGIN\n",duration);
 	if( duration > 0 ){
 fprintf(stderr,"set_refresh(%d):  enabling updates\n",duration);
 		_frame_duration = duration;
@@ -482,7 +331,6 @@ fprintf(stderr,"set_refresh(%d):  enabling updates\n",duration);
 		[self enableUpdates];
 	} else {
 		if( (_flags & QI_TRAP_REFRESH) == 0 ){
-//NWARN("quipImages enable_refresh:  refresh processing is already disabled!?");
 #ifdef BUILD_FOR_IOS
 			sprintf(DEFAULT_ERROR_STRING,
 		"set_refresh:  refresh processing is already disabled for viewer %s!?",
@@ -530,6 +378,7 @@ fprintf(stderr,"set_refresh(%d):  enabling updates\n",duration);
 //fprintf(stderr,"initWithSize:  created updateTimer\n");
 #endif // BUILD_FOR_IOS
 
+	self.opaque = YES;
 	self.alpha = 1.0;
 	self.hidden=NO;
 

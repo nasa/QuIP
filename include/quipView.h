@@ -113,6 +113,7 @@ NSOpenGLPixelFormat *	qv_pxlfmt;
 #define QV_BG_IMG(qv)		(qv).bgImageView
 #define QV_CANVAS(qv)		(qv).canvas
 #define QV_IMAGES(qv)		(qv).images
+#define SET_QV_IMAGES(qv,v)	(qv).images = v
 #define SET_QV_QVC(qv,c)	(qv).qvc = c
 
 #define SET_QV_SIZE(qv,s)	(qv)._size = s

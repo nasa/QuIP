@@ -483,15 +483,7 @@ static COMMAND_FUNC( do_refresh_viewer )
 
 #ifdef BUILD_FOR_OBJC
 	INSIST_IMAGE_VIEWER(refresh)
-
-	if( VW_IMAGES(vp) == NULL ){
-		sprintf(ERROR_STRING,
-			"do_refresh_viewer:  viewer %s does not have an associated image viewer!?",
-			VW_NAME(vp));
-		warn(ERROR_STRING);
-		return;
-	}
-	[ VW_IMAGES(vp) set_refresh:frame_duration];
+	set_viewer_refresh(vp,frame_duration);
 #else // ! BUILD_FOR_OBJC
 	//warn("do_refresh_viewer:  refresh event handling not implemented for this platform");
 

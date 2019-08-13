@@ -228,6 +228,7 @@
 {
 	quipView *qv;
 
+fprintf(stderr,"quipViewController.loadView creating a quipView\n");
 	qv = [[quipView alloc] initWithSize:_size];
 	SET_QV_QVC(qv,self);	// BUG?  needs to be a weak reference?
 	// set the background image

@@ -34,17 +34,6 @@
 	baseTime=0.0;
 	baseTime_2=0;
 	self = [self initWithFrame:r];
-
-	// These lines were added in an attempt
-	// to get the background to resize on
-	// device rotation, but it didn't work!?
-	// HOWEVER - it does make image viewers stretch, which
-	// we do not want...
-	//[self setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-#ifdef BUILD_FOR_IOS
-	self.autoresizesSubviews = NO;
-#endif // BUILD_FOR_IOS
-	
 	return self;
 }
 
@@ -56,7 +45,17 @@
 	// Initialization code
 #ifdef BUILD_FOR_IOS
 	[self setMultipleTouchEnabled:YES];
+
+	// These lines were added in an attempt
+	// to get the background to resize on
+	// device rotation, but it didn't work!?
+	// HOWEVER - it does make image viewers stretch, which
+	// we do not want...
+	//[self setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
 	self.autoresizesSubviews = NO;
+
+	self.images = NULL;	// init with something?
+	
 #endif // BUILD_FOR_IOS
 	SET_QV_SIZE(self,frame.size);
 	// Should we disable scrolling by default?

@@ -1258,27 +1258,34 @@ int n_pushed_panels(void)
 	return (int) a.count;
 }
 
-// If we call push_nav after pop_nav, the pop_nav may not have taken effect yet!?
-
-void push_nav(QSP_ARG_DECL  Gen_Win *gwp)
+static int controller_already_pushed(Gen_Win *gwp)
 {
-	// Make sure that this has not been pushed already by scanning the stack
-
 	NSArray *a = [ root_view_controller viewControllers];
-//fprintf(stderr,"push_nav:  root view controller has %lu view controllers\n",(unsigned long)a.count);
+//fprintf(stderr,"conroller_already_pushed:  root view controller has %lu view controllers\n",(unsigned long)a.count);
 	int i;
-//fprintf(stderr,"push_nav %s BEGIN\n",GW_NAME(gwp));
 	for(i=0;i<a.count;i++){
 		UIViewController *vc;
 		vc = [a objectAtIndex:i];
 		if( vc == GW_VC(gwp) ){
-			sprintf(DEFAULT_ERROR_STRING,
-	"push_nav %s:  panel already pushed!?",GW_NAME(gwp));
-			advise(DEFAULT_ERROR_STRING);
-			return;
+			return 1;
 		}
 	}
+	return 0;
+}
 
+// If we call push_nav after pop_nav, the pop_nav may not have taken effect yet!?
+
+void push_nav(QSP_ARG_DECL  Gen_Win *gwp)
+{
+//fprintf(stderr,"push_nav %s BEGIN\n",GW_NAME(gwp));
+
+	// Make sure that this has not been pushed already by scanning the stack
+	if( controller_already_pushed(gwp) ){
+		sprintf(DEFAULT_ERROR_STRING,
+			"push_nav %s:  panel already pushed!?",GW_NAME(gwp));
+		advise(DEFAULT_ERROR_STRING);
+		return;
+	}
 	// The current view controller should be a table controller...
 
 	// Is this next comment still valid?  I don't think so...
@@ -1357,6 +1364,9 @@ fprintf(stderr,"Genwin %s has an unknown view controller type!?\n",GW_NAME(gwp))
 
 	// changed animated to NO for snappier performance with experiments.
 	// Maybe should make this a user-settable property???
+
+	// This pushed the controller!
+fprintf(stderr,"push_nav:  will push %s\n",GW_NAME(gwp));
 	[ root_view_controller
 		pushViewController:GW_VC(gwp) animated:/*YES*/NO];
 

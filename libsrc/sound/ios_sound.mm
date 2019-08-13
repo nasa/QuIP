@@ -520,7 +520,7 @@ static void my_output_callback(	void *inUserData,
 
 	n_avail = inBuffer->mAudioDataBytesCapacity / sizeof(audio_sample_type);	// BUG get sample size from buffer?
 
-fprintf(stderr,"my_output_callback:  n_to_play = %d\n",n_to_play);
+//fprintf(stderr,"my_output_callback:  n_to_play = %d\n",n_to_play);
 
 	// Save the data here before releasing buffer!
 	if( n_to_play > 0 ){
@@ -538,7 +538,7 @@ fprintf(stderr,"my_output_callback:  n_to_play = %d\n",n_to_play);
 
 	if( n_to_play == 0 ){
 		// Don't stop the playback queue until all of the queued buffers have played...
-fprintf(stderr,"my_output_callback:  stopping\n");
+//fprintf(stderr,"my_output_callback:  stopping\n");
 		if( ! play_stop_requested )
 			stop_audio_output(SINGLE_QSP_ARG);
 	} else {
@@ -776,6 +776,7 @@ advise("calling AudioQueueStart for output queue...");
 	status = AudioQueueStart(audio_output_queue,NULL);
 	if( status != 0 )
 		report_audio_error(QSP_ARG  status);
+advise("start_audio_output will return.");
 }
 
 void audio_init(QSP_ARG_DECL  int mode)

@@ -1050,7 +1050,7 @@ int _pngfio_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 #include <UIKit/UIKit.h>
 
 //extern QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp);
-#include "quipImageView.h"	// objc_img_for_dp
+#include "quipImage.h"	// objc_img_for_dp
 
 // BUG  A hack:  we'd like to keep a pointer to the UIImage in the img_file struct,
 // but currently that's not an Objective C IOS_Item, and I don't want to take
