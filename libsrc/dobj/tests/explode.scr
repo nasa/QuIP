@@ -1,0 +1,18 @@
+Vector strtbl 5 32 string
+Explode 'this is a test' ' ' strtbl
+Print n_string_components
+Display strtbl
+
+Explode 'this is a test' '_' strtbl
+Print n_string_components
+Display strtbl
+
+Explode 'this is a test' 't' strtbl
+Print n_string_components
+Display strtbl
+
+Explode 'this is a test' 's' strtbl
+Print n_string_components
+Display strtbl
+exit
+

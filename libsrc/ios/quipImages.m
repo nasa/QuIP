@@ -210,7 +210,7 @@ fprintf(stderr,"set_cycle_done_func:  func = '%s'\n",cycle_done_func);
 #endif // BUILD_FOR_IOS
 }
 
--(int) subviewCount
+-(NSInteger) subviewCount
 {
 #ifdef BUILD_FOR_IOS
 	NSArray *a;
@@ -258,14 +258,10 @@ fprintf(stderr,"reveal:  bringing subview to front...\n");
 
 -(void) clearQueue
 {
-fprintf(stderr,"clearQueue BEGIN\n");
 	if( self.frameQueue != NULL ){
-fprintf(stderr,"clearQueue will empty queue\n");
 		[self.frameQueue removeAllObjects];
 	} else {
-fprintf(stderr,"clearQueue: no queue to empty!?\n");
 	}
-fprintf(stderr,"clearQueue: resetting index to 0\n");
 	_queue_idx = 0;
 }
 

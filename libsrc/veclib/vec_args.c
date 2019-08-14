@@ -215,12 +215,13 @@ static Data_Area * _set_arg_data_area(QSP_ARG_DECL  Vec_Obj_Args *oap)
 		if( i == MAX_N_ARGS ){
 			/* This was originally written as a CAUTIOUS //
 			 * check, but we land here for example
-			 * if we call ramp2d and specify a non-existant
+			 * if we call ramp2d or vset with a non-existant
 			 * destination image.  The oops flag is set,
 			 * but we still want to eat up args to avoid
 			 * a parsing error.
 			 */
 			ap = default_data_area();
+			assert(ap!=NULL);
 			push_data_area(ap);
 		}
 	}

@@ -3322,7 +3322,7 @@ static void _close_foreach_or_repeat_loop(QSP_ARG_DECL  Query *loop_qp)
 		close_foreach_loop(loop_qp);
 	} else if( QRY_COUNT(qp) < 0 ){		// should never happen???
 		// should never happen?
-		warn("Unexpected negative loop count!?");
+		warn("close_foreach_or_repeat_loop:  unexpected negative loop count!?");
 	} else {		// regular repeat loop
 		close_repeat_loop(loop_qp);
 	}

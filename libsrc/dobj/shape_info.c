@@ -94,14 +94,11 @@ DECLARE_INT_FORMAT_FUNC(u_long)
 													\
 static void _format_##type_str##_value(QSP_ARG_DECL  char *buf, Scalar_Value *svp, int pad_flag)	\
 {													\
-fprintf(stderr,"format_flt_func type = %s, member = %s, buf = 0x%lx\n",#type_str,#member,(long)buf);\
 	if( pad_flag ){											\
-fprintf(stderr,"format_flt_func padded_flt_fmt_str = %s\n",padded_flt_fmt_str);\
 		sprintf(buf,padded_flt_fmt_str,svp->member);						\
 	} else {											\
 		sprintf(buf,"%g",svp->member);								\
 	}												\
-fprintf(stderr,"format_flt_func strlen(buf) = %d\n",strlen(buf));\
 }
 
 DECLARE_FLT_FORMAT_FUNC(float,u_f)

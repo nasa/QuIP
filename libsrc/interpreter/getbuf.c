@@ -518,6 +518,7 @@ void * getbuf(size_t size)
 	// every time they are run - how can that happen?  Possibly
 	// using data on the stack?
 
+
 	p=calloc(size,1);
 
 	if( p == NULL ){

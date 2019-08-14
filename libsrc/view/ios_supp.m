@@ -767,31 +767,10 @@ int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
 #endif // ! BUILD_FOR_IOS
 }
 
-/* we want little-endian for images we synthesize on the iPad...
- * but when we write and then read a png file, the bytes are swapped!?
- * What a mess...
- */
-
-static QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
+CGImageRef cg_image_for_obj(Data_Obj *dp, int little_endian_flag)
 {
-	QUIP_IMAGE_TYPE *theImage;
-	CGImageRef myimg;
 	CGColorSpaceRef colorSpace;
-
-	if( OBJ_PREC(dp) != PREC_UBY ){
-		sprintf(DEFAULT_ERROR_STRING,
-			"cgimg_for_dp:  object %s (%s) must be u_byte",
-			OBJ_NAME(dp),OBJ_PREC_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
-		return NULL;
-	}
-	if( OBJ_COMPS(dp) != 4 ){
-		sprintf(DEFAULT_ERROR_STRING,
-			"cgimg_for_dp:  object %s (%d) must have 4 components",
-			OBJ_NAME(dp),OBJ_COMPS(dp));
-		NWARN(DEFAULT_ERROR_STRING);
-		return NULL;
-	}
+	CGImageRef the_img;
 
 	colorSpace = CGColorSpaceCreateDeviceRGB();
 //fprintf(stderr,"objc_img_for_dp:  little_endian_flag = %d\n",little_endian_flag);
@@ -819,11 +798,59 @@ static QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
 		return NULL;
 	}
 
-	myimg = CGBitmapContextCreateImage(cref);
+	the_img = CGBitmapContextCreateImage(cref);
 	CGContextRelease(cref);
 
+	return the_img;
+}
+
+/* we want little-endian for images we synthesize on the iPad...
+ * but when we write and then read a png file, the bytes are swapped!?
+ * What a mess...
+ */
+
+static QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
+{
+	QUIP_IMAGE_TYPE *theImage;
+	CGImageRef myimg;
+
+	if( OBJ_PREC(dp) != PREC_UBY ){
+		sprintf(DEFAULT_ERROR_STRING,
+			"objc_img_for_dp:  object %s (%s) must be u_byte",
+			OBJ_NAME(dp),OBJ_PREC_NAME(dp));
+		NWARN(DEFAULT_ERROR_STRING);
+		return NULL;
+	}
+	if( OBJ_COMPS(dp) != 4 ){
+		sprintf(DEFAULT_ERROR_STRING,
+			"objc_img_for_dp:  object %s (%d) must have 4 components",
+			OBJ_NAME(dp),OBJ_COMPS(dp));
+		NWARN(DEFAULT_ERROR_STRING);
+		return NULL;
+	}
+
+fprintf(stderr,"objc_img_for_dp will create a new image for %s\n",OBJ_NAME(dp));
+	myimg = cg_image_for_obj(dp,little_endian_flag);
+
 #ifdef BUILD_FOR_IOS
+
+	// Instead of making a CGImage, why not init with the data???
 	theImage = [QUIP_IMAGE_TYPE imageWithCGImage:myimg];
+
+#ifdef DIDNT_WORK
+	NSData *dataForImage;
+	dataForImage = [NSData dataWithBytesNoCopy:OBJ_DATA_PTR(dp)
+		length: (NSUInteger)(OBJ_N_MACH_ELTS(dp) * ELEMENT_SIZE(dp)) ];
+	assert(dataForImage != NULL);
+	//theImage = [QUIP_IMAGE_TYPE imageWithData: dataForImage ];
+	theImage = [[QUIP_IMAGE_TYPE alloc] initWithData: dataForImage ];
+	if( theImage == NULL ){
+		fprintf(stderr,"objc_img_for_dp:  error creating imageWithData!?\n");
+	}
+
+	// Where do we set the dimensions???
+#endif // DIDNT_WORK
+
 #endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
@@ -835,12 +862,14 @@ static QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
 	// image is retained by the property setting above,
 	// so we can release the original
 	// jbm:  DO WE NEED THAT WITH ARC???
-	
+
+#ifdef NOT_USING
 	// static analyzer complains, so we remove for now...
 	// but that broke things!
 	// It appears that CG stuff needs releases, even with ARC...
 	CGImageRelease(myimg);
-
+#endif // NOT_USING
+    
 	return theImage;
 
 }	// objc_img_for_dp
@@ -951,18 +980,30 @@ static UIImage * insure_object_has_uiimage(Data_Obj *dp)
 
 		// Save a reference to the image view in the data obj
 		SET_OBJ_UI_IMG(dp,uii_p);
+
+		// Save a reference in an Apple struct so it doesn't get garbage collected?
+		// BUG need to remove from the list if the object is released!
+		if( uii_list == NULL ){
+			uii_list = [[NSMutableArray alloc] init];
+		}
+fprintf(stderr,"insure_object_has_uiimage will insert uii_p to list\n");
+		[ uii_list addObject:uii_p];	// adds at end of array
+
 	} else {
 		uii_p = OBJ_UI_IMG(dp);
 	}
-
-	// Save a reference in an Apple struct so it doesn't get garbage collected?
-	if( uii_list == NULL ){
-		uii_list = [[NSMutableArray alloc] init];
-	}
-	[ uii_list addObject:uii_p];	// adds at end of array
+	assert(uii_p!=NULL);
 
 	return uii_p;
 }
+
+// will allow this object to be swept up by the garbage collector
+
+static void forget_uiimage(UIImage *uii_p)
+{
+	[ uii_list removeObject:uii_p ];
+}
+
 
 /*
  * OLD COMMENT:
@@ -1011,8 +1052,29 @@ void _queue_frame( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 
 	insure_viewer_images(vp);
 	assert(VW_IMAGES(vp)!=NULL);
-
 	[VW_IMAGES(vp) queueFrame:uii_p];
+}
+
+void _forget_frame( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
+{
+	UIImage *uii_p;
+
+	uii_p = OBJ_UI_IMG(dp);
+	if( uii_p == NULL ){
+		sprintf(ERROR_STRING,"forget_frame %s:  object %s does not have an associated UIImage!?",
+			VW_NAME(vp),OBJ_NAME(dp));
+		warn(ERROR_STRING);
+		return;
+	}
+	if( VW_IMAGES(vp) == NULL ){
+		sprintf(ERROR_STRING,"forget_frame:  viewer %s does not have an associated UIImageView!?",
+			VW_NAME(vp));
+		warn(ERROR_STRING);
+		return;
+	}
+fprintf(stderr,"forget_frame will forget %s\n",OBJ_NAME(dp));
+	forget_uiimage(uii_p);
+	INIT_OBJ_UI_IMG(dp,NULL);
 }
 
 void _clear_queue( QSP_ARG_DECL  Viewer *vp )
@@ -1462,7 +1524,15 @@ void bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp,int x,int y)
 #endif // BUILD_FOR_IOS
 
 
-void set_viewer_refresh(Viewer *vp, int frame_duration)
+void stop_viewer_animation(Viewer *vp)
+{
+	assert( VW_IMAGES(vp) != NULL );
+	if( ! VW_IMAGES(vp).animating ) return;
+
+	[VW_IMAGES(vp) stopAnimating];
+}
+
+void set_viewer_animation(Viewer *vp, int frame_duration, int repeat_count)
 {
 	insure_viewer_images(vp);
 	NSMutableArray *frame_queue;
@@ -1471,19 +1541,25 @@ void set_viewer_refresh(Viewer *vp, int frame_duration)
 
 	assert( VW_IMAGES(vp) != NULL );
 
+	if( VW_IMAGES(vp).animating ){
+		[VW_IMAGES(vp) stopAnimating];
+	}
+
 	frame_queue = VW_IMAGES(vp).frameQueue;
 	if( frame_queue == NULL ){
-		fprintf(stderr,"set_viewer_refresh:  viewer %s has no frame queue!?\n",
+		fprintf(stderr,"set_viewer_animation:  viewer %s has no frame queue!?\n",
 			VW_NAME(vp));
 		return;
 	}
 	nf = frame_queue.count;
 	dur = nf * (1.0/60.0) * frame_duration;	// frame_duration measured in refreshes
+fprintf(stderr,"set_viewer_animation:  frame_duration = %d, dur = %g\n",frame_duration,dur);
 
 	[VW_IMAGES(vp) setAnimationImages:frame_queue];
-	[VW_IMAGES(vp) setAnimationRepeatCount:1];	// 0 for looping
-	[VW_IMAGES(vp) setAnimationDuration:dur];	// 0 for looping
+	[VW_IMAGES(vp) setAnimationRepeatCount:repeat_count];	// 0 for looping
+	[VW_IMAGES(vp) setAnimationDuration:dur];
 	// default is 30 fps???
+
 	[VW_IMAGES(vp) startAnimating];
 }
 

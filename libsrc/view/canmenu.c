@@ -325,5 +325,18 @@ COMMAND_FUNC( do_clear_queue )
 	clear_queue(vp);
 }
 
+COMMAND_FUNC( do_forget_frame )
+{
+	Viewer *vp;
+	Data_Obj *dp;
+
+	vp = pick_vwr("");
+	dp = pick_obj("image");
+
+	if( vp == NULL || dp == NULL ) return;
+
+	forget_frame(vp,dp);
+}
+
 
 

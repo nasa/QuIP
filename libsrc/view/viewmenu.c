@@ -472,20 +472,21 @@ static COMMAND_FUNC( do_cycle_done_func )
 // duration is given in refreshes...
 // see ../ios/quipImages.m, ../ios/quipImageView.m
 
-static COMMAND_FUNC( do_refresh_viewer )
+static COMMAND_FUNC( do_animate_viewer )
 {
 	Viewer *vp;
-	int frame_duration;
+	int frame_duration, n_repeats;
 
-	GET_VIEWER("do_refresh_viewer");
+	GET_VIEWER("do_animate_viewer");
 	frame_duration = (int)how_many("Number of refreshes per frame (<=0 to disable)");
+	n_repeats = (int)how_many("Number of repetitions (0 for free-run)");
 	if( vp == NULL ) return;
 
 #ifdef BUILD_FOR_OBJC
 	INSIST_IMAGE_VIEWER(refresh)
-	set_viewer_refresh(vp,frame_duration);
+	set_viewer_animation(vp,frame_duration,n_repeats);
 #else // ! BUILD_FOR_OBJC
-	//warn("do_refresh_viewer:  refresh event handling not implemented for this platform");
+	//warn("do_animate_viewer:  refresh event handling not implemented for this platform");
 
 	// The goal of this is to cycle the loaded images every refresh...
 	// For unix we ought to give a duration?
@@ -493,6 +494,17 @@ static COMMAND_FUNC( do_refresh_viewer )
 
 	cycle_viewer_images(vp, frame_duration);
 #endif // ! BUILD_FOR_OBJC
+}
+
+static COMMAND_FUNC( do_stop_animation )
+{
+	Viewer *vp;
+
+	GET_VIEWER("do_stop_animation");
+	if( vp == NULL ) return;
+#ifdef BUILD_FOR_OBJC
+	stop_viewer_animation(vp);
+#endif // BUILD_FOR_OBJC
 }
 
 static COMMAND_FUNC( do_lock_orientation )
@@ -541,10 +553,12 @@ ADD_CMD( select,	do_select_vp,	select viewer for implicit operations )
 ADD_CMD( genwin,	do_genwin_menu,	general window operations submenu )
 ADD_CMD( show,		do_show_viewer,	display viewing window )
 ADD_CMD( unshow,	do_unshow_viewer,	hide viewing window )
-ADD_CMD( refresh,	do_refresh_viewer,	enable/disable refresh trapping)
+ADD_CMD( animate,	do_animate_viewer,	start viewer animation with parameters)
+ADD_CMD( stop_animation,	do_stop_animation,	stop viewer animation)
 ADD_CMD( cycle,		do_cycle_viewer,	cycle images associated with a viewer)
 ADD_CMD( queue_frame,	do_queue_frame,		queue an animation frame for display in a viewer )
 ADD_CMD( clear_queue,	do_clear_queue,		empty the animation queue )
+ADD_CMD( forget_frame,	do_forget_frame,	forget OS-specific image copy )
 ADD_CMD( cycle_func,	do_cycle_func,		specify script to run at next image cycling)
 ADD_CMD( cycle_done_func,	do_cycle_done_func,	specify script to run at end of animation cycle)
 ADD_CMD( bring_to_front,	do_bring_fwd,	bring an image to the front of a viewer)

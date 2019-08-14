@@ -65,7 +65,7 @@
 -(void) send_to_back:(struct data_obj *)dp;
 -(int) hasImageFromDataObject:(struct data_obj *)dp;
 -(void) removeImageFromDataObject:(struct data_obj *)dp;
--(int) subviewCount;
+-(NSInteger) subviewCount;
 @end
 
 // flag bits
