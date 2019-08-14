@@ -247,6 +247,7 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 
 - (BOOL) shouldAutorotate
 {
+fprintf(stderr,"quipTableViewController.shouldAutorotate:  will return YES\n");
 	return YES;
 }
 
@@ -254,11 +255,13 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations
 {
 	//return UIInterfaceOrientationMaskPortrait;
+fprintf(stderr,"quipTableViewController.supportedInterfaceOrientations:  will return ALL\n");
 	return UIInterfaceOrientationMaskAll;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
+fprintf(stderr,"quipTableViewController.shouldAutorotateToInterfaceOrientation:  will return YES\n");
 	return YES;
 }
 
