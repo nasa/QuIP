@@ -335,7 +335,11 @@ COMMAND_FUNC( do_forget_frame )
 
 	if( vp == NULL || dp == NULL ) return;
 
+#ifdef BUILD_FOR_OBJC
 	forget_frame(vp,dp);
+#else // ! BUILD_FOR_OBJC
+	warn("forget_frame:  not implemented.");
+#endif // ! BUILD_FOR_OBJC
 }
 
 
