@@ -357,6 +357,10 @@ extern void _print_class_info(QSP_ARG_DECL  Trial_Class *tc_p);
 extern void _print_stair_info(QSP_ARG_DECL  Staircase *stc_p);
 #define print_stair_info(stc_p) _print_stair_info(QSP_ARG  stc_p)
 
+#define reset_all_classes() _reset_all_classes(SINGLE_QSP_ARG)
+extern void _reset_all_classes(SINGLE_QSP_ARG_DECL);
+
+extern void set_response_cmd( Trial_Class *tc_p, const char *s );
 extern Summary_Data_Tbl *_new_summary_data_tbl(SINGLE_QSP_ARG_DECL);
 extern void rls_summ_dtbl(Summary_Data_Tbl *sdt_p);
 extern  Sequential_Data_Tbl *_new_sequential_data_tbl(SINGLE_QSP_ARG_DECL);
@@ -414,8 +418,6 @@ extern Trial_Class *new_class(SINGLE_QSP_ARG_DECL);
 extern void _del_class(QSP_ARG_DECL  Trial_Class *tc_p);
 #define del_class(tc_p) _del_class(QSP_ARG  tc_p)
 
-extern void _clear_all_data_tables(SINGLE_QSP_ARG_DECL);
-#define clear_all_data_tables() _clear_all_data_tables(SINGLE_QSP_ARG)
 
 extern void update_summary(Summary_Data_Tbl *sdt_p,Staircase *st_p,int rsp);
 extern void append_trial( Sequential_Data_Tbl *qdt_p, Staircase *st_p , int rsp );

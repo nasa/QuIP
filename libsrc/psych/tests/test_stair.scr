@@ -18,6 +18,8 @@ experiments
     quit
   classes
     new class1 C1Stim
+#    set_response_cmd class1 C1Respond		# only needed when C code sequences trials...
+    info class1
     quit
   use_keyboard no	# should read response from input stream?
   2AFC yes
@@ -30,6 +32,9 @@ experiments
       change n_2up 1
       display
       quit
+    quit
+  classes
+    info class1
     quit
   staircases
     list
@@ -44,13 +49,15 @@ Pause
 Set staircase_name staircase.class1.0
 
 Define Run_Block 1 n_trials
-experiments staircases reset staircase.class1.0 quit quit
+#experiments staircases reset staircase.class1.0 quit quit
+experiments classes reset class1 quit quit
 Set n_trials_remaining $1
 Print n_trials_remaining
 Next_Trial
 do
   Get_Response
   while $n_trials_remaining>0
+experiments classes info class1 quit quit
 experiments staircases info staircase.class1.0 quit quit
 .
 

@@ -284,6 +284,7 @@ static COMMAND_FUNC( do_discard_images )
 #endif
 }
 
+#ifdef NOT_USED
 static COMMAND_FUNC( do_cycle_viewer )
 {
 	Viewer *vp;
@@ -357,6 +358,7 @@ static COMMAND_FUNC( do_send_back )
 #endif
 
 }
+#endif // NOT_USED
 
 static COMMAND_FUNC( do_hide_imgs )
 {
@@ -408,6 +410,7 @@ static COMMAND_FUNC( do_reveal_imgs )
 
 }
 
+#ifdef NOT_USED
 static COMMAND_FUNC( do_cycle_func )
 {
 	const char *s;
@@ -465,6 +468,7 @@ static COMMAND_FUNC( do_cycle_done_func )
 #endif
 
 }
+#endif // NOT_USED
 
 // another command developed to support animation on iOS...
 //
@@ -569,14 +573,14 @@ ADD_CMD( unshow,	do_unshow_viewer,	hide viewing window )
 ADD_CMD( animate,	do_animate_viewer,	start viewer animation with parameters)
 ADD_CMD( after_animation,	do_after_animation,	specify script to execute after animation ends)
 ADD_CMD( stop_animation,	do_stop_animation,	stop viewer animation)
-ADD_CMD( cycle,		do_cycle_viewer,	cycle images associated with a viewer)
 ADD_CMD( queue_frame,	do_queue_frame,		queue an animation frame for display in a viewer )
 ADD_CMD( clear_queue,	do_clear_queue,		empty the animation queue )
 ADD_CMD( forget_frame,	do_forget_frame,	forget OS-specific image copy )
-ADD_CMD( cycle_func,	do_cycle_func,		specify script to run at next image cycling)
-ADD_CMD( cycle_done_func,	do_cycle_done_func,	specify script to run at end of animation cycle)
-ADD_CMD( bring_to_front,	do_bring_fwd,	bring an image to the front of a viewer)
-ADD_CMD( send_to_back,	do_send_back,	send an image to the back of a viewer)
+//ADD_CMD( cycle,		do_cycle_viewer,	cycle images associated with a viewer)
+//ADD_CMD( cycle_func,	do_cycle_func,		specify script to run at next image cycling)
+//ADD_CMD( cycle_done_func,	do_cycle_done_func,	specify script to run at end of animation cycle)
+//ADD_CMD( bring_to_front,	do_bring_fwd,	bring an image to the front of a viewer)
+//ADD_CMD( send_to_back,	do_send_back,	send an image to the back of a viewer)
 ADD_CMD( hide_images,	do_hide_imgs,	hide all images in a viewer)
 ADD_CMD( reveal_images,	do_reveal_imgs,	reveal images in a viewer)
 ADD_CMD( discard_images,	do_discard_images,	release stored images)

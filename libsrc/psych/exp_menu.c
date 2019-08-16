@@ -193,7 +193,7 @@ static COMMAND_FUNC( set_dribble_flag )
 
 static COMMAND_FUNC( do_exp_init )
 {
-	setup_files(&expt1);
+	setup_files(&expt1);	// prompts user for data filenames?
 	run_init();
 	set_recording( 1 );
 }

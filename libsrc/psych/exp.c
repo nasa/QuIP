@@ -42,6 +42,13 @@ static void null_mod(QSP_ARG_DECL Trial_Class * tc_p){}
 
 // In the old days we only saved to files...
 // Now we want to be able to import other data for fitting???
+//
+// BUG - this will prompt for a summary filename until a good name is entered!?
+// It is not clear why we need to store summary data, as it can be reconstituted
+// from sequential data...
+//
+// BUG init_dribble_file will prompt for a filename too, so this function doesn't
+// take a fixed number of arguments!?
 
 void _setup_files(QSP_ARG_DECL  Experiment *exp_p)
 {

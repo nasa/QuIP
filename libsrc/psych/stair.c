@@ -51,7 +51,6 @@ static Data_Obj * _create_summ_data_obj( QSP_ARG_DECL  const char *name, int siz
 {
 	Data_Obj *dp;
 
-fprintf(stderr,"creating data table %s with size %d\n",name,size);
 	dp = mk_vec(name,size,N_SUMMARY_DATA_COMPS,prec_for_code(PREC_IN));	// short integer
 	return dp;
 }
@@ -184,6 +183,7 @@ void rls_summ_dtbl(Summary_Data_Tbl *sdt_p)
 {
 	if( SUMM_DTBL_DATA_OBJ(sdt_p) != NULL )
 		remove_reference( SUMM_DTBL_DATA_OBJ(sdt_p) );
+
 	SET_SUMM_DTBL_DATA_PTR(sdt_p,NULL);
 
 	if( SUMM_DTBL_XVAL_OBJ(sdt_p) != NULL )
@@ -191,6 +191,16 @@ void rls_summ_dtbl(Summary_Data_Tbl *sdt_p)
 
 	givbuf(sdt_p);
 }
+
+#define rls_seq_dtbl(qdt_p ) _rls_seq_dtbl(QSP_ARG  qdt_p )
+
+static void _rls_seq_dtbl(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p )
+{
+	clear_sequential_data( qdt_p );
+	rls_list(SEQ_DTBL_LIST(qdt_p));
+	givbuf(qdt_p);
+}
+
 
 void _clear_sequential_data(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p)
 {
@@ -342,20 +352,16 @@ static void tally(Staircase *st_p,int rsp)			/* record new data */
 	assert(STAIR_CLASS(st_p)!=NULL);
 
 	assert(CLASS_SUMM_DTBL(STAIR_CLASS(st_p))!=NULL);
-fprintf(stderr,"tally will update class summary...\n");
 	update_summary(CLASS_SUMM_DTBL(STAIR_CLASS(st_p)),st_p,rsp);
 
 	if( STAIR_SUMM_DTBL(st_p) != NULL ){
-fprintf(stderr,"tally will update stair summary...\n");
 		update_summary(STAIR_SUMM_DTBL(st_p),st_p,rsp);
 	}
 
 	assert(CLASS_SEQ_DTBL(STAIR_CLASS(st_p))!=NULL);
-fprintf(stderr,"tally will update class sequential data...\n");
 	append_trial(CLASS_SEQ_DTBL(STAIR_CLASS(st_p)),st_p,rsp);
 
 	if( STAIR_SEQ_DTBL(st_p) != NULL ){
-fprintf(stderr,"tally will update stair sequential data...\n");
 		append_trial(STAIR_SEQ_DTBL(st_p),st_p,rsp);
 	}
 }
@@ -400,7 +406,6 @@ void _save_response(QSP_ARG_DECL  int rsp,Staircase *st_p)
 
 	if( rsp != REDO ){
 		Transition_Code _trans;
-fprintf(stderr,"save_response:  recording = %d\n",recording);
 		if( recording ) tally(st_p,rsp);
 		_trans= iftrans(st_p,rsp);
 		if( STAIR_INC(st_p) != STAIR_MIN_INC(st_p) ) adj_inc(st_p,_trans);
@@ -518,7 +523,6 @@ int _make_staircase( QSP_ARG_DECL  int st,	/* staircase type */
 {
 	char str[128];
 	Staircase *st_p;
-	Data_Obj *xv_dp;
 	Summary_Data_Tbl *sdt_p;
 
 	assert( tc_p != NULL );
@@ -540,9 +544,6 @@ int _make_staircase( QSP_ARG_DECL  int st,	/* staircase type */
 	// Must be called AFTER accessing CLASS_N_STAIRS!
 	add_stair_to_class(st_p,tc_p);
 
-	xv_dp = CLASS_XVAL_OBJ(tc_p);
-	assert(xv_dp!=NULL);
-
 	sdt_p = new_summary_data_tbl();
 	init_summ_dtbl_for_stair(sdt_p,st_p);
 	SET_SUMM_DTBL_CLASS( STAIR_SUMM_DTBL(st_p), tc_p );
@@ -550,10 +551,23 @@ int _make_staircase( QSP_ARG_DECL  int st,	/* staircase type */
 	SET_STAIR_SEQ_DTBL(st_p,new_sequential_data_tbl());
 	SET_SEQ_DTBL_CLASS( STAIR_SEQ_DTBL(st_p), tc_p );
 
+	// STAIR_XVAL_OBJ is just an alias for the class xval object
+
 	reset_stair(st_p);
 
 	return(nstairs++);
 } /* end makestair */
+
+#define delete_staircase( stc_p ) _delete_staircase( QSP_ARG  stc_p )
+
+static void _delete_staircase( QSP_ARG_DECL  Staircase *stc_p )
+{
+	rls_summ_dtbl( STAIR_SUMM_DTBL(stc_p) );
+	rls_seq_dtbl( STAIR_SEQ_DTBL(stc_p) );
+
+	del_stair(stc_p);
+}
+
 
 COMMAND_FUNC( do_save_data )
 {
@@ -633,6 +647,26 @@ static void _mk_stair_array(SINGLE_QSP_ARG_DECL)
 	}
 }
 
+#define clear_one_class(tc_p, arg ) _clear_one_class(QSP_ARG  tc_p, arg )
+
+static void _clear_one_class(QSP_ARG_DECL  Trial_Class *tc_p, void *arg )
+{
+	Summary_Data_Tbl *sdt_p;
+
+
+	sdt_p = CLASS_SUMM_DTBL(tc_p);
+	assert(sdt_p!=NULL);
+	clear_summary_data(sdt_p);
+}
+
+#define reset_all_classes() _reset_all_classes(SINGLE_QSP_ARG)
+
+void _reset_all_classes(SINGLE_QSP_ARG_DECL)	/* just clears data tables */
+{
+	iterate_over_classes(_clear_one_class,NULL);
+}
+
+
 void _run_init(SINGLE_QSP_ARG_DECL)	/* general runtime initialization */
 {
 	rninit();		// seed random number generator
@@ -641,7 +675,7 @@ void _run_init(SINGLE_QSP_ARG_DECL)	/* general runtime initialization */
 	sig_set(SIGINT,icatch);
 #endif /* CATCH_SIGS */
 
-	clear_all_data_tables();
+	reset_all_classes();
 	recording=0;
 	Abort=0;
 
@@ -833,13 +867,28 @@ Staircase *_find_stair_from_index(QSP_ARG_DECL  int index)
 
 void _del_class(QSP_ARG_DECL  Trial_Class *tc_p)
 {
+	Node *np;
+
 	rls_summ_dtbl( CLASS_SUMM_DTBL(tc_p) );
+	rls_seq_dtbl( CLASS_SEQ_DTBL(tc_p) );
+	// we would normally set these ptrs to NULL, but as we are
+	// deleting the object anyway, we don't need to...
 
 	/* what is this data field? */
 	if( CLASS_STIM_CMD(tc_p) != NULL ) rls_str(CLASS_STIM_CMD(tc_p));
 	if( CLASS_RESP_CMD(tc_p) != NULL ) rls_str(CLASS_RESP_CMD(tc_p));
 
-	del_trial_class(tc_p);
+	assert( CLASS_STAIRCASES(tc_p) != NULL );
+	np = remHead( CLASS_STAIRCASES(tc_p) );
+	while( np != NULL ){
+		Staircase *stc_p;
+		stc_p = NODE_DATA(np);
+		delete_staircase(stc_p);
+		np = remHead( CLASS_STAIRCASES(tc_p) );
+	}
+	rls_list( CLASS_STAIRCASES(tc_p) );
+
+	del_trial_class(tc_p);	// remove object from database - also frees?
 }
 
 Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
@@ -924,6 +973,14 @@ Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
 	return tc_p;
 }
 
+void set_response_cmd( Trial_Class *tc_p, const char *s )
+{
+	if( CLASS_RESP_CMD(tc_p) != NULL ) {
+		rls_str(CLASS_RESP_CMD(tc_p));
+	}
+	SET_CLASS_RESP_CMD( tc_p, savestr(s) );
+}
+
 // new_class_for_index creates a new class...
 
 Trial_Class *_new_class_for_index( QSP_ARG_DECL  int class_index )
@@ -943,22 +1000,6 @@ Trial_Class *_new_class_for_index( QSP_ARG_DECL  int class_index )
 	return(tc_p);
 }
 
-#define clear_one_class(tc_p, arg ) _clear_one_class(QSP_ARG  tc_p, arg )
-
-static void _clear_one_class(QSP_ARG_DECL  Trial_Class *tc_p, void *arg )
-{
-	Summary_Data_Tbl *sdt_p;
-
-	sdt_p = CLASS_SUMM_DTBL(tc_p);
-	assert(sdt_p!=NULL);
-	clear_summary_data(sdt_p);
-}
-
-void _clear_all_data_tables(SINGLE_QSP_ARG_DECL)	/* just clears data tables */
-{
-	iterate_over_classes(_clear_one_class,NULL);
-}
-
 void update_summary(Summary_Data_Tbl *sdt_p,Staircase *st_p,int rsp)
 {
 	int val;
@@ -970,7 +1011,6 @@ void update_summary(Summary_Data_Tbl *sdt_p,Staircase *st_p,int rsp)
 	assert( val >= 0 && val < SUMM_DTBL_SIZE(sdt_p) );
 
 	if( rsp != REDO && rsp != ABORT ){
-fprintf(stderr,"update_summary:  counting this trial\n");
 		SET_DATUM_NTOTAL( SUMM_DTBL_ENTRY(sdt_p,val),
 			1 + DATUM_NTOTAL( SUMM_DTBL_ENTRY(sdt_p,val) ) );
 		if( rsp == STAIR_CRCT_RSP(st_p) ){

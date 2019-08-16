@@ -169,7 +169,7 @@ else if( $flavor == csf ) then
 
   # csf_login has to come after demo/login because there are defaults overridden...
   set subdir=$extra_macro_dir/csf
-  set file_list=( csf_login csf gabor sound calib arrows csf_cam sync_files csf_admin csf_util psych )
+  set file_list=( csf_login csf gabor staircase_gabor sound calib arrows csf_cam sync_files csf_admin csf_util psych )
   source add_files.csh
 
   set subdir=ios

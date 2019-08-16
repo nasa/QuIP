@@ -1451,6 +1451,26 @@
 		7CCD40DA22178FD400C8E7D4 /* vector_parser_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */; };
 		7CCD40DB22178FD500C8E7D4 /* vector_parser_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */; };
 		7CCD40DC22178FD500C8E7D4 /* vector_parser_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */; };
+		7CCE06D023072E2E005B65C7 /* exp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CE23072E2E005B65C7 /* exp_menu.c */; };
+		7CCE06D123072E2E005B65C7 /* class_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CF23072E2E005B65C7 /* class_menu.c */; };
+		7CCE06D323072E3D005B65C7 /* chngp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06D223072E3D005B65C7 /* chngp_menu.c */; };
+		7CCE06D423072E55005B65C7 /* exp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CE23072E2E005B65C7 /* exp_menu.c */; };
+		7CCE06D523072E56005B65C7 /* exp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CE23072E2E005B65C7 /* exp_menu.c */; };
+		7CCE06D623072E57005B65C7 /* exp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CE23072E2E005B65C7 /* exp_menu.c */; };
+		7CCE06D723072E58005B65C7 /* exp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CE23072E2E005B65C7 /* exp_menu.c */; };
+		7CCE06D823072E5F005B65C7 /* class_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CF23072E2E005B65C7 /* class_menu.c */; };
+		7CCE06D923072E5F005B65C7 /* class_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CF23072E2E005B65C7 /* class_menu.c */; };
+		7CCE06DA23072E60005B65C7 /* class_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CF23072E2E005B65C7 /* class_menu.c */; };
+		7CCE06DB23072E61005B65C7 /* class_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CF23072E2E005B65C7 /* class_menu.c */; };
+		7CCE06DC23072E65005B65C7 /* chngp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06D223072E3D005B65C7 /* chngp_menu.c */; };
+		7CCE06DD23072E66005B65C7 /* chngp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06D223072E3D005B65C7 /* chngp_menu.c */; };
+		7CCE06DE23072E67005B65C7 /* chngp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06D223072E3D005B65C7 /* chngp_menu.c */; };
+		7CCE06DF23072E67005B65C7 /* chngp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06D223072E3D005B65C7 /* chngp_menu.c */; };
+		7CCE06E123072EE8005B65C7 /* stc_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06E023072EE8005B65C7 /* stc_util.c */; };
+		7CCE06E223072EE8005B65C7 /* stc_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06E023072EE8005B65C7 /* stc_util.c */; };
+		7CCE06E323072EE8005B65C7 /* stc_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06E023072EE8005B65C7 /* stc_util.c */; };
+		7CCE06E423072EE8005B65C7 /* stc_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06E023072EE8005B65C7 /* stc_util.c */; };
+		7CCE06E523072EE8005B65C7 /* stc_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06E023072EE8005B65C7 /* stc_util.c */; };
 		7CE0183C1FA2433700E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
 		7CE0183D1FA2433800E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
 		7CE0183E1FA2433900E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
@@ -1831,6 +1851,10 @@
 		7CB8D5D81B6198B90080809C /* string_ref.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = string_ref.c; sourceTree = "<group>"; };
 		7CCB914D21A36EB000926C39 /* no_sound.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = no_sound.c; sourceTree = "<group>"; };
 		7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = vector_parser_data.c; sourceTree = "<group>"; };
+		7CCE06CE23072E2E005B65C7 /* exp_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = exp_menu.c; sourceTree = "<group>"; };
+		7CCE06CF23072E2E005B65C7 /* class_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = class_menu.c; sourceTree = "<group>"; };
+		7CCE06D223072E3D005B65C7 /* chngp_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = chngp_menu.c; sourceTree = "<group>"; };
+		7CCE06E023072EE8005B65C7 /* stc_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stc_util.c; sourceTree = "<group>"; };
 		7CE5FDFC1A60750B0029C7AE /* avCap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = avCap.m; sourceTree = "<group>"; };
 		7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		7CE5FE001A60754A0029C7AE /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
@@ -2288,6 +2312,10 @@
 		7115AEC7160776DB0004645A /* psych */ = {
 			isa = PBXGroup;
 			children = (
+				7CCE06E023072EE8005B65C7 /* stc_util.c */,
+				7CCE06D223072E3D005B65C7 /* chngp_menu.c */,
+				7CCE06CF23072E2E005B65C7 /* class_menu.c */,
+				7CCE06CE23072E2E005B65C7 /* exp_menu.c */,
 				71828F60172617B800F7CB35 /* weibull.c */,
 				71828F61172617B800F7CB35 /* xvalmenu.c */,
 				71828F54172617A900F7CB35 /* mlfit.c */,
@@ -2887,6 +2915,7 @@
 				71828F531726179700F7CB35 /* lump.c in Sources */,
 				71828F5A172617A900F7CB35 /* mlfit.c in Sources */,
 				7C61EA411E1B080A0056CC01 /* vl2_platform.c in Sources */,
+				7CCE06D323072E3D005B65C7 /* chngp_menu.c in Sources */,
 				71828F5D172617A900F7CB35 /* stair.c in Sources */,
 				71828F5E172617A900F7CB35 /* stc_edit.c in Sources */,
 				71828F5F172617A900F7CB35 /* stc_menu.c in Sources */,
@@ -2927,6 +2956,7 @@
 				71828FA11726186100F7CB35 /* vec_chn.c in Sources */,
 				71828FA21726186100F7CB35 /* vec_func.c in Sources */,
 				7CF4CFBC1CA5F725004F07AE /* vectree.y in Sources */,
+				7CCE06D123072E2E005B65C7 /* class_menu.c in Sources */,
 				7C922E1F19CA51DE00F92C21 /* typed_scalars.c in Sources */,
 				71828FBE172618BA00F7CB35 /* sampmenu.c in Sources */,
 				71828FD4172618DB00F7CB35 /* chn_menu.c in Sources */,
@@ -2944,6 +2974,7 @@
 				7C79F9E51A2D47F1005EE8B8 /* soundmenu.c in Sources */,
 				7CB6F68A22C6D057008B8286 /* genlock.c in Sources */,
 				71828FF51726195400F7CB35 /* resolve.c in Sources */,
+				7CCE06E123072EE8005B65C7 /* stc_util.c in Sources */,
 				71828FF61726195400F7CB35 /* subrt_funcs.c in Sources */,
 				71828FF71726195400F7CB35 /* subrt.c in Sources */,
 				718290001726196F00F7CB35 /* comptree.c in Sources */,
@@ -3000,6 +3031,7 @@
 				71829092172621CC00F7CB35 /* camera.m in Sources */,
 				71829094172621EF00F7CB35 /* screen_obj.m in Sources */,
 				7CF4CFB41CA5F0B4004F07AE /* quip_exec.c in Sources */,
+				7CCE06D023072E2E005B65C7 /* exp_menu.c in Sources */,
 				718290961726221600F7CB35 /* img_file.c in Sources */,
 				718290981726224400F7CB35 /* raw.c in Sources */,
 				7182909A1726226D00F7CB35 /* local_max.c in Sources */,
@@ -3056,9 +3088,11 @@
 				7C5D93721D651A140096D7BC /* brent.c in Sources */,
 				7C4331A11D4D43FC0033687C /* tspread.c in Sources */,
 				7C4331A21D4D43FC0033687C /* seqparse.y in Sources */,
+				7CCE06E223072EE8005B65C7 /* stc_util.c in Sources */,
 				7C4331A31D4D43FC0033687C /* spread.c in Sources */,
 				7C4331A41D4D43FC0033687C /* rb2rgb.c in Sources */,
 				7C5D93811D651A140096D7BC /* svdcmp.c in Sources */,
+				7CCE06DC23072E65005B65C7 /* chngp_menu.c in Sources */,
 				7C4331A51D4D43FC0033687C /* requant.c in Sources */,
 				7C4331A61D4D43FC0033687C /* questions.c in Sources */,
 				7C4331A71D4D43FC0033687C /* areas.c in Sources */,
@@ -3283,6 +3317,7 @@
 				7C4332711D4D43FC0033687C /* accel.m in Sources */,
 				7C4332721D4D43FC0033687C /* makedobj.c in Sources */,
 				7C4332731D4D43FC0033687C /* camera.m in Sources */,
+				7CCE06D423072E55005B65C7 /* exp_menu.c in Sources */,
 				7C4332741D4D43FC0033687C /* screen_obj.m in Sources */,
 				7C4332751D4D43FC0033687C /* quip_exec.c in Sources */,
 				7C5D937F1D651A140096D7BC /* eigsrt.c in Sources */,
@@ -3294,6 +3329,7 @@
 				7C43327A1D4D43FC0033687C /* cdiff.c in Sources */,
 				7C43327B1D4D43FC0033687C /* pkg.c in Sources */,
 				7C43327C1D4D43FC0033687C /* quipTableViewController.m in Sources */,
+				7CCE06D823072E5F005B65C7 /* class_menu.c in Sources */,
 				7C43327D1D4D43FC0033687C /* quipNavController.m in Sources */,
 				7C43327E1D4D43FC0033687C /* sched.c in Sources */,
 				7C43327F1D4D43FC0033687C /* platform.m in Sources */,
@@ -3440,6 +3476,7 @@
 				7C43332B1D4D49450033687C /* lump.c in Sources */,
 				7C43332C1D4D49450033687C /* mlfit.c in Sources */,
 				7C61EA431E1B08EA0056CC01 /* vl2_platform.c in Sources */,
+				7CCE06DD23072E66005B65C7 /* chngp_menu.c in Sources */,
 				7C43332F1D4D49450033687C /* stair.c in Sources */,
 				7C4333301D4D49450033687C /* stc_edit.c in Sources */,
 				7C4333311D4D49450033687C /* stc_menu.c in Sources */,
@@ -3480,6 +3517,7 @@
 				7C4333511D4D49450033687C /* vec_chn.c in Sources */,
 				7C4333521D4D49450033687C /* vec_func.c in Sources */,
 				7C4333531D4D49450033687C /* vectree.y in Sources */,
+				7CCE06D923072E5F005B65C7 /* class_menu.c in Sources */,
 				7C4333541D4D49450033687C /* typed_scalars.c in Sources */,
 				7C4333551D4D49450033687C /* sampmenu.c in Sources */,
 				7C4333571D4D49450033687C /* chn_menu.c in Sources */,
@@ -3497,6 +3535,7 @@
 				7C4333641D4D49450033687C /* soundmenu.c in Sources */,
 				7CB6F68C22C6D374008B8286 /* genlock.c in Sources */,
 				7C4333651D4D49450033687C /* resolve.c in Sources */,
+				7CCE06E323072EE8005B65C7 /* stc_util.c in Sources */,
 				7C4333661D4D49450033687C /* subrt_funcs.c in Sources */,
 				7C4333671D4D49450033687C /* subrt.c in Sources */,
 				7C4333681D4D49450033687C /* comptree.c in Sources */,
@@ -3553,6 +3592,7 @@
 				7C43339A1D4D49450033687C /* camera.m in Sources */,
 				7C43339B1D4D49450033687C /* screen_obj.m in Sources */,
 				7C43339C1D4D49450033687C /* quip_exec.c in Sources */,
+				7CCE06D523072E56005B65C7 /* exp_menu.c in Sources */,
 				7C43339D1D4D49450033687C /* img_file.c in Sources */,
 				7C43339E1D4D49450033687C /* raw.c in Sources */,
 				7C43339F1D4D49450033687C /* local_max.c in Sources */,
@@ -3706,6 +3746,7 @@
 				7C4D6DF71D5111A400D34AC4 /* lump.c in Sources */,
 				7C4D6DF81D5111A400D34AC4 /* mlfit.c in Sources */,
 				7C61EA441E1B08EB0056CC01 /* vl2_platform.c in Sources */,
+				7CCE06DE23072E67005B65C7 /* chngp_menu.c in Sources */,
 				7C4D6DFB1D5111A400D34AC4 /* stair.c in Sources */,
 				7C4D6DFC1D5111A400D34AC4 /* stc_edit.c in Sources */,
 				7C4D6DFD1D5111A400D34AC4 /* stc_menu.c in Sources */,
@@ -3746,6 +3787,7 @@
 				7C4D6E1D1D5111A400D34AC4 /* vec_chn.c in Sources */,
 				7C4D6E1E1D5111A400D34AC4 /* vec_func.c in Sources */,
 				7C4D6E1F1D5111A400D34AC4 /* vectree.y in Sources */,
+				7CCE06DA23072E60005B65C7 /* class_menu.c in Sources */,
 				7C4D6E201D5111A400D34AC4 /* typed_scalars.c in Sources */,
 				7C4D6E211D5111A400D34AC4 /* sampmenu.c in Sources */,
 				7C4D6E231D5111A400D34AC4 /* chn_menu.c in Sources */,
@@ -3763,6 +3805,7 @@
 				7C4D6E301D5111A400D34AC4 /* soundmenu.c in Sources */,
 				7CB6F68D22C6D375008B8286 /* genlock.c in Sources */,
 				7C4D6E311D5111A400D34AC4 /* resolve.c in Sources */,
+				7CCE06E423072EE8005B65C7 /* stc_util.c in Sources */,
 				7C4D6E321D5111A400D34AC4 /* subrt_funcs.c in Sources */,
 				7C4D6E331D5111A400D34AC4 /* subrt.c in Sources */,
 				7C4D6E341D5111A400D34AC4 /* comptree.c in Sources */,
@@ -3819,6 +3862,7 @@
 				7C4D6E661D5111A400D34AC4 /* camera.m in Sources */,
 				7C4D6E671D5111A400D34AC4 /* screen_obj.m in Sources */,
 				7C4D6E681D5111A400D34AC4 /* quip_exec.c in Sources */,
+				7CCE06D623072E57005B65C7 /* exp_menu.c in Sources */,
 				7C4D6E691D5111A400D34AC4 /* img_file.c in Sources */,
 				7C4D6E6A1D5111A400D34AC4 /* raw.c in Sources */,
 				7C4D6E6B1D5111A400D34AC4 /* local_max.c in Sources */,
@@ -3875,9 +3919,11 @@
 				7CB670AE1F9484C5001FFADF /* brent.c in Sources */,
 				7CB670AF1F9484C5001FFADF /* tspread.c in Sources */,
 				7CB670B01F9484C5001FFADF /* seqparse.y in Sources */,
+				7CCE06E523072EE8005B65C7 /* stc_util.c in Sources */,
 				7CB670B11F9484C5001FFADF /* spread.c in Sources */,
 				7CB670B21F9484C5001FFADF /* rb2rgb.c in Sources */,
 				7CB670B31F9484C5001FFADF /* svdcmp.c in Sources */,
+				7CCE06DF23072E67005B65C7 /* chngp_menu.c in Sources */,
 				7CB670B41F9484C5001FFADF /* requant.c in Sources */,
 				7CB670B51F9484C5001FFADF /* questions.c in Sources */,
 				7CB670B61F9484C5001FFADF /* areas.c in Sources */,
@@ -4102,6 +4148,7 @@
 				7CB671911F9484C5001FFADF /* accel.m in Sources */,
 				7CB671921F9484C5001FFADF /* makedobj.c in Sources */,
 				7CB671931F9484C5001FFADF /* camera.m in Sources */,
+				7CCE06D723072E58005B65C7 /* exp_menu.c in Sources */,
 				7CB671941F9484C5001FFADF /* screen_obj.m in Sources */,
 				7CB671951F9484C5001FFADF /* quip_exec.c in Sources */,
 				7CB671961F9484C5001FFADF /* eigsrt.c in Sources */,
@@ -4113,6 +4160,7 @@
 				7CB6719C1F9484C5001FFADF /* cdiff.c in Sources */,
 				7CB6719D1F9484C5001FFADF /* pkg.c in Sources */,
 				7CB6719E1F9484C5001FFADF /* quipTableViewController.m in Sources */,
+				7CCE06DB23072E61005B65C7 /* class_menu.c in Sources */,
 				7CB6719F1F9484C5001FFADF /* quipNavController.m in Sources */,
 				7CB671A01F9484C5001FFADF /* sched.c in Sources */,
 				7CB671A11F9484C5001FFADF /* platform.m in Sources */,

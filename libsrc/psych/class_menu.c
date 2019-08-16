@@ -17,9 +17,9 @@ static COMMAND_FUNC( do_new_class )
 	SET_CLASS_STIM_CMD(tc_p,savestr(cmd));
 }
 
-static COMMAND_FUNC( do_clear_all_classes )
+static COMMAND_FUNC( do_reset_all_classes )
 {
-	clear_all_data_tables();
+	reset_all_classes();
 }
 
 static COMMAND_FUNC( do_delete_all_classes )
@@ -72,18 +72,31 @@ static COMMAND_FUNC( do_reset_class )
 	reset_class( tc_p );
 }
 
+static COMMAND_FUNC(do_set_rsp_cmd)
+{
+	Trial_Class *tc_p;
+	const char *s;
+
+	tc_p = pick_trial_class("");
+	s = nameof("commands to execute to collect and process trial responses");
+	if( tc_p == NULL ) return;
+
+	set_response_cmd( tc_p, s );
+}
+
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(class_menu,s,f,h)
 
 MENU_BEGIN(class)
-ADD_CMD( new,		do_new_class,		add a stimulus class )
-ADD_CMD( list,		do_list_classes,	list all stimulus classes )
-ADD_CMD( info,		do_class_info,		print info about a class )
-ADD_CMD( reset,		do_reset_class,		clear class data and reset staircases )
-ADD_CMD( summary_data,	do_show_class_summ,	print summary data from a class )
+ADD_CMD( new,			do_new_class,		add a stimulus class )
+ADD_CMD( list,			do_list_classes,	list all stimulus classes )
+ADD_CMD( info,			do_class_info,		print info about a class )
+ADD_CMD( set_response_cmd,	do_set_rsp_cmd,		specify response handler )
+ADD_CMD( reset,			do_reset_class,		clear class data and reset staircases )
+ADD_CMD( summary_data,		do_show_class_summ,	print summary data from a class )
 ADD_CMD( sequential_data,	do_show_class_seq,	print sequential data from a class )
-ADD_CMD( clear_all,	do_clear_all_classes,	clear data for all conditions )
-ADD_CMD( delete_all,	do_delete_all_classes,	delete all conditions )
+ADD_CMD( reset_all,		do_reset_all_classes,	clear data for all conditions )
+ADD_CMD( delete_all,		do_delete_all_classes,	delete all conditions )
 MENU_END(class)
 
 COMMAND_FUNC( do_class_menu )

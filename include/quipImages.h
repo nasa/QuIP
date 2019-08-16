@@ -69,8 +69,8 @@
 -(void) disableRefreshEventProcessing;
 -(void) queueFrame: (UIImage *)uii_p;
 -(void) clearQueue;
--(void) bring_to_front:(struct data_obj *)dp;
--(void) send_to_back:(struct data_obj *)dp;
+//-(void) bring_to_front:(struct data_obj *)dp;
+//-(void) send_to_back:(struct data_obj *)dp;
 @end
 
 // flag bits
