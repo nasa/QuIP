@@ -1,0 +1,67 @@
+max_warnings 8
+
+Define Read_If_Exists 1 filename
+If file_exists('$1')
+  Then "advise 'Reading $1...' < $1"
+  Else "advise 'File $1 not found.'"
+.
+
+Read_If_Exists staircase_test.mac
+Read_If_Exists tests/staircase_test.mac
+
+Setup_X_Values	# creats my_xvals
+
+
+experiments
+  xvals
+    import my_xvals
+    quit
+  classes
+    new class1 C1Stim
+    quit
+  use_keyboard no	# should read response from input stream?
+  2AFC yes
+  parameters
+    trials
+      change n_data 32    # not used?
+      display
+      quit
+    staircases
+      change n_2up 1
+      display
+      quit
+    quit
+  staircases
+    list
+    info staircase.class1.0
+    quit
+  quit
+Set response_string "target seen in first interval"
+
+advise "Ready to deliver trials"
+Pause
+
+Set staircase_name staircase.class1.0
+
+Define Run_Block 1 n_trials
+experiments staircases reset staircase.class1.0 quit quit
+Set n_trials_remaining $1
+Print n_trials_remaining
+Next_Trial
+do
+  Get_Response
+  while $n_trials_remaining>0
+experiments staircases info staircase.class1.0 quit quit
+.
+
+Run_Block 10
+
+advise "read to run again"
+advise "But save data first?"
+Pause
+
+Run_Block 10
+
+Pause
+exit
+
