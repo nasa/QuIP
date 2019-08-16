@@ -510,7 +510,7 @@ static COMMAND_FUNC( do_stop_animation )
 static COMMAND_FUNC( do_after_animation )
 {
 	Viewer *vp;
-	char *s;
+	const char *s;
 
 	GET_VIEWER("do_stop_animation");
 	s = nameof("text to interpret when animation finishes");
