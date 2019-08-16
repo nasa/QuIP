@@ -186,7 +186,7 @@
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations
 {
 	if( qvc_flags & QVC_ALLOWS_AUTOROTATION ){
-fprintf(stderr,"quipViewController.supportedInterfaceOrientations will return ALL\n");
+//fprintf(stderr,"quipViewController.supportedInterfaceOrientations will return ALL\n");
 		return UIInterfaceOrientationMaskAll;
 	} else {
 		/* BUG - we should remember the orientation when
@@ -194,7 +194,7 @@ fprintf(stderr,"quipViewController.supportedInterfaceOrientations will return AL
 		 * FIXME!!!
 		 */
 		qvc_flags |= QVC_BLOCKED_AUTOROTATION;
-fprintf(stderr,"quipViewController.supportedInterfaceOrientations will return Portrait!?\n");
+//fprintf(stderr,"quipViewController.supportedInterfaceOrientations will return Portrait!?\n");
 		return UIInterfaceOrientationMaskPortrait;
 	}
 }

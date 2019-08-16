@@ -13,13 +13,13 @@ static BOOL quipShouldAutorotate=YES;
 
 void set_supported_orientations( UIInterfaceOrientationMask m )
 {
-fprintf(stderr,"set_supported_orientations BEGIN\n");
+//fprintf(stderr,"set_supported_orientations BEGIN\n");
 	quipSupportedInterfaceOrientations=m;
 }
 
 void set_autorotation_allowed( BOOL yesno )
 {
-fprintf(stderr,"set_autorotation_allowed %s\n",yesno?"YES":"NO");
+//fprintf(stderr,"set_autorotation_allowed %s\n",yesno?"YES":"NO");
 	quipShouldAutorotate = yesno;
 }
 #endif // BUILD_FOR_IOS
@@ -146,11 +146,11 @@ fprintf(stderr,"No genwin found associated with view controller 0x%lx\n",
 {
 	// BUG find out the good mask...
 	if( [self topViewController] == NULL ){
-fprintf(stderr,"supportedInterfaceOrientations will return UIInterfaceOrientationMaskAll\n");
+//fprintf(stderr,"supportedInterfaceOrientations will return UIInterfaceOrientationMaskAll\n");
 		return UIInterfaceOrientationMaskAll;
 	//	return UIInterfaceOrientationMaskPortrait;
     } else {
-fprintf(stderr,"supportedInterfaceOrientations will return parent value\n");
+//fprintf(stderr,"supportedInterfaceOrientations will return parent value\n");
 		return [[self topViewController] supportedInterfaceOrientations];
     }
 }
@@ -164,7 +164,7 @@ fprintf(stderr,"supportedInterfaceOrientations will return parent value\n");
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-fprintf(stderr,"shouldAutorotateToInterfaceOrientation BEGIN\n");
+//fprintf(stderr,"shouldAutorotateToInterfaceOrientation BEGIN\n");
 	if( [self topViewController] == NULL ) return YES;
 	//if( [self topViewController] == NULL ) return NO;
 

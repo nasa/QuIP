@@ -664,7 +664,7 @@ advise("Calling AudioQueueNewOutput...");
 		status=AudioQueueAllocateBuffer ( audio_output_queue, 8192, &playback_bufp[i] );
 		if( status != 0 )
 			report_audio_error(QSP_ARG  status);
-fprintf(stderr,"allocated playback buffer at 0x%lx\n",(u_long)playback_bufp[i]);
+//fprintf(stderr,"allocated playback buffer at 0x%lx\n",(u_long)playback_bufp[i]);
 	}
 }
 
@@ -712,7 +712,7 @@ advise("Calling AudioQueueNewInput...");
 		status=AudioQueueAllocateBuffer ( audio_input_queue, 8192, &record_bufp[i] );
 		if( status != 0 )
 			report_audio_error(QSP_ARG  status);
-fprintf(stderr,"allocated buffer at 0x%lx\n",(u_long)record_bufp[i]);
+//fprintf(stderr,"allocated buffer at 0x%lx\n",(u_long)record_bufp[i]);
 	}
 }
 

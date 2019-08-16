@@ -24,7 +24,7 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 	 */
 
 	/* clear old classes */
-	do_delete_all_classes(SINGLE_QSP_ARG);
+	delete_all_trial_classes();
 
 	if( read_exp_data(fp) != 0 ){
 		fclose(fp);

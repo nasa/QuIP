@@ -7,7 +7,25 @@
 #include "dobj_prot.h"
 #include "item_obj.h"
 
-//#define MAXVALS		128
+typedef enum {
+	YES_INDEX,	//	0
+	NO_INDEX,	//	1
+	REDO_INDEX,	//	2
+	ABORT_INDEX,	//	3
+	N_RESPONSES	//	4
+} Response_Index;
+
+#define RSP_YES		"yes"
+#define RSP_NO		"no"
+#define RSP_REDO	"redo"
+#define RSP_ABORT	"abort"
+
+typedef struct trial_response {
+	int		tr_index;
+	const char *	tr_word;
+	int		tr_code;
+} Trial_Response;
+
 #define MAX_X_VALUES	1024
 
 // forward definitions
@@ -16,7 +34,8 @@ FWD_TYPEDEF(sequential_data_tbl,Sequential_Data_Tbl)
 
 typedef struct trial_class {
 	Item			tc_item;
-	const char *		tc_cmd;		/* general purpose string field */
+	const char *		tc_stim_cmd;
+	const char *		tc_resp_cmd;
 	int			tc_nstairs;
 	int			tc_index;
 	Data_Obj *		tc_xval_dp;
@@ -25,14 +44,16 @@ typedef struct trial_class {
 } Trial_Class;
 
 #define CLASS_NAME(tc_p)		(tc_p)->tc_item.item_name
-#define CLASS_CMD(tc_p)			(tc_p)->tc_cmd
+#define CLASS_STIM_CMD(tc_p)		(tc_p)->tc_stim_cmd
+#define CLASS_RESP_CMD(tc_p)		(tc_p)->tc_resp_cmd
 #define CLASS_N_STAIRS(tc_p)		(tc_p)->tc_nstairs
 #define CLASS_INDEX(tc_p)		(tc_p)->tc_index
 #define CLASS_SUMM_DTBL(tc_p)		(tc_p)->tc_sdt_p
 #define CLASS_SEQ_DTBL(tc_p)		(tc_p)->tc_qdt_p
 #define CLASS_XVAL_OBJ(tc_p)		(tc_p)->tc_xval_dp
 
-#define SET_CLASS_CMD(tc_p,v)		(tc_p)->tc_cmd = v
+#define SET_CLASS_STIM_CMD(tc_p,v)	(tc_p)->tc_stim_cmd = v
+#define SET_CLASS_RESP_CMD(tc_p,v)	(tc_p)->tc_resp_cmd = v
 #define SET_CLASS_N_STAIRS(tc_p,v)	(tc_p)->tc_nstairs = v
 #define SET_CLASS_INDEX(tc_p,v)		(tc_p)->tc_index = v
 #define SET_CLASS_SUMM_DTBL(tc_p,v)	(tc_p)->tc_sdt_p = v
@@ -64,7 +85,19 @@ struct summary_data_tbl {
 	Summary_Datum *		sdt_data_ptr;	// points to data in the object...
 	Trial_Class *		sdt_tc_p;	// may be invalid if lumped...
 	Data_Obj *		sdt_xval_dp;	// should match class
+	int			sdt_flags;
 };
+
+// flag values for summary data
+#define SUMMARY_DATA_DIRTY	1	// written without saved
+
+#define SET_SDT_FLAG_BIT(sdt_p,bit)	SUMM_DTBL_FLAGS(sdt_p) |= bit
+#define CLEAR_SDT_FLAG_BIT(sdt_p,bit)	SUMM_DTBL_FLAGS(sdt_p) &= ~(bit)
+
+#define SUMM_DTBL_NEEDS_SAVING(sdt_p)	(SUMM_DTBL_FLAGS(sdt_p) & SUMMARY_DATA_DIRTY)
+
+#define SUMM_DTBL_FLAGS(sdt_p)		(sdt_p)->sdt_flags
+#define SET_SUMM_DTBL_FLAGS(sdt_p,v)	(sdt_p)->sdt_flags = v
 
 #define SUMM_DTBL_SIZE(sdt_p)		(sdt_p)->sdt_size
 #define SUMM_DTBL_N(sdt_p)		(sdt_p)->sdt_npts
@@ -105,13 +138,32 @@ struct sequential_data_tbl {
 	List *		qdt_lp;
 	Data_Obj *	qdt_xval_dp;	// should match class
 	Trial_Class *	qdt_tc_p;	// may be invalid if lumped...
+	int		qdt_flags;
 } ;
+
+// flag bits
+#define SEQUENTIAL_DATA_DIRTY	1
+
+#define SEQ_DTBL_FLAGS(qdt_p)		(qdt_p)->qdt_flags
+#define SET_SEQ_DTBL_FLAGS(qdt_p,v)	(qdt_p)->qdt_flags = v
+
+#define SET_QDT_FLAG_BIT(qdt_p,bits)	SEQ_DTBL_FLAGS(qdt_p) |= bits
+#define CLEAR_QDT_FLAG_BIT(qdt_p,bits)	SEQ_DTBL_FLAGS(qdt_p) &= ~(bits)
 
 #define SEQ_DTBL_LIST(qdt_p)	(qdt_p)->qdt_lp
 #define SEQ_DTBL_CLASS(qdt_p)	(qdt_p)->qdt_tc_p
 
+#define SEQ_DTBL_NEEDS_SAVING(qdt_p)	(SEQ_DTBL_FLAGS(qdt_p) & SEQUENTIAL_DATA_DIRTY)
+
 #define SET_SEQ_DTBL_LIST(qdt_p,v)	(qdt_p)->qdt_lp = v
 #define SET_SEQ_DTBL_CLASS(qdt_p,v)	(qdt_p)->qdt_tc_p = v
+
+typedef enum {
+	NO_STAIR_TYPE,
+	UP_DOWN,	//	1
+	TWO_TO_ONE,	//	2
+	THREE_TO_ONE	//	3
+} Staircase_Type;
 
 
 typedef struct staircase {
@@ -119,20 +171,26 @@ typedef struct staircase {
 #define stair_name	stair_item.item_name
 
 	Trial_Class *	stair_tc_p;
-	int	stair_type;
-	int	stair_inc;
-	int	stair_min_inc;
-	int	stair_val;
+	int	stair_index;
+
+	// These determine the staircase type
+	Staircase_Type	stair_type;
+	int	stair_min_inc;		// can be positive or negative?
 	int	stair_inc_rsp;
-	int	stair_crct_rsp;
+	int	stair_crct_rsp;		// does this get diddled by coin flip???
+
+	// These are staircase state variables
+	int	stair_val;
+	int	stair_inc;		// can be positive or negative?
 	int	stair_last_rsp;
 	int	stair_last_rsp3;
 	int	stair_last_trial;
-	int	stair_index;
+
 	Summary_Data_Tbl	*stair_sdt_p;
 	Sequential_Data_Tbl	*stair_qdt_p;
 } Staircase;
 
+#define STAIR_NAME(st_p)	(st_p)->stair_name
 #define STAIR_CLASS(st_p)	(st_p)->stair_tc_p
 #define STAIR_TYPE(st_p)	(st_p)->stair_type
 #define STAIR_INC(st_p)		(st_p)->stair_inc
@@ -165,21 +223,65 @@ typedef struct staircase {
 
 #define NO_STC_DATA	(-1)
 
-#define UP_DOWN		1
-#define TWO_TO_ONE	2
-#define THREE_TO_ONE	4
-
-
-#define NO_RESP		(-1)
-
-#define NO_GOOD		(-2.0)
-
+// BUG this should be cleaned up!
 #define REDO		5	 /* historical, jkr switch box */
 #define ABORT		8
 
-#define NO_RSP		(-1)
+#ifdef FOOBAR
 
-#define EXP_MENU_PROMPT	"experiment"
+#define NO_RESP		(-1)
+
+#endif // FOOBAR
+
+typedef struct experiment {
+	int	expt_flags;
+
+	const char *	question_string;
+
+	int	n_preliminary_trials;
+	int	n_recorded_trials;
+
+	// BUG kind of messy?
+	int	n_updn_stairs;
+	int	n_dnup_stairs;
+	int	n_2iup_stairs;
+	int	n_2idn_stairs;
+	int	n_2up_stairs;
+	int	n_2dn_stairs;
+	int	n_3up_stairs;
+	int	n_3dn_stairs;
+
+} Experiment;
+
+extern Experiment expt1;	// a global singleton
+
+extern int exp_flags;
+
+#define DRIBBLING		1
+#define KEYBOARD_RESPONSE	2
+
+#define EXPT_N_PRELIM_TRIALS(exp_p)		((exp_p)->n_preliminary_trials)
+#define EXPT_N_RECORDED_TRIALS(exp_p)		((exp_p)->n_recorded_trials)
+
+#define EXPT_N_UPDN(exp_p)		((exp_p)->n_updn_stairs)
+#define EXPT_N_DNUP(exp_p)		((exp_p)->n_dnup_stairs)
+#define EXPT_N_2IUP(exp_p)		((exp_p)->n_2iup_stairs)
+#define EXPT_N_2IDN(exp_p)		((exp_p)->n_2idn_stairs)
+#define EXPT_N_2UP(exp_p)		((exp_p)->n_2up_stairs)
+#define EXPT_N_2DN(exp_p)		((exp_p)->n_2dn_stairs)
+#define EXPT_N_3UP(exp_p)		((exp_p)->n_3up_stairs)
+#define EXPT_N_3DN(exp_p)		((exp_p)->n_3dn_stairs)
+
+#define EXPT_FLAGS(exp_p)		((exp_p)->expt_flags)
+
+#define EXPT_QUESTION(exp_p)		((exp_p)->question_string)
+#define SET_EXPT_QUESTION(exp_p,v)	(exp_p)->question_string = v
+
+#define SET_EXP_FLAG(exp_p,bit)		(exp_p)->expt_flags |= bit
+#define CLEAR_EXP_FLAG(exp_p,bit)	(exp_p)->expt_flags &= ~(bit)
+
+#define IS_DRIBBLING(exp_p)		(EXPT_FLAGS(exp_p) & DRIBBLING)
+#define IS_USING_KEYBOARD(exp_p)	(EXPT_FLAGS(exp_p) & KEYBOARD_RESPONSE)
 
 /* a global variable BAD... */
 extern Data_Obj *global_xval_dp;
@@ -190,9 +292,11 @@ extern const char *correct_feedback_string, *incorrect_feedback_string;
 #define FTYPE	float
 
 /* BUG these are not thread-safe ...  probably ok */
+// But why do they need to be global???
 extern void (*modrt)(QSP_ARG_DECL Trial_Class *);
 extern void (*initrt)(void);
-extern int (*stmrt)(QSP_ARG_DECL Trial_Class *,int,Staircase *);
+extern void (*stim_func)(QSP_ARG_DECL Staircase *);
+extern int (*response_func)(QSP_ARG_DECL Staircase *, Experiment *);
 
 /* global variables */
 //extern float *xval_array;
@@ -206,9 +310,11 @@ extern int fc_flag;
 #define YES	1
 #define NO	2
 
-#define TRANS_UP	1
-#define TRANS_DN	2
-#define NO_TRANS	4
+typedef enum {
+	NO_TRANS,	//	0
+	TRANS_UP,	//	1
+	TRANS_DN	//	2
+} Transition_Code;
 
 /** maximum number of preliminary trials */
 #define MAXPREL		64
@@ -236,6 +342,11 @@ ITEM_INTERFACE_PROTOTYPES(Staircase,stair)
 #define list_stairs(fp)	_list_stairs(QSP_ARG  fp)
 #define stair_list()	_stair_list(SINGLE_QSP_ARG)
 
+extern void _reset_stair(QSP_ARG_DECL  Staircase *st_p);
+#define reset_stair(st_p) _reset_stair(QSP_ARG  st_p)
+
+extern void _print_stair_info(QSP_ARG_DECL  Staircase *stc_p);
+#define print_stair_info(stc_p) _print_stair_info(QSP_ARG  stc_p)
 
 extern Summary_Data_Tbl *_new_summary_data_tbl(SINGLE_QSP_ARG_DECL);
 extern void rls_summ_dtbl(Summary_Data_Tbl *sdt_p);
@@ -245,7 +356,13 @@ extern  Sequential_Data_Tbl *_new_sequential_data_tbl(SINGLE_QSP_ARG_DECL);
 
 extern void _init_summ_dtbl_for_class( QSP_ARG_DECL  Summary_Data_Tbl * sdt_p, Trial_Class *tc_p );
 #define init_summ_dtbl_for_class( sdt_p, tc_p ) _init_summ_dtbl_for_class( QSP_ARG  sdt_p, tc_p )
-extern void clear_summary_data( Summary_Data_Tbl *sdt_p );
+
+extern void _clear_sequential_data(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p);
+#define clear_sequential_data(qdt_p) _clear_sequential_data(QSP_ARG  qdt_p)
+
+extern void _clear_summary_data(QSP_ARG_DECL  Summary_Data_Tbl *sdt_p );
+#define clear_summary_data(sdt_p ) _clear_summary_data(QSP_ARG  sdt_p )
+
 extern Trial_Class *_new_class_for_index(QSP_ARG_DECL  int index);
 #define new_class_for_index(index) _new_class_for_index(QSP_ARG  index)
 
@@ -265,16 +382,17 @@ extern COMMAND_FUNC( do_save_data );
 #ifdef CATCH_SIGS
 extern void icatch(void);
 #endif /* CATCH_SIGS */
-extern void _run_stairs(QSP_ARG_DECL  int np,int nt);
-#define run_stairs(np,nt) _run_stairs(QSP_ARG  np,nt)
+extern void _run_stairs(QSP_ARG_DECL  Experiment *exp_p);
+#define run_stairs(exp_p) _run_stairs(QSP_ARG  exp_p)
 
 extern void set_dribble_file(FILE *fp);
 extern void set_summary_file(FILE *fp);
 extern void _add_stair(QSP_ARG_DECL  int type,Trial_Class *tc_p);
 #define add_stair(type,tc_p) _add_stair(QSP_ARG  type,tc_p)
 
-//extern void list_stairs(void);
-extern COMMAND_FUNC( del_all_stairs );
+extern void _delete_all_stairs(SINGLE_QSP_ARG_DECL);
+#define delete_all_stairs() _delete_all_stairs(SINGLE_QSP_ARG)
+
 extern void si_init(void);
 
 extern Trial_Class *_find_class_from_index(QSP_ARG_DECL  int);
@@ -294,24 +412,28 @@ extern void update_summary(Summary_Data_Tbl *sdt_p,Staircase *st_p,int rsp);
 extern void append_trial( Sequential_Data_Tbl *qdt_p, Staircase *st_p , int rsp );
 
 /* exp.c */
+
+extern void init_experiment( Experiment *exp_p );
+
+extern void _init_responses(SINGLE_QSP_ARG_DECL);
+#define init_responses() _init_responses(SINGLE_QSP_ARG)
+
+#define setup_files(exp_p) _setup_files(QSP_ARG  exp_p)
+extern void _setup_files(QSP_ARG_DECL  Experiment *exp_p);
+
+#define delete_all_trial_classes() _delete_all_trial_classes(SINGLE_QSP_ARG)
+extern void _delete_all_trial_classes(SINGLE_QSP_ARG_DECL);
+
 extern Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name);
 #define create_named_class(name) _create_named_class(QSP_ARG  name)
-extern COMMAND_FUNC( do_delete_all_classes );
-extern COMMAND_FUNC( do_clear_all_classes );
 extern void nullrt(void);
-//extern void make_staircases(SINGLE_QSP_ARG_DECL);
-extern COMMAND_FUNC( do_exp_init );
-
-#ifdef FOOBAR
-extern void exprmnt(void);
-#endif /* FOOBAR */
 
 extern COMMAND_FUNC( do_exp_menu );
 extern void _get_rsp_word(QSP_ARG_DECL const char **sptr,const char *def_rsp);
 #define get_rsp_word(sptr,def_rsp) _get_rsp_word(QSP_ARG sptr,def_rsp)
 
-extern int _collect_response(QSP_ARG_DECL  const char *s);
-#define collect_response(s) _collect_response(QSP_ARG  s)
+extern int _get_response(QSP_ARG_DECL  Staircase *stc_p, Experiment *exp_p);
+#define get_response(stc_p,exp_p) _get_response(QSP_ARG  stc_p,exp_p)
 
 extern void init_rps(char *target,const char *s);
 
@@ -357,7 +479,9 @@ extern void _iterate_over_classes( QSP_ARG_DECL  void (*func)(QSP_ARG_DECL  Tria
 #define iterate_over_classes(func, arg) _iterate_over_classes( QSP_ARG  func, arg)
 
 extern void write_summary_data( Summary_Data_Tbl *sdt_p, FILE *fp );
-extern void write_sequential_data( Sequential_Data_Tbl *sdt_p, FILE *fp );
+extern void _write_sequential_data(QSP_ARG_DECL  Sequential_Data_Tbl *sdt_p, FILE *fp );
+#define write_sequential_data(sdt_p, fp ) _write_sequential_data(QSP_ARG  sdt_p, fp )
+
 extern int dribbling(void);
 extern void dribble(Staircase *st_p, int rsp);
 extern void close_dribble(void);
@@ -376,11 +500,15 @@ void _print_error_bars(QSP_ARG_DECL  FILE *fp,Trial_Class *tc_p);
 
 
 /* stc_menu.c */
+extern COMMAND_FUNC( do_staircase_menu );
+
+/* stc_util.c */
 
 extern void general_mod(QSP_ARG_DECL Trial_Class * );
-extern int default_stim(QSP_ARG_DECL Trial_Class * ,int val,Staircase *stairp);
-extern COMMAND_FUNC( set_2afc );
-extern COMMAND_FUNC( stair_menu );
+extern void _default_stim(QSP_ARG_DECL Staircase *stairp);
+extern int _default_response(QSP_ARG_DECL  Staircase *stc_p, Experiment *exp_p);
+#define default_stim(stc_p) _default_stim(QSP_ARG  stc_p)
+#define default_response(stc_p,exp_p) _default_response(QSP_ARG  stc_p,exp_p)
 
 
 /* lookmenu.c */
@@ -405,6 +533,12 @@ extern int _insure_xval_array(SINGLE_QSP_ARG_DECL);
 #define insure_xval_array() _insure_xval_array(SINGLE_QSP_ARG)
 
 extern COMMAND_FUNC( xval_menu );
+
+/* class_menu.c */
+extern COMMAND_FUNC( do_class_menu );
+
+/* chngp_menu.c */
+extern COMMAND_FUNC( do_exp_param_menu );
 
 #endif /* _STC_H_ */
 

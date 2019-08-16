@@ -13,8 +13,6 @@
 #include "quip_prot.h"
 #include "viewer.h"
 
-
-
 uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 {
 	static mach_timebase_info_data_t	timebase_info;
@@ -39,34 +37,32 @@ uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 @synthesize _flags;
 @synthesize _vbl_count;
 @synthesize _frame_duration;
-@synthesize _n_frames_to_cycle;
 @synthesize _queue_idx;
-@synthesize cycle_func;
-@synthesize cycle_done_func;
+@synthesize refresh_func;
 @synthesize frameQueue;
+@synthesize afterAnimation;
+@synthesize animationStarted;
 
-// cycle_func is a string containing a script fragment?
+// refresh_func is a string containing a script fragment?
 // If it is set, then the text is interpreted every refresh event
 //
-// cycle_done_func is a string that is interpreted at the end of a one-shot event
+// afterAnimation is a string that is interpreted at the end of a one-shot event
 
--(void) set_cycle_func:(const char *)s
+-(void) set_refresh_func:(const char *)s
 {
-	if( cycle_func != NULL ) rls_str(cycle_func);
+	if( refresh_func != NULL ) rls_str(refresh_func);
 	//[self setCycleFunc:s];
-	cycle_func = savestr(s);
+	refresh_func = savestr(s);
 
-	[self enableUpdates];
+	[self enableRefreshEventProcessing];
 }
 
--(void) set_cycle_done_func:(const char *)s
+-(void) setAfterAnimation:(const char *)s
 {
-	if( cycle_done_func != NULL ) rls_str(cycle_done_func);
-	//[self setCycleFunc:s];
-	cycle_done_func = savestr(s);
-fprintf(stderr,"set_cycle_done_func:  func = '%s'\n",cycle_done_func);
-
-	[self enableUpdates];
+	if( afterAnimation != NULL ) rls_str(afterAnimation);
+	afterAnimation = savestr(s);
+	animationStarted = 0;
+	[self enableRefreshEventProcessing];
 }
 
 #ifdef BUILD_FOR_IOS
@@ -85,8 +81,8 @@ fprintf(stderr,"set_cycle_done_func:  func = '%s'\n",cycle_done_func);
 	if( (QI_QV(self)).baseTime == 0 ){
 		[QI_QV(self) setBaseTime:t];
 	}
-//sprintf(DEFAULT_ERROR_STRING,"_refresh:  t = %g, base_time = %g",t,(QI_QV(self)).baseTime);
-//sprintf(DEFAULT_ERROR_STRING,"_refresh:  _vbl_count = %d, _frame_duration = %d",_vbl_count,_frame_duration);
+//sprintf(DEFAULT_ERROR_STRING,"_onScreenRefresh:  t = %g, base_time = %g",t,(QI_QV(self)).baseTime);
+//sprintf(DEFAULT_ERROR_STRING,"_onScreenRefresh:  _vbl_count = %d, _frame_duration = %d",_vbl_count,_frame_duration);
 //NADVISE(DEFAULT_ERROR_STRING);
 	sprintf(time_buf,"%g",t - (QI_QV(self)).baseTime);
 	assign_var(DEFAULT_QSP_ARG  "refresh_time", time_buf );
@@ -102,38 +98,24 @@ fprintf(stderr,"set_cycle_done_func:  func = '%s'\n",cycle_done_func);
 
 #endif // BUILD_FOR_IOS
 
--(void) run_cycle_func
+-(void) exec_refresh_func
 {
 	// This is a one-shot
-	[self disableUpdates];
+	[self disableRefreshEventProcessing];
 
 #ifdef BUILD_FOR_IOS
 	[self setRefreshTime];
 #endif // BUILD_FOR_IOS
 
-	chew_text(DEFAULT_QSP_ARG  cycle_func, "(refresh event)");
+	chew_text(DEFAULT_QSP_ARG  refresh_func, "(refresh event)");
 }
 
--(void) cycle_done
+-(void) animationDone
 {
 	// Called at the end of a one-shot
-	[self disableUpdates];
-	if( cycle_done_func != NULL )
-		chew_text(DEFAULT_QSP_ARG  cycle_done_func, "(refresh event)");
-}
-
--(void) check_cycle
-{
-	/* If there is no cycle_func, we count up until we cycle frames */
-
-	if( _vbl_count < _frame_duration ){
-		// Give this frame more time
-		_vbl_count ++;
-	} else {
-		// Time to cycle
-		_vbl_count = 1;		// We count the new frame
-//fprintf(stderr,"refresh:  cycling image\n",_vbl_count);
-		[self cycle_images];
+	[self disableRefreshEventProcessing];
+	if( afterAnimation != NULL ){
+		chew_text(DEFAULT_QSP_ARG  afterAnimation, "(refresh event)");
 	}
 }
 
@@ -154,60 +136,33 @@ fprintf(stderr,"set_cycle_done_func:  func = '%s'\n",cycle_done_func);
 // frame was not displayed.  So we would like to display a counter in our PVT as well
 // so that we can see if we have the same problem!
 
--(void) _refresh
+-(void) _onScreenRefresh
 {
 	/* This used to be after the first block - not sure what it is for??? */
 	/*
 	if( _flags & QI_CHECK_TIMESTAMP ){
 		t = [_updateTimer timestamp];
-		fprintf(stderr,"_refresh:  elapsed time is %g\n",t-_time0);
+		fprintf(stderr,"_onScreenRefresh:  elapsed time is %g\n",t-_time0);
 		_time0 = t;
 	}
 	*/
 
-	if( cycle_func != NULL ){
-		[self run_cycle_func];
-	}
-	/*
-	else if( self.frameQueue != NULL ){
-		[self frameFromQueue];
-	}
-	*/
-	else {
-		[self check_cycle];
+	if( refresh_func != NULL ){
+		[self exec_refresh_func];
+	} else {
+		if( afterAnimation != NULL && animationStarted ){
+			if( ! self.animating ){
+				[self animationDone];
+			}
+		}
 	}
 }
 
--(void) cycle_images
+-(void) startAnimation
 {
-	// Rotate the subviews.
-	// the highest index in the array is in the front,
-	// 0 is the rear-most, we bring it to the front.
-	//
-	// To support one-shot mode, we need to maintain a count
-	// of how many images there are in the stack?
-
-#ifdef BUILD_FOR_IOS
-	if( _n_frames_to_cycle > 0 ){
-//fprintf(stderr,"cycle_images:  %d frames to cycle remaining\n",_n_frames_to_cycle);
-		_n_frames_to_cycle --;
-	} else if( _n_frames_to_cycle == 0 ){
-		[self cycle_done];
-		return;
-	}
-	// set this to a negative number for looping free-run
-
-
-	NSArray *a;
-	a=self.subviews;
-	if( a == NULL ) return;
-
-	UIView *v;
-	v= [a objectAtIndex:0];
-	if( v == NULL ) return;
-
-	[self bringSubviewToFront:v];
-#endif // BUILD_FOR_IOS
+	animationStarted = 1;
+	// enableRefreshEventProcessing is called if an when we set afterAnimation
+	[self startAnimating];
 }
 
 -(NSInteger) subviewCount
@@ -233,7 +188,6 @@ fprintf(stderr,"set_cycle_done_func:  func = '%s'\n",cycle_done_func);
 -(void) reveal
 {
 #ifdef BUILD_FOR_IOS
-fprintf(stderr,"reveal:  bringing subview to front...\n");
 	[self.superview bringSubviewToFront:self];
 #endif
 }
@@ -278,24 +232,24 @@ fprintf(stderr,"reveal:  bringing subview to front...\n");
 	[ self.frameQueue addObject:uii_p];	// adds at end of array
 }
 
--(void) enableUpdates
+-(void) enableRefreshEventProcessing
 {
 	if( _flags & QI_TRAP_REFRESH ){
-		NADVISE("quipImages enableUpdates:  WARNING refresh processing is already enabled!?");
+		NADVISE("quipImages enableRefreshEventProcessing:  WARNING refresh processing is already enabled!?");
 		return;
 	}
 #ifdef BUILD_FOR_IOS
 
 	// What does _updateTimer do???
 
-//fprintf(stderr,"enableUpdates:  adding updateTimer to run loop?\n");
+//fprintf(stderr,"enableRefreshEventProcessing:  adding updateTimer to run loop?\n");
 	[_updateTimer addToRunLoop:[NSRunLoop currentRunLoop]
 			forMode:NSDefaultRunLoopMode];
 #endif // BUILD_FOR_IOS
 	_flags |= QI_TRAP_REFRESH;
 }
 
--(void) disableUpdates
+-(void) disableRefreshEventProcessing
 {
 #ifdef BUILD_FOR_IOS
 	[_updateTimer
@@ -303,42 +257,6 @@ fprintf(stderr,"reveal:  bringing subview to front...\n");
 		forMode:NSDefaultRunLoopMode];
 #endif // BUILD_FOR_IOS
 	_flags &= ~QI_TRAP_REFRESH;
-}
-
-// We don't do this by default to avoid bogging things down...
-// Disable with a requested duration <= 0
-//
-// Now that we use iOS's built-in animation facility, do we still need this?
-// What about for PVT?
-
--(void) set_refresh:(int) duration
-{
-fprintf(stderr,"set_refresh(%d):  BEGIN\n",duration);
-	if( duration > 0 ){
-fprintf(stderr,"set_refresh(%d):  enabling updates\n",duration);
-		_frame_duration = duration;
-
-#ifdef BUILD_FOR_IOS
-		NSArray *a;
-		a=self.subviews;
-		_n_frames_to_cycle = (int) a.count;
-#endif // BUILD_FOR_IOS
-
-		[self enableUpdates];
-	} else {
-		if( (_flags & QI_TRAP_REFRESH) == 0 ){
-#ifdef BUILD_FOR_IOS
-			sprintf(DEFAULT_ERROR_STRING,
-		"set_refresh:  refresh processing is already disabled for viewer %s!?",
-				VW_NAME(QI_VW(self)));
-			NADVISE(DEFAULT_ERROR_STRING);
-			// We get this message when we flip windows around - why?
-#endif // BUILD_FOR_IOS
-			return;
-		}
-		[self disableUpdates];
-		_frame_duration = 0;
-	}
 }
 
 -(id)initWithSize:(CGSize) size
@@ -356,9 +274,8 @@ fprintf(stderr,"set_refresh(%d):  enabling updates\n",duration);
 	_flags = 0;	// make sure we're not refreshing
 	_vbl_count = 0;
 	_frame_duration = 15;	// Default is 4 fps for debugging
-	_n_frames_to_cycle = 0;	// no animation
-	cycle_func=NULL;
-	cycle_done_func=NULL;
+	refresh_func=NULL;
+	afterAnimation=NULL;
 	frameQueue = NULL;
 
 #ifdef BUILD_FOR_IOS
@@ -370,7 +287,7 @@ fprintf(stderr,"set_refresh(%d):  enabling updates\n",duration);
 
 	_updateTimer = [CADisplayLink
 			displayLinkWithTarget:self
-			selector:@selector(_refresh)];
+			selector:@selector(_onScreenRefresh)];
 //fprintf(stderr,"initWithSize:  created updateTimer\n");
 #endif // BUILD_FOR_IOS
 

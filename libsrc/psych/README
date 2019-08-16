@@ -1,0 +1,18 @@
+	this is a general package for running experiments
+
+	OLD:  this was a library that we linked with, providing our
+	own c-callable routines for stimulus delivery and parameter
+	modification.
+	The responsibilities of the caller of exprmnt() :
+
+		define the following global fuction ptrs:
+		int (*stim_func)(), (*modrt)();
+		initrt points to a routine which is called before each run
+
+	stimrt pts to a routine called with two integer args: class, val
+	modrt pts to a routine to modify stimulus parameters
+
+	NEW:  everything should be script-based.  Instead of providing a
+	c-callable stimulus routine, for each condition we provide a macro
+	to be called.
+

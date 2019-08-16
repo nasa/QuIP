@@ -185,7 +185,7 @@ void write_summary_data( Summary_Data_Tbl *sdt_p, FILE *fp )
 				);
 }
 
-void write_sequential_data( Sequential_Data_Tbl *qdt_p, FILE *fp )
+void _write_sequential_data(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p, FILE *fp )
 {
 	Node *np;
 	List *lp;
@@ -194,12 +194,28 @@ void write_sequential_data( Sequential_Data_Tbl *qdt_p, FILE *fp )
 	lp = SEQ_DTBL_LIST(qdt_p);
 	assert(lp!=NULL);
 	np = QLIST_HEAD(lp);
+	if( np == NULL ){
+		prt_msg("\tNo sequence data.");
+		return;
+	}
+
+	sprintf(MSG_STR,"\t%s\t%s\t%s\t%s\t%s",
+		"class","stair","val","resp","correct_resp");
+	prt_msg(MSG_STR);
+
 	while(np!=NULL){
 		Sequence_Datum *qd_p;
 		qd_p = NODE_DATA(np);
-        // BUG - should do something to write this here???
-        fprintf(stderr,"BUG - not writing sequential data at 0x%lx!?",(long)qd_p);
-        np = NODE_NEXT(np);
+		
+		sprintf(MSG_STR,"\t%d\t%d\t%d\t%d\t%d",
+			qd_p->sqd_class_idx,
+			qd_p->sqd_stair_idx,
+			qd_p->sqd_xval_idx,
+			qd_p->sqd_response,
+			qd_p->sqd_correct_response
+			);
+		prt_msg(MSG_STR);
+        	np = NODE_NEXT(np);
 	}
 }
 
@@ -555,7 +571,6 @@ void close_dribble(void)
 {
 	fclose(drib_file);
 	drib_file=NULL;
-	//CLEAR_EXP_FLAGS(DRIBBLING);
 }
 
 void set_dribble_file(FILE *fp) { drib_file=fp; }

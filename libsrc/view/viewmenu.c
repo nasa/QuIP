@@ -507,6 +507,19 @@ static COMMAND_FUNC( do_stop_animation )
 #endif // BUILD_FOR_OBJC
 }
 
+static COMMAND_FUNC( do_after_animation )
+{
+	Viewer *vp;
+	char *s;
+
+	GET_VIEWER("do_stop_animation");
+	s = nameof("text to interpret when animation finishes");
+	if( vp == NULL ) return;
+#ifdef BUILD_FOR_OBJC
+	exec_after_animation(vp,s);
+#endif // BUILD_FOR_OBJC
+}
+
 static COMMAND_FUNC( do_lock_orientation )
 {
 	Viewer *vp;
@@ -554,6 +567,7 @@ ADD_CMD( genwin,	do_genwin_menu,	general window operations submenu )
 ADD_CMD( show,		do_show_viewer,	display viewing window )
 ADD_CMD( unshow,	do_unshow_viewer,	hide viewing window )
 ADD_CMD( animate,	do_animate_viewer,	start viewer animation with parameters)
+ADD_CMD( after_animation,	do_after_animation,	specify script to execute after animation ends)
 ADD_CMD( stop_animation,	do_stop_animation,	stop viewer animation)
 ADD_CMD( cycle,		do_cycle_viewer,	cycle images associated with a viewer)
 ADD_CMD( queue_frame,	do_queue_frame,		queue an animation frame for display in a viewer )

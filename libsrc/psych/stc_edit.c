@@ -22,14 +22,14 @@ static Param stair_ptbl[]={
 
 static COMMAND_FUNC( edit_stair )
 {
-	Staircase *stcp;
+	Staircase *stc_p;
 
-	stcp = pick_stair("");
-	if( stcp== NULL ) return;
+	stc_p = pick_stair("");
+	if( stc_p== NULL ) return;
 
-	memcpy(&s1,stcp,sizeof(*stcp));
+	memcpy(&s1,stc_p,sizeof(*stc_p));
 	chngp(QSP_ARG stair_ptbl);
-	memcpy(stcp,&s1,sizeof(*stcp));
+	memcpy(stc_p,&s1,sizeof(*stc_p));
 }
 
 static const char *type_list[]={ "up_down","two_to_one","three_to_one" };
@@ -65,37 +65,48 @@ static COMMAND_FUNC( do_add_stair )
 
 static COMMAND_FUNC( do_del_stair )
 {
-	Staircase *stcp;
+	Staircase *stc_p;
 
-	stcp=pick_stair( "" );
-	if( stcp == NULL ) return;
-	del_stair(stcp);
+	stc_p=pick_stair( "" );
+	if( stc_p == NULL ) return;
+	del_stair(stc_p);
 }
 
 static COMMAND_FUNC(do_list_stairs){list_stairs(tell_msgfile());}
 
+#ifdef FOOBAR
+// redundant with one_resp in exp.c !?
+
 static COMMAND_FUNC( do_step_stair )
 {
-	Staircase *stcp;
+	Staircase *stc_p;
 	int resp;
 
-	stcp=pick_stair( "" );
-	resp = collect_response("response");
+	stc_p=pick_stair( "" );
+	resp = get_response(stc_p,exp_p);
 
-	if( stcp == NULL ) return;
+	if( stc_p == NULL ) return;
 
-	save_response(resp,stcp);
+	save_response(resp,stc_p);
+}
+#endif // FOOBAR
+
+static COMMAND_FUNC( do_del_all )
+{
+	delete_all_stairs();
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(staircases_menu,s,f,h)
+
+// BUG this menu is redundant with stc_menu!!!
 
 MENU_BEGIN(staircases)
 ADD_CMD( add,		do_add_stair,	add a staircase )
 ADD_CMD( list,		do_list_stairs,	list currently specified staircases )
 ADD_CMD( edit,		edit_stair,	edit a particular staircase )
-ADD_CMD( step,		do_step_stair,	step a staircase )
+//ADD_CMD( step,		do_step_stair,	step a staircase )
 ADD_CMD( delete,	do_del_stair,	delete a staircase )
-ADD_CMD( Delete,	del_all_stairs,	delete all staircases )
+ADD_CMD( delete_all,	do_del_all,	delete all staircases )
 MENU_END(staircases)
 
 COMMAND_FUNC( staircase_menu )

@@ -8,23 +8,16 @@ typedef enum {
 } Table_Item_Type;
 
 #ifdef BUILD_FOR_OBJC
-/* This file is only used in ios - for the present */
 
-//#include "quipAppDelegate.h"
-//#include "quipViewController.h"
-//#include "quipView.h"
 #include "quipTableViewController.h"
 
 #include "ios_item.h"
 #include "panel_obj.h"
 
-//#include "gen_win.h"
-
 @interface Nav_Panel : IOS_Item
 // the group list might be better as NSMutableArray?
 @property (retain) IOS_List *		groups;		// list of groups
 @property (retain) IOS_Item_Context *	grp_icp;	// context for group names
-//@property (retain) IOS_Item_Context *	itm_icp;	// context for item names
 @property (retain) quipTableViewController *	qnc;		// do we need a per-panel controller?
 +(void) initClass;
 -(void) setDoneAction:(const char *)action;
@@ -109,7 +102,7 @@ extern void set_autorotation_allowed(BOOL yesno);
 #else // ! BUILD_FOR_OBJC
 
 
-
+// emulation of iOS behavior using motif - sort of a hack
 
 
 typedef struct nav_panel {
@@ -187,6 +180,8 @@ ITEM_INTERFACE_PROTOTYPES(Nav_Item,nav_item)
 
 
 #endif // ! BUILD_FOR_OBJC
+
+
 
 #define init_nav_panels()	_init_nav_panels(SINGLE_QSP_ARG)
 #define pick_nav_panel(s)	_pick_nav_panel(QSP_ARG  s)

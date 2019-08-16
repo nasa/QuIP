@@ -764,6 +764,7 @@ extern void display_to_shm_viewer(Viewer *vp,Data_Obj *dp);
 // ios_supp.c
 extern void set_viewer_animation(Viewer *vp, int frame_duration, int n_repeats);
 extern void stop_viewer_animation(Viewer *vp);
+extern void exec_after_animation(Viewer *vp,const char *s);
 
 #endif // BUILD_FOR_OBJC
 

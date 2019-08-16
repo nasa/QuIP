@@ -829,7 +829,7 @@ static QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
 		return NULL;
 	}
 
-fprintf(stderr,"objc_img_for_dp will create a new image for %s\n",OBJ_NAME(dp));
+//fprintf(stderr,"objc_img_for_dp will create a new image for %s\n",OBJ_NAME(dp));
 	myimg = cg_image_for_obj(dp,little_endian_flag);
 
 #ifdef BUILD_FOR_IOS
@@ -896,8 +896,8 @@ static void insure_viewer_images(Viewer *vp)
 	size.width = VW_WIDTH(vp);
 	size.height = VW_HEIGHT(vp);
 
-fprintf(stderr,"insure_viewer_images %s:  will create quipImages with width %d and height %d\n",
-VW_NAME(vp),VW_WIDTH(vp),VW_HEIGHT(vp));
+//fprintf(stderr,"insure_viewer_images %s:  will create quipImages with width %d and height %d\n",
+//VW_NAME(vp),VW_WIDTH(vp),VW_HEIGHT(vp));
 
 	qip=[[quipImages alloc]initWithSize:size];
 
@@ -961,8 +961,8 @@ static quipImageView * insure_viewer_has_image( Viewer *vp, Data_Obj *dp, int x,
 		// so the above check doesn't really do much...
 		// are new subviews added at the back or front??
 
-fprintf(stderr,"insure_viewer_has_image:  %s has %d subviews before adding %s\n",
-VW_NAME(vp),[VW_IMAGES(vp) subviewCount],OBJ_NAME(dp));
+//fprintf(stderr,"insure_viewer_has_image:  %s has %d subviews before adding %s\n",
+//VW_NAME(vp),[VW_IMAGES(vp) subviewCount],OBJ_NAME(dp));
 
 		[VW_IMAGES(vp) addSubview:qiv_p];
 	}
@@ -986,7 +986,7 @@ static UIImage * insure_object_has_uiimage(Data_Obj *dp)
 		if( uii_list == NULL ){
 			uii_list = [[NSMutableArray alloc] init];
 		}
-fprintf(stderr,"insure_object_has_uiimage will insert uii_p to list\n");
+//fprintf(stderr,"insure_object_has_uiimage will insert uii_p to list\n");
 		[ uii_list addObject:uii_p];	// adds at end of array
 
 	} else {
@@ -1071,8 +1071,13 @@ void _forget_frame( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 			VW_NAME(vp));
 		warn(ERROR_STRING);
 		return;
-	}
-fprintf(stderr,"forget_frame will forget %s\n",OBJ_NAME(dp));
+
+    
+    
+    
+    
+    }
+//fprintf(stderr,"forget_frame will forget %s\n",OBJ_NAME(dp));
 	forget_uiimage(uii_p);
 	INIT_OBJ_UI_IMG(dp,NULL);
 }
@@ -1096,7 +1101,7 @@ quipImageView *image_view_for_viewer(Viewer *vp)
 	CGRect frame;
 
 	if( VW_QIV(vp) != NULL ){
-fprintf(stderr,"image_view_for_viewer returing existing image view 0x%lx for viewer %s\n",(long)VW_QIV(vp),VW_NAME(vp));
+//fprintf(stderr,"image_view_for_viewer returing existing image view 0x%lx for viewer %s\n",(long)VW_QIV(vp),VW_NAME(vp));
 		return VW_QIV(vp);
 	}
 
@@ -1112,8 +1117,8 @@ fprintf(stderr,"image_view_for_viewer returing existing image view 0x%lx for vie
 		insure_viewer_images(vp);
 	}
 
-fprintf(stderr,"adding subview 0x%lx to images 0x%lx, viewer = 0x%lx...\n",
-(long)qiv_p,(long)VW_IMAGES(vp),(long)vp);
+//fprintf(stderr,"adding subview 0x%lx to images 0x%lx, viewer = 0x%lx...\n",
+//(long)qiv_p,(long)VW_IMAGES(vp),(long)vp);
 	[VW_IMAGES(vp) addSubview:qiv_p];
 
 #ifdef BUILD_FOR_MACOS
@@ -1124,7 +1129,7 @@ fprintf(stderr,"adding subview 0x%lx to images 0x%lx, viewer = 0x%lx...\n",
 	// For a movie, if we render them in the order
 	// we want them played, then we can move from back-to-front...
 #ifdef BUILD_FOR_IOS
-fprintf(stderr,"bringing subview to front...\n");
+//fprintf(stderr,"bringing subview to front...\n");
 	[VW_IMAGES(vp) bringSubviewToFront:qiv_p];
 #endif // BUILD_FOR_IOS
 
@@ -1140,7 +1145,7 @@ fprintf(stderr,"bringing subview to front...\n");
 void set_backlight(CGFloat l)
 {
 	//CGFloat level = l;
-fprintf(stderr,"Setting backlight to %g\n",l);
+//fprintf(stderr,"Setting backlight to %g\n",l);
 	[[UIScreen mainScreen] setBrightness:l];
 }
 
@@ -1453,7 +1458,7 @@ int get_string_width(Viewer *vp, const char *s)
 	}
 
 	if( ! VW_TXT_MTRX_READY(vp) ){
-fprintf(stderr,"get_string_width(%s) calling init_text_font\n",s);
+//fprintf(stderr,"get_string_width(%s) calling init_text_font\n",s);
 		// this has to be here for get_string_offset to work...
 		init_text_font(vp);
 	}
@@ -1532,6 +1537,12 @@ void stop_viewer_animation(Viewer *vp)
 	[VW_IMAGES(vp) stopAnimating];
 }
 
+void exec_after_animation(Viewer *vp, const char *s)
+{
+	assert( VW_IMAGES(vp) != NULL );
+	[VW_IMAGES(vp) setAfterAnimation:s];
+}
+
 void set_viewer_animation(Viewer *vp, int frame_duration, int repeat_count)
 {
 	insure_viewer_images(vp);
@@ -1553,13 +1564,13 @@ void set_viewer_animation(Viewer *vp, int frame_duration, int repeat_count)
 	}
 	nf = frame_queue.count;
 	dur = nf * (1.0/60.0) * frame_duration;	// frame_duration measured in refreshes
-fprintf(stderr,"set_viewer_animation:  frame_duration = %d, dur = %g\n",frame_duration,dur);
+//fprintf(stderr,"set_viewer_animation:  frame_duration = %d, dur = %g\n",frame_duration,dur);
 
 	[VW_IMAGES(vp) setAnimationImages:frame_queue];
 	[VW_IMAGES(vp) setAnimationRepeatCount:repeat_count];	// 0 for looping
 	[VW_IMAGES(vp) setAnimationDuration:dur];
 	// default is 30 fps???
 
-	[VW_IMAGES(vp) startAnimating];
+	[VW_IMAGES(vp) startAnimation];		// not the system method!
 }
 

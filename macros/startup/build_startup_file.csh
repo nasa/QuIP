@@ -176,9 +176,10 @@ else if( $flavor == csf ) then
   set file_list=( utilz cache console )
   source add_files.csh
 
-  set subdir=$extra_macro_dir/pvt
-  set file_list=( pvt dashboard pvt_params pvt_dist pvt_plot )
-  source add_files.csh
+  # why put PVT stuff in CSF???
+  #set subdir=$extra_macro_dir/pvt
+  #set file_list=( pvt dashboard pvt_params pvt_dist pvt_plot )
+  #source add_files.csh
 
   set subdir=data
   set file_list=( string_edit set_sizes )

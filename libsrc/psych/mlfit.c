@@ -57,6 +57,8 @@ static void _set_float_var(QSP_ARG_DECL  const char *name, double v)
 void set_fcflag(int flg)
 { fc_flag=flg; }
 
+#define NO_GOOD		(-2.0)		// special flag value...
+
 double _regr(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int first)
 /* =1 if the first iteration */
 {

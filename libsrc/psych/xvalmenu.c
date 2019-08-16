@@ -6,7 +6,8 @@
  *	The responsibilities of the caller of exprmnt() :
  *
  *		define the following global fuction ptrs:
- *		int (*stmrt)(), (*modrt)();
+ *		int (*stim_func)(), (*modrt)();
+ *		optional:  resp_func...
  *		initrt points to a routine which is called before each run
  *
  *	stimrt pts to a routine called with two integer args: class, val

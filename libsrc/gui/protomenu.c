@@ -733,13 +733,8 @@ static COMMAND_FUNC( do_nav_menu )
 
 static COMMAND_FUNC( do_push_nav )
 {
-	//Panel_Obj *po;
 	Gen_Win *gwp;
 	const char *s;
-
-	// Are nav panels really regular panels???
-	//po = pick_panel("");
-	//if( po == NULL ) return;
 
 	s = NAMEOF("name of panel or viewer");
 	gwp = find_genwin(s);
