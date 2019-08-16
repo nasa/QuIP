@@ -3892,8 +3892,12 @@ static const char *name_for_ref( Reference *ref_p )
 static void dump_ref( Identifier *idp )
 {
 	Reference *refp;
-    assert(idp!=NULL);
-	fprintf(stderr,"Showing reference info for identifier %s\n",ID_NAME(idp));
+	assert(idp!=NULL);
+	refp = ID_REF(idp);
+	assert(refp!=NULL);
+
+	fprintf(stderr,"Showing reference info for identifier %s:\n",ID_NAME(idp));
+	fprintf(stderr,"\tReference name: %s\n", name_for_ref(refp) );
 }
 
 long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
