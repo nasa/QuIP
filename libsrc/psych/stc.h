@@ -41,6 +41,7 @@ typedef struct trial_class {
 	Data_Obj *		tc_xval_dp;
 	Summary_Data_Tbl *	tc_sdt_p;
 	Sequential_Data_Tbl *	tc_qdt_p;
+	List *			tc_staircase_lp;
 } Trial_Class;
 
 #define CLASS_NAME(tc_p)		(tc_p)->tc_item.item_name
@@ -51,6 +52,7 @@ typedef struct trial_class {
 #define CLASS_SUMM_DTBL(tc_p)		(tc_p)->tc_sdt_p
 #define CLASS_SEQ_DTBL(tc_p)		(tc_p)->tc_qdt_p
 #define CLASS_XVAL_OBJ(tc_p)		(tc_p)->tc_xval_dp
+#define CLASS_STAIRCASES(tc_p)		(tc_p)->tc_staircase_lp
 
 #define SET_CLASS_STIM_CMD(tc_p,v)	(tc_p)->tc_stim_cmd = v
 #define SET_CLASS_RESP_CMD(tc_p,v)	(tc_p)->tc_resp_cmd = v
@@ -59,6 +61,7 @@ typedef struct trial_class {
 #define SET_CLASS_SUMM_DTBL(tc_p,v)	(tc_p)->tc_sdt_p = v
 #define SET_CLASS_SEQ_DTBL(tc_p,v)	(tc_p)->tc_qdt_p = v
 #define SET_CLASS_XVAL_OBJ(tc_p,v)	(tc_p)->tc_xval_dp = v
+#define SET_CLASS_STAIRCASES(tc_p,v)	(tc_p)->tc_staircase_lp = v
 
 #define summ_data_t	short
 #define SUMM_DATA_PREC	PREC_IN
@@ -342,8 +345,14 @@ ITEM_INTERFACE_PROTOTYPES(Staircase,stair)
 #define list_stairs(fp)	_list_stairs(QSP_ARG  fp)
 #define stair_list()	_stair_list(SINGLE_QSP_ARG)
 
+extern void _reset_class(QSP_ARG_DECL  Trial_Class *tc_p);
+#define reset_class(tc_p) _reset_class(QSP_ARG  tc_p)
+
 extern void _reset_stair(QSP_ARG_DECL  Staircase *st_p);
 #define reset_stair(st_p) _reset_stair(QSP_ARG  st_p)
+
+extern void _print_class_info(QSP_ARG_DECL  Trial_Class *tc_p);
+#define print_class_info(tc_p) _print_class_info(QSP_ARG  tc_p)
 
 extern void _print_stair_info(QSP_ARG_DECL  Staircase *stc_p);
 #define print_stair_info(stc_p) _print_stair_info(QSP_ARG  stc_p)

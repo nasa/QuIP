@@ -443,6 +443,30 @@ static int _step(QSP_ARG_DECL Staircase *st_p, Experiment *exp_p)
 	return(rsp);
 }
 
+// reset_class clears the data and resets the staircases
+
+void _reset_class(QSP_ARG_DECL  Trial_Class *tc_p)
+{
+	Node *np;
+
+	clear_summary_data( CLASS_SUMM_DTBL(tc_p) );
+	clear_sequential_data( CLASS_SEQ_DTBL(tc_p) );
+
+	assert(CLASS_STAIRCASES(tc_p)!=NULL);
+	np = QLIST_HEAD( CLASS_STAIRCASES(tc_p) );
+	if( np == NULL ){
+		warn("reset_class:  no staircases!?");
+		return;
+	}
+	while(np!=NULL){
+		Staircase *stc_p;
+		stc_p = NODE_DATA(np);
+		assert(stc_p!=NULL);
+		reset_stair(stc_p);
+		np = NODE_NEXT(np);
+	}
+}
+
 // reset_stair initialized the state variables of the staircase
 
 void _reset_stair(QSP_ARG_DECL  Staircase *st_p)
@@ -474,6 +498,17 @@ void _reset_stair(QSP_ARG_DECL  Staircase *st_p)
 	clear_sequential_data( STAIR_SEQ_DTBL(st_p) );
 }
 
+static void add_stair_to_class(Staircase *st_p,Trial_Class *tc_p)
+{
+	Node *np;
+
+	// BUG? better to use eltcount instead of keeping a variable?
+	SET_CLASS_N_STAIRS(tc_p,CLASS_N_STAIRS(tc_p)+1);
+
+	np = mk_node(st_p);
+	addTail(CLASS_STAIRCASES(tc_p),np);
+}
+
 int _make_staircase( QSP_ARG_DECL  int st,	/* staircase type */
 		Trial_Class *tc_p,	/* staircase class */
 		int mi,		/* mininimum increment */
@@ -481,13 +516,14 @@ int _make_staircase( QSP_ARG_DECL  int st,	/* staircase type */
 		int ir		/* increment response */
 		)
 {
-	char str[64];
+	char str[128];
 	Staircase *st_p;
 	Data_Obj *xv_dp;
 	Summary_Data_Tbl *sdt_p;
 
 	assert( tc_p != NULL );
 
+	// BUG possible buffer overflow
 	sprintf(str,"staircase.%s.%d",CLASS_NAME(tc_p),CLASS_N_STAIRS(tc_p) );
 	st_p = new_stair(str);
 	assert(st_p!=NULL);
@@ -500,7 +536,9 @@ int _make_staircase( QSP_ARG_DECL  int st,	/* staircase type */
 	SET_STAIR_INC_RSP(st_p,ir);
 
 	st_p->stair_index = CLASS_N_STAIRS(tc_p);
-	SET_CLASS_N_STAIRS(tc_p,CLASS_N_STAIRS(tc_p)+1);
+
+	// Must be called AFTER accessing CLASS_N_STAIRS!
+	add_stair_to_class(st_p,tc_p);
 
 	xv_dp = CLASS_XVAL_OBJ(tc_p);
 	assert(xv_dp!=NULL);
@@ -819,8 +857,71 @@ Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 	if( lp == NULL ) n=0;
 	else n=(int)eltcount(lp);
 
+	// BUG?  If a class is deleted, then the available indices
+	// won't match the list length...
+
 	tc_p = new_class_for_index(n);
 	return(tc_p);
+}
+
+// We used to have a global variable for this...
+// This should be OK even if we allow deletion of classes...
+
+static int next_class_index(void)
+{
+	static int class_index = 0;
+	return class_index++;
+}
+
+static void set_class_xval_obj( Trial_Class *tc_p, Data_Obj *dp )
+{
+	if( CLASS_XVAL_OBJ(tc_p) != NULL )
+		remove_reference(CLASS_XVAL_OBJ(tc_p));
+
+	SET_CLASS_XVAL_OBJ(tc_p,dp);
+
+	if( dp != NULL )
+		add_reference(dp);
+}
+
+Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
+{
+	Trial_Class *tc_p;
+	Summary_Data_Tbl *sdt_p;
+
+	// Make sure not in use
+	tc_p = trial_class_of(name);
+	if( tc_p != NULL ){
+		sprintf(ERROR_STRING,"Class name \"%s\" is already in use!?",
+			name);
+		warn(ERROR_STRING);
+		return NULL;
+	}
+
+	tc_p = new_trial_class(name );
+	SET_CLASS_INDEX(tc_p,next_class_index());
+	SET_CLASS_N_STAIRS(tc_p,0);		// do we need this with a list?
+	SET_CLASS_STAIRCASES(tc_p,new_list());
+
+	SET_CLASS_XVAL_OBJ(tc_p,NULL);			// so we don't un-reference garbage
+	set_class_xval_obj(tc_p,global_xval_dp);	// may be null
+
+	sdt_p = new_summary_data_tbl();
+	init_summ_dtbl_for_class(sdt_p,tc_p);
+
+	SET_CLASS_SEQ_DTBL(tc_p,new_sequential_data_tbl());
+	SET_SEQ_DTBL_CLASS( CLASS_SEQ_DTBL(tc_p), tc_p );
+
+	SET_CLASS_STIM_CMD(tc_p, NULL);
+	SET_CLASS_RESP_CMD(tc_p, NULL);
+
+	assert( CLASS_SUMM_DTBL(tc_p) != NULL );
+	clear_summary_data( CLASS_SUMM_DTBL(tc_p) );
+
+	sprintf(MSG_STR,"create_named_class:  created new class '%s' with index %d",CLASS_NAME(tc_p),CLASS_INDEX(tc_p));
+	prt_msg(MSG_STR);
+
+	return tc_p;
 }
 
 // new_class_for_index creates a new class...
@@ -967,6 +1068,48 @@ void _print_stair_info( QSP_ARG_DECL  Staircase *stc_p )
 		);
 	prt_msg(MSG_STR);
 	write_sequential_data( STAIR_SEQ_DTBL(stc_p), tell_msgfile() );
+
+	prt_msg("");
+}
+
+void _print_class_info(QSP_ARG_DECL  Trial_Class *tc_p)
+{
+	Node *np;
+
+	sprintf(MSG_STR,"\nClass %s:\n",CLASS_NAME(tc_p));
+	prt_msg(MSG_STR);
+
+	sprintf(MSG_STR,"\tIndex: %d",CLASS_INDEX(tc_p));
+	prt_msg(MSG_STR);
+	sprintf(MSG_STR,"\tStimulus command: '%s'",CLASS_STIM_CMD(tc_p));
+	prt_msg(MSG_STR);
+	sprintf(MSG_STR,"\tResponse command: '%s'",CLASS_RESP_CMD(tc_p));
+	prt_msg(MSG_STR);
+	sprintf(MSG_STR,"\tX-value object: %s",OBJ_NAME(CLASS_XVAL_OBJ(tc_p)) );
+	prt_msg(MSG_STR);
+
+	sprintf(MSG_STR,"\n\tStaircases (%d):",CLASS_N_STAIRS(tc_p) );
+	prt_msg(MSG_STR);
+	np = QLIST_HEAD( CLASS_STAIRCASES(tc_p) );
+	while(np!=NULL){
+		Staircase *stc_p;
+		stc_p = NODE_DATA(np);
+		sprintf(MSG_STR,"\t\t%s",STAIR_NAME(stc_p) );
+		prt_msg(MSG_STR);
+		np = NODE_NEXT(np);
+	}
+
+	sprintf(MSG_STR,"\n\tSummary data (%s):\n",
+		SUMM_DTBL_NEEDS_SAVING(CLASS_SUMM_DTBL(tc_p)) ? "needs to be saved" : "saved/empty"
+		);
+	prt_msg(MSG_STR);
+	write_summary_data( CLASS_SUMM_DTBL(tc_p), tell_msgfile() );
+
+	sprintf(MSG_STR,"\n\tSequential data (%s):\n",
+		SEQ_DTBL_NEEDS_SAVING(CLASS_SEQ_DTBL(tc_p)) ? "needs to be saved" : "saved/empty"
+		);
+	prt_msg(MSG_STR);
+	write_sequential_data( CLASS_SEQ_DTBL(tc_p), tell_msgfile() );
 
 	prt_msg("");
 }
