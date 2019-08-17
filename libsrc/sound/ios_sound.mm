@@ -101,7 +101,6 @@ static void init_timebase_info(SINGLE_QSP_ARG_DECL)
 	} else {
 		mtbi_p = (&mtbi);
 		hTime2nsFactor = ((double)mtbi.numer)/mtbi.denom;
-fprintf(stderr,"hTime2nsFactor = %g\n",hTime2nsFactor);
 	}
 }
 
@@ -466,7 +465,6 @@ fprintf(stderr,"init_ios_audio_session:  already initialized!?\n");
 		return -1;
 	}
 
-advise("audio session activated...");
 	return 0;
 }
 #endif // FOOBAR
@@ -480,7 +478,6 @@ static void stop_audio_input(SINGLE_QSP_ARG_DECL)
 		return;
 	}
 
-advise("Calling AudioQueueStop!");
 	status = AudioQueueStop(audio_input_queue,true);
 	if( status != 0 )
 		report_audio_error(QSP_ARG  status);
@@ -498,7 +495,6 @@ static void stop_audio_output(SINGLE_QSP_ARG_DECL)
 		return;
 	}
 
-advise("Calling AudioQueueStop!");
 	status = AudioQueueStop(audio_output_queue,false);
 	if( status != 0 )
 		report_audio_error(QSP_ARG  status);
@@ -649,7 +645,6 @@ static void init_ios_audio_output(SINGLE_QSP_ARG_DECL)
 	in_fmt.mBytesPerPacket = in_fmt.mFramesPerPacket * in_fmt.mBytesPerFrame;
 	in_fmt.mBitsPerChannel = 8 * sizeof (SInt32);
 
-advise("Calling AudioQueueNewOutput...");
 	status = AudioQueueNewOutput(	&in_fmt,
 					my_output_callback,
 					user_data,
@@ -697,7 +692,6 @@ static void init_ios_audio_input(SINGLE_QSP_ARG_DECL)
 	in_fmt.mBytesPerPacket = in_fmt.mFramesPerPacket * in_fmt.mBytesPerFrame;
 	in_fmt.mBitsPerChannel = 8 * sizeof (SInt32);
 
-advise("Calling AudioQueueNewInput...");
 	status = AudioQueueNewInput(	&in_fmt,
 					/*callback_func*/my_input_callback,
 					user_data,
@@ -746,7 +740,6 @@ static void start_audio_input(SINGLE_QSP_ARG_DECL)
 			report_audio_error(QSP_ARG  status);
 	}
 
-advise("calling AudioQueueStart for input queue...");
 	status = AudioQueueStart(audio_input_queue,NULL);
 	if( status != 0 )
 		report_audio_error(QSP_ARG  status);
@@ -771,12 +764,10 @@ static void start_audio_output(SINGLE_QSP_ARG_DECL)
 			my_output_callback(NULL,audio_output_queue,playback_bufp[i]);
 	}
 
-advise("calling AudioQueueStart for output queue...");
 	// Maybe should not call if already started!?
 	status = AudioQueueStart(audio_output_queue,NULL);
 	if( status != 0 )
 		report_audio_error(QSP_ARG  status);
-advise("start_audio_output will return.");
 }
 
 void audio_init(QSP_ARG_DECL  int mode)
@@ -784,7 +775,6 @@ void audio_init(QSP_ARG_DECL  int mode)
 	//int channels;
 	static int ts_class_inited=0;
 
-advise("audio_init BEGIN");
 	init_ios_audio(QSP_ARG  mode);
 
 	if( ! ts_class_inited ){

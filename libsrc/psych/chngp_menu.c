@@ -59,41 +59,41 @@ static void _make_staircases(QSP_ARG_DECL  Experiment *exp_p)
 
 		/* make_staircase( type, class, mininc, correct rsp, inc rsp ); */
 		for( j=0;j<EXPT_N_UPDN(exp_p);j++)
-			make_staircase( UP_DOWN, tc_p, 1, YES, YES );
+			make_staircase( UP_DOWN, tc_p, 1, YES_INDEX, YES_INDEX );
 		for( j=0;j<EXPT_N_DNUP(exp_p);j++)
-			make_staircase( UP_DOWN, tc_p, -1, YES, YES );
+			make_staircase( UP_DOWN, tc_p, -1, YES_INDEX, YES_INDEX );
 		for(j=0;j<EXPT_N_2UP(exp_p);j++)
 			/*
 			 * 2-up increases val after 2 YES's,
 			 * decreases val after 1 NO
 			 * seeks 71% YES, YES decreasing with val
 			 */
-			make_staircase( TWO_TO_ONE, tc_p, 1, YES, YES );
+			make_staircase( TWO_TO_ONE, tc_p, 1, YES_INDEX, YES_INDEX );
 		for(j=0;j<EXPT_N_2DN(exp_p);j++)
 			/*
 			 * 2-down decreases val after 2 NO's,
 			 * increases val after 1 YES
 			 * Seeks 71% NO, NO increasing with val
 			 */
-			make_staircase( TWO_TO_ONE, tc_p, -1, YES, NO );
+			make_staircase( TWO_TO_ONE, tc_p, -1, YES_INDEX, NO_INDEX );
 		for(j=0;j<EXPT_N_2IUP(exp_p);j++)
 			/*
 			 * 2-inverted-up decreases val after 2 YES's,
 			 * increases val after 1 NO
 			 * Seeks 71% YES, YES increasing with val
 			 */
-			make_staircase( TWO_TO_ONE, tc_p, -1, YES, YES );
+			make_staircase( TWO_TO_ONE, tc_p, -1, YES_INDEX, YES_INDEX );
 		for(j=0;j<EXPT_N_2IDN(exp_p);j++)
 			/*
 			 * 2-inverted-down increases val after 2 NO's,
 			 * decreases val after 1 YES
 			 * Seeks 71% NO, NO decreasing with val
 			 */
-			make_staircase( TWO_TO_ONE, tc_p, 1, YES, NO );
+			make_staircase( TWO_TO_ONE, tc_p, 1, YES_INDEX, NO_INDEX );
 		for(j=0;j<EXPT_N_3UP(exp_p);j++)
-			make_staircase( THREE_TO_ONE, tc_p, 1, YES, YES );
+			make_staircase( THREE_TO_ONE, tc_p, 1, YES_INDEX, YES_INDEX );
 		for(j=0;j<EXPT_N_3DN(exp_p);j++)
-			make_staircase( THREE_TO_ONE, tc_p, -1, YES, NO );
+			make_staircase( THREE_TO_ONE, tc_p, -1, YES_INDEX, NO_INDEX );
 	}
 }
 

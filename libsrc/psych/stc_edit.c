@@ -74,23 +74,6 @@ static COMMAND_FUNC( do_del_stair )
 
 static COMMAND_FUNC(do_list_stairs){list_stairs(tell_msgfile());}
 
-#ifdef FOOBAR
-// redundant with one_resp in exp.c !?
-
-static COMMAND_FUNC( do_step_stair )
-{
-	Staircase *stc_p;
-	int resp;
-
-	stc_p=pick_stair( "" );
-	resp = get_response(stc_p,exp_p);
-
-	if( stc_p == NULL ) return;
-
-	save_response(resp,stc_p);
-}
-#endif // FOOBAR
-
 static COMMAND_FUNC( do_del_all )
 {
 	delete_all_stairs();

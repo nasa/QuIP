@@ -20,18 +20,12 @@
 
 static void null_init(void);
 static void null_mod(QSP_ARG_DECL Trial_Class *);
-static void set_rsp_word(const char **sptr,const char *s,const char *default_str);
 
 /* these two global vars ought to be declared in a .h file ... */
 void (*initrt)(void)=null_init;
 void (*modrt)(QSP_ARG_DECL Trial_Class *)=null_mod;
 
-static char rsp_tbl[N_RESPONSES][64];
-
-static int custom_keys=0;
-//static int dribbling=1;
-
-static const char *response_list[N_RESPONSES];
+Response_Word response_words[N_RESPONSES];	// a global
 
 static void null_init(void)
 {
@@ -76,63 +70,116 @@ void _setup_files(QSP_ARG_DECL  Experiment *exp_p)
 }
 
 
-static void set_rsp_word(const char **sptr,const char *s,const char *default_str)
+static void set_rsp_word(Response_Index idx, const char *s)
 {
-	/* free the old string only if different from the default */
-	if( strcmp(*sptr,default_str) )
-		givbuf((void *)(*sptr));
+	if( response_words[idx].custom != NULL )
+		rls_str(response_words[idx].custom);
 
-	/* save the new string only if different from the default */
-	if( strcmp(s,default_str) ) *sptr=savestr(s);
-	else *sptr=default_str;
+	response_words[idx].custom = savestr(s);
 }
 
 
-void _get_rsp_word(QSP_ARG_DECL const char **sptr,const char *def_rsp)
+void _get_rsp_word(QSP_ARG_DECL Response_Index idx)
 {
-	char buf[LLEN];
+	char pmpt[LLEN];
 	const char *s;
 
-	sprintf(buf,"word %s response",def_rsp);
-	s=nameof(buf);
-	sprintf(buf,"use \"%s\" for %s response",s,def_rsp);
-	if( !confirm(buf) ) return;
+	sprintf(pmpt,"custom '%s' response",response_words[idx].dflt);
+	s=nameof(pmpt);
 
-	set_rsp_word(sptr,s,def_rsp);
+	// only confirm if interactive...
+	if( intractive() ){
+		sprintf(pmpt,"use \"%s\" for '%s' response",s,response_words[idx].dflt);
+		if( !confirm(pmpt) ) return;
+	}
+
+	set_rsp_word(idx,s);
 }
 
+static void get_response_parts(int *ip, const char **sp, Response_Index idx)
+{
+	const char *s;
+	s = response_words[idx].custom;
+	if( s == NULL ){
+		s = response_words[idx].dflt;
+	}
+	*ip = s[0];
+	*sp = s+1;
+}
 
 static void init_response_prompt(char *target_prompt_string,const char *question_string)
 {
-	if( custom_keys ){
-		sprintf(target_prompt_string,
-	"%s? [(%c)%s (yes), (%c)%s (no), (%c)%s (redo), (a)bort] : ",
-			question_string,
-			response_list[YES_INDEX][0],response_list[YES_INDEX]+1,
-			response_list[NO_INDEX][0],response_list[NO_INDEX]+1,
-			response_list[REDO_INDEX][0],response_list[REDO_INDEX]+1
-			);
-	} else {
-		sprintf(target_prompt_string,
-	"%s? [(%c)%s, (%c)%s, (%c)%s, (a)bort] : ",
-			question_string,
-			response_list[YES_INDEX][0],response_list[YES_INDEX]+1,
-			response_list[NO_INDEX][0],response_list[NO_INDEX]+1,
-			response_list[REDO_INDEX][0],response_list[REDO_INDEX]+1
-			);
+	int c1_yes, c1_no, c1_redo;
+	const char *s2_yes, *s2_no, *s2_redo;
+
+	get_response_parts(&c1_yes,&s2_yes,YES_INDEX);
+	get_response_parts(&c1_no,&s2_no,NO_INDEX);
+	get_response_parts(&c1_redo,&s2_redo,REDO_INDEX);
+
+	sprintf(target_prompt_string,
+"%s? [(%c)%s (yes), (%c)%s (no), (%c)%s (redo), (a)bort, (u)ndo previous finger error] : ",
+		question_string, c1_yes,s2_yes, c1_no,s2_no, c1_redo,s2_redo);
+}
+
+static const char *current_response_word(int idx)
+{
+	return response_words[idx].custom == NULL ?
+		response_words[idx].dflt :
+		response_words[idx].custom ;
+}
+
+/* BUG
+ * if we set the redo char to 'r' after we have alread run
+ * (so that "redo" is in the history list, then the response
+ * handler no longer accepts "redo" !?
+ */
+
+int _check_custom_response(QSP_ARG_DECL  int rsp_idx)
+{
+	int idx;
+	const char *r;
+
+	r = current_response_word(rsp_idx);
+
+	for(idx=0;idx<N_RESPONSES;idx++){
+		if( rsp_idx != idx ){
+			const char *w;
+			w = current_response_word(idx);
+			if( r[0] == w[0] ){
+				sprintf(ERROR_STRING,
+	"Responses '%s' (%d) and '%s' (%d) must differ in the 1st character!?",
+					r,rsp_idx, w,idx);
+				warn(ERROR_STRING);
+				return -1;
+			}
+		}
 	}
+	return 0;
+}
+
+static const char ** init_response_choices(void)
+{
+	const char ** s_arr;
+	int idx;
+
+	s_arr = getbuf( sizeof(const char *) * N_RESPONSES );
+	for(idx=0;idx<N_RESPONSES;idx++){
+		s_arr[idx] = current_response_word(idx);
+	}
+	return s_arr;
 }
 
 #define collect_response(exp_p) _collect_response(QSP_ARG  exp_p)
 
 static int _collect_response(QSP_ARG_DECL  Experiment * exp_p)
 {
+	static const char **response_choices=NULL;
 	int n;
 	char rpmtstr[128];	// BUG? possible buffer overflow?
 
 	init_response_prompt(rpmtstr,EXPT_QUESTION(exp_p));
 
-fprintf(stderr,"collect_response:  get_response_from_keyboard = %d\n",IS_USING_KEYBOARD(exp_p));
+fprintf(stderr,"collect_response:  using_keyboard = %d\n",IS_USING_KEYBOARD(exp_p));
 	if( IS_USING_KEYBOARD(exp_p) ){
 #ifndef BUILD_FOR_OBJC
 		redir( tfile(), "/dev/tty" );	/* get response from keyboard */
@@ -141,10 +188,15 @@ fprintf(stderr,"collect_response:  get_response_from_keyboard = %d\n",IS_USING_K
 #endif // BUILD_FOR_OBJC
 	}
 
+	if( response_choices == NULL ) {
+		// BUG with this as a local static var,
+		// we can't ever update it!?
+		response_choices = init_response_choices();
+	}
 
 	do {
 		inhibit_next_prompt_format(SINGLE_QSP_ARG);	// prompt already formatted!
-		n=which_one(rpmtstr,N_RESPONSES,response_list);
+		n = which_one(rpmtstr,N_RESPONSES,response_choices);
 		enable_prompt_format(SINGLE_QSP_ARG);
 	} while( n < 0 );
 
@@ -153,15 +205,16 @@ fprintf(stderr,"collect_response:  get_response_from_keyboard = %d\n",IS_USING_K
 	}
 
 	switch(n){
-		case YES_INDEX:		return(YES); break;
-		case NO_INDEX:		return(NO); break;
-		case REDO_INDEX:	return(REDO); break;
-		case ABORT_INDEX:	Abort=1; return(REDO); break;
+		case YES_INDEX:		return(n); break;
+		case NO_INDEX:		return(n); break;
+		case REDO_INDEX:	return(n); break;
+		case UNDO_INDEX:	return(n); break;
+		case ABORT_INDEX:	Abort=1; return(REDO_INDEX); break;
 		default:
 			assert( AERROR("response:  crazy response value") );
 	}
 	/* should never be reached */
-	return(ABORT);
+	return(ABORT_INDEX);
 }
 
 #define consider_coin(stc_p) _consider_coin(QSP_ARG  stc_p)
@@ -186,9 +239,9 @@ static void _consider_coin(QSP_ARG_DECL  Staircase *stc_p)
        	// analyzer complains coin is a garbage value??? BUG?
 
 	if( coin ){
-		SET_STAIR_CRCT_RSP(stc_p,NO);
+		SET_STAIR_CRCT_RSP(stc_p,NO_INDEX);
 	} else {
-		SET_STAIR_CRCT_RSP(stc_p,YES);
+		SET_STAIR_CRCT_RSP(stc_p,YES_INDEX);
 	}
 }
 
@@ -247,24 +300,25 @@ void _delete_all_trial_classes(SINGLE_QSP_ARG_DECL)
 	assign_reserved_var( "n_classes" , "0" );
 }
 
+#define INIT_RESPONSE_WORD(idx,dflt_val)				\
+	response_words[idx].code = idx;					\
+	response_words[idx].dflt = dflt_val;				\
+	response_words[idx].custom = NULL;
+
 void _init_responses(SINGLE_QSP_ARG_DECL)
 {
 	static int rsp_inited=0;
-	int i;
 
 	if( rsp_inited ){
 		warn("redundant call to init_responses!?");
 		return;
 	}
 
-	strcpy(rsp_tbl[YES_INDEX],RSP_YES);
-	strcpy(rsp_tbl[NO_INDEX],RSP_NO);
-	strcpy(rsp_tbl[REDO_INDEX],RSP_REDO);
-	strcpy(rsp_tbl[ABORT_INDEX],RSP_ABORT);
-
-	// BUG why have response_list AND rsp_tbl ???
-	for(i=0;i<N_RESPONSES;i++)
-		response_list[i] = rsp_tbl[i];
+	INIT_RESPONSE_WORD(YES_INDEX,RSP_YES)
+	INIT_RESPONSE_WORD(NO_INDEX,RSP_NO)
+	INIT_RESPONSE_WORD(REDO_INDEX,RSP_REDO)
+	INIT_RESPONSE_WORD(ABORT_INDEX,RSP_ABORT)
+	INIT_RESPONSE_WORD(UNDO_INDEX,RSP_UNDO)
 
 	rsp_inited=1;
 }

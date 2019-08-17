@@ -309,7 +309,9 @@ static void adj_val(Staircase *st_p, Transition_Code _trans)	/* set the value fo
 }
 
 #define NO_RSP		(-1)
-#define FC_RSP(st_p,rsp)		(STAIR_CRCT_RSP(st_p)==YES?rsp:(rsp^3))
+// BUG this code relies on the codes for YES and NO being 1 and 2, so that XOR with 3 flips them!
+
+#define FC_RSP(st_p,rsp)		(STAIR_CRCT_RSP(st_p)==YES_INDEX?rsp:(rsp^3))
 
 static Transition_Code iftrans(Staircase *st_p,int rsp)	/* see if this response warrants a transition */
 {
@@ -351,6 +353,10 @@ static void tally(Staircase *st_p,int rsp)			/* record new data */
 	assert(st_p!=NULL);
 	assert(STAIR_CLASS(st_p)!=NULL);
 
+	// BUG - we don't really need summary data
+	// as it is redundant with sequential, and is not
+	// corrected for undo's
+
 	assert(CLASS_SUMM_DTBL(STAIR_CLASS(st_p))!=NULL);
 	update_summary(CLASS_SUMM_DTBL(STAIR_CLASS(st_p)),st_p,rsp);
 
@@ -361,6 +367,8 @@ static void tally(Staircase *st_p,int rsp)			/* record new data */
 	assert(CLASS_SEQ_DTBL(STAIR_CLASS(st_p))!=NULL);
 	append_trial(CLASS_SEQ_DTBL(STAIR_CLASS(st_p)),st_p,rsp);
 
+	// BUG - we don't really need per-stair sequential data,
+	// as it is redundant
 	if( STAIR_SEQ_DTBL(st_p) != NULL ){
 		append_trial(STAIR_SEQ_DTBL(st_p),st_p,rsp);
 	}
@@ -376,15 +384,17 @@ static void _give_trial_feedback(QSP_ARG_DECL  int rsp, Staircase *st_p)
 	if( rsp == STAIR_CRCT_RSP(st_p) ){
 		assert( correct_feedback_string != NULL );
 		chew_text(correct_feedback_string, FEEDBACK_FILENAME);
-	} else if( rsp != REDO && rsp != ABORT ){
+	} else if( rsp != REDO_INDEX && rsp != ABORT_INDEX ){
 		assert( incorrect_feedback_string != NULL );
 		chew_text(incorrect_feedback_string, FEEDBACK_FILENAME);
 	}
 }
 
+#define NORMAL_RESPONSE(rsp)	(rsp==YES_INDEX || rsp==NO_INDEX)
+
 /* save_reponse not only saves the response, it also updates the staircase!?  a misnomer... */
 
-void _save_response(QSP_ARG_DECL  int rsp,Staircase *st_p)
+void _process_response(QSP_ARG_DECL  int rsp,Staircase *st_p)
 {
 	/* give feedback if feedback string is set */
 
@@ -401,22 +411,24 @@ void _save_response(QSP_ARG_DECL  int rsp,Staircase *st_p)
 		 */
 
 #ifdef CATCH_SIGS
-	if( Redo || Abort ) rsp=REDO;
+	if( Redo || Abort ) rsp=REDO_INDEX;
 #endif /* CATCH_SIGS */
 
-	if( rsp != REDO ){
+	// After adding undo, we tally all responses.
+	// Add redo and undo to sequential data, but not summary data
+	if( recording ) tally(st_p,rsp);
+
+	if( NORMAL_RESPONSE(rsp) != UNDO_INDEX ){
 		Transition_Code _trans;
-		if( recording ) tally(st_p,rsp);
+
 		_trans= iftrans(st_p,rsp);
 		if( STAIR_INC(st_p) != STAIR_MIN_INC(st_p) ) adj_inc(st_p,_trans);
 		adj_val(st_p,_trans);
-	} else {
-		sprintf(ERROR_STRING,"discarding trial");
+	}
+
+	if( Abort ){
+		sprintf(ERROR_STRING,"aborting run");
 		advise(ERROR_STRING);
-		if( Abort ){
-			sprintf(ERROR_STRING,"aborting run");
-			advise(ERROR_STRING);
-		}
 	}
 }
 
@@ -444,7 +456,7 @@ static int _step(QSP_ARG_DECL Staircase *st_p, Experiment *exp_p)
 
 	rsp=(*response_func)( QSP_ARG st_p, exp_p );
 
-	save_response(rsp,st_p);
+	process_response(rsp,st_p);
 	return(rsp);
 }
 
@@ -478,8 +490,8 @@ void _reset_stair(QSP_ARG_DECL  Staircase *st_p)
 {
 	int n_xvals;
 
-	SET_STAIR_LAST_RSP3(st_p,REDO);
-	SET_STAIR_LAST_RSP(st_p,REDO);
+	SET_STAIR_LAST_RSP3(st_p,REDO_INDEX);
+	SET_STAIR_LAST_RSP(st_p,REDO_INDEX);
 	SET_STAIR_LAST_TRIAL(st_p,NO_TRANS);
 
 
@@ -647,23 +659,18 @@ static void _mk_stair_array(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-#define clear_one_class(tc_p, arg ) _clear_one_class(QSP_ARG  tc_p, arg )
+#define reset_one_class(tc_p, arg ) _reset_one_class(QSP_ARG  tc_p, arg )
 
-static void _clear_one_class(QSP_ARG_DECL  Trial_Class *tc_p, void *arg )
+static void _reset_one_class(QSP_ARG_DECL  Trial_Class *tc_p, void *arg )
 {
-	Summary_Data_Tbl *sdt_p;
-
-
-	sdt_p = CLASS_SUMM_DTBL(tc_p);
-	assert(sdt_p!=NULL);
-	clear_summary_data(sdt_p);
+	reset_class(tc_p);
 }
 
 #define reset_all_classes() _reset_all_classes(SINGLE_QSP_ARG)
 
 void _reset_all_classes(SINGLE_QSP_ARG_DECL)	/* just clears data tables */
 {
-	iterate_over_classes(_clear_one_class,NULL);
+	iterate_over_classes(_reset_one_class,NULL);
 }
 
 
@@ -695,7 +702,7 @@ if( nstairs==0 ) error1("step_all_stairs:  no staircases!?");
 
 	permute(stair_order,nstairs);
 	for(i=0;i<nstairs;i++){
-		if( (!Abort) && step( stair_tbl[ stair_order[i] ], exp_p ) == REDO ){
+		if( (!Abort) && step( stair_tbl[ stair_order[i] ], exp_p ) == REDO_INDEX ){
 			scramble(&stair_order[i], nstairs-i );
 			i--;
 		}
@@ -794,7 +801,7 @@ void set_summary_file(FILE *fp) { summ_file=fp; }
 
 void _add_stair(QSP_ARG_DECL  int type,Trial_Class *tc_p )
 {
-	if( make_staircase(type,tc_p,1,YES,YES) < 0 )
+	if( make_staircase(type,tc_p,1,YES_INDEX,YES_INDEX) < 0 )
 		warn("Error creating staircase!?");
 }
 
@@ -1010,7 +1017,7 @@ void update_summary(Summary_Data_Tbl *sdt_p,Staircase *st_p,int rsp)
 	assert( SUMM_DTBL_SIZE(sdt_p) > 0 );
 	assert( val >= 0 && val < SUMM_DTBL_SIZE(sdt_p) );
 
-	if( rsp != REDO && rsp != ABORT ){
+	if( NORMAL_RESPONSE(rsp) ){
 		SET_DATUM_NTOTAL( SUMM_DTBL_ENTRY(sdt_p,val),
 			1 + DATUM_NTOTAL( SUMM_DTBL_ENTRY(sdt_p,val) ) );
 		if( rsp == STAIR_CRCT_RSP(st_p) ){
@@ -1020,9 +1027,9 @@ fprintf(stderr,"update_summary:  response was correct\n");
 		} else {
 fprintf(stderr,"update_summary:  response was incorrect\n");
 		}
+		SET_SDT_FLAG_BIT(sdt_p, SUMMARY_DATA_DIRTY);
 	}
 
-	SET_SDT_FLAG_BIT(sdt_p, SUMMARY_DATA_DIRTY);
 }
 
 void append_trial( Sequential_Data_Tbl *qdt_p, Staircase *st_p , int rsp )

@@ -8,17 +8,27 @@
 #include "item_obj.h"
 
 typedef enum {
-	YES_INDEX,	//	0
-	NO_INDEX,	//	1
-	REDO_INDEX,	//	2
-	ABORT_INDEX,	//	3
-	N_RESPONSES	//	4
+	UNDO_INDEX,	//	0
+	YES_INDEX,	//	1
+	NO_INDEX,	//	2
+	REDO_INDEX,	//	3
+	ABORT_INDEX,	//	4
+	N_RESPONSES	//	5
 } Response_Index;
+
+typedef struct response_word {
+	Response_Index		code;
+	const char *		dflt;
+	const char *		custom;
+} Response_Word;
 
 #define RSP_YES		"yes"
 #define RSP_NO		"no"
 #define RSP_REDO	"redo"
 #define RSP_ABORT	"abort"
+#define RSP_UNDO	"undo"		// newly introduced to note a finger error on the previous response
+					// will redo the current trial, but not the one with the error
+extern Response_Word response_words[N_RESPONSES];
 
 typedef struct trial_response {
 	int		tr_index;
@@ -227,8 +237,8 @@ typedef struct staircase {
 #define NO_STC_DATA	(-1)
 
 // BUG this should be cleaned up!
-#define REDO		5	 /* historical, jkr switch box */
-#define ABORT		8
+//#define REDO		5	 /* historical, jkr switch box */
+//#define ABORT		8
 
 #ifdef FOOBAR
 
@@ -310,8 +320,8 @@ extern int Abort, Redo;
 extern int fc_flag;
 
 // BUG, should be an enum for response codes...
-#define YES	1
-#define NO	2
+//#define YES	1
+//#define NO	2
 
 typedef enum {
 	NO_TRANS,	//	0
@@ -379,8 +389,8 @@ extern void _clear_summary_data(QSP_ARG_DECL  Summary_Data_Tbl *sdt_p );
 extern Trial_Class *_new_class_for_index(QSP_ARG_DECL  int index);
 #define new_class_for_index(index) _new_class_for_index(QSP_ARG  index)
 
-extern void _save_response(QSP_ARG_DECL  int rsp,Staircase *st_p);
-#define save_response(rsp,st_p) _save_response(QSP_ARG  rsp,st_p)
+extern void _process_response(QSP_ARG_DECL  int rsp,Staircase *st_p);
+#define process_response(rsp,st_p) _process_response(QSP_ARG  rsp,st_p)
 
 extern void _run_init(SINGLE_QSP_ARG_DECL);
 #define run_init() _run_init(SINGLE_QSP_ARG)
@@ -424,6 +434,9 @@ extern void append_trial( Sequential_Data_Tbl *qdt_p, Staircase *st_p , int rsp 
 
 /* exp.c */
 
+extern int _check_custom_response(QSP_ARG_DECL  int rsp_idx);
+#define check_custom_response(rsp_idx) _check_custom_response(QSP_ARG  rsp_idx)
+
 extern void init_experiment( Experiment *exp_p );
 
 extern void _init_responses(SINGLE_QSP_ARG_DECL);
@@ -440,8 +453,8 @@ extern Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name);
 extern void nullrt(void);
 
 extern COMMAND_FUNC( do_exp_menu );
-extern void _get_rsp_word(QSP_ARG_DECL const char **sptr,const char *def_rsp);
-#define get_rsp_word(sptr,def_rsp) _get_rsp_word(QSP_ARG sptr,def_rsp)
+extern void _get_rsp_word(QSP_ARG_DECL Response_Index idx);
+#define get_rsp_word(idx) _get_rsp_word(QSP_ARG idx)
 
 extern int _get_response(QSP_ARG_DECL  Staircase *stc_p, Experiment *exp_p);
 #define get_response(stc_p,exp_p) _get_response(QSP_ARG  stc_p,exp_p)

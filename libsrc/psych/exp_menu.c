@@ -19,7 +19,6 @@
 /* local prototypes */
 
 static void null_mod(QSP_ARG_DECL Trial_Class *);
-static void set_rsp_word(const char **sptr,const char *s,const char *default_str);
 
 int exp_flags=0;
 
@@ -27,10 +26,9 @@ Experiment expt1;	// a singleton
 
 
 
-static int custom_keys=0;
 static int get_response_from_keyboard=1;
 
-static const char *response_list[N_RESPONSES];
+const char *response_choices[N_RESPONSES];
 static int exp_inited=0;
 
 static void null_mod(QSP_ARG_DECL Trial_Class * tc_p){}
@@ -61,7 +59,7 @@ static int insure_exp_is_ready(SINGLE_QSP_ARG_DECL)	/* make sure there is someth
 
 static int _present_stim(QSP_ARG_DECL Staircase *stc_p)
 {
-	int rsp=REDO;
+	int rsp=REDO_INDEX;
 	Trial_Class *tc_p;
 
 	assert(stc_p!=NULL);
@@ -95,8 +93,8 @@ static void _present_stim_for_stair(QSP_ARG_DECL  Staircase *stc_p)
 	SET_STAIR_SEQ_DTBL(&st, NULL);		\
 	SET_STAIR_INDEX(&st, 0);		\
 	SET_STAIR_VAL(&st, v);			\
-	SET_STAIR_CRCT_RSP(&st, YES);		\
-	SET_STAIR_INC_RSP(&st, YES);		\
+	SET_STAIR_CRCT_RSP(&st, YES_INDEX);		\
+	SET_STAIR_INC_RSP(&st, YES_INDEX);		\
 	SET_STAIR_TYPE(&st, UP_DOWN);		\
 	SET_STAIR_INC(&st, 1);
 
@@ -119,7 +117,7 @@ static COMMAND_FUNC( do_one_trial )	/** present a stimulus, tally response */
 
 
 	set_recording(1);
-	save_response(rsp,&st1);
+	process_response(rsp,&st1);
 }
 
 static COMMAND_FUNC( do_one_stim )	/** present a stimulus, tally response */
@@ -143,12 +141,13 @@ static COMMAND_FUNC( do_one_response )	/** give a response to a staircase and st
 	if( stc_p == NULL ) return;
 
 	rsp = get_response(stc_p,&expt1);
-fprintf(stderr,"do_one_response will call save_response...\n");
+fprintf(stderr,"do_one_response will call process_response...\n");
 	set_recording(1);
-	save_response(rsp,stc_p);	// also updates staircase!
+	process_response(rsp,stc_p);	// updates staircase and saves data
 }
 
-#define IS_VALID_RESPONSE(r)	( r == REDO || r == ABORT || r == YES || r == NO )
+//#define IS_VALID_RESPONSE(r)	( r == REDO_INDEX || r == ABORT_INDEX || r == YES_INDEX || r == NO )
+#define IS_VALID_RESPONSE(r)	( r >= 0 && r < N_RESPONSES )
 
 static COMMAND_FUNC( do_test_stim )		/** demo a stimulus for this experiment */
 {
@@ -229,16 +228,14 @@ static COMMAND_FUNC( do_feedback )
 
 }
 
-
-static void set_rsp_word(const char **sptr,const char *s,const char *default_str)
+static void revert_to_default_response(Response_Index idx)
 {
-	/* free the old string only if different from the default */
-	if( strcmp(*sptr,default_str) )
-		givbuf((void *)(*sptr));
-
-	/* save the new string only if different from the default */
-	if( strcmp(s,default_str) ) *sptr=savestr(s);
-	else *sptr=default_str;
+	if( response_words[idx].custom == NULL ){
+		NWARN("CAUTIOUS:  revert_to_default_response:  no custom setting!?");
+	} else {
+		rls_str(response_words[idx].custom);
+		response_words[idx].custom = NULL;
+	}
 }
 
 static COMMAND_FUNC( do_use_kb )
@@ -246,47 +243,24 @@ static COMMAND_FUNC( do_use_kb )
 	get_response_from_keyboard = askif("use keyboard for responses");
 }
 
-/* BUG
- * if we set the redo char to 'r' after we have alread run
- * (so that "redo" is in the history list, then the response
- * handler no longer accepts "redo" !?
- */
-
 static COMMAND_FUNC( setyesno )
 {
-	get_rsp_word(&response_list[YES_INDEX],RSP_YES);
-	get_rsp_word(&response_list[NO_INDEX],RSP_NO);
-	get_rsp_word(&response_list[REDO_INDEX],RSP_REDO);
+	get_rsp_word(YES_INDEX);
+	get_rsp_word(NO_INDEX);
+	get_rsp_word(REDO_INDEX);
+	// Why not allow custom for undo also?
 
 	/* now check that everything is legal! */
 
-	if( is_a_substring(RSP_ABORT,response_list[YES_INDEX]) ||
-		is_a_substring(RSP_ABORT,response_list[NO_INDEX]) ||
-		is_a_substring(RSP_ABORT,response_list[REDO_INDEX]) ){
-
-		warn("conflict with abort response");
-		goto bad;
+	if( check_custom_response(YES_INDEX) < 0 ){
+		revert_to_default_response(YES_INDEX);
 	}
-	if( response_list[YES_INDEX][0] == response_list[NO_INDEX][0] ){
-		warn("yes and no responses must differ in the 1st character");
-		goto bad;
+	if( check_custom_response(NO_INDEX) < 0 ){
+		revert_to_default_response(NO_INDEX);
 	}
-	if( response_list[YES_INDEX][0] == response_list[REDO_INDEX][0] ){
-		warn("yes and redo responses must differ in the 1st character");
-		goto bad;
+	if( check_custom_response(REDO_INDEX) < 0 ){
+		revert_to_default_response(REDO_INDEX);
 	}
-	if( response_list[NO_INDEX][0] == response_list[REDO_INDEX][0] ){
-		warn("no and redo responses must differ in the 1st character");
-		goto bad;
-	}
-	custom_keys=1;
-	return;
-bad:
-	/* install default responses */
-	set_rsp_word(&response_list[YES_INDEX],RSP_YES,RSP_YES);
-	set_rsp_word(&response_list[NO_INDEX],RSP_NO,RSP_NO);
-	set_rsp_word(&response_list[REDO_INDEX],RSP_REDO,RSP_REDO);
-	custom_keys=0;
 
 	return;
 }
