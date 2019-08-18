@@ -182,6 +182,7 @@ static void ios_warn(QSP_ARG_DECL  const char *msg)
 fprintf(stderr,"ios_warn:  %s\n",msg);
 	wstr = add_prefix_to_msg(WARNING_PREFIX,msg);
 	ios_advise(wstr); // log to console or file, and possibly xcode console
+fprintf(stderr,"ios_warn will call simple_alert...");
 	simple_alert("WARNING",msg);
 }
 

@@ -67,6 +67,7 @@ static void _show_alert( QSP_ARG_DECL   QUIP_ALERT_OBJ_TYPE *alert_p )
 
 	[ root_view_controller presentViewController:alert_p animated:YES completion:^(void){
 		dispatch_after(0, dispatch_get_main_queue(), ^{
+fprintf(stderr,"show_alert:  executing after alert callback...\n");
 			if( alert_p == busy_alert_p ){
 				resume_quip(DEFAULT_QSP_ARG);
 			}
@@ -1705,6 +1706,7 @@ static void present_generic_alert(QSP_ARG_DECL  const char *type, const char *ms
 	// root_view_controller (during startup)
 
 	if( vc == NULL ){
+fprintf(stderr,"present_generic_alert:  calling defer_alert\n");
 		defer_alert(type,msg);
 		return;
 	}
@@ -1719,22 +1721,26 @@ static void present_generic_alert(QSP_ARG_DECL  const char *type, const char *ms
 
 	is_fatal = !strcmp(type,FATAL_ERROR_TYPE_STR) ? 1 : 0 ;
 
+fprintf(stderr,"present_generic_alert:  calling create_alert_with_one_button\n");
 	QUIP_ALERT_OBJ_TYPE *alert;
 	alert = create_alert_with_one_button(type,msg);
 
 	remember_normal_alert(alert);
 	fatal_alert_view = is_fatal ? alert : NULL;
+fprintf(stderr,"present_generic_alert:  calling show_alert\n");
 	show_alert(alert);
 } // generic_alert
 
 static void generic_alert(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	if( busy_alert_p != NULL ) {
+fprintf(stderr,"generic_alert:  a busy alert is being displayed, will defer...\n");
 		suspend__busy();
 		// relinquish control and come back later
 		defer_alert(type,msg);
 		suspend_quip_interpreter();
 	} else {
+fprintf(stderr,"generic_alert:  calling present_generic_alert...\n");
 		present_generic_alert(QSP_ARG  type, msg);
 	}
 }
