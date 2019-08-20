@@ -45,7 +45,8 @@
 
 @property const char *			refresh_func;
 
-@property const char *			afterAnimation;
+@property const char *			afterAnimation;		// what makes this "atomic" ???
+//const char *				_afterAnimation;	// @property generates synthesized getter/setter?
 @property int				animationStarted;
 @property NSMutableArray *		frameQueue;
 @property int				_queue_idx;
@@ -62,7 +63,6 @@
 -(void) hide;
 -(void) reveal;
 -(void) set_refresh_func:(const char *)s;
--(void) setAfterAnimation:(const char *)s;
 -(void) startAnimation;
 -(void) discard_subviews;
 -(void) enableRefreshEventProcessing;

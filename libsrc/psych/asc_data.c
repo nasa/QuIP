@@ -103,25 +103,6 @@ static void _print_sequence_datum(QSP_ARG_DECL  Sequence_Datum *qd_p)
 	write_sequence_datum(qd_p, tell_msgfile());
 }
 
-void _print_class_sequence(QSP_ARG_DECL  Trial_Class *tcp)
-{
-	List *lp;
-	Node *np;
-
-	assert( CLASS_SEQ_DTBL(tcp) != NULL );
-	lp = SEQ_DTBL_LIST( CLASS_SEQ_DTBL(tcp) );
-	assert(lp!=NULL);
-
-	np = QLIST_HEAD(lp);
-	while( np != NULL ){
-		Sequence_Datum *qd_p;
-		qd_p = (Sequence_Datum *) NODE_DATA(np);
-		assert(qd_p!=NULL);
-		print_sequence_datum(qd_p);
-		np = NODE_NEXT(np);
-	}
-}
-
 #ifdef FOOBAR
 void print_class_summary(QSP_ARG_DECL  Trial_Class * tcp)
 {
@@ -234,10 +215,10 @@ static void _write_data_preamble(QSP_ARG_DECL  FILE *fp)
 	int n_xvals;
 	Data_Obj *xv_dp;
 
-	nclasses = eltcount( trial_class_list() );
+	nclasses = eltcount( EXPT_CLASS_LIST(&expt1) );
 	assert(nclasses>=1);
 
-	np = QLIST_HEAD( trial_class_list() );
+	np = QLIST_HEAD( EXPT_CLASS_LIST(&expt1) );
 	assert(np!=NULL);
 	tc_p = NODE_DATA(np);
 	assert(tc_p!=NULL);
@@ -263,7 +244,7 @@ void _iterate_over_classes( QSP_ARG_DECL  void (*func)(QSP_ARG_DECL  Trial_Class
 	Node *np;
 	Trial_Class *tc_p;
 
-	lp = trial_class_list();
+	lp = EXPT_CLASS_LIST(&expt1);
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
 		tc_p=(Trial_Class *)np->n_data;
@@ -334,6 +315,8 @@ static int _read_class_summaries(QSP_ARG_DECL  int n_classes,FILE *fp)		/** read
 }
 
 /* Read a dribble file (sequential list of trials).
+ *
+ * No header???
  */
 
 #define rd_dribble(fp) _rd_dribble(QSP_ARG  fp)
@@ -366,7 +349,7 @@ static int _rd_dribble(QSP_ARG_DECL  FILE *fp)
 
 			SET_STAIR_VAL(st_p,i_val);
 
-			update_summary(CLASS_SUMM_DTBL(tc_p),st_p,resp);
+			//update_summary(CLASS_SUMM_DTBL(tc_p),st_p,resp);
 
 		} else {
 			if( feof(fp) )

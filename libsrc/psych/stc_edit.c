@@ -60,7 +60,8 @@ static COMMAND_FUNC( do_add_stair )
 	if( t < 0 ) return;
 	if( tcp == NULL ) return;
 
-	add_stair(t,tcp);
+	//add_stair(t,tcp);
+	warn("do_add_stair:  NOT IMPLEMENTED!?");	// obsolete code?
 }
 
 static COMMAND_FUNC( do_del_stair )

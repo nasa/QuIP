@@ -153,7 +153,7 @@ static COMMAND_FUNC( do_import_xvals )
 		warn(ERROR_STRING);
 		return;
 	}
-	global_xval_dp = dp;
+	SET_EXPT_XVAL_OBJ(&expt1,dp);
 }
 
 static COMMAND_FUNC( do_set_nxvals )

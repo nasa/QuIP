@@ -203,7 +203,7 @@
  
  Override the supportedInterfaceOrientations and preferredInterfaceOrientationForPresentation methods instead.
  */
-
+/*
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
 	if( qvc_flags & QVC_ALLOWS_AUTOROTATION )
@@ -213,6 +213,7 @@
 		return NO;
 	}
 }
+*/
 
 #endif // BUILD_FOR_IOS
 

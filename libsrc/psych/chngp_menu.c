@@ -37,6 +37,51 @@ struct param n_stairs_ptbl[]={
 { NULL_UPARAM }
 };
 
+#define make_stairs_for_class( tc_p, exp_p ) _make_stairs_for_class( QSP_ARG  tc_p, exp_p )
+
+static void _make_stairs_for_class( QSP_ARG_DECL  Trial_Class *tc_p, Experiment *exp_p )
+{
+	int j;
+
+	/* make_staircase( type, class, mininc, correct rsp, inc rsp ); */
+	for( j=0;j<EXPT_N_UPDN(exp_p);j++)
+		make_staircase( UP_DOWN, tc_p, 1, YES_INDEX, YES_INDEX );
+	for( j=0;j<EXPT_N_DNUP(exp_p);j++)
+		make_staircase( UP_DOWN, tc_p, -1, YES_INDEX, YES_INDEX );
+	for(j=0;j<EXPT_N_2UP(exp_p);j++)
+		/*
+		 * 2-up increases val after 2 YES's,
+		 * decreases val after 1 NO
+		 * seeks 71% YES, YES decreasing with val
+		 */
+		make_staircase( TWO_TO_ONE, tc_p, 1, YES_INDEX, YES_INDEX );
+	for(j=0;j<EXPT_N_2DN(exp_p);j++)
+		/*
+		 * 2-down decreases val after 2 NO's,
+		 * increases val after 1 YES
+		 * Seeks 71% NO, NO increasing with val
+		 */
+		make_staircase( TWO_TO_ONE, tc_p, -1, YES_INDEX, NO_INDEX );
+	for(j=0;j<EXPT_N_2IUP(exp_p);j++)
+		/*
+		 * 2-inverted-up decreases val after 2 YES's,
+		 * increases val after 1 NO
+		 * Seeks 71% YES, YES increasing with val
+		 */
+		make_staircase( TWO_TO_ONE, tc_p, -1, YES_INDEX, YES_INDEX );
+	for(j=0;j<EXPT_N_2IDN(exp_p);j++)
+		/*
+		 * 2-inverted-down increases val after 2 NO's,
+		 * decreases val after 1 YES
+		 * Seeks 71% NO, NO decreasing with val
+		 */
+		make_staircase( TWO_TO_ONE, tc_p, 1, YES_INDEX, NO_INDEX );
+	for(j=0;j<EXPT_N_3UP(exp_p);j++)
+		make_staircase( THREE_TO_ONE, tc_p, 1, YES_INDEX, YES_INDEX );
+	for(j=0;j<EXPT_N_3DN(exp_p);j++)
+		make_staircase( THREE_TO_ONE, tc_p, -1, YES_INDEX, NO_INDEX );
+}
+
 
 /* make the staircases specified by the parameter table */
 
@@ -44,56 +89,22 @@ struct param n_stairs_ptbl[]={
 
 static void _make_staircases(QSP_ARG_DECL  Experiment *exp_p)
 {
-	int j;
 	List *lp;
 	Node *np;
 	Trial_Class *tc_p;
 
-	lp=trial_class_list();
+	// Here we use the item interface's list - it would be better
+	// to have a list in the experiment struct...
+
+	lp=EXPT_CLASS_LIST(exp_p);
 	assert( lp != NULL );
 
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
-		tc_p=(Trial_Class *)np->n_data;
+		tc_p = NODE_DATA(np);
 		np=np->n_next;
 
-		/* make_staircase( type, class, mininc, correct rsp, inc rsp ); */
-		for( j=0;j<EXPT_N_UPDN(exp_p);j++)
-			make_staircase( UP_DOWN, tc_p, 1, YES_INDEX, YES_INDEX );
-		for( j=0;j<EXPT_N_DNUP(exp_p);j++)
-			make_staircase( UP_DOWN, tc_p, -1, YES_INDEX, YES_INDEX );
-		for(j=0;j<EXPT_N_2UP(exp_p);j++)
-			/*
-			 * 2-up increases val after 2 YES's,
-			 * decreases val after 1 NO
-			 * seeks 71% YES, YES decreasing with val
-			 */
-			make_staircase( TWO_TO_ONE, tc_p, 1, YES_INDEX, YES_INDEX );
-		for(j=0;j<EXPT_N_2DN(exp_p);j++)
-			/*
-			 * 2-down decreases val after 2 NO's,
-			 * increases val after 1 YES
-			 * Seeks 71% NO, NO increasing with val
-			 */
-			make_staircase( TWO_TO_ONE, tc_p, -1, YES_INDEX, NO_INDEX );
-		for(j=0;j<EXPT_N_2IUP(exp_p);j++)
-			/*
-			 * 2-inverted-up decreases val after 2 YES's,
-			 * increases val after 1 NO
-			 * Seeks 71% YES, YES increasing with val
-			 */
-			make_staircase( TWO_TO_ONE, tc_p, -1, YES_INDEX, YES_INDEX );
-		for(j=0;j<EXPT_N_2IDN(exp_p);j++)
-			/*
-			 * 2-inverted-down increases val after 2 NO's,
-			 * decreases val after 1 YES
-			 * Seeks 71% NO, NO decreasing with val
-			 */
-			make_staircase( TWO_TO_ONE, tc_p, 1, YES_INDEX, NO_INDEX );
-		for(j=0;j<EXPT_N_3UP(exp_p);j++)
-			make_staircase( THREE_TO_ONE, tc_p, 1, YES_INDEX, YES_INDEX );
-		for(j=0;j<EXPT_N_3DN(exp_p);j++)
-			make_staircase( THREE_TO_ONE, tc_p, -1, YES_INDEX, NO_INDEX );
+		make_stairs_for_class(tc_p,exp_p);
 	}
 }
 

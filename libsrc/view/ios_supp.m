@@ -767,7 +767,7 @@ int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
 #endif // ! BUILD_FOR_IOS
 }
 
-CGImageRef cg_image_for_obj(Data_Obj *dp, int little_endian_flag)
+static CGImageRef CreateCgImageForObj(Data_Obj *dp, int little_endian_flag)
 {
 	CGColorSpaceRef colorSpace;
 	CGImageRef the_img;
@@ -830,7 +830,7 @@ static QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
 	}
 
 //fprintf(stderr,"objc_img_for_dp will create a new image for %s\n",OBJ_NAME(dp));
-	myimg = cg_image_for_obj(dp,little_endian_flag);
+	myimg = CreateCgImageForObj(dp,little_endian_flag);
 
 #ifdef BUILD_FOR_IOS
 
@@ -1045,7 +1045,6 @@ void embed_image(QSP_ARG_DECL Viewer *vp, Data_Obj *dp,int x,int y)
 void _queue_frame( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 {
 	UIImage *uii_p;
-	quipImages *qi_p;
 
 	uii_p = insure_object_has_uiimage(dp);
 	assert(uii_p!=NULL);

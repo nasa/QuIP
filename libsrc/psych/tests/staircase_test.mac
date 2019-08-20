@@ -7,6 +7,7 @@ Record_Response $r EndTrialsTest
 
 Define Next_Trial 0
 experiments
+  get_next_staircase staircase_name
   advise "Next_Trial will call:  present_stim $staircase_name"
   present_stim $staircase_name
   advise "Next_Trial back from:  present_stim $staircase_name"

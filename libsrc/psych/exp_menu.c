@@ -24,8 +24,6 @@ int exp_flags=0;
 
 Experiment expt1;	// a singleton
 
-
-
 static int get_response_from_keyboard=1;
 
 const char *response_choices[N_RESPONSES];
@@ -41,9 +39,9 @@ static COMMAND_FUNC( modify )
 	if( tc_p == NULL ) return;
 
 	// BUG?  perhaps modrt should be a class member?
-	if( modrt==null_mod ) error1("pointer modrt must be defined by user");
+	if( EXPT_MOD_FUNC(&expt1)==null_mod ) error1("Modify function must be defined by user");
 
-	(*modrt)(QSP_ARG tc_p);
+	(* EXPT_MOD_FUNC(&expt1) )(QSP_ARG tc_p);
 }
 
 static int insure_exp_is_ready(SINGLE_QSP_ARG_DECL)	/* make sure there is something to run */
@@ -71,9 +69,9 @@ static int _present_stim(QSP_ARG_DECL Staircase *stc_p)
 
 	assert( CLASS_XVAL_OBJ(tc_p) != NULL );
 
-	(*stim_func)(QSP_ARG stc_p);
+	(* EXPT_STIM_FUNC( STAIR_EXPT(stc_p) ) )(QSP_ARG stc_p);
 
-	rsp = (*response_func)(QSP_ARG  stc_p,&expt1);
+	rsp = (* EXPT_RSP_FUNC( STAIR_EXPT(stc_p) ) )(QSP_ARG  stc_p,&expt1);
 	return(rsp);
 }
 
@@ -83,14 +81,12 @@ static void _present_stim_for_stair(QSP_ARG_DECL  Staircase *stc_p)
 {
 	if( insure_exp_is_ready(SINGLE_QSP_ARG) == -1 ) return;
 
-	(*stim_func)(QSP_ARG stc_p);
+	(* EXPT_STIM_FUNC( STAIR_EXPT(stc_p) ) )(QSP_ARG stc_p);
 }
 
 #define INIT_DUMMY_STAIR(st)			\
 	/* make a dummy staircase */		\
 	SET_STAIR_CLASS(&st, tc_p);		\
-	SET_STAIR_SUMM_DTBL(&st, NULL);		\
-	SET_STAIR_SEQ_DTBL(&st, NULL);		\
 	SET_STAIR_INDEX(&st, 0);		\
 	SET_STAIR_VAL(&st, v);			\
 	SET_STAIR_CRCT_RSP(&st, YES_INDEX);		\
@@ -265,11 +261,21 @@ static COMMAND_FUNC( setyesno )
 	return;
 }
 
+static COMMAND_FUNC( do_init_block )
+{
+	init_trial_block(&expt1);
+}
+
+static COMMAND_FUNC( do_expt_info )
+{
+	print_expt_info(&expt1);
+}
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(experiment_menu,s,f,h)
 
 MENU_BEGIN(experiment)
+ADD_CMD( info,		do_expt_info,	report information about the experiment )
 ADD_CMD( classes,	do_class_menu,	stimulus class submenu )
 ADD_CMD( modify,	modify,		modify class parameters )
 ADD_CMD( parameters,	do_exp_param_menu,		modify experiment parameters )
@@ -278,6 +284,7 @@ ADD_CMD( use_keyboard,	do_use_kb,	enable/disable use of keyboard for responses )
 ADD_CMD( init,		do_exp_init,	start new experiment )
 ADD_CMD( present_trial,	do_one_trial,	present a stimulus & save data )
 ADD_CMD( present_stim,	do_one_stim,	present a stimulus without collecting response)
+ADD_CMD( init_block,	do_init_block,	create a randomized order of staircase trials )
 ADD_CMD( response,	do_one_response,	specify the response for the preceding stimulus)
 ADD_CMD( finish,	do_save_data,	close data files )
 

@@ -80,15 +80,6 @@ static COMMAND_FUNC( do_print_summ )
 	print_class_summary(tcp);
 }
 
-static COMMAND_FUNC( do_print_seq )
-{
-	Trial_Class *tcp;
-
-	tcp = pick_trial_class("");
-	if( tcp == NULL ) return;
-	print_class_sequence(tcp);
-}
-
 #define print_psychometric_pts(fp, tcp) _print_psychometric_pts(QSP_ARG  fp, tcp)
 
 static void _print_psychometric_pts(QSP_ARG_DECL  FILE *fp, Trial_Class * tcp)
@@ -245,6 +236,11 @@ static COMMAND_FUNC( do_pnt_bars )
 	print_error_bars( fp, tcp );
 }
 
+static COMMAND_FUNC( do_print_seq )
+{
+	warn("print_seq:  not implemented!?");
+}
+
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(lookit_menu,s,f,h)
 
@@ -252,7 +248,6 @@ MENU_BEGIN(lookit)
 ADD_CMD( read,		do_read_data,	read new data file )
 ADD_CMD( print_summary,		do_print_summ,	print summary data )
 ADD_CMD( print_sequence,	do_print_seq,	print sequential data )
-//ADD_CMD( class,		setcl,		select new stimulus class )
 ADD_CMD( plotprint,	pntgrph,	print data for plotting )
 ADD_CMD( errbars,	do_pnt_bars,	print psychometric function with error bars )
 ADD_CMD( ogive,		do_ogive,	do fits with to ogive )

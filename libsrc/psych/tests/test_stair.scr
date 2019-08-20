@@ -18,7 +18,9 @@ experiments
     quit
   classes
     new class1 C1Stim
+    new class2 C1Stim
 #    set_response_cmd class1 C1Respond		# only needed when C code sequences trials...
+    advise "Will print info for class1..."
     info class1
     quit
   use_keyboard no	# should read response from input stream?
@@ -34,24 +36,39 @@ experiments
       quit
     quit
   classes
+    advise "Will print info for class1..."
     info class1
     quit
   staircases
+    advise "Will list all staircases..."
     list
+    advise "Will print info for one staircase..."
     info staircase.class1.0
     quit
   quit
-Set response_string "target seen in first interval"
 
 advise "Ready to deliver trials"
+Set response_string "target seen in first interval"
 Pause
 
 Set staircase_name staircase.class1.0
 
 Define Run_Block 1 n_trials
 #experiments staircases reset staircase.class1.0 quit quit
-experiments classes reset class1 quit quit
-Set n_trials_remaining $1
+experiments
+  parameters
+    trials
+      change n_data $1
+      quit
+    quit
+  classes
+    #reset class1
+    #reset class2
+    reset_all
+    quit
+  init_block	# make a randomized order
+  quit
+If !var_exists(n_trial_remaining) "error_exit 'Variable n_trials_remaining is not set!?'"
 Print n_trials_remaining
 Next_Trial
 do
