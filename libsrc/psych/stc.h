@@ -407,6 +407,9 @@ ITEM_INTERFACE_PROTOTYPES(Staircase,stair)
 #define list_stairs(fp)	_list_stairs(QSP_ARG  fp)
 #define stair_list()	_stair_list(SINGLE_QSP_ARG)
 
+extern void save_datum(Experiment *exp_p, Sequence_Datum *qd_p);
+extern void clear_summary_data(Summary_Data_Tbl *sdt_p );
+extern void update_summary( Summary_Data_Tbl *sdt_p, Sequence_Datum *qd_p );
 
 extern void _reset_expt_classes(QSP_ARG_DECL  Experiment *exp_p);
 #define reset_expt_classes(exp_p) _reset_expt_classes(QSP_ARG  exp_p)
@@ -480,7 +483,7 @@ extern void _del_class(QSP_ARG_DECL  Trial_Class *tc_p);
 #define del_class(tc_p) _del_class(QSP_ARG  tc_p)
 
 
-extern void update_summary(Summary_Data_Tbl *sdt_p,Staircase *st_p,int rsp);
+extern void update_class_summary(Trial_Class *tc_p,Sequence_Datum *qd_p);
 
 /* exp.c */
 

@@ -78,17 +78,84 @@ static void _write_class_summ_data(QSP_ARG_DECL  Trial_Class *tc_p,void *_fp)
 	write_summary_data( CLASS_SUMM_DTBL(tc_p), fp );
 }
 
-void _print_class_summary(QSP_ARG_DECL  Trial_Class * tcp)
+static void tabulate_class( Trial_Class *tc_p )
 {
+	List *lp;
+	Node *np;
+
+	lp = SEQ_DTBL_LIST( EXPT_SEQ_DTBL( CLASS_EXPT(tc_p) ) );
+	assert(lp!=NULL);
+
+	np = QLIST_HEAD(lp);
+	while(np!=NULL){
+		Sequence_Datum *qd_p;
+		qd_p = NODE_DATA(np);
+
+		update_summary(CLASS_SUMM_DTBL(tc_p),qd_p);
+
+		np = NODE_NEXT(np);
+	}
+}
+
+/*
+
+	int			sdt_size;	// number of allocated entries (x values)
+	int			sdt_npts;	// number that have non-zero n trials
+	Data_Obj *		sdt_data_dp;
+	Summary_Datum *		sdt_data_ptr;	// points to data in the object...
+	Trial_Class *		sdt_tc_p;	// may be invalid if lumped...
+	Data_Obj *		sdt_xval_dp;	// should match class
+	int			sdt_flags;
+	*/
+
+#define init_class_summary( tc_p) _init_class_summary( QSP_ARG  tc_p)
+
+static void _init_class_summary( QSP_ARG_DECL  Trial_Class *tc_p)
+{
+	Summary_Data_Tbl *sdt_p;
+	Data_Obj *dp;
+
+	assert(tc_p!=NULL);
+	assert(CLASS_SUMM_DTBL(tc_p)==NULL);
+
+	sdt_p = getbuf(sizeof(Summary_Data_Tbl));
+	SET_CLASS_SUMM_DTBL(tc_p, sdt_p );
+
+	dp = EXPT_XVAL_OBJ(CLASS_EXPT(tc_p));
+	assert(dp!=NULL);
+
+	SET_SUMM_DTBL_SIZE(sdt_p, OBJ_COLS(dp) );
+	SET_SUMM_DTBL_DATA_PTR(sdt_p, getbuf( SUMM_DTBL_SIZE(sdt_p) * sizeof(Summary_Datum) ) );
+	SET_SUMM_DTBL_CLASS(sdt_p,tc_p);
+
+	SET_SUMM_DTBL_N(sdt_p,0);
+	SET_SUMM_DTBL_DATA_OBJ(sdt_p,NULL);
+
+	clear_summary_data( sdt_p );
+
+	if( EXPT_SEQ_DTBL( CLASS_EXPT(tc_p) ) == NULL ){
+		warn("init_class_summary:  experiment has no data!?");
+		return;
+	}
+	tabulate_class(tc_p);
+}
+
+void _print_class_summary(QSP_ARG_DECL  Trial_Class * tc_p)
+{
+	if( CLASS_SUMM_DTBL(tc_p) == NULL ){
+fprintf(stderr,"print_class_summary calling init_class_summary\n");
+		init_class_summary(tc_p);
+	}
+
 	if( verbose ){
 		sprintf(msg_str,"class = %s, %d points",
-			CLASS_NAME(tcp),SUMM_DTBL_N(CLASS_SUMM_DTBL(tcp)));
+			CLASS_NAME(tc_p),SUMM_DTBL_N(CLASS_SUMM_DTBL(tc_p)));
 		prt_msg(msg_str);
 		sprintf(msg_str,"val\txval\t\tntot\tncorr\t%% corr\n");
 		prt_msg(msg_str);
 	}
 
-	write_class_summ_data(tcp,tell_msgfile());
+	write_class_summ_data(tc_p,tell_msgfile());
 }
 
 void write_summary_data( Summary_Data_Tbl *sdt_p, FILE *fp )
@@ -629,7 +696,7 @@ static int _read_sequential_header( QSP_ARG_DECL  Experiment *exp_p, FILE *fp )
 static int _read_sequential_datum( QSP_ARG_DECL  Experiment *exp_p, FILE *fp )
 { 
 	int ret_val;
-	Sequence_Datum qd;
+	Sequence_Datum qd, *qd_p;
 
 	ret_val = fscanf(fp,SEQ_DATUM_FMT,
 		& SEQ_DATUM_TRIAL_IDX(&qd),
@@ -643,9 +710,11 @@ static int _read_sequential_datum( QSP_ARG_DECL  Experiment *exp_p, FILE *fp )
 	CHECK_FOR_EOF(sequential datum)
 	CHECK_FOR_PARSE(7,sequential datum)
 
-	// BUG need to save it!
+	qd_p = getbuf( sizeof(qd) );
+	*qd_p = qd;
 
-advise("read sequential datum");
+	save_datum(exp_p,qd_p);
+
 	return 0;
 }
 

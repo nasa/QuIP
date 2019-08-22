@@ -18,7 +18,7 @@ ITEM_INTERFACE_DECLARATIONS(Staircase,stair,0)
 
 
 
-static void clear_summary_data(Summary_Data_Tbl *sdt_p )
+void clear_summary_data(Summary_Data_Tbl *sdt_p )
 {
 	int i;
 
@@ -220,9 +220,8 @@ static Transition_Code iftrans(Staircase *st_p,int rsp)	/* see if this response 
 	return(retval);
 }
 
-static void append_trial( Sequential_Data_Tbl *qdt_p, Staircase *st_p , int rsp )
+static void append_trial( Experiment *exp_p, Staircase *st_p , int rsp )
 {
-	Node *np;
 	Sequence_Datum *qd_p;
 
 	qd_p = getbuf(sizeof(Sequence_Datum));
@@ -234,10 +233,20 @@ static void append_trial( Sequential_Data_Tbl *qdt_p, Staircase *st_p , int rsp 
 	SET_SEQ_DATUM_RESPONSE(qd_p, rsp );
 	SET_SEQ_DATUM_CRCT_RSP(qd_p, STAIR_CRCT_RSP(st_p) );
 
-	np = mk_node(qd_p);
-	addTail( SEQ_DTBL_LIST(qdt_p), np );
+	save_datum(exp_p,qd_p);
+}
 
-	SET_QDT_FLAG_BITS(qdt_p,SEQUENTIAL_DATA_DIRTY);
+void save_datum(Experiment *exp_p, Sequence_Datum *qd_p)
+{
+	Node *np;
+
+	assert(exp_p!=NULL);
+	assert(EXPT_SEQ_DTBL(exp_p)!=NULL);
+
+	np = mk_node(qd_p);
+	addTail( SEQ_DTBL_LIST( EXPT_SEQ_DTBL(exp_p) ), np );
+
+	SET_QDT_FLAG_BITS(EXPT_SEQ_DTBL(exp_p),SEQUENTIAL_DATA_DIRTY);
 }
 
 static void tally(Staircase *st_p,int rsp)			/* record new data */
@@ -249,7 +258,7 @@ static void tally(Staircase *st_p,int rsp)			/* record new data */
 
 	// We used to tally summary data here, but it's redundant with the sequential data,
 	// so we don't bother.
-	append_trial(STAIR_SEQ_DTBL(st_p),st_p,rsp);
+	append_trial(STAIR_EXPT(st_p),st_p,rsp);
 }
 
 
@@ -824,8 +833,10 @@ Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
 
 	SET_CLASS_SUMM_DTBL(tc_p,NULL);
 
+	/*
 	sprintf(MSG_STR,"create_named_class:  created new class '%s' with index %d",CLASS_NAME(tc_p),CLASS_INDEX(tc_p));
 	prt_msg(MSG_STR);
+	*/
 
 	return tc_p;
 }	// create_named_class
@@ -859,28 +870,43 @@ Trial_Class *_new_class_for_index( QSP_ARG_DECL  int class_index )
 	return(tc_p);
 }
 
-void update_summary(Summary_Data_Tbl *sdt_p,Staircase *st_p,int rsp)
+void update_summary( Summary_Data_Tbl *sdt_p, Sequence_Datum *qd_p )
 {
-	int val;
+	int val, rsp;
 
 	assert( sdt_p != NULL );
-
-	val = STAIR_VAL(st_p);
 	assert( SUMM_DTBL_SIZE(sdt_p) > 0 );
+
+	val = SEQ_DATUM_XVAL_IDX(qd_p);
 	assert( val >= 0 && val < SUMM_DTBL_SIZE(sdt_p) );
 
+	rsp = SEQ_DATUM_RESPONSE(qd_p);
+
+	// This just counts trials and number correct - what about RT???
+
 	if( NORMAL_RESPONSE(rsp) ){
+		if( DATUM_NTOTAL( SUMM_DTBL_ENTRY(sdt_p,val) ) == 0 ){	// first record at this level?
+			SET_SUMM_DTBL_N(sdt_p, 1 + SUMM_DTBL_N(sdt_p) );
+		}
+
 		SET_DATUM_NTOTAL( SUMM_DTBL_ENTRY(sdt_p,val),
 			1 + DATUM_NTOTAL( SUMM_DTBL_ENTRY(sdt_p,val) ) );
-		if( rsp == STAIR_CRCT_RSP(st_p) ){
-fprintf(stderr,"update_summary:  response was correct\n");
+		if( rsp == SEQ_DATUM_CRCT_RSP(qd_p) ){
 			SET_DATUM_NCORR( SUMM_DTBL_ENTRY(sdt_p,val),
 				1 + DATUM_NCORR( SUMM_DTBL_ENTRY(sdt_p,val) ) );
-		} else {
-fprintf(stderr,"update_summary:  response was incorrect\n");
 		}
-	}
+		/* else {
+fprintf(stderr,"update_class_summary:  response was incorrect\n");
 
+		} */
+	}
+}
+
+void update_class_summary(Trial_Class *tc_p,Sequence_Datum *qd_p)
+{
+	if( SEQ_DATUM_CLASS_IDX(qd_p) != CLASS_INDEX(tc_p) ) return;	// don't care about this one
+
+	update_summary( CLASS_SUMM_DTBL(tc_p), qd_p );
 }
 
 static const char *name_for_stair_type(Staircase_Type stair_type)
