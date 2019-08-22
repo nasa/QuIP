@@ -1,13 +1,12 @@
 
 Define Get_Response 0
-prompt_text 'Target in first interval (yes/no/abort/redo)' r
+prompt_text 'Target in first interval (yes/no/abort/redo/undo)' r
 Print r
 Record_Response $r EndTrialsTest
 .
 
 Define Next_Trial 0
 experiments
-  get_next_staircase staircase_name
   advise "Next_Trial will call:  present_stim $staircase_name"
   present_stim $staircase_name
   advise "Next_Trial back from:  present_stim $staircase_name"
@@ -15,6 +14,7 @@ experiments
 .
 
 Define C1Stim 0
+Print n_trials_remaining
 advise "C1Stimulus!   class = $class   val = $val"
 .
 
@@ -161,14 +161,15 @@ Define Record_Response 2 response_word end_macro
 advise "Record_Response $1 $2 BEGIN"
 
 experiments
-  verbose yes
-  advise "Get_Gabor_Response 'response $staircase_name $1"
-  response $staircase_name $1
-  verbose no
+  #verbose yes
+  #advise "Get_Gabor_Response 'response $staircase_name $1"
+  #response $staircase_name $1
+  #verbose no
+  respond_next $1
   quit
 
-Decrement n_trials_remaining
-If $n_trials_remaining<=0 "$2 exit_macro"
+Print n_trials_remaining
+If $n_trials_remaining<=0 "advise 'Record_Response:  No more trials!' $2 exit_macro"
 
 Next_Trial
 advise "Record_Response DONE"

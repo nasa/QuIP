@@ -111,20 +111,51 @@ static COMMAND_FUNC( do_one_trial )	/** present a stimulus, tally response */
 
 	rsp=present_stim(&st1);
 
-
-	set_recording(1);
 	process_response(rsp,&st1);
 }
 
-static COMMAND_FUNC( do_one_stim )	/** present a stimulus, tally response */
+static Staircase *get_current_stair(Experiment *exp_p)
+{
+	Staircase **trl_tbl;
+	int idx;
+
+	idx = EXPT_CURR_TRIAL_IDX(exp_p);
+	assert( idx >= 0 && idx < EXPT_N_TOTAL_TRIALS(exp_p) );
+	trl_tbl = EXPT_TRIAL_TBL(exp_p);
+	assert(trl_tbl!=NULL);
+	return trl_tbl[idx];
+}
+
+static COMMAND_FUNC( do_one_stim )	/** present the stimulus for the next staircase */
 {
 	Staircase *stc_p;
 
 	stc_p = pick_stair("");
-
 	if( stc_p == NULL ) return;
 
 	present_stim_for_stair(stc_p);
+}
+
+static COMMAND_FUNC( do_next_stim )	/** present the stimulus for the next staircase */
+{
+	Staircase *stc_p;
+
+	stc_p = get_current_stair(&expt1);
+	assert(stc_p!=NULL);
+
+	present_stim_for_stair(stc_p);
+}
+
+static COMMAND_FUNC( do_next_resp )
+{
+	Staircase *stc_p;
+	int rsp;
+
+	stc_p = get_current_stair(&expt1);
+	assert(stc_p!=NULL);
+
+	rsp = get_response(stc_p,&expt1);
+	process_response(rsp,stc_p);	// updates staircase and saves data
 }
 
 static COMMAND_FUNC( do_one_response )	/** give a response to a staircase and step it! */
@@ -133,12 +164,10 @@ static COMMAND_FUNC( do_one_response )	/** give a response to a staircase and st
 	Staircase *stc_p;
 
 	stc_p = pick_stair("");
-
 	if( stc_p == NULL ) return;
 
 	rsp = get_response(stc_p,&expt1);
 fprintf(stderr,"do_one_response will call process_response...\n");
-	set_recording(1);
 	process_response(rsp,stc_p);	// updates staircase and saves data
 }
 
@@ -168,29 +197,12 @@ static COMMAND_FUNC( do_run_exp )
 {
 	if( insure_exp_is_ready(SINGLE_QSP_ARG) == -1 ) return;
 
-	setup_files(&expt1);
-
 	run_stairs(&expt1);
-}
-
-static COMMAND_FUNC( set_dribble_flag )
-{
-	if( askif("Record trial-by-trial data") )
-		SET_EXP_FLAG(&expt1,DRIBBLING);
-	else
-		CLEAR_EXP_FLAG(&expt1,DRIBBLING);
-
-	if( IS_DRIBBLING(&expt1) )
-		advise("Recording trial-by-trial data");
-	else
-		advise("Recording only summary data");
 }
 
 static COMMAND_FUNC( do_exp_init )
 {
-	setup_files(&expt1);	// prompts user for data filenames?
 	run_init();
-	set_recording( 1 );
 }
 
 static COMMAND_FUNC( set_2afc )
@@ -198,11 +210,11 @@ static COMMAND_FUNC( set_2afc )
 	if( askif( "2AFC experiment" ) ){
 		advise("Setting 2afc flag");
 		advise("Inverting response based on $coin");
-		is_fc=1;
+		SET_EXPT_FLAG_BITS(&expt1,EXPT_2AFC);
 	} else {
 		advise("Clearing 2afc flag");
 		advise("NOT inverting response based on $coin");
-		is_fc=0;
+		CLEAR_EXPT_FLAG_BITS(&expt1,EXPT_2AFC);
 	}
 }
 
@@ -271,6 +283,20 @@ static COMMAND_FUNC( do_expt_info )
 	print_expt_info(&expt1);
 }
 
+static COMMAND_FUNC( do_save_data )
+{
+	FILE *fp;
+	const char *s;
+
+	s = nameof("output filename for sequential data");
+
+	fp = try_nice(s,"w");
+	if( fp == NULL ) return;	// BUG - should we save somewhere else
+					// so that data is not lost???
+
+	save_data(&expt1,fp);
+}
+
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(experiment_menu,s,f,h)
 
@@ -284,8 +310,11 @@ ADD_CMD( use_keyboard,	do_use_kb,	enable/disable use of keyboard for responses )
 ADD_CMD( init,		do_exp_init,	start new experiment )
 ADD_CMD( present_trial,	do_one_trial,	present a stimulus & save data )
 ADD_CMD( present_stim,	do_one_stim,	present a stimulus without collecting response)
+ADD_CMD( present_next,	do_next_stim,	present the stimulus for the next staircase)
+ADD_CMD( respond_next,	do_next_resp,	collect the response for the next staircase)
 ADD_CMD( init_block,	do_init_block,	create a randomized order of staircase trials )
 ADD_CMD( response,	do_one_response,	specify the response for the preceding stimulus)
+ADD_CMD( save,		do_save_data,	save sequential data to a file )
 ADD_CMD( finish,	do_save_data,	close data files )
 
 /*
@@ -299,7 +328,6 @@ ADD_CMD( run,		do_run_exp,	run experiment )
 ADD_CMD( 2AFC,		set_2afc,	set forced choice flag )
 ADD_CMD( keys,		setyesno,	select response keys )
 ADD_CMD( xvals,		xval_menu,	x value submenu )
-ADD_CMD( dribble,	set_dribble_flag,	set long/short data file format )
 ADD_CMD( lookit,	lookmenu,	data analysis submenu )
 ADD_CMD( feedback,	do_feedback,	specify feedback strings )
 MENU_END(experiment)

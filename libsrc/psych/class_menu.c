@@ -44,28 +44,6 @@ static COMMAND_FUNC( do_class_info )
 	print_class_info(tc_p);
 }
 
-#ifdef FOOBAR
-static COMMAND_FUNC( do_show_class_summ )
-{
-	Trial_Class *tc_p;
-
-	tc_p = pick_trial_class("");
-	if( tc_p == NULL ) return;
-
-	write_summary_data( CLASS_SUMM_DTBL(tc_p), tell_msgfile() );
-}
-
-static COMMAND_FUNC( do_show_class_seq )
-{
-	Trial_Class *tc_p;
-
-	tc_p = pick_trial_class("");
-	if( tc_p == NULL ) return;
-
-	write_sequential_data( CLASS_SEQ_DTBL(tc_p), tell_msgfile() );
-}
-#endif // FOOBAR
-
 static COMMAND_FUNC( do_reset_class )
 {
 	Trial_Class *tc_p;

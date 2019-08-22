@@ -49,7 +49,7 @@ experiments
 
 advise "Ready to deliver trials"
 Set response_string "target seen in first interval"
-Pause
+#Pause
 
 Set staircase_name staircase.class1.0
 
@@ -68,7 +68,7 @@ experiments
     quit
   init_block	# make a randomized order
   quit
-If !var_exists(n_trial_remaining) "error_exit 'Variable n_trials_remaining is not set!?'"
+If !var_exists(n_trials_remaining) "error_exit 'Variable n_trials_remaining is not set!?'"
 Print n_trials_remaining
 Next_Trial
 do
@@ -76,16 +76,28 @@ do
   while $n_trials_remaining>0
 experiments classes info class1 quit quit
 experiments staircases info staircase.class1.0 quit quit
+Save_Expt_Data
+.
+
+Define Save_Expt_Data 0
+Set n 0
+do
+  Increment n
+  Set filename expt_data.$n
+  while file_exists('$filename')
+advise "Saving data to file $filename"
+experiments
+  save $filename
+  quit
 .
 
 Run_Block 10
 
-advise "read to run again"
-advise "But save data first?"
-Pause
+advise "test_stair.scr:  Ready to run again, but need to save data"
+#Pause
 
 Run_Block 10
 
-Pause
+#Pause
 exit
 

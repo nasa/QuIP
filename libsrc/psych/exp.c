@@ -30,33 +30,6 @@ static void null_init(void)
 
 static void null_mod(QSP_ARG_DECL Trial_Class * tc_p){}
 
-// In the old days we only saved to files...
-// Now we want to be able to import other data for fitting???
-//
-// BUG - this will prompt for a summary filename until a good name is entered!?
-// It is not clear why we need to store summary data, as it can be reconstituted
-// from sequential data...
-//
-// BUG init_dribble_file will prompt for a filename too, so this function doesn't
-// take a fixed number of arguments!?
-
-void _setup_files(QSP_ARG_DECL  Experiment *exp_p)
-{
-	set_dribble_file(NULL);
-
-	sync();		/* make files safe in case of crash */
-			/* a relic of pdp-11 days */
-
-	/*
-	 * We don't bother to write a summary data file
-	 * if we are writing a trial-by-trial dribble file,
-	 * since the former can be constructed from the latter
-	 */
-
-	init_dribble_file(SINGLE_QSP_ARG);
-}
-
-
 static void set_rsp_word(Response_Index idx, const char *s)
 {
 	if( response_words[idx].custom != NULL )
@@ -194,8 +167,14 @@ fprintf(stderr,"collect_response:  using_keyboard = %d\n",IS_USING_KEYBOARD(exp_
 	switch(n){
 		case YES_INDEX:		return(n); break;
 		case NO_INDEX:		return(n); break;
-		case REDO_INDEX:	return(n); break;
-		case UNDO_INDEX:	return(n); break;
+		case REDO_INDEX:
+			SET_EXPT_FLAG_BITS(exp_p,EXPT_REDO);
+			return(n);
+			break;
+		case UNDO_INDEX:
+			SET_EXPT_FLAG_BITS(exp_p,EXPT_UNDO);
+			return(n);
+			break;
 		case ABORT_INDEX:
 			SET_EXPT_FLAG_BITS(exp_p,EXPT_ABORT);
 			return(REDO_INDEX);
@@ -235,9 +214,22 @@ static void _consider_coin(QSP_ARG_DECL  Staircase *stc_p)
 	}
 }
 
-int _get_response(QSP_ARG_DECL  Staircase *stc_p, Experiment *exp_p)
+#define check_response_string(exp_p) _check_response_string(QSP_ARG  exp_p)
+
+static void _check_response_string(QSP_ARG_DECL  Experiment *exp_p)
 {
 	Variable *vp;
+
+	vp=var_of("response_string");
+	if( vp != NULL ){
+		SET_EXPT_QUESTION( exp_p, VAR_VALUE(vp) );
+	}
+	// Because we can now specify the question from the menu, it's
+	// not worth a warning if this isn't set.
+}
+
+int _get_response(QSP_ARG_DECL  Staircase *stc_p, Experiment *exp_p)
+{
 	int rsp;
 
 	if( stc_p == NULL ){
@@ -247,21 +239,10 @@ int _get_response(QSP_ARG_DECL  Staircase *stc_p, Experiment *exp_p)
 
 	// BUG instead of getting this from a variable,
 	// better to set in in the experiment struct...
-	vp=var_of("response_string");
-	SET_EXPT_QUESTION( exp_p, VAR_VALUE(vp) );
 
-	if( vp != NULL ){
-		rsp = collect_response(exp_p);
-	} else {
-		static int warned=0;
-
-		if( !warned ){
-			warn("default_stim:  script variable $response_string not defined");
-			warned=1;
-		}
-		rsp = collect_response(exp_p);
-	}
-	if( is_fc ){
+	check_response_string(exp_p);	// $response_string will override if set
+	rsp = collect_response(exp_p);
+	if( IS_2AFC(exp_p) ){
 fprintf(stderr,"get_response:  will consider coin...\n");
 		consider_coin(stc_p);
 	} else {

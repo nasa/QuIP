@@ -8,25 +8,7 @@
 #include "list.h"
 #include "getbuf.h"
 
-/* If CATCH_SIGS is defined, then we can use ^C to interrupt trials...
- *
- * Not sure when this was used...
- */
-
-#ifdef CATCH_SIGS
-#ifdef HAVE_SIGNAL_H
-#include <signal.h>
-#endif
-
-static int caught;
-
-#endif /* CATCH_SIGS */
-
-//void (*stim_func)(QSP_ARG_DECL  Staircase *) = _default_stim;		/* global var */
-//int (*response_func)(QSP_ARG_DECL  Staircase *, Experiment *) = _default_response;		/* global var */
-
 /* globals? */
-int Abort;				/* stop the run now if set != 0 */
 const char *correct_feedback_string=NULL, *incorrect_feedback_string=NULL;
 
 ITEM_INTERFACE_DECLARATIONS(Trial_Class,trial_class,0)
@@ -34,24 +16,6 @@ ITEM_INTERFACE_DECLARATIONS(Staircase,stair,0)
 
 #define create_summ_data_obj( name, size ) _create_summ_data_obj( QSP_ARG  name, size )
 
-static Data_Obj * _create_summ_data_obj( QSP_ARG_DECL  const char *name, int size )
-{
-	Data_Obj *dp;
-
-	dp = mk_vec(name,size,N_SUMMARY_DATA_COMPS,prec_for_code(PREC_IN));	// short integer
-	return dp;
-}
-
-static void set_summ_dtbl_data_obj(Summary_Data_Tbl *sdt_p, Data_Obj *dp)
-{
-	if( SUMM_DTBL_DATA_OBJ(sdt_p) != NULL )
-		remove_reference(SUMM_DTBL_DATA_OBJ(sdt_p));
-
-	SET_SUMM_DTBL_DATA_OBJ(sdt_p,dp);
-
-	if( dp != NULL )
-		add_reference(dp);
-}
 
 
 static void clear_summary_data(Summary_Data_Tbl *sdt_p )
@@ -68,61 +32,7 @@ static void clear_summary_data(Summary_Data_Tbl *sdt_p )
 		SET_DATUM_NTOTAL(SUMM_DTBL_ENTRY(sdt_p,i),0);
 		SET_DATUM_NCORR(SUMM_DTBL_ENTRY(sdt_p,i),0);
 	}
-	CLEAR_SDT_FLAG_BIT(sdt_p, SUMMARY_DATA_DIRTY);
 }
-
-#define init_summ_dtbl_with_name(sdt_p, name, size ) _init_summ_dtbl_with_name(QSP_ARG   sdt_p, name, size )
-
-static void _init_summ_dtbl_with_name(QSP_ARG_DECL   Summary_Data_Tbl *sdt_p, const char *name, int size )
-{
-	Data_Obj *dp;
-
-	assert(size>0);
-	dp = create_summ_data_obj(name,size);
-	set_summ_dtbl_data_obj(sdt_p,dp);
-	SET_SUMM_DTBL_DATA_PTR(sdt_p,OBJ_DATA_PTR(dp));
-	SET_SUMM_DTBL_SIZE(sdt_p,OBJ_COLS(dp));
-advise("init_summ_dtbl_with_name calling clear_summary_data");
-	clear_summary_data(sdt_p);
-}
-
-
-#ifdef FOOBAR
-
-static void set_summ_dtbl_xval_obj(Summary_Data_Tbl *sdt_p, Data_Obj *dp)
-{
-	if( SUMM_DTBL_XVAL_OBJ(sdt_p) != NULL )
-		remove_reference(SUMM_DTBL_XVAL_OBJ(sdt_p));
-
-	SET_SUMM_DTBL_XVAL_OBJ(sdt_p,dp);
-
-	if( dp != NULL )
-		add_reference(dp);
-}
-
-
-#define init_summ_dtbl_for_stair(sdt_p, st_p) _init_summ_dtbl_for_stair(QSP_ARG  sdt_p, st_p)
-
-static void _init_summ_dtbl_for_stair(QSP_ARG_DECL  Summary_Data_Tbl *sdt_p, Staircase *st_p)
-{
-	char name[LLEN];
-	Data_Obj *xv_dp;
-
-	assert( st_p != NULL );
-	assert( STAIR_CLASS(st_p) != NULL );
-
-	xv_dp = STAIR_XVAL_OBJ(st_p);	// comes from the class...
-	assert(xv_dp != NULL);
-
-	SET_STAIR_SUMM_DTBL(st_p,sdt_p);
-
-	sprintf(name,"summary_data_class_%d_stair_%d",
-		CLASS_INDEX(STAIR_CLASS(st_p)),STAIR_INDEX(st_p));
-
-	init_summ_dtbl_with_name(sdt_p,name,OBJ_COLS(xv_dp));
-	set_summ_dtbl_xval_obj(sdt_p,xv_dp);
-}
-#endif // FOOBAR
 
 // init_summ_dtbl - just set the values to defaults...
 
@@ -138,30 +48,6 @@ static void _init_summ_dtbl(QSP_ARG_DECL  Summary_Data_Tbl *sdt_p )
 	SET_SUMM_DTBL_DATA_PTR(sdt_p,NULL);
 	SET_SUMM_DTBL_FLAGS(sdt_p,0);
 }
-
-#ifdef FOOBAR
-void _init_summ_dtbl_for_class( QSP_ARG_DECL  Summary_Data_Tbl * sdt_p, Trial_Class *tc_p )
-{
-	Data_Obj *xv_dp;
-
-	SET_CLASS_SUMM_DTBL(tc_p,sdt_p);
-	SET_SUMM_DTBL_CLASS( sdt_p, tc_p );
-	
-	xv_dp = CLASS_XVAL_OBJ(tc_p);
-	if( xv_dp != NULL ){
-		char name[LLEN];
-		assert(SUMM_DTBL_CLASS(sdt_p)!=NULL);
-		sprintf(name,"summary_data_class%d",CLASS_INDEX( SUMM_DTBL_CLASS(sdt_p) ) );
-		init_summ_dtbl_with_name(sdt_p,name,OBJ_COLS(xv_dp));
-		set_summ_dtbl_xval_obj(sdt_p,xv_dp);
-	} else {
-		SET_SUMM_DTBL_SIZE(sdt_p,0);
-		set_summ_dtbl_data_obj(sdt_p,NULL);
-		SET_SUMM_DTBL_DATA_PTR(sdt_p,NULL);
-		warn("init_summ_dtbl_for_class:  NULL x-value object!?");
-	}
-}
-#endif // FOOBAR
 
 Summary_Data_Tbl *_new_summary_data_tbl(SINGLE_QSP_ARG_DECL)
 {
@@ -212,7 +98,7 @@ void _clear_sequential_data(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p)
 		givbuf(qd_p);
 		rls_node(np);
 	}
-	CLEAR_QDT_FLAG_BIT(qdt_p,SEQUENTIAL_DATA_DIRTY);
+	CLEAR_QDT_FLAG_BITS(qdt_p,SEQUENTIAL_DATA_DIRTY);
 }
 
 static void init_seq_data_tbl(Sequential_Data_Tbl *qdt_p)
@@ -246,15 +132,6 @@ void new_exp(SINGLE_QSP_ARG_DECL)		/** discard old stairs */
 		np=np->n_next;		/* must do this before freeing item! */
 		del_stair(st_p);
 		givbuf((void *)st_p->stair_name);
-	}
-}
-
-void set_recording(int flag)
-{
-	if( flag ){
-		SET_EXPT_FLAG_BITS(&expt1,EXPT_RECORDING);
-	} else {
-		CLEAR_EXPT_FLAG_BITS(&expt1,EXPT_RECORDING);
 	}
 }
 
@@ -350,6 +227,7 @@ static void append_trial( Sequential_Data_Tbl *qdt_p, Staircase *st_p , int rsp 
 
 	qd_p = getbuf(sizeof(Sequence_Datum));
 
+	SET_SEQ_DATUM_TRIAL_IDX(qd_p, EXPT_CURR_TRIAL_IDX( STAIR_EXPT(st_p) ) );
 	SET_SEQ_DATUM_CLASS_IDX(qd_p, CLASS_INDEX( STAIR_CLASS(st_p) ) );
 	SET_SEQ_DATUM_STAIR_IDX(qd_p, STAIR_INDEX(st_p) );
 	SET_SEQ_DATUM_XVAL_IDX(qd_p, STAIR_VAL(st_p) );
@@ -359,7 +237,7 @@ static void append_trial( Sequential_Data_Tbl *qdt_p, Staircase *st_p , int rsp 
 	np = mk_node(qd_p);
 	addTail( SEQ_DTBL_LIST(qdt_p), np );
 
-	SET_QDT_FLAG_BIT(qdt_p,SEQUENTIAL_DATA_DIRTY);
+	SET_QDT_FLAG_BITS(qdt_p,SEQUENTIAL_DATA_DIRTY);
 }
 
 static void tally(Staircase *st_p,int rsp)			/* record new data */
@@ -390,6 +268,14 @@ static void _give_trial_feedback(QSP_ARG_DECL  int rsp, Staircase *st_p)
 	}
 }
 
+#define update_remaining_trials( exp_p ) _update_remaining_trials( QSP_ARG  exp_p )
+
+static void _update_remaining_trials( QSP_ARG_DECL  Experiment *exp_p )
+{
+	sprintf(MSG_STR,"%d",EXPT_N_TOTAL_TRIALS(exp_p)-EXPT_CURR_TRIAL_IDX(exp_p));
+	assign_reserved_var("n_trials_remaining",MSG_STR);
+}
+
 #define NORMAL_RESPONSE(rsp)	(rsp==YES_INDEX || rsp==NO_INDEX)
 
 /* save_reponse not only saves the response, it also updates the staircase!?  a misnomer... */
@@ -401,33 +287,31 @@ void _process_response(QSP_ARG_DECL  int rsp,Staircase *st_p)
 	if( correct_feedback_string != NULL )
 		give_trial_feedback(rsp,st_p);
 
-	//dribble(st_p,rsp);
 
-		/*
-		 * BUG would be nice to also print out coin flips here,
-		 * but can't know what stim_func does!
-		 */
+	/*
+	 * BUG would be nice to also print out coin flips here,
+	 * but can't know what stim_func does!
+	 */
 
-#ifdef CATCH_SIGS
-	if( Redo || Abort ) rsp=REDO_INDEX;
-#endif /* CATCH_SIGS */
+	tally(st_p,rsp);
 
-	// After adding undo, we tally all responses.
-	// Add redo and undo to sequential data, but not summary data
-	if( IS_RECORDING(&expt1) ) tally(st_p,rsp);
-
-	if( NORMAL_RESPONSE(rsp) != UNDO_INDEX ){
+	if( NORMAL_RESPONSE(rsp) ){
 		Transition_Code _trans;
 
 		_trans= iftrans(st_p,rsp);
 		if( STAIR_INC(st_p) != STAIR_MIN_INC(st_p) ) adj_inc(st_p,_trans);
 		adj_val(st_p,_trans);
+
+		// advance to the next trial
+		SET_EXPT_CURR_TRIAL_IDX( STAIR_EXPT(st_p) , EXPT_CURR_TRIAL_IDX( STAIR_EXPT(st_p) )+1 );
 	}
 
-	if( IS_ABORTING(&expt1) ){
+	if( IS_ABORTING( STAIR_EXPT(st_p) ) ){
 		sprintf(ERROR_STRING,"aborting run");
 		advise(ERROR_STRING);
 	}
+
+	update_remaining_trials( STAIR_EXPT(st_p) );
 }
 
 #define step(st_p,exp_p) _step(QSP_ARG st_p,exp_p)
@@ -437,14 +321,8 @@ static int _step(QSP_ARG_DECL Staircase *st_p, Experiment *exp_p)
 	int rsp;
 
 	if( st_p->stair_val == (-1) ) return(0);	/* discarded */
-#ifdef CATCH_SIGS
-	CLEAR_EXPT_FLAG_BITS(exp_p,EXPT_REDO);
-	caught=0;
-#endif /* CATCH_SIGS */
 
-	EXPT_CURR_TRIAL_IDX(exp_p) ++;
-
-	sprintf(ERROR_STRING,"trial number %d",EXPT_CURR_TRIAL_IDX(exp_p));
+	sprintf(ERROR_STRING,"trial number %d",1+EXPT_CURR_TRIAL_IDX(exp_p));
 	advise(ERROR_STRING);
 
 	/* stimulus routines MUST call response() for proper abort & redo */
@@ -515,19 +393,30 @@ void _reset_stair(QSP_ARG_DECL  Staircase *st_p)
 	}
 }
 
-static void update_expt_stair_count( Experiment *exp_p )
+static void apply_to_class_list( Experiment *exp_p, void (*func)(Trial_Class *, Experiment *) )
 {
-	int n=0;
 	Node *np;
 
 	np = QLIST_HEAD( EXPT_CLASS_LIST(exp_p) );
 	while( np != NULL ){
 		Trial_Class *tc_p;
 		tc_p = NODE_DATA(np);
-		n += eltcount( CLASS_STAIRCASES(tc_p) );
+		(*func)(tc_p,exp_p);
 		np = NODE_NEXT(np);
 	}
+}
+
+static void count_class_stairs( Trial_Class *tc_p, Experiment *exp_p )
+{
+	int n = EXPT_N_STAIRCASES(exp_p);
+	n += eltcount( CLASS_STAIRCASES(tc_p) );
 	SET_EXPT_N_STAIRCASES(exp_p,n);
+}
+
+static void update_expt_stair_count( Experiment *exp_p )
+{
+	SET_EXPT_N_STAIRCASES(exp_p,0);
+	apply_to_class_list( exp_p, count_class_stairs );
 }
 
 static void add_stair_to_class(Staircase *st_p,Trial_Class *tc_p)
@@ -591,78 +480,6 @@ static void _delete_staircase( QSP_ARG_DECL  Staircase *stc_p )
 }
 
 
-COMMAND_FUNC( do_save_data )
-{
-	close_dribble();
-
-	CLEAR_EXPT_FLAG_BITS(&expt1,EXPT_RECORDING);
-}
-
-#ifdef CATCH_SIGS
-void icatch()	/** when SIGINT is caught */
-{
-	const char *sustr="are you sure";
-
-	if( caught ) return;
-	caught=1;
-	sig_set(SIGINT,icatch);	/* reset signal */
-	sprintf(ERROR_STRING,"\n\007\007");
-	advise(ERROR_STRING);
-	if( askif("intentional interrupt") ){
-		if( askif("redo last trial") ) Redo=1;
-		/* is Redo initially zero? */
-		else if( askif("abort run") ){
-			if( askif(sustr) ){
-				Abort=1;
-				do_save_data(DEFAULT_SINGLE_QSP_ARG);
-			}
-		}
-		else if( askif("DIE") ){
-			if( askif(sustr) ) exit(0);
-		}
-		else Redo=1;
-	}
-	else Redo=1;
-
-	/* giveup();*/	/* suppresses repetition of response prompt */
-			/* see qword.c in libjbm.a */
-}
-#endif /* CATCH_SIGS */
-
-#ifdef FOOBAR
-/* What does mk_stair_array do??? */
-
-#define mk_stair_array() _mk_stair_array(SINGLE_QSP_ARG)
-
-static void _mk_stair_array(SINGLE_QSP_ARG_DECL)
-{
-	List *lp;
-	Node *np;
-	Staircase **st_pp;
-	int n;
-
-	if( stair_itp == NULL ) init_stairs();	// init item subsystem
-
-	if( stair_tbl != NULL ) givbuf(stair_tbl);
-	if( stair_order != NULL ) givbuf(stair_order);
-
-	lp = stair_list();	// list of already-created staircases
-	n = eltcount(lp);
-	if( n < 1 ){
-		warn("mk_stair_array:  no staircases specified!?");
-		return;
-	}
-
-	st_pp = stair_tbl = (Staircase **)getbuf( n * sizeof(Staircase *) );
-	stair_order = (SCRAMBLE_TYPE *) getbuf( n * sizeof(*stair_order) );
-	np = QLIST_HEAD(lp);
-	while( np != NULL ){
-		*st_pp++ = (Staircase *)np->n_data;
-		np = np->n_next;
-	}
-}
-#endif // FOOBAR
-
 #define reset_expt_classes(exp_p) _reset_expt_classes(QSP_ARG  exp_p)
 
 void _reset_expt_classes(QSP_ARG_DECL  Experiment *exp_p)	/* just clears data tables */
@@ -685,8 +502,9 @@ void _reset_expt_classes(QSP_ARG_DECL  Experiment *exp_p)	/* just clears data ta
 static void _reset_experiment(QSP_ARG_DECL  Experiment *exp_p)
 {
 	reset_expt_classes(exp_p);
-	CLEAR_EXPT_FLAG_BITS(exp_p,(EXPT_RECORDING|EXPT_ABORT|EXPT_REDO));
-	(* EXPT_INIT_FUNC(exp_p) )();
+	clear_sequential_data( EXPT_SEQ_DTBL(exp_p) );
+	CLEAR_EXPT_FLAG_BITS(exp_p,(EXPT_ABORT|EXPT_REDO|EXPT_UNDO));
+	(* EXPT_INIT_FUNC(exp_p) )();	// user-provided init func?
 }
 
 
@@ -694,11 +512,87 @@ void _run_init(SINGLE_QSP_ARG_DECL)	/* general runtime initialization */
 {
 	rninit();		// seed random number generator
 
-#ifdef CATCH_SIGS
-	sig_set(SIGINT,icatch);
-#endif /* CATCH_SIGS */
-
 	reset_experiment(&expt1);
+}
+
+static void populate_stair_tbl( Experiment *exp_p )
+{
+	Staircase **stair_tbl;
+	Node *class_np;
+	int stair_idx = 0;
+
+	stair_tbl = EXPT_STAIR_TBL(exp_p);
+	assert( EXPT_CLASS_LIST(exp_p) != NULL );
+	class_np = QLIST_HEAD( EXPT_CLASS_LIST(exp_p) );
+	while( class_np != NULL ){
+		Trial_Class *tc_p;
+		Node *stair_np;
+
+		tc_p = NODE_DATA(class_np);
+		assert(tc_p!=NULL);
+		assert(CLASS_STAIRCASES(tc_p)!=NULL);
+		stair_np = QLIST_HEAD( CLASS_STAIRCASES(tc_p) );
+		while( stair_np != NULL ){
+			Staircase *stc_p;
+			stc_p = NODE_DATA(stair_np);
+			stair_tbl[stair_idx++] = stc_p;
+			stair_np = NODE_NEXT(stair_np);
+		}
+
+		class_np = NODE_NEXT(class_np);
+	}
+	assert(stair_idx==EXPT_N_STAIRCASES(exp_p));
+}
+
+static void create_stair_table( Experiment *exp_p )
+{
+	int n_staircases;
+	Staircase **stair_tbl;
+
+	n_staircases = EXPT_N_STAIRCASES(exp_p);
+
+	stair_tbl = getbuf( sizeof(Staircase *) * n_staircases );
+
+	assert( EXPT_STAIR_TBL(exp_p) == NULL );
+	SET_EXPT_STAIR_TBL(exp_p, stair_tbl );
+
+	populate_stair_tbl(exp_p);
+}
+
+#define init_trial_tbl(exp_p) _init_trial_tbl(QSP_ARG  exp_p)
+
+static int _init_trial_tbl(QSP_ARG_DECL  Experiment *exp_p)
+{
+	int n_staircases;
+	int n_rounds;
+
+	if( EXPT_TRIAL_TBL(exp_p) != NULL ){
+		// Instead of releasing and reallocating, we could keep track of the size?
+		givbuf( EXPT_TRIAL_TBL(exp_p) );
+		SET_EXPT_TRIAL_TBL(exp_p,NULL);
+	}
+	n_rounds = EXPT_N_RECORDED_TRIALS(exp_p);	// BUG - no preliminary trials???
+	n_staircases = EXPT_N_STAIRCASES(exp_p);
+
+	if( n_rounds <= 0 ){
+		sprintf(ERROR_STRING,"init_trial_tbl:  number of recorded trials per staircase (%d) must be positive!?",
+			n_rounds);
+		warn(ERROR_STRING);
+		return -1;
+	}
+	if( n_staircases <= 0 ){
+		sprintf(ERROR_STRING,"init_trial_tbl:  number of staircases (%d) must be positive!?",
+			n_staircases);
+		warn(ERROR_STRING);
+		return -1;
+	}
+
+	// Instead of checking whether the number of trials is the same, we just allocate
+	// a new block every time.
+	assert( EXPT_TRIAL_TBL(exp_p) == NULL );
+	SET_EXPT_TRIAL_TBL(exp_p, getbuf( sizeof(Staircase *) * n_rounds * n_staircases ) );
+
+	return 0;
 }
 
 void _init_trial_block( QSP_ARG_DECL  Experiment *exp_p )
@@ -709,133 +603,65 @@ void _init_trial_block( QSP_ARG_DECL  Experiment *exp_p )
 	uint32_t *order;
 	Staircase **trl_tbl, **stair_tbl;
 
-	if( EXPT_TRIAL_TBL(exp_p) != NULL ){
-		// Instead of releasing and reallocating, we could keep track of the size?
-		givbuf( EXPT_TRIAL_TBL(exp_p) );
+	reset_experiment(exp_p);
+
+	if( init_trial_tbl(exp_p) < 0 ){
+		warn("init_trial_block:  error initializing trial table!?");
+		return;
 	}
-	n_rounds = EXPT_N_RECORDED_TRIALS(exp_p);	// BUG - no preliminary trials???
+
 	n_staircases = EXPT_N_STAIRCASES(exp_p);
-
-	if( n_rounds <= 0 ){
-		sprintf(ERROR_STRING,"init_trial_block:  number of recorded trials per staircase (%d) must be positive!?",
-			n_rounds);
-		warn(ERROR_STRING);
-		return;
-	}
-	if( n_staircases <= 0 ){
-		sprintf(ERROR_STRING,"init_trial_block:  number of staircases (%d) must be positive!?",
-			n_staircases);
-		warn(ERROR_STRING);
-		return;
-	}
-
-	SET_EXPT_TRIAL_TBL(exp_p, getbuf( sizeof(Staircase *) * n_rounds * n_staircases ) );
+	n_rounds = EXPT_N_RECORDED_TRIALS(exp_p);
 
 	order = getbuf( sizeof(*order) * n_staircases );
 	for(i=0;i<n_staircases;i++) order[i]=i;
 
 	trial_idx = 0;
 	trl_tbl = EXPT_TRIAL_TBL(exp_p);
+
+	if( EXPT_STAIR_TBL(exp_p) == NULL ){
+		create_stair_table(exp_p);
+	}
+
 	stair_tbl = EXPT_STAIR_TBL(exp_p);
+	assert( stair_tbl != NULL );
 	for(i=0;i<n_rounds;i++){
 		permute(order,n_staircases);
 		for(j=0;j<n_staircases;j++){
 			trl_tbl[trial_idx++] = stair_tbl[ order[j] ];
 		}
 	}
+
+	SET_EXPT_N_TOTAL_TRIALS(exp_p,n_staircases*n_rounds);
+	SET_EXPT_CURR_TRIAL_IDX(exp_p,0);
+
+	sprintf(MSG_STR,"%d",EXPT_N_TOTAL_TRIALS(exp_p));
+	assign_reserved_var("n_trials_remaining",MSG_STR);
+fprintf(stderr,"init_trial_block:  n_trials_remaining set to %s\n",MSG_STR);
+
 }
 
-#ifdef FOOBAR
-#define step_all_stairs(exp_p) _step_all_stairs(QSP_ARG exp_p)
-
-static void _step_all_stairs(QSP_ARG_DECL  Experiment *exp_p)	/** step each stair in a random order */
-{
-	int i;
-
-if( nstairs==0 ) error1("step_all_stairs:  no staircases!?");
-
-	permute(stair_order,nstairs);
-	for(i=0;i<nstairs;i++){
-		if( (!Abort) && step( stair_tbl[ stair_order[i] ], exp_p ) == REDO_INDEX ){
-			scramble(&stair_order[i], nstairs-i );
-			i--;
-		}
-	}
-}
-
-#define prestep(exp_p) _prestep(QSP_ARG  exp_p)
-
-static int _prestep(QSP_ARG_DECL  Experiment *exp_p)	/* step stairs below criterion in a random order */
-{
-	int i;
-	int still=0;
-
-	permute(stair_order,nstairs);
-	for(i=0;i<nstairs;i++){
-		if( !Abort && STAIR_INC(stair_tbl[stair_order[i]])
-				!= STAIR_MIN_INC(stair_tbl[stair_order[i]]) ){
-
-			still=1;
-			step( stair_tbl[stair_order[i]], exp_p );
-		}
-	}
-	return(still);
-}
-
-#define run_prelim_to_criterion(exp_p) _run_prelim_to_criterion(QSP_ARG  exp_p)
-
-static void _run_prelim_to_criterion(QSP_ARG_DECL  Experiment *exp_p)
-{
-	int ndone=0;
-
-	while( !Abort && ndone<MAXPREL && prestep(exp_p) ){
-		ndone++;
-	}
-	if( ndone>=MAXPREL ){
-		int i;
-		for(i=0;i<nstairs;i++){
-			if( STAIR_INC(stair_tbl[i]) != STAIR_MIN_INC(stair_tbl[i]) ){
-				sprintf(ERROR_STRING,
-	"\007no preliminary threshold for stair %d",i);
-				warn(ERROR_STRING);
-				stair_tbl[i]->stair_val=(-1);
-			}
-		}
-	}
-}
-
-static void preliminary_trials( QSP_ARG_DECL  Experiment *exp_p)
-{
-	if( EXPT_N_PRELIM_TRIALS(exp_p) < 0 ){
-		run_prelim_to_criterion(exp_p);
-	} else {
-		int n_prelim_trials = EXPT_N_PRELIM_TRIALS(exp_p);
-
-		while( (!Abort) && n_prelim_trials-- ){
-			step_all_stairs(exp_p);
-		}
-	}
-}
-#endif // FOOBAR
 
 static void stair_trials(QSP_ARG_DECL  Experiment *exp_p)
 {
 	int n_trials_remaining;
 
-	SET_EXPT_FLAG_BITS(exp_p,EXPT_RECORDING);
 	SET_EXPT_CURR_TRIAL_IDX(exp_p,0);
 
 	n_trials_remaining = EXPT_N_TOTAL_TRIALS(exp_p);
 
-	while( (!Abort) && n_trials_remaining > 0 ) {
+	while( (! IS_ABORTING(exp_p) ) && n_trials_remaining > 0 ) {
 		Staircase *st_p;
 
 		st_p = EXPT_TRIAL_TBL(exp_p)[ EXPT_CURR_TRIAL_IDX(exp_p) ];
 		assert(st_p!=NULL);
+
+		sprintf(MSG_STR,"%d",n_trials_remaining);
+		assign_reserved_var("n_trials_remaining",MSG_STR);
+
 		// BUG?  need to check that redo and undo do the right thing???
 		step(st_p,exp_p);
 		n_trials_remaining --;
-		SET_EXPT_CURR_TRIAL_IDX(exp_p, EXPT_CURR_TRIAL_IDX(exp_p)+1 );
 	}
 }
 
@@ -844,21 +670,9 @@ void _run_stairs(QSP_ARG_DECL  Experiment *exp_p )	/** this does most everything
 advise("calling _run_init");
 	_run_init(SINGLE_QSP_ARG);
 	stair_trials(QSP_ARG exp_p);
-advise("calling do_save_data");
-	do_save_data(SINGLE_QSP_ARG);
-
-#ifdef CATCH_SIGS
-	sig_set(SIGINT,SIG_DFL);
-#endif /* CATCH_SIGS */
+	//do_save_data(SINGLE_QSP_ARG);
 }
 
-#ifdef FOOBAR
-void _add_stair(QSP_ARG_DECL  int type,Trial_Class *tc_p )
-{
-	if( make_staircase(type,tc_p,1,YES_INDEX,YES_INDEX) < 0 )
-		warn("Error creating staircase!?");
-}
-#endif // FOOBAR
 
 void _delete_all_stairs(SINGLE_QSP_ARG_DECL)
 {
@@ -984,18 +798,6 @@ static int next_class_index(void)
 	return class_index++;
 }
 
-#ifdef FOOBAR
-static void set_class_xval_obj( Trial_Class *tc_p, Data_Obj *dp )
-{
-	if( CLASS_XVAL_OBJ(tc_p) != NULL )
-		remove_reference(CLASS_XVAL_OBJ(tc_p));
-
-	SET_CLASS_XVAL_OBJ(tc_p,dp);
-
-	if( dp != NULL )
-		add_reference(dp);
-}
-#endif // FOOBAR
 
 Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
 {
@@ -1077,7 +879,6 @@ fprintf(stderr,"update_summary:  response was correct\n");
 		} else {
 fprintf(stderr,"update_summary:  response was incorrect\n");
 		}
-		SET_SDT_FLAG_BIT(sdt_p, SUMMARY_DATA_DIRTY);
 	}
 
 }

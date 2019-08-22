@@ -104,12 +104,9 @@ struct summary_data_tbl {
 };
 
 // flag values for summary data
-#define SUMMARY_DATA_DIRTY	1	// written without saved
 
 #define SET_SDT_FLAG_BIT(sdt_p,bit)	SUMM_DTBL_FLAGS(sdt_p) |= bit
 #define CLEAR_SDT_FLAG_BIT(sdt_p,bit)	SUMM_DTBL_FLAGS(sdt_p) &= ~(bit)
-
-#define SUMM_DTBL_NEEDS_SAVING(sdt_p)	(SUMM_DTBL_FLAGS(sdt_p) & SUMMARY_DATA_DIRTY)
 
 #define SUMM_DTBL_FLAGS(sdt_p)		(sdt_p)->sdt_flags
 #define SET_SUMM_DTBL_FLAGS(sdt_p,v)	(sdt_p)->sdt_flags = v
@@ -131,30 +128,34 @@ struct summary_data_tbl {
 #define SUMM_DTBL_EXPT(sdt_p)		CLASS_EXPT( SUMM_DTBL_CLASS(sdt_p) )
 
 typedef struct sequence_datum {
+	int	sqd_trial_idx;
 	int	sqd_class_idx;
 	int	sqd_stair_idx;
 	int	sqd_xval_idx;
 	int	sqd_response;
 	int	sqd_correct_response;
+	int	sqd_rt_msecs;	
 } Sequence_Datum;
 
+#define SEQ_DATUM_TRIAL_IDX(qd_p)	(qd_p)->sqd_trial_idx
 #define SEQ_DATUM_CLASS_IDX(qd_p)	(qd_p)->sqd_class_idx
 #define SEQ_DATUM_STAIR_IDX(qd_p)	(qd_p)->sqd_stair_idx
 #define SEQ_DATUM_XVAL_IDX(qd_p)	(qd_p)->sqd_xval_idx
 #define SEQ_DATUM_RESPONSE(qd_p)	(qd_p)->sqd_response
 #define SEQ_DATUM_CRCT_RSP(qd_p)	(qd_p)->sqd_correct_response
+#define SEQ_DATUM_RT_MSECS(qd_p)	(qd_p)->sqd_rt_msecs
 
+#define SET_SEQ_DATUM_TRIAL_IDX(qd_p,v)	(qd_p)->sqd_trial_idx = v
 #define SET_SEQ_DATUM_CLASS_IDX(qd_p,v)	(qd_p)->sqd_class_idx = v
 #define SET_SEQ_DATUM_STAIR_IDX(qd_p,v)	(qd_p)->sqd_stair_idx = v
 #define SET_SEQ_DATUM_XVAL_IDX(qd_p,v)	(qd_p)->sqd_xval_idx = v
 #define SET_SEQ_DATUM_RESPONSE(qd_p,v)	(qd_p)->sqd_response = v
 #define SET_SEQ_DATUM_CRCT_RSP(qd_p,v)	(qd_p)->sqd_correct_response = v
+#define SET_SEQ_RT_MSECS(qd_p,v)	(qd_p)->sqd_rt_msecs = v
 
 // x values are per-experiment, not per-class???
 struct sequential_data_tbl {
 	List *		qdt_lp;
-//	Data_Obj *	qdt_xval_dp;	// should match class
-//	Trial_Class *	qdt_tc_p;	// may be invalid if lumped...
 	int		qdt_flags;
 } ;
 
@@ -164,8 +165,8 @@ struct sequential_data_tbl {
 #define SEQ_DTBL_FLAGS(qdt_p)		(qdt_p)->qdt_flags
 #define SET_SEQ_DTBL_FLAGS(qdt_p,v)	(qdt_p)->qdt_flags = v
 
-#define SET_QDT_FLAG_BIT(qdt_p,bits)	SEQ_DTBL_FLAGS(qdt_p) |= bits
-#define CLEAR_QDT_FLAG_BIT(qdt_p,bits)	SEQ_DTBL_FLAGS(qdt_p) &= ~(bits)
+#define SET_QDT_FLAG_BITS(qdt_p,bits)	SEQ_DTBL_FLAGS(qdt_p) |= bits
+#define CLEAR_QDT_FLAG_BITS(qdt_p,bits)	SEQ_DTBL_FLAGS(qdt_p) &= ~(bits)
 
 #define SEQ_DTBL_LIST(qdt_p)	(qdt_p)->qdt_lp
 
@@ -238,16 +239,6 @@ typedef struct staircase {
 
 #define NO_STC_DATA	(-1)
 
-// BUG this should be cleaned up!
-//#define REDO		5	 /* historical, jkr switch box */
-//#define ABORT		8
-
-#ifdef FOOBAR
-
-#define NO_RESP		(-1)
-
-#endif // FOOBAR
-
 struct experiment {
 	int		expt_flags;
 
@@ -291,19 +282,22 @@ struct experiment {
 
 extern Experiment expt1;	// a global singleton
 
-#define DRIBBLING		1
-#define KEYBOARD_RESPONSE	2
-#define EXPT_REDO		4
-#define EXPT_ABORT		8
-#define EXPT_RECORDING		16
+#define KEYBOARD_RESPONSE	1
+#define EXPT_REDO		2
+#define EXPT_ABORT		4
+#define EXPT_UNDO		8
+#define EXPT_2AFC		16
 
 #define EXPT_FLAGS(exp_p)		(exp_p)->expt_flags		
 #define SET_EXPT_FLAG_BITS(exp_p,bits)	(exp_p)->expt_flags |= bits
 #define CLEAR_EXPT_FLAG_BITS(exp_p,bits)	(exp_p)->expt_flags &= ~(bits)
 
-#define IS_RECORDING(exp_p)		(EXPT_FLAGS(exp_p) & EXPT_RECORDING)
 #define IS_ABORTING(exp_p)		(EXPT_FLAGS(exp_p) & EXPT_ABORT)
 #define IS_REDOING(exp_p)		(EXPT_FLAGS(exp_p) & EXPT_REDO)
+#define IS_UNDOING(exp_p)		(EXPT_FLAGS(exp_p) & EXPT_UNDO)
+#define IS_2AFC(exp_p)			(EXPT_FLAGS(exp_p) & EXPT_2AFC)
+
+#define NEEDS_TO_REDO(exp_p)		(IS_ABORTING(exp_p) || IS_REDOING(exp_p) || IS_UNDOING(exp_p))
 
 #define EXPT_STIM_FUNC(exp_p)		((exp_p)->expt_stim_func)
 #define SET_EXPT_STIM_FUNC(exp_p,v)	((exp_p)->expt_stim_func) = v
@@ -361,7 +355,6 @@ extern Experiment expt1;	// a global singleton
 
 /* a global variable BAD... */
 extern Data_Obj *global_xval_dp;
-extern int is_fc;
 extern const char *correct_feedback_string, *incorrect_feedback_string;
 
 /* for fortran stuff... */
@@ -443,14 +436,8 @@ extern  Sequential_Data_Tbl *_new_sequential_data_tbl(SINGLE_QSP_ARG_DECL);
 #define new_summary_data_tbl() _new_summary_data_tbl(SINGLE_QSP_ARG)
 #define new_sequential_data_tbl() _new_sequential_data_tbl(SINGLE_QSP_ARG)
 
-#ifdef FOOBAR
-extern void _init_summ_dtbl_for_class( QSP_ARG_DECL  Summary_Data_Tbl * sdt_p, Trial_Class *tc_p );
-#define init_summ_dtbl_for_class( sdt_p, tc_p ) _init_summ_dtbl_for_class( QSP_ARG  sdt_p, tc_p )
-#endif // FOOBAR
-
 extern void _clear_sequential_data(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p);
 #define clear_sequential_data(qdt_p) _clear_sequential_data(QSP_ARG  qdt_p)
-
 
 extern Trial_Class *_new_class_for_index(QSP_ARG_DECL  int index);
 #define new_class_for_index(index) _new_class_for_index(QSP_ARG  index)
@@ -463,18 +450,17 @@ extern void _run_init(SINGLE_QSP_ARG_DECL);
 
 extern void new_exp(SINGLE_QSP_ARG_DECL);
 extern void clrit(void);
-extern void set_recording(int flag);
 extern void _make_staircase( QSP_ARG_DECL  int st, Trial_Class *tc_p, int mi, int cr, int ir );
 #define make_staircase( st, tc_p, mi, cr, ir ) _make_staircase( QSP_ARG  st, tc_p, mi, cr, ir )
 
-extern COMMAND_FUNC( do_save_data );
-#ifdef CATCH_SIGS
-extern void icatch(void);
-#endif /* CATCH_SIGS */
+extern void _save_data( QSP_ARG_DECL  Experiment *exp_p, FILE *fp );
+#define save_data( exp_p, fp ) _save_data( QSP_ARG  exp_p, fp )
+
 extern void _run_stairs(QSP_ARG_DECL  Experiment *exp_p);
 #define run_stairs(exp_p) _run_stairs(QSP_ARG  exp_p)
 
-extern void set_dribble_file(FILE *fp);
+//extern void set_dribble_file(FILE *fp);
+
 extern void _add_stair(QSP_ARG_DECL  int type,Trial_Class *tc_p);
 #define add_stair(type,tc_p) _add_stair(QSP_ARG  type,tc_p)
 
@@ -512,9 +498,6 @@ extern void _init_experiment( QSP_ARG_DECL  Experiment *exp_p );
 
 extern void _init_responses(SINGLE_QSP_ARG_DECL);
 #define init_responses() _init_responses(SINGLE_QSP_ARG)
-
-#define setup_files(exp_p) _setup_files(QSP_ARG  exp_p)
-extern void _setup_files(QSP_ARG_DECL  Experiment *exp_p);
 
 #define delete_all_trial_classes() _delete_all_trial_classes(SINGLE_QSP_ARG)
 extern void _delete_all_trial_classes(SINGLE_QSP_ARG_DECL);
@@ -567,6 +550,8 @@ extern COMMAND_FUNC( do_lump );
 
 /* asc_data.c */
 
+extern void _print_sequence_data(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p, FILE *fp );
+#define print_sequence_data(qdt_p, fp ) _print_sequence_data(QSP_ARG  qdt_p, fp )
 
 extern void _iterate_over_classes( QSP_ARG_DECL  void (*func)(QSP_ARG_DECL  Trial_Class *, void *), void *arg);
 #define iterate_over_classes(func, arg) _iterate_over_classes( QSP_ARG  func, arg)
