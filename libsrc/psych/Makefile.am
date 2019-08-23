@@ -7,7 +7,6 @@ libpsych_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
 
 libpsych_a_SOURCES = 				\
 						\
-		xvalmenu.c			\
 		stair.c				\
 		asc_data.c	lookmenu.c	\
 		mlfit.c		lump.c		\

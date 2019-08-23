@@ -40,9 +40,9 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 	assign_reserved_var( "n_classes" , num_str );
 	
 	if( verbose ){
-		assert(global_xval_dp!=NULL);
+		assert(EXPT_XVAL_OBJ(&expt1)!=NULL);
 		sprintf(ERROR_STRING,"File %s read, %d classes, %d x-values",
-			filename,n_have_classes,OBJ_COLS(global_xval_dp));
+			filename,n_have_classes,OBJ_COLS(EXPT_XVAL_OBJ(&expt1)));
 		advise(ERROR_STRING);
 	}
 }
@@ -238,7 +238,7 @@ static COMMAND_FUNC( do_pnt_bars )
 
 static COMMAND_FUNC( do_print_seq )
 {
-	warn("print_seq:  not implemented!?");
+	write_sequential_data( EXPT_SEQ_DTBL(&expt1), tell_msgfile() );
 }
 
 #undef ADD_CMD

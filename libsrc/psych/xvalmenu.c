@@ -41,15 +41,15 @@ static int log_steps=0;
 
 #define set_n_xvals(n) _set_n_xvals(QSP_ARG  n)
 
-static void _set_n_xvals(QSP_ARG_DECL  int n)
+static void _set_n_xvals(QSP_ARG_DECL  Experiment *exp_p, int n)
 {
 	assert( n > 0 && n <= MAX_X_VALUES );
 
-	if( global_xval_dp != NULL ){
-		if( n != OBJ_COLS(global_xval_dp) ){
+	if( EXPT_XVAL_OBJ(exp_p) != NULL ){
+		if( n != OBJ_COLS(EXPT_XVAL_OBJ(exp_p)) ){
 			sprintf(ERROR_STRING,
 	"set_n_xvals:  requested value %d does not match object %s!?",
-				n,OBJ_NAME(global_xval_dp));
+				n,OBJ_NAME(EXPT_XVAL_OBJ(exp_p)));
 			warn(ERROR_STRING);
 			return;
 		}
@@ -60,7 +60,7 @@ fprintf(stderr,"number of x-values set to %d\n",n);
 
 int _insure_xval_array(SINGLE_QSP_ARG_DECL)
 {
-	if( global_xval_dp == NULL ){
+	if( EXPT_XVAL_OBJ(exp_p) == NULL ){
 		if( verbose )
 			advise("insure_xval_array:  creating x-value object");
 		if( global_n_xvals <= 0 ){
@@ -74,8 +74,8 @@ int _insure_xval_array(SINGLE_QSP_ARG_DECL)
 			advise("insure_xval_array:  x-value object already exists...");
 		return 0;
 	}
-	global_xval_dp = mk_vec("default_x_values",global_n_xvals,1,prec_for_code(PREC_SP));
-	assert(global_xval_dp!=NULL);
+	EXPT_XVAL_OBJ(exp_p) = mk_vec("default_x_values",global_n_xvals,1,prec_for_code(PREC_SP));
+	assert(EXPT_XVAL_OBJ(exp_p)!=NULL);
 	return 0;
 }
 
@@ -86,12 +86,12 @@ static void _linsteps(SINGLE_QSP_ARG_DECL)	/** make linear steps */
 	float inc;
 	int n_xvals;
 
-	assert(global_xval_dp!=NULL);
-	n_xvals = OBJ_COLS(global_xval_dp);
+	assert(EXPT_XVAL_OBJ(exp_p)!=NULL);
+	n_xvals = OBJ_COLS(EXPT_XVAL_OBJ(exp_p));
 
 	inc=xval_n - xval_1;
 	inc /= (n_xvals-1);
-	easy_ramp2d(global_xval_dp, xval_1, inc, 0);
+	easy_ramp2d(EXPT_XVAL_OBJ(exp_p), xval_1, inc, 0);
 }
 
 #define make_steps() _make_steps(SINGLE_QSP_ARG)
@@ -111,8 +111,8 @@ static void _make_steps(SINGLE_QSP_ARG_DECL)
 		Vec_Obj_Args oa1;
 
 		clear_obj_args(&oa1);
-		SET_OA_DEST(&oa1, global_xval_dp);
-		SET_OA_SRC1(&oa1, global_xval_dp);
+		SET_OA_DEST(&oa1, EXPT_XVAL_OBJ(exp_p));
+		SET_OA_SRC1(&oa1, EXPT_XVAL_OBJ(exp_p));
 		set_obj_arg_flags(&oa1);
 
 		platform_dispatch_by_code( FVEXP, &oa1 );
@@ -156,70 +156,10 @@ static COMMAND_FUNC( do_import_xvals )
 	SET_EXPT_XVAL_OBJ(&expt1,dp);
 }
 
-static COMMAND_FUNC( do_set_nxvals )
-{
-	int n;
-
-	n = (int) how_many("number of x values");
-	if( n <= 0 || n > MAX_X_VALUES ){
-		sprintf(ERROR_STRING,
-			"Number of x values must be between 0 and %d",MAX_X_VALUES);
-		warn(ERROR_STRING);
-		return;
-	}
-	set_n_xvals(n);
-
-	make_steps();
-}
-
-static COMMAND_FUNC( do_set_range )
-{
-	xval_1 = (int) how_much("zeroeth value");
-	xval_n = (int) how_much("last value");
-
-	make_steps();
-}
-
-static COMMAND_FUNC( do_set_step_type )
-{
-	int i;
-
-	i = which_one("step type (linear/logarithmic)",2,step_types);
-	if( i < 0 ) warn("invalid step type");
-	else log_steps=i;
-
-	make_steps();
-}
-
-static COMMAND_FUNC( do_save_xvals )
-{
-	FILE *fp;
-	int i;
-	int n_xvals;
-
-	fp=try_nice( nameof("output file"), "w" );
-	if( !fp ) return;
-
-	assert(global_xval_dp!=NULL);
-	n_xvals = OBJ_COLS(global_xval_dp);
-
-	for(i=0;i<n_xvals;i++){
-		float *xv_p;
-		xv_p = indexed_data(global_xval_dp,i);
-		fprintf(fp,"%f\n",*xv_p);
-	}
-
-	fclose(fp);
-}
-
 #define ADD_CMD(s,f,h)	ADD_COMMAND(xvals_menu,s,f,h)
 
 MENU_BEGIN(xvals)
 ADD_CMD( import,	do_import_xvals,	load x values from a data object )
-ADD_CMD( save,		do_save_xvals,	save x values to a file )
-ADD_CMD( n_vals,	do_set_nxvals,	set number of x values )
-ADD_CMD( range,		do_set_range,	set range of x values )
-ADD_CMD( step_type,	do_set_step_type,	select linear/logarithmic steps )
 MENU_END(xvals)
 
 COMMAND_FUNC( xval_menu )	/** play around with an experiment */

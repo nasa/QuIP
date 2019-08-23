@@ -91,7 +91,7 @@ static void tabulate_class( Trial_Class *tc_p )
 		Sequence_Datum *qd_p;
 		qd_p = NODE_DATA(np);
 
-		update_summary(CLASS_SUMM_DTBL(tc_p),qd_p);
+		update_class_summary(tc_p,qd_p);
 
 		np = NODE_NEXT(np);
 	}
@@ -162,10 +162,8 @@ void write_summary_data( Summary_Data_Tbl *sdt_p, FILE *fp )
 {
 	int j;
 
-	// count the number of points with at least one trial
-	for(j=0;j<SUMM_DTBL_SIZE(sdt_p);j++)
-		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(sdt_p,j)) != 0 )
-			SET_SUMM_DTBL_N(sdt_p,1+SUMM_DTBL_N(sdt_p));
+	// We used to set SUMM_DTBL_N here, but now that is done when
+	// we convert from sequential data...
 
 	assert(SUMM_DTBL_CLASS(sdt_p)!=NULL);
 	fprintf(fp,CLASS_SUMM_DATA_HEAD_FMT,CLASS_INDEX(SUMM_DTBL_CLASS(sdt_p)),SUMM_DTBL_N(sdt_p));
@@ -417,9 +415,6 @@ static int _rd_dribble(QSP_ARG_DECL  FILE *fp)
 			assert( STAIR_CRCT_RSP(st_p) == crct );
 
 			SET_STAIR_VAL(st_p,i_val);
-
-			//update_summary(CLASS_SUMM_DTBL(tc_p),st_p,resp);
-
 		} else {
 			if( feof(fp) )
 				have_input_line=0;
@@ -764,4 +759,5 @@ void _save_data( QSP_ARG_DECL  Experiment *exp_p, FILE *fp )
 	// mark the data table as written!
 	CLEAR_QDT_FLAG_BITS( EXPT_SEQ_DTBL(exp_p), SEQUENTIAL_DATA_DIRTY );
 }
+
 

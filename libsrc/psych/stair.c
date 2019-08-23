@@ -870,7 +870,7 @@ Trial_Class *_new_class_for_index( QSP_ARG_DECL  int class_index )
 	return(tc_p);
 }
 
-void update_summary( Summary_Data_Tbl *sdt_p, Sequence_Datum *qd_p )
+static void update_summary( Summary_Data_Tbl *sdt_p, Sequence_Datum *qd_p )
 {
 	int val, rsp;
 

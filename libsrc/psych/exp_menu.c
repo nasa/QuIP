@@ -297,6 +297,43 @@ static COMMAND_FUNC( do_save_data )
 	save_data(&expt1,fp);
 }
 
+static COMMAND_FUNC( do_import_xvals )
+{
+	Data_Obj *dp;
+
+	dp = pick_obj("float object for x-values");
+	if( dp == NULL ) return;
+
+	if( OBJ_PREC(dp) != PREC_SP ){
+		sprintf(ERROR_STRING,"import_xvals:  object %s (%s) should have %s precision!?",
+			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)),NAME_FOR_PREC_CODE(PREC_SP));
+		warn(ERROR_STRING);
+		return;
+	}
+	if( OBJ_COMPS(dp) != 1 ){
+		sprintf(ERROR_STRING,"import_xvals:  object %s should have 1 component!?", OBJ_NAME(dp));
+		warn(ERROR_STRING);
+		return;
+	}
+	if( OBJ_ROWS(dp) != 1 ){
+		sprintf(ERROR_STRING,"import_xvals:  object %s should have 1 row!?", OBJ_NAME(dp));
+		warn(ERROR_STRING);
+		return;
+	}
+	if( OBJ_FRAMES(dp) != 1 ){
+		sprintf(ERROR_STRING,"import_xvals:  object %s should have 1 frame!?", OBJ_NAME(dp));
+		warn(ERROR_STRING);
+		return;
+	}
+	if( OBJ_COLS(dp) < 2 || OBJ_COLS(dp) > MAX_X_VALUES ){
+		sprintf(ERROR_STRING,"import_xvals:  object %s has %d columns, should be in range 2-%d!?",
+			OBJ_NAME(dp),OBJ_COLS(dp),MAX_X_VALUES);
+		warn(ERROR_STRING);
+		return;
+	}
+	SET_EXPT_XVAL_OBJ(&expt1,dp);
+}
+
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(experiment_menu,s,f,h)
 
@@ -327,7 +364,7 @@ ADD_CMD( staircases,	do_staircase_menu,	edit individual staircases )
 ADD_CMD( run,		do_run_exp,	run experiment )
 ADD_CMD( 2AFC,		set_2afc,	set forced choice flag )
 ADD_CMD( keys,		setyesno,	select response keys )
-ADD_CMD( xvals,		xval_menu,	x value submenu )
+ADD_CMD( import_xvals,	do_import_xvals,	specify data object to use for x-values )
 ADD_CMD( lookit,	lookmenu,	data analysis submenu )
 ADD_CMD( feedback,	do_feedback,	specify feedback strings )
 MENU_END(experiment)

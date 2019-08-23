@@ -15,7 +15,7 @@ experiments
 
 Define C1Stim 0
 Print n_trials_remaining
-advise "C1Stimulus!   class = $class   val = $val"
+advise "C1Stimulus!   class = $class   val = $val   coin = $coin"
 .
 
 Define Setup_X_Values 0

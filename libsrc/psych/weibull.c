@@ -68,8 +68,8 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 
 	t_beta = opp->ans;
 
-	assert(global_xval_dp!=NULL);
-	n_xvals = OBJ_COLS(global_xval_dp);
+	assert(EXPT_XVAL_OBJ(&expt1)!=NULL);
+	n_xvals = OBJ_COLS(EXPT_XVAL_OBJ(&expt1));
 	assert(n_xvals>1);
 
 	for(i=0;i<n_xvals;i++){
@@ -81,7 +81,7 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 			continue;
 
 		nc=DATUM_NCORR( SUMM_DTBL_ENTRY(the_dtp,i) );
-		xv_p = indexed_data(global_xval_dp,i);
+		xv_p = indexed_data(EXPT_XVAL_OBJ(&expt1),i);
 		xv = *xv_p;
 
 		if( xv == 0.0 ) pc = (float) w_gamma;
@@ -119,16 +119,16 @@ static void _weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac)		/** maxi
 
 	delete_opt_params(SINGLE_QSP_ARG);	/* clear any existing parameters */
 
-	assert(global_xval_dp!=NULL);
-	n_xvals = OBJ_COLS(global_xval_dp);
+	assert(EXPT_XVAL_OBJ(&expt1)!=NULL);
+	n_xvals = OBJ_COLS(EXPT_XVAL_OBJ(&expt1));
 	assert(n_xvals>1);
 
 	tmp_param.op_name = ALPHA_NAME;
 
-	mid_xv_p = indexed_data(global_xval_dp,n_xvals/2);
-	mid2_xv_p = indexed_data(global_xval_dp,n_xvals/2+1);
-	first_xv_p = indexed_data(global_xval_dp,0);
-	last_xv_p = indexed_data(global_xval_dp,n_xvals-1);
+	mid_xv_p = indexed_data(EXPT_XVAL_OBJ(&expt1),n_xvals/2);
+	mid2_xv_p = indexed_data(EXPT_XVAL_OBJ(&expt1),n_xvals/2+1);
+	first_xv_p = indexed_data(EXPT_XVAL_OBJ(&expt1),0);
+	last_xv_p = indexed_data(EXPT_XVAL_OBJ(&expt1),n_xvals-1);
 
 	tmp_param.ans = *mid_xv_p;
 	if( *first_xv_p < *last_xv_p ){

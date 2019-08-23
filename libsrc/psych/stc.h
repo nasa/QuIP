@@ -354,7 +354,7 @@ extern Experiment expt1;	// a global singleton
 #define IS_USING_KEYBOARD(exp_p)	(EXPT_FLAGS(exp_p) & KEYBOARD_RESPONSE)
 
 /* a global variable BAD... */
-extern Data_Obj *global_xval_dp;
+//extern Data_Obj *global_xval_dp;
 extern const char *correct_feedback_string, *incorrect_feedback_string;
 
 /* for fortran stuff... */
@@ -362,10 +362,12 @@ extern const char *correct_feedback_string, *incorrect_feedback_string;
 
 /* BUG these are not thread-safe ...  probably ok */
 // But why do they need to be global???
+/*
 extern void (*modrt)(QSP_ARG_DECL Trial_Class *);
 extern void (*initrt)(void);
 extern void (*stim_func)(QSP_ARG_DECL Staircase *);
 extern int (*response_func)(QSP_ARG_DECL Staircase *, Experiment *);
+*/
 
 /* global variables */
 
@@ -409,7 +411,6 @@ ITEM_INTERFACE_PROTOTYPES(Staircase,stair)
 
 extern void save_datum(Experiment *exp_p, Sequence_Datum *qd_p);
 extern void clear_summary_data(Summary_Data_Tbl *sdt_p );
-extern void update_summary( Summary_Data_Tbl *sdt_p, Sequence_Datum *qd_p );
 
 extern void _reset_expt_classes(QSP_ARG_DECL  Experiment *exp_p);
 #define reset_expt_classes(exp_p) _reset_expt_classes(QSP_ARG  exp_p)
