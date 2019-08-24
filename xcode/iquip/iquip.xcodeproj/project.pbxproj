@@ -134,7 +134,6 @@
 		71828F5E172617A900F7CB35 /* stc_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F58172617A900F7CB35 /* stc_edit.c */; };
 		71828F5F172617A900F7CB35 /* stc_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F59172617A900F7CB35 /* stc_menu.c */; };
 		71828F62172617B800F7CB35 /* weibull.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F60172617B800F7CB35 /* weibull.c */; };
-		71828F63172617B800F7CB35 /* xvalmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F61172617B800F7CB35 /* xvalmenu.c */; };
 		71828F67172617E500F7CB35 /* unix_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F66172617E500F7CB35 /* unix_menu.c */; };
 		71828F6F1726180E00F7CB35 /* conv3d.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F681726180E00F7CB35 /* conv3d.c */; };
 		71828F701726180E00F7CB35 /* convolve.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F691726180E00F7CB35 /* convolve.c */; };
@@ -377,7 +376,6 @@
 		7C4332091D4D43FC0033687C /* stc_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F58172617A900F7CB35 /* stc_edit.c */; };
 		7C43320A1D4D43FC0033687C /* stc_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F59172617A900F7CB35 /* stc_menu.c */; };
 		7C43320B1D4D43FC0033687C /* weibull.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F60172617B800F7CB35 /* weibull.c */; };
-		7C43320C1D4D43FC0033687C /* xvalmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F61172617B800F7CB35 /* xvalmenu.c */; };
 		7C43320D1D4D43FC0033687C /* unix_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F66172617E500F7CB35 /* unix_menu.c */; };
 		7C43320E1D4D43FC0033687C /* conv3d.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F681726180E00F7CB35 /* conv3d.c */; };
 		7C43320F1D4D43FC0033687C /* convolve.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F691726180E00F7CB35 /* convolve.c */; };
@@ -649,7 +647,6 @@
 		7C4333301D4D49450033687C /* stc_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F58172617A900F7CB35 /* stc_edit.c */; };
 		7C4333311D4D49450033687C /* stc_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F59172617A900F7CB35 /* stc_menu.c */; };
 		7C4333321D4D49450033687C /* weibull.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F60172617B800F7CB35 /* weibull.c */; };
-		7C4333331D4D49450033687C /* xvalmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F61172617B800F7CB35 /* xvalmenu.c */; };
 		7C4333341D4D49450033687C /* unix_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F66172617E500F7CB35 /* unix_menu.c */; };
 		7C4333351D4D49450033687C /* conv3d.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F681726180E00F7CB35 /* conv3d.c */; };
 		7C4333361D4D49450033687C /* convolve.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F691726180E00F7CB35 /* convolve.c */; };
@@ -926,7 +923,6 @@
 		7C4D6DFC1D5111A400D34AC4 /* stc_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F58172617A900F7CB35 /* stc_edit.c */; };
 		7C4D6DFD1D5111A400D34AC4 /* stc_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F59172617A900F7CB35 /* stc_menu.c */; };
 		7C4D6DFE1D5111A400D34AC4 /* weibull.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F60172617B800F7CB35 /* weibull.c */; };
-		7C4D6DFF1D5111A400D34AC4 /* xvalmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F61172617B800F7CB35 /* xvalmenu.c */; };
 		7C4D6E001D5111A400D34AC4 /* unix_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F66172617E500F7CB35 /* unix_menu.c */; };
 		7C4D6E011D5111A400D34AC4 /* conv3d.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F681726180E00F7CB35 /* conv3d.c */; };
 		7C4D6E021D5111A400D34AC4 /* convolve.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F691726180E00F7CB35 /* convolve.c */; };
@@ -1271,7 +1267,6 @@
 		7CB6711F1F9484C5001FFADF /* stc_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F59172617A900F7CB35 /* stc_menu.c */; };
 		7CB671201F9484C5001FFADF /* weibull.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F60172617B800F7CB35 /* weibull.c */; };
 		7CB671211F9484C5001FFADF /* amoeba.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB44FFA1D65083A00B6783F /* amoeba.c */; };
-		7CB671221F9484C5001FFADF /* xvalmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F61172617B800F7CB35 /* xvalmenu.c */; };
 		7CB671231F9484C5001FFADF /* unix_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F66172617E500F7CB35 /* unix_menu.c */; };
 		7CB671241F9484C5001FFADF /* conv3d.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F681726180E00F7CB35 /* conv3d.c */; };
 		7CB671251F9484C5001FFADF /* convolve.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F691726180E00F7CB35 /* convolve.c */; };
@@ -1674,7 +1669,6 @@
 		71828F58172617A900F7CB35 /* stc_edit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stc_edit.c; sourceTree = "<group>"; };
 		71828F59172617A900F7CB35 /* stc_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stc_menu.c; sourceTree = "<group>"; };
 		71828F60172617B800F7CB35 /* weibull.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = weibull.c; sourceTree = "<group>"; };
-		71828F61172617B800F7CB35 /* xvalmenu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = xvalmenu.c; sourceTree = "<group>"; };
 		71828F66172617E500F7CB35 /* unix_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = unix_menu.c; sourceTree = "<group>"; };
 		71828F681726180E00F7CB35 /* conv3d.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = conv3d.c; sourceTree = "<group>"; };
 		71828F691726180E00F7CB35 /* convolve.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = convolve.c; sourceTree = "<group>"; };
@@ -2317,7 +2311,6 @@
 				7CCE06CF23072E2E005B65C7 /* class_menu.c */,
 				7CCE06CE23072E2E005B65C7 /* exp_menu.c */,
 				71828F60172617B800F7CB35 /* weibull.c */,
-				71828F61172617B800F7CB35 /* xvalmenu.c */,
 				71828F54172617A900F7CB35 /* mlfit.c */,
 				71828F57172617A900F7CB35 /* stair.c */,
 				71828F58172617A900F7CB35 /* stc_edit.c */,
@@ -2920,7 +2913,6 @@
 				71828F5E172617A900F7CB35 /* stc_edit.c in Sources */,
 				71828F5F172617A900F7CB35 /* stc_menu.c in Sources */,
 				71828F62172617B800F7CB35 /* weibull.c in Sources */,
-				71828F63172617B800F7CB35 /* xvalmenu.c in Sources */,
 				71828F67172617E500F7CB35 /* unix_menu.c in Sources */,
 				7C4685951E7CB3A8000403FA /* slow_len.c in Sources */,
 				71828F6F1726180E00F7CB35 /* conv3d.c in Sources */,
@@ -3201,7 +3193,6 @@
 				7C43320A1D4D43FC0033687C /* stc_menu.c in Sources */,
 				7C43320B1D4D43FC0033687C /* weibull.c in Sources */,
 				7C5D93821D651A140096D7BC /* amoeba.c in Sources */,
-				7C43320C1D4D43FC0033687C /* xvalmenu.c in Sources */,
 				7CE0183C1FA2433700E1B4C1 /* fusion.c in Sources */,
 				7C43320D1D4D43FC0033687C /* unix_menu.c in Sources */,
 				7C43320E1D4D43FC0033687C /* conv3d.c in Sources */,
@@ -3481,7 +3472,6 @@
 				7C4333301D4D49450033687C /* stc_edit.c in Sources */,
 				7C4333311D4D49450033687C /* stc_menu.c in Sources */,
 				7C4333321D4D49450033687C /* weibull.c in Sources */,
-				7C4333331D4D49450033687C /* xvalmenu.c in Sources */,
 				7C4333341D4D49450033687C /* unix_menu.c in Sources */,
 				7C4685971E7CB41F000403FA /* slow_len.c in Sources */,
 				7C4333351D4D49450033687C /* conv3d.c in Sources */,
@@ -3751,7 +3741,6 @@
 				7C4D6DFC1D5111A400D34AC4 /* stc_edit.c in Sources */,
 				7C4D6DFD1D5111A400D34AC4 /* stc_menu.c in Sources */,
 				7C4D6DFE1D5111A400D34AC4 /* weibull.c in Sources */,
-				7C4D6DFF1D5111A400D34AC4 /* xvalmenu.c in Sources */,
 				7C4D6E001D5111A400D34AC4 /* unix_menu.c in Sources */,
 				7C4685981E7CB420000403FA /* slow_len.c in Sources */,
 				7C4D6E011D5111A400D34AC4 /* conv3d.c in Sources */,
@@ -4032,7 +4021,6 @@
 				7CB6711F1F9484C5001FFADF /* stc_menu.c in Sources */,
 				7CB671201F9484C5001FFADF /* weibull.c in Sources */,
 				7CB671211F9484C5001FFADF /* amoeba.c in Sources */,
-				7CB671221F9484C5001FFADF /* xvalmenu.c in Sources */,
 				7CE0183F1FA2433A00E1B4C1 /* fusion.c in Sources */,
 				7CB671231F9484C5001FFADF /* unix_menu.c in Sources */,
 				7CB671241F9484C5001FFADF /* conv3d.c in Sources */,

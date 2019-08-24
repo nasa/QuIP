@@ -816,7 +816,7 @@ static COMMAND_FUNC( do_confirm )
 	title=NAMEOF("title for alert");
 	question=NAMEOF("confirmation question");
 
-	get_confirmation(title,question);
+	get_confirmation(title,question);	// result passed back in $confirmed
 
 	// another event can occur while the alert is getting
 	// ready to go up, pushing text onto the command stack.

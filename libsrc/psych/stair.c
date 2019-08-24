@@ -281,7 +281,11 @@ static void _give_trial_feedback(QSP_ARG_DECL  int rsp, Staircase *st_p)
 
 static void _update_remaining_trials( QSP_ARG_DECL  Experiment *exp_p )
 {
-	sprintf(MSG_STR,"%d",EXPT_N_TOTAL_TRIALS(exp_p)-EXPT_CURR_TRIAL_IDX(exp_p));
+	if( IS_ABORTING( exp_p ) ){
+		strcpy(MSG_STR,"0");
+	} else {
+		sprintf(MSG_STR,"%d",EXPT_N_TOTAL_TRIALS(exp_p)-EXPT_CURR_TRIAL_IDX(exp_p));
+	}
 	assign_reserved_var("n_trials_remaining",MSG_STR);
 }
 
@@ -316,7 +320,7 @@ void _process_response(QSP_ARG_DECL  int rsp,Staircase *st_p)
 	}
 
 	if( IS_ABORTING( STAIR_EXPT(st_p) ) ){
-		sprintf(ERROR_STRING,"aborting run");
+		sprintf(ERROR_STRING,"process_response:  aborting run");
 		advise(ERROR_STRING);
 	}
 
@@ -381,6 +385,7 @@ void _reset_stair(QSP_ARG_DECL  Staircase *st_p)
 	SET_STAIR_LAST_TRIAL(st_p,NO_TRANS);
 
 
+	assert( STAIR_XVAL_OBJ(st_p) != NULL );
 	n_xvals = (int) OBJ_COLS(STAIR_XVAL_OBJ(st_p));
 
 	/* random initialization is ok in general, but not good

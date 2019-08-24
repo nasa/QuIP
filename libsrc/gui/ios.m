@@ -65,9 +65,9 @@ static void _show_alert( QSP_ARG_DECL   QUIP_ALERT_OBJ_TYPE *alert_p )
 	assert(shown_alert_p==NULL);
 	shown_alert_p = alert_p;
 
-	[ root_view_controller presentViewController:alert_p animated:YES completion:^(void){
-		dispatch_after(0, dispatch_get_main_queue(), ^{
-fprintf(stderr,"show_alert:  executing after alert callback...\n");
+	[ root_view_controller presentViewController:alert_p animated:/*YES*/NO completion:^(void){
+		/* dispatch_after(0, */
+		dispatch_async( dispatch_get_main_queue(), ^{
 			if( alert_p == busy_alert_p ){
 				resume_quip(DEFAULT_QSP_ARG);
 			}
@@ -1367,7 +1367,6 @@ fprintf(stderr,"Genwin %s has an unknown view controller type!?\n",GW_NAME(gwp))
 	// Maybe should make this a user-settable property???
 
 	// This pushed the controller!
-fprintf(stderr,"push_nav:  will push %s\n",GW_NAME(gwp));
 	[ root_view_controller
 		pushViewController:GW_VC(gwp) animated:/*YES*/NO];
 
@@ -1663,6 +1662,8 @@ static QUIP_ALERT_OBJ_TYPE *create_alert_with_one_button(const char *type, const
 	return alert;
 }
 
+// BUG we would like to be able to customize the button labels?
+
 static QUIP_ALERT_OBJ_TYPE *create_alert_with_two_buttons(const char *type, const char *msg)
 {
 	QUIP_ALERT_OBJ_TYPE *alert;
@@ -1685,6 +1686,7 @@ static QUIP_ALERT_OBJ_TYPE *create_alert_with_two_buttons(const char *type, cons
 		actionWithTitle:@"Cancel"
 		style:UIAlertActionStyleDefault
 		handler:^(UIAlertAction * action) {
+			[alert dismissViewControllerAnimated:YES completion:nil];
 				confirmation_alert_dismissal_actions(alert,0);
 		}
 		];
@@ -1706,7 +1708,6 @@ static void present_generic_alert(QSP_ARG_DECL  const char *type, const char *ms
 	// root_view_controller (during startup)
 
 	if( vc == NULL ){
-fprintf(stderr,"present_generic_alert:  calling defer_alert\n");
 		defer_alert(type,msg);
 		return;
 	}
@@ -1721,13 +1722,11 @@ fprintf(stderr,"present_generic_alert:  calling defer_alert\n");
 
 	is_fatal = !strcmp(type,FATAL_ERROR_TYPE_STR) ? 1 : 0 ;
 
-fprintf(stderr,"present_generic_alert:  calling create_alert_with_one_button\n");
 	QUIP_ALERT_OBJ_TYPE *alert;
 	alert = create_alert_with_one_button(type,msg);
 
 	remember_normal_alert(alert);
 	fatal_alert_view = is_fatal ? alert : NULL;
-fprintf(stderr,"present_generic_alert:  calling show_alert\n");
 	show_alert(alert);
 } // generic_alert
 
@@ -1858,7 +1857,8 @@ static void dismiss_busy_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
 	[root_view_controller dismissViewControllerAnimated:YES completion:^(void)
 		{
-			dispatch_after(0, dispatch_get_main_queue(), ^{
+			/*dispatch_after(0,*/
+			dispatch_async( dispatch_get_main_queue(), ^{
 				shown_alert_p = NULL;
 				if( ! check_deferred_alert() ){
 					busy_dismissal_checks(a);
