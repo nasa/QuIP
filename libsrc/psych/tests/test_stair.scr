@@ -13,9 +13,7 @@ Setup_X_Values	# creats my_xvals
 
 
 experiments
-  xvals
-    import my_xvals
-    quit
+  import_xvals my_xvals
   classes
     new class1 C1Stim
     new class2 C1Stim

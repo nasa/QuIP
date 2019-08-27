@@ -101,6 +101,87 @@ void _clear_sequential_data(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p)
 	CLEAR_QDT_FLAG_BITS(qdt_p,SEQUENTIAL_DATA_DIRTY);
 }
 
+#define clean_undo_response( np ) _clean_undo_response( QSP_ARG  np )
+
+static void _clean_undo_response( QSP_ARG_DECL  Node *np )
+{
+	Sequence_Datum *qd_p;
+
+	if( np == NULL ){
+		warn("clean_undo_response:  'undo' response with no previous trial!?");
+		return;
+	}
+	qd_p = NODE_DATA(np);
+	if( SEQ_DATUM_RESPONSE(qd_p) == YES_INDEX ){
+		SET_SEQ_DATUM_RESPONSE(qd_p,NO_INDEX);
+	} else if( SEQ_DATUM_RESPONSE(qd_p) == NO_INDEX ){
+		SET_SEQ_DATUM_RESPONSE(qd_p,YES_INDEX);
+	} else if( SEQ_DATUM_RESPONSE(qd_p) == REDO_INDEX ){
+		warn("clean_undo_response:  'undo' response following 'redo' response!?");
+	} else if( SEQ_DATUM_RESPONSE(qd_p) == UNDO_INDEX ){
+		// Should two undo's cancel each other out???
+		warn("clean_undo_response:  'undo' response following 'undo' response!?");
+	} else {
+		sprintf(ERROR_STRING,
+	"clean_undo_response:  'undo' response following unexpected response code %d!?",
+			SEQ_DATUM_RESPONSE(qd_p));
+		warn(ERROR_STRING);
+	}
+}
+
+#define cleaned_list( lp ) _cleaned_list( QSP_ARG  lp )
+
+static List *_cleaned_list( QSP_ARG_DECL  List *lp )
+{
+	List *new_lp;
+	Node *np;
+
+	new_lp = new_list();
+	np = remHead(lp);
+	while( np != NULL ){
+		Sequence_Datum *qd_p;
+		qd_p = NODE_DATA(np);
+		if( SEQ_DATUM_RESPONSE(qd_p) == YES_INDEX || SEQ_DATUM_RESPONSE(qd_p) == NO_INDEX ){
+			// Hopefully most of the cases land here!
+			addTail(new_lp,np);
+		} else if( SEQ_DATUM_RESPONSE(qd_p) == REDO_INDEX ){
+			// just skip it!
+		} else if( SEQ_DATUM_RESPONSE(qd_p) == UNDO_INDEX ){
+			// This says that the previous trial had a finger error
+			Node *np_to_fix;
+			np_to_fix = QLIST_TAIL(new_lp);
+			clean_undo_response(np_to_fix);
+		} else if( SEQ_DATUM_RESPONSE(qd_p) == ABORT_INDEX ){
+			// There shouldn't be any trials following an abort response!
+			assert( QLIST_HEAD(lp) == NULL );
+		} else {
+			sprintf(ERROR_STRING,"CAUTIOUS:  unexpected response code (%d)!?",
+				SEQ_DATUM_RESPONSE(qd_p) );
+			warn(ERROR_STRING);
+		}
+		np = remHead(lp);
+	}
+	return new_lp;
+}
+
+void _clean_sequential_data(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p)
+{
+	List *lp;
+
+	if( SEQ_DTBL_NEEDS_SAVING(qdt_p) ){
+		warn("clean_sequential_data:  cleaning unsaved data!?");
+	}
+
+	assert( SEQ_DTBL_LIST(qdt_p) != NULL );
+	lp = cleaned_list( SEQ_DTBL_LIST(qdt_p) );
+
+	assert( QLIST_HEAD( SEQ_DTBL_LIST(qdt_p) ) == NULL );	// should be empty now
+	rls_list( SEQ_DTBL_LIST(qdt_p) );
+	SET_SEQ_DTBL_LIST(qdt_p,lp);
+
+	retabulate_classes();
+}
+
 static void init_seq_data_tbl(Sequential_Data_Tbl *qdt_p)
 {
 	SET_SEQ_DTBL_LIST(qdt_p,new_list());

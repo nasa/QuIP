@@ -554,6 +554,12 @@ extern COMMAND_FUNC( do_lump );
 
 /* asc_data.c */
 
+extern void _print_class_seq(QSP_ARG_DECL  Trial_Class *tc_p);
+#define print_class_seq(tc_p) _print_class_seq(QSP_ARG  tc_p)
+
+extern void _retabulate_classes(SINGLE_QSP_ARG_DECL);
+#define retabulate_classes() _retabulate_classes(SINGLE_QSP_ARG)
+
 extern void _print_sequence_data(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p, FILE *fp );
 #define print_sequence_data(qdt_p, fp ) _print_sequence_data(QSP_ARG  qdt_p, fp )
 
@@ -563,6 +569,8 @@ extern void _iterate_over_classes( QSP_ARG_DECL  void (*func)(QSP_ARG_DECL  Tria
 extern void write_summary_data( Summary_Data_Tbl *sdt_p, FILE *fp );
 extern void _write_sequential_data(QSP_ARG_DECL  Sequential_Data_Tbl *sdt_p, FILE *fp );
 #define write_sequential_data(sdt_p, fp ) _write_sequential_data(QSP_ARG  sdt_p, fp )
+extern void _clean_sequential_data(QSP_ARG_DECL  Sequential_Data_Tbl *sdt_p );
+#define clean_sequential_data(sdt_p ) _clean_sequential_data(QSP_ARG  sdt_p )
 
 extern int dribbling(void);
 extern void dribble(Staircase *st_p, int rsp);
