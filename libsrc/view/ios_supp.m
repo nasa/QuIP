@@ -1045,7 +1045,6 @@ void embed_image(QSP_ARG_DECL Viewer *vp, Data_Obj *dp,int x,int y)
 void _queue_frame( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 {
 	UIImage *uii_p;
-	quipImages *qi_p;
 
 	uii_p = insure_object_has_uiimage(dp);
 	assert(uii_p!=NULL);

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1F088D5E2309FAD2006A15FC /* CSF-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1F088D5D2309FAD2006A15FC /* CSF-Info.plist */; };
 		2299DE11196C6EF800844988 /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2299DE10196C6EF800844988 /* CoreMotion.framework */; };
 		2299DE13196C6F2500844988 /* sched.c in Sources */ = {isa = PBXBuildFile; fileRef = 2299DE12196C6F2500844988 /* sched.c */; };
 		37063914178B490E0033D2C5 /* features.c in Sources */ = {isa = PBXBuildFile; fileRef = 37063913178B490E0033D2C5 /* features.c */; };
@@ -1479,7 +1480,6 @@
 		7CE018411FA2435A00E1B4C1 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
 		7CE018421FA2435B00E1B4C1 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
 		7CE018431FA2435C00E1B4C1 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
-		7CE3AE7A21BB47510083FBD8 /* CSF-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 7C4332AE1D4D43FC0033687C /* CSF-Info.plist */; };
 		7CE5FDFD1A60750B0029C7AE /* avCap.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CE5FDFC1A60750B0029C7AE /* avCap.m */; };
 		7CE5FDFF1A60752D0029C7AE /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */; };
 		7CE5FE011A60754A0029C7AE /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
@@ -1546,6 +1546,7 @@
 /* End PBXBuildRule section */
 
 /* Begin PBXFileReference section */
+		1F088D5D2309FAD2006A15FC /* CSF-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "CSF-Info.plist"; path = "xcode/iquip/CSF-Info.plist"; sourceTree = "<group>"; };
 		2299DE10196C6EF800844988 /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
 		2299DE12196C6F2500844988 /* sched.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sched.c; sourceTree = "<group>"; };
 		37063913178B490E0033D2C5 /* features.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = features.c; sourceTree = "<group>"; };
@@ -1797,7 +1798,6 @@
 		7C3904C017F64894005163CD /* stamps.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stamps.c; sourceTree = "<group>"; };
 		7C3904C217F64901005163CD /* my_stty.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = my_stty.c; sourceTree = "<group>"; };
 		7C4332AD1D4D43FC0033687C /* CSF.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CSF.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		7C4332AE1D4D43FC0033687C /* CSF-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "CSF-Info.plist"; path = "/Users/jmulliga/working/quip/xcode/iquip/CSF-Info.plist"; sourceTree = "<absolute>"; };
 		7C4332AF1D4D47D40033687C /* csf_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = csf_startup.enc; path = macros/startup/csf_startup.enc; sourceTree = "<group>"; };
 		7C4333D41D4D49450033687C /* EZJet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EZJet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C4333D51D4D4A1F0033687C /* ezjet_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = ezjet_startup.enc; path = macros/startup/ezjet_startup.enc; sourceTree = "<group>"; };
@@ -2040,9 +2040,9 @@
 		7106ED0816004437006BF850 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				1F088D5D2309FAD2006A15FC /* CSF-Info.plist */,
 				7C6B33C71953AC0C00967093 /* InfoPlist.strings */,
 				7C6B33C61953ABEC00967093 /* iQuIP-Prefix.pch */,
-				7C4332AE1D4D43FC0033687C /* CSF-Info.plist */,
 				7C6B33C41953ABD700967093 /* iQuIP-Info.plist */,
 			);
 			name = "Supporting Files";
@@ -2672,6 +2672,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 			);
 			mainGroup = 7106ECF216004437006BF850;
@@ -2697,6 +2698,7 @@
 				71BA647C17D5076F00446D65 /* Default.png in Resources */,
 				7C6B33C91953AC0C00967093 /* InfoPlist.strings in Resources */,
 				711F118B1637B6D50069EF13 /* Icon@2x.png in Resources */,
+				1F088D5E2309FAD2006A15FC /* CSF-Info.plist in Resources */,
 				711F118C1637B6D50069EF13 /* Icon.png in Resources */,
 				711F118D1637B6D50069EF13 /* Icon-Small@2x.png in Resources */,
 				711F118E1637B6D50069EF13 /* Icon-Small.png in Resources */,
@@ -2716,7 +2718,6 @@
 				7C4332B11D4D48220033687C /* csf_startup.enc in Resources */,
 				7C43329E1D4D43FC0033687C /* Default.png in Resources */,
 				7C43329F1D4D43FC0033687C /* InfoPlist.strings in Resources */,
-				7CE3AE7A21BB47510083FBD8 /* CSF-Info.plist in Resources */,
 				7C4332A01D4D43FC0033687C /* Icon@2x.png in Resources */,
 				7C4332A11D4D43FC0033687C /* Icon.png in Resources */,
 				7C4332A21D4D43FC0033687C /* Icon-Small@2x.png in Resources */,
@@ -4312,6 +4313,7 @@
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
+				DEVELOPMENT_TEAM = 6NC2ML6K22;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
@@ -4332,6 +4334,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = iQuIP;
+				PROVISIONING_PROFILE_SPECIFIER = JBM_DevProf_11_24_2018;
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -4362,6 +4365,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = iQuIP;
+				PROVISIONING_PROFILE_SPECIFIER = TarregaDistProfile;
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
