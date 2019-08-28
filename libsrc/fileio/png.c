@@ -509,7 +509,6 @@ FIO_OPEN_FUNC( pngfio )		// unix version
 	memset(ifp->if_hdr_p,0,sizeof(Png_Hdr));
 
 	if( IS_READABLE(ifp) ) {
-//fprintf(stderr,"checking header info, reading png file...\n");
 		if(get_hdr_info(QSP_ARG  ifp) < 0)
 			return(NULL);
 
@@ -636,6 +635,7 @@ static u_char *get_image( QSP_ARG_DECL  Image_File *ifp, u_long *pRowbytes )
 	return png_image_data;
 }
 
+// How do we know whether or not to read the header???
 
 FIO_RD_FUNC( pngfio )
 {

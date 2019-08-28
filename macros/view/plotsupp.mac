@@ -1596,6 +1596,10 @@ Write_File_Header $1 1
 Put_Next _plotbuf $1
 .
 
+Define Init_For_Plot_Locale 1 locale
+If !strcmp('$1','x11') "Assume_Unix_Plot_Locale exit_macro"
+advise "Init_For_Plot_Locale:  not sure what to do for locale $1!?"
+.
 
 # this is the default, but $macro_dir is not defined on iOS
 
@@ -1648,10 +1652,7 @@ Init_Color_Indices
 # I would have thought that the use of single quotes would have postponed the
 # expansion of the variable???
 
-Print plot_locale
-If !var_exists(plot_locale)
-  Assume_Unix_Plot_Locale
-
+If !var_exists(plot_locale) Assume_Unix_Plot_Locale
 
 Init_Font_Stuff
 

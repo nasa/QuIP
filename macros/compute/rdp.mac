@@ -4,6 +4,8 @@
 
 Start_File rdp.mac
 
+If var_exists(rdp_mac_loaded)
+  "warn 'rdp.mac:  file already loaded!?' exit_file"
 # make a noise image
 
 Define Uniform 1 target
@@ -107,3 +109,4 @@ Delete_Image sumbuf
 Stop_File rdp.mac
 
 Set rdp_mac_loaded 1
+
