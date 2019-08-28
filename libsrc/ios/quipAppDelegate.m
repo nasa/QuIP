@@ -244,8 +244,9 @@ static void perform_text_action(NSString *s, Screen_Obj *sop)
 	UITableViewCell *c;
 
 	Screen_Obj *sop=find_any_scrnobj(tableView);
-	CHECK_SCRNOBJ_INT(sop,tableView,cellForRowAtIndexPath,1);
-
+	//CHECK_SCRNOBJ_INT(sop,tableView,cellForRowAtIndexPath,1);
+    assert(sop!=NULL);
+    
 	int r = (int) indexPath.row;
 	assert( r >= 0 && r < SOB_N_SELECTORS(sop) );
 

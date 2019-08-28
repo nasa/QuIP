@@ -2530,6 +2530,7 @@ void set_query_readfunc( QSP_ARG_DECL  char * (*rfunc)(QSP_ARG_DECL  void *buf, 
 	DECLARE_QP
 	assert( QS_FLAGS(THIS_QSP) & QS_INITED );
 	assert( QLEVEL >= 0 );
+    assert(qp!=NULL);
 
 	SET_QRY_READFUNC(qp, rfunc);
 }
