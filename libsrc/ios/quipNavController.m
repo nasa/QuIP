@@ -162,6 +162,8 @@ fprintf(stderr,"No genwin found associated with view controller 0x%lx\n",
 }
 #endif // FOOBAR
 
+// deprecated method
+/*
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
 //fprintf(stderr,"shouldAutorotateToInterfaceOrientation BEGIN\n");
@@ -174,6 +176,7 @@ fprintf(stderr,"No genwin found associated with view controller 0x%lx\n",
 	return [[self topViewController]
 		shouldAutorotateToInterfaceOrientation:interfaceOrientation];
 }
+*/
 
 #endif // BUILD_FOR_IOS
 

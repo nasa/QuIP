@@ -9,8 +9,6 @@
 #include "getbuf.h"
 #include "variable.h"
 
-int is_fc=0;
-
 void general_mod(QSP_ARG_DECL Trial_Class * tc_p)
 {
 	const char *s;
@@ -122,7 +120,7 @@ void _default_stim(QSP_ARG_DECL  Staircase *stc_p)
 	tc_p = STAIR_CLASS(stc_p);
 	assert( tc_p != NULL );
 
-	if( is_fc ) flip_coin();
+	if( IS_2AFC( STAIR_EXPT(stc_p) ) ) flip_coin();
 	get_this_xval(tc_p,STAIR_VAL(stc_p));
 
 	set_class_index(stc_p);

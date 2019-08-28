@@ -74,7 +74,6 @@ ADD_CMD( info,		do_stair_info,		print info about a staircase )
 ADD_CMD( reset,		do_reset_stair,		reset staircase state and clear data )
 ADD_CMD( edit,		staircase_menu,		edit individual staircases )
 ADD_CMD( get_value,	do_get_value,		get current level of a staircase )
-ADD_CMD( xvals,		xval_menu,		x value submenu )
 MENU_END(staircases)
 
 COMMAND_FUNC( do_staircase_menu )

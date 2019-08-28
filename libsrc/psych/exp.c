@@ -21,10 +21,6 @@
 static void null_init(void);
 static void null_mod(QSP_ARG_DECL Trial_Class *);
 
-/* these two global vars ought to be declared in a .h file ... */
-void (*initrt)(void)=null_init;
-void (*modrt)(QSP_ARG_DECL Trial_Class *)=null_mod;
-
 Response_Word response_words[N_RESPONSES];	// a global
 
 static void null_init(void)
@@ -33,42 +29,6 @@ static void null_init(void)
 }
 
 static void null_mod(QSP_ARG_DECL Trial_Class * tc_p){}
-
-// In the old days we only saved to files...
-// Now we want to be able to import other data for fitting???
-//
-// BUG - this will prompt for a summary filename until a good name is entered!?
-// It is not clear why we need to store summary data, as it can be reconstituted
-// from sequential data...
-//
-// BUG init_dribble_file will prompt for a filename too, so this function doesn't
-// take a fixed number of arguments!?
-
-void _setup_files(QSP_ARG_DECL  Experiment *exp_p)
-{
-	FILE *fp;
-
-	set_summary_file(NULL);
-	set_dribble_file(NULL);
-
-	sync();		/* make files safe in case of crash */
-			/* a relic of pdp-11 days */
-
-	/*
-	 * We don't bother to write a summary data file
-	 * if we are writing a trial-by-trial dribble file,
-	 * since the former can be constructed from the latter
-	 */
-
-	if( IS_DRIBBLING(exp_p) ){
-		init_dribble_file(SINGLE_QSP_ARG);
-	} else {
-		while( (fp=try_nice(nameof("summary data file"),"w")) == NULL )
-			;
-		set_summary_file(fp);
-	}
-}
-
 
 static void set_rsp_word(Response_Index idx, const char *s)
 {
@@ -207,9 +167,18 @@ fprintf(stderr,"collect_response:  using_keyboard = %d\n",IS_USING_KEYBOARD(exp_
 	switch(n){
 		case YES_INDEX:		return(n); break;
 		case NO_INDEX:		return(n); break;
-		case REDO_INDEX:	return(n); break;
-		case UNDO_INDEX:	return(n); break;
-		case ABORT_INDEX:	Abort=1; return(REDO_INDEX); break;
+		case REDO_INDEX:
+			SET_EXPT_FLAG_BITS(exp_p,EXPT_REDO);
+			return(n);
+			break;
+		case UNDO_INDEX:
+			SET_EXPT_FLAG_BITS(exp_p,EXPT_UNDO);
+			return(n);
+			break;
+		case ABORT_INDEX:
+			SET_EXPT_FLAG_BITS(exp_p,EXPT_ABORT);
+			return(REDO_INDEX);
+			break;
 		default:
 			assert( AERROR("response:  crazy response value") );
 	}
@@ -245,9 +214,22 @@ static void _consider_coin(QSP_ARG_DECL  Staircase *stc_p)
 	}
 }
 
-int _get_response(QSP_ARG_DECL  Staircase *stc_p, Experiment *exp_p)
+#define check_response_string(exp_p) _check_response_string(QSP_ARG  exp_p)
+
+static void _check_response_string(QSP_ARG_DECL  Experiment *exp_p)
 {
 	Variable *vp;
+
+	vp=var_of("response_string");
+	if( vp != NULL ){
+		SET_EXPT_QUESTION( exp_p, VAR_VALUE(vp) );
+	}
+	// Because we can now specify the question from the menu, it's
+	// not worth a warning if this isn't set.
+}
+
+int _get_response(QSP_ARG_DECL  Staircase *stc_p, Experiment *exp_p)
+{
 	int rsp;
 
 	if( stc_p == NULL ){
@@ -257,21 +239,10 @@ int _get_response(QSP_ARG_DECL  Staircase *stc_p, Experiment *exp_p)
 
 	// BUG instead of getting this from a variable,
 	// better to set in in the experiment struct...
-	vp=var_of("response_string");
-	SET_EXPT_QUESTION( exp_p, VAR_VALUE(vp) );
 
-	if( vp != NULL ){
-		rsp = collect_response(exp_p);
-	} else {
-		static int warned=0;
-
-		if( !warned ){
-			warn("default_stim:  script variable $response_string not defined");
-			warned=1;
-		}
-		rsp = collect_response(exp_p);
-	}
-	if( is_fc ){
+	check_response_string(exp_p);	// $response_string will override if set
+	rsp = collect_response(exp_p);
+	if( IS_2AFC(exp_p) ){
 fprintf(stderr,"get_response:  will consider coin...\n");
 		consider_coin(stc_p);
 	} else {
@@ -284,18 +255,18 @@ fprintf(stderr,"get_response:  will NOT consider coin...\n");
 void _delete_all_trial_classes(SINGLE_QSP_ARG_DECL)
 {
 	List *lp;
-	Node *np,*next;
+	Node *np;
 	Trial_Class *tc_p;
 
-	lp=trial_class_list();
-	if( lp==NULL ) return;
+	lp=EXPT_CLASS_LIST(&expt1);
+	assert( lp != NULL );
 
-	np=QLIST_HEAD(lp);
-	while(np!=NULL){
-		tc_p=(Trial_Class *)np->n_data;
-		next = np->n_next;	/* del_class messes with the nodes... */
+	np = QLIST_HEAD(lp);
+	while( np != NULL ){
+		np = remHead(lp);
+		tc_p = NODE_DATA(np);
 		del_class(tc_p);
-		np=next;
+		np = QLIST_HEAD(lp);
 	}
 	assign_reserved_var( "n_classes" , "0" );
 }
@@ -323,20 +294,98 @@ void _init_responses(SINGLE_QSP_ARG_DECL)
 	rsp_inited=1;
 }
 
-void init_experiment( Experiment *exp_p )
+void _init_experiment( QSP_ARG_DECL  Experiment *exp_p )
 {
-	exp_p->expt_flags		= 0;
-	exp_p->question_string		= NULL;
-	exp_p->n_preliminary_trials	= 0;
-	exp_p->n_recorded_trials	= 0;
+	exp_p->expt_flags			= 0;
+	exp_p->expt_question_string		= NULL;
+	exp_p->expt_xval_dp			= NULL;
+	exp_p->expt_class_lp			= new_list();
 
-	exp_p->n_updn_stairs		= 0;
-	exp_p->n_dnup_stairs		= 0;
-	exp_p->n_2iup_stairs		= 0;
-	exp_p->n_2idn_stairs		= 0;
-	exp_p->n_2up_stairs		= 0;
-	exp_p->n_2dn_stairs		= 0;
-	exp_p->n_3up_stairs		= 0;
-	exp_p->n_3dn_stairs		= 0;
+	exp_p->expt_stair_tbl			= NULL;
+	exp_p->expt_n_staircases		= 0;
+	exp_p->expt_trial_tbl			= NULL;
+
+	exp_p->expt_n_preliminary_trials	= 0;
+	exp_p->expt_n_recorded_trials		= 0;
+
+	exp_p->expt_n_updn_stairs		= 0;
+	exp_p->expt_n_dnup_stairs		= 0;
+	exp_p->expt_n_2iup_stairs		= 0;
+	exp_p->expt_n_2idn_stairs		= 0;
+	exp_p->expt_n_2up_stairs		= 0;
+	exp_p->expt_n_2dn_stairs		= 0;
+	exp_p->expt_n_3up_stairs		= 0;
+	exp_p->expt_n_3dn_stairs		= 0;
+
+	exp_p->expt_stim_func			= _default_stim;
+	exp_p->expt_response_func		= _default_response;
+	exp_p->expt_init_func			= null_init;
+	exp_p->expt_mod_func			= null_mod;
+
+	exp_p->expt_qdt_p			= new_sequential_data_tbl();
+}
+
+void _add_class_to_expt( QSP_ARG_DECL  Experiment *exp_p, Trial_Class *tc_p )
+{
+	// BUG?  check and make sure that this class is not already on the list?
+	Node *np;
+
+	np = nodeOf(EXPT_CLASS_LIST(exp_p),tc_p);
+	if( np != NULL ){
+		sprintf(ERROR_STRING,"add_class_to_expt:  trial class %s has already been added!?",
+			CLASS_NAME(tc_p));
+		warn(ERROR_STRING);
+		return;
+	}
+
+	np = mk_node(tc_p);
+	addTail( EXPT_CLASS_LIST(exp_p), np );
+}
+
+#define print_expt_classes( exp_p ) _print_expt_classes( QSP_ARG  exp_p )
+
+static void _print_expt_classes( QSP_ARG_DECL  Experiment *exp_p )
+{
+	int n;
+
+	assert( EXPT_CLASS_LIST(exp_p) != NULL );
+	if( (n=eltcount( EXPT_CLASS_LIST(exp_p) )) == 0 ){
+		prt_msg("No conditions specified.");
+	} else {
+		Node *np;
+		sprintf(MSG_STR,"\t%d Condition%s:",n,n==1?"":"s");
+		prt_msg(MSG_STR);
+		np = QLIST_HEAD( EXPT_CLASS_LIST(exp_p) );
+		while(np!=NULL){
+			Trial_Class *tc_p;
+			tc_p = NODE_DATA(np);
+			sprintf(MSG_STR,"\t\t%s",CLASS_NAME(tc_p));
+			prt_msg(MSG_STR);
+			np = NODE_NEXT(np);
+		}
+	}
+}
+
+void _print_expt_info( QSP_ARG_DECL  Experiment *exp_p )
+{
+	int n;
+	prt_msg("\nExperiment info:\n");
+
+	if( EXPT_XVAL_OBJ(exp_p) == NULL ){
+		prt_msg("\tX-values not specified");
+	} else {
+		sprintf(MSG_STR,"\tX-values provided in object %s",OBJ_NAME( EXPT_XVAL_OBJ(exp_p) ) );
+		prt_msg(MSG_STR);
+	}
+
+	print_expt_classes(exp_p);
+
+	n = EXPT_N_STAIRCASES(exp_p);
+	sprintf(MSG_STR,"\t%d staircase%s",n,n==1?"":"s");
+	prt_msg(MSG_STR);
+
+	n = EXPT_N_TOTAL_TRIALS(exp_p);
+	sprintf(MSG_STR,"\t%d trial%s",n,n==1?"":"s");
+	prt_msg(MSG_STR);
 }
 

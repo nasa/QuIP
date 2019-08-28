@@ -767,7 +767,7 @@ int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
 #endif // ! BUILD_FOR_IOS
 }
 
-CGImageRef cg_image_for_obj(Data_Obj *dp, int little_endian_flag)
+static CGImageRef CreateCgImageForObj(Data_Obj *dp, int little_endian_flag)
 {
 	CGColorSpaceRef colorSpace;
 	CGImageRef the_img;
@@ -830,7 +830,7 @@ static QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
 	}
 
 //fprintf(stderr,"objc_img_for_dp will create a new image for %s\n",OBJ_NAME(dp));
-	myimg = cg_image_for_obj(dp,little_endian_flag);
+	myimg = CreateCgImageForObj(dp,little_endian_flag);
 
 #ifdef BUILD_FOR_IOS
 
@@ -1026,8 +1026,14 @@ void embed_image(QSP_ARG_DECL Viewer *vp, Data_Obj *dp,int x,int y)
 	UIImage *uii_p;		// BUG really only for iOS...
 
 	INSIST_IMAGE_VIEWER(embed_image)
-
 	////qiv_p = insure_viewer_has_image(vp,dp,x,y);
+
+	// We may use the same object over and over again with different data...
+	// So we forget it here...
+	if( OBJ_UI_IMG(dp) != NULL ){
+		forget_uiimage( OBJ_UI_IMG(dp) );
+		INIT_OBJ_UI_IMG(dp,NULL);
+	}
 	uii_p = insure_object_has_uiimage(dp);
 
 #ifdef BUILD_FOR_IOS
@@ -1070,12 +1076,8 @@ void _forget_frame( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 			VW_NAME(vp));
 		warn(ERROR_STRING);
 		return;
+    	}
 
-    
-    
-    
-    
-    }
 //fprintf(stderr,"forget_frame will forget %s\n",OBJ_NAME(dp));
 	forget_uiimage(uii_p);
 	INIT_OBJ_UI_IMG(dp,NULL);

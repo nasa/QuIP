@@ -650,12 +650,12 @@ static const char *_rb_tree_advance_frag_match(QSP_ARG_DECL  Frag_Match_Info * f
 static const char *_hash_tbl_advance_frag_match(QSP_ARG_DECL  Frag_Match_Info * fmi_p, int direction )
 {
 	Item *ip;
-	List *lp;
+	//List *lp;
 
 	// there may be no items!?
 	assert( fmi_p != NULL );
 
-	lp = FMI_HT_LIST(fmi_p);
+	//lp = FMI_HT_LIST(fmi_p);
 	if( direction == CYC_FORWARD ){
 		if( CURR_FRAG(fmi_p) == LAST_FRAG(fmi_p) )
 			return NULL;

@@ -33,6 +33,11 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 		return;
 	}
 	fclose(fp);
+
+	// The data is created using the same routines as during collection,
+	// but it does not need to be marked dirty because it has already been saved!
+	CLEAR_QDT_FLAG_BITS(EXPT_SEQ_DTBL(&expt1),SEQUENTIAL_DATA_DIRTY);
+
 	n_have_classes = eltcount(trial_class_list());
 
 	sprintf(num_str,"%d",n_have_classes);	// BUG?  buffer overflow
@@ -40,9 +45,9 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 	assign_reserved_var( "n_classes" , num_str );
 	
 	if( verbose ){
-		assert(global_xval_dp!=NULL);
+		assert(EXPT_XVAL_OBJ(&expt1)!=NULL);
 		sprintf(ERROR_STRING,"File %s read, %d classes, %d x-values",
-			filename,n_have_classes,OBJ_COLS(global_xval_dp));
+			filename,n_have_classes,OBJ_COLS(EXPT_XVAL_OBJ(&expt1)));
 		advise(ERROR_STRING);
 	}
 }
@@ -78,15 +83,6 @@ static COMMAND_FUNC( do_print_summ )
 	tcp = pick_trial_class("");
 	if( tcp == NULL ) return;
 	print_class_summary(tcp);
-}
-
-static COMMAND_FUNC( do_print_seq )
-{
-	Trial_Class *tcp;
-
-	tcp = pick_trial_class("");
-	if( tcp == NULL ) return;
-	print_class_sequence(tcp);
 }
 
 #define print_psychometric_pts(fp, tcp) _print_psychometric_pts(QSP_ARG  fp, tcp)
@@ -245,6 +241,30 @@ static COMMAND_FUNC( do_pnt_bars )
 	print_error_bars( fp, tcp );
 }
 
+
+// print to the standard message stream, we can redirect to a file
+// to get for plotting...
+
+static COMMAND_FUNC( do_print_class_seq )
+{
+	Trial_Class *tcp;
+
+	tcp = pick_trial_class("");
+	if( tcp == NULL ) return;
+
+	print_class_seq( tcp );
+}
+
+static COMMAND_FUNC( do_print_seq )
+{
+	write_sequential_data( EXPT_SEQ_DTBL(&expt1), tell_msgfile() );
+}
+
+static COMMAND_FUNC( do_clean_seq )
+{
+	clean_sequential_data( EXPT_SEQ_DTBL(&expt1) );
+}
+
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(lookit_menu,s,f,h)
 
@@ -252,7 +272,8 @@ MENU_BEGIN(lookit)
 ADD_CMD( read,		do_read_data,	read new data file )
 ADD_CMD( print_summary,		do_print_summ,	print summary data )
 ADD_CMD( print_sequence,	do_print_seq,	print sequential data )
-//ADD_CMD( class,		setcl,		select new stimulus class )
+ADD_CMD( clean_sequence,	do_clean_seq,	remove redo's and undo's )
+ADD_CMD( print_class_seq,	do_print_class_seq,	print val vs. trial number for a single class)
 ADD_CMD( plotprint,	pntgrph,	print data for plotting )
 ADD_CMD( errbars,	do_pnt_bars,	print psychometric function with error bars )
 ADD_CMD( ogive,		do_ogive,	do fits with to ogive )

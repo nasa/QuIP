@@ -248,7 +248,7 @@ struct query_stack {
 #define QS_SILENCE_CHECKED	0x010000
 #define QS_TIME_FMT_UTC		0x020000
 #define QS_HAS_PREV_LOG_MSG	0x040000
-#define QS_SUSPENDED		0x080000
+#define QS_SUSPENDED		0x080000	// used for anything???
 #define QS_APPENDING		0x100000
 
 #define HAS_PREV_LOG_MSG(qsp)	(QS_FLAGS(qsp) & QS_HAS_PREV_LOG_MSG)

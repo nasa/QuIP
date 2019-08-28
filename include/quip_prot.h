@@ -338,6 +338,8 @@ extern void set_query_readfunc( QSP_ARG_DECL
 	char * (*func)(QSP_ARG_DECL  void *buf, int size, void *fp ) );
 extern void resume_execution(SINGLE_QSP_ARG_DECL);
 extern void resume_quip(SINGLE_QSP_ARG_DECL);
+extern void _suspend_quip(SINGLE_QSP_ARG_DECL);
+#define suspend_quip() _suspend_quip(SINGLE_QSP_ARG)
 extern const char *query_filename(SINGLE_QSP_ARG_DECL);
 extern void set_query_filename(Query *, const char *);
 extern void set_query_macro(Query *,Macro *);

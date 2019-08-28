@@ -1,0 +1,16 @@
+experiments
+  lookit
+    read expt_data.5
+    print_summary class1
+    print_summary class2
+    ogive
+      2afc no
+      chance_rate 0.5
+      analyse class1
+      analyse class2
+      quit
+    Pause
+    quit
+  quit
+exit
+

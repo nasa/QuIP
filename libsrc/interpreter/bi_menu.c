@@ -1542,6 +1542,11 @@ static COMMAND_FUNC( do_pmpttext )
 
 static COMMAND_FUNC( my_quick_exit ){ exit(0); }
 
+static COMMAND_FUNC( do_yield_proc )
+{
+	suspend_quip();
+}
+
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(builtin_menu,s,f,h)
 MENU_BEGIN(builtin)
@@ -1596,8 +1601,11 @@ ADD_CMD( decrypt_file,	do_decrypt_file,	decrypt a file )
 ADD_CMD( read_encrypted_file,	do_read_encrypted_file,	read an encrypted file )
 ADD_CMD( debug,		do_debug,	enable debug module	)
 ADD_CMD( nop,       do_nop,     do nothing )
+// Not sure what these do???
 ADD_CMD( allow_events,	suspend_chewing,	process event actions immediately )
 ADD_CMD( disallow_events,	unsuspend_chewing,	process event actions sequentially )
+ADD_CMD( yield,		do_yield_proc,	yield processor to OS events )
+
 #undef verbose
 ADD_CMD( verbose,	do_verbose,	enable/disable verbose messages )
 ADD_CMD( exit,		do_exit_prog,	exit program		)

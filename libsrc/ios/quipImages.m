@@ -40,10 +40,10 @@ uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 @synthesize _queue_idx;
 @synthesize refresh_func;
 @synthesize frameQueue;
-@synthesize afterAnimation;
+@synthesize afterAnimation;	// Can't combine user-provided setter with synthesized getter...
 @synthesize animationStarted;
 
-// refresh_func is a string containing a script fragment?
+// refresh_func is a string containing a script fra(nonatomic) gment?
 // If it is set, then the text is interpreted every refresh event
 //
 // afterAnimation is a string that is interpreted at the end of a one-shot event
@@ -57,10 +57,19 @@ uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 	[self enableRefreshEventProcessing];
 }
 
+-(const char *) afterAnimation
+{
+    return afterAnimation;
+}
+
+// We have a custom setter not just to release the old string (which could
+// be done automatically if we used an NSString), but to set the flag
+// and enable refresh event processing...
+
 -(void) setAfterAnimation:(const char *)s
 {
-	if( afterAnimation != NULL ) rls_str(afterAnimation);
-	afterAnimation = savestr(s);
+    if( afterAnimation != NULL ) rls_str(afterAnimation);
+    afterAnimation = savestr(s);
 	animationStarted = 0;
 	[self enableRefreshEventProcessing];
 }
@@ -114,8 +123,8 @@ uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 {
 	// Called at the end of a one-shot
 	[self disableRefreshEventProcessing];
-	if( afterAnimation != NULL ){
-		chew_text(DEFAULT_QSP_ARG  afterAnimation, "(refresh event)");
+    if( afterAnimation != NULL ){
+        chew_text(DEFAULT_QSP_ARG  afterAnimation, "(refresh event)");
 	}
 }
 
@@ -150,7 +159,7 @@ uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 	if( refresh_func != NULL ){
 		[self exec_refresh_func];
 	} else {
-		if( afterAnimation != NULL && animationStarted ){
+        if( afterAnimation != NULL && animationStarted ){
 			if( ! self.animating ){
 				[self animationDone];
 			}
@@ -161,7 +170,7 @@ uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 -(void) startAnimation
 {
 	animationStarted = 1;
-	// enableRefreshEventProcessing is called if an when we set afterAnimation
+	// enableRefreshEventProcessing is called if an when we set _afterAnimation
 	[self startAnimating];
 }
 
@@ -275,7 +284,7 @@ uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 	_vbl_count = 0;
 	_frame_duration = 15;	// Default is 4 fps for debugging
 	refresh_func=NULL;
-	afterAnimation=NULL;
+    afterAnimation=NULL;
 	frameQueue = NULL;
 
 #ifdef BUILD_FOR_IOS

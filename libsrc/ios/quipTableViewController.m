@@ -259,11 +259,14 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 	return UIInterfaceOrientationMaskAll;
 }
 
+// deprecated method
+/*
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
 //fprintf(stderr,"quipTableViewController.shouldAutorotateToInterfaceOrientation:  will return YES\n");
 	return YES;
 }
+*/
 
 
 

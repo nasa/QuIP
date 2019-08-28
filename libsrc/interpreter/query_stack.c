@@ -60,7 +60,7 @@ void pop_vector_parser_data(SINGLE_QSP_ARG_DECL)
 	np = remHead( QS_VECTOR_PARSER_DATA_STACK(THIS_QSP) );
 	assert(np!=NULL);
 
-	vpd_p = NODE_DATA(np);
+	// vpd_p = NODE_DATA(np);
 
 	// We don't release the resources of this object, we just store it
 	// on the free list, and it will be ready to go if we need it again.
