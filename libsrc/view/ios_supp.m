@@ -4,6 +4,8 @@
 
 #include "quip_config.h"
 
+#define OLD_TEXT_METHOD	// uses deprecated CG methods...
+
 #include "view_prot.h"
 #include "view_cmds.h"
 #include "linear.h"
@@ -319,15 +321,32 @@ static CGPoint get_string_offset(CGContextRef ctx, const char *str)
 	//CGTextDrawingMode mode = CGContextGetTextDrawingMode(ctx);
 //fprintf(stderr,"get_string_offset \"%s\"\n",str);
 	CGContextSaveGState(ctx);
-	// needed?
-	//CGContextSetCharacterSpacing( ctx, char_spacing);
 	CGContextSetTextDrawingMode(ctx, kCGTextInvisible);
+
+#ifdef OLD_TEXT_METHOD
 	CGContextShowTextAtPoint(ctx, 0, 0, str, strlen(str));
+#else // ! OLD_TEXT_METHOD
+
+	CGContextRef context;
+	context = UIGraphicsGetCurrentContext();
+	UIGraphicsPushContext(context);
+
+	CGFloat x=0;
+	CGFloat y=0;
+
+	NSString *ios_string = [NSString stringWithUTF8String:str];
+	[ios_string drawAtPoint:CGPointMake(x,y)
+		withAttributes:
+		size:
+		];
+
+	UIGraphicsPopContext();
+
+#endif // ! OLD_TEXT_METHOD
+
+	// BUG?  does this still work if we're not using the old method?
 	CGPoint pt = CGContextGetTextPosition(ctx);
-	//CGContextSetTextDrawingMode(ctx, mode);
 	CGContextRestoreGState(ctx);
-//fprintf(stderr,"get_string_offset '%s' (%zd):  offset is %g %g\n",
-//str,strlen(str),pt.x,pt.y);
 	return pt;
 }
 
@@ -469,11 +488,11 @@ static int _exec_drawop(QSP_ARG_DECL  Viewer *vp, Draw_Op *do_p)
 				CGContextShowTextAtPoint (VW_GFX_CTX(vp),
 					x, y, DOA_STR(do_p), strlen(DOA_STR(do_p)) );
 			} else if( VW_TEXT_CENTER(vp) ){
-//fprintf(stderr,"drawing centered text \"%s\"\n",DOA_STR(do_p));
-				CGPoint pt = get_string_offset(VW_GFX_CTX(vp),DOA_STR(do_p));
-#define OLD_TEXT_METHOD
 
+				CGPoint pt = get_string_offset(VW_GFX_CTX(vp),DOA_STR(do_p));
 #ifdef OLD_TEXT_METHOD
+//fprintf(stderr,"drawing centered text \"%s\"\n",DOA_STR(do_p));
+
 //fprintf(stderr,"x = %g   y = %g\n",x,y);
 //fprintf(stderr,"string offset = %g %g\n",pt.x,pt.y);
 				CGContextShowTextAtPoint (VW_GFX_CTX(vp),
@@ -490,6 +509,7 @@ static int _exec_drawop(QSP_ARG_DECL  Viewer *vp, Draw_Op *do_p)
 */
 
 /* This doesn't seem to use the CG transformations??? */
+fprintf(stderr,"using new method to draw text!\n");
 CGSize drawn_size =
 [@(DOA_STR(do_p)) drawAtPoint:CGPointMake(x-pt.x/2, y-pt.y/2)
 	withFont: [UIFont fontWithName:@"Helvetica" size:20] ];
@@ -609,10 +629,12 @@ static int is_drawing_node( IOS_Node *np )
 			break;
 
 		case DO_UNUSED:
-            fprintf(stderr,"is_drawing_node:  DO_UNUSED shouldn't occur!?\n");
+			fprintf(stderr,
+				"is_drawing_node:  DO_UNUSED shouldn't occur!?\n");
 			break;
 		case N_DRAWOP_CODES:
-            fprintf(stderr,"is_drawing_node:  N_DRAWOP_CODES shouldn't occur!?\n");
+			fprintf(stderr,
+				"is_drawing_node:  N_DRAWOP_CODES shouldn't occur!?\n");
 			break;
 		default:
 			fprintf(stderr,"report_drawop:  OOPS - unhandled code %d (0x%x)\n",
@@ -858,7 +880,7 @@ static QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
 		initWithCGImage:myimg
 		size:NSZeroSize ];
 #endif // BUILD_FOR_MACOS
-    
+
 	// image is retained by the property setting above,
 	// so we can release the original
 	// jbm:  DO WE NEED THAT WITH ARC???
@@ -869,7 +891,7 @@ static QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
 	// It appears that CG stuff needs releases, even with ARC...
 	CGImageRelease(myimg);
 #endif // NOT_USING
-    
+
 	return theImage;
 
 }	// objc_img_for_dp
@@ -1076,7 +1098,7 @@ void _forget_frame( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 			VW_NAME(vp));
 		warn(ERROR_STRING);
 		return;
-    	}
+	}
 
 //fprintf(stderr,"forget_frame will forget %s\n",OBJ_NAME(dp));
 	forget_uiimage(uii_p);
