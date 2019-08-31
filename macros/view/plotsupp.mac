@@ -82,14 +82,6 @@ Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
 Label_X_Ticks $xmin $xmax $x_tick_spacing
 .
 
-# Check to see if the variable exists - if not,
-# then set it to the provided default value
-
-Define Check_Var 2 varname default_value
-If !var_exists('$1')
-  "Set $1 $2 Tell_If 'Check_Var:  $1 set to default value $2'"
-.
-
 # Unset old axis vars to make sure that we don't inherit from
 # a previous viewer?
 #
