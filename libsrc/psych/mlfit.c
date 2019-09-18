@@ -57,6 +57,8 @@ static void _set_float_var(QSP_ARG_DECL  const char *name, double v)
 void set_fcflag(int flg)
 { fc_flag=flg; }
 
+#define NO_GOOD		(-2.0)		// special flag value...
+
 double _regr(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int first)
 /* =1 if the first iteration */
 {
@@ -163,8 +165,8 @@ static float likelihood(SINGLE_QSP_ARG_DECL)	/* called from optimization routine
 	/* Opt_Param *opp; */
 
 	/* compute the likelihood for this guess */
-	assert( global_xval_dp != NULL );
-	n_xvals = OBJ_COLS(global_xval_dp);
+	assert( EXPT_XVAL_OBJ(&expt1) != NULL );
+	n_xvals = OBJ_COLS(EXPT_XVAL_OBJ(&expt1));
 
 	t_slope = get_opt_param_value(SLOPE_NAME);
 
@@ -182,7 +184,7 @@ static float likelihood(SINGLE_QSP_ARG_DECL)	/* called from optimization routine
 			continue;
 
 		nc=DATUM_NCORR(SUMM_DTBL_ENTRY(the_dtbl,i));
-		xv_p = indexed_data(global_xval_dp,i);
+		xv_p = indexed_data(EXPT_XVAL_OBJ(&expt1),i);
 		xv = *xv_p;
 		pc = (float) ztop( t_int + t_slope * xv );
 		if( pc == 1.0 ) pc = (float) 0.99;
@@ -361,6 +363,12 @@ void pntquic(FILE *fp,Trial_Class * tcp,int in_db)
 }
 #endif /* QUIK */
 
+// The split function was introduced to analyze the two limbs of a U-shaped function
+// separately...
+// We scan the summary table, looking at entries with data.  If we want the upper limb,
+// then we zero all the entries before we see the first 0 correct, at which point we are done.
+// If we want the lower limb, then we do nothing until we see the first zero
+
 void _split(QSP_ARG_DECL  Trial_Class * tcp,int wantupper)
 {
         int j;
@@ -375,18 +383,13 @@ void _split(QSP_ARG_DECL  Trial_Class * tcp,int wantupper)
 	n_xvals = OBJ_COLS( CLASS_XVAL_OBJ(tcp) );
 	assert(n_xvals>1);
 
-	//j=0;
 	for(j=0;j<n_xvals;j++){
 		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) > 0 ){
 			if( DATUM_NCORR(SUMM_DTBL_ENTRY(dtp,j)) == 0 ){
-				if( wantupper ){
-					return;
-				}
+				if( wantupper ) return;
 				havzero=1;
 			} else {
-				if( wantupper ){
-					DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) = 0;
-				} else if( havzero ){
+				if( wantupper || havzero ){
 					DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) = 0;
 				}
 			}

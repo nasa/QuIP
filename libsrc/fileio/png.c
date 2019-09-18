@@ -36,12 +36,17 @@
 #include "fio_prot.h"
 #include "debug.h"
 #include <stdio.h>
+#include <strings.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif /* HAVE_STDLIB_H */
 #include "img_file/fio_png.h"
 
 #define HDR_P	((Png_Hdr *)ifp->if_hdr_p)
+
+typedef struct png_extra_info {
+	int frames_counted;
+} Png_Extra_Info;
 
 /* sq: The original decoder defines this. */
 #define NO_24BIT_MASKS
@@ -58,8 +63,6 @@
 	(composite) = (u_char)((temp + (temp >> 8)) >> 8);		\
 }
 
-
-//png_structp png_ptr = NULL;
 
 /* some globals */
 /* BUG: some of these are avoidable */
@@ -126,12 +129,11 @@ FIO_CLOSE_FUNC( pngfio )
 	/* First do the png library cleanup */
 	if( IS_READABLE(ifp) ){
 		png_destroy_read_struct(&HDR_P->png_ptr, &HDR_P->info_ptr, NULL);
-
 	} else {
-//		WARN("pngfio_close:  don't know how to finish up file writing operation");
+		png_destroy_write_struct(&HDR_P->png_ptr, &HDR_P->info_ptr );
 	}
 
-	/* Shouldn't we also free the info struct that we allocated? */
+	/* BUG?  Shouldn't we also free the info struct that we allocated? */
 	if( ifp->if_hdr_p != NULL ){
 		givbuf(ifp->if_hdr_p);
 	}
@@ -144,18 +146,21 @@ FIO_CLOSE_FUNC( pngfio )
 // have the same size, and figure it out from the size of the first frame,
 // and the file size.
 
-#define count_png_frames(fp, frame_size) _count_png_frames(QSP_ARG  fp, frame_size)
+#define count_png_frames(ifp, frame_size) _count_png_frames(QSP_ARG  ifp, frame_size)
 
-static dimension_t _count_png_frames(QSP_ARG_DECL  FILE *fp, long *frame_size)
+static dimension_t _count_png_frames(QSP_ARG_DECL  Image_File *ifp, long *frame_size_p)
 {
+	FILE *fp;
 	dimension_t nf=1;
 	long file_pos;		// so we can restore the file ptr
 	long end_pos;		// so we can restore the file ptr
 	long file_pos2;		// so we can restore the file ptr
 	int end_seen=0;
 
+	fp = ifp->if_fp;
+
+	// We assume we have already read part of the first header
 	file_pos = ftell(fp);
-//fprintf(stderr,"count_png_frames:  file_pos = %ld (0x%lx)\n",file_pos,file_pos);
 
 	// get to the first header - why are we not there already!?
 	// The file position at this point seems to be right after the first
@@ -206,69 +211,109 @@ static dimension_t _count_png_frames(QSP_ARG_DECL  FILE *fp, long *frame_size)
 	} else {
 		nf = end_pos / file_pos2;
 	}
-	*frame_size = file_pos2;	// return the frame size
-
-	// rewind to initial position
-	if( fseek(fp,file_pos,SEEK_SET) < 0 )
-		warn("count_png_frames:  reset seek error!?");
+	*frame_size_p = file_pos2;	// return the frame size
 
 	return nf;
-}
+} // count_png_frames
 
-/*
- * init_png :   rewind the file, verify magic number.
- *	Create the library struct, and the info struct.
- */
+#define read_png_signature(ifp) _read_png_signature(QSP_ARG  ifp)
 
-static int init_png(QSP_ARG_DECL  Image_File *ifp /* , png_infop info_ptr */ )
+static int _read_png_signature(QSP_ARG_DECL  Image_File *ifp)
 {
 	u_char sig[8];
-	long frame_size;
-	png_infop info_ptr;
-
-	//png_infop orig_info_ptr;
-
-
-	//orig_info_ptr = info_ptr;
-
-	//rewind(ifp->if_fp);
 
 	if( fread(sig, 1 /* size */, 8 /* n_items */, ifp->if_fp) != 8 ){
-		WARN("Error reading PNG header!?");
+		warn("Error reading PNG header!?");
 		return(-1);
 	}
 
 	if( png_sig_cmp(sig,0,8) != 0 ){
-		WARN("init_png:  not a valid PNG file (bad signature)");
+		warn("read_png_signature:  not a valid PNG file (bad signature)");
 		return -1;
 	}
+	return 0;
+}
 
-	if( HDR_P->n_frames != 0 ){	// not first time?
-		png_destroy_read_struct(&HDR_P->png_ptr, &(HDR_P->info_ptr), NULL);
-	}
+#define create_read_struct(ifp) _create_read_struct(QSP_ARG  ifp)
+
+static int _create_read_struct(QSP_ARG_DECL  Image_File *ifp)
+{
+	assert( HDR_P->png_ptr == NULL );
 
 	HDR_P->png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,	NULL, NULL, NULL);
 	if (!HDR_P->png_ptr){
-		WARN("error creating png read struct");
+		warn("error creating png read struct");
 		return(-1);   /* out of memory */
 	}
+	return 0;
+}
+
+#define create_info_struct(ifp) _create_info_struct(QSP_ARG  ifp)
+
+static int _create_info_struct(QSP_ARG_DECL  Image_File *ifp)
+{
+	png_infop info_ptr;
 
 	info_ptr = png_create_info_struct(HDR_P->png_ptr);
 	if (!info_ptr) {
-		WARN("error creating png info struct");
-		png_destroy_read_struct(&HDR_P->png_ptr, NULL, NULL);
+		warn("error creating png info struct");
 		return(-1);   /* out of memory */
 	}
 	HDR_P->info_ptr = info_ptr;
+	return 0;
+}
+
+#define create_png_structs(ifp) _create_png_structs(QSP_ARG  ifp)
+
+static int _create_png_structs(QSP_ARG_DECL  Image_File *ifp)
+{
+	if( create_read_struct(ifp) < 0 ) return -1;
+	if( create_info_struct(ifp) < 0 ){
+		assert(HDR_P->png_ptr != NULL );
+		png_destroy_read_struct(&HDR_P->png_ptr, NULL, NULL);
+		HDR_P->png_ptr = NULL;
+		return -1;
+	}
+	return 0;
+}
+
+#define cleanup_png_read(ifp) _cleanup_png_read(QSP_ARG  ifp)
+
+static void _cleanup_png_read(QSP_ARG_DECL  Image_File *ifp)
+{
+	assert( HDR_P->png_ptr != NULL );
+	assert( HDR_P->info_ptr != NULL );
+	// 3rd ard is end_infopp
+	png_destroy_read_struct(&HDR_P->png_ptr, &(HDR_P->info_ptr), NULL);
+	HDR_P->png_ptr = NULL;
+	HDR_P->info_ptr = NULL;
+}
+
+
+#define read_png_header_info(ifp) _read_png_header_info(QSP_ARG  ifp)
+
+static int _read_png_header_info(QSP_ARG_DECL  Image_File *ifp)
+{
+	if( read_png_signature(ifp) < 0 ) return -1;
+
+	if( HDR_P->png_ptr != NULL ){
+		// destroy and remake so fresh on every frame
+		cleanup_png_read(ifp);
+	}
+
+	if( create_png_structs(ifp) < 0 ) return -1;
 
 	/* setjmp() must be called in every function
 	 * that calls a PNG-reading libpng function */
 
 	if (setjmp(png_jmpbuf(HDR_P->png_ptr))) {
-		png_destroy_read_struct(&HDR_P->png_ptr, &(HDR_P->info_ptr), NULL);
+		// execute this code after an error below...
+		cleanup_png_read(ifp);
 		return(-1);
 	}
 
+	// do we need to do this every time???
+	// Or only in the init routine???
 	png_init_io(HDR_P->png_ptr, ifp->if_fp);
 	/* we have already read the 8 signature bytes */
 	png_set_sig_bytes(HDR_P->png_ptr, 8);
@@ -276,17 +321,41 @@ static int init_png(QSP_ARG_DECL  Image_File *ifp /* , png_infop info_ptr */ )
 	/* read all PNG info up to image data */
 	png_read_info(HDR_P->png_ptr, HDR_P->info_ptr);
 
-	//orig_info_ptr = (png_infop)memcpy(orig_info_ptr, info_ptr, sizeof(png_info));
+	return 0;
+}
 
-	/* what about freeing our new struct? */
+#define init_frame_count(ifp) _init_frame_count(QSP_ARG  ifp)
 
-	//printf("init_png: OUT\n");
+static void _init_frame_count(QSP_ARG_DECL  Image_File *ifp)
+{
+	long frame_size;
 
-	if( HDR_P->n_frames == 0 ){	// first time
-		frame_size=0;	// silence compiler warning
-		HDR_P->n_frames = count_png_frames(ifp->if_fp,&frame_size);
-		HDR_P->frame_size = frame_size;
-	}
+	frame_size=0;	// silence compiler warning
+	HDR_P->n_frames = count_png_frames(ifp,&frame_size);
+	HDR_P->frame_size = frame_size;
+	NOTE_PNG_FRAMES_COUNTED(ifp)
+}
+
+/*
+ * init_png_for_reading :   rewind the file, verify magic number.
+ *	Create the library struct, and the info struct.
+ */
+
+static int init_png_for_reading(QSP_ARG_DECL  Image_File *ifp /* , png_infop info_ptr */ )
+{
+	assert( ! PNG_FRAMES_COUNTED(ifp) );	// flag that we've read the header once...
+
+	// header already zeroed in the open func...
+
+	if( read_png_header_info(ifp) < 0 ) return -1;
+
+	init_frame_count(ifp);
+
+	fill_hdr(HDR_P);		// fill the header struct using png_ptr and info_ptr
+
+	// rewind
+	if( fseek(ifp->if_fp,0L,SEEK_SET) < 0 )
+		warn("init_png_for_reading:  rewind seek error!?");
 
 	return 0;
 }
@@ -390,17 +459,8 @@ static int expand_image(Image_File *ifp)
 
 static int skip_hdr_info(QSP_ARG_DECL  Image_File *ifp)
 {
-	u_char sig[8];
-
-	if( fread(sig, 1, 8, ifp->if_fp) != 8 ){
-		WARN("Error reading PNG header!?");
-		return(-1);
-	}
-
-	if( png_sig_cmp(sig,0,8) != 0 ){
-		WARN("init_png:  not a valid PNG file (bad signature)");
-		return -1;
-	}
+	if( read_png_signature(ifp) < 0 ) return -1;
+	//
 	// read the header chunk - if we wanted to be very careful
 	// we could compare the contents to what we expect...
 
@@ -419,45 +479,18 @@ static int skip_hdr_info(QSP_ARG_DECL  Image_File *ifp)
  * This hack expands the images and picks up the hdr info.
  *
  * (who wrote that comment?  doesn't sound like me (jbm) ...
- *
+ * // init_png_for_reading
  * get_hdr_info is called when we open a file for reading...
  */
 
 static int get_hdr_info(QSP_ARG_DECL  Image_File *ifp)
 {
-	//png_infop info_ptr;
 
-	//info_ptr = HDR_P->info_ptr;
-
-	if( init_png(QSP_ARG  ifp /*, info_ptr*/ ) < 0)
+	if( init_png_for_reading(QSP_ARG  ifp) < 0)
 		return(-1);
-
-	/* Used to call expand_image() here, which seems to blow anything up to RGB???  why bother? */
-	/*
-	if( expand_image(ifp) < 0)
-		return(-1);
-		*/
-
-	// The header doesn't contain the number of frames,
-	// so we have to scan the file...
 
 	if( png_to_dp(ifp->if_dp, HDR_P ))
 		return(-1);
-	fill_hdr(HDR_P);
-
-
-//advise("get_hdr_info calling png_destroy_read_struct");
-	//png_destroy_read_struct(&HDR_P->png_ptr, &info_ptr, NULL);
-//advise("get_hdr_info setting png_ptr to NULL");
-	//HDR_P->png_ptr = NULL;
-	//info_ptr = NULL;
-	//free(info_ptr);
-
-	//givbuf(ifp->if_hdr_p);
-
-	//ifp->if_hdr_p = getbuf( sizeof(Png_Hdr) );
-	//HDR_P->info_ptr = (png_infop)getbuf(sizeof(png_info));
-
 
 	return 0;
 }
@@ -475,10 +508,7 @@ FIO_OPEN_FUNC( pngfio )		// unix version
 	/* zero the contents */
 	memset(ifp->if_hdr_p,0,sizeof(Png_Hdr));
 
-	//HDR_P->info_ptr = NULL;
-
 	if( IS_READABLE(ifp) ) {
-//fprintf(stderr,"checking header info, reading png file...\n");
 		if(get_hdr_info(QSP_ARG  ifp) < 0)
 			return(NULL);
 
@@ -571,13 +601,13 @@ static u_char *get_image( QSP_ARG_DECL  Image_File *ifp, u_long *pRowbytes )
 	*pRowbytes = rowbytes = png_get_rowbytes(HDR_P->png_ptr, HDR_P->info_ptr);
 
 	if ((png_image_data = (u_char *)getbuf(rowbytes*HDR_P->height)) == NULL) {
-		WARN("get_image:  getbuf error #1!?");
+		warn("get_image:  getbuf error #1!?");
 		pngfio_close(QSP_ARG  ifp);
 		return (u_char *)NULL;
 	}
 
 	if ((row_pointers = (png_bytepp)getbuf(HDR_P->height*sizeof(png_bytep))) == NULL) {
-		WARN("get_image:  getbuf error #2!?");
+		warn("get_image:  getbuf error #2!?");
 		pngfio_close(QSP_ARG  ifp);
 		givbuf(png_image_data);
 		png_image_data = NULL;
@@ -605,6 +635,7 @@ static u_char *get_image( QSP_ARG_DECL  Image_File *ifp, u_long *pRowbytes )
 	return png_image_data;
 }
 
+// How do we know whether or not to read the header???
 
 FIO_RD_FUNC( pngfio )
 {
@@ -621,24 +652,10 @@ FIO_RD_FUNC( pngfio )
 		return;
 #endif // HAVE_ANY_GPU
 
-	/*
-	if(ifp->if_nfrms) {
-		advise("ERROR: png format does not have a stream of frames!");
-		exit(1);
-	}
-	*/
-//fprintf(stderr,"pngfio_rd:  ifp->if_nfrms = %d\n",ifp->if_nfrms);
-	if( ifp->if_nfrms > 0 ) {
-		// This means we have already read at least one frame.
-		// We scan the header when we open the file, but concatenated images
-		// have their own header, which we have to skip...
-		/*
-		if( skip_hdr_info(QSP_ARG  ifp) < 0 ){
-			WARN("Error skipping frame header in png file!?");
-			return;
-		}
-		*/
-		init_png(QSP_ARG  ifp);
+	// This skips the header portion
+	if( read_png_header_info(ifp) < 0 ){
+		warn("pngfio_read:  back from read_png_header_info, error reading header info!?");
+		return;
 	}
 
 //advise("png_rd calling expand_image");
@@ -669,7 +686,7 @@ FIO_RD_FUNC( pngfio )
 	if( HDR_P->channels != OBJ_COMPS(dp) ){
 		sprintf(ERROR_STRING,"png_rd:  file %s has %d channels, but object %s has depth %d!?",
 			ifp->if_name,HDR_P->channels,OBJ_NAME(dp),OBJ_COMPS(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -736,7 +753,7 @@ FIO_WT_FUNC( pngfio )		// unix version
 	HDR_P->png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
 							NULL, NULL, NULL);
 	if (!HDR_P->png_ptr){
-		WARN("Error creating PNG write struct!?");
+		warn("Error creating PNG write struct!?");
 		return(-1);
 	}
 
@@ -762,8 +779,8 @@ FIO_WT_FUNC( pngfio )		// unix version
 	png_info_ptr = png_create_info_struct(HDR_P->png_ptr);
 
 	if( !png_info_ptr ){
-		WARN("Unable to create PNG info struct!?");
-		png_destroy_read_struct(&HDR_P->png_ptr, NULL, NULL);
+		warn("Unable to create PNG info struct!?");
+		png_destroy_write_struct(&HDR_P->png_ptr, NULL );
 		return(-1);   /* out of memory */
 	}
 
@@ -771,7 +788,7 @@ FIO_WT_FUNC( pngfio )		// unix version
 	 * error handling functions in the png_create_write_struct() call.
 	 */
 	if (setjmp(png_jmpbuf(HDR_P->png_ptr))) {
-		png_destroy_read_struct(&HDR_P->png_ptr, &png_info_ptr, NULL);
+		png_destroy_write_struct(&HDR_P->png_ptr, &png_info_ptr );
 		return(-1);
 	}
 
@@ -784,7 +801,7 @@ FIO_WT_FUNC( pngfio )		// unix version
 
 	if( bit_depth != 8 && bit_depth != 16 ){
 		sprintf(ERROR_STRING,"Bad bit depth (%d) for PNG!?",bit_depth);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -813,7 +830,7 @@ FIO_WT_FUNC( pngfio )		// unix version
 			sprintf(ERROR_STRING,
 				"Object %s has bad number of components (%d) for png",
 							OBJ_NAME(dp),OBJ_COMPS(dp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(-1);
 		}
 
@@ -988,22 +1005,14 @@ FIO_SEEK_FUNC(pngfio)
 {
 	long offset;
 
-	// BUG - should we validate the frame index?
+	assert( PNG_FRAMES_COUNTED(ifp) );	// flag that we've read the header once...
 
 	offset = HDR_P->frame_size * n;
 	if( fseek(ifp->if_fp,offset,SEEK_SET) < 0 ){
-		WARN("Error seeking in png file!?");
+		warn("Error seeking in png file!?");
 		return -1;
 	}
 	// We used to skip the header here, but better to do it in the read function
-#ifdef FOOBAR
-	// Now we should read the top of the file, to the first data
-	// section?
-	if( skip_hdr_info(QSP_ARG  ifp) < 0 ){
-		WARN("Error skipping header after seeking in png file!?");
-		return -1;
-	}
-#endif // FOOBAR
 
 	return 0;
 }
@@ -1041,7 +1050,7 @@ int _pngfio_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 #include <UIKit/UIKit.h>
 
 //extern QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp);
-#include "quipImageView.h"	// objc_img_for_dp
+#include "quipImage.h"	// objc_img_for_dp
 
 // BUG  A hack:  we'd like to keep a pointer to the UIImage in the img_file struct,
 // but currently that's not an Objective C IOS_Item, and I don't want to take
@@ -1065,13 +1074,13 @@ FIO_WT_FUNC( pngfio )		// iOS version
 					// I don't understand that, but it works correctly
 					// like this so I don't care!
 	if( myimg == NULL ){
-		WARN("error creating UIImage!?");
+		warn("error creating UIImage!?");
 		return -1;
 	}
 	png_data = UIImagePNGRepresentation(myimg);
 
 	if( png_data == NULL ){
-		WARN("error creating NSData!?");
+		warn("error creating NSData!?");
 		return -1;
 	}
 
@@ -1163,7 +1172,7 @@ FIO_OPEN_FUNC( pngfio )		// iOS version
 		UIImage *img;
 		img = [UIImage imageWithContentsOfFile:STRINGOBJ(ifp->if_pathname)];
 		if( img == NULL ){
-			WARN("pngfio_open:  error reading file!?");
+			warn("pngfio_open:  error reading file!?");
 			// BUG if we return NULL here,
 			// we need to deallocate...
 			return NULL;
@@ -1172,7 +1181,7 @@ FIO_OPEN_FUNC( pngfio )		// iOS version
 		png_to_dp(ifp->if_dp, img);
 		// Need to keep a pointer to the image...
 		if( png_ifp != NULL ){
-			WARN("Oops, can only read one png file at a time!?");
+			warn("Oops, can only read one png file at a time!?");
 			return NULL;
 		}
 		png_ifp = ifp;
@@ -1200,11 +1209,11 @@ FIO_RD_FUNC( pngfio )		// iOS version
 	if( ifp != png_ifp ){
 		sprintf(ERROR_STRING,"pngfio_rd:  have image data from %s, but %s requested!?",
 			IF_NAME(png_ifp),IF_NAME(ifp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( png_uip == NULL ){
-		WARN("pngfio_rd:  null uiimage!?");
+		warn("pngfio_rd:  null uiimage!?");
 		return;
 	}
 

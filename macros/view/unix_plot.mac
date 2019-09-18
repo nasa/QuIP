@@ -20,7 +20,7 @@ Define Y_Legend 1 string
 Push_Var xsync_state
 Set_XSync yes
 
-Get_Legend_Image $1
+Get_Legend_Image $1	# where does this return the image?
 
 Pop_Var xsync_state
 Set_XSync $xsync_state
@@ -38,6 +38,7 @@ Assign ly ($plot_ymax+$plot_ymin+$string_width)/2	# top
 Assign lx $plot_xmin-$legend_h_offset			# left
 Plot_2_Screen slx sly $lx $ly
 #advise "drawing y legend at $slx $sly"
+#advise "Subimage y_legend_inset save_buf ncols(y_legend) nrows(y_legend) $slx $sly"
 Subimage y_legend_inset save_buf ncols(y_legend) nrows(y_legend) $slx $sly
 VMov y_legend_inset y_legend
 Delete_Image y_legend
@@ -103,7 +104,6 @@ Plot_2_Screen sx1 sy1 $lx $ly
 #Assign legend_width floor(strlen('$1')*$h_screen_units_per_char)
 view draw $the_plotter get_string_width legend_width "$1" quit quit
 Add_Var sx1 -$legend_width/2	# need this when we have centered mode
-#Print legend_width
 Assign legend_height floor($v_screen_units_per_char)
 Image legend_strip $legend_height $legend_width depth('$DISPLAY')/8 u_byte
 Add_Var sy1 floor($v_screen_units_per_char*$descender_fraction)
@@ -112,7 +112,6 @@ Assign sy2 $sy1-$legend_height
 
 # this line draws a box around the clipped area
 #Show_Legend_Area
-#Pause
 
 # lx and ly are in plotting coords...
 # BadMatch error on Mac OS X occurs here, not on the first call...
@@ -128,6 +127,7 @@ data
     nrows(y_legend)	nrows(y_legend)-1	-1
   quit
 Transpose r_legend legend_strip
+
 Delete_Image legend_strip
 .
 

@@ -766,6 +766,8 @@ void _dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 	init_dobjs();		/* initialize items */
 
 	vl2_init_platform(SINGLE_QSP_ARG);	// this initializes ram_area_p
+	curr_ap = ram_area_p;
+	assert(curr_ap!=NULL);
 
 	init_tmp_dps();
 

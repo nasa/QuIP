@@ -1,0 +1,17 @@
+# test script to clean redo's and undo's
+
+experiments
+  lookit
+    read expt_data.5
+    print_summary class1
+    print_summary class2
+    print_sequence
+    clean_sequence
+    print_sequence
+    print_summary class1
+    print_summary class2
+    Pause
+    quit
+  quit
+exit
+

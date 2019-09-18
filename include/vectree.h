@@ -185,8 +185,8 @@ extern int dumpit;
 extern int dumping;		/* a flag that is set when in dump_tree */
 
 
-#define eval_ptr_lhs_ref(enp)		eval_ptr_ref(QSP_ARG enp,0)
-#define eval_ptr_rhs_ref(enp)		eval_ptr_ref(QSP_ARG enp,1)
+#define eval_ptr_lhs_ref(enp)		eval_ptr_expr(QSP_ARG enp,0)
+#define eval_ptr_rhs_ref(enp)		eval_ptr_expr(QSP_ARG enp,1)
 
 
 #define IS_DECL( code )		( ( code )==T_SCAL_DECL || \
@@ -412,7 +412,7 @@ extern Data_Obj *	_eval_obj_ref(QSP_ARG_DECL  Vec_Expr_Node *);
 extern Data_Obj *	_eval_obj_exp(QSP_ARG_DECL  Vec_Expr_Node *,Data_Obj *);
 extern Context_Pair *	pop_previous(SINGLE_QSP_ARG_DECL);
 extern void		_restore_previous(QSP_ARG_DECL  Context_Pair *);
-extern Identifier *	_eval_ptr_ref(QSP_ARG_DECL  Vec_Expr_Node *enp,int expect_ptr_set);
+extern Identifier *	_eval_ptr_expr(QSP_ARG_DECL  Vec_Expr_Node *enp,int expect_ptr_set);
 extern char *		node_desc(Vec_Expr_Node *);
 extern void		_reeval_decl_stat(QSP_ARG_DECL  Precision *prec_p,Vec_Expr_Node *,int ro);
 extern const char *	_eval_string(QSP_ARG_DECL Vec_Expr_Node *);
@@ -431,7 +431,7 @@ extern void		_eval_decl_tree(QSP_ARG_DECL  Vec_Expr_Node *);
 #define eval_flt_exp(enp)		_eval_flt_exp(QSP_ARG enp)
 #define eval_int_exp(enp)		_eval_int_exp(QSP_ARG enp)
 #define eval_string(enp)		_eval_string(QSP_ARG enp)
-#define eval_ptr_ref(enp,expect_ptr_set)	_eval_ptr_ref(QSP_ARG enp,expect_ptr_set)
+#define eval_ptr_expr(enp,expect_ptr_set)	_eval_ptr_expr(QSP_ARG enp,expect_ptr_set)
 #define missing_case(enp,str)		_missing_case(QSP_ARG  enp,str)
 #define restore_previous(cpp)		_restore_previous(QSP_ARG cpp)
 

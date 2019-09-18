@@ -159,6 +159,7 @@ IOS_ITEM_LIST_PROT(Canvas_Event,canvas_event)
 #define VW_QV(vp)		((quipView *)VW_QVC(vp).view)
 #define VW_CANVAS(vp)		QV_CANVAS(VW_QV(vp))
 #define VW_IMAGES(vp)		QV_IMAGES(VW_QV(vp))
+#define SET_VW_IMAGES(vp,v)	SET_QV_IMAGES(VW_QV(vp),v)
 #endif // BUILD_FOR_IOS
 
 #define VW_BG_IMG(vp)		QV_BG_IMG(VW_QV(vp))
@@ -542,8 +543,14 @@ extern int add_image(Viewer *vp,Data_Obj *dp,int x,int y);
 extern void insert_image(Data_Obj *dpto,Data_Obj *dpfr,int x,int y,int frameno);
 extern void update_image(Viewer *vp);
 extern void _load_viewer(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp);
+extern void _queue_frame(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp);
+extern void _forget_frame(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp);
+extern void _clear_queue(QSP_ARG_DECL  Viewer *vp);
 extern void _old_load_viewer(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp);
 #define load_viewer(vp,dp) _load_viewer(QSP_ARG  vp,dp)
+#define queue_frame(vp,dp) _queue_frame(QSP_ARG  vp,dp)
+#define forget_frame(vp,dp) _forget_frame(QSP_ARG  vp,dp)
+#define clear_queue(vp) _clear_queue(QSP_ARG  vp)
 #define old_load_viewer(vp,dp) _old_load_viewer(QSP_ARG  vp,dp)
 
 /* xplot.c */
@@ -752,6 +759,14 @@ extern void display_to_shm_viewer(Viewer *vp,Data_Obj *dp);
 }
 #endif
 
+#ifdef BUILD_FOR_OBJC
+
+// ios_supp.c
+extern void set_viewer_animation(Viewer *vp, int frame_duration, int n_repeats);
+extern void stop_viewer_animation(Viewer *vp);
+extern void exec_after_animation(Viewer *vp,const char *s);
+
+#endif // BUILD_FOR_OBJC
 
 #endif /* ! _VIEWER_H_ */
 

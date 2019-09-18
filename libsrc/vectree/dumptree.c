@@ -128,7 +128,7 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	int i;
 	const char *s;
 
-	if( enp==NULL ) return;
+	if( enp == NULL ) return;
 
 	/* print the node "name", and a code that tells about shape knowledge */
 
@@ -284,16 +284,24 @@ assert(VN_SUBRT(enp)!=NULL);
 		prt_msg_frag("\t");
 	} else if( code==T_RAMP ){
 		prt_msg_frag("\t");
+	} else if( code == T_VS_VS_CONDASS ){
+		sprintf(msg_str," %s",VF_NAME(FIND_VEC_FUNC(VN_BM_CODE(enp))));
+		prt_msg_frag(msg_str);
 	}
 
 	/* Now print the addresses of the child nodes */
 
+#define N_EXPECTED_CHILDREN(enp)	(tnt_tbl[code].tnt_nchildren)
+
 	if( VN_CHILD(enp,0)!=NULL){
+fprintf(stderr,"child 0 at 0x%lx\n",(long)VN_CHILD(enp,0));
+		assert( N_EXPECTED_CHILDREN(enp) >= 1 );
 		sprintf(msg_str,"\t\tn%d",VN_SERIAL(VN_CHILD(enp,0)));
 		prt_msg_frag(msg_str);
 	}
 	for(i=1;i<MAX_CHILDREN(enp);i++){
 		if( VN_CHILD(enp,i)!=NULL){
+			assert( N_EXPECTED_CHILDREN(enp) > i );
 			sprintf(msg_str,", n%d",VN_SERIAL(VN_CHILD(enp,i)));
 			prt_msg_frag(msg_str);
 		}

@@ -1,52 +1,80 @@
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Created by GNU Texinfo 5.2, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Prompts - QuIP Manual</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="QuIP Manual">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="up" href="Interactive-Features.html#Interactive-Features" title="Interactive Features">
-<link rel="next" href="Response-completion.html#Response-completion" title="Response completion">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
+<title>QuIP Manual: Prompts</title>
+
+<meta name="description" content="QuIP Manual: Prompts">
+<meta name="keywords" content="QuIP Manual: Prompts">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="QuIPindex.html#QuIPindex" rel="index" title="QuIPindex">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="Interactive-Features.html#Interactive-Features" rel="up" title="Interactive Features">
+<link href="Response-completion.html#Response-completion" rel="next" title="Response completion">
+<link href="Interactive-Features.html#Interactive-Features" rel="prev" title="Interactive Features">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.indentedblock {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smallindentedblock {margin-left: 3.2em; font-size: smaller}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style:oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nocodebreak {white-space:nowrap}
+span.nolinebreak {white-space:nowrap}
+span.roman {font-family:serif; font-weight:normal}
+span.sansserif {font-family:sans-serif; font-weight:normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
 </head>
-<body>
-<div class="node">
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
 <a name="Prompts"></a>
+<div class="header">
 <p>
-Next:&nbsp;<a rel="next" accesskey="n" href="Response-completion.html#Response-completion">Response completion</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="Interactive-Features.html#Interactive-Features">Interactive Features</a>
-<hr>
+Next: <a href="Response-completion.html#Response-completion" accesskey="n" rel="next">Response completion</a>, Up: <a href="Interactive-Features.html#Interactive-Features" accesskey="u" rel="up">Interactive Features</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="QuIPindex.html#QuIPindex" title="Index" rel="index">Index</a>]</p>
 </div>
-
+<hr>
+<a name="Prompts-1"></a>
 <h4 class="subsection">2.1.1 Prompts</h4>
-
 <p>Prompts and prompt suppression
-
+</p>
 <p>When QuIP is waiting for user input, a prompt is printed.  Command prompts
-typically end in "&gt; ", preceded by a string indicating the menu hierarchy. 
-Parameter prompts are typically of the form "Enter &lt;parameter description&gt;: ".
-
+typically end in &quot;&gt; &quot;, preceded by a string indicating the menu hierarchy. 
+Parameter prompts are typically of the form &quot;Enter &lt;parameter description&gt;: &quot;.
+</p>
 <p>Prompts are only printed when QuIP is starved for input.  So if multiple
 commands are entered on a single line, no prompt will be printed before the
 second command is read.
-
+</p>
 <p>The fact that commands prompt for missing arguments
 makes them somewhat self-documenting.  If you forget the number or order
 of parameters to a given command, you can simply enter it interactively
 and note the prompts.  The transcripting facility (LINK) provides
 a convenient way of recording the results.
+</p>
 
-</body></html>
 
+
+</body>
+</html>

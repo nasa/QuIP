@@ -108,6 +108,14 @@ Define Image 5 name height width depth type
 data image $1 $2 $3 $4 $5 quit
 .
 
+# Image_If  - create an image, only if it doesn't already exist
+
+Define Image_If 5 name rows cols comps type
+If obj_exists('$1') exit_macro
+Image $1 $2 $3 $4 $5
+expressions export $1 quit
+.
+
 Define Hypersequence 7 name seqs frames height width ncomps type
 data hyperseq $1 $2 $3 $4 $5 $6 $7 quit
 .

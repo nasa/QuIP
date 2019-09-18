@@ -1,9 +1,8 @@
 //
-//  quipImageView.m
+//  quipImage.m
 //
 
-#include "quipImages.h"
-#include "quipImageView.h"
+#include "quipImage.h"
 #include "quip_prot.h"
 #include "viewer.h"
 
@@ -63,6 +62,7 @@ QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
 	CGContextRelease(cref);
 
 #ifdef BUILD_FOR_IOS
+	// We could also use imageWithData, and it might be a lot simpler???
 	theImage = [QUIP_IMAGE_TYPE imageWithCGImage:myimg];
 #endif // BUILD_FOR_IOS
 
@@ -84,38 +84,5 @@ QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
 	return theImage;
 }
 
-@implementation quipImageView
 
-@synthesize qiv_dp;
-
--(id)initWithDataObj:(Data_Obj *) dp
-{
-	QUIP_IMAGE_TYPE *myimg=objc_img_for_dp(dp,1);	// the 1 is the little-endian flag...
-
-#ifdef BUILD_FOR_IOS
-	self =[super initWithImage:myimg];
-
-//fprintf(stderr,"quipImageView - initWithDataObj %s:  setting alpha to 1\n",OBJ_NAME(dp));
-	self.alpha = 1.0;
-
-#endif // BUILD_FOR_IOS
-#ifdef BUILD_FOR_MACOS
-	self = [super init];
-	self.image = myimg;
-	self.imageScaling = NSScaleNone;
-
-	// default is NSScaleProportionally
-	// When we first ran, the image only looked correct
-	// when shrunk...  With no scaling, it
-	// always looks incorrect!?
-
-#endif // BUILD_FOR_MACOS
-
-	self.hidden=NO;
-	qiv_dp = dp;
-
-	return self;
-}
-
-@end
 

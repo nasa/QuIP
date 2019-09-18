@@ -430,6 +430,7 @@ void _replace_var_string(QSP_ARG_DECL  Variable *vp, const char *find,
 		cat_string_n(sbp,start,(int)(s-start));
 		cat_string(sbp,replace);
 		start = s + nr;
+        assert(start!=NULL);
 		if( *start == 0 ) continue;
 
 		s=strstr(start,find);

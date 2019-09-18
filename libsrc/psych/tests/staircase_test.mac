@@ -1,0 +1,272 @@
+
+Define Get_Response 0
+prompt_text 'Target in first interval (yes/no/abort/redo/undo)' r
+Print r
+Record_Response $r EndTrialsTest
+.
+
+Define Next_Trial 0
+experiments
+  advise "Next_Trial will call:  present_stim $staircase_name"
+  present_stim $staircase_name
+  advise "Next_Trial back from:  present_stim $staircase_name"
+  quit
+.
+
+Define C1Stim 0
+Print n_trials_remaining
+advise "C1Stimulus!   class = $class   val = $val   coin = $coin"
+.
+
+Define Setup_X_Values 0
+Vector my_xvals 21 1 float
+Ramp1D my_xvals 0 -0.1
+.
+
+Define Make_Response_Buttons 0
+If obj_exists('response_frame') 'warn "Make_Response_Buttons:  image already exists!?" exit_macro'
+If !obj_exists('blank_frame') 'warn "Make_Response_Buttons:  blank frame image does not exist!?" exit_macro'
+Dup_UByte response_frame blank_frame
+Dup_Byte response_map blank_frame{0}
+VSet response_map -1
+VMov response_frame blank_frame
+Assign button_w round(ncols(response_frame)/4)
+Assign button_h $button_w
+Assign y0 round((nrows(response_frame)-$button_h)/2)
+Assign left_response_button_x round(ncols(response_frame)/4)
+Assign right_response_button_x round(3*ncols(response_frame)/4)
+Assign response_button_y round(nrows(response_frame)/2)
+Subimage left_button response_frame $button_w $button_h round($button_w/2) $y0
+VSet left_button 255
+Subimage right_button response_frame $button_w $button_h round(5*$button_w/2) $y0
+VSet right_button 255
+Delete_Image left_button
+Delete_Image right_button
+
+# The map image simplifies interpreting the touch coords
+Subimage left_button response_map $button_w $button_h round($button_w/2) $y0
+VSet left_button 1
+Subimage right_button response_map $button_w $button_h round(5*$button_w/2) $y0
+VSet right_button 2
+Delete_Image left_button
+Delete_Image right_button
+.
+
+Define Draw_Ready_Text 0
+advise 'Draw_Ready_Text clearing viewer...'
+view draw $gabor_stim_viewer_name clear quit quit	# clear old draw list...
+advise 'Draw_Ready_Text showing blank frame...'
+Show_Bytes blank_frame $gabor_stim_viewer_name
+advise 'Draw_Ready_Text drawing string...'
+view
+  draw $gabor_stim_viewer_name
+    text_mode left_justified
+    string "Tap screen to initiate trial" 20 20
+    quit
+  quit
+.
+
+Define Clear_Stim_Text 0
+view draw $gabor_stim_viewer_name clear quit quit	# clear old draw list...
+.
+
+Define Draw_Response_Legend 0
+view
+  draw $gabor_stim_viewer_name
+    text_mode centered
+    Print left_response_button_x
+    Print right_response_button_x
+    string "Target in first interval" $left_response_button_x $response_button_y
+    string "Target in second interval" $right_response_button_x $response_button_y
+    quit
+  quit
+.
+
+Define FCGaborContrast 0
+Pop_Nav		# pop freq selector
+Print gabor_freq_cps	# from the selector?
+Get_Gabor_Index_For_Freq $gabor_freq_cps
+If $gabor_freq_idx<0 exit_macro
+
+# We need the index to get the staircase name...
+Check_Staircases Present2AFCGabor
+Get_Staircase_Name $gabor_freq_idx 0
+Display_Gabor_Stim_Viewer
+Run_Staircase_Trials
+.
+
+# this version has no display, just for testing control flow & data saving
+Define FCGaborContrastTest 0
+Print gabor_freq_cps	# from the selector?
+Get_Gabor_Index_For_Freq $gabor_freq_cps
+If $gabor_freq_idx<0 exit_macro
+
+# We need the index to get the staircase name...
+Check_Staircases Present2AFCGaborTest
+Get_Staircase_Name $gabor_freq_idx 0
+#Display_Gabor_Stim_Viewer
+Run_Staircase_Trials
+.
+
+# The analysis software doesn't have a way to stuff a data table, but
+# CAN read a file, so we emulate the data saving routine...
+
+Define Write_Psych_To_File 0
+Insure_Directory $scratch_dir
+Set psych_filename tmp_psych.asc
+Set psych_pathname $scratch_dir/$psych_filename
+# first write the x values
+append no
+output_file $psych_pathname
+echo "1 classes, $n_gabor_contrast_levels x values"
+data ascii append gabor_log_contrast_list $psych_pathname quit quit
+echo "Summary data"
+echo "Trial_Class 0, $n_psych_pts data points"
+Set cidx 0
+repeat $n_gabor_contrast_levels
+  Assign n value(gabor_psych_data[$cidx]{$gabor_psych_ntotal_idx})
+  If $n>0 "Emit_Psych_Point $cidx"
+  Increment cidx
+  end
+.
+
+
+Define Emit_Psych_Point 1 contrast_idx
+Assign ntot value(gabor_psych_data[$1]{$gabor_psych_ntotal_idx})
+Assign nseen value(gabor_psych_data[$1]{$gabor_psych_nseen_idx})
+echo "	$1	$ntot	$nseen"
+.
+
+Set interval_1 1
+Set interval_2 2
+
+Define Classify_Response 2 x y
+If !obj_exists(response_map) "warn 'Classify_Response:  response_map does not exist!?' exit_macro"
+Assign response_code value(response_map[$2][$1])
+Print response_code
+.
+
+Define Get_Gabor_Response 1 end_macro
+advise "response at $touch1_x $touch1_y"
+Classify_Response $touch1_x $touch1_y
+If $response_code<0 exit_macro	# a stray touch - could beep?
+
+Set response_word foobar
+If $response_code==1 "Set response_word yes"
+If $response_code==2 "Set response_word no"
+Record_Response $response_word $1
+.
+
+Define Record_Response 2 response_word end_macro
+advise "Record_Response $1 $2 BEGIN"
+
+experiments
+  #verbose yes
+  #advise "Get_Gabor_Response 'response $staircase_name $1"
+  #response $staircase_name $1
+  #verbose no
+  respond_next $1
+  quit
+
+Print n_trials_remaining
+If $n_trials_remaining<=0 "advise 'Record_Response:  No more trials!' $2 exit_macro"
+
+Next_Trial
+advise "Record_Response DONE"
+.
+
+Define EndTrials 0
+Pop_Nav
+Show_Nav_Bar
+Set trial_state undefined
+.
+
+Define EndTrialsTest 0
+Set trial_state undefined
+.
+
+Define New_Gabor_Class 2 name stimulus_macro
+experiments
+  classes
+    new $1 $2
+    quit
+  quit
+.
+
+# make a staircase for each gabor frequency
+
+Set gabor_stairs_inited 0
+
+Define Check_Staircases 1 stimulus_macro
+If $gabor_stairs_inited exit_macro
+
+experiments
+  xvals
+    import gabor_contrast_list
+    quit
+  quit
+
+Set f_idx 1
+repeat $n_gabor_frequencies
+  New_Gabor_Class class$f_idx $1
+  Increment f_idx
+  end
+
+experiments
+  use_keyboard no
+  2AFC yes
+  staircases
+    change n_data 32	# not used?
+    change n_2up 1
+    quit
+  quit
+
+# won't be used, but keeps the software happy...
+Set response_string "target seen in first interval"
+
+Set gabor_stairs_inited 1
+.
+
+Define Get_Staircase_Name 2 c_idx stair_idx
+Assign _n 1+$1
+Set staircase_name staircase.class$_n.0
+.
+
+Set n_staircase_trials 32
+
+Define Run_Staircase_Trials 0
+Set n_trials_remaining $n_staircase_trials
+Next_Trial
+.
+
+Define Present2AFCGabor 0
+Print class
+Print val
+Assign f_idx $class
+Assign c_idx $val
+Assign coin random(1)
+Print coin
+If $coin
+  Then "Set which_interval $interval_2"
+  Else "Set which_interval $interval_1"
+
+Show_Test_Stim $f_idx $c_idx $which_interval
+.
+
+
+Define Present2AFCGaborTest 0
+Print class
+Print val
+Assign f_idx $class
+Assign c_idx $val
+Assign coin random(1)
+Print coin
+If $coin
+  Then "Set which_interval $interval_2"
+  Else "Set which_interval $interval_1"
+
+#Show_Test_Stim $f_idx $c_idx $which_interval
+advise "Would present freq $f_idx contrast $c_idx in interval $which_interval"
+.
+
+

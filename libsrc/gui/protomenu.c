@@ -733,13 +733,8 @@ static COMMAND_FUNC( do_nav_menu )
 
 static COMMAND_FUNC( do_push_nav )
 {
-	//Panel_Obj *po;
 	Gen_Win *gwp;
 	const char *s;
-
-	// Are nav panels really regular panels???
-	//po = pick_panel("");
-	//if( po == NULL ) return;
 
 	s = NAMEOF("name of panel or viewer");
 	gwp = find_genwin(s);
@@ -821,7 +816,7 @@ static COMMAND_FUNC( do_confirm )
 	title=NAMEOF("title for alert");
 	question=NAMEOF("confirmation question");
 
-	get_confirmation(title,question);
+	get_confirmation(title,question);	// result passed back in $confirmed
 
 	// another event can occur while the alert is getting
 	// ready to go up, pushing text onto the command stack.

@@ -314,6 +314,16 @@ void resume_execution(SINGLE_QSP_ARG_DECL)
 	exec_at_level(QSP_ARG  0);
 }
 
+// We use this in the iOS environment, when we need to temporarily yield
+// to the system's dispatch queue, to carry out some previous requests.
+// We have been doing that with alerts, where we have a callback function
+// that can restart execution...
+
+void _suspend_quip(SINGLE_QSP_ARG_DECL)
+{
+	SET_QS_FLAG_BITS(THIS_QSP, (QS_HALTING|QS_SUSPENDED) );
+}
+
 void resume_quip(SINGLE_QSP_ARG_DECL)
 {
 	if( IS_CHEWING(THIS_QSP) ){

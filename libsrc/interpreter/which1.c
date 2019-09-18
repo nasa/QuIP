@@ -75,7 +75,7 @@ int _which_one(QSP_ARG_DECL  const char *prompt, int n, const char** choices)
 	sprintf(ERROR_STRING,"valid selections for %s are:",prompt);
 	advise(ERROR_STRING);
 	for(i=0;i<n;i++){
-		sprintf(ERROR_STRING,"\t%s",choices[i]);
+		sprintf(ERROR_STRING,"\t'%s'",choices[i]);
 		advise(ERROR_STRING);
 	}
 #ifdef HAVE_HISTORY

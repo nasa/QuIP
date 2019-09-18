@@ -47,6 +47,8 @@ typedef struct fft_args {
 #define SET_FFT_DST_OFFSET(fap,v)	(fap)->fft_dst_offset = v
 #endif // HAVE_OPENCL
 
+#define FFT2D_REAL_XFORM_ROWS	1
+#define FFT2D_REAL_XFORM_COLS	2
 
 
 extern dimension_t bitrev_size;

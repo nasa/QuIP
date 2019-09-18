@@ -1,0 +1,147 @@
+# test of raw volume recording
+
+rawvol default quit	# make sure rawvol is open
+
+#max_warnings 3
+max_warnings -1
+< $macro_dir/system/mark_time.mac
+
+Set cam0 Blackfly_S_BFS-U3-13Y3M
+Set cam1 Blackfly_S_BFS-U3-13Y3M_2
+
+advise "rec.scr BEGIN"
+
+spinnaker
+  advise "initializing spinnaker system..."
+  init
+  advise "DONE initializing..."
+  list_cams
+  quit
+
+Define Init_Timestamp 0
+Set last_ts -1
+Set first_fid -1
+.
+
+Define Show_Delta 0
+Assign delta ($ts-$last_ts)/1000000	# nano seconds?
+advise "delta = $delta msec"
+.
+
+Define GrabEm 1 n
+Init_Timestamp
+advise "Grabbing $1 frames, starting capture"
+spinnaker capture start quit quit
+advise "capture started..."
+Set i_grab 0
+repeat $1
+  advise "grabbing frame $i_grab..."
+  do
+    nop
+    while !$image_ready
+  Grab_Next
+  Set image_ready 0
+  #Show_Bytes cam$cam_idx.frame$newest v
+  Show_Timestamp
+  usleep $proc_usecs
+  Release_Oldest
+  Increment i_grab
+  end
+spinnaker capture stop quit quit
+.
+
+Define Time_It 2 macro_name arg
+advise "Time_It $1 $2 BEGIN"
+Zero_Time
+$1 $2
+Check_Time
+advise "$total_ms milliseconds elapsed"
+advise "Time_It DONE"
+.
+
+Define Show_Underrun_Count 0
+spinnaker
+  nodes
+    select_map $$cam_name.stream_TL
+#    info_all
+    info StreamBufferUnderrunCount
+    info StreamTotalBufferCount
+    quit
+  quit
+.
+
+Define Setup_Grab 2 cam n_buffers
+advise "Setting grab params for $1"
+spinnaker
+  info $1
+  nodes
+    select_map $1.genicam
+    info AcquisitionMode
+    select_map $1.stream_TL
+    info StreamBufferHandlingMode
+    set StreamBufferHandlingMode OldestFirst	# or OldestFirstOverwrite?
+    info StreamBufferHandlingMode
+    info StreamDefaultBufferCount
+    set StreamDefaultBufferCount $2
+    info StreamDefaultBufferCount
+    quit
+advise "selecting $1"
+  select $1
+  info $1
+  capture
+    advise "Setting up $2 buffers"
+    set_n_buffers $2
+    quit
+  quit
+.
+
+Set cam_idx 1
+Set cam_name cam$cam_idx
+
+Define Enable_Chunks 1 cam
+advise "Enabling chunks for $1"
+spinnaker
+  select $1
+  nodes
+    select_map $1.genicam
+    #info_all
+    quit
+  chunks
+    enable Timestamp
+    enable FrameID
+    quit
+  nodes
+    select_map $1.genicam
+    #info_all
+    quit
+  quit
+.
+
+Enable_Chunks $cam0
+#Enable_Chunks $cam1
+Setup_Grab $cam0 10
+#Setup_Grab $cam1 10
+
+Define Show_All_Nodes 0
+spinnaker
+  nodes
+    select_map $$cam_name.device_TL
+    info_all
+    select_map $$cam_name.stream_TL
+    info_all
+    select_map $$cam_name.genicam
+    info_all
+    quit quit
+.
+
+spinnaker
+  capture
+advise "Ready to record..."
+#    record foo1 500 2 $cam0 $cam1
+    record foo1 500 1 $cam0
+advise "Done recording!"
+Pause
+
+exit
+
+

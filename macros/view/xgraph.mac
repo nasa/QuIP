@@ -44,12 +44,14 @@ Set have_x_legend 0
 Set grid_style 1		# default
 
 Define Set_Default_Plotter_Params 0
+advise Set_Default_Plotter_Params
 Set x_tick_spacing -1
 Set y_tick_spacing -1
 Set y_legend none
 Set x_legend none
 .
 
+# Process the next arg, which could be an option OR a file to plot
 
 Define Process_Arg 1 index
 #advise "Process_Arg $1 (argc = $argc)"
@@ -58,7 +60,8 @@ Set arg $$argname
 If !strncmp('$arg','--',2) "Process_Long_Option $arg $1 exit_macro"
 If !strncmp('$arg','-',1) "Process_Short_Option $arg $1 exit_macro"
 # The default action is plot a file of points
-If !$have_plotter_instance "Plotter_Instance Set_Default_Plotter_Params"
+#If !$have_plotter_instance "Plotter_Instance Set_Default_Plotter_Params"
+If !$have_plotter_instance "Plotter_Instance "
 #advise "Graph_File $$argname $pen_color"
 Graph_File $$argname $pen_color
 Next_Pen_Color
@@ -93,6 +96,7 @@ If isdigit($x)
   "Set x_tick_spacing $$argname Increment i_arg"
 Set x_scale_determined 1
 If $x_scale_determined&&$y_scale_determined "Set scale_determined 1"
+Print scale_determined
 .
 
 Define Y_Axis_Option 1 index
@@ -111,7 +115,9 @@ advise "Y_Axis_Option:  3rd arg $argname = $$argname"
 If isdigit(string_obj('$$argname')[0])
   "Set y_tick_spacing $$argname Increment i_arg"
 Set y_scale_determined 1
+Print y_tick_spacing
 If $x_scale_determined&&$y_scale_determined "Set scale_determined 1"
+Print scale_determined
 .
 
 Define Grid_Style_Option 1 index
@@ -195,6 +201,8 @@ warn "unrecognized long option $1"
 Define Process_Options 0
 If $argc<1 "exit_macro"
 
+Set_Default_Plotter_Params
+
 Set i_arg 1
 do
   Process_Arg $i_arg
@@ -239,7 +247,8 @@ advise "$minx - x - $maxx      $miny - y - $maxy"
 Get_Round_Range miny maxy
 #Print y_tick_spacing
 If $y_tick_spacing==(-1)
-  "advise 'Resetting y_tick_spacing to $chunk' Set y_tick_spacing $chunk"
+  "advise 'Graph_File:  Resetting y_tick_spacing to $chunk' \
+   Set y_tick_spacing $chunk"
 
 Get_Round_Range minx maxx
 If $x_tick_spacing==(-1)

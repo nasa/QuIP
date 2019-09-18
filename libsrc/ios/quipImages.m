@@ -9,11 +9,9 @@
 #include <mach/mach_time.h>
 
 #include "quipImages.h"
-#include "quipImageView.h"
+//#include "quipImageView.h"
 #include "quip_prot.h"
 #include "viewer.h"
-
-
 
 uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 {
@@ -39,15 +37,95 @@ uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 @synthesize _flags;
 @synthesize _vbl_count;
 @synthesize _frame_duration;
-@synthesize cycle_func;
+@synthesize _queue_idx;
+@synthesize refresh_func;
+@synthesize frameQueue;
+@synthesize afterAnimation;	// Can't combine user-provided setter with synthesized getter...
+@synthesize animationStarted;
 
--(void) set_cycle_func:(const char *)s
+// refresh_func is a string containing a script fra(nonatomic) gment?
+// If it is set, then the text is interpreted every refresh event
+//
+// afterAnimation is a string that is interpreted at the end of a one-shot event
+
+-(void) set_refresh_func:(const char *)s
 {
-	if( cycle_func != NULL ) rls_str(cycle_func);
+	if( refresh_func != NULL ) rls_str(refresh_func);
 	//[self setCycleFunc:s];
-	cycle_func = savestr(s);
+	refresh_func = savestr(s);
 
-	[self enableUpdates];
+	[self enableRefreshEventProcessing];
+}
+
+-(const char *) afterAnimation
+{
+    return afterAnimation;
+}
+
+// We have a custom setter not just to release the old string (which could
+// be done automatically if we used an NSString), but to set the flag
+// and enable refresh event processing...
+
+-(void) setAfterAnimation:(const char *)s
+{
+    if( afterAnimation != NULL ) rls_str(afterAnimation);
+    afterAnimation = savestr(s);
+	animationStarted = 0;
+	[self enableRefreshEventProcessing];
+}
+
+#ifdef BUILD_FOR_IOS
+
+-(void) setRefreshTime
+{
+	char time_buf[64];
+	uint64_t ltime;
+	ltime = mach_absolute_time();
+	CFTimeInterval t;
+	
+
+	// This is not what we need for PVT, because
+	// This is called at the start of the trial...
+	t = [_updateTimer timestamp];
+	if( (QI_QV(self)).baseTime == 0 ){
+		[QI_QV(self) setBaseTime:t];
+	}
+//sprintf(DEFAULT_ERROR_STRING,"_onScreenRefresh:  t = %g, base_time = %g",t,(QI_QV(self)).baseTime);
+//sprintf(DEFAULT_ERROR_STRING,"_onScreenRefresh:  _vbl_count = %d, _frame_duration = %d",_vbl_count,_frame_duration);
+//NADVISE(DEFAULT_ERROR_STRING);
+	sprintf(time_buf,"%g",t - (QI_QV(self)).baseTime);
+	assign_var(DEFAULT_QSP_ARG  "refresh_time", time_buf );
+
+	//ltime -= _time0_2;
+	ltime -= (QI_QV(self)).baseTime_2;
+	uint64_t ns;
+	//ns = AbsoluteToNanoseconds( *(AbsoluteTime *) &ltime );
+	ns = my_absolute_to_nanoseconds( &ltime );
+	sprintf(time_buf,"%g",round(ns/100000)/10.0);
+	assign_var(DEFAULT_QSP_ARG  "refresh_time2", time_buf );
+}
+
+#endif // BUILD_FOR_IOS
+
+-(void) exec_refresh_func
+{
+	// This is a one-shot
+	[self disableRefreshEventProcessing];
+
+#ifdef BUILD_FOR_IOS
+	[self setRefreshTime];
+#endif // BUILD_FOR_IOS
+
+	chew_text(DEFAULT_QSP_ARG  refresh_func, "(refresh event)");
+}
+
+-(void) animationDone
+{
+	// Called at the end of a one-shot
+	[self disableRefreshEventProcessing];
+    if( afterAnimation != NULL ){
+        chew_text(DEFAULT_QSP_ARG  afterAnimation, "(refresh event)");
+	}
 }
 
 // This is called when _updateTimer is added to the run loop...
@@ -58,151 +136,56 @@ uint64_t my_absolute_to_nanoseconds( uint64_t *t )
 // for a fixed interval.  For example, for PVT we need
 // to wait for a variable delay, and then swap images.
 // We want to take the timestamp at the time of the swap.
+//
+// Yet another mode that we need to support is one-shot animation
+// of a sequence...
+//
+// The original PVT used a single stimulus image, but when we analyzed Kenji's
+// app that had a traditional time counter, we discovered that sometimes the first
+// frame was not displayed.  So we would like to display a counter in our PVT as well
+// so that we can see if we have the same problem!
 
--(void) _refresh
+-(void) _onScreenRefresh
 {
-#ifdef BUILD_FOR_IOS
-	CFTimeInterval t;
-#endif // BUILD_FOR_IOS
-	
 	/* This used to be after the first block - not sure what it is for??? */
 	/*
 	if( _flags & QI_CHECK_TIMESTAMP ){
 		t = [_updateTimer timestamp];
-		fprintf(stderr,"_refresh:  elapsed time is %g\n",t-_time0);
+		fprintf(stderr,"_onScreenRefresh:  elapsed time is %g\n",t-_time0);
 		_time0 = t;
 	}
 	*/
 
-	if( cycle_func != NULL ){
-#ifdef BUILD_FOR_IOS
-		char time_buf[64];
-#endif // BUILD_FOR_IOS
-
-fprintf(stderr,"_refresh:  cycle_func = '%s'\n",cycle_func);
-		// This is a one-shot
-		[self disableUpdates];
-#ifdef BUILD_FOR_IOS
-		uint64_t ltime;
-		ltime = mach_absolute_time();
-
-		// This is not what we need for PVT, because
-		// This is called at the start of the trial...
-		t = [_updateTimer timestamp];
-		if( (QI_QV(self)).baseTime == 0 ){
-			[QI_QV(self) setBaseTime:t];
-		}
-//sprintf(DEFAULT_ERROR_STRING,"_refresh:  t = %g, base_time = %g",t,(QI_QV(self)).baseTime);
-//sprintf(DEFAULT_ERROR_STRING,"_refresh:  _vbl_count = %d, _frame_duration = %d",_vbl_count,_frame_duration);
-//NADVISE(DEFAULT_ERROR_STRING);
-		sprintf(time_buf,"%g",t - (QI_QV(self)).baseTime);
-		assign_var(DEFAULT_QSP_ARG  "refresh_time", time_buf );
-
-		//ltime -= _time0_2;
-		ltime -= (QI_QV(self)).baseTime_2;
-		uint64_t ns;
-		//ns = AbsoluteToNanoseconds( *(AbsoluteTime *) &ltime );
-		ns = my_absolute_to_nanoseconds( &ltime );
-		sprintf(time_buf,"%g",round(ns/100000)/10.0);
-		assign_var(DEFAULT_QSP_ARG  "refresh_time2", time_buf );
-
-#endif // BUILD_FOR_IOS
-		chew_text(DEFAULT_QSP_ARG  cycle_func, "(refresh event)");
+	if( refresh_func != NULL ){
+		[self exec_refresh_func];
 	} else {
-		/* If there is no cycle_func, we count up until we cycle frames */
-
-		if( _vbl_count < _frame_duration ){
-//fprintf(stderr,"refresh:  _vbl_count = %d\n",_vbl_count);
-			_vbl_count ++;
-			return;
+        if( afterAnimation != NULL && animationStarted ){
+			if( ! self.animating ){
+				[self animationDone];
+			}
 		}
-
-		_vbl_count = 1;		// We count this frame
-
-//fprintf(stderr,"refresh:  cycling image\n",_vbl_count);
-		[self cycle_images];
 	}
 }
 
--(void) cycle_images
+-(void) startAnimation
 {
-	// Rotate the subviews.
-	// the highest index in the array is in the front,
-	// 0 is the rear-most, we bring it to the front.
-#ifdef BUILD_FOR_IOS
-	NSArray *a;
-	a=self.subviews;
-	if( a == NULL ) return;
-
-	UIView *v;
-	v= [a objectAtIndex:0];
-	if( v == NULL ) return;
-
-
-/*
-sprintf(DEFAULT_ERROR_STRING,"cycle_images:  bringing view at 0x%lx to front, superview = 0x%lx, supersuper = 0x%lx",
-(long)v,(long)self,(long) self.superview);
-NADVISE(DEFAULT_ERROR_STRING);
-*/
-
-	[self bringSubviewToFront:v];
-#endif // BUILD_FOR_IOS
+	animationStarted = 1;
+	// enableRefreshEventProcessing is called if an when we set _afterAnimation
+	[self startAnimating];
 }
 
--(int) indexForDataObject:(Data_Obj *)dp
+-(NSInteger) subviewCount
 {
 #ifdef BUILD_FOR_IOS
 	NSArray *a;
 
 	a=self.subviews;
 	if( a == NULL ) return -1;
-
-	int i;
-	for(i=0;i<a.count;i++){
-		quipImageView *qiv_p;
-		qiv_p = [a objectAtIndex:i];
-		if( qiv_p.qiv_dp == dp ) return i;
-	}
-#endif // BUILD_FOR_IOS
-	return -1;
+	return a.count;
+#else // ! BUILD_FOR_IOS
+	return 0;	
+#endif // ! BUILD_FOR_IOS
 }
-
--(int) hasImageFromDataObject:(Data_Obj *)dp
-{
-	int i;
-
-	i=[self indexForDataObject:dp];
-	if( i < 0 ) return NO;
-	return YES;
-}
-
--(void) removeImageFromDataObject:(Data_Obj *)dp
-{
-	int i;
-
-	i=[self indexForDataObject:dp];
-#ifdef CAUTIOUS
-	if( i < 0 ){
-		sprintf(DEFAULT_ERROR_STRING,
-	"CAUTIOUS:  removeImageFromDataObject:  object %s not found in image list!?",
-			OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
-		return;
-	}
-#endif /* CAUTIOUS */
-
-#ifdef BUILD_FOR_IOS
-	quipImageView *qiv_p;
-	qiv_p = [self.subviews objectAtIndex:i];
-	[qiv_p removeFromSuperview];
-
-	// now we want to deallocate the imageView...
-	// what is the reference count???
-	// are there any other references???
-
-#endif // BUILD_FOR_IOS
-}
-
 
 -(void) hide
 {
@@ -214,59 +197,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 -(void) reveal
 {
 #ifdef BUILD_FOR_IOS
-fprintf(stderr,"reveal:  bringing subview to front...\n");
 	[self.superview bringSubviewToFront:self];
 #endif
-}
-
--(void) bring_to_front : (Data_Obj *) dp
-{
-#ifdef BUILD_FOR_IOS
-	NSArray *a;
-	int i;
-
-	a=self.subviews;
-	if( a == NULL ){
-		NWARN("bring_to_front:  no subviews!?");
-		return;
-	}
-
-	for ( i=0; i<a.count; i++ ){
-		quipImageView * qiv_p;
-
-		qiv_p = [a objectAtIndex:i];
-		if( dp == qiv_p.qiv_dp ){	// found a match!
-			[self bringSubviewToFront:qiv_p];
-			return;
-		}
-	}
-	NWARN("bring_to_front:  no subview found matching image");
-#endif // BUILD_FOR_IOS
-}
-
--(void) send_to_back : (Data_Obj *) dp
-{
-#ifdef BUILD_FOR_IOS
-	NSArray *a;
-	int i;
-
-	a=self.subviews;
-	if( a == NULL ){
-		NWARN("send_to_back:  no subviews!?");
-		return;
-	}
-
-	for ( i=0; i<a.count; i++ ){
-		quipImageView * qiv_p;
-
-		qiv_p = [a objectAtIndex:i];
-		if( dp == qiv_p.qiv_dp ){	// found a match!
-			[self sendSubviewToBack:qiv_p];
-			return;
-		}
-	}
-	NWARN("send_to_back:  no subview found matching image");
-#endif // BUILD_FOR_IOS
 }
 
 -(void) discard_subviews
@@ -287,25 +219,46 @@ fprintf(stderr,"reveal:  bringing subview to front...\n");
 
 }
 
--(void) enableUpdates
+-(void) clearQueue
+{
+	if( self.frameQueue != NULL ){
+		[self.frameQueue removeAllObjects];
+	} else {
+	}
+	_queue_idx = 0;
+}
+
+-(void) queueFrame: (UIImage *)uii_p
+{
+	//assert( [self hasSubview:qiv_p] );
+
+	if( self.frameQueue == NULL ){
+		// The 60 is somewhat arbitrary, but should be enough for 1 second of animation.
+		// Presumably the array can grow if we queue more than 60 frames.
+		self.frameQueue = [NSMutableArray arrayWithCapacity:60]; 
+	}
+	assert( self.frameQueue != NULL );
+	[ self.frameQueue addObject:uii_p];	// adds at end of array
+}
+
+-(void) enableRefreshEventProcessing
 {
 	if( _flags & QI_TRAP_REFRESH ){
-		//NWARN("quipImages enable_refresh:  refresh processing is already enabled!?");
-		NADVISE("quipImages enableUpdates:  WARNING refresh processing is already enabled!?");
+		NADVISE("quipImages enableRefreshEventProcessing:  WARNING refresh processing is already enabled!?");
 		return;
 	}
 #ifdef BUILD_FOR_IOS
 
 	// What does _updateTimer do???
 
-//fprintf(stderr,"enableUpdates:  adding updateTimer to run loop?\n");
+//fprintf(stderr,"enableRefreshEventProcessing:  adding updateTimer to run loop?\n");
 	[_updateTimer addToRunLoop:[NSRunLoop currentRunLoop]
 			forMode:NSDefaultRunLoopMode];
 #endif // BUILD_FOR_IOS
 	_flags |= QI_TRAP_REFRESH;
 }
 
--(void) disableUpdates
+-(void) disableRefreshEventProcessing
 {
 #ifdef BUILD_FOR_IOS
 	[_updateTimer
@@ -313,32 +266,6 @@ fprintf(stderr,"reveal:  bringing subview to front...\n");
 		forMode:NSDefaultRunLoopMode];
 #endif // BUILD_FOR_IOS
 	_flags &= ~QI_TRAP_REFRESH;
-}
-
-// We don't do this by default to avoid bogging things down...
-// Disable with a requested duration <= 0
-
--(void) set_refresh:(int) duration
-{
-	if( duration > 0 ){
-fprintf(stderr,"set_refresh(%d):  enabling updates\n",duration);
-		_frame_duration = duration;
-		[self enableUpdates];
-	} else {
-		if( (_flags & QI_TRAP_REFRESH) == 0 ){
-//NWARN("quipImages enable_refresh:  refresh processing is already disabled!?");
-#ifdef BUILD_FOR_IOS
-			sprintf(DEFAULT_ERROR_STRING,
-		"set_refresh:  refresh processing is already disabled for viewer %s!?",
-				VW_NAME(QI_VW(self)));
-			NADVISE(DEFAULT_ERROR_STRING);
-			// We get this message when we flip windows around - why?
-#endif // BUILD_FOR_IOS
-			return;
-		}
-		[self disableUpdates];
-		_frame_duration = 0;
-	}
 }
 
 -(id)initWithSize:(CGSize) size
@@ -350,12 +277,16 @@ fprintf(stderr,"set_refresh(%d):  enabling updates\n",duration);
 	r.size = size;
 #ifdef BUILD_FOR_IOS
 	self = [super initWithFrame:r];
+	//self =[super initWithImage:myimg];
 #endif // BUILD_FOR_IOS
 
 	_flags = 0;	// make sure we're not refreshing
 	_vbl_count = 0;
 	_frame_duration = 15;	// Default is 4 fps for debugging
-	cycle_func=NULL;
+	refresh_func=NULL;
+    afterAnimation=NULL;
+	frameQueue = NULL;
+
 #ifdef BUILD_FOR_IOS
 
 	// initialize the timer here,
@@ -365,9 +296,17 @@ fprintf(stderr,"set_refresh(%d):  enabling updates\n",duration);
 
 	_updateTimer = [CADisplayLink
 			displayLinkWithTarget:self
-			selector:@selector(_refresh)];
+			selector:@selector(_onScreenRefresh)];
 //fprintf(stderr,"initWithSize:  created updateTimer\n");
 #endif // BUILD_FOR_IOS
+
+	self.opaque = YES;
+	self.alpha = 1.0;
+	self.hidden=NO;
+
+	//self.imageScaling = NSScaleNone;	// not with iOS?
+
+	self.contentMode = UIViewContentModeTopLeft;
 
 	return self;
 }  // end initWithSize

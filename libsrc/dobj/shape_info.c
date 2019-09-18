@@ -94,10 +94,11 @@ DECLARE_INT_FORMAT_FUNC(u_long)
 													\
 static void _format_##type_str##_value(QSP_ARG_DECL  char *buf, Scalar_Value *svp, int pad_flag)	\
 {													\
-	if( pad_flag )											\
+	if( pad_flag ){											\
 		sprintf(buf,padded_flt_fmt_str,svp->member);						\
-	else												\
+	} else {											\
 		sprintf(buf,"%g",svp->member);								\
+	}												\
 }
 
 DECLARE_FLT_FORMAT_FUNC(float,u_f)

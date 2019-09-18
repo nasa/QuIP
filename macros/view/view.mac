@@ -6,13 +6,8 @@ Start_File view.mac
 
 If !var_exists(DISPLAY_DEPTH) "Set DISPLAY_DEPTH 24"
 
-#< $macro_dir/view/common.mac
-#< $macro_dir/view/luts.mac
-#< $macro_dir/view/dither.mac
-
 #advise protect_lut
 #Protect_LUT 0
-#< $macro_dir/view/grayscale.scr
 
 # default flag values
 If !var_exists(showall) "Set showall 0"

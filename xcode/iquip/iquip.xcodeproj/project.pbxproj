@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1F088D5E2309FAD2006A15FC /* CSF-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1F088D5D2309FAD2006A15FC /* CSF-Info.plist */; };
 		2299DE11196C6EF800844988 /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2299DE10196C6EF800844988 /* CoreMotion.framework */; };
 		2299DE13196C6F2500844988 /* sched.c in Sources */ = {isa = PBXBuildFile; fileRef = 2299DE12196C6F2500844988 /* sched.c */; };
 		37063914178B490E0033D2C5 /* features.c in Sources */ = {isa = PBXBuildFile; fileRef = 37063913178B490E0033D2C5 /* features.c */; };
@@ -28,7 +29,6 @@
 		7153FD1E175BF995002D1407 /* seqprint.c in Sources */ = {isa = PBXBuildFile; fileRef = 7153FD1D175BF995002D1407 /* seqprint.c */; };
 		715913B51734D48B008F5524 /* quipTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 715913B41734D48B008F5524 /* quipTableViewController.m */; };
 		715913B71734D8F4008F5524 /* quipNavController.m in Sources */ = {isa = PBXBuildFile; fileRef = 715913B61734D8F4008F5524 /* quipNavController.m */; };
-		71614B38187745BE001AC360 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 71614B37187745BE001AC360 /* genlock.c */; };
 		716CCB2417AA1228009F5690 /* AdSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 716CCB2317AA1228009F5690 /* AdSupport.framework */; };
 		717074A6162DCDA500831805 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 717074A5162DCDA500831805 /* QuartzCore.framework */; };
 		71828E7F1726139F00F7CB35 /* http_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828E7E1726139F00F7CB35 /* http_menu.c */; };
@@ -117,7 +117,6 @@
 		71828F321726171000F7CB35 /* quipCanvas.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F201726171000F7CB35 /* quipCanvas.m */; };
 		71828F331726171000F7CB35 /* quipConsole.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F211726171000F7CB35 /* quipConsole.m */; };
 		71828F341726171000F7CB35 /* quipImages.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F221726171000F7CB35 /* quipImages.m */; };
-		71828F351726171000F7CB35 /* quipImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F231726171000F7CB35 /* quipImageView.m */; };
 		71828F391726173C00F7CB35 /* client.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F371726173C00F7CB35 /* client.c */; };
 		71828F3A1726173C00F7CB35 /* dataport.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F381726173C00F7CB35 /* dataport.c */; };
 		71828F411726174F00F7CB35 /* packets.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F3B1726174F00F7CB35 /* packets.c */; };
@@ -136,7 +135,6 @@
 		71828F5E172617A900F7CB35 /* stc_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F58172617A900F7CB35 /* stc_edit.c */; };
 		71828F5F172617A900F7CB35 /* stc_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F59172617A900F7CB35 /* stc_menu.c */; };
 		71828F62172617B800F7CB35 /* weibull.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F60172617B800F7CB35 /* weibull.c */; };
-		71828F63172617B800F7CB35 /* xvalmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F61172617B800F7CB35 /* xvalmenu.c */; };
 		71828F67172617E500F7CB35 /* unix_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F66172617E500F7CB35 /* unix_menu.c */; };
 		71828F6F1726180E00F7CB35 /* conv3d.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F681726180E00F7CB35 /* conv3d.c */; };
 		71828F701726180E00F7CB35 /* convolve.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F691726180E00F7CB35 /* convolve.c */; };
@@ -360,7 +358,6 @@
 		7C4331F21D4D43FC0033687C /* quipCanvas.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F201726171000F7CB35 /* quipCanvas.m */; };
 		7C4331F31D4D43FC0033687C /* quipConsole.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F211726171000F7CB35 /* quipConsole.m */; };
 		7C4331F41D4D43FC0033687C /* quipImages.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F221726171000F7CB35 /* quipImages.m */; };
-		7C4331F51D4D43FC0033687C /* quipImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F231726171000F7CB35 /* quipImageView.m */; };
 		7C4331F61D4D43FC0033687C /* client.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F371726173C00F7CB35 /* client.c */; };
 		7C4331F71D4D43FC0033687C /* dataport.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F381726173C00F7CB35 /* dataport.c */; };
 		7C4331F81D4D43FC0033687C /* packets.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F3B1726174F00F7CB35 /* packets.c */; };
@@ -380,7 +377,6 @@
 		7C4332091D4D43FC0033687C /* stc_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F58172617A900F7CB35 /* stc_edit.c */; };
 		7C43320A1D4D43FC0033687C /* stc_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F59172617A900F7CB35 /* stc_menu.c */; };
 		7C43320B1D4D43FC0033687C /* weibull.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F60172617B800F7CB35 /* weibull.c */; };
-		7C43320C1D4D43FC0033687C /* xvalmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F61172617B800F7CB35 /* xvalmenu.c */; };
 		7C43320D1D4D43FC0033687C /* unix_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F66172617E500F7CB35 /* unix_menu.c */; };
 		7C43320E1D4D43FC0033687C /* conv3d.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F681726180E00F7CB35 /* conv3d.c */; };
 		7C43320F1D4D43FC0033687C /* convolve.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F691726180E00F7CB35 /* convolve.c */; };
@@ -505,7 +501,6 @@
 		7C4332891D4D43FC0033687C /* ppm.c in Sources */ = {isa = PBXBuildFile; fileRef = 71D2E98717B21340003AEB04 /* ppm.c */; };
 		7C43328A1D4D43FC0033687C /* reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 71D37EB717C9D95F00ECCBE1 /* reachability.m */; };
 		7C43328B1D4D43FC0033687C /* function.m in Sources */ = {isa = PBXBuildFile; fileRef = 71A1041C17CFEB33003AC2C2 /* function.m */; };
-		7C43328C1D4D43FC0033687C /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 71614B37187745BE001AC360 /* genlock.c */; };
 		7C43328E1D4D43FC0033687C /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C51C4ECA740093125D /* AudioToolbox.framework */; };
 		7C43328F1D4D43FC0033687C /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C31C4ECA6B0093125D /* CoreAudio.framework */; };
 		7C4332901D4D43FC0033687C /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
@@ -634,7 +629,6 @@
 		7C4333191D4D49450033687C /* quipCanvas.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F201726171000F7CB35 /* quipCanvas.m */; };
 		7C43331A1D4D49450033687C /* quipConsole.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F211726171000F7CB35 /* quipConsole.m */; };
 		7C43331B1D4D49450033687C /* quipImages.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F221726171000F7CB35 /* quipImages.m */; };
-		7C43331C1D4D49450033687C /* quipImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F231726171000F7CB35 /* quipImageView.m */; };
 		7C43331D1D4D49450033687C /* client.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F371726173C00F7CB35 /* client.c */; };
 		7C43331E1D4D49450033687C /* dataport.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F381726173C00F7CB35 /* dataport.c */; };
 		7C43331F1D4D49450033687C /* packets.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F3B1726174F00F7CB35 /* packets.c */; };
@@ -654,7 +648,6 @@
 		7C4333301D4D49450033687C /* stc_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F58172617A900F7CB35 /* stc_edit.c */; };
 		7C4333311D4D49450033687C /* stc_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F59172617A900F7CB35 /* stc_menu.c */; };
 		7C4333321D4D49450033687C /* weibull.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F60172617B800F7CB35 /* weibull.c */; };
-		7C4333331D4D49450033687C /* xvalmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F61172617B800F7CB35 /* xvalmenu.c */; };
 		7C4333341D4D49450033687C /* unix_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F66172617E500F7CB35 /* unix_menu.c */; };
 		7C4333351D4D49450033687C /* conv3d.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F681726180E00F7CB35 /* conv3d.c */; };
 		7C4333361D4D49450033687C /* convolve.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F691726180E00F7CB35 /* convolve.c */; };
@@ -779,7 +772,6 @@
 		7C4333B01D4D49450033687C /* ppm.c in Sources */ = {isa = PBXBuildFile; fileRef = 71D2E98717B21340003AEB04 /* ppm.c */; };
 		7C4333B11D4D49450033687C /* reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 71D37EB717C9D95F00ECCBE1 /* reachability.m */; };
 		7C4333B21D4D49450033687C /* function.m in Sources */ = {isa = PBXBuildFile; fileRef = 71A1041C17CFEB33003AC2C2 /* function.m */; };
-		7C4333B31D4D49450033687C /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 71614B37187745BE001AC360 /* genlock.c */; };
 		7C4333B51D4D49450033687C /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C51C4ECA740093125D /* AudioToolbox.framework */; };
 		7C4333B61D4D49450033687C /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C31C4ECA6B0093125D /* CoreAudio.framework */; };
 		7C4333B71D4D49450033687C /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
@@ -913,7 +905,6 @@
 		7C4D6DE51D5111A400D34AC4 /* quipCanvas.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F201726171000F7CB35 /* quipCanvas.m */; };
 		7C4D6DE61D5111A400D34AC4 /* quipConsole.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F211726171000F7CB35 /* quipConsole.m */; };
 		7C4D6DE71D5111A400D34AC4 /* quipImages.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F221726171000F7CB35 /* quipImages.m */; };
-		7C4D6DE81D5111A400D34AC4 /* quipImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F231726171000F7CB35 /* quipImageView.m */; };
 		7C4D6DE91D5111A400D34AC4 /* client.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F371726173C00F7CB35 /* client.c */; };
 		7C4D6DEA1D5111A400D34AC4 /* dataport.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F381726173C00F7CB35 /* dataport.c */; };
 		7C4D6DEB1D5111A400D34AC4 /* packets.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F3B1726174F00F7CB35 /* packets.c */; };
@@ -933,7 +924,6 @@
 		7C4D6DFC1D5111A400D34AC4 /* stc_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F58172617A900F7CB35 /* stc_edit.c */; };
 		7C4D6DFD1D5111A400D34AC4 /* stc_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F59172617A900F7CB35 /* stc_menu.c */; };
 		7C4D6DFE1D5111A400D34AC4 /* weibull.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F60172617B800F7CB35 /* weibull.c */; };
-		7C4D6DFF1D5111A400D34AC4 /* xvalmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F61172617B800F7CB35 /* xvalmenu.c */; };
 		7C4D6E001D5111A400D34AC4 /* unix_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F66172617E500F7CB35 /* unix_menu.c */; };
 		7C4D6E011D5111A400D34AC4 /* conv3d.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F681726180E00F7CB35 /* conv3d.c */; };
 		7C4D6E021D5111A400D34AC4 /* convolve.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F691726180E00F7CB35 /* convolve.c */; };
@@ -1058,7 +1048,6 @@
 		7C4D6E7C1D5111A400D34AC4 /* ppm.c in Sources */ = {isa = PBXBuildFile; fileRef = 71D2E98717B21340003AEB04 /* ppm.c */; };
 		7C4D6E7D1D5111A400D34AC4 /* reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 71D37EB717C9D95F00ECCBE1 /* reachability.m */; };
 		7C4D6E7E1D5111A400D34AC4 /* function.m in Sources */ = {isa = PBXBuildFile; fileRef = 71A1041C17CFEB33003AC2C2 /* function.m */; };
-		7C4D6E7F1D5111A400D34AC4 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 71614B37187745BE001AC360 /* genlock.c */; };
 		7C4D6E811D5111A400D34AC4 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C51C4ECA740093125D /* AudioToolbox.framework */; };
 		7C4D6E821D5111A400D34AC4 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C31C4ECA6B0093125D /* CoreAudio.framework */; };
 		7C4D6E831D5111A400D34AC4 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
@@ -1124,6 +1113,11 @@
 		7C74566E1DB18F5600A0D538 /* rbtree.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C74566B1DB18F4D00A0D538 /* rbtree.c */; };
 		7C74566F1DB18F5700A0D538 /* rbtree.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C74566B1DB18F4D00A0D538 /* rbtree.c */; };
 		7C79F9E51A2D47F1005EE8B8 /* soundmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C79F9E41A2D47F1005EE8B8 /* soundmenu.c */; };
+		7C80CE3422FDF1E600C13959 /* quipImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C80CE3322FDF1E600C13959 /* quipImage.m */; };
+		7C80CE3522FDF44900C13959 /* quipImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C80CE3322FDF1E600C13959 /* quipImage.m */; };
+		7C80CE3622FDF44A00C13959 /* quipImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C80CE3322FDF1E600C13959 /* quipImage.m */; };
+		7C80CE3722FDF44B00C13959 /* quipImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C80CE3322FDF1E600C13959 /* quipImage.m */; };
+		7C80CE3822FDF44C00C13959 /* quipImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C80CE3322FDF1E600C13959 /* quipImage.m */; };
 		7C922E1F19CA51DE00F92C21 /* typed_scalars.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C922E1E19CA51DE00F92C21 /* typed_scalars.c */; };
 		7C9C32181C0699CE00E2094F /* lin_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C9C32171C0699CE00E2094F /* lin_util.c */; };
 		7C9F27A620C32B39002D9F63 /* equivalence.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C9F27A520C32B39002D9F63 /* equivalence.c */; };
@@ -1251,7 +1245,6 @@
 		7CB671041F9484C5001FFADF /* quipCanvas.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F201726171000F7CB35 /* quipCanvas.m */; };
 		7CB671051F9484C5001FFADF /* quipConsole.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F211726171000F7CB35 /* quipConsole.m */; };
 		7CB671061F9484C5001FFADF /* quipImages.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F221726171000F7CB35 /* quipImages.m */; };
-		7CB671071F9484C5001FFADF /* quipImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828F231726171000F7CB35 /* quipImageView.m */; };
 		7CB671081F9484C5001FFADF /* container.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C7456661DB18EE900A0D538 /* container.c */; };
 		7CB671091F9484C5001FFADF /* client.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F371726173C00F7CB35 /* client.c */; };
 		7CB6710A1F9484C5001FFADF /* dataport.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F381726173C00F7CB35 /* dataport.c */; };
@@ -1275,7 +1268,6 @@
 		7CB6711F1F9484C5001FFADF /* stc_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F59172617A900F7CB35 /* stc_menu.c */; };
 		7CB671201F9484C5001FFADF /* weibull.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F60172617B800F7CB35 /* weibull.c */; };
 		7CB671211F9484C5001FFADF /* amoeba.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB44FFA1D65083A00B6783F /* amoeba.c */; };
-		7CB671221F9484C5001FFADF /* xvalmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F61172617B800F7CB35 /* xvalmenu.c */; };
 		7CB671231F9484C5001FFADF /* unix_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F66172617E500F7CB35 /* unix_menu.c */; };
 		7CB671241F9484C5001FFADF /* conv3d.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F681726180E00F7CB35 /* conv3d.c */; };
 		7CB671251F9484C5001FFADF /* convolve.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F691726180E00F7CB35 /* convolve.c */; };
@@ -1413,7 +1405,6 @@
 		7CB671AB1F9484C5001FFADF /* ppm.c in Sources */ = {isa = PBXBuildFile; fileRef = 71D2E98717B21340003AEB04 /* ppm.c */; };
 		7CB671AC1F9484C5001FFADF /* reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 71D37EB717C9D95F00ECCBE1 /* reachability.m */; };
 		7CB671AD1F9484C5001FFADF /* function.m in Sources */ = {isa = PBXBuildFile; fileRef = 71A1041C17CFEB33003AC2C2 /* function.m */; };
-		7CB671AE1F9484C5001FFADF /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 71614B37187745BE001AC360 /* genlock.c */; };
 		7CB671B01F9484C5001FFADF /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C51C4ECA740093125D /* AudioToolbox.framework */; };
 		7CB671B11F9484C5001FFADF /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C1BD1C31C4ECA6B0093125D /* CoreAudio.framework */; };
 		7CB671B21F9484C5001FFADF /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
@@ -1440,6 +1431,11 @@
 		7CB671C91F9484C5001FFADF /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = 711F118A1637B6D50069EF13 /* Icon-72.png */; };
 		7CB671CA1F9484C5001FFADF /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 71BA647617D4F67B00446D65 /* Default-568h@2x.png */; };
 		7CB671D31F9501E6001FFADF /* symm_startup.enc in Resources */ = {isa = PBXBuildFile; fileRef = 7CB671D11F9501DC001FFADF /* symm_startup.enc */; };
+		7CB6F68A22C6D057008B8286 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB6F68922C6D057008B8286 /* genlock.c */; };
+		7CB6F68B22C6D373008B8286 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB6F68922C6D057008B8286 /* genlock.c */; };
+		7CB6F68C22C6D374008B8286 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB6F68922C6D057008B8286 /* genlock.c */; };
+		7CB6F68D22C6D375008B8286 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB6F68922C6D057008B8286 /* genlock.c */; };
+		7CB6F68E22C6D376008B8286 /* genlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB6F68922C6D057008B8286 /* genlock.c */; };
 		7CB8D5D91B6198B90080809C /* string_ref.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB8D5D81B6198B90080809C /* string_ref.c */; };
 		7CCB914E21A36EB000926C39 /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCB914D21A36EB000926C39 /* no_sound.c */; };
 		7CCB914F21A36F9D00926C39 /* no_sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCB914D21A36EB000926C39 /* no_sound.c */; };
@@ -1451,6 +1447,26 @@
 		7CCD40DA22178FD400C8E7D4 /* vector_parser_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */; };
 		7CCD40DB22178FD500C8E7D4 /* vector_parser_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */; };
 		7CCD40DC22178FD500C8E7D4 /* vector_parser_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */; };
+		7CCE06D023072E2E005B65C7 /* exp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CE23072E2E005B65C7 /* exp_menu.c */; };
+		7CCE06D123072E2E005B65C7 /* class_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CF23072E2E005B65C7 /* class_menu.c */; };
+		7CCE06D323072E3D005B65C7 /* chngp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06D223072E3D005B65C7 /* chngp_menu.c */; };
+		7CCE06D423072E55005B65C7 /* exp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CE23072E2E005B65C7 /* exp_menu.c */; };
+		7CCE06D523072E56005B65C7 /* exp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CE23072E2E005B65C7 /* exp_menu.c */; };
+		7CCE06D623072E57005B65C7 /* exp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CE23072E2E005B65C7 /* exp_menu.c */; };
+		7CCE06D723072E58005B65C7 /* exp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CE23072E2E005B65C7 /* exp_menu.c */; };
+		7CCE06D823072E5F005B65C7 /* class_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CF23072E2E005B65C7 /* class_menu.c */; };
+		7CCE06D923072E5F005B65C7 /* class_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CF23072E2E005B65C7 /* class_menu.c */; };
+		7CCE06DA23072E60005B65C7 /* class_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CF23072E2E005B65C7 /* class_menu.c */; };
+		7CCE06DB23072E61005B65C7 /* class_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06CF23072E2E005B65C7 /* class_menu.c */; };
+		7CCE06DC23072E65005B65C7 /* chngp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06D223072E3D005B65C7 /* chngp_menu.c */; };
+		7CCE06DD23072E66005B65C7 /* chngp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06D223072E3D005B65C7 /* chngp_menu.c */; };
+		7CCE06DE23072E67005B65C7 /* chngp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06D223072E3D005B65C7 /* chngp_menu.c */; };
+		7CCE06DF23072E67005B65C7 /* chngp_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06D223072E3D005B65C7 /* chngp_menu.c */; };
+		7CCE06E123072EE8005B65C7 /* stc_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06E023072EE8005B65C7 /* stc_util.c */; };
+		7CCE06E223072EE8005B65C7 /* stc_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06E023072EE8005B65C7 /* stc_util.c */; };
+		7CCE06E323072EE8005B65C7 /* stc_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06E023072EE8005B65C7 /* stc_util.c */; };
+		7CCE06E423072EE8005B65C7 /* stc_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06E023072EE8005B65C7 /* stc_util.c */; };
+		7CCE06E523072EE8005B65C7 /* stc_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CCE06E023072EE8005B65C7 /* stc_util.c */; };
 		7CE0183C1FA2433700E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
 		7CE0183D1FA2433800E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
 		7CE0183E1FA2433900E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
@@ -1459,7 +1475,6 @@
 		7CE018411FA2435A00E1B4C1 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
 		7CE018421FA2435B00E1B4C1 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
 		7CE018431FA2435C00E1B4C1 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
-		7CE3AE7A21BB47510083FBD8 /* CSF-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 7C4332AE1D4D43FC0033687C /* CSF-Info.plist */; };
 		7CE5FDFD1A60750B0029C7AE /* avCap.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CE5FDFC1A60750B0029C7AE /* avCap.m */; };
 		7CE5FDFF1A60752D0029C7AE /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */; };
 		7CE5FE011A60754A0029C7AE /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
@@ -1526,6 +1541,7 @@
 /* End PBXBuildRule section */
 
 /* Begin PBXFileReference section */
+		1F088D5D2309FAD2006A15FC /* CSF-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "CSF-Info.plist"; path = "xcode/iquip/CSF-Info.plist"; sourceTree = "<group>"; };
 		2299DE10196C6EF800844988 /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
 		2299DE12196C6F2500844988 /* sched.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sched.c; sourceTree = "<group>"; };
 		37063913178B490E0033D2C5 /* features.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = features.c; sourceTree = "<group>"; };
@@ -1548,7 +1564,6 @@
 		7153FD1D175BF995002D1407 /* seqprint.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = seqprint.c; sourceTree = "<group>"; };
 		715913B41734D48B008F5524 /* quipTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipTableViewController.m; sourceTree = "<group>"; };
 		715913B61734D8F4008F5524 /* quipNavController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipNavController.m; sourceTree = "<group>"; };
-		71614B37187745BE001AC360 /* genlock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = genlock.c; sourceTree = "<group>"; };
 		716CCB2317AA1228009F5690 /* AdSupport.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdSupport.framework; path = System/Library/Frameworks/AdSupport.framework; sourceTree = SDKROOT; };
 		717074A5162DCDA500831805 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		71828E7E1726139F00F7CB35 /* http_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = http_menu.c; sourceTree = "<group>"; };
@@ -1637,7 +1652,6 @@
 		71828F201726171000F7CB35 /* quipCanvas.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipCanvas.m; sourceTree = "<group>"; };
 		71828F211726171000F7CB35 /* quipConsole.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipConsole.m; sourceTree = "<group>"; };
 		71828F221726171000F7CB35 /* quipImages.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipImages.m; sourceTree = "<group>"; };
-		71828F231726171000F7CB35 /* quipImageView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipImageView.m; sourceTree = "<group>"; };
 		71828F371726173C00F7CB35 /* client.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = client.c; sourceTree = "<group>"; };
 		71828F381726173C00F7CB35 /* dataport.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dataport.c; sourceTree = "<group>"; };
 		71828F3B1726174F00F7CB35 /* packets.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = packets.c; sourceTree = "<group>"; };
@@ -1656,7 +1670,6 @@
 		71828F58172617A900F7CB35 /* stc_edit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stc_edit.c; sourceTree = "<group>"; };
 		71828F59172617A900F7CB35 /* stc_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stc_menu.c; sourceTree = "<group>"; };
 		71828F60172617B800F7CB35 /* weibull.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = weibull.c; sourceTree = "<group>"; };
-		71828F61172617B800F7CB35 /* xvalmenu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = xvalmenu.c; sourceTree = "<group>"; };
 		71828F66172617E500F7CB35 /* unix_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = unix_menu.c; sourceTree = "<group>"; };
 		71828F681726180E00F7CB35 /* conv3d.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = conv3d.c; sourceTree = "<group>"; };
 		71828F691726180E00F7CB35 /* convolve.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = convolve.c; sourceTree = "<group>"; };
@@ -1779,7 +1792,6 @@
 		7C3904C017F64894005163CD /* stamps.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stamps.c; sourceTree = "<group>"; };
 		7C3904C217F64901005163CD /* my_stty.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = my_stty.c; sourceTree = "<group>"; };
 		7C4332AD1D4D43FC0033687C /* CSF.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CSF.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		7C4332AE1D4D43FC0033687C /* CSF-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "CSF-Info.plist"; path = "/Users/jmulliga/working/quip/xcode/iquip/CSF-Info.plist"; sourceTree = "<absolute>"; };
 		7C4332AF1D4D47D40033687C /* csf_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = csf_startup.enc; path = macros/startup/csf_startup.enc; sourceTree = "<group>"; };
 		7C4333D41D4D49450033687C /* EZJet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EZJet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C4333D51D4D4A1F0033687C /* ezjet_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = ezjet_startup.enc; path = macros/startup/ezjet_startup.enc; sourceTree = "<group>"; };
@@ -1798,6 +1810,7 @@
 		7C7456661DB18EE900A0D538 /* container.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = container.c; sourceTree = "<group>"; };
 		7C74566B1DB18F4D00A0D538 /* rbtree.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rbtree.c; sourceTree = "<group>"; };
 		7C79F9E41A2D47F1005EE8B8 /* soundmenu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = soundmenu.c; sourceTree = "<group>"; };
+		7C80CE3322FDF1E600C13959 /* quipImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipImage.m; sourceTree = "<group>"; };
 		7C922E1E19CA51DE00F92C21 /* typed_scalars.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = typed_scalars.c; sourceTree = "<group>"; };
 		7C9C32171C0699CE00E2094F /* lin_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lin_util.c; sourceTree = "<group>"; };
 		7C9F27A520C32B39002D9F63 /* equivalence.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = equivalence.c; sourceTree = "<group>"; };
@@ -1826,9 +1839,16 @@
 		7CB4501E1D650EB500B6783F /* f1dim.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = f1dim.c; sourceTree = "<group>"; };
 		7CB671CF1F9484C5001FFADF /* Symmetry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Symmetry.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7CB671D11F9501DC001FFADF /* symm_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = symm_startup.enc; path = macros/startup/symm_startup.enc; sourceTree = "<group>"; };
+		7CB6F68722C6979D008B8286 /* vector_parser_data.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = vector_parser_data.h; sourceTree = "<group>"; };
+		7CB6F68822C697D6008B8286 /* subrt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = subrt.h; sourceTree = "<group>"; };
+		7CB6F68922C6D057008B8286 /* genlock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = genlock.c; sourceTree = "<group>"; };
 		7CB8D5D81B6198B90080809C /* string_ref.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = string_ref.c; sourceTree = "<group>"; };
 		7CCB914D21A36EB000926C39 /* no_sound.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = no_sound.c; sourceTree = "<group>"; };
 		7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = vector_parser_data.c; sourceTree = "<group>"; };
+		7CCE06CE23072E2E005B65C7 /* exp_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = exp_menu.c; sourceTree = "<group>"; };
+		7CCE06CF23072E2E005B65C7 /* class_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = class_menu.c; sourceTree = "<group>"; };
+		7CCE06D223072E3D005B65C7 /* chngp_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = chngp_menu.c; sourceTree = "<group>"; };
+		7CCE06E023072EE8005B65C7 /* stc_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stc_util.c; sourceTree = "<group>"; };
 		7CE5FDFC1A60750B0029C7AE /* avCap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = avCap.m; sourceTree = "<group>"; };
 		7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		7CE5FE001A60754A0029C7AE /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
@@ -2014,9 +2034,9 @@
 		7106ED0816004437006BF850 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				1F088D5D2309FAD2006A15FC /* CSF-Info.plist */,
 				7C6B33C71953AC0C00967093 /* InfoPlist.strings */,
 				7C6B33C61953ABEC00967093 /* iQuIP-Prefix.pch */,
-				7C4332AE1D4D43FC0033687C /* CSF-Info.plist */,
 				7C6B33C41953ABD700967093 /* iQuIP-Info.plist */,
 			);
 			name = "Supporting Files";
@@ -2236,6 +2256,8 @@
 		7115AE9616076BD40004645A /* vectree */ = {
 			isa = PBXGroup;
 			children = (
+				7CB6F68822C697D6008B8286 /* subrt.h */,
+				7CB6F68722C6979D008B8286 /* vector_parser_data.h */,
 				7CCD40D722178CFA00C8E7D4 /* vector_parser_data.c */,
 				7CEF2F6B1FA182F600ADC7A4 /* fusion.c */,
 				7CF4CFBB1CA5F725004F07AE /* vectree.y */,
@@ -2284,8 +2306,11 @@
 		7115AEC7160776DB0004645A /* psych */ = {
 			isa = PBXGroup;
 			children = (
+				7CCE06E023072EE8005B65C7 /* stc_util.c */,
+				7CCE06D223072E3D005B65C7 /* chngp_menu.c */,
+				7CCE06CF23072E2E005B65C7 /* class_menu.c */,
+				7CCE06CE23072E2E005B65C7 /* exp_menu.c */,
 				71828F60172617B800F7CB35 /* weibull.c */,
-				71828F61172617B800F7CB35 /* xvalmenu.c */,
 				71828F54172617A900F7CB35 /* mlfit.c */,
 				71828F57172617A900F7CB35 /* stair.c */,
 				71828F58172617A900F7CB35 /* stc_edit.c */,
@@ -2316,6 +2341,7 @@
 		7115AF9B16079BBA0004645A /* ios */ = {
 			isa = PBXGroup;
 			children = (
+				7C80CE3322FDF1E600C13959 /* quipImage.m */,
 				7CE5FDFC1A60750B0029C7AE /* avCap.m */,
 				715913B61734D8F4008F5524 /* quipNavController.m */,
 				715913B41734D48B008F5524 /* quipTableViewController.m */,
@@ -2338,7 +2364,6 @@
 				71828F201726171000F7CB35 /* quipCanvas.m */,
 				71828F211726171000F7CB35 /* quipConsole.m */,
 				71828F221726171000F7CB35 /* quipImages.m */,
-				71828F231726171000F7CB35 /* quipImageView.m */,
 			);
 			path = ios;
 			sourceTree = "<group>";
@@ -2418,7 +2443,7 @@
 		71E43C2B160D4906003A2297 /* view */ = {
 			isa = PBXGroup;
 			children = (
-				71614B37187745BE001AC360 /* genlock.c */,
+				7CB6F68922C6D057008B8286 /* genlock.c */,
 				7C3904BA17F64787005163CD /* fbmenu.m */,
 				7182908B1726211700F7CB35 /* linmenu.c */,
 				718290751726205A00F7CB35 /* linear.c */,
@@ -2640,6 +2665,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 			);
 			mainGroup = 7106ECF216004437006BF850;
@@ -2665,6 +2691,7 @@
 				71BA647C17D5076F00446D65 /* Default.png in Resources */,
 				7C6B33C91953AC0C00967093 /* InfoPlist.strings in Resources */,
 				711F118B1637B6D50069EF13 /* Icon@2x.png in Resources */,
+				1F088D5E2309FAD2006A15FC /* CSF-Info.plist in Resources */,
 				711F118C1637B6D50069EF13 /* Icon.png in Resources */,
 				711F118D1637B6D50069EF13 /* Icon-Small@2x.png in Resources */,
 				711F118E1637B6D50069EF13 /* Icon-Small.png in Resources */,
@@ -2684,7 +2711,6 @@
 				7C4332B11D4D48220033687C /* csf_startup.enc in Resources */,
 				7C43329E1D4D43FC0033687C /* Default.png in Resources */,
 				7C43329F1D4D43FC0033687C /* InfoPlist.strings in Resources */,
-				7CE3AE7A21BB47510083FBD8 /* CSF-Info.plist in Resources */,
 				7C4332A01D4D43FC0033687C /* Icon@2x.png in Resources */,
 				7C4332A11D4D43FC0033687C /* Icon.png in Resources */,
 				7C4332A21D4D43FC0033687C /* Icon-Small@2x.png in Resources */,
@@ -2854,6 +2880,7 @@
 				71828F291726171000F7CB35 /* ios_list.m in Sources */,
 				7CF4CFB81CA5F1CD004F07AE /* nexpr.y in Sources */,
 				71828F2A1726171000F7CB35 /* ios_node.m in Sources */,
+				7C80CE3422FDF1E600C13959 /* quipImage.m in Sources */,
 				7C0C6D1A1CEFD06900D7D2FB /* pipe_menu.c in Sources */,
 				71828F2B1726171000F7CB35 /* ios_sizable.m in Sources */,
 				7C7456671DB18EE900A0D538 /* container.c in Sources */,
@@ -2865,7 +2892,6 @@
 				71828F321726171000F7CB35 /* quipCanvas.m in Sources */,
 				71828F331726171000F7CB35 /* quipConsole.m in Sources */,
 				71828F341726171000F7CB35 /* quipImages.m in Sources */,
-				71828F351726171000F7CB35 /* quipImageView.m in Sources */,
 				71828F391726173C00F7CB35 /* client.c in Sources */,
 				71828F3A1726173C00F7CB35 /* dataport.c in Sources */,
 				71828F411726174F00F7CB35 /* packets.c in Sources */,
@@ -2883,11 +2909,11 @@
 				71828F531726179700F7CB35 /* lump.c in Sources */,
 				71828F5A172617A900F7CB35 /* mlfit.c in Sources */,
 				7C61EA411E1B080A0056CC01 /* vl2_platform.c in Sources */,
+				7CCE06D323072E3D005B65C7 /* chngp_menu.c in Sources */,
 				71828F5D172617A900F7CB35 /* stair.c in Sources */,
 				71828F5E172617A900F7CB35 /* stc_edit.c in Sources */,
 				71828F5F172617A900F7CB35 /* stc_menu.c in Sources */,
 				71828F62172617B800F7CB35 /* weibull.c in Sources */,
-				71828F63172617B800F7CB35 /* xvalmenu.c in Sources */,
 				71828F67172617E500F7CB35 /* unix_menu.c in Sources */,
 				7C4685951E7CB3A8000403FA /* slow_len.c in Sources */,
 				71828F6F1726180E00F7CB35 /* conv3d.c in Sources */,
@@ -2923,6 +2949,7 @@
 				71828FA11726186100F7CB35 /* vec_chn.c in Sources */,
 				71828FA21726186100F7CB35 /* vec_func.c in Sources */,
 				7CF4CFBC1CA5F725004F07AE /* vectree.y in Sources */,
+				7CCE06D123072E2E005B65C7 /* class_menu.c in Sources */,
 				7C922E1F19CA51DE00F92C21 /* typed_scalars.c in Sources */,
 				71828FBE172618BA00F7CB35 /* sampmenu.c in Sources */,
 				71828FD4172618DB00F7CB35 /* chn_menu.c in Sources */,
@@ -2938,7 +2965,9 @@
 				71828FF31726195400F7CB35 /* pointer.c in Sources */,
 				71828FF41726195400F7CB35 /* reference.c in Sources */,
 				7C79F9E51A2D47F1005EE8B8 /* soundmenu.c in Sources */,
+				7CB6F68A22C6D057008B8286 /* genlock.c in Sources */,
 				71828FF51726195400F7CB35 /* resolve.c in Sources */,
+				7CCE06E123072EE8005B65C7 /* stc_util.c in Sources */,
 				71828FF61726195400F7CB35 /* subrt_funcs.c in Sources */,
 				71828FF71726195400F7CB35 /* subrt.c in Sources */,
 				718290001726196F00F7CB35 /* comptree.c in Sources */,
@@ -2995,6 +3024,7 @@
 				71829092172621CC00F7CB35 /* camera.m in Sources */,
 				71829094172621EF00F7CB35 /* screen_obj.m in Sources */,
 				7CF4CFB41CA5F0B4004F07AE /* quip_exec.c in Sources */,
+				7CCE06D023072E2E005B65C7 /* exp_menu.c in Sources */,
 				718290961726221600F7CB35 /* img_file.c in Sources */,
 				718290981726224400F7CB35 /* raw.c in Sources */,
 				7182909A1726226D00F7CB35 /* local_max.c in Sources */,
@@ -3018,7 +3048,6 @@
 				71D37EB817C9D95F00ECCBE1 /* reachability.m in Sources */,
 				71A1041D17CFEB33003AC2C2 /* function.m in Sources */,
 				7C74566C1DB18F4D00A0D538 /* rbtree.c in Sources */,
-				71614B38187745BE001AC360 /* genlock.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3052,9 +3081,11 @@
 				7C5D93721D651A140096D7BC /* brent.c in Sources */,
 				7C4331A11D4D43FC0033687C /* tspread.c in Sources */,
 				7C4331A21D4D43FC0033687C /* seqparse.y in Sources */,
+				7CCE06E223072EE8005B65C7 /* stc_util.c in Sources */,
 				7C4331A31D4D43FC0033687C /* spread.c in Sources */,
 				7C4331A41D4D43FC0033687C /* rb2rgb.c in Sources */,
 				7C5D93811D651A140096D7BC /* svdcmp.c in Sources */,
+				7CCE06DC23072E65005B65C7 /* chngp_menu.c in Sources */,
 				7C4331A51D4D43FC0033687C /* requant.c in Sources */,
 				7C4331A61D4D43FC0033687C /* questions.c in Sources */,
 				7C4331A71D4D43FC0033687C /* areas.c in Sources */,
@@ -3140,7 +3171,6 @@
 				7C4331F21D4D43FC0033687C /* quipCanvas.m in Sources */,
 				7C4331F31D4D43FC0033687C /* quipConsole.m in Sources */,
 				7C4331F41D4D43FC0033687C /* quipImages.m in Sources */,
-				7C4331F51D4D43FC0033687C /* quipImageView.m in Sources */,
 				7C7456681DB18F3300A0D538 /* container.c in Sources */,
 				7C4331F61D4D43FC0033687C /* client.c in Sources */,
 				7C4331F71D4D43FC0033687C /* dataport.c in Sources */,
@@ -3164,7 +3194,6 @@
 				7C43320A1D4D43FC0033687C /* stc_menu.c in Sources */,
 				7C43320B1D4D43FC0033687C /* weibull.c in Sources */,
 				7C5D93821D651A140096D7BC /* amoeba.c in Sources */,
-				7C43320C1D4D43FC0033687C /* xvalmenu.c in Sources */,
 				7CE0183C1FA2433700E1B4C1 /* fusion.c in Sources */,
 				7C43320D1D4D43FC0033687C /* unix_menu.c in Sources */,
 				7C43320E1D4D43FC0033687C /* conv3d.c in Sources */,
@@ -3183,6 +3212,7 @@
 				7C4332191D4D43FC0033687C /* sample.c in Sources */,
 				7C43321A1D4D43FC0033687C /* scale.c in Sources */,
 				7C43321B1D4D43FC0033687C /* scramble.c in Sources */,
+				7CB6F68B22C6D373008B8286 /* genlock.c in Sources */,
 				7C43321C1D4D43FC0033687C /* SeedFill.c in Sources */,
 				7C5D93831D651A210096D7BC /* nrmenu.c in Sources */,
 				7C43321D1D4D43FC0033687C /* fftsupp.c in Sources */,
@@ -3218,6 +3248,7 @@
 				7C43323C1D4D43FC0033687C /* reference.c in Sources */,
 				7C43323D1D4D43FC0033687C /* soundmenu.c in Sources */,
 				7C43323E1D4D43FC0033687C /* resolve.c in Sources */,
+				7C80CE3522FDF44900C13959 /* quipImage.m in Sources */,
 				7C5D93701D651A140096D7BC /* f1dim.c in Sources */,
 				7C43323F1D4D43FC0033687C /* subrt_funcs.c in Sources */,
 				7C4332401D4D43FC0033687C /* subrt.c in Sources */,
@@ -3278,6 +3309,7 @@
 				7C4332711D4D43FC0033687C /* accel.m in Sources */,
 				7C4332721D4D43FC0033687C /* makedobj.c in Sources */,
 				7C4332731D4D43FC0033687C /* camera.m in Sources */,
+				7CCE06D423072E55005B65C7 /* exp_menu.c in Sources */,
 				7C4332741D4D43FC0033687C /* screen_obj.m in Sources */,
 				7C4332751D4D43FC0033687C /* quip_exec.c in Sources */,
 				7C5D937F1D651A140096D7BC /* eigsrt.c in Sources */,
@@ -3289,6 +3321,7 @@
 				7C43327A1D4D43FC0033687C /* cdiff.c in Sources */,
 				7C43327B1D4D43FC0033687C /* pkg.c in Sources */,
 				7C43327C1D4D43FC0033687C /* quipTableViewController.m in Sources */,
+				7CCE06D823072E5F005B65C7 /* class_menu.c in Sources */,
 				7C43327D1D4D43FC0033687C /* quipNavController.m in Sources */,
 				7C43327E1D4D43FC0033687C /* sched.c in Sources */,
 				7C43327F1D4D43FC0033687C /* platform.m in Sources */,
@@ -3305,7 +3338,6 @@
 				7C9F27A720C32B45002D9F63 /* equivalence.c in Sources */,
 				7C43328A1D4D43FC0033687C /* reachability.m in Sources */,
 				7C43328B1D4D43FC0033687C /* function.m in Sources */,
-				7C43328C1D4D43FC0033687C /* genlock.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3407,6 +3439,7 @@
 				7C43330F1D4D49450033687C /* ios_list.m in Sources */,
 				7C4333101D4D49450033687C /* nexpr.y in Sources */,
 				7C4333111D4D49450033687C /* ios_node.m in Sources */,
+				7C80CE3622FDF44A00C13959 /* quipImage.m in Sources */,
 				7C4333121D4D49450033687C /* pipe_menu.c in Sources */,
 				7C4333131D4D49450033687C /* ios_sizable.m in Sources */,
 				7C7456691DB18F3500A0D538 /* container.c in Sources */,
@@ -3418,7 +3451,6 @@
 				7C4333191D4D49450033687C /* quipCanvas.m in Sources */,
 				7C43331A1D4D49450033687C /* quipConsole.m in Sources */,
 				7C43331B1D4D49450033687C /* quipImages.m in Sources */,
-				7C43331C1D4D49450033687C /* quipImageView.m in Sources */,
 				7C43331D1D4D49450033687C /* client.c in Sources */,
 				7C43331E1D4D49450033687C /* dataport.c in Sources */,
 				7C43331F1D4D49450033687C /* packets.c in Sources */,
@@ -3436,11 +3468,11 @@
 				7C43332B1D4D49450033687C /* lump.c in Sources */,
 				7C43332C1D4D49450033687C /* mlfit.c in Sources */,
 				7C61EA431E1B08EA0056CC01 /* vl2_platform.c in Sources */,
+				7CCE06DD23072E66005B65C7 /* chngp_menu.c in Sources */,
 				7C43332F1D4D49450033687C /* stair.c in Sources */,
 				7C4333301D4D49450033687C /* stc_edit.c in Sources */,
 				7C4333311D4D49450033687C /* stc_menu.c in Sources */,
 				7C4333321D4D49450033687C /* weibull.c in Sources */,
-				7C4333331D4D49450033687C /* xvalmenu.c in Sources */,
 				7C4333341D4D49450033687C /* unix_menu.c in Sources */,
 				7C4685971E7CB41F000403FA /* slow_len.c in Sources */,
 				7C4333351D4D49450033687C /* conv3d.c in Sources */,
@@ -3476,6 +3508,7 @@
 				7C4333511D4D49450033687C /* vec_chn.c in Sources */,
 				7C4333521D4D49450033687C /* vec_func.c in Sources */,
 				7C4333531D4D49450033687C /* vectree.y in Sources */,
+				7CCE06D923072E5F005B65C7 /* class_menu.c in Sources */,
 				7C4333541D4D49450033687C /* typed_scalars.c in Sources */,
 				7C4333551D4D49450033687C /* sampmenu.c in Sources */,
 				7C4333571D4D49450033687C /* chn_menu.c in Sources */,
@@ -3491,7 +3524,9 @@
 				7C4333621D4D49450033687C /* pointer.c in Sources */,
 				7C4333631D4D49450033687C /* reference.c in Sources */,
 				7C4333641D4D49450033687C /* soundmenu.c in Sources */,
+				7CB6F68C22C6D374008B8286 /* genlock.c in Sources */,
 				7C4333651D4D49450033687C /* resolve.c in Sources */,
+				7CCE06E323072EE8005B65C7 /* stc_util.c in Sources */,
 				7C4333661D4D49450033687C /* subrt_funcs.c in Sources */,
 				7C4333671D4D49450033687C /* subrt.c in Sources */,
 				7C4333681D4D49450033687C /* comptree.c in Sources */,
@@ -3548,6 +3583,7 @@
 				7C43339A1D4D49450033687C /* camera.m in Sources */,
 				7C43339B1D4D49450033687C /* screen_obj.m in Sources */,
 				7C43339C1D4D49450033687C /* quip_exec.c in Sources */,
+				7CCE06D523072E56005B65C7 /* exp_menu.c in Sources */,
 				7C43339D1D4D49450033687C /* img_file.c in Sources */,
 				7C43339E1D4D49450033687C /* raw.c in Sources */,
 				7C43339F1D4D49450033687C /* local_max.c in Sources */,
@@ -3571,7 +3607,6 @@
 				7C4333B11D4D49450033687C /* reachability.m in Sources */,
 				7C4333B21D4D49450033687C /* function.m in Sources */,
 				7C74566E1DB18F5600A0D538 /* rbtree.c in Sources */,
-				7C4333B31D4D49450033687C /* genlock.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3673,6 +3708,7 @@
 				7C4D6DDB1D5111A400D34AC4 /* ios_list.m in Sources */,
 				7C4D6DDC1D5111A400D34AC4 /* nexpr.y in Sources */,
 				7C4D6DDD1D5111A400D34AC4 /* ios_node.m in Sources */,
+				7C80CE3722FDF44B00C13959 /* quipImage.m in Sources */,
 				7C4D6DDE1D5111A400D34AC4 /* pipe_menu.c in Sources */,
 				7C4D6DDF1D5111A400D34AC4 /* ios_sizable.m in Sources */,
 				7C74566A1DB18F3500A0D538 /* container.c in Sources */,
@@ -3684,7 +3720,6 @@
 				7C4D6DE51D5111A400D34AC4 /* quipCanvas.m in Sources */,
 				7C4D6DE61D5111A400D34AC4 /* quipConsole.m in Sources */,
 				7C4D6DE71D5111A400D34AC4 /* quipImages.m in Sources */,
-				7C4D6DE81D5111A400D34AC4 /* quipImageView.m in Sources */,
 				7C4D6DE91D5111A400D34AC4 /* client.c in Sources */,
 				7C4D6DEA1D5111A400D34AC4 /* dataport.c in Sources */,
 				7C4D6DEB1D5111A400D34AC4 /* packets.c in Sources */,
@@ -3702,11 +3737,11 @@
 				7C4D6DF71D5111A400D34AC4 /* lump.c in Sources */,
 				7C4D6DF81D5111A400D34AC4 /* mlfit.c in Sources */,
 				7C61EA441E1B08EB0056CC01 /* vl2_platform.c in Sources */,
+				7CCE06DE23072E67005B65C7 /* chngp_menu.c in Sources */,
 				7C4D6DFB1D5111A400D34AC4 /* stair.c in Sources */,
 				7C4D6DFC1D5111A400D34AC4 /* stc_edit.c in Sources */,
 				7C4D6DFD1D5111A400D34AC4 /* stc_menu.c in Sources */,
 				7C4D6DFE1D5111A400D34AC4 /* weibull.c in Sources */,
-				7C4D6DFF1D5111A400D34AC4 /* xvalmenu.c in Sources */,
 				7C4D6E001D5111A400D34AC4 /* unix_menu.c in Sources */,
 				7C4685981E7CB420000403FA /* slow_len.c in Sources */,
 				7C4D6E011D5111A400D34AC4 /* conv3d.c in Sources */,
@@ -3742,6 +3777,7 @@
 				7C4D6E1D1D5111A400D34AC4 /* vec_chn.c in Sources */,
 				7C4D6E1E1D5111A400D34AC4 /* vec_func.c in Sources */,
 				7C4D6E1F1D5111A400D34AC4 /* vectree.y in Sources */,
+				7CCE06DA23072E60005B65C7 /* class_menu.c in Sources */,
 				7C4D6E201D5111A400D34AC4 /* typed_scalars.c in Sources */,
 				7C4D6E211D5111A400D34AC4 /* sampmenu.c in Sources */,
 				7C4D6E231D5111A400D34AC4 /* chn_menu.c in Sources */,
@@ -3757,7 +3793,9 @@
 				7C4D6E2E1D5111A400D34AC4 /* pointer.c in Sources */,
 				7C4D6E2F1D5111A400D34AC4 /* reference.c in Sources */,
 				7C4D6E301D5111A400D34AC4 /* soundmenu.c in Sources */,
+				7CB6F68D22C6D375008B8286 /* genlock.c in Sources */,
 				7C4D6E311D5111A400D34AC4 /* resolve.c in Sources */,
+				7CCE06E423072EE8005B65C7 /* stc_util.c in Sources */,
 				7C4D6E321D5111A400D34AC4 /* subrt_funcs.c in Sources */,
 				7C4D6E331D5111A400D34AC4 /* subrt.c in Sources */,
 				7C4D6E341D5111A400D34AC4 /* comptree.c in Sources */,
@@ -3814,6 +3852,7 @@
 				7C4D6E661D5111A400D34AC4 /* camera.m in Sources */,
 				7C4D6E671D5111A400D34AC4 /* screen_obj.m in Sources */,
 				7C4D6E681D5111A400D34AC4 /* quip_exec.c in Sources */,
+				7CCE06D623072E57005B65C7 /* exp_menu.c in Sources */,
 				7C4D6E691D5111A400D34AC4 /* img_file.c in Sources */,
 				7C4D6E6A1D5111A400D34AC4 /* raw.c in Sources */,
 				7C4D6E6B1D5111A400D34AC4 /* local_max.c in Sources */,
@@ -3837,7 +3876,6 @@
 				7C4D6E7D1D5111A400D34AC4 /* reachability.m in Sources */,
 				7C4D6E7E1D5111A400D34AC4 /* function.m in Sources */,
 				7C74566F1DB18F5700A0D538 /* rbtree.c in Sources */,
-				7C4D6E7F1D5111A400D34AC4 /* genlock.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3871,9 +3909,11 @@
 				7CB670AE1F9484C5001FFADF /* brent.c in Sources */,
 				7CB670AF1F9484C5001FFADF /* tspread.c in Sources */,
 				7CB670B01F9484C5001FFADF /* seqparse.y in Sources */,
+				7CCE06E523072EE8005B65C7 /* stc_util.c in Sources */,
 				7CB670B11F9484C5001FFADF /* spread.c in Sources */,
 				7CB670B21F9484C5001FFADF /* rb2rgb.c in Sources */,
 				7CB670B31F9484C5001FFADF /* svdcmp.c in Sources */,
+				7CCE06DF23072E67005B65C7 /* chngp_menu.c in Sources */,
 				7CB670B41F9484C5001FFADF /* requant.c in Sources */,
 				7CB670B51F9484C5001FFADF /* questions.c in Sources */,
 				7CB670B61F9484C5001FFADF /* areas.c in Sources */,
@@ -3959,7 +3999,6 @@
 				7CB671041F9484C5001FFADF /* quipCanvas.m in Sources */,
 				7CB671051F9484C5001FFADF /* quipConsole.m in Sources */,
 				7CB671061F9484C5001FFADF /* quipImages.m in Sources */,
-				7CB671071F9484C5001FFADF /* quipImageView.m in Sources */,
 				7CB671081F9484C5001FFADF /* container.c in Sources */,
 				7CB671091F9484C5001FFADF /* client.c in Sources */,
 				7CB6710A1F9484C5001FFADF /* dataport.c in Sources */,
@@ -3983,7 +4022,6 @@
 				7CB6711F1F9484C5001FFADF /* stc_menu.c in Sources */,
 				7CB671201F9484C5001FFADF /* weibull.c in Sources */,
 				7CB671211F9484C5001FFADF /* amoeba.c in Sources */,
-				7CB671221F9484C5001FFADF /* xvalmenu.c in Sources */,
 				7CE0183F1FA2433A00E1B4C1 /* fusion.c in Sources */,
 				7CB671231F9484C5001FFADF /* unix_menu.c in Sources */,
 				7CB671241F9484C5001FFADF /* conv3d.c in Sources */,
@@ -4002,6 +4040,7 @@
 				7CB671311F9484C5001FFADF /* sample.c in Sources */,
 				7CB671321F9484C5001FFADF /* scale.c in Sources */,
 				7CB671331F9484C5001FFADF /* scramble.c in Sources */,
+				7CB6F68E22C6D376008B8286 /* genlock.c in Sources */,
 				7CB671341F9484C5001FFADF /* SeedFill.c in Sources */,
 				7CB671351F9484C5001FFADF /* nrmenu.c in Sources */,
 				7CB671361F9484C5001FFADF /* fftsupp.c in Sources */,
@@ -4037,6 +4076,7 @@
 				7CB671561F9484C5001FFADF /* reference.c in Sources */,
 				7CB671571F9484C5001FFADF /* soundmenu.c in Sources */,
 				7CB671581F9484C5001FFADF /* resolve.c in Sources */,
+				7C80CE3822FDF44C00C13959 /* quipImage.m in Sources */,
 				7CB671591F9484C5001FFADF /* f1dim.c in Sources */,
 				7CB6715A1F9484C5001FFADF /* subrt_funcs.c in Sources */,
 				7CB6715B1F9484C5001FFADF /* subrt.c in Sources */,
@@ -4097,6 +4137,7 @@
 				7CB671911F9484C5001FFADF /* accel.m in Sources */,
 				7CB671921F9484C5001FFADF /* makedobj.c in Sources */,
 				7CB671931F9484C5001FFADF /* camera.m in Sources */,
+				7CCE06D723072E58005B65C7 /* exp_menu.c in Sources */,
 				7CB671941F9484C5001FFADF /* screen_obj.m in Sources */,
 				7CB671951F9484C5001FFADF /* quip_exec.c in Sources */,
 				7CB671961F9484C5001FFADF /* eigsrt.c in Sources */,
@@ -4108,6 +4149,7 @@
 				7CB6719C1F9484C5001FFADF /* cdiff.c in Sources */,
 				7CB6719D1F9484C5001FFADF /* pkg.c in Sources */,
 				7CB6719E1F9484C5001FFADF /* quipTableViewController.m in Sources */,
+				7CCE06DB23072E61005B65C7 /* class_menu.c in Sources */,
 				7CB6719F1F9484C5001FFADF /* quipNavController.m in Sources */,
 				7CB671A01F9484C5001FFADF /* sched.c in Sources */,
 				7CB671A11F9484C5001FFADF /* platform.m in Sources */,
@@ -4124,7 +4166,6 @@
 				7C9F27AA20C32B48002D9F63 /* equivalence.c in Sources */,
 				7CB671AC1F9484C5001FFADF /* reachability.m in Sources */,
 				7CB671AD1F9484C5001FFADF /* function.m in Sources */,
-				7CB671AE1F9484C5001FFADF /* genlock.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4192,7 +4233,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = ../../include;
+				HEADER_SEARCH_PATHS = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = iQuIP;
@@ -4241,7 +4282,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = ../../include;
+				HEADER_SEARCH_PATHS = "";
 				"HEADER_SEARCH_PATHS[sdk=iphoneos*]" = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
@@ -4260,6 +4301,7 @@
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
+				DEVELOPMENT_TEAM = 6NC2ML6K22;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
@@ -4280,6 +4322,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = iQuIP;
+				PROVISIONING_PROFILE_SPECIFIER = JBM_DevProf_11_24_2018;
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -4310,6 +4353,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = iQuIP;
+				PROVISIONING_PROFILE_SPECIFIER = TarregaDistProfile;
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -4409,6 +4453,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
+				"HEADER_SEARCH_PATHS[arch=*]" = ../../include;
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "";
@@ -4418,6 +4463,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -4430,8 +4476,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
+				CODE_SIGN_IDENTITY = "Apple Distribution: Jeffrey Mulligan (6NC2ML6K22)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution: Jeffrey Mulligan (6NC2ML6K22)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				"HEADER_SEARCH_PATHS[sdk=iphoneos*]" = ../../include;
@@ -4444,6 +4490,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = TarregaDistProfile;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=*]" = TarregaDistProfile;
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;

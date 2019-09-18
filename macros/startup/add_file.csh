@@ -8,7 +8,7 @@ set p=../../macros/$1
 if( ! -e $p ) then
     echo Macro file $p not found.
 else
-  echo "# FILE $subdir/$macro_file.mac BEGIN" >> $outfile
+  echo "# FILE $1 BEGIN" >> $outfile
   cat $p >> $outfile
 endif
 

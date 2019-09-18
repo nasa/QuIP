@@ -244,8 +244,9 @@ static void perform_text_action(NSString *s, Screen_Obj *sop)
 	UITableViewCell *c;
 
 	Screen_Obj *sop=find_any_scrnobj(tableView);
-	CHECK_SCRNOBJ_INT(sop,tableView,cellForRowAtIndexPath,1);
-
+	//CHECK_SCRNOBJ_INT(sop,tableView,cellForRowAtIndexPath,1);
+    assert(sop!=NULL);
+    
 	int r = (int) indexPath.row;
 	assert( r >= 0 && r < SOB_N_SELECTORS(sop) );
 
@@ -642,11 +643,22 @@ event_done:
 	// We create the dummy panel so that we can use expressions
 	// like ncols(iPad2)...
 
+	// BUG we need to check landscape vs. portrait.
+	// This code was written with portrait in mind, but iPhone4s introduced
+	// when using landscale, really same as iPod retina!?  FIXME
+
 	// dev_size fields are float, can't switch
 	int w = dev_size.width, h = dev_size.height;
 
 	//Gen_Win *po;
 	switch( w ){
+		case 480:	// iPhone4s?
+			dev_type = DEV_TYPE_IPHONE4S;
+			force_reserved_var(DEFAULT_QSP_ARG  "DISPLAY","iPhone4s");
+			dummy_panel(DEFAULT_QSP_ARG  "iPhone4s",
+				dev_size.width, dev_size.height);
+			break;
+
 		case 568:	// iPhone5?
 			dev_type = DEV_TYPE_IPHONE5;
 			force_reserved_var(DEFAULT_QSP_ARG  "DISPLAY","iPhone5");
@@ -706,7 +718,7 @@ ipad_pro_9_7:
 			NWARN(DEFAULT_ERROR_STRING);
 			break;
 	}
-}
+} // getDevTypeForSize
 
 int is_portrait(void)
 {
@@ -815,19 +827,6 @@ static const char *get_display_width(SINGLE_QSP_ARG_DECL)
 {
 	int w;
 	static char wstr[16];
-
-fprintf(stderr,"get_display_width:  globalAppDelegate.dev_size = %f (w) x %f (h)\n",
-globalAppDelegate.dev_size.width,globalAppDelegate.dev_size.height);
-//#ifdef BUILD_FOR_IOS
-//	if( is_portrait() )
-//		w=(int)globalAppDelegate.dev_size.width;
-//	else
-//		w=(int)globalAppDelegate.dev_size.height;
-//#else // ! BUILD_FOR_IOS
-//	w=(int)globalAppDelegate.dev_size.width;
-//#endif // ! BUILD_FOR_IOS
-
-//fprintf(stderr,"get_display_width:  w = %d, is_portrait = %d\n",w,is_portrait());
 
 	w=(int)globalAppDelegate.dev_size.width;
 
@@ -975,7 +974,7 @@ static void init_ios_device(void)
 
 	init_ios_device();	// set the uuid to a script var
 
-	// now interpreter the startup file...
+	// now interpret the startup file...
 	// We'd like the startup file to define the navigation interface...
 
 	// we can't call this thread synchronously, and then

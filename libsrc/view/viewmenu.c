@@ -284,6 +284,7 @@ static COMMAND_FUNC( do_discard_images )
 #endif
 }
 
+#ifdef NOT_USED
 static COMMAND_FUNC( do_cycle_viewer )
 {
 	Viewer *vp;
@@ -357,6 +358,7 @@ static COMMAND_FUNC( do_send_back )
 #endif
 
 }
+#endif // NOT_USED
 
 static COMMAND_FUNC( do_hide_imgs )
 {
@@ -380,6 +382,8 @@ static COMMAND_FUNC( do_hide_imgs )
 #endif
 
 }
+
+// I forget what this does - VW_IMAGES is a canvas viewer in iOS???
 
 static COMMAND_FUNC( do_reveal_imgs )
 {
@@ -406,12 +410,13 @@ static COMMAND_FUNC( do_reveal_imgs )
 
 }
 
+#ifdef NOT_USED
 static COMMAND_FUNC( do_cycle_func )
 {
 	const char *s;
 	Viewer *vp;
 
-	GET_VIEWER("do_cycle_viewer");
+	GET_VIEWER("do_cycle_func");
 	s=nameof("text to interpret at next image flip");
 
 	if( vp == NULL ) return;
@@ -435,28 +440,57 @@ static COMMAND_FUNC( do_cycle_func )
 
 }
 
-static COMMAND_FUNC( do_refresh_viewer )
+static COMMAND_FUNC( do_cycle_done_func )
 {
+	const char *s;
 	Viewer *vp;
-	int frame_duration;
 
-	GET_VIEWER("do_refresh_viewer");
-	frame_duration = (int)how_many("Number of refreshes per frame (<=0 to disable)");
+	GET_VIEWER("do_cycle_done_func");
+	s=nameof("text to interpret at end of animation cycle");
+
 	if( vp == NULL ) return;
 
-#ifdef BUILD_FOR_OBJC
-	INSIST_IMAGE_VIEWER(refresh)
-
+#ifdef BUILD_FOR_IOS
 	if( VW_IMAGES(vp) == NULL ){
 		sprintf(ERROR_STRING,
-			"do_refresh_viewer:  viewer %s does not have an associated image viewer!?",
+			"do_cycle_viewer:  viewer %s does not have an associated image viewer!?",
 			VW_NAME(vp));
 		warn(ERROR_STRING);
 		return;
 	}
-	[ VW_IMAGES(vp) set_refresh:frame_duration];
+	[ VW_IMAGES(vp) set_cycle_done_func:s];
+#else
+	warn("image cycle functions not implemented for this platform");
+	// suppress warning
+	sprintf(ERROR_STRING,"Not interpreting \"%s\" in viewer 0x%lx",
+		s,(long)vp);
+	advise(ERROR_STRING);
+#endif
+
+}
+#endif // NOT_USED
+
+// another command developed to support animation on iOS...
+//
+// We have a stack of images that get cycled at the frame interrupts?
+// duration is given in refreshes...
+// see ../ios/quipImages.m, ../ios/quipImageView.m
+
+static COMMAND_FUNC( do_animate_viewer )
+{
+	Viewer *vp;
+	int frame_duration, n_repeats;
+
+	GET_VIEWER("do_animate_viewer");
+	frame_duration = (int)how_many("Number of refreshes per frame (<=0 to disable)");
+	n_repeats = (int)how_many("Number of repetitions (0 for free-run)");
+	if( vp == NULL ) return;
+
+#ifdef BUILD_FOR_OBJC
+	INSIST_IMAGE_VIEWER(refresh)
+	set_viewer_animation(vp,frame_duration,n_repeats);
 #else // ! BUILD_FOR_OBJC
-	//warn("do_refresh_viewer:  refresh event handling not implemented for this platform");
+	//warn("do_animate_viewer:  refresh event handling not implemented for this platform");
 
 	// The goal of this is to cycle the loaded images every refresh...
 	// For unix we ought to give a duration?
@@ -464,6 +498,30 @@ static COMMAND_FUNC( do_refresh_viewer )
 
 	cycle_viewer_images(vp, frame_duration);
 #endif // ! BUILD_FOR_OBJC
+}
+
+static COMMAND_FUNC( do_stop_animation )
+{
+	Viewer *vp;
+
+	GET_VIEWER("do_stop_animation");
+	if( vp == NULL ) return;
+#ifdef BUILD_FOR_OBJC
+	stop_viewer_animation(vp);
+#endif // BUILD_FOR_OBJC
+}
+
+static COMMAND_FUNC( do_after_animation )
+{
+	Viewer *vp;
+	const char *s;
+
+	GET_VIEWER("do_stop_animation");
+	s = nameof("text to interpret when animation finishes");
+	if( vp == NULL ) return;
+#ifdef BUILD_FOR_OBJC
+	exec_after_animation(vp,s);
+#endif // BUILD_FOR_OBJC
 }
 
 static COMMAND_FUNC( do_lock_orientation )
@@ -512,11 +570,17 @@ ADD_CMD( select,	do_select_vp,	select viewer for implicit operations )
 ADD_CMD( genwin,	do_genwin_menu,	general window operations submenu )
 ADD_CMD( show,		do_show_viewer,	display viewing window )
 ADD_CMD( unshow,	do_unshow_viewer,	hide viewing window )
-ADD_CMD( refresh,	do_refresh_viewer,	enable/disable refresh trapping)
-ADD_CMD( cycle,		do_cycle_viewer,	cycle images associated with a viewer)
-ADD_CMD( cycle_func,	do_cycle_func,		specify script to run at next image cycling)
-ADD_CMD( bring_to_front,	do_bring_fwd,	bring an image to the front of a viewer)
-ADD_CMD( send_to_back,	do_send_back,	send an image to the back of a viewer)
+ADD_CMD( animate,	do_animate_viewer,	start viewer animation with parameters)
+ADD_CMD( after_animation,	do_after_animation,	specify script to execute after animation ends)
+ADD_CMD( stop_animation,	do_stop_animation,	stop viewer animation)
+ADD_CMD( queue_frame,	do_queue_frame,		queue an animation frame for display in a viewer )
+ADD_CMD( clear_queue,	do_clear_queue,		empty the animation queue )
+ADD_CMD( forget_frame,	do_forget_frame,	forget OS-specific image copy )
+//ADD_CMD( cycle,		do_cycle_viewer,	cycle images associated with a viewer)
+//ADD_CMD( cycle_func,	do_cycle_func,		specify script to run at next image cycling)
+//ADD_CMD( cycle_done_func,	do_cycle_done_func,	specify script to run at end of animation cycle)
+//ADD_CMD( bring_to_front,	do_bring_fwd,	bring an image to the front of a viewer)
+//ADD_CMD( send_to_back,	do_send_back,	send an image to the back of a viewer)
 ADD_CMD( hide_images,	do_hide_imgs,	hide all images in a viewer)
 ADD_CMD( reveal_images,	do_reveal_imgs,	reveal images in a viewer)
 ADD_CMD( discard_images,	do_discard_images,	release stored images)

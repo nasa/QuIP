@@ -65,8 +65,9 @@ static void _show_alert( QSP_ARG_DECL   QUIP_ALERT_OBJ_TYPE *alert_p )
 	assert(shown_alert_p==NULL);
 	shown_alert_p = alert_p;
 
-	[ root_view_controller presentViewController:alert_p animated:YES completion:^(void){
-		dispatch_after(0, dispatch_get_main_queue(), ^{
+	[ root_view_controller presentViewController:alert_p animated:/*YES*/NO completion:^(void){
+		/* dispatch_after(0, */
+		dispatch_async( dispatch_get_main_queue(), ^{
 			if( alert_p == busy_alert_p ){
 				resume_quip(DEFAULT_QSP_ARG);
 			}
@@ -1258,27 +1259,34 @@ int n_pushed_panels(void)
 	return (int) a.count;
 }
 
-// If we call push_nav after pop_nav, the pop_nav may not have taken effect yet!?
-
-void push_nav(QSP_ARG_DECL  Gen_Win *gwp)
+static int controller_already_pushed(Gen_Win *gwp)
 {
-	// Make sure that this has not been pushed already by scanning the stack
-
 	NSArray *a = [ root_view_controller viewControllers];
-//fprintf(stderr,"push_nav:  root view controller has %lu view controllers\n",(unsigned long)a.count);
+//fprintf(stderr,"conroller_already_pushed:  root view controller has %lu view controllers\n",(unsigned long)a.count);
 	int i;
-//fprintf(stderr,"push_nav %s BEGIN\n",GW_NAME(gwp));
 	for(i=0;i<a.count;i++){
 		UIViewController *vc;
 		vc = [a objectAtIndex:i];
 		if( vc == GW_VC(gwp) ){
-			sprintf(DEFAULT_ERROR_STRING,
-	"push_nav %s:  panel already pushed!?",GW_NAME(gwp));
-			advise(DEFAULT_ERROR_STRING);
-			return;
+			return 1;
 		}
 	}
+	return 0;
+}
 
+// If we call push_nav after pop_nav, the pop_nav may not have taken effect yet!?
+
+void push_nav(QSP_ARG_DECL  Gen_Win *gwp)
+{
+//fprintf(stderr,"push_nav %s BEGIN\n",GW_NAME(gwp));
+
+	// Make sure that this has not been pushed already by scanning the stack
+	if( controller_already_pushed(gwp) ){
+		sprintf(DEFAULT_ERROR_STRING,
+			"push_nav %s:  panel already pushed!?",GW_NAME(gwp));
+		advise(DEFAULT_ERROR_STRING);
+		return;
+	}
 	// The current view controller should be a table controller...
 
 	// Is this next comment still valid?  I don't think so...
@@ -1355,8 +1363,12 @@ fprintf(stderr,"Genwin %s has an unknown view controller type!?\n",GW_NAME(gwp))
 	// perhaps the solution to this is the UINavigationControllerDelegate
 	// methods ???
 
+	// changed animated to NO for snappier performance with experiments.
+	// Maybe should make this a user-settable property???
+
+	// This pushed the controller!
 	[ root_view_controller
-		pushViewController:GW_VC(gwp) animated:YES];
+		pushViewController:GW_VC(gwp) animated:/*YES*/NO];
 
 	// push the screen object context too, so that we will
 	// be able to look up widgets in other places,
@@ -1413,10 +1425,11 @@ void pop_nav(QSP_ARG_DECL int n_levels)
 		}
 		UIViewController *target_vc;
 		target_vc = a[a.count-n_levels-1];
-		[ root_view_controller popToViewController:target_vc animated:YES ];
+		// Changed to NO for snappier performance in experiments
+		[ root_view_controller popToViewController:target_vc animated:/*YES*/NO ];
 	} else {
 	/* qvc = (quipViewController *) */
-		[ root_view_controller popViewControllerAnimated:YES
+		[ root_view_controller popViewControllerAnimated:/*YES*/NO
 			checkOrientation:[old_vc didBlockAutorotation]
 			];
 	}
@@ -1649,6 +1662,8 @@ static QUIP_ALERT_OBJ_TYPE *create_alert_with_one_button(const char *type, const
 	return alert;
 }
 
+// BUG we would like to be able to customize the button labels?
+
 static QUIP_ALERT_OBJ_TYPE *create_alert_with_two_buttons(const char *type, const char *msg)
 {
 	QUIP_ALERT_OBJ_TYPE *alert;
@@ -1671,6 +1686,7 @@ static QUIP_ALERT_OBJ_TYPE *create_alert_with_two_buttons(const char *type, cons
 		actionWithTitle:@"Cancel"
 		style:UIAlertActionStyleDefault
 		handler:^(UIAlertAction * action) {
+			[alert dismissViewControllerAnimated:YES completion:nil];
 				confirmation_alert_dismissal_actions(alert,0);
 		}
 		];
@@ -1717,11 +1733,13 @@ static void present_generic_alert(QSP_ARG_DECL  const char *type, const char *ms
 static void generic_alert(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	if( busy_alert_p != NULL ) {
+fprintf(stderr,"generic_alert:  a busy alert is being displayed, will defer...\n");
 		suspend__busy();
 		// relinquish control and come back later
 		defer_alert(type,msg);
 		suspend_quip_interpreter();
 	} else {
+fprintf(stderr,"generic_alert:  calling present_generic_alert...\n");
 		present_generic_alert(QSP_ARG  type, msg);
 	}
 }
@@ -1839,7 +1857,8 @@ static void dismiss_busy_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
 	[root_view_controller dismissViewControllerAnimated:YES completion:^(void)
 		{
-			dispatch_after(0, dispatch_get_main_queue(), ^{
+			/*dispatch_after(0,*/
+			dispatch_async( dispatch_get_main_queue(), ^{
 				shown_alert_p = NULL;
 				if( ! check_deferred_alert() ){
 					busy_dismissal_checks(a);

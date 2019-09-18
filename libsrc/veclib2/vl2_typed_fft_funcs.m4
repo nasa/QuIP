@@ -605,7 +605,7 @@ dnl	the space before the opening paren is important!!!
 	cbot->im = (std_type) B0;	// shouldn_t this be zero???
 	for(i=1;i<len/2;i++){
 		cbot+=dst_inc;
-		cbot->im *= _sinfact[i];	// rvfft
+		cbot->im *= _sinfact[i];	// rvfft_v1
 	}
 
 	/* now make it look like the correct answer */
@@ -618,7 +618,7 @@ dnl	the space before the opening paren is important!!!
 	ctop->im = cbot->im = 0.0;
 
 	RECOMBINE(dst_inc)	// in-place
-}
+} // rvfft_v1
 
 dnl	Alternate implementation based on TI documentation
 dnl
@@ -891,7 +891,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		op += 2*dst_inc;
 	}
 	/* done */
-}
+}	// rvift_v1
 
 // Alternate implementation based on TI white paper
 // The forward transform seems to have more numerical error
@@ -1042,6 +1042,8 @@ void HOST_TYPED_CALL_NAME_CPX(vift,type_code)( HOST_CALL_ARG_DECLS )
 }
 
 
+// this used to be hard-coded with rvfft_v1 - is v2 OK?
+
 void HOST_TYPED_CALL_NAME_REAL(vfft,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
@@ -1052,12 +1054,12 @@ void HOST_TYPED_CALL_NAME_REAL(vfft,type_code)( HOST_CALL_ARG_DECLS )
 	SET_FFT_SRC( fap, (std_type *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
 	SET_FFT_DST( fap, (std_cpx *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 
-	XFER_FFT_SINC(rvfft_v1,fap,OA_SRC1(oap))
-	XFER_FFT_DINC(rvfft_v1,fap,OA_DEST(oap))
+	XFER_FFT_SINC(rvfft,fap,OA_SRC1(oap))
+	XFER_FFT_DINC(rvfft,fap,OA_DEST(oap))
 
 	SET_FFT_LEN( fap, OBJ_N_TYPE_ELTS( OA_SRC1(oap) ) );
 	SET_FFT_ISI( fap, FWD_FFT );
-	PF_FFT_CALL_NAME(rvfft_v1)( fap );
+	PF_FFT_CALL_NAME(rvfft)( fap );
 }
 
 void HOST_TYPED_CALL_NAME_REAL(vift,type_code)( HOST_CALL_ARG_DECLS )
@@ -1068,12 +1070,12 @@ void HOST_TYPED_CALL_NAME_REAL(vift,type_code)( HOST_CALL_ARG_DECLS )
 	SET_FFT_SRC( fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
 	SET_FFT_DST( fap, (std_type *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 
-	XFER_FFT_SINC(rvift_v1,fap,OA_SRC1(oap))
-	XFER_FFT_DINC(rvift_v1,fap,OA_DEST(oap))
+	XFER_FFT_SINC(rvift,fap,OA_SRC1(oap))
+	XFER_FFT_DINC(rvift,fap,OA_DEST(oap))
 
 	SET_FFT_LEN( fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );
 	SET_FFT_ISI( fap, INV_FFT );
-	PF_FFT_CALL_NAME(rvift_v1)( fap );
+	PF_FFT_CALL_NAME(rvift)( fap );
 }
 
 /* Read 2-D fourier transform.
@@ -1293,10 +1295,10 @@ void HOST_TYPED_CALL_NAME_REAL(fftrows,type_code)(HOST_CALL_ARG_DECLS)
 
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 	if( n_processors > 1 ){
-		MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft_v1),std_type,std_cpx)
+		MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),std_type,std_cpx)
 	} else
 ') dnl endif /* N_PROCESSORS > 1 */
-		ROW_LOOP( OA_SRC1(oap), PF_FFT_CALL_NAME(rvfft_v1),std_type,std_cpx )
+		ROW_LOOP( OA_SRC1(oap), PF_FFT_CALL_NAME(rvfft),std_type,std_cpx )
 
 }
 
@@ -1305,7 +1307,7 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 // and N rows (for a square NxN image).  This seems to be compatible with cuFFT.  However, clFFT
 // appears to do the opposite!?  Therefore, it would be a kindness to provide a column-first version...
 
-static void HOST_TYPED_CALL_NAME_REAL(fft2d_1,type_code)(HOST_CALL_ARG_DECLS)
+static void HOST_TYPED_CALL_NAME_REAL(fft2d_real_rows,type_code)(HOST_CALL_ARG_DECLS)
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -1327,14 +1329,14 @@ dnl	//SET_FFT_DINC( fap, OBJ_PXL_INC( OA_DEST(oap) )/2 );
 
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
-			MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft_v1),std_type,std_cpx)
+			MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),std_type,std_cpx)
 		} else
 ') dnl endif /* N_PROCESSORS > 1 */
-			ROW_LOOP( OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft_v1),
+			ROW_LOOP( OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),
 				std_type,std_cpx)
 	}
 
-dnl fprintf(stderr,"rvfft2d_1:  row loop done\\n");
+dnl fprintf(stderr,"rvfft2d_real_rows:  row loop done\\n");
 
 	/* Now transform the columns */
 	/* BUG wrong if columns == 1 */
@@ -1354,9 +1356,9 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 ') dnl endif /* N_PROCESSORS > 1 */
 		COLUMN_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(cvfft))
 	}
-}
+}	// fft2d_real_rows
 
-static void HOST_TYPED_CALL_NAME_REAL(fft2d_2,type_code)(HOST_CALL_ARG_DECLS)
+static void HOST_TYPED_CALL_NAME_REAL(fft2d_real_cols,type_code)(HOST_CALL_ARG_DECLS)
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -1378,10 +1380,10 @@ static void HOST_TYPED_CALL_NAME_REAL(fft2d_2,type_code)(HOST_CALL_ARG_DECLS)
 
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
-			MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft_v1),std_type,std_cpx)
+			MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),std_type,std_cpx)
 		} else
 ') dnl endif /* N_PROCESSORS > 1 */
-			COL_LOOP_2( OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft_v1),
+			COL_LOOP_2( OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),
 				std_type,std_cpx)
 	}
 
@@ -1402,18 +1404,18 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		//COLUMN_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(cvfft))
 		ROW_LOOP_2(OA_DEST(oap),PF_FFT_CALL_NAME(cvfft))
 	}
-}
+} // fft2d_real_cols
 
 void HOST_TYPED_CALL_NAME_REAL(fft2d,type_code)(HOST_CALL_ARG_DECLS)
 {
 	int n;
 
 	switch( (n=real_fft_type(DEFAULT_QSP_ARG  OA_SRC1(oap),OA_DEST(oap),"rfft2d")) ){
-		case 1:
-			HOST_TYPED_CALL_NAME_REAL(fft2d_1,type_code)(HOST_CALL_ARGS);
+		case FFT2D_REAL_XFORM_ROWS:
+			HOST_TYPED_CALL_NAME_REAL(fft2d_real_rows,type_code)(HOST_CALL_ARGS);
 			break;
-		case 2:
-			HOST_TYPED_CALL_NAME_REAL(fft2d_2,type_code)(HOST_CALL_ARGS);
+		case FFT2D_REAL_XFORM_COLS:
+			HOST_TYPED_CALL_NAME_REAL(fft2d_real_cols,type_code)(HOST_CALL_ARGS);
 			break;
 		// default case is error in inputs, but reported elsewhere...
 	}
@@ -1457,10 +1459,10 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
-			MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),std_cpx,std_type)
+			MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),std_cpx,std_type)
 		} else
 ') dnl endif /* N_PROCESSORS > 1 */
-			ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),
+			ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),
 				std_cpx,std_type)
 	}
 }
@@ -1505,12 +1507,12 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
-			MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),std_cpx,std_type)
+			MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),std_cpx,std_type)
 		} else
 ') dnl endif /* N_PROCESSORS > 1 */
-	/*		ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),
+	/*		ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),
 				std_cpx,std_type) */
-			COL_LOOP_2(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),
+			COL_LOOP_2(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),
 				std_cpx,std_type)
 	}
 }
@@ -1548,11 +1550,11 @@ void HOST_TYPED_CALL_NAME_REAL(iftrows,type_code)( HOST_CALL_ARG_DECLS )
 
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 	if( n_processors > 1 ){
-		MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),std_cpx,std_type)
+		MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),std_cpx,std_type)
 		return;
 	} else
 ') dnl endif /* N_PROCESSORS > 1 */
-		ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift_v1),std_cpx,std_type)
+		ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),std_cpx,std_type)
 }
 
 

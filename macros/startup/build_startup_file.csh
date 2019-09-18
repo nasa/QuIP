@@ -169,16 +169,17 @@ else if( $flavor == csf ) then
 
   # csf_login has to come after demo/login because there are defaults overridden...
   set subdir=$extra_macro_dir/csf
-  set file_list=( csf_login csf gabor calib arrows csf_cam sync_files csf_admin csf_util psych )
+  set file_list=( csf_login csf gabor staircase_gabor sound calib arrows csf_cam sync_files csf_admin csf_util psych )
   source add_files.csh
 
   set subdir=ios
   set file_list=( utilz cache console )
   source add_files.csh
 
-  set subdir=$extra_macro_dir/pvt
-  set file_list=( pvt dashboard pvt_params pvt_dist pvt_plot )
-  source add_files.csh
+  # why put PVT stuff in CSF???
+  #set subdir=$extra_macro_dir/pvt
+  #set file_list=( pvt dashboard pvt_params pvt_dist pvt_plot )
+  #source add_files.csh
 
   set subdir=data
   set file_list=( string_edit set_sizes )

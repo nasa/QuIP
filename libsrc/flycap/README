@@ -19,3 +19,12 @@ _____________________________________
 New users on the system don't see cameras in flycap!?
 What needs to be done???
 
+______________________
+
+On the ubuntu container, these commands needed to be issued to see the cameras:
+
+sudo chgrp flirimaging /dev/bus/usb/010
+sudo chgrp flirimaging /dev/bus/usb/010/*
+sudo chgrp video /dev/fw?
+sudo chmod 660 /dev/fw?
+

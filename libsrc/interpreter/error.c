@@ -814,6 +814,9 @@ void _tell_sys_error(QSP_ARG_DECL  const char* s)
 	advise(ERROR_STRING);
 }
 
+// Print the line numbers of all the files in the query stack...
+// More-or-less an interpreter stack trace.
+
 static void tell_input_location( SINGLE_QSP_ARG_DECL )
 {
 	int n_levels_to_print;
@@ -829,15 +832,9 @@ static void tell_input_location( SINGLE_QSP_ARG_DECL )
 	 * stack...
 	 */
 
-	/* OLD:  Only print the filename if it's not the console input */
-	// BUT it could be a command line redirect, so print it anyway
-	//filename=query_filename(SINGLE_QSP_ARG);
-	//if( !strcmp(filename,"-") ){
-	//	return;
-	//}
-
+	// We suppress redundant levels (loops, evals...)
 	level_tbl = get_levels_to_print(QSP_ARG  &n_levels_to_print);
-	print_qs_levels(QSP_ARG  level_tbl, n_levels_to_print);
+	report_qs_line_numbers(QSP_ARG  level_tbl, n_levels_to_print);
 	givbuf(level_tbl);
 }
 

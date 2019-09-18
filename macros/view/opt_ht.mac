@@ -1,8 +1,14 @@
+If !var_exists(rdp_mac_loaded)
+  'advise "opt_ht.mac requires rdp.mac, loading ..." < $macro_dir/compute/rdp.mac'
+
+# easy usage:
+#	Opt_HT_Init target
+#	Compute_Opt_HT target source
 
 # dependencies on these files:
-#< $macro_dir/view/def_viewers.scr
-#< $macro_dir/war/rdp.mac
-#< $macro_dir/war/conv.mac
+# view/def_viewers.scr
+# compute/rdp.mac
+# compute/conv.mac
 
 #< disp.macs
 
@@ -40,9 +46,10 @@ Vector indices $total_ht_pixels 1 int
 
 Define Opt_HT_Init 1 prototype
 If obj_exists('ht_input')&&ncols('ht_input')==ncols('$1')&&nrows('ht_input')==nrows('$1')
-  exit_macro
+  "advise 'Opt_HT_Init:  already initialized for requested size, doing nothing.' exit_macro"
 If obj_exists('ht_input')
-  "Delete_Image ht_input Delete_Image halftone Delete_Image last_halftone Delete_Image zoombuf"
+  "advise 'Opt_HT_Init:  deleting old helper images...' \
+   Delete_Image ht_input Delete_Image halftone Delete_Image last_halftone Delete_Image zoombuf Delete_Image indices"
 
 Set_Sizes ncols('$1') nrows('$1')
 Float_Image ht_input
@@ -50,14 +57,15 @@ Float_Image halftone
 Float_Image last_halftone
 Float_Image zoombuf
 
-Assign mid floor($fsize/2)
+Assign total_ht_pixels ncols(halftone)*nrows(halftone)
+Vector indices $total_ht_pixels 1 int
+
 If obj_exists('filter') exit_macro
 
+Assign mid floor($fsize/2)
 Image filter $fsize $fsize 1 float
 Scalar maxscal 1 float
 Scalar nmax 1 int
-Assign total_ht_pixels ncols(halftone)*nrows(halftone)
-Vector indices $total_ht_pixels 1 int
 .
 
 Define Msgs_On 0

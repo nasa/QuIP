@@ -1,0 +1,19 @@
+max_warnings 3
+
+< $macro_dir/system/mark_time.mac
+< utils.mac
+< flea3.mac
+
+Set cam0 Flea3_FL3-U3-13Y3M
+
+Init_Cameras
+
+Init_Flea3
+
+Test_Grab $cam0
+
+advise "Ready to exit program..."
+Pause
+exit
+
+

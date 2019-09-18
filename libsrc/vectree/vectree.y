@@ -23,7 +23,7 @@
 #include "veclib/vec_func.h"
 #include "warn.h"
 #include "vector_parser_data.h"
-//#include "query_stack.h"	// BUG?
+
 #define QLEVEL	qs_level(SINGLE_QSP_ARG)
 
 #include "vectree.h"
@@ -108,7 +108,8 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp);
 
 int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 
-#define YY_ERR_STR	ERROR_STRING
+// Can't define this to ERROR_STRING, because ERROR_STRING gets overwritten in yyerror...
+#define YY_ERR_STR	VECTOR_PARSER_ERROR_STRING
 
 %}
 
@@ -139,6 +140,7 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 // We have 22 shift/reduce conflicts, this line suppresses the
 // message reporting that when we run bison, but will generate
 // an error if the number changes.
+// Now the number is at 25!?
 
 /* %expect 22 */
 
@@ -354,16 +356,18 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 
 %type <enp> objref
 /* %type <enp> scalref */
-%type <enp> lvalue
+// %type <enp> lvalue
 %type <enp> pointer
 %type <enp> func_ptr
+//%type <enp> func_ptr_deref
 %type <enp> str_ptr
 %type <enp> str_ptr_arg
 %type <enp> subsamp_spec
 
 %type <enp> string
 %type <enp> string_list
-%type <enp> string_arg
+%type <enp> string_expr
+%type <enp> string_ref
 %type <enp> printable
 %type <enp> print_list
 %type <enp> mixed_list
@@ -380,6 +384,7 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 %type <enp> decl_item
 
 %type <enp> expression
+%type <enp> condition
 
 %type <prec_p> data_type
 %type <prec_p> precision
@@ -402,6 +407,8 @@ pointer		: PTRNAME
 			{
 			$$=node0(T_POINTER);
 			SET_VN_STRING($$, savestr(ID_NAME($1)));
+fprintf(stderr,"PTRNAME recognized, created T_POINTER node\n");
+dump_tree($$);
 			}
 		;
 
@@ -434,7 +441,11 @@ subsamp_spec	:	expression ':' expression ':' expression
 //		;
 		*/
 
-objref		: OBJNAME
+// An objref is a reference to an actual object, that can be used as an lvalue
+
+objref		: '(' objref ')'
+			{ $$ = $2; }
+		| OBJNAME
 			{
 			if( OBJ_FLAGS($1) & DT_STATIC ){
 				$$=node0(T_STATIC_OBJ);
@@ -453,6 +464,12 @@ objref		: OBJNAME
 			}
 		| '*' pointer %prec UNARY
 			{
+#ifdef QUIP_DEBUG
+if( debug & parser_debug ){
+sprintf(ERROR_STRING,"parser recognized pointer dereference");
+advise(ERROR_STRING);
+}
+#endif /* QUIP_DEBUG */
 			$$ = node1(T_DEREFERENCE,$2);
 			}
 		| OBJ_OF '(' string_list ')'
@@ -512,14 +529,8 @@ expression	: FIX_SIZE '(' expression ')'
 			{
 			$$=node1(T_FIX_SIZE,$3);
 			}
-		/*
-		| pointer {
-			$$=NULL;
-			sprintf(YY_ERR_STR,"Need to dereference pointer \"%s\"",VN_STRING($1));
-			yyerror(THIS_QSP,  YY_ERR_STR);
-			}
-			*/
-		| string_arg
+		| objref
+		| string_expr
 		| '(' data_type ')' expression %prec UNARY
 			{
 			$$ = node1(T_TYPECAST,$4);
@@ -560,54 +571,6 @@ expression	: FIX_SIZE '(' expression ')'
 //			SET_VN_STRING($$, savestr(ID_NAME($1)));
 //			}
 			*/
-		| expression LOG_EQ expression {
-			$$=node2(T_BOOL_EQ,$1,$3);
-			}
-		| expression '<' expression {
-			$$ = node2(T_BOOL_LT,$1,$3);
-			}
-		| expression '>' expression {
-			$$=node2(T_BOOL_GT,$1,$3);
-			}
-		| expression GE expression {
-			$$=node2(T_BOOL_GE,$1,$3);
-			}
-		| expression LE expression {
-			$$=node2(T_BOOL_LE,$1,$3);
-			}
-		| expression NE expression {
-			$$=node2(T_BOOL_NE,$1,$3);
-			}
-		| expression LOGAND expression {
-			$$=node2(T_BOOL_AND,$1,$3);
-			}
-		| expression LOGOR expression {
-			$$=node2(T_BOOL_OR,$1,$3);
-			}
-		| expression LOGXOR expression {
-			$$=node2(T_BOOL_XOR,$1,$3);
-			}
-		| '!' expression {
-			$$=node1(T_BOOL_NOT,$2);
-			}
-		| pointer NE ref_arg {
-			Vec_Expr_Node *enp;
-			enp=node2(T_BOOL_PTREQ,$1,$3);
-			$$=node1(T_BOOL_NOT,enp);
-			}
-		// We'd like to have ref_arg == ref_arg, but we can't figure out
-		// how to get rid of the parsing ambiguity when we see:
-		//	& objref ==
-		//
-		// arising from the rules:
-		//	ref_arg -> & objref
-		//	expression -> expression == expression
-		//	expression -> objref
-
-		| pointer LOG_EQ ref_arg {
-			$$=node2(T_BOOL_PTREQ,$1,$3);
-			}
-
 		| MATH0_FUNC '(' ')' 
 			{
 			$$=node0(T_MATH0_FN);
@@ -657,11 +620,7 @@ expression	: FIX_SIZE '(' expression ')'
 			SET_VN_FUNC_PTR($$,$1);
 			}
 
-		| SIZE_FUNC '(' string_arg ')' {
-			$$=node1(T_SIZE_FN,$3);
-			SET_VN_FUNC_PTR($$,$1);
-			}
-		| SIZE_FUNC '(' objref ')' {
+		| SIZE_FUNC '(' string_ref ')' {
 			$$=node1(T_SIZE_FN,$3);
 			SET_VN_FUNC_PTR($$,$1);
 			}
@@ -682,35 +641,35 @@ expression	: FIX_SIZE '(' expression ')'
 			$$=node1(T_SUM,$3);
 			}
 
-		| FILE_EXISTS '(' string_arg ')'
+		| FILE_EXISTS '(' string_ref ')'
 			{
 			$$=node1(T_FILE_EXISTS,$3);
 			}
-		| STR1_FUNC '(' string_arg ')'
+		| STR1_FUNC '(' string_ref ')'
 			{
 			$$=node1(T_STR1_FN,$3);
 			SET_VN_FUNC_PTR($$,$1);
 			}
-		| STR2_FUNC '(' string_arg ',' string_arg ')'
+		| STR2_FUNC '(' string_ref ',' string_ref ')'
 			{
 			$$=node2(T_STR2_FN,$3,$5);
 			SET_VN_FUNC_PTR($$,$1);
 			}
 		// What are the 3-arg string functions???
-		| STR3_FUNC '(' string_arg ',' string_arg ')'
+		| STR3_FUNC '(' string_ref ',' string_ref ')'
 			{
 			$$=node2(T_STR2_FN,$3,$5);
 			SET_VN_FUNC_PTR($$,$1);
 			}
 		// string-valued functions, toupper, tolower
-		| STRV_FUNC '(' string_arg ')'
+		| STRV_FUNC '(' string_ref ')'
 			{
 			$$=node1(T_STRV_FN,$3);
 			SET_VN_FUNC_PTR($$,$1);
 			}
 		// char arg functions, isupper, islower, etc
 		// output is a bitmap...
-		| CHAR_FUNC '(' string_arg ')'
+		| CHAR_FUNC '(' string_ref ')'
 			{
 			$$=node1(T_CHAR_FN,$3);
 			SET_VN_FUNC_PTR($$,$1);
@@ -792,6 +751,8 @@ fprintf(stderr,"vectree.y:  expression, setting VN_SUBRT\n");
 			SET_VN_SIZCH_SHAPE($$, ALLOC_SHAPE );
 			}
 		| assignment
+		/* BUG - can't we handle these native functions in a generic way??? */
+		/* maybe not, because the args are different for each... */
 		| WRAP '(' expression ')' {
 			$$=node1(T_WRAP,$3);
 			}
@@ -813,7 +774,7 @@ fprintf(stderr,"vectree.y:  expression, setting VN_SUBRT\n");
 			$$=node1(T_REDUCE,$3);
 			SET_VN_SIZCH_SHAPE($$, ALLOC_SHAPE );
 			}
-		| LOAD '(' string_arg ')'
+		| LOAD '(' string_ref ')'
 			{ $$=node1(T_LOAD,$3); }
 		| RAMP '(' expression ',' expression ',' expression')' {
 				$$=node3(T_RAMP,$3,$5,$7);
@@ -823,6 +784,51 @@ fprintf(stderr,"vectree.y:  expression, setting VN_SUBRT\n");
 			$$ = node3(T_MAX_TIMES,$3,$5,$7);
 			}
 
+		| condition
+		;
+
+condition	: expression '<' expression {
+			$$ = node2(T_BOOL_LT,$1,$3);
+			}
+		| expression '>' expression {
+			$$=node2(T_BOOL_GT,$1,$3);
+			}
+		| expression GE expression {
+			$$=node2(T_BOOL_GE,$1,$3);
+			}
+		| expression LE expression {
+			$$=node2(T_BOOL_LE,$1,$3);
+			}
+		| expression NE expression {
+			$$=node2(T_BOOL_NE,$1,$3);
+			}
+		| expression LOG_EQ expression {
+			$$=node2(T_BOOL_EQ,$1,$3);
+			}
+		/* BUG can't put ref_arg first because of parser ambiguity!? */
+		| pointer NE ref_arg {
+			Vec_Expr_Node *enp;
+			enp=node2(T_BOOL_PTREQ,$1,$3);
+			$$=node1(T_BOOL_NOT,enp);
+			}
+		| pointer LOG_EQ ref_arg {
+			$$=node2(T_BOOL_PTREQ,$1,$3);
+			}
+		| expression LOG_EQ pointer {
+			$$=node2(T_BOOL_PTREQ,$1,$3);
+			}
+		| expression LOGAND expression {
+			$$=node2(T_BOOL_AND,$1,$3);
+			}
+		| expression LOGOR expression {
+			$$=node2(T_BOOL_OR,$1,$3);
+			}
+		| expression LOGXOR expression {
+			$$=node2(T_BOOL_XOR,$1,$3);
+			}
+		| '!' expression {
+			$$=node1(T_BOOL_NOT,$2);
+			}
 		;
 
 func_arg	: expression
@@ -863,7 +869,6 @@ func_args	: func_arg
 void_call	: FUNCNAME '(' func_args ')'
 			{
 			$$=node1(T_CALLFUNC,$3);
-fprintf(stderr,"vectree.y:  void_call, setting VN_SUBRT\n");
 			SET_VN_SUBRT($$, $1);
 			/* check to see that this subrt is void! */
 			if( SR_PREC_CODE($1) != PREC_VOID ){
@@ -937,66 +942,62 @@ str_assgn	: str_ptr '=' print_list {
 // Perhaps we should define some rules for bad assignments,
 // so that we can give a more helpful error msg than YYERROR!?
 
-lvalue		: objref
-		/* | scalref */
-		;
-
-assignment	: lvalue '=' expression {
+assignment	: objref '=' expression {
 			$$=node2(T_ASSIGN,$1,$3);
 			}
-		| lvalue PLUS_PLUS { $$=node1(T_POSTINC,$1); }
-		| PLUS_PLUS lvalue { $$=node1(T_PREINC,$2); }
-		| MINUS_MINUS lvalue { $$=node1(T_PREDEC,$2); }
-		| lvalue MINUS_MINUS { $$=node1(T_POSTDEC,$1); }
-		| lvalue PLUS_EQ expression {
+		| objref PLUS_PLUS { $$=node1(T_POSTINC,$1); }
+		| PLUS_PLUS objref { $$=node1(T_PREINC,$2); }
+		| MINUS_MINUS objref { $$=node1(T_PREDEC,$2); }
+		| objref MINUS_MINUS { $$=node1(T_POSTDEC,$1); }
+		| objref PLUS_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=node2(T_PLUS,$1,$3);
 			dup_enp=dup_tree($1);
 			$$=node2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| lvalue TIMES_EQ expression {
+		| objref TIMES_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=node2(T_TIMES,$1,$3);
 			dup_enp=dup_tree($1);
 			$$=node2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| lvalue MINUS_EQ expression {
+		| objref MINUS_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=node2(T_MINUS,$1,$3);
 			dup_enp=dup_tree($1);
 			$$=node2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| lvalue DIV_EQ expression {
+		| objref DIV_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=node2(T_DIVIDE,$1,$3);
 			dup_enp=dup_tree($1);
 			$$=node2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| lvalue AND_EQ expression {
+		| objref AND_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=node2(T_BITAND,$1,$3);
 			dup_enp=dup_tree($1);
 			$$=node2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| lvalue OR_EQ expression {
+		| objref OR_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=node2(T_BITOR,$1,$3);
 			dup_enp=dup_tree($1);
 			$$=node2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| lvalue XOR_EQ expression {
+		| objref XOR_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=node2(T_BITXOR,$1,$3);
 			dup_enp=dup_tree($1);
 			$$=node2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| lvalue SHL_EQ expression {
+		| objref SHL_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=node2(T_BITLSHIFT,$1,$3);
 			dup_enp=dup_tree($1);
 			$$=node2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| lvalue SHR_EQ expression {
+		| objref SHR_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=node2(T_BITRSHIFT,$1,$3);
 			dup_enp=dup_tree($1);
@@ -1088,6 +1089,12 @@ stat_block	: '{' stat_list '}'
 
 new_func_decl	: NEWNAME '(' arg_decl_list ')'
 			{
+#ifdef QUIP_DEBUG
+if( debug & parser_debug ){
+sprintf(ERROR_STRING,"parser recognized new_func_decl");
+advise(ERROR_STRING);
+}
+#endif /* QUIP_DEBUG */
 			set_subrt_ctx($1);		/* when do we unset??? */
 			// We evaluate the declarations here so we can parse the body, but
 			// the declarations get interpreted a second time when we compile the nodes -
@@ -1304,9 +1311,9 @@ return_stat	: RETURN
 			}
 		;
 
-fileio_stat	:	SAVE '(' string_arg ',' expression ')'
+fileio_stat	:	SAVE '(' string_ref ',' expression ')'
 			{ $$=node2(T_SAVE,$3,$5); }
-		| FILETYPE '(' string_arg ')'
+		| FILETYPE '(' string_ref ')'
 			{ $$=node1(T_FILETYPE,$3); }
 		;
 
@@ -1382,7 +1389,7 @@ misc_stat	: STRCPY '(' str_ptr_arg ',' printable ')'
 			}
 
 
-		| SET_OUTPUT_FILE '(' string_arg ')'
+		| SET_OUTPUT_FILE '(' string_ref ')'
 			{ $$=node1(T_OUTPUT_FILE,$3); }
 
 		;
@@ -1796,8 +1803,8 @@ mixed_list	: mixed_item
 			{ $$=node2(T_MIXED_LIST,$1,$3); }
 		;
 
-string_list	: string_arg
-		| string_list ',' string_arg
+string_list	: string_ref
+		| string_list ',' string_ref
 			{ $$=node2(T_STRING_LIST,$1,$3); }
 		;
 
@@ -1817,14 +1824,15 @@ string		: LEX_STRING
 printable	: expression
 		;
 
-// What is a string_arg?
-
-string_arg	: string
+string_expr	: string
 		| str_ptr
 		| str_assgn
-		| objref
 		| '(' str_assgn ')' { $$ = $2; }
 		| '(' print_list ')' { $$ = $2; }
+		;
+
+string_ref	: string_expr
+		| objref
 		;
 
 // Error Handling
@@ -2168,12 +2176,11 @@ static void update_current_input_file(Query_Stack *qsp)
 
 	/* if the name now is different from the remembered name, change it! */
 	if( strcmp(CURRENT_FILENAME,SR_STRING(CURR_INFILE)) ){
-		// This is a problem - we don't want to release the old string, because
+		// We don't want to release the old strin if any
 		// existing nodes point to it.  We don't want them to have private copies,
-		// either, because there would be too many.  We compromise here by not
-		// releasing the old string, but not remembering it either.  Thus we may
-		// end up with a few more copies later, if we have nested file inclusion...
-		// rls_str(CURR_INFILE);
+		// either, because there would be too many.  Therefore,
+		// we keep a count of the number of references to the string,
+		// and only release when it is 0.
 		if( SR_COUNT(CURR_INFILE) == 0 )
 			rls_stringref(CURR_INFILE);
 		CURR_INFILE = save_stringref(CURRENT_FILENAME);
@@ -2187,6 +2194,35 @@ static void read_next_statement(SINGLE_QSP_ARG_DECL)
 	copy_string(YY_WORD_BUF,NAMEOF("statement"));
 	YY_CP = sb_buffer(YY_WORD_BUF);
 }
+
+#ifdef QUIP_DEBUG
+static char *name_for_token(int tok)
+{
+	switch(tok){
+		case NATIVE_FUNC_NAME:
+			return "native_func_name";
+		case FUNCNAME:
+			return "funcname";
+		case PTRNAME:
+			return "ptrname";
+		case FUNCPTRNAME:
+			return "funcptrname";
+		case OBJNAME:
+			return "objname";
+		case LABELNAME:
+			return "labelname";
+		case NEWNAME:
+			return "newname";
+		case FLOAT:
+			return "float";
+		case VOID_TYPE:
+			return "void_type";
+		default:
+			return "no case for this token value in name_for_token, check vectree.c";
+	}
+	return "SHOULD NEVER HAPPEN!?";
+}
+#endif // QUIP_DEBUG
 
 int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 {
@@ -2370,7 +2406,7 @@ if( debug & parser_debug ){ advise("yylex returning CHAR_CONST"); }
 		if( tok == NEXT_TOKEN ) goto nexttok;
 		else {
 #ifdef QUIP_DEBUG
-if( debug & parser_debug ){ sprintf(ERROR_STRING,"yylex returning token %d",tok); advise(ERROR_STRING); }
+if( debug & parser_debug ){ sprintf(ERROR_STRING,"yylex returning token %d (%s)",tok,name_for_token(tok)); advise(ERROR_STRING); }
 #endif /* QUIP_DEBUG */
 			return(tok);
 		}
@@ -2726,14 +2762,19 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 	stat=yyparse(THIS_QSP);
 
 	if( TOP_NODE != NULL )	/* successful parsing */
-		{
+	{
 		if( dumpit ) {
 			print_shape_key(SINGLE_QSP_ARG);
 			dump_tree(TOP_NODE);
 		}
 		// What are we releasing?  the immediately
 		// executed statements?
+		//
+		// This can be a problem if they are declarations of objects that retain
+		// a pointer to their declaration nodes!?!?
+//fprintf(stderr,"parse_stuff calling check_release...\n");
 		check_release(TOP_NODE);
+//fprintf(stderr,"parse_stuff back from check_release...\n");
 	} else {
 		// Do we get here on a syntax error???
 		warn("Unsuccessfully parsed statement (top_node=NULL");

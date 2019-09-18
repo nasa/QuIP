@@ -8,12 +8,6 @@
 
 #include "nports_api.h"
 
-#ifdef FOOBAR
-#ifdef HAVE_TIFF
-#include <tiffio.h>
-#endif /* HAVE_TIFF */
-#endif // FOOBAR
-
 // We used to have some of these ifdef'd, but
 // maybe it's better for the values to be constant?
 
@@ -120,9 +114,13 @@ struct image_file {
 	Filetype *	if_ftp;
 	void *		if_hdr_p;	/* pointer to header */
 					/* an Img_File_Hdr */
-	short		if_flags;
+	short		if_flags;	// 16 bits
 	Data_Obj *	if_dp;		/* to remember width, etc */
 	const char *	if_pathname;	/* full pathname */
+
+	void *		if_extra_p;	// filetype-specific extra information
+					// introduced to hold PNG file data offset...
+
 // BUG see png.c - we need to have an iOS version of this struct...
 //
 //#ifdef BUILD_FOR_IOS
@@ -144,6 +142,9 @@ struct image_file {
 #endif /* HAVE_TIFF */
 
 /* flag values for ifp's & filetype's */
+//
+// There are 16 bits in a short, so we can take a bit or two
+// for filetype-specific use...
 
 #define FILE_READ	1
 #define FILE_WRITE	2
@@ -158,8 +159,13 @@ struct image_file {
 
 #define NO_AUTO_CLOSE	256
 
+#define PNG_FRAMES_COUNTED_MASK	512
+
 #define IS_WRITABLE(ifp)	(ifp->if_flags & FILE_WRITE)
 #define IS_READABLE(ifp)	(ifp->if_flags & FILE_READ)
+
+#define PNG_FRAMES_COUNTED(ifp)	(ifp->if_flags & PNG_FRAMES_COUNTED_MASK)
+#define NOTE_PNG_FRAMES_COUNTED(ifp)	{ifp->if_flags |= PNG_FRAMES_COUNTED_MASK;}
 
 #define CAN_READ_FORMAT		FILE_READ
 #define CAN_WRITE_FORMAT	FILE_WRITE

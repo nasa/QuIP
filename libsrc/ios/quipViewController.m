@@ -185,17 +185,25 @@
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations
 {
-	if( qvc_flags & QVC_ALLOWS_AUTOROTATION )
+	if( qvc_flags & QVC_ALLOWS_AUTOROTATION ){
+//fprintf(stderr,"quipViewController.supportedInterfaceOrientations will return ALL\n");
 		return UIInterfaceOrientationMaskAll;
-	else {
+	} else {
 		/* BUG - we should remember the orientation when
 		 * the view controller is created...
+		 * FIXME!!!
 		 */
 		qvc_flags |= QVC_BLOCKED_AUTOROTATION;
+//fprintf(stderr,"quipViewController.supportedInterfaceOrientations will return Portrait!?\n");
 		return UIInterfaceOrientationMaskPortrait;
 	}
 }
-
+/*
+ Deprecated
+ 
+ Override the supportedInterfaceOrientations and preferredInterfaceOrientationForPresentation methods instead.
+ */
+/*
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
 	if( qvc_flags & QVC_ALLOWS_AUTOROTATION )
@@ -205,6 +213,7 @@
 		return NO;
 	}
 }
+*/
 
 #endif // BUILD_FOR_IOS
 
@@ -223,6 +232,7 @@
 {
 	quipView *qv;
 
+//fprintf(stderr,"quipViewController.loadView creating a quipView\n");
 	qv = [[quipView alloc] initWithSize:_size];
 	SET_QV_QVC(qv,self);	// BUG?  needs to be a weak reference?
 	// set the background image
@@ -258,8 +268,12 @@
 	_size = size;
 
 #ifdef BUILD_FOR_IOS
-	//qvc_flags = QVC_ALLOWS_AUTOROTATION;
-	qvc_flags = 0;
+	// This was disable - why???  Was it to fix a problem with the Rutgers folks?
+	qvc_flags = QVC_ALLOWS_AUTOROTATION;
+
+//fprintf(stderr,"quipViewController.initWithSize:  NOT setting qvc_flags to allow auto-rotation!?\n");
+//	qvc_flags = 0;
+
 #endif // BUILD_FOR_IOS
 
 	// The view property is set by loadView

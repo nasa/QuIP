@@ -1240,6 +1240,9 @@ fi
 
 if test "x${use_spinnaker}" = xyes; then
   AC_SEARCH_LIBS([spinSystemGetInstance],[Spinnaker_C],[have_libspinnaker=yes],[have_libspinnaker=no])
+  if test "x${have_libspinnaker}" = xyes; then
+    AC_SEARCH_LIBS([spinVideoClose],[SpinVideo_C],[have_libspinvideo=yes],[have_libspinvideo=no])
+  fi
 fi
 
 if test "x${use_dc1394}" = xyes; then
@@ -2380,6 +2383,9 @@ fi
 
 if test "x${have_libspinnaker}" = xyes; then
   AC_DEFINE([HAVE_LIBSPINNAKER], 1, [Support for Point Grey Research cameras w/ libspinnaker])
+fi
+if test "x${have_libspinvideo}" = xyes; then
+  AC_DEFINE([HAVE_LIBSPINVIDEO], 1, [Support for Point Grey Research spin video library])
 fi
 
 if test "x${have_libdc1394}" = xyes; then

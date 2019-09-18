@@ -1,7 +1,7 @@
 # %Z% $RCSfile: dither.mac,v $ ver: $Revision: 1.5 $ $Date: 1999/04/08 15:36:51 $
 
 # depends on n_red_levels etc from disp.mac
-Start_File "$macro_dir/view/dither.mac"
+Start_File "dither.mac"
 
 Set n_red_levels	6
 Set n_green_levels	11
@@ -65,5 +65,5 @@ Define Binary_Dither 2 target source
 war image diffuse $1 $2 2 0 255 quit quit
 .
 
-Stop_File "$macro_dir/view/dither.mac"
+Stop_File "dither.mac"
 

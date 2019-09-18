@@ -6,7 +6,6 @@
 
 #include "quip_prot.h"
 #include "viewer.h"
-#include "quipImageView.h"
 
 // the_cap is a static global that holds the value of the current a/v session
 // used for camera capture

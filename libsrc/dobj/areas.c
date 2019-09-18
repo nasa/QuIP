@@ -81,6 +81,7 @@ void a_init(void)
 Data_Area *_default_data_area(SINGLE_QSP_ARG_DECL)
 {
 	if( curr_ap == NULL ) dataobj_init();
+	assert(curr_ap!=NULL);
 	return(curr_ap);
 }
 

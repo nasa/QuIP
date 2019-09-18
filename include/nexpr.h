@@ -104,8 +104,10 @@ extern int check_ios_interlaceable_func( double *retval, Quip_Function *funcp, S
 
 extern void _set_eval_szbl_func(QSP_ARG_DECL  Item * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) );
 extern void _set_eval_dobj_func(QSP_ARG_DECL  Data_Obj * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) );
-#define set_eval_szbl_func(func ) _set_eval_szbl_func(QSP_ARG  func )
-#define set_eval_dobj_func(func ) _set_eval_dobj_func(QSP_ARG  func )
+extern void _set_eval_cam_func(QSP_ARG_DECL  Item * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) );
+#define set_eval_szbl_func( func ) _set_eval_szbl_func(QSP_ARG  func )
+#define set_eval_dobj_func( func ) _set_eval_dobj_func(QSP_ARG  func )
+#define set_eval_cam_func( func ) _set_eval_cam_func(QSP_ARG  func )
 
 // temporary!  BUG
 /*static*/ extern void dump_etree(QSP_ARG_DECL  Scalar_Expr_Node *enp);

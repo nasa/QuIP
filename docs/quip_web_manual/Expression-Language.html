@@ -1,47 +1,71 @@
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Created by GNU Texinfo 5.2, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Expression Language - QuIP Manual</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="QuIP Manual">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="prev" href="Data-Objects.html#Data-Objects" title="Data Objects">
-<link rel="next" href="Displaying-Images.html#Displaying-Images" title="Displaying Images">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
+<title>QuIP Manual: Expression Language</title>
+
+<meta name="description" content="QuIP Manual: Expression Language">
+<meta name="keywords" content="QuIP Manual: Expression Language">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="QuIPindex.html#QuIPindex" rel="index" title="QuIPindex">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="Displaying-Images.html#Displaying-Images" rel="next" title="Displaying Images">
+<link href="Subscripting.html#Subscripting" rel="prev" title="Subscripting">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.indentedblock {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smallindentedblock {margin-left: 3.2em; font-size: smaller}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style:oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nocodebreak {white-space:nowrap}
+span.nolinebreak {white-space:nowrap}
+span.roman {font-family:serif; font-weight:normal}
+span.sansserif {font-family:sans-serif; font-weight:normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
 </head>
-<body>
-<div class="node">
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
 <a name="Expression-Language"></a>
+<div class="header">
 <p>
-Next:&nbsp;<a rel="next" accesskey="n" href="Displaying-Images.html#Displaying-Images">Displaying Images</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="Data-Objects.html#Data-Objects">Data Objects</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
-<hr>
+Next: <a href="Displaying-Images.html#Displaying-Images" accesskey="n" rel="next">Displaying Images</a>, Previous: <a href="Data-Objects.html#Data-Objects" accesskey="p" rel="prev">Data Objects</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="QuIPindex.html#QuIPindex" title="Index" rel="index">Index</a>]</p>
 </div>
-
+<hr>
+<a name="Expression-Language-1"></a>
 <h2 class="chapter">4 Expression Language</h2>
-
-<p>Writing scripts using QuIP's expression language
-
+<p>Writing scripts using QuIP&rsquo;s expression language
+</p>
 <p>The command language described in the previous chapter can be cumbersome
 when writing complicated image processing operations.  Consider, for example,
 synthesizing a floating point sinusoidal grating image, scaling it to the range 0 to 255,
 and converting it to byte.  In the command language, we would do it with the
 following script:
-
-<p>&lsquo;<samp><span class="samp">
+</p>
+<p>&lsquo;<samp>
 Set h 256 <br>
 Set w 256 <br>
 Set period 64 <br>
@@ -52,11 +76,11 @@ Ramp2D f 0 $two_pi/$period 0 <br>
 VSin f f <br>
 VSAdd f f 1 <br>
 VSMul f f 255/2 <br>
-Convert b f</span></samp>&rsquo;
-
+Convert b f</samp>&rsquo;
+</p>
 <p>Here is the exact same thing written using the expression language:
-
-<p>&lsquo;<samp><span class="samp">
+</p>
+<p>&lsquo;<samp>
 expressions <br>
   read - <br>
   int h=256, w=256; <br>
@@ -67,13 +91,16 @@ expressions <br>
   f=ramp2d(0,two_pi/period,0); <br>
   b = (sin(f)+1)*255/2; <br>
   end <br>
-  quit</span></samp>&rsquo;
-
+  quit</samp>&rsquo;
+</p>
 <p>While the second version is not significantly shorter in terms of characters,
 it is arguably easier to read and understand.  In the command language, each
 operation is one command, while in the expression language multiple operations
 can be packed into a complex vector expression.
+</p>
 
-<!-- CHAPTER 5 - DISPLAYING IMAGES -->
-</body></html>
 
+
+
+</body>
+</html>

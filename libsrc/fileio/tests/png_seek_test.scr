@@ -1,0 +1,26 @@
+
+Filetype pngfio
+Set f t.png
+Read_File_Header $f
+
+Assign w ncols('$f')
+Assign h nrows('$f')
+Assign d depth('$f')
+Assign n nframes('$f')
+
+advise "File $f has $n $w x $h frames, with depth $d"
+
+Image b $h $w $d u_byte
+Viewer_For v b
+
+Set i 0
+repeat $n
+  advise "Seeking frame $i"
+  File_Seek $f $i
+  advise "Reading frame $i"
+  Get_Next b $f
+  Show_Bytes b v
+  Increment i
+  end
+exit
+

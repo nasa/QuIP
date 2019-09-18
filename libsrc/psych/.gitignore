@@ -6,3 +6,5 @@ Makefile.in
 *.dat
 test_xv.asc
 test_xvals
+expt_data.*
+foo*

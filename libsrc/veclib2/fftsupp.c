@@ -206,11 +206,11 @@ int real_fft_type(QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp,const char *f
 	if( OBJ_ROWS(real_dp) == OBJ_ROWS(cpx_dp) ){
 		if( ! good_xform_size( real_dp, cpx_dp, 1, funcname ) ) return -1;
 		if( ! dim_is_power_of_two(real_dp, 2, funcname ) ) return -1;
-		return 1;
+		return FFT2D_REAL_XFORM_ROWS;
 	} else if( OBJ_COLS(real_dp) == OBJ_COLS(cpx_dp) ){
 		if( ! good_xform_size( real_dp, cpx_dp, 2, funcname ) ) return -1;
 		if( ! dim_is_power_of_two(real_dp, 1, funcname ) ) return -1;
-		return 2;
+		return FFT2D_REAL_XFORM_COLS;
 	} else {
 		sprintf(ERROR_STRING,
 "%s:  real data %s (%d x %d) and transform %s (%d x %d) must have one matching dimension!?",

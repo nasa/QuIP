@@ -1,19 +1,19 @@
 //
-//  quipImageView.h
+//  quipImage.h
 //
-//  Created by Jeff Mulligan on 3/7/13.
-//  Copyright 2013 NASA. All rights reserved.
+//  Created by Jeff Mulligan on 8/9/19.
+//  Copyright 2019 NASA. All rights reserved.
 //
 
-#ifndef _QUIPIMAGEVIEW_H_
-#define _QUIPIMAGEVIEW_H_
+#ifndef _QUIPIMAGE_H_
+#define _QUIPIMAGE_H_
 
 #include "data_obj.h"
 
 #ifdef BUILD_FOR_IOS
-#import <UIKit/UIImageView.h>
+#import <UIKit/UIImage.h>
 
-@interface quipImageView : UIImageView
+@interface quipImage : UIImage
 
 #endif // BUILD_FOR_IOS
 
@@ -24,7 +24,7 @@
 @interface quipImageView : NSImageView
 #endif // BUILD_FOR_MACOS
 
-@property Data_Obj *	qiv_dp;
+@property Data_Obj *	qi_dp;
 
 -(id) initWithDataObj:(Data_Obj *)dp;
 
@@ -32,5 +32,5 @@
 
 extern QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp,int little_endian_flag);
 
-#endif /* ! _QUIPIMAGEVIEW_H_ */
+#endif /* ! _QUIPIMAGE_H_ */
 
