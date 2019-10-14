@@ -15,14 +15,19 @@
 #endif /* HAVE_NPP_H */
 #include <nppi.h>
 #include <npps.h>
+
+#ifndef NPP_VERSION
+// nppversion.h missing in 10.1 !?
 #include <nppversion.h>
 
 #define NPP_VERSION_CODE(major,minor,build)			\
 	((major<<16)|(minor<<8)|build)
 
 #define NPP_VERSION	NPP_VERSION_CODE(NPP_VERSION_MAJOR,NPP_VERSION_MINOR,NPP_VERSION_BUILD)
+#endif // ! NPP_VERSION
 
-#else
+#else	// ! HAVE_NPP_H
+
 #undef HAVE_LIBNPP	// we may hand-edit out HAVE_CUDA on a system that has it?
 #endif // HAVE_CUDA
 
