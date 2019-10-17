@@ -139,7 +139,6 @@ static int _collect_response(QSP_ARG_DECL  Experiment * exp_p)
 
 	init_response_prompt(rpmtstr,EXPT_QUESTION(exp_p));
 
-fprintf(stderr,"collect_response:  using_keyboard = %d\n",IS_USING_KEYBOARD(exp_p));
 	if( IS_USING_KEYBOARD(exp_p) ){
 #ifndef BUILD_FOR_OBJC
 		redir( tfile(), "/dev/tty" );	/* get response from keyboard */
@@ -243,32 +242,9 @@ int _get_response(QSP_ARG_DECL  Staircase *stc_p, Experiment *exp_p)
 	check_response_string(exp_p);	// $response_string will override if set
 	rsp = collect_response(exp_p);
 	if( IS_2AFC(exp_p) ){
-fprintf(stderr,"get_response:  will consider coin...\n");
 		consider_coin(stc_p);
-	} else {
-fprintf(stderr,"get_response:  will NOT consider coin...\n");
 	}
-
 	return rsp;
-}
-
-void _delete_all_trial_classes(SINGLE_QSP_ARG_DECL)
-{
-	List *lp;
-	Node *np;
-	Trial_Class *tc_p;
-
-	lp=EXPT_CLASS_LIST(&expt1);
-	assert( lp != NULL );
-
-	np = QLIST_HEAD(lp);
-	while( np != NULL ){
-		np = remHead(lp);
-		tc_p = NODE_DATA(np);
-		del_class(tc_p);
-		np = QLIST_HEAD(lp);
-	}
-	assign_reserved_var( "n_classes" , "0" );
 }
 
 #define INIT_RESPONSE_WORD(idx,dflt_val)				\

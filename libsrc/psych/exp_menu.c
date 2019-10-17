@@ -332,6 +332,8 @@ static COMMAND_FUNC( do_import_xvals )
 		return;
 	}
 	SET_EXPT_XVAL_OBJ(&expt1,dp);
+	add_reference(dp);	// so it doesn't get deleted?
+fprintf(stderr,"do_import_xvals:  experiment xval obj set to %s\n",OBJ_NAME(dp));
 }
 
 #undef ADD_CMD

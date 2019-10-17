@@ -31,7 +31,9 @@
 
 #define XVAL_LINE_FMT	"\t%g\n"
 #define CLASS_SUMM_DATA_HEAD_FMT	"Trial_Class %d, %d data points\n"
-#define SUMM_DATA_POINT_FMT	"\t%d\t%d\t%d\n"
+// old was just index, ntotal, ncorrect
+//#define SUMM_DATA_POINT_FMT	"\t%d\t%d\t%d\n"
+#define SUMM_DATA_POINT_FMT	"\t%d\t%g\t%d\t%d\t%g\n"
 
 Data_Obj *global_xval_dp=NULL;
 
@@ -68,9 +70,7 @@ static void tabulate_class( Trial_Class *tc_p )
 	}
 }
 
-#define init_class_summary( tc_p) _init_class_summary( QSP_ARG  tc_p)
-
-static void _init_class_summary( QSP_ARG_DECL  Trial_Class *tc_p)
+void _init_class_summary( QSP_ARG_DECL  Trial_Class *tc_p)
 {
 	Summary_Data_Tbl *sdt_p;
 	Data_Obj *dp;
@@ -98,7 +98,7 @@ static void _init_class_summary( QSP_ARG_DECL  Trial_Class *tc_p)
 	tabulate_class(tc_p);
 }
 
-static void retabulate_one_class( QSP_ARG_DECL  Trial_Class *tc_p, void *arg )
+void _retabulate_one_class( QSP_ARG_DECL  Trial_Class *tc_p, void *arg )
 {
 	if( CLASS_SUMM_DTBL(tc_p) == NULL ){
 		init_class_summary(tc_p);
@@ -110,7 +110,7 @@ static void retabulate_one_class( QSP_ARG_DECL  Trial_Class *tc_p, void *arg )
 void _retabulate_classes(SINGLE_QSP_ARG_DECL)
 {
 	// iterate over classes...
-	iterate_over_classes( retabulate_one_class, NULL );
+	iterate_over_classes( _retabulate_one_class, NULL );
 }
 
 void _print_class_summary(QSP_ARG_DECL  Trial_Class * tc_p)
@@ -120,6 +120,7 @@ fprintf(stderr,"print_class_summary calling init_class_summary\n");
 		init_class_summary(tc_p);
 	}
 
+	/*
 	if( verbose ){
 		sprintf(msg_str,"class = %s, %d points",
 			CLASS_NAME(tc_p),SUMM_DTBL_N(CLASS_SUMM_DTBL(tc_p)));
@@ -127,6 +128,7 @@ fprintf(stderr,"print_class_summary calling init_class_summary\n");
 		sprintf(msg_str,"val\txval\t\tntot\tncorr\t%% corr\n");
 		prt_msg(msg_str);
 	}
+	*/
 
 	write_class_summ_data(tc_p,tell_msgfile());
 }
@@ -134,6 +136,7 @@ fprintf(stderr,"print_class_summary calling init_class_summary\n");
 void write_summary_data( Summary_Data_Tbl *sdt_p, FILE *fp )
 {
 	int j;
+	Data_Obj *xv_dp;
 
 	// We used to set SUMM_DTBL_N here, but now that is done when
 	// we convert from sequential data...
@@ -141,12 +144,22 @@ void write_summary_data( Summary_Data_Tbl *sdt_p, FILE *fp )
 	assert(SUMM_DTBL_CLASS(sdt_p)!=NULL);
 	fprintf(fp,CLASS_SUMM_DATA_HEAD_FMT,CLASS_INDEX(SUMM_DTBL_CLASS(sdt_p)),SUMM_DTBL_N(sdt_p));
 
-	for(j=0;j<SUMM_DTBL_SIZE(sdt_p);j++)
-		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(sdt_p,j)) != 0 )
-			fprintf(fp,SUMM_DATA_POINT_FMT, j,
-				DATUM_NTOTAL(SUMM_DTBL_ENTRY(sdt_p,j)),
-				DATUM_NCORR(SUMM_DTBL_ENTRY(sdt_p,j))
-				);
+	xv_dp = SUMM_DTBL_XVAL_OBJ(sdt_p);
+	assert(xv_dp!=NULL);
+
+	for(j=0;j<SUMM_DTBL_SIZE(sdt_p);j++){
+		int ntotal,ncorr;
+		float pc, *xv_p;
+		ntotal = DATUM_NTOTAL(SUMM_DTBL_ENTRY(sdt_p,j));
+		if( ntotal != 0 ){
+			ncorr = DATUM_NCORR(SUMM_DTBL_ENTRY(sdt_p,j));
+			pc = ncorr;
+			pc /= ntotal;
+			xv_p = indexed_data(xv_dp,j);
+			assert(xv_p!=NULL);
+			fprintf(fp,SUMM_DATA_POINT_FMT, j, *xv_p, ntotal, ncorr, pc);
+		}
+	}
 }
 
 #define SEQ_DATA_HEADER_FMT	"Sequential Data, %d records\n"
@@ -442,7 +455,14 @@ static int _read_xval_summary(QSP_ARG_DECL  Experiment *exp_p, FILE *fp )
 	}
 
 	// Now it's OK
+
+	if( EXPT_XVAL_OBJ(exp_p) != NULL ){
+		// This can happen when we load a second file...
+		delvec( EXPT_XVAL_OBJ(exp_p) );
+		SET_EXPT_XVAL_OBJ(exp_p,NULL);
+	}
 	assert( EXPT_XVAL_OBJ(exp_p) == NULL );
+
 	dp = mk_vec("experiment_x_values",n_xv,1,prec_for_code(PREC_SP));
 	assert(dp!=NULL);
 	SET_EXPT_XVAL_OBJ(exp_p,dp);

@@ -1,6 +1,6 @@
 #include "quip_config.h"
 
-/* maximum liklihood fit suggested by DIAM */
+// maximum liklihood fit suggested by DIAM */
 
 /*
  * Fit a normal ogive by doing linear regression on
@@ -19,26 +19,45 @@
 #define PREC		.005
 #define MAXTRIES	20
 
-int fc_flag=0;			/* forced choice */
+// BUG - get rid of these globals!!!
+
+int fc_flag=0;			// forced choice
 
 static double slope, y_int;
 static int slope_constraint=0;
 static double _r_, _r_initial, _x_, siqd;
-static double chance_rate=0.0;	/* for yes-no */
+static double chance_rate=0.0;	// for yes-no
+
+static Opt_Param *slope_param_p=NULL;
+static Opt_Param *intercept_param_p=NULL;
+
+static double thresh, siqd;
+static Opt_Param *thresh_param_p=NULL;
+static Opt_Param *siqd_param_p=NULL;
 
 /* For 2afc, we use the 2afc flag, and do the ogive fit by reflecting the points in
  * the origin - assuming that we have a linear x value scale with zero representing zero
  * signal.  But for 4afc, we have a chance rate of 0.25...  for now we just transform
  * the probabilities - but what is the correct thing to do?
+ *
+ * ALSO:  it is non-ideal to reflect the points in the origin, because for something
+ * like contrast threshold, we expect the psychometric functions to have the same
+ * shape on a log axis, in which case the xvals never get to 0...  We might like to fit
+ * by assuming an ogive with one asymptote at 1 and the other at the chance rate...
  */
 
+// regression parameters
 #define SLOPE_NAME	"slope"
 #define INTERCEPT_NAME	"intercept"
 
+// ogive fit parameters
+#define THRESHOLD_NAME	"threshold"
+#define SIQD_NAME	"siqd"
+
 Summary_Data_Tbl *the_dtbl;
 
-/* local prototypes */
-static float likelihood(SINGLE_QSP_ARG_DECL);
+// local prototypes
+//static float likelihood(SINGLE_QSP_ARG_DECL);
 
 void set_chance_rate( double r )
 {
@@ -60,7 +79,7 @@ void set_fcflag(int flg)
 #define NO_GOOD		(-2.0)		// special flag value...
 
 double _regr(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int first)
-/* =1 if the first iteration */
+// =1 if the first iteration
 {
 	int i;
 	double sx,sy,sxx,syy,sxy;
@@ -73,6 +92,7 @@ double _regr(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int first)
 	short nsamps=0;
 	int n_xvals;
 
+	assert(dtp!=NULL);
 	assert(SUMM_DTBL_XVAL_OBJ(dtp)!=NULL);
 	n_xvals = OBJ_COLS( SUMM_DTBL_XVAL_OBJ(dtp) );
 	assert(n_xvals>1);
@@ -88,6 +108,17 @@ double _regr(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int first)
 			 * flag is set - We need a better way to do this!
 			 */
 			if( chance_rate != 0.0 ){
+				// transform the percent correct to the probability seen
+				// p_correct = p_seen + p_guess * ( 1 - p_seen )
+				//           = p_seen * ( 1 - p_guess ) + p_guess
+				// p_seen = (p_correct-p_guess)/(1-p_guess)
+				//
+				// That is what we have here, but it seems incorrect
+				// because the binomial variability is based on the p_correct,
+				// not p_seen.  Therefore, the correct way to do this is to fit
+				// a curve to the real data...
+				//
+				// However, this linear regression is just used for a first cut...
 				pc -= chance_rate;
 				pc *= 1/(1-chance_rate);
 				if( pc < 0 ) pc = 0;
@@ -129,7 +160,7 @@ double _regr(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int first)
 	yvar = nt * syy;
 	xyvar = nt * sxy;
 
-	/* fc_flag=1 is for forced choice */
+	// fc_flag=1 is for forced choice
 
 	if( !fc_flag ){
 		xvar -= sx * sx ;
@@ -153,18 +184,19 @@ double _regr(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int first)
 	return(r);
 }
 
-static float likelihood(SINGLE_QSP_ARG_DECL)	/* called from optimization routine; return likelihood of guess */
+/*
+static float likelihood(SINGLE_QSP_ARG_DECL)	// called from optimization routine; return likelihood of guess
 {
 	float lh=0.0,lhinc;
 	int i;
-	int ntt,		/* number of total trials */
-	    nc;			/* number "correct" */
+	int ntt,		// number of total trials
+	    nc;			// number "correct"
 	float pc,xv;
-	float t_slope, t_int;	/* trial slope and int */
+	float t_slope, t_int;	// trial slope and int
 	int n_xvals;
-	/* Opt_Param *opp; */
+	// Opt_Param *opp;
 
-	/* compute the likelihood for this guess */
+	// compute the likelihood for this guess
 	assert( EXPT_XVAL_OBJ(&expt1) != NULL );
 	n_xvals = OBJ_COLS(EXPT_XVAL_OBJ(&expt1));
 
@@ -178,7 +210,7 @@ static float likelihood(SINGLE_QSP_ARG_DECL)	/* called from optimization routine
 	for(i=0;i<n_xvals;i++){
 		float *xv_p;
 
-		/* calculate theoretical percent correct with this guess */
+		// calculate theoretical percent correct with this guess
 
 		if( (ntt=DATUM_NTOTAL(SUMM_DTBL_ENTRY(the_dtbl,i))) <= 0 )
 			continue;
@@ -186,11 +218,96 @@ static float likelihood(SINGLE_QSP_ARG_DECL)	/* called from optimization routine
 		nc=DATUM_NCORR(SUMM_DTBL_ENTRY(the_dtbl,i));
 		xv_p = indexed_data(EXPT_XVAL_OBJ(&expt1),i);
 		xv = *xv_p;
+		// This is the crux of the model - we ought to be able to put any other function here???
 		pc = (float) ztop( t_int + t_slope * xv );
+		// This seems like a hack...
 		if( pc == 1.0 ) pc = (float) 0.99;
 		else if( pc == 0.0 ) pc = (float) 0.01;
 
-		/* pc is the theoretical % correct at this xval */
+		// pc is the theoretical % correct at this xval
+
+		lhinc = (float)( nc * log( pc ) + ( ntt - nc ) * log( 1 - pc ) );
+		lh -= lhinc;
+	}
+
+	return(lh);
+}
+*/
+
+static float _get_lin_ptoz(QSP_ARG_DECL  float xv)
+{
+	float pc, t_slope, t_int;
+
+	t_slope = get_opt_param_value(SLOPE_NAME);
+
+	if( !fc_flag )
+		t_int = get_opt_param_value(INTERCEPT_NAME);
+	else
+		t_int = 0.0;
+
+	pc = (float) ztop( t_int + t_slope * xv );
+	return pc;
+}
+
+// We want our function to go from p_guess to 1, with p_guess=0 being a normal case
+// for a yes-no experiment.  In that case we would take p = (erf+1)/2
+// with an original range of 2 and a transformed range of 1.
+// When p_guess != 0, we want a transformed range of 1-p_guess,
+// so the factor is (1-p_guess)/2.
+// In general, p = (erf+1) * (1-p_guess)/2 + p_guess;
+
+static float _ogive_prediction(QSP_ARG_DECL  float xv)
+{
+	double thresh, siqd;
+	float pc;
+
+	thresh = get_opt_param_value(THRESHOLD_NAME);
+	siqd = get_opt_param_value(SIQD_NAME);
+
+	pc = erf( (xv - thresh)/siqd );
+
+	pc = (pc+1)*(1-chance_rate)/2 + chance_rate;
+	return pc;
+}
+
+static float (*prediction_func)(QSP_ARG_DECL  float xv) = _get_lin_ptoz; 
+
+static float generic_likelihood(SINGLE_QSP_ARG_DECL)	// return likelihood of trial params
+{
+	float lh=0.0,lhinc;
+	int i;
+	int ntt,		// number of total trials
+	    nc;			// number "correct"
+	float pc,xv;
+//	float t_slope, t_int;	// trial slope and int
+	int n_xvals;
+	// Opt_Param *opp;
+
+	// compute the likelihood for this guess
+	assert( EXPT_XVAL_OBJ(&expt1) != NULL );
+	n_xvals = OBJ_COLS(EXPT_XVAL_OBJ(&expt1));
+
+	for(i=0;i<n_xvals;i++){
+		float *xv_p;
+
+		// calculate theoretical percent correct with this guess
+
+		if( (ntt=DATUM_NTOTAL(SUMM_DTBL_ENTRY(the_dtbl,i))) <= 0 )
+			// no trials at this xval...
+			continue;
+
+		nc=DATUM_NCORR(SUMM_DTBL_ENTRY(the_dtbl,i));
+		xv_p = indexed_data(EXPT_XVAL_OBJ(&expt1),i);
+		xv = *xv_p;
+
+		pc = (*prediction_func)(QSP_ARG  xv);
+
+		// This is the crux of the model - we ought to be able to put any other function here???
+		// This seems like a hack...
+		if( pc == 1.0 ) pc = (float) 0.99;
+		else if( pc == 0.0 ) pc = (float) 0.01;
+
+		// pc is the theoretical % correct at this xval
 
 		lhinc = (float)( nc * log( pc ) + ( ntt - nc ) * log( 1 - pc ) );
 		lh -= lhinc;
@@ -199,14 +316,11 @@ static float likelihood(SINGLE_QSP_ARG_DECL)	/* called from optimization routine
 	return(lh);
 }
 
-void _ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int ntrac)		/** maximum liklihood fit */
+#define init_regression_opt_params() _init_regression_opt_params(SINGLE_QSP_ARG)
+
+static void _init_regression_opt_params(SINGLE_QSP_ARG_DECL)
 {
 	Opt_Param tmp_param;
-	Opt_Param *slope_param_p=NULL;
-	Opt_Param *intercept_param_p=NULL;
-
-	/* initialize global */
-	the_dtbl = dtp;
 
 	delete_opt_params(SINGLE_QSP_ARG);
 
@@ -224,6 +338,7 @@ void _ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int ntrac)		/** maximum likliho
 	tmp_param.delta = (float) fabs(slope/10.0);
 	tmp_param.mindel = (float) 1.0e-30;
 
+	assert(slope_param_p==NULL);
 	slope_param_p = add_opt_param(&tmp_param);
 
 
@@ -239,6 +354,9 @@ void _ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int ntrac)		/** maximum likliho
 	 * thereof, may make a difference on the result.  (note that the
 	 * original zero is sent to minus infinity by the log transform,
 	 * and that the new 0 is determined by a scale factor.
+	 *
+	 * So for things like contrast threshold, better NOT to set the fc flag,
+	 * and set the chance rate instead, and regress against the log values...
 	 */
 
 	if( !fc_flag ){
@@ -248,27 +366,89 @@ void _ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int ntrac)		/** maximum likliho
 		tmp_param.mindel = (float) 1.0e-30;
 		tmp_param.maxv = 10000.0;
 		tmp_param.minv = -10000.0;
+
+		assert(intercept_param_p == NULL);
 		intercept_param_p = add_opt_param(&tmp_param);
 	}
+}
 
+#define init_ogive_opt_params() _init_ogive_opt_params(SINGLE_QSP_ARG)
 
-	optimize(likelihood);
+static void _init_ogive_opt_params(SINGLE_QSP_ARG_DECL)
+{
+	Opt_Param tmp_param;
 
+	delete_opt_params(SINGLE_QSP_ARG);
+
+	tmp_param.op_name=THRESHOLD_NAME;
+	tmp_param.maxv=10000.0;
+	tmp_param.minv=(-10000.0);
+	tmp_param.ans = 0.0;		// user should have some input here!?
+	tmp_param.delta = 0.1;
+	tmp_param.mindel = (float) 1.0e-30;
+
+	assert(thresh_param_p==NULL);
+fprintf(stderr,"init_ogive_opt_params:  creating threshold param\n");
+	thresh_param_p = add_opt_param(&tmp_param);
+
+	tmp_param.op_name=SIQD_NAME;
+	tmp_param.ans = (float) 1;
+	tmp_param.delta = 0.1;
+	tmp_param.mindel = (float) 1.0e-30;
+	tmp_param.maxv = 10000.0;
+	tmp_param.minv = 0.0;
+
+	assert(siqd_param_p == NULL);
+fprintf(stderr,"init_ogive_opt_params:  creating SIQD param\n");
+	siqd_param_p = add_opt_param(&tmp_param);
+}
+
+#define finish_regression_optimization() _finish_regression_optimization(SINGLE_QSP_ARG)
+
+static void _finish_regression_optimization(SINGLE_QSP_ARG_DECL)
+{
 	slope = get_opt_param_value(SLOPE_NAME);
 	del_opt_param(slope_param_p);
+	slope_param_p=NULL;
 
 	if( !fc_flag ){
 		y_int = get_opt_param_value(INTERCEPT_NAME);
 		del_opt_param(intercept_param_p);
+		intercept_param_p = NULL;
 	} else
 		y_int = 0.0;
 }
 
-void _ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */
+#define finish_ogive_optimization() _finish_ogive_optimization(SINGLE_QSP_ARG)
+
+static void _finish_ogive_optimization(SINGLE_QSP_ARG_DECL)
+{
+	thresh = get_opt_param_value(THRESHOLD_NAME);
+	del_opt_param(thresh_param_p);
+	thresh_param_p=NULL;
+
+	siqd = get_opt_param_value(SIQD_NAME);
+	del_opt_param(siqd_param_p);
+	siqd_param_p = NULL;
+}
+
+void _ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int ntrac)		// maximum liklihood fit
+{
+
+	// initialize global
+	the_dtbl = dtp;
+
+
+	optimize(generic_likelihood);
+}
+
+void _ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		// do a regression on the ith table
 {
 	double _slope, _y_int;
 
-	/* ntrac = how_many("trace stepit output (-1,0,1)"); */
+	// ntrac = how_many("trace stepit output (-1,0,1)");
+
+	retabulate_one_class(tcp,NULL);
 
 	_r_initial = regr( CLASS_SUMM_DTBL(tcp), 1 );
 	if(_r_initial == NO_GOOD){
@@ -276,13 +456,16 @@ void _ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the it
                 return;
         }
 
+	prediction_func = _get_lin_ptoz; 
+	init_regression_opt_params();
 	ml_fit( CLASS_SUMM_DTBL(tcp), /* ntrac */ -1 );
+	finish_regression_optimization();
 
-	/* now we want to compute the correlation coefficient
-	 * for the final fit
-	 */
+	// now we want to compute the correlation coefficient
+	// for the final fit
 	
-	/* need to remember M-L slope & int */
+	
+	// need to remember M-L slope & int
 	_slope = slope;
 	_y_int = y_int;
 
@@ -306,7 +489,38 @@ void _ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the it
 	}
 }
 
-void _longout(QSP_ARG_DECL  Trial_Class *tcp)	/** verbose analysis report */
+// The "new" ogive fit doesn't mess with the trick of transforming to z scores
+// and fitting a line - rather, we just synthesize a function with 2 parameters:
+// ogive_threshold, and ogive_siqd;
+// A third parameter, p_guess (the chance rate) is not varied by the optimization.
+//
+// The math library erf() goes from -1 to 1, with inflection at 0 (and siqd=1 ???)
+//
+// We want our function to go from p_guess to 1, with p_guess=0 being a normal case
+// for a yes-no experiment.  In that case we would take p = (erf+1)/2
+// with an original range of 2 and a transformed range of 1.
+// When p_guess != 0, we want a transformed range of 1-p_guess,
+// so the factor is (1-p_guess)/2.
+// In general, p = (erf+1) * (1-p_guess)/2 + p_guess;
+
+void _new_ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		// do a regression on the ith table
+{
+	double siqd, thresh;
+
+	// ntrac = how_many("trace stepit output (-1,0,1)");
+
+	retabulate_one_class(tcp,NULL);
+
+	prediction_func = _ogive_prediction; 
+	init_ogive_opt_params();
+	ml_fit( CLASS_SUMM_DTBL(tcp), /* ntrac */ -1 );
+	finish_ogive_optimization();
+
+	set_float_var("ogive_siqd",siqd);
+	set_float_var("ogive_threshold",thresh);
+}
+
+void _print_ogive_parameters(QSP_ARG_DECL  Trial_Class *tcp)	// verbose analysis report
 {
         sprintf(msg_str,"\nTrial_Class %s\n",CLASS_NAME(tcp));
 	prt_msg(msg_str);
@@ -344,7 +558,7 @@ void pntquic(FILE *fp,Trial_Class * tcp,int in_db)
         Summary_Data_Tbl *dtp;
 
 	dtp=(&dt[cl]);
-	/* first count the number of records */
+	// first count the number of records
 	j=0;
 	while( DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) && j<n_xvals )
 		j++;
@@ -361,7 +575,7 @@ void pntquic(FILE *fp,Trial_Class * tcp,int in_db)
 		}
 	fflush(fp);
 }
-#endif /* QUIK */
+#endif // QUIK
 
 // The split function was introduced to analyze the two limbs of a U-shaped function
 // separately...

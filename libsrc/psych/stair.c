@@ -16,6 +16,7 @@ ITEM_INTERFACE_DECLARATIONS(Staircase,stair,0)
 
 #define create_summ_data_obj( name, size ) _create_summ_data_obj( QSP_ARG  name, size )
 
+static int class_index = 0;
 
 
 void clear_summary_data(Summary_Data_Tbl *sdt_p )
@@ -60,17 +61,21 @@ Summary_Data_Tbl *_new_summary_data_tbl(SINGLE_QSP_ARG_DECL)
 
 void rls_summ_dtbl(Summary_Data_Tbl *sdt_p)
 {
-	if( SUMM_DTBL_DATA_OBJ(sdt_p) != NULL )
+	if( SUMM_DTBL_DATA_OBJ(sdt_p) != NULL ){
+fprintf(stderr,"rls_summ_dtbl will remove reference to the data table object...\n");
 		remove_reference( SUMM_DTBL_DATA_OBJ(sdt_p) );
+	}
 
 	SET_SUMM_DTBL_DATA_PTR(sdt_p,NULL);
 
-	if( SUMM_DTBL_XVAL_OBJ(sdt_p) != NULL )
-		remove_reference( SUMM_DTBL_XVAL_OBJ(sdt_p) );
+	// We used to remove a reference to the xval object here,
+	// but the data table doesn't have its own reference, it gets it
+	// through the linked experiment
 
 	givbuf(sdt_p);
 }
 
+/*
 #define rls_seq_dtbl(qdt_p ) _rls_seq_dtbl(QSP_ARG  qdt_p )
 
 static void _rls_seq_dtbl(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p )
@@ -79,6 +84,7 @@ static void _rls_seq_dtbl(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p )
 	rls_list(SEQ_DTBL_LIST(qdt_p));
 	givbuf(qdt_p);
 }
+*/
 
 
 void _clear_sequential_data(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p)
@@ -325,6 +331,7 @@ void save_datum(Experiment *exp_p, Sequence_Datum *qd_p)
 	assert(EXPT_SEQ_DTBL(exp_p)!=NULL);
 
 	np = mk_node(qd_p);
+	assert(SEQ_DTBL_LIST(EXPT_SEQ_DTBL(exp_p))!=NULL);
 	addTail( SEQ_DTBL_LIST( EXPT_SEQ_DTBL(exp_p) ), np );
 
 	SET_QDT_FLAG_BITS(EXPT_SEQ_DTBL(exp_p),SEQUENTIAL_DATA_DIRTY);
@@ -443,7 +450,12 @@ advise("reset_class calling clear_summary_data");
 	assert(CLASS_STAIRCASES(tc_p)!=NULL);
 	np = QLIST_HEAD( CLASS_STAIRCASES(tc_p) );
 	if( np == NULL ){
-		warn("reset_class:  no staircases!?");
+		// This is not necessarily an error that deserves
+		// a warning, as we might be running with method of
+		// constant stimuli, or delivering trials "by hand"
+		// from a script...
+
+		//warn("reset_class:  no staircases!?");
 		return;
 	}
 	while(np!=NULL){
@@ -569,8 +581,7 @@ void _make_staircase( QSP_ARG_DECL  int st,	/* staircase type */
 static void _delete_staircase( QSP_ARG_DECL  Staircase *stc_p )
 {
 	rls_summ_dtbl( STAIR_SUMM_DTBL(stc_p) );
-	rls_seq_dtbl( STAIR_SEQ_DTBL(stc_p) );
-
+	// staircase doesn't own sequential data
 	del_stair(stc_p);
 }
 
@@ -840,8 +851,12 @@ void _del_class(QSP_ARG_DECL  Trial_Class *tc_p)
 {
 	Node *np;
 
+	// When we delete these objects, we can leave a dangling pointer!?
 	rls_summ_dtbl( CLASS_SUMM_DTBL(tc_p) );
-	rls_seq_dtbl( CLASS_SEQ_DTBL(tc_p) );
+
+	// the sequence table belongs to the experiment, not the class!!!
+	//rls_seq_dtbl( CLASS_SEQ_DTBL(tc_p) );
+
 	// we would normally set these ptrs to NULL, but as we are
 	// deleting the object anyway, we don't need to...
 
@@ -884,12 +899,32 @@ Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 	return(tc_p);
 }
 
+void _delete_all_trial_classes(SINGLE_QSP_ARG_DECL)
+{
+	List *lp;
+	Node *np;
+	Trial_Class *tc_p;
+
+	lp=EXPT_CLASS_LIST(&expt1);
+	assert( lp != NULL );
+
+	np = QLIST_HEAD(lp);
+	while( np != NULL ){
+		np = remHead(lp);
+		tc_p = NODE_DATA(np);
+		del_class(tc_p);
+		np = QLIST_HEAD(lp);
+	}
+	assign_reserved_var( "n_classes" , "0" );
+	// need to also reset automatic numbering!
+	class_index = 0;
+}
+
 // We used to have a global variable for this...
 // This should be OK even if we allow deletion of classes...
 
 static int next_class_index(void)
 {
-	static int class_index = 0;
 	return class_index++;
 }
 
@@ -899,6 +934,7 @@ Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
 	Trial_Class *tc_p;
 	//Summary_Data_Tbl *sdt_p;
 
+fprintf(stderr,"create_named_class BEGIN\n");
 	// Make sure not in use
 	tc_p = trial_class_of(name);
 	if( tc_p != NULL ){
@@ -908,7 +944,7 @@ Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
 		return NULL;
 	}
 
-	tc_p = new_trial_class(name );
+	tc_p = new_trial_class(name);
 	SET_CLASS_INDEX(tc_p,next_class_index());
 	SET_CLASS_STAIRCASES(tc_p,new_list());
 

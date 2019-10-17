@@ -99,7 +99,6 @@ struct summary_data_tbl {
 	Data_Obj *		sdt_data_dp;
 	Summary_Datum *		sdt_data_ptr;	// points to data in the object...
 	Trial_Class *		sdt_tc_p;	// may be invalid if lumped...
-	Data_Obj *		sdt_xval_dp;	// should match class
 	int			sdt_flags;
 };
 
@@ -525,8 +524,8 @@ extern COMMAND_FUNC( staircase_menu );
 /* mlfit.c */
 extern void _ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac);
 #define ml_fit(dp,ntrac) _ml_fit(QSP_ARG  dp,ntrac)
-extern void _longout(QSP_ARG_DECL  Trial_Class *);
-#define longout(tc_p) _longout(QSP_ARG  tc_p)
+extern void _print_ogive_parameters(QSP_ARG_DECL  Trial_Class *);
+#define print_ogive_parameters(tc_p) _print_ogive_parameters(QSP_ARG  tc_p)
 extern void _tersout(QSP_ARG_DECL  Trial_Class *);
 #define tersout(tc_p) _tersout(QSP_ARG  tc_p)
 
@@ -535,6 +534,8 @@ extern void set_fcflag(int flg);
 extern void set_chance_rate(double chance_rate);
 extern void _ogive_fit( QSP_ARG_DECL  Trial_Class *tc_p );
 #define ogive_fit(tc_p) _ogive_fit(QSP_ARG  tc_p )
+extern void _new_ogive_fit( QSP_ARG_DECL  Trial_Class *tc_p );
+#define new_ogive_fit(tc_p) _new_ogive_fit(QSP_ARG  tc_p )
 
 #ifdef QUIK
 extern void pntquic(FILE *fp,Trial_Class *tc_p,int in_db);
@@ -553,6 +554,12 @@ extern void _split(QSP_ARG_DECL  Trial_Class * tc_p,int wantupper);
 extern COMMAND_FUNC( do_lump );
 
 /* asc_data.c */
+
+extern void _retabulate_one_class( QSP_ARG_DECL  Trial_Class *tc_p, void *arg );
+#define retabulate_one_class( tc_p, arg ) _retabulate_one_class( QSP_ARG  tc_p, arg )
+
+extern void _init_class_summary( QSP_ARG_DECL  Trial_Class *tc_p);
+#define init_class_summary( tc_p) _init_class_summary( QSP_ARG  tc_p)
 
 extern void _print_class_seq(QSP_ARG_DECL  Trial_Class *tc_p);
 #define print_class_seq(tc_p) _print_class_seq(QSP_ARG  tc_p)

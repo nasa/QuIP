@@ -18,13 +18,16 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 	fp=try_open( filename, "r" );
 	if( !fp ) return;
 
-	/* We used to clear the data tables here,
-	 * but now they are dynamically allocated
-	 * and cleared at that time...
-	 */
+	// We used to clear the data tables here,
+	// but now they are dynamically allocated
+	// and cleared at that time...
+	//
 
-	/* clear old classes */
+	// Clear old classes
+	// But this doesn't clear the sequential data, which belongs to the experiment...
 	delete_all_trial_classes();
+
+	clear_sequential_data( EXPT_SEQ_DTBL(&expt1) );
 
 	if( read_exp_data(fp) != 0 ){
 		fclose(fp);
@@ -112,7 +115,10 @@ static COMMAND_FUNC( pntgrph )
 	Trial_Class *tcp;
 
 	tcp = pick_trial_class("");
-	fp=try_nice( nameof("output file"), "w" );
+
+	// just print to outfile and let user redirect from script if desired...
+	fp = qs_msg_file();
+
 	if( fp == NULL || tcp == NULL ) return;
 
 	print_psychometric_pts(fp,tcp);
@@ -143,6 +149,18 @@ static COMMAND_FUNC( do_terse_ogive_fit )
 	tersout(tcp);
 }
 
+static COMMAND_FUNC( do_terse_new_ogive_fit )
+{
+	Trial_Class *tcp;
+
+	tcp = pick_trial_class("");
+
+	if( tcp == NULL ) return;
+
+	new_ogive_fit(tcp);
+	tersout(tcp);
+}
+
 static COMMAND_FUNC( weibull_fit )
 {
 	Trial_Class *tcp;
@@ -164,7 +182,19 @@ static COMMAND_FUNC( do_ogive_fit )
 	if( tcp == NULL ) return;
 
 	ogive_fit(tcp);
-	longout(tcp);
+	print_ogive_parameters(tcp);
+}
+
+static COMMAND_FUNC( do_new_ogive_fit )
+{
+	Trial_Class *tcp;
+
+	tcp = pick_trial_class("");
+
+	if( tcp == NULL ) return;
+
+	new_ogive_fit(tcp);
+	print_ogive_parameters(tcp);
 }
 
 static COMMAND_FUNC( setfc ) { set_fcflag( askif("do analysis relative to 50% chance") ); }
@@ -188,20 +218,36 @@ static COMMAND_FUNC( do_split )
 	split(tcp,wu);
 }
 
-#define ADD_CMD(s,f,h)	ADD_COMMAND(ogive_menu,s,f,h)
+#define ADD_CMD(s,f,h)	ADD_COMMAND(old_ogive_menu,s,f,h)
 
-MENU_BEGIN(ogive)
+MENU_BEGIN(old_ogive)
 ADD_CMD( analyse,	do_ogive_fit,			analyse data )
 ADD_CMD( summarize,	do_terse_ogive_fit,		analyse data (terse output) )
 //ADD_CMD( class,		setcl,			select new stimulus class )
 ADD_CMD( 2afc,		setfc,			set forced-choice flag )
 ADD_CMD( chance_rate, 	do_set_chance_rate,	specify chance P(correct) )
 ADD_CMD( constrain,	constrain_slope,	constrain regression slope )
-MENU_END(ogive)
+MENU_END(old_ogive)
 
-static COMMAND_FUNC( do_ogive )
+static COMMAND_FUNC( do_old_ogive )
 {
-	CHECK_AND_PUSH_MENU(ogive);
+	CHECK_AND_PUSH_MENU(old_ogive);
+}
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(new_ogive_menu,s,f,h)
+
+MENU_BEGIN(new_ogive)
+ADD_CMD( analyse,	do_new_ogive_fit,			analyse data )
+ADD_CMD( summarize,	do_terse_new_ogive_fit,		analyse data (terse output) )
+//ADD_CMD( class,		setcl,			select new stimulus class )
+ADD_CMD( chance_rate, 	do_set_chance_rate,	specify chance P(correct) )
+MENU_END(new_ogive)
+
+
+static COMMAND_FUNC( do_new_ogive )
+{
+	CHECK_AND_PUSH_MENU(new_ogive);
 }
 
 static COMMAND_FUNC( seter )
@@ -276,7 +322,8 @@ ADD_CMD( clean_sequence,	do_clean_seq,	remove redo's and undo's )
 ADD_CMD( print_class_seq,	do_print_class_seq,	print val vs. trial number for a single class)
 ADD_CMD( plotprint,	pntgrph,	print data for plotting )
 ADD_CMD( errbars,	do_pnt_bars,	print psychometric function with error bars )
-ADD_CMD( ogive,		do_ogive,	do fits with to ogive )
+ADD_CMD( old_ogive,	do_old_ogive,	do fits with ogive (original method) )
+ADD_CMD( ogive,		do_new_ogive,	do fits with ogive (new method) )
 ADD_CMD( weibull,	do_weibull,	do fits to weibull function )
 ADD_CMD( split,		do_split,	split data at zeroes )
 ADD_CMD( lump,		do_lump,	lump data conditions )
