@@ -147,7 +147,9 @@ void _print_error_bars(QSP_ARG_DECL  FILE *fp, Trial_Class *tcp)
 	n_xvals = OBJ_COLS( CLASS_XVAL_OBJ(tcp) );
 	assert(n_xvals>1);
 
+	retabulate_one_class(tcp,NULL);
 	dtp=CLASS_SUMM_DTBL(tcp);
+	assert(dtp!=NULL);
 	for(j=0;j<n_xvals;j++){
 		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) > 0 ){
 			float *xv_p;

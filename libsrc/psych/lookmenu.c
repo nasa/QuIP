@@ -7,6 +7,12 @@
 #include "variable.h"
 #include "quip_menu.h"
 
+static Fit_Data fit_data1;
+static float user_chance_rate=0.0;
+static int fit_log_flag=0;
+static int the_slope_constraint;
+//SET_FIT_SLOPE_CONSTRAINT(fdp, ctype - 1 );	// -1, 0, or +1
+
 static COMMAND_FUNC( do_read_data )	/** read a data file */
 {
 	FILE *fp;
@@ -124,84 +130,194 @@ static COMMAND_FUNC( pntgrph )
 	print_psychometric_pts(fp,tcp);
 }
 
+#define print_old_ogive_terse(fdp, msg) _print_old_ogive_terse(QSP_ARG  fdp, msg)
 
-static COMMAND_FUNC( terse_weibull_fit )
+static void _print_old_ogive_terse(QSP_ARG_DECL  Fit_Data *fdp, const char *msg)
+{
+	// BUG move fcflag into fit_data struct
+	if( !fc_flag ) 
+		sprintf(msg_str,"%s\t%d\t%f\t%f\t%f",msg,FIT_CLASS_INDEX(fdp),FIT_R(fdp),FIT_THRESH(fdp),FIT_SIQD(fdp));
+	else
+		sprintf(msg_str,"%s\t%d\t%f\t%f",msg,FIT_CLASS_INDEX(fdp),FIT_R(fdp), FIT_THRESH(fdp));
+
+	prt_msg(msg_str);
+}
+
+#define print_new_ogive_terse(fdp, msg) _print_new_ogive_terse(QSP_ARG  fdp, msg)
+
+static void _print_new_ogive_terse(QSP_ARG_DECL  Fit_Data *fdp, const char *msg)
+{
+	// BUG - should print sum of log likelihood too?
+	sprintf(msg_str,"%s\tclass %d\t\tthresh %f\tsiqd %f",msg,FIT_CLASS_INDEX(fdp),FIT_THRESH(fdp),FIT_SIQD(fdp));
+	prt_msg(msg_str);
+}
+
+#define print_weibull_terse(fdp, msg) _print_weibull_terse(QSP_ARG  fdp, msg)
+
+static void _print_weibull_terse(QSP_ARG_DECL  Fit_Data *fdp, const char *msg)
+{
+	prt_msg("Oops - print_weibull_terse not implemented!?");
+}
+
+#define print_data_terse(fdp,msg) _print_data_terse(QSP_ARG  fdp,msg)
+
+static void _print_data_terse(QSP_ARG_DECL  Fit_Data *fdp, const char *msg)
+{
+	if( FIT_TYPE(fdp) == FIT_OLD_OGIVE ){
+		print_old_ogive_terse(fdp,msg);
+	} else if( FIT_TYPE(fdp) == FIT_NEW_OGIVE ){
+		print_new_ogive_terse(fdp,msg);
+	} else if( FIT_TYPE(fdp) == FIT_WEIBULL ){
+		print_weibull_terse(fdp,msg);
+	} else {
+		sprintf(ERROR_STRING,"print_data_terse:  unexpected fit type (%d)!?",FIT_TYPE(fdp));
+		warn(ERROR_STRING);
+	}
+}
+
+#define print_weibull_verbose(fdp) _print_weibull_verbose(QSP_ARG  fdp)
+
+static void _print_weibull_verbose(QSP_ARG_DECL  Fit_Data *fdp)	// verbose analysis report
+{
+	warn("print_weibull_verbose:  not implemented!?");
+}
+
+#define print_ogive_verbose(fdp) _print_ogive_verbose(QSP_ARG  fdp)
+
+static void _print_ogive_verbose(QSP_ARG_DECL  Fit_Data *fdp)	// verbose analysis report
+{
+        sprintf(msg_str,"\nTrial_Class %s\n",CLASS_NAME(FIT_CLASS(fdp)));
+	prt_msg(msg_str);
+        sprintf(msg_str,"initial correlation:\t\t\t%f", FIT_R_INITIAL(fdp) );
+	prt_msg(msg_str);
+        sprintf(msg_str,"final correlation:\t\t\t%f", FIT_R(fdp) );
+	prt_msg(msg_str);
+
+        if(!fc_flag) {
+                sprintf(msg_str,"x value at inflection pt:\t\t%f", FIT_THRESH(fdp) );
+		prt_msg(msg_str);
+                sprintf(msg_str,"semi-interquartile difference:\t\t%f",FIT_SIQD( fdp ) );
+		prt_msg(msg_str);
+        } else {
+		sprintf(msg_str,"x value for 75%%:\t%f", FIT_THRESH(fdp) );
+		prt_msg(msg_str);
+	}
+}
+
+#define print_data_verbose(fdp) _print_data_verbose(QSP_ARG  fdp)
+
+static void _print_data_verbose(QSP_ARG_DECL  Fit_Data *fdp )
+{
+	if( FIT_TYPE(fdp) == FIT_NEW_OGIVE || FIT_TYPE(fdp) == FIT_OLD_OGIVE ){
+		print_ogive_verbose(fdp);
+	} else if( FIT_TYPE(fdp) == FIT_WEIBULL ){
+		print_weibull_verbose(fdp);
+	} else {
+		sprintf(ERROR_STRING,"print_data_verbose:  unexpected fit type (%d)!?",FIT_TYPE(fdp));
+		warn(ERROR_STRING);
+	}
+}
+
+static void init_fit_data( Fit_Data *fdp, Fit_Type type, Trial_Class *tcp )
+{
+	SET_FIT_TYPE(fdp,type);
+	SET_FIT_CLASS(fdp,tcp);
+	SET_FIT_CHANCE_RATE(fdp,user_chance_rate);
+	SET_FIT_LOG_FLAG(fdp,fit_log_flag);
+
+	memset(&(fdp->fd_u),0,sizeof(fdp->fd_u));
+
+	if( IS_OGIVE_FIT(fdp) ){
+		SET_FIT_SLOPE_CONSTRAINT(fdp, the_slope_constraint);	// -1, 0, or +1
+	}
+}
+
+#define fit_func_for_type(type) _fit_func_for_type(QSP_ARG  type)
+
+static void (*_fit_func_for_type(QSP_ARG_DECL  Fit_Type type))(QSP_ARG_DECL  Fit_Data *)
+{
+	void (*func)(QSP_ARG_DECL  Fit_Data *fdp);
+
+	assert( type >= 0 && type < N_FIT_TYPES );
+
+	switch(type){
+		case FIT_OLD_OGIVE:
+			func = _old_ogive_fit;
+			break;
+		case FIT_NEW_OGIVE:
+			func = _new_ogive_fit;
+			break;
+		case FIT_WEIBULL:
+			func = _w_analyse;
+			break;
+		case N_FIT_TYPES:
+			error1("invalid fit type!?");
+			func = NULL;
+			break;
+	}
+	return func;
+}
+
+#define show_fit_terse( func ) _show_fit_terse( QSP_ARG   func )
+
+static void _show_fit_terse( QSP_ARG_DECL   Fit_Type type )
 {
 	Trial_Class *tcp;
+	const char *msg;
+	void (*func)(QSP_ARG_DECL  Fit_Data *fdp);
 
 	tcp = pick_trial_class("");
+	msg = nameof("output tag string");
 
 	if( tcp == NULL ) return;
 
-	w_analyse(tcp);
-	w_tersout(tcp);
+	func = fit_func_for_type(type);
+	init_fit_data(&fit_data1,type,tcp);
+	(*func)(QSP_ARG  &fit_data1);
+	print_data_terse(&fit_data1,msg);
 }
 
-static COMMAND_FUNC( do_terse_ogive_fit )
+#define show_fit_verbose(type) _show_fit_verbose(QSP_ARG  type)
+
+static void _show_fit_verbose(QSP_ARG_DECL  Fit_Type type)
 {
 	Trial_Class *tcp;
+	void (*func)(QSP_ARG_DECL  Fit_Data *fdp);
 
 	tcp = pick_trial_class("");
-
 	if( tcp == NULL ) return;
 
-	ogive_fit(tcp);
-	tersout(tcp);
+	func = fit_func_for_type(type);
+	init_fit_data(&fit_data1,type,tcp);
+	(*func)(QSP_ARG  &fit_data1);
+	print_data_verbose(&fit_data1);
 }
 
-static COMMAND_FUNC( do_terse_new_ogive_fit )
-{
-	Trial_Class *tcp;
 
-	tcp = pick_trial_class("");
+static COMMAND_FUNC( terse_weibull_fit ) { show_fit_terse(FIT_WEIBULL); }
+static COMMAND_FUNC( do_terse_old_ogive_fit ) { show_fit_terse(FIT_OLD_OGIVE); }
+static COMMAND_FUNC( do_terse_new_ogive_fit ) { show_fit_terse(FIT_NEW_OGIVE); }
 
-	if( tcp == NULL ) return;
-
-	new_ogive_fit(tcp);
-	tersout(tcp);
-}
-
-static COMMAND_FUNC( weibull_fit )
-{
-	Trial_Class *tcp;
-
-	tcp = pick_trial_class("");
-
-	if( tcp == NULL ) return;
-
-	w_analyse(tcp);
-	weibull_out(tcp);
-}
-
-static COMMAND_FUNC( do_ogive_fit )
-{
-	Trial_Class *tcp;
-
-	tcp = pick_trial_class("");
-
-	if( tcp == NULL ) return;
-
-	ogive_fit(tcp);
-	print_ogive_parameters(tcp);
-}
-
-static COMMAND_FUNC( do_new_ogive_fit )
-{
-	Trial_Class *tcp;
-
-	tcp = pick_trial_class("");
-
-	if( tcp == NULL ) return;
-
-	new_ogive_fit(tcp);
-	print_ogive_parameters(tcp);
-}
+static COMMAND_FUNC( weibull_fit ) { show_fit_verbose(FIT_WEIBULL); } 
+static COMMAND_FUNC( do_old_ogive_fit ) { show_fit_verbose(FIT_OLD_OGIVE); } 
+static COMMAND_FUNC( do_new_ogive_fit ) { show_fit_verbose(FIT_NEW_OGIVE); }
 
 static COMMAND_FUNC( setfc ) { set_fcflag( askif("do analysis relative to 50% chance") ); }
 
 static COMMAND_FUNC( do_set_chance_rate )
 {
-	set_chance_rate( how_much("Probability of correct response due to guessing") );
+	float r = how_much("Probability of correct response due to guessing");
+	if( r < 0 || r > 1 ){
+		sprintf(ERROR_STRING,"Chance rate (%g) should be between 0 and 1!?",r);
+		warn(ERROR_STRING);
+		return;
+	}
+	user_chance_rate = r;
+}
+
+static COMMAND_FUNC( do_fit_logs )
+{
+	fit_log_flag = askif("Take logarithm of x value before fitting");
 }
 
 static COMMAND_FUNC( do_split )
@@ -218,13 +334,27 @@ static COMMAND_FUNC( do_split )
 	split(tcp,wu);
 }
 
+static const char *clist[]={"negative","unconstrained","positive"};
+
+static COMMAND_FUNC( constrain_slope )
+{
+	int ctype;
+
+	ctype = which_one("constraint for slope",3,clist);
+	if( ctype < 0 ) return;
+
+	the_slope_constraint = ctype - 1;
+}
+
+
 #define ADD_CMD(s,f,h)	ADD_COMMAND(old_ogive_menu,s,f,h)
 
 MENU_BEGIN(old_ogive)
-ADD_CMD( analyse,	do_ogive_fit,			analyse data )
-ADD_CMD( summarize,	do_terse_ogive_fit,		analyse data (terse output) )
+ADD_CMD( analyse,	do_old_ogive_fit,			analyse data )
+ADD_CMD( summarize,	do_terse_old_ogive_fit,		analyse data (terse output) )
 //ADD_CMD( class,		setcl,			select new stimulus class )
 ADD_CMD( 2afc,		setfc,			set forced-choice flag )
+ADD_CMD( fit_logs,	do_fit_logs,		specify fitting against log or linear x values)
 ADD_CMD( chance_rate, 	do_set_chance_rate,	specify chance P(correct) )
 ADD_CMD( constrain,	constrain_slope,	constrain regression slope )
 MENU_END(old_ogive)
@@ -241,6 +371,7 @@ MENU_BEGIN(new_ogive)
 ADD_CMD( analyse,	do_new_ogive_fit,			analyse data )
 ADD_CMD( summarize,	do_terse_new_ogive_fit,		analyse data (terse output) )
 //ADD_CMD( class,		setcl,			select new stimulus class )
+ADD_CMD( fit_logs,	do_fit_logs,		specify fitting against log or linear x values)
 ADD_CMD( chance_rate, 	do_set_chance_rate,	specify chance P(correct) )
 MENU_END(new_ogive)
 

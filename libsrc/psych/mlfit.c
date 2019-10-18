@@ -23,15 +23,8 @@
 
 int fc_flag=0;			// forced choice
 
-static double slope, y_int;
-static int slope_constraint=0;
-static double _r_, _r_initial, _x_, siqd;
-static double chance_rate=0.0;	// for yes-no
-
 static Opt_Param *slope_param_p=NULL;
 static Opt_Param *intercept_param_p=NULL;
-
-static double thresh, siqd;
 static Opt_Param *thresh_param_p=NULL;
 static Opt_Param *siqd_param_p=NULL;
 
@@ -54,15 +47,11 @@ static Opt_Param *siqd_param_p=NULL;
 #define THRESHOLD_NAME	"threshold"
 #define SIQD_NAME	"siqd"
 
-Summary_Data_Tbl *the_dtbl;
+//static Summary_Data_Tbl *the_dtbl=NULL;
+static Fit_Data *the_fdp=NULL;
 
 // local prototypes
 //static float likelihood(SINGLE_QSP_ARG_DECL);
-
-void set_chance_rate( double r )
-{
-	chance_rate = r;
-}
 
 #define set_float_var(name, v) _set_float_var(QSP_ARG  name, v)
 
@@ -78,7 +67,9 @@ void set_fcflag(int flg)
 
 #define NO_GOOD		(-2.0)		// special flag value...
 
-double _regr(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int first)
+#define regr(fdp,first) _regr(QSP_ARG  fdp,first)
+
+static double _regr(QSP_ARG_DECL  Fit_Data *fdp,int first)
 // =1 if the first iteration
 {
 	int i;
@@ -91,12 +82,16 @@ double _regr(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int first)
 	double f1,f2,yt;
 	short nsamps=0;
 	int n_xvals;
+	double chance_rate;
+	Summary_Data_Tbl *dtp;
 
+	dtp = CLASS_SUMM_DTBL(FIT_CLASS(fdp));
 	assert(dtp!=NULL);
 	assert(SUMM_DTBL_XVAL_OBJ(dtp)!=NULL);
 	n_xvals = OBJ_COLS( SUMM_DTBL_XVAL_OBJ(dtp) );
 	assert(n_xvals>1);
 	for(i=0;i<n_xvals;i++) n[i]=0.0;
+	chance_rate = FIT_CHANCE_RATE(fdp);
 	for(i=0;i<n_xvals;i++){
 		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,i)) > 0 ){
 			float *xv_p;
@@ -131,7 +126,7 @@ double _regr(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int first)
 			x[nsamps] = *xv_p;
 			if( first ) yt=y[nsamps];
 			else {
-				yt= y_int + slope * x[nsamps];
+				yt= FIT_Y_INT(fdp) + FIT_SLOPE(fdp) * x[nsamps];
 				pc = ztop( yt );
 				if( pc == 1.0 ) pc=.99;
 				else if( pc==0.0 ) pc=.01;
@@ -171,10 +166,13 @@ double _regr(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int first)
 		warn("zero xvar");
 		return(0.0);
 	}
-	slope= xyvar/ xvar;
+	SET_FIT_SLOPE(fdp, xyvar / xvar );
 
-	if( fc_flag ) y_int=0.0;
-	else y_int= (sy-sx*slope)/nt;
+	if( fc_flag ) {
+		SET_FIT_Y_INT(fdp,0.0);
+	} else {
+		SET_FIT_Y_INT(fdp,(sy-sx*FIT_SLOPE(fdp))/nt);
+	}
 
 	if( yvar==0.0 ){
 		warn("zero yvar");
@@ -234,7 +232,7 @@ static float likelihood(SINGLE_QSP_ARG_DECL)	// called from optimization routine
 }
 */
 
-static float _get_lin_ptoz(QSP_ARG_DECL  float xv)
+static float _get_lin_ptoz(QSP_ARG_DECL  Fit_Data *fdp, float xv)
 {
 	float pc, t_slope, t_int;
 
@@ -256,7 +254,7 @@ static float _get_lin_ptoz(QSP_ARG_DECL  float xv)
 // so the factor is (1-p_guess)/2.
 // In general, p = (erf+1) * (1-p_guess)/2 + p_guess;
 
-static float _ogive_prediction(QSP_ARG_DECL  float xv)
+static float _ogive_prediction(QSP_ARG_DECL  Fit_Data *fdp, float xv)
 {
 	double thresh, siqd;
 	float pc;
@@ -266,11 +264,11 @@ static float _ogive_prediction(QSP_ARG_DECL  float xv)
 
 	pc = erf( (xv - thresh)/siqd );
 
-	pc = (pc+1)*(1-chance_rate)/2 + chance_rate;
+	pc = (pc+1)*(1-FIT_CHANCE_RATE(fdp))/2 + FIT_CHANCE_RATE(fdp);
 	return pc;
 }
 
-static float (*prediction_func)(QSP_ARG_DECL  float xv) = _get_lin_ptoz; 
+static float (*prediction_func)(QSP_ARG_DECL  Fit_Data *fdp, float xv) = _get_lin_ptoz; 
 
 static float generic_likelihood(SINGLE_QSP_ARG_DECL)	// return likelihood of trial params
 {
@@ -282,6 +280,9 @@ static float generic_likelihood(SINGLE_QSP_ARG_DECL)	// return likelihood of tri
 //	float t_slope, t_int;	// trial slope and int
 	int n_xvals;
 	// Opt_Param *opp;
+	Summary_Data_Tbl *the_dtbl;
+
+	the_dtbl = CLASS_SUMM_DTBL( FIT_CLASS(the_fdp) );
 
 	// compute the likelihood for this guess
 	assert( EXPT_XVAL_OBJ(&expt1) != NULL );
@@ -300,7 +301,12 @@ static float generic_likelihood(SINGLE_QSP_ARG_DECL)	// return likelihood of tri
 		xv_p = indexed_data(EXPT_XVAL_OBJ(&expt1),i);
 		xv = *xv_p;
 
-		pc = (*prediction_func)(QSP_ARG  xv);
+		if( FIT_LOG_FLAG(the_fdp) ){
+			xv = log10(xv);
+		}
+
+		pc = (*prediction_func)(QSP_ARG  the_fdp, xv);
+//fprintf(stderr,"original xv = %g, xv = %g, predicted pc = %g\n",*xv_p,xv,pc);
 
 		// This is the crux of the model - we ought to be able to put any other function here???
 		// This seems like a hack...
@@ -316,9 +322,9 @@ static float generic_likelihood(SINGLE_QSP_ARG_DECL)	// return likelihood of tri
 	return(lh);
 }
 
-#define init_regression_opt_params() _init_regression_opt_params(SINGLE_QSP_ARG)
+#define init_regression_opt_params(fdp) _init_regression_opt_params(QSP_ARG  fdp)
 
-static void _init_regression_opt_params(SINGLE_QSP_ARG_DECL)
+static void _init_regression_opt_params(QSP_ARG_DECL  Fit_Data *fdp)
 {
 	Opt_Param tmp_param;
 
@@ -327,15 +333,15 @@ static void _init_regression_opt_params(SINGLE_QSP_ARG_DECL)
 	tmp_param.op_name=SLOPE_NAME;
 	tmp_param.maxv=10000.0;
 	tmp_param.minv=(-10000.0);
-	tmp_param.ans = (float) slope;
-	if( slope_constraint < 0 ){
+	tmp_param.ans = (float) FIT_SLOPE(fdp);
+	if( FIT_SLOPE_CONSTRAINT(fdp) < 0 ){
 		tmp_param.maxv = 0.0;
-		if( slope > 0 ) tmp_param.ans = 0.0;
-	} else if( slope_constraint > 0 ){
+		if( FIT_SLOPE(fdp) > 0 ) tmp_param.ans = 0.0;
+	} else if( FIT_SLOPE_CONSTRAINT(fdp) > 0 ){
 		tmp_param.minv = 0.0;
-		if( slope < 0 ) tmp_param.ans = 0.0;
+		if( FIT_SLOPE(fdp) < 0 ) tmp_param.ans = 0.0;
 	}
-	tmp_param.delta = (float) fabs(slope/10.0);
+	tmp_param.delta = (float) fabs(FIT_SLOPE(fdp)/10.0);
 	tmp_param.mindel = (float) 1.0e-30;
 
 	assert(slope_param_p==NULL);
@@ -361,8 +367,8 @@ static void _init_regression_opt_params(SINGLE_QSP_ARG_DECL)
 
 	if( !fc_flag ){
 		tmp_param.op_name=INTERCEPT_NAME;
-		tmp_param.ans = (float) y_int;
-		tmp_param.delta = (float) fabs(y_int/10.0);
+		tmp_param.ans = (float) FIT_Y_INT(fdp);
+		tmp_param.delta = (float) fabs(FIT_Y_INT(fdp)/10.0);
 		tmp_param.mindel = (float) 1.0e-30;
 		tmp_param.maxv = 10000.0;
 		tmp_param.minv = -10000.0;
@@ -403,89 +409,95 @@ fprintf(stderr,"init_ogive_opt_params:  creating SIQD param\n");
 	siqd_param_p = add_opt_param(&tmp_param);
 }
 
-#define finish_regression_optimization() _finish_regression_optimization(SINGLE_QSP_ARG)
+#define finish_regression_optimization(fdp) _finish_regression_optimization(QSP_ARG  fdp)
 
-static void _finish_regression_optimization(SINGLE_QSP_ARG_DECL)
+static void _finish_regression_optimization(QSP_ARG_DECL  Fit_Data *fdp)
 {
-	slope = get_opt_param_value(SLOPE_NAME);
+	SET_FIT_SLOPE(fdp, get_opt_param_value(SLOPE_NAME) );
 	del_opt_param(slope_param_p);
 	slope_param_p=NULL;
 
 	if( !fc_flag ){
-		y_int = get_opt_param_value(INTERCEPT_NAME);
+		SET_FIT_Y_INT(fdp, get_opt_param_value(INTERCEPT_NAME) );
 		del_opt_param(intercept_param_p);
 		intercept_param_p = NULL;
-	} else
-		y_int = 0.0;
+	} else {
+		SET_FIT_Y_INT(fdp, 0.0);
+	}
 }
 
-#define finish_ogive_optimization() _finish_ogive_optimization(SINGLE_QSP_ARG)
+#define finish_ogive_optimization(fdp) _finish_ogive_optimization(QSP_ARG  fdp)
 
-static void _finish_ogive_optimization(SINGLE_QSP_ARG_DECL)
+static void _finish_ogive_optimization(QSP_ARG_DECL  Fit_Data *fdp)
 {
-	thresh = get_opt_param_value(THRESHOLD_NAME);
+	SET_FIT_THRESH( fdp, get_opt_param_value(THRESHOLD_NAME) );
 	del_opt_param(thresh_param_p);
 	thresh_param_p=NULL;
 
-	siqd = get_opt_param_value(SIQD_NAME);
+	SET_FIT_SIQD(fdp, get_opt_param_value(SIQD_NAME) );
 	del_opt_param(siqd_param_p);
 	siqd_param_p = NULL;
 }
 
-void _ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dtp,int ntrac)		// maximum liklihood fit
+#define ml_fit(fdp,ntrac) _ml_fit(QSP_ARG  fdp,ntrac)
+
+static void _ml_fit(QSP_ARG_DECL  Fit_Data *fdp,int ntrac)		// maximum liklihood fit
 {
-
-	// initialize global
-	the_dtbl = dtp;
-
+	// initialize globals
+	the_fdp = fdp;
+	//the_dtbl = CLASS_SUMM_DTBL(FIT_CLASS(fdp));
 
 	optimize(generic_likelihood);
 }
 
-void _ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		// do a regression on the ith table
+void _old_ogive_fit( QSP_ARG_DECL  Fit_Data *fdp )		// do a regression on the ith table
 {
 	double _slope, _y_int;
 
 	// ntrac = how_many("trace stepit output (-1,0,1)");
 
-	retabulate_one_class(tcp,NULL);
+	retabulate_one_class(FIT_CLASS(fdp),NULL);
 
-	_r_initial = regr( CLASS_SUMM_DTBL(tcp), 1 );
-	if(_r_initial == NO_GOOD){
+	SET_FIT_R_INITIAL(fdp, regr( fdp, 1 ) );
+	if( FIT_R_INITIAL(fdp) == NO_GOOD){
                 advise("\n");
                 return;
         }
 
 	prediction_func = _get_lin_ptoz; 
-	init_regression_opt_params();
-	ml_fit( CLASS_SUMM_DTBL(tcp), /* ntrac */ -1 );
-	finish_regression_optimization();
+	init_regression_opt_params(fdp);
+	ml_fit( fdp, /* ntrac */ -1 );
+	finish_regression_optimization(fdp);
 
 	// now we want to compute the correlation coefficient
 	// for the final fit
 	
 	
 	// need to remember M-L slope & int
-	_slope = slope;
-	_y_int = y_int;
+	_slope = FIT_SLOPE(fdp);
+	_y_int = FIT_Y_INT(fdp);
 
-	_r_ = regr( CLASS_SUMM_DTBL(tcp), 0 );
+	SET_FIT_R(fdp, regr( fdp, 0 ) );
 
-	slope = _slope;
-	y_int = _y_int;
+	// BUG?  it is not at all clear how the local variables _slope & _y_int are updated by regr???
 
-        if( slope == 0.0 ) warn("zero slope");
+	SET_FIT_SLOPE(fdp, _slope);
+	SET_FIT_Y_INT(fdp, _y_int);
+
+        if( FIT_SLOPE(fdp) == 0.0 ) warn("zero slope");
         else if(!fc_flag) {
-                _x_ = ( ptoz( .5 ) - y_int )/ slope ;
-                siqd = ( ptoz(.25) - y_int )/slope;
-                if( siqd > _x_ ) siqd-=_x_;
-                else siqd = _x_-siqd;
-		set_float_var("ogive_siqd",siqd);
-		set_float_var("ogive_threshold",_x_);
-        }
-	else {
-		_x_=ptoz(.75)/slope;
-		set_float_var("ogive_threshold",_x_);
+                SET_FIT_THRESH(fdp, ( ptoz( .5 ) - FIT_Y_INT(fdp) )/ FIT_SLOPE(fdp) );
+                SET_FIT_SIQD( fdp, ( ptoz(.25) - FIT_Y_INT(fdp) )/FIT_SLOPE(fdp) );
+                if( FIT_SIQD(fdp) > FIT_THRESH(fdp) ){
+			SET_FIT_SIQD( fdp, FIT_SIQD(fdp) - FIT_THRESH(fdp) );
+		} else {
+			SET_FIT_SIQD( fdp, FIT_THRESH(fdp) - FIT_SIQD(fdp) );
+		}
+		set_float_var("ogive_siqd", FIT_SIQD( fdp ) );
+		set_float_var("ogive_threshold",FIT_THRESH(fdp));
+        } else {
+		SET_FIT_THRESH( fdp, ptoz(.75)/FIT_SLOPE(fdp) );
+		set_float_var("ogive_threshold",FIT_THRESH(fdp));
 	}
 }
 
@@ -503,50 +515,19 @@ void _ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		// do a regression on the ith
 // so the factor is (1-p_guess)/2.
 // In general, p = (erf+1) * (1-p_guess)/2 + p_guess;
 
-void _new_ogive_fit( QSP_ARG_DECL  Trial_Class *tcp )		// do a regression on the ith table
+void _new_ogive_fit( QSP_ARG_DECL  Fit_Data *fdp )		// do a regression on the ith table
 {
-	double siqd, thresh;
-
 	// ntrac = how_many("trace stepit output (-1,0,1)");
 
-	retabulate_one_class(tcp,NULL);
+	retabulate_one_class(FIT_CLASS(fdp),NULL);
 
 	prediction_func = _ogive_prediction; 
 	init_ogive_opt_params();
-	ml_fit( CLASS_SUMM_DTBL(tcp), /* ntrac */ -1 );
-	finish_ogive_optimization();
+	ml_fit( fdp, /* ntrac */ -1 );
+	finish_ogive_optimization(fdp);
 
-	set_float_var("ogive_siqd",siqd);
-	set_float_var("ogive_threshold",thresh);
-}
-
-void _print_ogive_parameters(QSP_ARG_DECL  Trial_Class *tcp)	// verbose analysis report
-{
-        sprintf(msg_str,"\nTrial_Class %s\n",CLASS_NAME(tcp));
-	prt_msg(msg_str);
-        sprintf(msg_str,"initial correlation:\t\t\t%f", _r_initial );
-	prt_msg(msg_str);
-        sprintf(msg_str,"final correlation:\t\t\t%f", _r_ );
-	prt_msg(msg_str);
-
-        if(!fc_flag) {
-                sprintf(msg_str,"x value at inflection pt:\t\t%f",_x_);
-		prt_msg(msg_str);
-                sprintf(msg_str,"semi-interquartile difference:\t\t%f",siqd);
-		prt_msg(msg_str);
-        } else {
-		sprintf(msg_str,"x value for 75%%:\t%f",_x_);
-		prt_msg(msg_str);
-	}
-}
-
-void _tersout(QSP_ARG_DECL  Trial_Class *tcp)
-{
-	if( !fc_flag ) 
-		sprintf(msg_str,"%d\t%f\t%f\t%f", CLASS_INDEX(tcp),_r_, _x_,siqd);
-	else
-		sprintf(msg_str,"%d\t%f\t%f", CLASS_INDEX(tcp),_r_, _x_);
-	prt_msg(msg_str);
+	set_float_var("ogive_siqd",FIT_SIQD( fdp ) );
+	set_float_var("ogive_threshold",FIT_THRESH( fdp ) );
 }
 
 #ifdef QUIK
@@ -611,17 +592,4 @@ void _split(QSP_ARG_DECL  Trial_Class * tcp,int wantupper)
 	}
 	if( !havzero ) warn("split:  no zero found!");
 }
-
-static const char *clist[]={"negative","unconstrained","positive"};
-
-COMMAND_FUNC( constrain_slope )
-{
-	int ctype;
-
-	ctype = which_one("constraint for slope",3,clist);
-	if( ctype < 0 ) return;
-
-	slope_constraint = ctype -1;
-}
-
 

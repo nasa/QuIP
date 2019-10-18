@@ -1,0 +1,13 @@
+
+Set f x.png
+Read_File_Header $f
+advise 'File header read, ready to read data.'
+Pause
+Assign h nrows('$f')
+Assign w ncols('$f')
+Assign d depth('$f')
+Assign p precision('$f')
+Image x $h $w $d $p
+Get_Next x $f
+Pause
+
