@@ -364,6 +364,9 @@ AC_CHECK_FILE([/home/craik/jbm/inst/usr/local/lib],[LDFLAGS="$LDFLAGS -L/home/cr
 AC_CHECK_FILE([/home/craik/jbm/inst/usr/local/include],[CFLAGS="$CFLAGS -I/home/craik/jbm/inst/usr/local/include"],[])
 
 
+AC_CHECK_FILE([/Users/jmulliga/inst/usr/local/lib],[LDFLAGS="$LDFLAGS -L/Users/jmulliga/inst/usr/local/lib"],[])
+AC_CHECK_FILE([/Users/jmulliga/inst/usr/local/include],[CFLAGS="$CFLAGS -I/Users/jmulliga/inst/usr/local/include"],[])
+
 #################################################
 #
 # cuda CUDA checks
