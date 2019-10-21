@@ -49,7 +49,6 @@ Substring $1 $2 $source_len-$delim_idx $delim_idx
 # BUG?  make sure explode doesn't overflow if there are too many components or characters...
 
 Define Explode 3 string char table
-advise "Explode $1 $2 BEGIN"
 VSet $3 0
 Set_String $3[0] $1
 Assign l strlen('$1')
