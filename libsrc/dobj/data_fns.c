@@ -433,6 +433,7 @@ void *indexed_data(Data_Obj *dp, dimension_t offset )
 	dimension_t remainder;
 	int i;
 
+	assert(OBJ_MACH_DIMS(dp)!=NULL);
 	count_array[0] = OBJ_MACH_DIM(dp,0);
 	for(i=1;i<N_DIMENSIONS;i++)
 		count_array[i] = count_array[i-1] * OBJ_MACH_DIM(dp,i-1);

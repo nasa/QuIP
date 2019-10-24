@@ -1,6 +1,7 @@
 *.o
 *.a
 *.asc
+x.png
 .deps
 Makefile
 Makefile.in
