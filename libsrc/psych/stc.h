@@ -99,7 +99,6 @@ struct summary_data_tbl {
 	Data_Obj *		sdt_data_dp;
 	Summary_Datum *		sdt_data_ptr;	// points to data in the object...
 	Trial_Class *		sdt_tc_p;	// may be invalid if lumped...
-	Data_Obj *		sdt_xval_dp;	// should match class
 	int			sdt_flags;
 };
 
@@ -238,6 +237,74 @@ typedef struct staircase {
 #define SET_STAIR_SUMM_DTBL(st_p,v)	(st_p)->stair_sdt_p = v
 
 #define NO_STC_DATA	(-1)
+
+typedef enum {
+	FIT_OLD_OGIVE,
+	FIT_NEW_OGIVE,
+	FIT_WEIBULL,
+	N_FIT_TYPES
+} Fit_Type;
+
+typedef struct {
+	double	ofd_slope;
+	double	ofd_y_int;
+	int	ofd_slope_constraint;
+	double	ofd_r;
+	double	ofd_r_initial;
+	double	ofd_thresh;
+	double	ofd_siqd;
+} Ogive_Fit_Data;
+
+typedef struct {
+} Weibull_Fit_Data;
+
+typedef struct fit_data {
+	Fit_Type	fd_type;
+	double		fd_chance_rate;
+	int		fd_log_flag;
+	Trial_Class *	fd_tcp;
+	union {
+		Ogive_Fit_Data		u_ogive_fit_data;
+		Weibull_Fit_Data	u_weibull_fit_data;
+	} fd_u;
+} Fit_Data;
+
+#define fd_slope		fd_u.u_ogive_fit_data.ofd_slope
+#define fd_slope_constraint	fd_u.u_ogive_fit_data.ofd_slope_constraint
+#define fd_y_int		fd_u.u_ogive_fit_data.ofd_y_int
+#define fd_r			fd_u.u_ogive_fit_data.ofd_r
+#define fd_r_initial		fd_u.u_ogive_fit_data.ofd_r_initial
+#define fd_thresh		fd_u.u_ogive_fit_data.ofd_thresh
+#define fd_siqd			fd_u.u_ogive_fit_data.ofd_siqd
+
+#define FIT_TYPE(fdp)			(fdp)->fd_type
+#define FIT_CHANCE_RATE(fdp)		(fdp)->fd_chance_rate
+#define FIT_LOG_FLAG(fdp)		(fdp)->fd_log_flag
+#define FIT_SLOPE(fdp)			(fdp)->fd_slope
+#define FIT_Y_INT(fdp)			(fdp)->fd_y_int
+#define FIT_SLOPE_CONSTRAINT(fdp)	(fdp)->fd_slope_constraint
+#define FIT_R(fdp)			(fdp)->fd_r
+#define FIT_R_INITIAL(fdp)		(fdp)->fd_r_initial
+#define FIT_THRESH(fdp)			(fdp)->fd_thresh
+#define FIT_SIQD(fdp)			(fdp)->fd_siqd
+#define FIT_CLASS(fdp)			(fdp)->fd_tcp
+
+#define FIT_CLASS_INDEX(fdp)		CLASS_INDEX( FIT_CLASS(fdp) )
+
+#define SET_FIT_TYPE(fdp,v)		(fdp)->fd_type = v
+#define SET_FIT_CHANCE_RATE(fdp,v)	(fdp)->fd_chance_rate = v
+#define SET_FIT_LOG_FLAG(fdp,v)		(fdp)->fd_log_flag = v
+#define SET_FIT_SLOPE(fdp,v)		(fdp)->fd_slope = v
+#define SET_FIT_Y_INT(fdp,v)		(fdp)->fd_y_int = v
+#define SET_FIT_SLOPE_CONSTRAINT(fdp,v)	(fdp)->fd_slope_constraint = v
+#define SET_FIT_R(fdp,v)		(fdp)->fd_r = v
+#define SET_FIT_R_INITIAL(fdp,v)	(fdp)->fd_r_initial = v
+#define SET_FIT_THRESH(fdp,v)		(fdp)->fd_thresh = v
+#define SET_FIT_SIQD(fdp,v)		(fdp)->fd_siqd = v
+#define SET_FIT_CLASS(fdp,v)		(fdp)->fd_tcp = v
+
+#define IS_OGIVE_FIT(fdp)	(FIT_TYPE(fdp) == FIT_NEW_OGIVE || FIT_TYPE(fdp) == FIT_OLD_OGIVE )
+
 
 struct experiment {
 	int		expt_flags;
@@ -523,18 +590,15 @@ extern void init_rps(char *target,const char *s);
 extern COMMAND_FUNC( staircase_menu );
 
 /* mlfit.c */
-extern void _ml_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac);
-#define ml_fit(dp,ntrac) _ml_fit(QSP_ARG  dp,ntrac)
-extern void _longout(QSP_ARG_DECL  Trial_Class *);
-#define longout(tc_p) _longout(QSP_ARG  tc_p)
-extern void _tersout(QSP_ARG_DECL  Trial_Class *);
-#define tersout(tc_p) _tersout(QSP_ARG  tc_p)
+extern void _print_ogive_parameters(QSP_ARG_DECL  Trial_Class *);
+#define print_ogive_parameters(tc_p) _print_ogive_parameters(QSP_ARG  tc_p)
 
-extern COMMAND_FUNC( constrain_slope );
 extern void set_fcflag(int flg);
 extern void set_chance_rate(double chance_rate);
-extern void _ogive_fit( QSP_ARG_DECL  Trial_Class *tc_p );
-#define ogive_fit(tc_p) _ogive_fit(QSP_ARG  tc_p )
+extern void _old_ogive_fit( QSP_ARG_DECL  Fit_Data *fdp );
+#define old_ogive_fit(tc_p) _old_ogive_fit(QSP_ARG  tc_p )
+extern void _new_ogive_fit( QSP_ARG_DECL  Fit_Data *fdp );
+#define new_ogive_fit(tc_p) _new_ogive_fit(QSP_ARG  tc_p )
 
 #ifdef QUIK
 extern void pntquic(FILE *fp,Trial_Class *tc_p,int in_db);
@@ -542,10 +606,8 @@ extern void pntquic(FILE *fp,Trial_Class *tc_p,int in_db);
 extern void _print_class_summary(QSP_ARG_DECL  Trial_Class * tc_p);
 #define print_class_summary(tc_p) _print_class_summary(QSP_ARG  tc_p)
 
-extern double _regr(QSP_ARG_DECL  Summary_Data_Tbl *dp,int first);
 extern void _split(QSP_ARG_DECL  Trial_Class * tc_p,int wantupper);
 
-#define regr(dp,first) _regr(QSP_ARG  dp,first)
 #define split(tc_p,wantupper) _split(QSP_ARG  tc_p,wantupper)
 
 
@@ -553,6 +615,12 @@ extern void _split(QSP_ARG_DECL  Trial_Class * tc_p,int wantupper);
 extern COMMAND_FUNC( do_lump );
 
 /* asc_data.c */
+
+extern void _retabulate_one_class( QSP_ARG_DECL  Trial_Class *tc_p, void *arg );
+#define retabulate_one_class( tc_p, arg ) _retabulate_one_class( QSP_ARG  tc_p, arg )
+
+extern void _init_class_summary( QSP_ARG_DECL  Trial_Class *tc_p);
+#define init_class_summary( tc_p) _init_class_summary( QSP_ARG  tc_p)
 
 extern void _print_class_seq(QSP_ARG_DECL  Trial_Class *tc_p);
 #define print_class_seq(tc_p) _print_class_seq(QSP_ARG  tc_p)
@@ -607,10 +675,11 @@ extern COMMAND_FUNC( lookmenu );
 
 /* weibull.c */
 
-extern void _w_analyse( QSP_ARG_DECL  Trial_Class * );
+extern void _w_analyse( QSP_ARG_DECL  Fit_Data * );
 extern void _w_tersout(QSP_ARG_DECL  Trial_Class * );
 extern void _weibull_out(QSP_ARG_DECL  Trial_Class * );
-#define w_analyse(tc_p) _w_analyse(QSP_ARG  tc_p )
+#define w_analyse(fdp) _w_analyse(QSP_ARG  fdp )
+
 #define w_tersout(tc_p) _w_tersout(QSP_ARG  tc_p )
 #define weibull_out(tc_p) _weibull_out(QSP_ARG  tc_p )
 

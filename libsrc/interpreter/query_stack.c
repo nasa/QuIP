@@ -298,7 +298,7 @@ int qs_level(SINGLE_QSP_ARG_DECL)
 	return QS_LEVEL(THIS_QSP);
 }
 
-FILE *qs_msg_file(SINGLE_QSP_ARG_DECL)
+FILE *_qs_msg_file(SINGLE_QSP_ARG_DECL)
 {
 	return QS_MSG_FILE(THIS_QSP);
 }

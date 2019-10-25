@@ -181,11 +181,11 @@ static void _weibull_fit(QSP_ARG_DECL  Summary_Data_Tbl *dp,int ntrac)		/** maxi
 	del_opt_param(alpha_param_p);
 }
 
-void _w_analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */
+void _w_analyse( QSP_ARG_DECL  Fit_Data *fdp )		/** do a regression on the ith table */
 {
 	int ntrac=(-1);
 
-	weibull_fit( CLASS_SUMM_DTBL(tcp), ntrac );
+	weibull_fit( CLASS_SUMM_DTBL( FIT_CLASS(fdp) ), ntrac );
 }
 
 void _weibull_out(QSP_ARG_DECL  Trial_Class * tcp)			/** verbose analysis report */

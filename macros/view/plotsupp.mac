@@ -20,7 +20,7 @@
 # (Label_Y_Ticks_Right first max delta)
 #
 # new:
-# Set xmin, xmax, ymin, ymax, x_tick_spacing, y_tick_spacing, x_legend, y_legend
+# Set xmin, xmax, ymin, ymax, x_tick_spacing, y_tick_spacing, x_legend, y_legend, x_tick_auto, y_tick_auto
 # Setup_Axes
 #
 # XYPlot data_vector
