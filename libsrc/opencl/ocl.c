@@ -382,6 +382,8 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 
 	pdp = create_ocl_device(QSP_ARG  dev_id, cpp);
 	if( pdp == NULL ) return;
+sprintf(ERROR_STRING,"init_ocl_device %s BEGIN",PFDEV_NAME(pdp));
+advise(ERROR_STRING);
 
 	/* Remember this name in case the default is not found */
 	if( first_ocl_dev_name == NULL )
@@ -416,6 +418,10 @@ fprintf(stderr,"Setting %s device index to %d\n",PFDEV_NAME(pdp),n_ocl_devs);
 	// We insert a hack below by excluding that device name,
 	// but maybe there is another model where that would be
 	// inappropriate?
+
+	// On the mac pro, which appears to have TWO radeon GPU devices,
+	// the first one is associated with the GL context, but the second
+	// one throws an error...  what is the correct way to handle this?
 
 	if( extension_supported(pdp,"cl_APPLE_gl_sharing") &&
 			strcmp(PFDEV_NAME(pdp),"Iris_Pro")){
