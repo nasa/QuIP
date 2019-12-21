@@ -338,6 +338,7 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 // argset_type  REAL_ARGS etc...
 #ifdef CAUTIOUS
 //#define VL_TYPE_MASK(code)		((code)>=0&&(code)<N_ARGSET_TYPES?1<<((code)-1):0)
+// can we be sure that code is never 0 (UNKNOWN_ARGS) ???
 #define VL_TYPE_MASK(code)		(1<<((code)-1))
 #else // ! CAUTIOUS
 #define VL_TYPE_MASK(code)		(1<<((code)-1))

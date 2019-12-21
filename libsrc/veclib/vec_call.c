@@ -292,6 +292,7 @@ static int _chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 
 
 	/* now the type field has been set - make sure it's legal */
+	assert( OA_ARGSTYPE(oap) != UNKNOWN_ARGS );
 	if( (VF_TYPEMASK(vfp) & VL_TYPE_MASK(OA_ARGSTYPE(oap) ) )==0 ){
 		sprintf(ERROR_STRING,
 	"chktyp:  Arguments of type %s are not permitted with function %s",
