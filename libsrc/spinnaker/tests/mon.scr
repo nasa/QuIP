@@ -13,7 +13,7 @@ spinnaker
   advise "initializing..."
   init
   advise "DONE initializing..."
-  list_interfaces
+#  list_interfaces
   list_cams
 #  info Flea3_FL3-U3-13Y3M
 #  select Flea3_FL3-U3-13Y3M

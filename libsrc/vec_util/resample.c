@@ -17,7 +17,7 @@
 #include "vec_util.h"
 
 // BUG global var not thread-safe
-static int wrap_resample=1;
+static int wrap_resample=0;
 
 void set_resample_wrap(int flag)
 {
