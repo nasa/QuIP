@@ -102,17 +102,25 @@ static void _print_psychometric_pts(QSP_ARG_DECL  FILE *fp, Trial_Class * tcp)
         Summary_Data_Tbl *dtp;
 
 	assert(CLASS_XVAL_OBJ(tcp)!=NULL);
+
+	if( CLASS_SUMM_DTBL(tcp) == NULL ){
+		init_class_summary(tcp);
+	}
+	assert(CLASS_SUMM_DTBL(tcp)!=NULL);
+
 	dtp=CLASS_SUMM_DTBL(tcp);
 	for(j=0;j<SUMM_DTBL_SIZE(dtp);j++){
 		if( DATUM_NTOTAL(SUMM_DTBL_ENTRY(dtp,j)) > 0 ){
 			float *xv_p;
 			xv_p = indexed_data( CLASS_XVAL_OBJ(tcp), j);
 			assert(xv_p!=NULL);
-			fprintf(fp,"%f\t", *xv_p);
-			fprintf(fp,"%f\n",DATUM_FRACTION(SUMM_DTBL_ENTRY(dtp,j)));
+			sprintf(MSG_STR,"%f\t", *xv_p);
+			fputs(MSG_STR,fp);
+			sprintf(MSG_STR,"%f\n",DATUM_FRACTION(SUMM_DTBL_ENTRY(dtp,j)));
+			fputs(MSG_STR,fp);
+			//fflush(fp);
 		}
 	}
-	fclose(fp);
 }
 
 static COMMAND_FUNC( pntgrph )

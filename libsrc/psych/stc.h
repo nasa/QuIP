@@ -118,7 +118,7 @@ struct summary_data_tbl {
 #define SUMM_DTBL_CLASS(sdt_p)		(sdt_p)->sdt_tc_p
 
 #define SET_SUMM_DTBL_SIZE(sdt_p,v)	(sdt_p)->sdt_size = v
-#define SET_SUMM_DTBL_N(sdt_p,v)		(sdt_p)->sdt_npts = v
+#define SET_SUMM_DTBL_N(sdt_p,v)	(sdt_p)->sdt_npts = v
 #define SET_SUMM_DTBL_DATA_OBJ(sdt_p,v)	(sdt_p)->sdt_data_dp = v
 #define SET_SUMM_DTBL_DATA_PTR(sdt_p,v)	(sdt_p)->sdt_data_ptr = v
 #define SET_SUMM_DTBL_CLASS(sdt_p,v)	(sdt_p)->sdt_tc_p = v

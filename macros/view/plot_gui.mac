@@ -549,6 +549,7 @@ Panel_On $image_panel
 .
 
 Define LegendPanel 0
+If $n_extra_legends>0 Update_Legend_Choices
 Panel_Off $main_panel
 Panel_On $legend_panel
 .
@@ -961,12 +962,12 @@ repeat $n_embedded_images
 .
 
 Define Find_Legend_From_Nickname 1 nickname
-Set legend_nickname no_legend
+Set curr_legend_name no_legend
 If $n_extra_legends==0 exit_macro
 Set i 1
 repeat $n_extra_legends
   Set vname legend_${i}_nickname
-  If !strcmp('$1','$$vname') "Set legend_nickname legend_$i exit_macro"
+  If !strcmp('$1','$$vname') "Set curr_legend_name legend_$i exit_macro"
   Increment i
   end
 .
@@ -1076,29 +1077,26 @@ Panel_Off $image_panel
 Panel_On $image_edit_panel
 .
 
+Define SelectLegend 0
+Set selected_legend_nickname $selection
+Print selected_legend_nickname
+.
 
 Define EditLegend 0
 If !strcmp('$selected_legend_nickname','no_legend') "No_Legend_Msg exit_macro"
-Find_Image_From_Nickname $selected_image_nickname
-If !strcmp('$curr_image_name','no_image') "advise 'Could not find image with nickname $selected_image_nickname!?' exit_macro"
-Load_Image_Vars $curr_image_name
+Find_Legend_From_Nickname $selected_legend_nickname
+If !strcmp('$curr_legend_name','no_legend') "advise 'Could not find legend with nickname $selected_legend_nickname!?' exit_macro"
+Load_Legend_Vars $curr_legend_name
 interface
-  decorate $image_edit_panel
-    set_edit_text $image_nickname_widget_name $image_nickname
-    set_edit_text $image_source_file_widget_name $image_filename
-    set_edit_text $image_posn_x_widget_name $image_posn_x
-    set_edit_text $image_posn_y_widget_name $image_posn_y
-    set_edit_text $image_extent_x_widget_name $image_extent_x
-    set_edit_text $image_extent_y_widget_name $image_extent_y
-    advise "set_edit_text '$image_zoom_x_widget_name' '$image_zoom_x'"
-    set_edit_text $image_zoom_x_widget_name $image_zoom_x
-    advise "set_edit_text '$image_zoom_y_widget_name' '$image_zoom_y'"
-    set_edit_text $image_zoom_y_widget_name $image_zoom_y
-
+  decorate $legend_edit_panel
+    set_edit_text $legend_nickname_widget_name $legend_nickname
+    set_edit_text $legend_text_widget_name $legend_text
+    set_edit_text $legend_posn_x_widget_name $legend_posn_x
+    set_edit_text $legend_posn_y_widget_name $legend_posn_y
     quit
   quit
-Panel_Off $image_panel
-Panel_On $image_edit_panel
+Panel_Off $legend_panel
+Panel_On $legend_edit_panel
 .
 
 
@@ -1362,7 +1360,8 @@ repeat $n_extra_legends
   Set $1 "$$1 $$vname"
   Increment i
   end
-#Print $1
+echo "Make_Legend_List_Cmd:"
+Print $1
 .
 
 Define Make_Grid_List_Cmd 1 varname
@@ -1407,6 +1406,7 @@ interface
 .
 
 Define Update_Legend_Choices 0
+advise 'Update_Legend_Choices'
 Make_Legend_List_Cmd cmd
 interface
   decorate $legend_panel
@@ -2415,8 +2415,8 @@ interface
   decorate $legend_edit_panel
     text $legend_nickname_widget_name SetLegendNickname legendNNN
     text $legend_text_widget_name SetLegendText 'legend text' # Use file chooser?
-    text $legend_posn_x_widget_name SetImageOriginX 0
-    text $legend_posn_y_widget_name SetImageOriginY 0
+    text $legend_posn_x_widget_name SetLegendX 0
+    text $legend_posn_y_widget_name SetLegendY 0
     button 'Refresh_Plot' LegendEditRefreshPlot
     button Done LegendEditDone
     quit
