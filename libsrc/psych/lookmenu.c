@@ -13,6 +13,17 @@ static int fit_log_flag=0;
 static int the_slope_constraint;
 //SET_FIT_SLOPE_CONSTRAINT(fdp, ctype - 1 );	// -1, 0, or +1
 
+static COMMAND_FUNC( do_clear_data )
+{
+	Sequential_Data_Tbl *qdt_p;
+	qdt_p = EXPT_SEQ_DTBL(&expt1);
+
+	// This suppresses the warning about clearing unsaved data
+	CLEAR_QDT_FLAG_BITS(qdt_p,SEQUENTIAL_DATA_DIRTY);
+	
+	clear_sequential_data( qdt_p );
+}
+
 static COMMAND_FUNC( do_read_data )	/** read a data file */
 {
 	FILE *fp;
@@ -466,6 +477,7 @@ ADD_CMD( ogive,		do_new_ogive,	do fits with ogive (new method) )
 ADD_CMD( weibull,	do_weibull,	do fits to weibull function )
 ADD_CMD( split,		do_split,	split data at zeroes )
 ADD_CMD( lump,		do_lump,	lump data conditions )
+ADD_CMD( clear_data,	do_clear_data,	clear all data )
 #ifdef QUIK
 ADD_CMD( Quick,		prquic,		print data in QUICK format )
 #endif /* QUIK */

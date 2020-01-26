@@ -103,6 +103,7 @@ void _retabulate_one_class( QSP_ARG_DECL  Trial_Class *tc_p, void *arg )
 	if( CLASS_SUMM_DTBL(tc_p) == NULL ){
 		init_class_summary(tc_p);
 	} else {
+		// should clear any old summary data???
 		tabulate_class(tc_p);
 	}
 }

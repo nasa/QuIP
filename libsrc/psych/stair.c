@@ -75,23 +75,12 @@ fprintf(stderr,"rls_summ_dtbl will remove reference to the data table object...\
 	givbuf(sdt_p);
 }
 
-/*
-#define rls_seq_dtbl(qdt_p ) _rls_seq_dtbl(QSP_ARG  qdt_p )
-
-static void _rls_seq_dtbl(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p )
-{
-	clear_sequential_data( qdt_p );
-	rls_list(SEQ_DTBL_LIST(qdt_p));
-	givbuf(qdt_p);
-}
-*/
-
-
 void _clear_sequential_data(QSP_ARG_DECL  Sequential_Data_Tbl *qdt_p)
 {
 	List *lp;
 	Node *np;
 
+	// We warn about clearing unsaved-data, but what if it is phony data?
 	if( SEQ_DTBL_NEEDS_SAVING(qdt_p) ){
 		warn("clear_sequential_data:  clearing unsaved data!?");
 	}
