@@ -923,7 +923,6 @@ Trial_Class *_create_named_class(QSP_ARG_DECL  const char *name)
 	Trial_Class *tc_p;
 	//Summary_Data_Tbl *sdt_p;
 
-fprintf(stderr,"create_named_class BEGIN\n");
 	// Make sure not in use
 	tc_p = trial_class_of(name);
 	if( tc_p != NULL ){
