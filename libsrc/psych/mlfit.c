@@ -394,7 +394,6 @@ static void _init_ogive_opt_params(SINGLE_QSP_ARG_DECL)
 	tmp_param.mindel = (float) 1.0e-30;
 
 	assert(thresh_param_p==NULL);
-fprintf(stderr,"init_ogive_opt_params:  creating threshold param\n");
 	thresh_param_p = add_opt_param(&tmp_param);
 
 	tmp_param.op_name=SIQD_NAME;
@@ -405,7 +404,6 @@ fprintf(stderr,"init_ogive_opt_params:  creating threshold param\n");
 	tmp_param.minv = 0.0;
 
 	assert(siqd_param_p == NULL);
-fprintf(stderr,"init_ogive_opt_params:  creating SIQD param\n");
 	siqd_param_p = add_opt_param(&tmp_param);
 }
 
