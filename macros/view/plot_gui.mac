@@ -348,7 +348,6 @@ data
 Set legend_line_delta 12
 
 Define Refresh_Series_Legend 0
-#advise "Refresh_Series_Legend BEGIN"
 Unit_Font
 Left_Justify
 S_At $series_legend_text $series_legend_x $series_legend_y
@@ -490,7 +489,6 @@ Set plot_ready 0
 
 Define Refresh_Plot 0
 If !$plot_ready exit_macro
-#advise "Refresh_Plot BEGIN"
 Erase_Plot
 Select_Pen $black
 If $show_frame Draw_Frame
@@ -567,7 +565,6 @@ Panel_On $grid_panel
 # Axis panel actions
 
 Define TogAxisLogValues 0
-advise TogAxisLogValues
 Set $axis_logv_name $toggle_state
 Refresh_Plot
 .
@@ -725,7 +722,6 @@ Set plot_type $choice
 .
 
 Define GenPanel 0
-advise "GenPanel BEGIN"
 interface
   decorate $gen_panel
     set_edit_text $plot_legend_text_widget_name "$plot_legend_text"
@@ -734,7 +730,6 @@ interface
     # set the chooser state???
     quit
   quit
-advise "GenPanel will update toggles"
 Update_Toggle $plot_frame_toggle_widget_name $show_frame $gen_panel
 Update_Toggle $plot_legend_toggle_widget_name $show_plot_legend $gen_panel
 Panel_Off $main_panel
@@ -804,7 +799,6 @@ Load_Series_Var $1 legend_y
 .
 
 Define Store_Tick_Vars 0
-advise Store_Tick_Vars
 Set vname ${which_axis}_tick_${current_tick_index}_posn
 Set $vname $custom_tick_posn
 Set vname ${which_axis}_tick_${current_tick_index}_label
@@ -814,7 +808,6 @@ Set $vname $custom_tick_label
 # Store_Series_Vars - transfer the general global vars into  the variables for a particular series
 
 Define Store_Series_Vars 1 series_name
-#advise "Store_Series_Vars $1 BEGIN"
 Store_Series_Var $1 filename
 Store_Series_Var $1 nickname
 Store_Series_Var $1 color
@@ -841,7 +834,6 @@ Load_Image_Var $1 zoom_x
 Load_Image_Var $1 zoom_y
 
 Set vname ${1}_posn_y
-advise "Load_Image_Vars $1:  ${1}_posn_y = $$vname"
 .
 
 Define Store_Image_Vars 1 image_name
@@ -987,7 +979,6 @@ Define EditData 0
 If !strcmp('$selected_series_nickname','no_series') "No_Series_Msg exit_macro"
 Find_Series_From_Nickname $selected_series_nickname
 If !strcmp('$curr_series_name','no_series') "advise 'Could not find series with nickname $selected_series_nickname!?' exit_macro"
-#advise "EditData BEGIN  curr_series_name = $curr_series_name"
 Load_Series_Vars $curr_series_name
 interface
   decorate $data_edit_panel
@@ -1011,7 +1002,6 @@ Panel_On $data_edit_panel
 .
 
 Define Find_Tick_From_ID_String 2 varname string
-advise "Find_Tick_From_ID_String '$2' BEGIN"
 Set $1 -1	# error indicator
 If $$tick_count_name<=0 "error_exit 'Find_Tick_From_Label:  no ticks!?'"
 Set tick_idx 0
@@ -1087,6 +1077,7 @@ If !strcmp('$selected_legend_nickname','no_legend') "No_Legend_Msg exit_macro"
 Find_Legend_From_Nickname $selected_legend_nickname
 If !strcmp('$curr_legend_name','no_legend') "advise 'Could not find legend with nickname $selected_legend_nickname!?' exit_macro"
 Load_Legend_Vars $curr_legend_name
+Print curr_legend_name
 interface
   decorate $legend_edit_panel
     set_edit_text $legend_nickname_widget_name $legend_nickname
@@ -1183,6 +1174,7 @@ Get_Text_Var $tick_edit_panel $tick_label_widget_name custom_tick_label
 
 Define SetLegendX 0
 Get_Text_Var $legend_edit_panel $legend_posn_x_widget_name legend_posn_x
+# Need to save it in the legend-specific var!
 .
 
 Define SetLegendY 0
@@ -1230,9 +1222,9 @@ Load_Image_Vars $curr_image_name
 .
 
 Define LegendEditRefreshPlot 0
-Store_Legend_Vars $legend_nickname
+Store_Legend_Vars $curr_legend_name
 Refresh_Plot
-Load_Legend_Vars $legend_nickname
+Load_Legend_Vars $curr_legend_name
 .
 
 Define SetGridSourceFile 0
@@ -1406,7 +1398,6 @@ interface
 .
 
 Define Update_Legend_Choices 0
-advise 'Update_Legend_Choices'
 Make_Legend_List_Cmd cmd
 interface
   decorate $legend_panel
@@ -1433,11 +1424,8 @@ Panel_On $custom_tick_panel_name
 .
 
 Define SeriesEditDone 0
-advise "SeriesEditDone, curr_series_name = $curr_series_name"
 Store_Series_Vars $curr_series_name
-advise 'vars stored'
 Update_Series_Choices
-advise 'choices updated'
 Panel_Off $data_edit_panel
 Panel_On $data_panel
 Refresh_Data
@@ -1647,7 +1635,6 @@ echo "Set $1 '$$1' "
 .
 
 Define Save_Data_Params 0
-advise "Save_Data_Params BEGIN  n_data_series = $n_data_series"
 Save_Param n_data_series
 Set i 1
 If $n_data_series<1 exit_macro
@@ -1684,7 +1671,6 @@ repeat $n_embedded_images
   Save_Image_Param $i posn_y
   Save_Image_Param $i extent_x
   Save_Image_Param $i extent_y
-advise "saving zoom params..."
   Save_Image_Param $i zoom_x
   Save_Image_Param $i zoom_y
 
@@ -2506,7 +2492,6 @@ repeat $n_extra_legends
 .
 
 Define Render_One_Legend 3 text x y
-advise "Render_One_Legend '$1' $2 $3"
 S_At $1 $2 $3
 .
 
