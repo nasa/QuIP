@@ -489,6 +489,7 @@ Set plot_ready 0
 
 Define Refresh_Plot 0
 If !$plot_ready exit_macro
+Label_Viewer $plotwin $plot_name
 Erase_Plot
 Select_Pen $black
 If $show_frame Draw_Frame
@@ -1836,6 +1837,7 @@ Emit_Curve series_pts $series_line_thickness
 .
 
 Define Emit_Curve 2 object linewidth
+If $2==0 exit_macro
 echo "$2 numberedlinewidth"
 Set pt_idx 0
 Assign x value($1[$pt_idx]{0})
@@ -1874,8 +1876,12 @@ echo "/gx0 1.5 in def"
 echo "/gy0 1.5 in def"
 #echo "/gdx pspan def"
 #echo "/gdy pspan def"
+# 100 pixels is one inch?
+# Changing this makes the fonts too big...
 echo "/gdx $plot_w 100 div in def"
 echo "/gdy $plot_h 100 div in def"
+#echo "/gdx $plot_w 200 div in def"
+#echo "/gdy $plot_h 200 div in def"
 echo "/guxmin $xmin def"
 echo "/guxmax $xmax def"
 echo "/guymin $ymin def"
